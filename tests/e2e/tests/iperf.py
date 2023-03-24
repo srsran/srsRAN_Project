@@ -11,28 +11,25 @@ Test Iperf
 """
 
 import logging
-from contextlib import suppress
 from typing import Iterable, Union
 
-import grpc
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import String
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEAttachedInfo
+from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import start_and_attach
+from .steps.stub import iperf, start_and_attach
 
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
 HIGH_BITRATE = int(20e6)
-
+BITRATE_THRESHOLD: float = 0.1
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 
@@ -198,41 +195,13 @@ def _iperf(
 
     ue_attached_info_list: Iterable[UEAttachedInfo] = start_and_attach(ue, gnb, epc)
 
-    # For each attached UE
-    for ue_attached_info in ue_attached_info_list:
-        # Start IPerf Server
-        server = epc.StartIPerfService(String(value=ue_attached_info.ipv4_gateway))
-
-        # Run iperf
-        with suppress(grpc.RpcError):
-            ue.IPerf(
-                IPerfRequest(
-                    server=server,
-                    duration=iperf_duration,
-                    direction=direction,
-                    proto=protocol,
-                    bitrate=bitrate,
-                )
-            )
-
-        # Stop server, get results and print it
-        iperf_data = epc.StopIPerfService(server)
-        logging.info(
-            "Iperf %s [%s %s] result %s",
-            ue_attached_info.ipv4,
-            _iperf_proto_to_str(protocol),
-            _iperf_dir_to_str(direction),
-            iperf_data,
-        )
-
-
-def _iperf_proto_to_str(proto):
-    return {IPerfProto.TCP: "tcp", IPerfProto.UDP: "udp"}[proto]
-
-
-def _iperf_dir_to_str(direction):
-    return {
-        IPerfDir.DOWNLINK: "downlink",
-        IPerfDir.UPLINK: "uplink",
-        IPerfDir.BIDIRECTIONAL: "bidirectional",
-    }[direction]
+    iperf(
+        ue,
+        epc,
+        ue_attached_info_list,
+        protocol,
+        direction,
+        iperf_duration,
+        bitrate,
+        BITRATE_THRESHOLD,
+    )

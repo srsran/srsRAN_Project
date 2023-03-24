@@ -9,6 +9,7 @@
 """
 Test ping
 """
+from contextlib import suppress
 import logging
 from typing import Iterable, Union
 
@@ -16,14 +17,13 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import PingRequest
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import start_and_attach
+from .steps.stub import ping, start_and_attach
 
 
 @mark.parametrize(
@@ -66,6 +66,45 @@ def test_zmq(
         time_alignment_calibration=0,
         log_search=True,
     )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(3, 15, 10, marks=mark.zmq_valgrind, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+# pylint: disable=too-many-arguments
+def test_zmq_valgrind(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    gnb: GNBStub,
+    epc: EPCStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    Valgrind Ping
+    - Ignore if the ping fails or ue can't attach
+    - Fails only if ue/gnb/epc crashes
+    """
+
+    with suppress(grpc.RpcError, AssertionError):
+        _ping(
+            retina_manager=retina_manager,
+            retina_data=retina_data,
+            ue=ue,
+            gnb=gnb,
+            epc=epc,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            global_timing_advance=0,
+            time_alignment_calibration=0,
+            log_search=False,
+            always_download_artifacts=True,
+            pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=yes --error-exitcode=22",
+        )
 
 
 @mark.parametrize(
@@ -121,6 +160,8 @@ def _ping(
     always_download_artifacts: bool = False,
     ue_count: int = 4,
     ping_count: int = 10,
+    pre_command: str = "",
+    post_command: str = "",
 ):
     logging.info("Ping Test")
 
@@ -140,21 +181,7 @@ def _ping(
         log_search=log_search,
     )
 
-    ue_attached_info_list: Iterable[UEAttachedInfo] = start_and_attach(ue, gnb, epc)
-
-    # For each attached UE
-    for ue_attached_info in ue_attached_info_list:
-        # Launch both ping in parallel: ue -> epc and epc -> ue
-        ue_to_epc = ue.Ping.future(PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count))
-        epc_to_ue = epc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
-
-        # Wait both ping to end
-        ue_to_epc_result = ue_to_epc.result()
-        epc_to_ue_result = epc_to_ue.result()
-
-        # Print status
-        logging.info("Ping [%s] UE -> EPC: %s", ue_attached_info.ipv4, ue_to_epc_result)
-        logging.info("Ping [%s] EPC -> UE: %s", ue_attached_info.ipv4, epc_to_ue_result)
-
-        # Validate both ping results
-        assert all(map(lambda r: r.status, (ue_to_epc_result, epc_to_ue_result))) is True, "Ping failed!"
+    ue_attached_info_list: Iterable[UEAttachedInfo] = start_and_attach(
+        ue, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command
+    )
+    ping(ue, epc, ue_attached_info_list, ping_count)

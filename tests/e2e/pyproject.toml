@@ -25,6 +25,7 @@ markers = [
   "uplink",
   "bidirectional",
   "multiue",
+  "zmq_valgrind",
   "test",
 ]
 minversion = "6.0"

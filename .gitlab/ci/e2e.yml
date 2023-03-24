@@ -23,7 +23,7 @@ include:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.0
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.2
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -113,6 +113,12 @@ zmq-asan:
     - job: "avx2 [asan]"
       artifacts: true
 
+zmq-valgrind:
+  extends: zmq
+  variables:
+    MARKERS: "zmq_valgrind"
+    LOG_LEVEL: "warning"
+
 rf:
   extends: .e2e-run
   rules:
@@ -123,7 +129,7 @@ rf:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf"
-    LOG_LEVEL: "info"
+    LOG_LEVEL: "warning"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
