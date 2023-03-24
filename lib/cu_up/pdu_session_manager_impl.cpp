@@ -35,14 +35,6 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 {
 }
 
-pdu_session_manager_impl::~pdu_session_manager_impl()
-{
-  for (auto& session_it : pdu_sessions) {
-    // Remove GTP-U tunnel from GTP-U demux
-    gtpu_rx_demux.remove_tunnel(session_it.second->local_teid);
-  }
-}
-
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
 {
   pdu_session_setup_result pdu_session_result = {};
@@ -60,7 +52,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session));
+  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session, gtpu_rx_demux));
   std::unique_ptr<pdu_session>& new_session    = pdu_sessions.at(session.pdu_session_id);
   const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
 
@@ -284,6 +276,13 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {
     logger.error("PDU session {} not found", pdu_session_id);
     return;
+  }
+
+  // Disconnect all UL tunnels for this PDU session.
+  auto& pdu_session = pdu_sessions.at(pdu_session_id);
+  for (const auto& drb : pdu_session->drbs) {
+    logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid.value());
+    f1u_gw.disconnect_cu_bearer(drb.second->f1u_ul_teid.value());
   }
 
   pdu_sessions.erase(pdu_session_id);

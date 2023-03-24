@@ -176,11 +176,15 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return response;
   }
 
-  // pdu session resource to modify list
-  if (msg.ng_ran_bearer_context_mod_request.has_value() &&
-      !msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
+  if (msg.ng_ran_bearer_context_mod_request.has_value()) {
+    // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
+    }
+
+    // Traverse list of PDU sessions to be removed.
+    for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
+      ue_ctxt->remove_pdu_session(pdu_session_item);
     }
   }
 
@@ -194,6 +198,11 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
 void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
 {
+  ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
+  if (ue_ctxt == nullptr) {
+    logger.error("ue={} not found. Discarding E1 Bearer Context Release Command.", msg.ue_index);
+    return;
+  }
   ue_mng->remove_ue(msg.ue_index);
 }
 
