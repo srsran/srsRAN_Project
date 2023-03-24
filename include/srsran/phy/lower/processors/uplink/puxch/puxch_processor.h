@@ -19,11 +19,11 @@ class slot_point;
 
 /// \brief PUCCH and PUSCH processor main interface.
 ///
-/// Provides a single access point to all PUCCH- and PUSCH-related interfaces, that is puxch_processor_notifier,
-/// puxch_processor_request_handler and puxch_processor_baseband.
+/// Provides a single access point to all PUCCH- and PUSCH-related interfaces, that is \ref puxch_processor_notifier,
+/// \ref puxch_processor_request_handler and \ref puxch_processor_baseband.
 ///
 /// \note All implementations of this interface must trigger an assertion error if the PUxCH processor is not connected
-/// to a notifier before calling get_request_handler() or get_baseband().
+/// to a notifier before calling \ref get_request_handler() or \ref get_baseband().
 class puxch_processor
 {
 public:

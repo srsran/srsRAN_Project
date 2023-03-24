@@ -72,10 +72,9 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
     // If there is no data available for the sector.
     if (dl_rg == nullptr) {
       // Log warning indicating the sector.
-      lower_phy_error_notifier::late_resource_grid_context context;
+      resource_grid_context context;
       context.sector = sector_id;
       context.slot   = dl_slot_context;
-      context.symbol = symbol_id;
       error_notifier.on_late_resource_grid(context);
     }
 

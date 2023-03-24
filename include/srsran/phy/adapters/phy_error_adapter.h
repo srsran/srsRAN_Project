@@ -28,13 +28,11 @@ public:
   phy_error_adapter(std::string log_level) : logger(srslog::fetch_basic_logger("Low-PHY")) {}
 
   // See interface for documentation.
-  void on_late_resource_grid(const late_resource_grid_context& context) override
+  void on_late_resource_grid(const resource_grid_context& context) override
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.info("Real-time failure in low-phy: Downlink data late for sector {}, slot {} and symbol {}.",
-                context.sector,
-                context.slot,
-                context.symbol);
+    logger.info(
+        "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.", context.sector, context.slot);
   }
 
   // See interface for documentation.

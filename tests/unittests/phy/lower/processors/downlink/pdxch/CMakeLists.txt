@@ -5,7 +5,3 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
-
-add_subdirectory(adaptors)
-add_subdirectory(downlink)
-add_subdirectory(uplink)

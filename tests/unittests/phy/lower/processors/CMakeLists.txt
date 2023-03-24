@@ -6,4 +6,5 @@
 # the distribution.
 #
 
+add_subdirectory(downlink)
 add_subdirectory(uplink)

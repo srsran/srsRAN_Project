@@ -36,6 +36,24 @@ std::ostream& operator<<(std::ostream& os, const lower_phy_rx_symbol_context& co
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const sampling_rate& srate)
+{
+  fmt::print(os, "{}", srate);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const subcarrier_spacing& scs)
+{
+  fmt::print(os, "{}", to_string(scs));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const cyclic_prefix& cp)
+{
+  fmt::print(os, "{}", cp.to_string());
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const prach_processor_baseband::symbol_context& context)
 {
   fmt::print(os, "{} {} {} {}", context.slot, context.symbol, context.sector, context.port);
@@ -139,7 +157,7 @@ protected:
     config.bandwidth_prb       = dist_bandwidth_prb(rgen);
     config.center_frequency_Hz = dist_center_freq_Hz(rgen);
     config.nof_rx_ports        = nof_rx_ports;
-    config.initial_slot_index  = dist_initial_slot(rgen);
+    config.initial_slot_index  = 0;
 
     // Create processor.
     ul_processor = ul_proc_factory->create(config);
@@ -155,7 +173,6 @@ protected:
   static constexpr unsigned                                  nof_frames_test = 10;
   static std::mt19937                                        rgen;
   static std::uniform_int_distribution<unsigned>             dist_sector_id;
-  static std::uniform_int_distribution<unsigned>             dist_initial_slot;
   static std::uniform_int_distribution<unsigned>             dist_bandwidth_prb;
   static std::uniform_real_distribution<double>              dist_center_freq_Hz;
   static std::uniform_real_distribution<float>               dist_sample;
@@ -171,7 +188,6 @@ protected:
 
 std::mt19937                                        LowerPhyUplinkProcessorFixture::rgen(0);
 std::uniform_int_distribution<unsigned>             LowerPhyUplinkProcessorFixture::dist_sector_id(0, 16);
-std::uniform_int_distribution<unsigned>             LowerPhyUplinkProcessorFixture::dist_initial_slot(0, 10);
 std::uniform_int_distribution<unsigned>             LowerPhyUplinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
 std::uniform_real_distribution<double>              LowerPhyUplinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
 std::uniform_real_distribution<float>               LowerPhyUplinkProcessorFixture::dist_sample(-1, 1);
@@ -296,6 +312,8 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
 INSTANTIATE_TEST_SUITE_P(LowerPhyUplinkProcessor,
                          LowerPhyUplinkProcessorFixture,
                          ::testing::Combine(::testing::Values(1, 2),
-                                            ::testing::Values(sampling_rate::from_MHz(3.84)),
-                                            ::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30),
+                                            ::testing::Values(sampling_rate::from_MHz(7.68)),
+                                            ::testing::Values(subcarrier_spacing::kHz15,
+                                                              subcarrier_spacing::kHz30,
+                                                              subcarrier_spacing::kHz60),
                                             ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED)));

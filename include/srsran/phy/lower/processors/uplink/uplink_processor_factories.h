@@ -14,6 +14,7 @@
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_factories.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
+#include "srsran/phy/lower/sampling_rate.h"
 #include <memory>
 
 namespace srsran {

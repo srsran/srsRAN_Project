@@ -14,7 +14,6 @@
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
-#include "srsran/phy/support/resource_grid_context.h"
 
 using namespace srsran;
 
@@ -81,7 +80,8 @@ void lower_phy_uplink_processor_impl::process(baseband_gateway_buffer& samples)
   // Process all the input samples.
   while (nof_processed_samples < nof_samples) {
     // Select current OFDM symbol size.
-    unsigned current_symbol_size = symbol_sizes[current_symbol_index];
+    unsigned current_symbol_size =
+        symbol_sizes[current_symbol_index + current_slot.subframe_slot_index() * nof_symbols_per_slot];
     temp_buffer.resize(current_symbol_size);
 
     // Select the minimum among the remainder of samples to process and the number of samples to complete the buffer.

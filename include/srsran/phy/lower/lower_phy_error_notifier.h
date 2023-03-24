@@ -24,16 +24,6 @@ public:
   /// Default destructor.
   virtual ~lower_phy_error_notifier() = default;
 
-  /// Describes the context in which \c on_late_resource_grid is notified.
-  struct late_resource_grid_context {
-    /// Sector identifier.
-    unsigned sector;
-    /// Slot context.
-    slot_point slot;
-    /// Symbol index within the slot.
-    unsigned symbol;
-  };
-
   /// \brief Notifies the unavailability of a downlink resource grid.
   ///
   /// This error happens in a sector when the resource grid for the processing slot is not available at the time when a
@@ -45,7 +35,7 @@ public:
   ///
   /// \param[in] context Context in which the resource grid is not available.
   /// \sa lower_phy_rg_handler::handle_resource_grid.
-  virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
+  virtual void on_late_resource_grid(const resource_grid_context& context) = 0;
 
   /// \brief Notifies a PRACH request outside the slot window.
   ///

@@ -43,6 +43,10 @@ public:
     unsigned initial_slot_index;
   };
 
+  /// \brief Constructs a software generic lower PHY uplink processor that can process PRACH and PUxCH.
+  /// \param[in] prach_proc_ PRACH processor.
+  /// \param[in] puxch_proc_ PUxCH processor.
+  /// \param[in] config      Uplink processor configuration.
   lower_phy_uplink_processor_impl(std::unique_ptr<prach_processor> prach_proc_,
                                   std::unique_ptr<puxch_processor> puxch_proc_,
                                   const configuration&             config);

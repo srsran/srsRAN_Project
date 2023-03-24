@@ -17,19 +17,19 @@ namespace srsran {
 
 class baseband_gateway_buffer;
 
-/// \brief Lower physical layer uplink processor - Baseband interface.
+/// \brief Lower physical layer downlink processor - Baseband interface.
 ///
-/// Processes baseband samples. It derives the symbol and slot timing from the number of processed samples.
-class uplink_processor_baseband
+/// Processes baseband samples, it derives the symbol and slot timing from the number of processed samples.
+class downlink_processor_baseband
 {
 public:
   /// Default destructor.
-  virtual ~uplink_processor_baseband() = default;
+  virtual ~downlink_processor_baseband() = default;
 
   /// \brief Processes any number of baseband samples.
   ///
   /// \param[in] buffer Baseband samples to process.
-  /// \remark The number of channels in \c buffer must be equal to the number of receive ports for the sector.
+  /// \remark The number of channels in \c buffer must be equal to the number of transmit ports for the sector.
   virtual void process(baseband_gateway_buffer& buffer) = 0;
 };
 

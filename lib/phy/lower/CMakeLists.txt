@@ -15,6 +15,7 @@ target_link_libraries(srsran_lower_phy
         srsran_generic_funcs
         srsran_lower_phy_adaptors
         srsran_lower_phy_amplitude_controller
+        srsran_lower_phy_downlink_processor
         srsran_lower_phy_modulation
         srsran_lower_phy_prach_processor
         srsran_lower_phy_puxch_processor
