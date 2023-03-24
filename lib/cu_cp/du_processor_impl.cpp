@@ -329,7 +329,7 @@ async_task<cu_cp_pdu_session_resource_setup_response>
 du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsran_assert(ue != nullptr, "Could not find DU UE");
+  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
 
   return routine_mng->start_pdu_session_resource_setup_routine(msg,
                                                                rrc->find_ue(msg.ue_index)->get_rrc_ue_secutity_config(),
