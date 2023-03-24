@@ -269,7 +269,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // start routine
   task_sched.schedule_async_task(ue_index,
                                  launch_async<ngap_pdu_session_resource_setup_procedure>(
-                                     *ue, msg, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
+                                     msg, *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 
   // Handle optional parameters
   if (request->nas_pdu_present) {
