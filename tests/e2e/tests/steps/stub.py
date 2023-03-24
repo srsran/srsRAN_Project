@@ -31,9 +31,10 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEAttachedInfo, UEAttachedInfoList, UEStartInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
-UE_STARTUP_TIMEOUT: int = 3 * 60  # RF requires more time
-GNB_STARTUP_TIMEOUT: int = 5
-EPC_STARTUP_TIMEOUT: int = UE_STARTUP_TIMEOUT
+RF_MAX_TIMEOUT: int = 3 * 60  # Time enough in RF when loading a new image in the sdr
+UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
+GNB_STARTUP_TIMEOUT: int = 5  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
+EPC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 120
 
 

@@ -76,7 +76,7 @@ def _get_dl_arfcn(band: int) -> int:
     """
     Get dl arfcn
     """
-    return {3: 368500, 7: 536020, 41: 520002}[band]
+    return {3: 368500, 7: 536020, 41: 520002, 78: 632628}[band]
 
 
 def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
@@ -109,4 +109,5 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
                 50: 517230,
             },
         ),
+        78: defaultdict(lambda: 632544),
     }[band][bandwidth]

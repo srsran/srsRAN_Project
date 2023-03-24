@@ -26,6 +26,7 @@ markers = [
   "bidirectional",
   "multiue",
   "zmq_valgrind",
+  "rf_b200",
   "test",
 ]
 minversion = "6.0"

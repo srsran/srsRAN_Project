@@ -133,3 +133,10 @@ rf:
   needs:
     - job: "avx2 [basic]"
       artifacts: true
+
+rf b200 config:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_b200"
