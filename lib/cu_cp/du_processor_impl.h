@@ -19,7 +19,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/executors/task_executor.h"
@@ -141,9 +140,8 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1ap_cu>                                     f1ap;
-  std::unique_ptr<rrc_du_interface>                            rrc;
-  std::unordered_map<ue_index_t, std::unique_ptr<pdcp_entity>> pdcp_bearers;
+  std::unique_ptr<f1ap_cu>          f1ap;
+  std::unique_ptr<rrc_du_interface> rrc;
 
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;
