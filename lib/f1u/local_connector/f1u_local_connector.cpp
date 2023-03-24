@@ -69,15 +69,17 @@ void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
   // Disconnect UL path of DU first if we have a dl_teid for lookup
   if (bearer_it->second.dl_teid.has_value()) {
     auto du_bearer_it = du_map.find(bearer_it->second.dl_teid.value());
-    if (du_bearer_it == du_map.end()) {
-      logger.warning("Could not find DL-TEID={} at DU to disconnect DU F1-U bearer from CU handler. UL-TEID={}",
-                     bearer_it->second.dl_teid,
-                     ul_teid);
-      return;
+    if (du_bearer_it != du_map.end()) {
+      logger.debug("Disconnecting DU F1-U bearer with DL-TEID={} from CU handler. UL-TEID={}",
+                   bearer_it->second.dl_teid,
+                   ul_teid);
+      du_bearer_it->second.du_tx->detach_cu_handler();
+    } else {
+      // Bearer could already been removed from DU.
+      logger.info("Could not find DL-TEID={} at DU to disconnect DU F1-U bearer from CU handler. UL-TEID={}",
+                  bearer_it->second.dl_teid,
+                  ul_teid);
     }
-    logger.debug(
-        "Disconnecting DU F1-U bearer with DL-TEID={} from CU handler. UL-TEID={}", bearer_it->second.dl_teid, ul_teid);
-    du_bearer_it->second.du_tx->detach_cu_handler();
   } else {
     logger.warning("No DL-TEID provided to disconnect DU F1-U bearer from CU handler. UL-TEID={}", ul_teid);
   }
