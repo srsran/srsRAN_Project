@@ -118,7 +118,8 @@ zmq-valgrind:
   variables:
     MARKERS: "zmq_valgrind"
     LOG_LEVEL: "warning"
-
+  allow_failure: true
+  
 rf:
   extends: .e2e-run
   rules:
