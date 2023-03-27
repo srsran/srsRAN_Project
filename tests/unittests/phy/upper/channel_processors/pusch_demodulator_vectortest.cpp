@@ -138,10 +138,6 @@ TEST_P(PuschDemodulatorFixture, PuschProcessorUnittest)
 {
   const test_case_t& test_case = GetParam();
 
-  if ((config.dmrs_config_type != dmrs_type::TYPE1) || (config.nof_cdm_groups_without_data != 2)) {
-    GTEST_SKIP();
-  }
-
   // Prepare channel estimates.
   channel_estimate::channel_estimate_dimensions ce_dims;
   ce_dims.nof_prb       = config.rb_mask.size();
