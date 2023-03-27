@@ -194,7 +194,8 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
-  srsran_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty(),
+  srsran_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty() ||
+                    !dl_data.paging_pdus.empty(),
                 "Received a mac_dl_data_result object with zero payloads");
 
   fapi::tx_data_request_message msg;
