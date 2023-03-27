@@ -566,76 +566,93 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
 void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx)
 {
-  unsigned                      pusch_td_res_index = 0; // TODO: Derive PUSCH TD res index.
-  const unsigned                k2                 = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].k2;
-  cell_slot_resource_allocator& pdcch_alloc        = res_alloc[0];
-  cell_slot_resource_allocator& pusch_alloc        = res_alloc[k2];
+  cell_slot_resource_allocator&                     pdcch_alloc = res_alloc[0];
+  span<const pusch_time_domain_resource_allocation> pusch_tds =
+      get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common);
+  const bwp_configuration& bwp_ul_cmn = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot) or not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     // Not possible to schedule Msg3s in this TDD slot.
     return;
   }
 
-  // Verify there is space in PUSCH and PDCCH result lists for new allocations.
-  if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
+  // Verify there is space in PDCCH result lists for new allocations.
+  if (pdcch_alloc.result.dl.ul_pdcchs.full()) {
     logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler output list");
     return;
   }
 
-  const bwp_configuration& bwp_ul_cmn = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  for (unsigned pusch_td_res_index = 0; pusch_td_res_index != pusch_tds.size(); ++pusch_td_res_index) {
+    const unsigned                k2          = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].k2;
+    cell_slot_resource_allocator& pusch_alloc = res_alloc[k2];
 
-  // Try to reuse previous HARQ PRBs.
-  prb_interval prbs = msg3_ctx.harq.last_tx_params().prbs.prbs();
-  grant_info   grant;
-  grant.scs     = bwp_ul_cmn.scs;
-  grant.symbols = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].symbols;
-  grant.crbs    = prb_to_crb(bwp_ul_cmn, prbs);
-  if (pusch_alloc.ul_res_grid.collides(grant)) {
-    // Find available symbol x RB resources.
-    // TODO
-    return;
+    if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
+      // Not possible to schedule Msg3s in this TDD slot.
+      continue;
+    }
+
+    // Verify there is space in PUSCH and PDCCH result lists for new allocations.
+    if (pusch_alloc.result.ul.puschs.full()) {
+      logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler output list");
+      continue;
+    }
+
+    // Try to reuse previous HARQ PRBs.
+    prb_interval prbs = msg3_ctx.harq.last_tx_params().prbs.prbs();
+    grant_info   grant;
+    grant.scs     = bwp_ul_cmn.scs;
+    grant.symbols = pusch_tds[pusch_td_res_index].symbols;
+    grant.crbs    = prb_to_crb(bwp_ul_cmn, prbs);
+    if (pusch_alloc.ul_res_grid.collides(grant)) {
+      // Find available symbol x RB resources.
+      // TODO
+      continue;
+    }
+
+    // > Find space in PDCCH for Msg3 DCI.
+    // [3GPP TS 38.213, clause 10.1] a UE monitors PDCCH candidates in one or more of the following search spaces sets
+    //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+    //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+    search_space_id       ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+    pdcch_ul_information* pdcch =
+        pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
+    if (pdcch == nullptr) {
+      logger.debug("tc-rnti={:#x}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
+                   msg3_ctx.preamble.tc_rnti);
+      continue;
+    }
+
+    // Mark resources as occupied in the ResourceGrid.
+    pusch_alloc.ul_res_grid.fill(grant);
+
+    // Allocate new retx in the HARQ.
+    msg3_ctx.harq.new_retx(pusch_alloc.slot);
+
+    // Fill DCI.
+    build_dci_f0_0_tc_rnti(pdcch->dci,
+                           cell_cfg.dl_cfg_common.init_dl_bwp,
+                           cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                           prbs,
+                           pusch_td_res_index,
+                           msg3_ctx.harq.last_tx_params().mcs,
+                           msg3_ctx.harq);
+
+    // Fill PUSCH.
+    ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.emplace_back();
+    ul_info.context.ue_index   = INVALID_DU_UE_INDEX;
+    ul_info.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+    ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
+    ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
+    ul_info.pusch_cfg.prbs     = prbs;
+    ul_info.pusch_cfg.rv_index = pdcch->dci.tc_rnti_f0_0.redundancy_version;
+    ul_info.pusch_cfg.new_data = false;
+
+    // Store parameters used in HARQ.
+    msg3_ctx.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, ul_info.pusch_cfg);
+
+    // successful allocation. Exit loop.
+    break;
   }
-
-  // > Find space in PDCCH for Msg3 DCI.
-  // [3GPP TS 38.213, clause 10.1] a UE monitors PDCCH candidates in one or more of the following search spaces sets
-  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
-  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-  search_space_id       ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  pdcch_ul_information* pdcch =
-      pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
-  if (pdcch == nullptr) {
-    logger.debug("tc-rnti={:#x}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
-                 msg3_ctx.preamble.tc_rnti);
-    return;
-  }
-
-  // Mark resources as occupied in the ResourceGrid.
-  pusch_alloc.ul_res_grid.fill(grant);
-
-  // Allocate new retx in the HARQ.
-  msg3_ctx.harq.new_retx(pusch_alloc.slot);
-
-  // Fill DCI.
-  build_dci_f0_0_tc_rnti(pdcch->dci,
-                         cell_cfg.dl_cfg_common.init_dl_bwp,
-                         cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                         prbs,
-                         pusch_td_res_index,
-                         msg3_ctx.harq.last_tx_params().mcs,
-                         msg3_ctx.harq);
-
-  // Fill PUSCH.
-  ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.emplace_back();
-  ul_info.context.ue_index   = INVALID_DU_UE_INDEX;
-  ul_info.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
-  ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
-  ul_info.pusch_cfg.prbs     = prbs;
-  ul_info.pusch_cfg.rv_index = pdcch->dci.tc_rnti_f0_0.redundancy_version;
-  ul_info.pusch_cfg.new_data = false;
-
-  // Store parameters used in HARQ.
-  msg3_ctx.harq.save_alloc_params(dci_ul_rnti_config_type::tc_rnti_f0_0, ul_info.pusch_cfg);
 }
 
 sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const
