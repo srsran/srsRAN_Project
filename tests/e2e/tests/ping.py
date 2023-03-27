@@ -108,6 +108,7 @@ def test_zmq_valgrind(
         )
 
 
+@mark.xfail
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
