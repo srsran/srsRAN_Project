@@ -95,7 +95,7 @@ size_t du_manager_impl::nof_ues()
         cvar.notify_one();
       })) {
     logger.warning("Unable to compute the number of UEs active in the DU");
-    return 0;
+    return std::numeric_limits<size_t>::max();
   }
   {
     std::unique_lock<std::mutex> lock(mutex);
