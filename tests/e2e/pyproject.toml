@@ -7,7 +7,7 @@
 #
 
 [tool.pytest.ini_options]
-addopts = "--tb=short --random-order"
+addopts = "--tb=short --random-order --random-order-bucket=class"
 filterwarnings = [
   "ignore:HTTPResponse.getheaders:DeprecationWarning",
 ]
