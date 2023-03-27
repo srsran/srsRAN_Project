@@ -55,12 +55,12 @@ inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_con
     qos_list[7] = cfg;
   }
   {
-    // 5QI=9 (temporary default to UM)
+    // 5QI=9
     srs_cu_cp::cu_cp_qos_config cfg{};
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
