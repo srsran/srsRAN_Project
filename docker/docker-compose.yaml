@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  srsran:
+    image: srsran:latest
+    container_name: srsran
+    privileged: true
+    environment:
+      NGAP_LOCAL_ADDR: 192.168.70.163
+      NGAP_REMOTE_ADDR: 192.168.70.132 # AMF IP ADDR
+      PLMN:     "00101"
+      TAC:      1
+      GNB_ID:   0x19B
+      DL_ARFCN: 632628
+      BAND:     78
+      CH_BW:    10
+      SCS:      30
+      TX_GAIN:  80
+      RX_GAIN:  40
+      SRATE:    11.52
+      UHD_TYPE: b200
+      UHD_IMAGES_DIR: /srsran/images
+      # DEVICE_DRIVER: auto # 'zmq' for simulation, 'auto' while using uhd
+      # DEVICE_ARGS: fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=11.52e6 # empty while using uhd
+    cap_add:
+      - NET_ADMIN
+    networks:
+      public_net:
+          ipv4_address: 192.168.70.163
+    volumes:
+        -  /dev/bus/usb/:/dev/bus/usb/   # mount local USRP device
+        #- /srsran/images:/srsran/images # mount 
+networks:
+    public_net:
+        driver: bridge
+        name: srsran-public-net
+        ipam:
+            config:
+                - subnet: 192.168.70.0/24
+        driver_opts:
+            com.docker.network.bridge.name: "srsran-br"
+        # Reuse docker network used by CN 
+        # if CN + gNB on same machine
+        # external: 
+        #     name: srs-public-net
+
