@@ -18,3 +18,28 @@ Update docker-compose file as per required configuration
 docker-compose -f docker/docker-compose.yaml up -d
 ```
 
+Verify logs
+```bash
+$ docker logs srsran -f
+Now setting these variables '@BAND@ @CH_BW@ @DL_ARFCN@ @NGAP_LOCAL_ADDR@ @NGAP_REMOTE_ADDR@ @PLMN@ @RX_GAIN@ @SCS@ @SRATE@ @TAC@ @TX_GAIN@ @UHD_TYPE@'
+Done setting the configuration
+
+Running gNB Service 
+
+[INFO] [UHD] linux; GNU C++ version 9.4.0; Boost_107100; UHD_4.3.0.HEAD-0-g1f8fd345
+[INFO] [LOGGING] Fastpath logging disabled at runtime.
+[INFO] [B200] Detected Device: B210
+[INFO] [B200] Operating over USB 3.
+[INFO] [B200] Initialize CODEC control...
+[INFO] [B200] Initialize Radio control...
+[INFO] [B200] Performing register loopback test... 
+[INFO] [B200] Register loopback test passed
+[INFO] [B200] Performing register loopback test... 
+[INFO] [B200] Register loopback test passed
+[INFO] [B200] Setting master clock rate selection to 'automatic'.
+[INFO] [B200] Asking for clock rate 16.000000 MHz... 
+[INFO] [B200] Actually got clock rate 16.000000 MHz.
+[INFO] [MULTI_USRP] Setting master clock rate selection to 'manual'.
+[INFO] [B200] Asking for clock rate 23.040000 MHz... 
+[INFO] [B200] Actually got clock rate 23.040000 MHz.
+```
