@@ -50,6 +50,8 @@ RUN uhd_images_downloader -t b2xx -i /srsran/bin -i /images/ && \
 ARG BASE_IMAGE=ubuntu:jammy
 FROM $BASE_IMAGE as srsran
 
+ARG UHD_VERSION=v4.3.0.0
+
 RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt install -y \ 
     iproute2 net-tools iputils-ping -y
@@ -76,7 +78,9 @@ COPY --from=builder /usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.71.0
                     /usr/lib/x86_64-linux-gnu/libicudata.so.66 \
                     /usr/lib/x86_64-linux-gnu/libyaml-cpp.so.0.6 \ 
                     /usr/lib/x86_64-linux-gnu/libdl.so.2 \
+                    # UHD_VERSION=v4.3.0.0
                     /usr/lib/x86_64-linux-gnu/libpython3.8.so.1.0 \
+                    /usr/lib/x86_64-linux-gnu/libexpat.so.1 \
                     # /usr/local/lib/libsrsran_rf_zmq.so.0 \
                     /usr/lib/x86_64-linux-gnu/libfftw3f.so.3 /usr/lib/x86_64-linux-gnu/
 RUN ldconfig
