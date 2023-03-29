@@ -23,12 +23,13 @@ services:
       # DEVICE_ARGS: fail_on_disconnect=true,tx_port=tcp://*:2000,rx_port=tcp://localhost:2001,id=enb,base_srate=11.52e6 # empty while using uhd
     cap_add:
       - NET_ADMIN
+    #network_mode: host
     networks:
       public_net:
           ipv4_address: 192.168.70.163
     volumes:
-        -  /dev/bus/usb/:/dev/bus/usb/   # mount local USRP device
-        #- /srsran/images:/srsran/images # mount 
+        -  /dev/bus/usb/:/dev/bus/usb/   # mount local USRP device (required for B200 & ignored if SDR is over network)
+        #- /srsran/images:/srsran/images # mount local USRP images
 networks:
     public_net:
         driver: bridge
