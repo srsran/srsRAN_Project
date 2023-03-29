@@ -10,13 +10,13 @@ services:
       PLMN:     "00101"
       TAC:      1
       GNB_ID:   0x19B
-      DL_ARFCN: 632628
-      BAND:     78
-      CH_BW:    10
+      DL_ARFCN: 621332
+      BAND:     77
+      CH_BW:    20
       SCS:      30
-      TX_GAIN:  80
-      RX_GAIN:  40
-      SRATE:    11.52
+      TX_GAIN:  89
+      RX_GAIN:  76
+      SRATE:    23.04
       UHD_TYPE: b200
       UHD_IMAGES_DIR: /srsran/images
       # DEVICE_DRIVER: auto # 'zmq' for simulation, 'auto' while using uhd
