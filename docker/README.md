@@ -43,3 +43,7 @@ Running gNB Service
 [INFO] [B200] Asking for clock rate 23.040000 MHz... 
 [INFO] [B200] Actually got clock rate 23.040000 MHz.
 ```
+
+<br/>
+
+* [Sample pcap for simcom ue + srsran docker + oai 5g cn docker](https://github.com/orion-belt/srsRAN_Project/files/11100673/srsran_simcom_oai_cn.zip)
