@@ -59,7 +59,7 @@ public:
 
   /// \brief Gets a DM-RS position mask within a resource block.
   ///
-  /// \param nof_cdm_groups_without_data Number of CDM groups without data.
+  /// \param[in] nof_cdm_groups_without_data Number of CDM groups without data.
   /// \return A RE mask within a PRB that contain DM-RS.
   re_prb_mask get_dmrs_prb_mask(unsigned nof_cdm_groups_without_data) const
   {
