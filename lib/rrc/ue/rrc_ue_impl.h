@@ -50,7 +50,6 @@ public:
   rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  rrc_ue_capability_handler&            get_rrc_ue_capability_handler() override { return *this; }
   drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
   security::sec_as_config&              get_rrc_ue_secutity_config() override { return context.sec_cfg; }
 
@@ -65,6 +64,7 @@ public:
   // rrc_ue_control_message_handler
   void             handle_new_guami(const guami& msg) override;
   async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
+  async_task<bool> handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override;
   void             handle_rrc_ue_release() override;
 
 private:
@@ -93,9 +93,6 @@ private:
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
-
-  // triggers a RRC UE Capability transfer
-  async_task<bool> handle_rrc_ue_capability_transfer() override;
 
   // Helper to create PDU from RRC message
   template <class T>

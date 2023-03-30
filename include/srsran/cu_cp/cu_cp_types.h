@@ -535,6 +535,10 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
   optional<cu_cp_rrc_recfg_v1530_ies> non_crit_ext;
 };
 
+struct cu_cp_ue_capability_transfer_request {
+  // Empty for now but should include ratType and capabilityRequestFilter, etc.
+};
+
 struct cu_cp_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
   cause_t    cause    = cause_t::nulltype;

@@ -28,6 +28,11 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
 {
   CORO_BEGIN(ctx);
 
+  if (context.capabilities.has_value()) {
+    logger.debug("ue={} \"{}\" skipped - capabilities already present", context.ue_index, name());
+    CORO_EARLY_RETURN(true);
+  }
+
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRCUeCapabilityEnquiry
   transaction = event_mng.transactions.create_transaction(rrc_ue_cap_timeout_ms);
@@ -55,6 +60,9 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
             asn1::json_writer json_writer;
             ue_nr_cap.to_json(json_writer);
             logger.debug("{}", json_writer.to_string().c_str());
+
+            // Store capabilities for future use.
+            context.capabilities = ue_nr_cap;
           } else {
             logger.debug("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
           }
@@ -62,15 +70,18 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
       }
     }
 
-    // TODO: handle ue capability information
-
-    logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
+    if (context.capabilities.has_value()) {
+      logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
+    } else {
+      logger.debug("ue={} \"{}\" finished but no NR capabilities present", context.ue_index, name());
+    }
+    // TODO: fail procedure after updating ASN1 lib
     procedure_result = true;
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
   }
 
-  logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());
+  logger.debug("ue={} \"{}\" finalized", context.ue_index, name());
   CORO_RETURN(procedure_result);
 }
 

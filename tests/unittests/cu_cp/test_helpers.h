@@ -234,6 +234,16 @@ public:
 
   void on_new_guami(const guami& msg) override { logger.info("Received a new GUAMI"); }
 
+  async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  {
+    logger.info("Received a new UE capability transfer request");
+
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ue_cap_transfer_outcome);
+    });
+  }
+
   async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
     logger.info("Received a new RRC reconfiguration request");
@@ -248,6 +258,7 @@ public:
 
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
+  bool                  ue_cap_transfer_outcome     = true;
   bool                  rrc_reconfiguration_outcome = false;
 };
 

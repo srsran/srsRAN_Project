@@ -10,6 +10,7 @@
 
 #include "../../ran/gnb_format.h"
 #include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 
@@ -173,6 +174,12 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
+}
+
+async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg)
+{
+  //  Launch RRC UE capability transfer procedure
+  return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
 void rrc_ue_impl::handle_rrc_ue_release()

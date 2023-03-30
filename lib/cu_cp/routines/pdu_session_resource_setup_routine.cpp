@@ -79,6 +79,17 @@ void pdu_session_resource_setup_routine::operator()(
     }
   }
 
+  {
+    CORO_AWAIT_VALUE(ue_capability_transfer_result,
+                     rrc_ue_notifier.on_ue_capability_transfer_request(ue_capability_transfer_request));
+
+    // Handle UE Capability Transfer result
+    if (not ue_capability_transfer_result) {
+      logger.error("ue={}: \"{}\" UE capability transfer failed", setup_msg.ue_index, name());
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+  }
+
   // sanity check passed, now we request the RRC to calculate calculate DRBs
   // that need to added depending on QoSFlowSetupRequestList, more than one DRB could be needed
   {

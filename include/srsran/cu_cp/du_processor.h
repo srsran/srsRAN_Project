@@ -187,6 +187,10 @@ public:
   /// \param[in] msg The new GUAMI.
   virtual void on_new_guami(const guami& msg) = 0;
 
+  /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
+  /// \param[in] msg The new request msg containing the RAT type, etc.
+  virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
+
   /// \brief Notify the RRC UE about an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.

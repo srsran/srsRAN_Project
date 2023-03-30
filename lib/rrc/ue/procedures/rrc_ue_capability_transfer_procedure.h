@@ -47,8 +47,9 @@ private:
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
 
-  const std::chrono::milliseconds rrc_ue_cap_timeout_ms{1000}; // arbitrary timeout for RRC UE Capability procedure
-  bool                            procedure_result = false;
+  const std::chrono::milliseconds rrc_ue_cap_timeout_ms{
+      80}; // See 38.331 Sec. 12  arbitrary timeout for RRC UE Capability procedure
+  bool procedure_result = false;
 };
 
 /// \brief Fills ASN.1 RRC UE Capability Enquiry struct.
