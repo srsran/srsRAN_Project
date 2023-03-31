@@ -9,7 +9,9 @@
  */
 
 #include "srsran/ran/pdcch/dci_packing.h"
+#include "srsran/adt/span.h"
 #include "srsran/support/math_utils.h"
+#include <unordered_set>
 
 using namespace srsran;
 
@@ -18,37 +20,33 @@ static dci_0_0_size dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
 {
   dci_0_0_size sizes = {};
 
-  unsigned nof_bits = 0;
-
   // Identifier for DCI formats - 1 bit.
-  ++nof_bits;
+  ++sizes.total;
 
   // Frequency domain resource assignment. Number of bits as per TS38.214 Section 6.1.2.2.2.
-  sizes.freq_resource = units::bits(log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2));
-  nof_bits += sizes.freq_resource.value();
+  sizes.frequency_resource = units::bits(log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2));
+  sizes.total += sizes.frequency_resource;
 
   // Time domain resource assignment - 4 bit.
-  nof_bits += 4;
+  sizes.total += units::bits(4);
 
   // Frequency hopping flag - 1 bit.
-  ++nof_bits;
+  ++sizes.total;
 
   // Modulation and coding scheme - 5 bit.
-  nof_bits += 5;
+  sizes.total += units::bits(5);
 
   // New data indicator - 1 bit.
-  ++nof_bits;
+  ++sizes.total;
 
   // Redundancy version - 2 bit.
-  nof_bits += 2;
+  sizes.total += units::bits(2);
 
   // HARQ process number - 4 bit.
-  nof_bits += 4;
+  sizes.total += units::bits(4);
 
   // TPC command for scheduled PUSCH - 2 bit.
-  nof_bits += 2;
-
-  sizes.total = units::bits(nof_bits);
+  sizes.total += units::bits(2);
 
   return sizes;
 }
@@ -62,8 +60,439 @@ static dci_1_0_size dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
   sizes.total = units::bits(28U);
 
   // Frequency domain resource assignment. Number of bits as per TS38.214 Section 5.1.2.2.2.
-  sizes.freq_resource = units::bits(log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2));
-  sizes.total += sizes.freq_resource;
+  sizes.frequency_resource = units::bits(log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2));
+  sizes.total += sizes.frequency_resource;
+
+  return sizes;
+}
+
+// Computes the BWP indicator field size for DCI formats 0_1 and 1_1.
+static unsigned bwp_indicator_size(unsigned nof_bwp_rrc)
+{
+  unsigned bwp_ind_size = 0;
+  if (nof_bwp_rrc > 0) {
+    unsigned n_bwp = nof_bwp_rrc;
+    if (n_bwp <= 3) {
+      ++n_bwp;
+    }
+    bwp_ind_size = log2_ceil(n_bwp);
+    srsran_assert(bwp_ind_size <= 2,
+                  "The derived BWP indicator field size, i.e., {} exceeds the maximum expected size of 2",
+                  bwp_ind_size);
+  }
+  return bwp_ind_size;
+}
+
+static unsigned freq_resource_assignment_size(resource_allocation res_allocation_type,
+                                              optional<unsigned>  nof_rb_groups,
+                                              unsigned            nof_prb_bwp)
+{
+  unsigned freq_resource_size = 0;
+  switch (res_allocation_type) {
+    case resource_allocation::resource_allocation_type_0:
+      srsran_assert(nof_rb_groups.has_value(), "The number of RBGs is required for resource allocation type 0");
+
+      // For resource allocation type 0, the field size is the number of UL RBG, as per TS38.214 Section 6.1.2.2.1.
+      freq_resource_size = nof_rb_groups.value();
+      break;
+    case resource_allocation::resource_allocation_type_1:
+      // For resource allocation type 1, the field size is derived from the bandwidth of the active BWP, as per TS38.212
+      // Section 7.3.1.
+      freq_resource_size = log2_ceil(nof_prb_bwp * (nof_prb_bwp + 1) / 2);
+      break;
+    case resource_allocation::dynamic_switch:
+      srsran_assert(nof_rb_groups.has_value(), "The number of RBGs is required for dynamic resource allocation type.");
+
+      // For dynamic resource allocation type, the field size is determined by the resource allocation type that results
+      // in a larger payload, and one extra bit is added to provide dynamic selection between type 0 and type 1.
+      freq_resource_size = 1 + std::max(nof_rb_groups.value(), log2_ceil(nof_prb_bwp * (nof_prb_bwp + 1) / 2));
+      break;
+  }
+  return freq_resource_size;
+}
+
+// Computes the UL antenna ports field size for a specific DM-RS configuration.
+static unsigned ul_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len, bool transform_precoding)
+{
+  // 2 bits as defined by Tables 7.3.1.1.2-6, if transform precoder is enabled, dmrs-Type=1, and maxLength=1.
+  if (transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len1) {
+    return 2;
+  }
+
+  // 4 bits as defined by Tables 7.3.1.1.2-7, if transform precoder is enabled, dmrs-Type=1, and maxLength=2.
+  if (transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len2) {
+    return 4;
+  }
+
+  // 3 bits as defined by Tables 7.3.1.1.2-8/9/10/11, if transform precoder is disabled, dmrs-Type=1, and maxLength=1.
+  if (!transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len1) {
+    return 3;
+  }
+
+  // 4 bits as defined by Tables 7.3.1.1.2-12/13/14/15, if transform precoder is disabled, dmrs-Type=1, and
+  // maxLength=2.
+  if (!transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len2) {
+    return 4;
+  }
+
+  // 4 bits as defined by Tables 7.3.1.1.2-16/17/18/19, if transform precoder is disabled, dmrs-Type=2, and
+  // maxLength=1.
+  if (!transform_precoding && dmrs_type == dmrs_config_type::type2 && dmrs_len == dmrs_max_length::len1) {
+    return 4;
+  }
+
+  // 5 bits as defined by Tables 7.3.1.1.2-20/21/22/23, if transform precoder is disabled, dmrs-Type=2, and
+  // maxLength=2.
+  if (!transform_precoding && dmrs_type == dmrs_config_type::type2 && dmrs_len == dmrs_max_length::len2) {
+    return 5;
+  }
+
+  srsran_assertion_failure("Invalid combination of PUSCH DM-RS and transform precoding parameters.");
+  return 0;
+}
+
+// Computes the DL antenna ports field size for a specific DM-RS configuration.
+static unsigned dl_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len)
+{
+  // 4, 5 or 6 bits as defined by Tables 7.3.1.2.2-1/2/3/4.
+  unsigned ports_size = 4;
+  if (dmrs_type == dmrs_config_type::type2) {
+    ++ports_size;
+  }
+  if (dmrs_len == dmrs_max_length::len2) {
+    ++ports_size;
+  }
+  return ports_size;
+}
+
+// Computes the antenna ports field size for DCI format 0_1.
+static units::bits ul_ports_size(optional<dmrs_config_type> dmrs_A_type,
+                                 optional<dmrs_max_length>  dmrs_A_max_len,
+                                 optional<dmrs_config_type> dmrs_B_type,
+                                 optional<dmrs_max_length>  dmrs_B_max_len,
+                                 bool                       transform_precoding_enabled)
+{
+  bool mapping_type_A_configured = dmrs_A_type.has_value() && dmrs_A_max_len.has_value();
+  bool mapping_type_B_configured = dmrs_B_type.has_value() && dmrs_B_max_len.has_value();
+
+  srsran_assert(mapping_type_A_configured || mapping_type_B_configured,
+                "At least one PUSCH DM-RS mapping type must be configured");
+
+  units::bits pusch_dmrs_A_ports_size =
+      mapping_type_A_configured
+          ? units::bits(ul_dmrs_ports_size(dmrs_A_type.value(), dmrs_A_max_len.value(), transform_precoding_enabled))
+          : units::bits(0);
+
+  units::bits pusch_dmrs_B_ports_size =
+      mapping_type_B_configured
+          ? units::bits(ul_dmrs_ports_size(dmrs_B_type.value(), dmrs_B_max_len.value(), transform_precoding_enabled))
+          : units::bits(0);
+
+  return std::max(pusch_dmrs_A_ports_size, pusch_dmrs_B_ports_size);
+}
+
+// Computes the antenna ports field size for DCI format 1_1.
+static units::bits dl_ports_size(optional<dmrs_config_type> dmrs_A_type,
+                                 optional<dmrs_max_length>  dmrs_A_max_len,
+                                 optional<dmrs_config_type> dmrs_B_type,
+                                 optional<dmrs_max_length>  dmrs_B_max_len)
+{
+  bool mapping_type_A_configured = dmrs_A_type.has_value() && dmrs_A_max_len.has_value();
+  bool mapping_type_B_configured = dmrs_B_type.has_value() && dmrs_B_max_len.has_value();
+
+  srsran_assert(mapping_type_A_configured || mapping_type_B_configured,
+                "At least one PDSCH DM-RS mapping type must be configured");
+
+  units::bits pdsch_dmrs_A_ports_size =
+      mapping_type_A_configured ? units::bits(dl_dmrs_ports_size(dmrs_A_type.value(), dmrs_A_max_len.value()))
+                                : units::bits(0);
+
+  units::bits pdsch_dmrs_B_ports_size =
+      mapping_type_B_configured ? units::bits(dl_dmrs_ports_size(dmrs_B_type.value(), dmrs_B_max_len.value()))
+                                : units::bits(0);
+
+  return std::max(pdsch_dmrs_A_ports_size, pdsch_dmrs_B_ports_size);
+}
+
+static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
+{
+  unsigned srs_res_size;
+  if (dci_config.tx_config_non_codebook) {
+    srsran_assert(dci_config.pusch_max_layers.has_value(),
+                  "Maximum number of PUSCH layers is required for non-codebook transmission");
+    srsran_assert(dci_config.nof_srs_resources.has_value(),
+                  "Number of SRS resources is required for non-codebook transmission");
+
+    srsran_assert(dci_config.pusch_max_layers.value() == 1, "Multiple layers on PUSCH are not currently supported");
+
+    // Derived from TS38.212 Table 7.3.1.1.2-28.
+    switch (dci_config.nof_srs_resources.value()) {
+      case 2:
+        srs_res_size = 1;
+        break;
+      case 3:
+      case 4:
+        srs_res_size = 2;
+        break;
+      default:
+        srsran_assertion_failure("Invalid number of SRS resources, i.e., {}", dci_config.nof_srs_resources.value());
+    }
+  } else {
+    // For codebook based transmission, the number of SRS resources is up to 2, therefore, the SRS resource indicator
+    // always occupies 1 bit.
+    srs_res_size = 1;
+  }
+  return srs_res_size;
+}
+
+// Computes the number of information bits before padding for a DCI format 0_1 message.
+static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_config)
+{
+  dci_0_1_size sizes = {};
+
+  // Identifier for DCI formats - 1 bit.
+  ++sizes.total;
+
+  // Carrier indicator - 0 or 3 bits.
+  sizes.carrier_indicator = dci_config.cross_carrier_configured ? units::bits(3) : units::bits(0);
+  sizes.total += sizes.carrier_indicator;
+
+  // UL/SUL indicator - 0 or 1 bit.
+  sizes.ul_sul_indicator = dci_config.sul_configured ? units::bits(1) : units::bits(0);
+  sizes.total += sizes.ul_sul_indicator;
+
+  // BWP indicator - 0, 1 or 2 bits.
+  sizes.bwp_indicator = units::bits(bwp_indicator_size(dci_config.nof_ul_bwp_rrc));
+  sizes.total += sizes.bwp_indicator;
+
+  // Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.1.2.
+  sizes.frequency_resource = units::bits(freq_resource_assignment_size(
+      dci_config.pusch_res_allocation_type, dci_config.nof_ul_rb_groups, dci_config.ul_bwp_active_bw));
+  sizes.total += sizes.frequency_resource;
+
+  // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
+  srsran_assert(dci_config.nof_ul_time_domain_res <= 16,
+                "The number of UL time domain resource allocations, i.e., {} exceeds the maximum expected size of 16",
+                dci_config.nof_ul_time_domain_res);
+  sizes.time_resource = units::bits(log2_ceil(dci_config.nof_ul_time_domain_res));
+  sizes.total += sizes.time_resource;
+
+  // Frequency hopping flag - 0 or 1 bit.
+  sizes.freq_hopping_flag = (dci_config.pusch_res_allocation_type != resource_allocation::resource_allocation_type_0) &&
+                                    dci_config.frequency_hopping_configured
+                                ? units::bits(1)
+                                : units::bits(0);
+  sizes.total += sizes.freq_hopping_flag;
+
+  // Modulation and coding scheme - 5 bits.
+  sizes.total += units::bits(5);
+
+  // New Data indicator - 1 bit.
+  ++sizes.total;
+
+  // Redundancy version - 2 bits.
+  sizes.total += units::bits(2);
+
+  // HARQ process number - 4 bits.
+  sizes.total += units::bits(4);
+
+  // First downlink assignment index - 1 or 2 bits.
+  sizes.first_dl_assignment_idx =
+      (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) ? units::bits(2) : units::bits(1);
+  sizes.total += sizes.first_dl_assignment_idx;
+
+  // Second downlink assignment index - 0 or 2 bits.
+  sizes.second_dl_assignment_idx =
+      (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) && dci_config.dynamic_dual_harq_ack_cb
+          ? units::bits(2)
+          : units::bits(0);
+  sizes.total += sizes.second_dl_assignment_idx;
+
+  // TPC command for scheduled PUSCH - 2 bits.
+  sizes.total += units::bits(2);
+
+  // SRS resource indicator.
+  sizes.srs_resource_indicator = units::bits(srs_resource_indicator_size(dci_config));
+  sizes.total += sizes.srs_resource_indicator;
+
+  // Precoding information and number of layers - 0, 1, 2, 3, 4, 5 or 6 bits.
+  if (!dci_config.tx_config_non_codebook && (dci_config.nof_antenna_ports > 1)) {
+    srsran_assertion_failure("Precoding is not currently supported");
+  }
+
+  // Antenna ports - 2, 3, 4 or 5 bits.
+  sizes.antenna_ports = ul_ports_size(dci_config.pusch_dmrs_A_type,
+                                      dci_config.pusch_dmrs_A_max_len,
+                                      dci_config.pusch_dmrs_B_type,
+                                      dci_config.pusch_dmrs_B_max_len,
+                                      dci_config.transform_precoding_enabled);
+  sizes.total += sizes.antenna_ports;
+
+  // SRS request - 2 or 3 bits.
+  sizes.srs_request = dci_config.sul_configured ? units::bits(3) : units::bits(2);
+  sizes.total += sizes.srs_request;
+
+  // CSI request - 0, 1, 2, 3, 4, 5 or 6 bits.
+  sizes.csi_request = units::bits(dci_config.report_trigger_size);
+  sizes.total += sizes.csi_request;
+
+  // CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
+  if (dci_config.max_cbg_tb_pusch.has_value()) {
+    // Assert with possible values.
+    srsran_assert(std::unordered_set<unsigned>({2, 4, 6, 8}).count(dci_config.max_cbg_tb_pusch.value()),
+                  "Invalid Maximum CBG per PUSCH TB, i.e., {}",
+                  dci_config.max_cbg_tb_pusch.value());
+
+    sizes.cbg_transmission_info = units::bits(dci_config.max_cbg_tb_pusch.value());
+    sizes.total += sizes.cbg_transmission_info;
+  }
+
+  // PT-RS/DM-RS association - 0 or 2 bits.
+  if (dci_config.ptrs_uplink_configured && !dci_config.transform_precoding_enabled && (dci_config.max_rank > 1)) {
+    srsran_assertion_failure("PT-RS/DM-RS association not currently supported");
+  }
+
+  // Beta offset indicator - 0 or 2 bits.
+  sizes.beta_offset_indicator = dci_config.dynamic_beta_offsets ? units::bits(2) : units::bits(0);
+  sizes.total += sizes.beta_offset_indicator;
+
+  // DM-RS sequence initialization - 0 or 1 bit.
+  sizes.dmrs_seq_initialization = dci_config.transform_precoding_enabled ? units::bits(0) : units::bits(1);
+  sizes.total += sizes.dmrs_seq_initialization;
+
+  // UL-SCH indicator - 1 bit.
+  ++sizes.total;
+
+  return sizes;
+}
+
+// Computes the number of information bits before padding for a DCI format 1_1 message.
+static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_config)
+{
+  dci_1_1_size sizes = {};
+
+  // Identifier for DCI formats - 1 bit.
+  ++sizes.total;
+
+  // Carrier indicator - 0 or 3 bits.
+  sizes.carrier_indicator = dci_config.cross_carrier_configured ? units::bits(3) : units::bits(0);
+  sizes.total += sizes.carrier_indicator;
+
+  // BWP indicator - 0, 1 or 2 bits.
+  sizes.bwp_indicator = units::bits(bwp_indicator_size(dci_config.nof_dl_bwp_rrc));
+  sizes.total += sizes.bwp_indicator;
+
+  // Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.2.2.
+  sizes.frequency_resource = units::bits(freq_resource_assignment_size(
+      dci_config.pdsch_res_allocation_type, dci_config.nof_dl_rb_groups, dci_config.dl_bwp_active_bw));
+
+  // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
+  srsran_assert(dci_config.nof_dl_time_domain_res <= 16,
+                "The number of DL time domain resource allocations, i.e., {} exceeds the maximum expected size of 16",
+                dci_config.nof_dl_time_domain_res);
+  sizes.time_resource = units::bits(log2_ceil(dci_config.nof_dl_time_domain_res));
+  sizes.total += sizes.time_resource;
+
+  // VRP-to-PRB mapping - 0 or 1 bit.
+  sizes.vrb_prb_mapping = (dci_config.pdsch_res_allocation_type != resource_allocation::resource_allocation_type_0) &&
+                                  dci_config.interleaved_vrb_prb_mapping
+                              ? units::bits(1)
+                              : units::bits(0);
+  sizes.total += sizes.vrb_prb_mapping;
+
+  // PRB bundling size indicator - 0 or 1 bit.
+  sizes.prb_bundling_size_indicator = dci_config.dynamic_prb_bundling ? units::bits(1) : units::bits(0);
+  sizes.total += sizes.prb_bundling_size_indicator;
+
+  // Rate matching indicator - 0, 1 or 2 bits.
+  unsigned nof_rm_pattern_groups =
+      static_cast<unsigned>(dci_config.rm_pattern_group1) + static_cast<unsigned>(dci_config.rm_pattern_group2);
+  sizes.rate_matching_indicator = units::bits(nof_rm_pattern_groups);
+  sizes.total += sizes.rate_matching_indicator;
+
+  // ZP CSI-RS trigger - 0, 1 or 2 bits.
+  srsran_assert(dci_config.nof_aperiodic_zp_csi <= 3,
+                "Number of aperiodic ZP CSI-RS resource sets, i.e., {}, cannot be larger than 3",
+                dci_config.nof_aperiodic_zp_csi);
+  sizes.zp_csi_rs_trigger = units::bits(log2_ceil(dci_config.nof_aperiodic_zp_csi + 1));
+
+  // Modulation and coding scheme for TB 1 - 5 bits.
+  sizes.total += units::bits(5);
+
+  // New data indicator for TB 1 - 1 bit.
+  ++sizes.total;
+
+  // Redundancy version for TB 1 - 2 bits.
+  sizes.total += units::bits(2);
+
+  if (dci_config.pdsch_two_codewords) {
+    // Modulation and coding scheme for TB 2 - 0 or 5 bits.
+    sizes.tb2_modulation_coding_scheme = units::bits(5);
+    sizes.total += sizes.tb2_modulation_coding_scheme;
+
+    // New data indicator for TB 2 - 0 or 1 bit.
+    sizes.tb2_new_data_indicator = units::bits(1);
+    sizes.total += sizes.tb2_new_data_indicator;
+
+    // Redundancy version for TB 2 - 0 or 2 bits.
+    sizes.tb2_redundancy_version = units::bits(2);
+    sizes.total += sizes.tb2_redundancy_version;
+  }
+
+  // HARQ process number - 4 bits.
+  sizes.total += units::bits(4);
+
+  // Downlink Assignment Index (DAI) - 0, 2 or 4 bits.
+  if (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) {
+    sizes.downlink_assignment_index = dci_config.multiple_scells ? units::bits(4) : units::bits(2);
+    sizes.total += sizes.downlink_assignment_index;
+  }
+
+  // TPC command for scheduled PUCCH - 2 bits.
+  sizes.total += units::bits(2);
+
+  // PUCCH resource indicator - 3 bits as per TS38.213 Section 9.2.3.
+  sizes.total += units::bits(3);
+
+  // PDSCH to HARQ feedback timing indicator - 0, 1, 2 or 3 bits.
+  srsran_assert(dci_config.nof_pdsch_ack_timings <= 8,
+                "Number of PDSCH HARQ-ACK timings, i.e., {}, cannot be larger than 8",
+                dci_config.nof_pdsch_ack_timings);
+  sizes.pdsch_harq_fb_timing_indicator = units::bits(log2_ceil(dci_config.nof_pdsch_ack_timings));
+  sizes.total += sizes.pdsch_harq_fb_timing_indicator;
+
+  // Antenna ports - 4, 5 or 6 bits.
+  sizes.antenna_ports = dl_ports_size(dci_config.pdsch_dmrs_A_type,
+                                      dci_config.pdsch_dmrs_A_max_len,
+                                      dci_config.pdsch_dmrs_B_type,
+                                      dci_config.pdsch_dmrs_B_max_len);
+  sizes.total += sizes.antenna_ports;
+
+  // Transmission configuration indication - 0 or 3 bits.
+  sizes.cbg_transmission_info = dci_config.pdsch_tci ? units::bits(3) : units::bits(0);
+  sizes.total += sizes.cbg_transmission_info;
+
+  // SRS request - 2 or 3 bits.
+  sizes.srs_request = dci_config.sul_configured ? units::bits(3) : units::bits(2);
+  sizes.total += sizes.srs_request;
+
+  // CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
+  if (dci_config.max_cbg_tb_pusch.has_value()) {
+    // Assert with possible values.
+    srsran_assert(std::unordered_set<unsigned>({2, 4, 6, 8}).count(dci_config.max_cbg_tb_pdsch.value()),
+                  "Invalid Maximum CBG per PDSCH TB, i.e., {}",
+                  dci_config.max_cbg_tb_pdsch.value());
+
+    sizes.cbg_transmission_info = units::bits(dci_config.max_cbg_tb_pdsch.value());
+    sizes.total += sizes.cbg_transmission_info;
+  }
+
+  // CBG Flushing Out Information (CBGFI) - 0 or 1 bit.
+  sizes.cbg_flushing_info = dci_config.cbg_flush_indicator ? units::bits(1) : units::bits(0);
+  sizes.total += sizes.cbg_flushing_info;
+
+  // DM-RS sequence initialization - 1 bit.
+  ++sizes.total;
 
   return sizes;
 }
@@ -73,15 +502,15 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
   dci_sizes final_sizes = {};
 
   // Step 0
-  // - Determine DCI format 0_0 monitored in a common search space according to clause 7.3.1.1.1 where N_UL_BWP_RB is
-  // given by the size of the initial UL bandwidth part.
-  dci_0_0_size format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.ul_bwp_initial_bw);
+  // - Determine DCI format 0_0 monitored in a common search space according to TS38.212 Section 7.3.1.1.1 where
+  // N_UL_BWP_RB is given by the size of the initial UL bandwidth part.
+  const dci_0_0_size format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.ul_bwp_initial_bw);
 
-  // - Determine DCI format 1_0 monitored in a common search space according to clause 7.3.1.2.1 where N_DL_BWP_RB given
-  // by:
+  // - Determine DCI format 1_0 monitored in a common search space according to TS38.212 Section 7.3.1.2.1 where
+  // N_DL_BWP_RB given by:
   //   - the size of CORESET 0 if CORESET 0 is configured for the cell
   //   - the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
-  dci_1_0_size format1_0_info_bits_common =
+  const dci_1_0_size format1_0_info_bits_common =
       dci_f1_0_bits_before_padding((config.coreset0_bw != 0) ? config.coreset0_bw : config.dl_bwp_initial_bw);
 
   final_sizes.format0_0_common_size = format0_0_info_bits_common;
@@ -108,57 +537,130 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
   // scheduling the same serving cell, the bitwidth of the frequency domain resource assignment field in the DCI format
   // 0_0 is reduced by truncating the first few most significant bits such that the size of DCI format 0_0 equals the
   // size of the DCI format 1_0.
-  if (format0_0_info_bits_common.total > format1_0_info_bits_common.total) {
+  else if (format0_0_info_bits_common.total > format1_0_info_bits_common.total) {
     units::bits nof_truncated_bits = format0_0_info_bits_common.total - format1_0_info_bits_common.total;
-    final_sizes.format0_0_common_size.freq_resource -= nof_truncated_bits;
+    final_sizes.format0_0_common_size.frequency_resource -= nof_truncated_bits;
     final_sizes.format0_0_common_size.total -= nof_truncated_bits;
   }
 
   srsran_assert(final_sizes.format1_0_common_size.total == final_sizes.format0_0_common_size.total,
-                "DCI format 0_0 and 1_0 payload size must match");
+                "DCI format 0_0 and 1_0 payload sizes must match");
 
   // Step 1
-  // - Determine DCI format 0_0 monitored in a UE-specific search space according to clause 7.3.1.1.1 where N_UL_BWP_RB
-  // is the size of the active UL bandwidth part.
-  dci_0_0_size format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.ul_bwp_active_bw);
+  if (config.dci_0_0_and_1_0_ue_ss) {
+    // - Determine DCI format 0_0 monitored in a UE-specific search space according to TS38.212 Section 7.3.1.1.1 where
+    // N_UL_BWP_RB is the size of the active UL bandwidth part.
+    const dci_0_0_size format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.ul_bwp_active_bw);
 
-  // - Determine DCI format 1_0 monitored in a UE-specific search space according to clause 7.3.1.2.1 where N_DL_BWP_RB
-  // is the size of the active DL bandwidth part.
-  dci_1_0_size format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.dl_bwp_active_bw);
+    // - Determine DCI format 1_0 monitored in a UE-specific search space according to TS38.212 Section 7.3.1.2.1 where
+    // N_DL_BWP_RB is the size of the active DL bandwidth part.
+    const dci_1_0_size format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.dl_bwp_active_bw);
 
-  final_sizes.format0_0_ue_size = format0_0_info_bits_ue;
-  final_sizes.format1_0_ue_size = format1_0_info_bits_ue;
+    // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
+    // transmitted on both the SUL and the non-SUL of the cell and if the number of information bits in DCI format 0_0
+    // in UE-specific search space for the SUL is not equal to the number of information bits in DCI format 0_0 in
+    // UE-specific search space for the non-SUL, a number of zero padding bits are generated for the smaller DCI format
+    // 0_0 until the payload size equals that of the larger DCI format 0_0.
 
-  // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
-  // transmitted on both the SUL and the non-SUL of the cell and if the number of information bits in DCI format 0_0 in
-  // UE-specific search space for the SUL is not equal to the number of information bits in DCI format 0_0 in
-  // UE-specific search space for the non-SUL, a number of zero padding bits are generated for the smaller DCI format
-  // 0_0 until the payload size equals that of the larger DCI format 0_0.
+    // Not implemented.
 
-  // Not implemented.
+    final_sizes.format0_0_ue_size = format0_0_info_bits_ue;
+    final_sizes.format1_0_ue_size = format1_0_info_bits_ue;
 
-  // - If DCI format 0_0 is monitored in UE-specific search space and if the number of information bits in the DCI
-  // format 0_0 prior to padding is less than the payload size of the DCI format 1_0 monitored in UE-specific search
-  // space for scheduling the same serving cell, a number of zero padding bits are generated for the DCI format 0_0
-  // until the payload size equals that of the DCI format 1_0.
-  if (format0_0_info_bits_ue.total < format1_0_info_bits_ue.total) {
-    units::bits nof_padding_bits_incl_ul_sul          = format1_0_info_bits_ue.total - format0_0_info_bits_ue.total;
-    final_sizes.format0_0_ue_size.padding_incl_ul_sul = nof_padding_bits_incl_ul_sul;
-    final_sizes.format0_0_ue_size.total += nof_padding_bits_incl_ul_sul;
+    // - If DCI format 0_0 is monitored in UE-specific search space and if the number of information bits in the DCI
+    // format 0_0 prior to padding is less than the payload size of the DCI format 1_0 monitored in UE-specific search
+    // space for scheduling the same serving cell, a number of zero padding bits are generated for the DCI format 0_0
+    // until the payload size equals that of the DCI format 1_0.
+    if (format0_0_info_bits_ue.total < format1_0_info_bits_ue.total) {
+      units::bits nof_padding_bits_incl_ul_sul = format1_0_info_bits_ue.total - format0_0_info_bits_ue.total;
+      final_sizes.format0_0_ue_size.value().padding_incl_ul_sul = nof_padding_bits_incl_ul_sul;
+      final_sizes.format0_0_ue_size.value().total += nof_padding_bits_incl_ul_sul;
+    }
+
+    // - If DCI format 1_0 is monitored in UE-specific search space and if the number of information bits in the DCI
+    // format 1_0 prior to padding is less than the payload size of the DCI format 0_0 monitored in UE-specific search
+    // space for scheduling the same serving cell, zeros shall be appended to the DCI format 1_0 until the payload size
+    // equals that of the DCI format 0_0
+    else if (format1_0_info_bits_ue.total < format0_0_info_bits_ue.total) {
+      units::bits nof_padding_bits                  = format0_0_info_bits_ue.total - format1_0_info_bits_ue.total;
+      final_sizes.format1_0_ue_size.value().padding = nof_padding_bits;
+      final_sizes.format1_0_ue_size.value().total += final_sizes.format1_0_ue_size.value().padding;
+    }
+
+    srsran_assert(final_sizes.format1_0_ue_size.value().total == final_sizes.format0_0_ue_size.value().total,
+                  "DCI format 0_0 and 1_0 payload sizes must match");
   }
 
-  // - If DCI format 1_0 is monitored in UE-specific search space and if the number of information bits in the DCI
-  // format 1_0 prior to padding is less than the payload size of the DCI format 0_0 monitored in UE-specific search
-  // space for scheduling the same serving cell, zeros shall be appended to the DCI format 1_0 until the payload size
-  // equals that of the DCI format 0_0
-  if (format1_0_info_bits_ue.total < format0_0_info_bits_ue.total) {
-    units::bits nof_padding_bits          = format0_0_info_bits_ue.total - format1_0_info_bits_ue.total;
-    final_sizes.format1_0_ue_size.padding = nof_padding_bits;
-    final_sizes.format1_0_ue_size.total += final_sizes.format1_0_ue_size.padding;
+  // Step 2.
+  if (config.dci_0_1_and_1_1_ue_ss) {
+    // Determine the size of DCI format 0_1 according to TS38.212 Section 7.3.1.1.2.
+    dci_0_1_size format0_1_ue_size = dci_f0_1_bits_before_padding(config);
+
+    // Determine the size of DCI format 1_1 according to TS38.212 Section 7.3.1.2.2.
+    dci_1_1_size format1_1_ue_size = dci_f1_1_bits_before_padding(config);
+
+    // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
+    // transmitted on both the SUL and the non-SUL of the cell and if the number of information bits in format 0_1 for
+    // the SUL is not equal to the number of information bits in format 0_1 for the non-SUL, zeros shall be appended to
+    // smaller format 0_1 until the payload size equals that of the larger format 0_1.
+
+    // Not implemented.
+
+    // - If the size of DCI format 0_1 monitored in a UE-specific search space equals that of a DCI format 0_0/1_0
+    // monitored in another UE-specific search space, one bit of zero padding shall be appended to DCI format 0_1.
+    if (config.dci_0_0_and_1_0_ue_ss && (format0_1_ue_size.total == final_sizes.format0_0_ue_size.value().total)) {
+      format0_1_ue_size.padding = units::bits(1);
+      format0_1_ue_size.total += format0_1_ue_size.padding;
+    }
+
+    // - If the size of DCI format 1_1 monitored in a UE-specific search space equals that of a DCI format 0_0/1_0
+    // monitored in another UE-specific search space, one bit of zero padding shall be appended to DCI format 1_1.
+    if (config.dci_0_0_and_1_0_ue_ss && (format1_1_ue_size.total == final_sizes.format1_0_ue_size.value().total)) {
+      format1_1_ue_size.padding = units::bits(1);
+      format1_1_ue_size.total += format1_1_ue_size.padding;
+    }
+
+    final_sizes.format0_1_ue_size = format0_1_ue_size;
+    final_sizes.format1_1_ue_size = format1_1_ue_size;
   }
 
-  srsran_assert(final_sizes.format1_0_ue_size.total == final_sizes.format0_0_ue_size.total,
-                "DCI format 0_0 and 1_0 final_sizes must match");
+  // Step 3.
+
+  // If both of the following conditions are fulfilled the size alignment procedure is complete.
+  // - The total number of different DCI sizes configured to monitor is no more than 4 for the cell.
+  // - The total number of different DCI sizes with C-RNTI configured to monitor is no more than 3 for the cell.
+
+  // Maximum number of DCI payload sizes given the current implementation.
+  constexpr unsigned max_nof_c_rnti_sizes = 4;
+
+  std::unordered_set<unsigned> unique_dci_sizes(max_nof_c_rnti_sizes);
+
+  // Fallback DCI formats monitored in Common Search Space are always included.
+  unique_dci_sizes.insert(final_sizes.format0_0_common_size.total.value());
+
+  // Fallback DCI formats monitored in UE-specific Search Space. Count if they are included in the DCI size alignment
+  // procedure and the resulting payload size is different from the fallback DCI formats monitored in a CSS.
+  if (config.dci_0_0_and_1_0_ue_ss) {
+    unique_dci_sizes.insert(final_sizes.format0_0_ue_size.value().total.value());
+  }
+
+  // Non-fallback DCI formats monitored in UE-specific Search Space.
+  if (config.dci_0_1_and_1_1_ue_ss) {
+    unique_dci_sizes.insert(final_sizes.format0_1_ue_size.value().total.value());
+    unique_dci_sizes.insert(final_sizes.format1_1_ue_size.value().total.value());
+  }
+
+  // Get the actual number of distinct DCI payload sizes. No special DCI formats are implemented, so the most
+  // restrictive condition is no more than 3 DCI sizes scrambled by C-RNTI.
+  unsigned nof_c_rnti_dci_sizes = unique_dci_sizes.size();
+
+  // Step 4.
+  // If the above conditions are not met, set the size of the fallback DCI formats in USS to the size of the fallback
+  // DCI formats monitored in a CSS.
+  if (nof_c_rnti_dci_sizes > 3) {
+    final_sizes.format0_0_ue_size = final_sizes.format0_0_common_size;
+    final_sizes.format1_0_ue_size = final_sizes.format1_0_common_size;
+  }
 
   return final_sizes;
 }
@@ -168,7 +670,7 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
 
   dci_payload payload;
-  units::bits frequency_resource_nof_bits = config.payload_size.freq_resource;
+  units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
 
   // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
   payload.push_back(0x00U, 1);
@@ -248,7 +750,7 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
 {
   srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
 
-  units::bits frequency_resource_nof_bits = config.payload_size.freq_resource;
+  units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
   dci_payload payload;
 
   // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
@@ -331,7 +833,7 @@ dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   payload.push_back(0x01U, 1);
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
-  payload.push_back(config.frequency_resource, config.payload_size.freq_resource.value());
+  payload.push_back(config.frequency_resource, config.payload_size.frequency_resource.value());
 
   // Time domain resource assignment - 4 bit.
   payload.push_back(config.time_resource, 4);
