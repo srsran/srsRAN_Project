@@ -85,6 +85,8 @@ private:
   /// Note: I use uint8_t to avoid vector<bool> special case.
   std::vector<uint8_t> dl_enabled_slot_lst;
   std::vector<uint8_t> ul_enabled_slot_lst;
+  std::vector<uint8_t> dl_symbols_per_slot_lst;
+  std::vector<uint8_t> ul_symbols_per_slot_lst;
 };
 
 } // namespace srsran
