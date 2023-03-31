@@ -42,6 +42,10 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
     const unsigned tdd_period_slots = nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common);
     dl_enabled_slot_lst.resize(tdd_period_slots);
     ul_enabled_slot_lst.resize(tdd_period_slots);
+    fully_dl_enabled_slot_lst.resize(tdd_period_slots);
+    fully_ul_enabled_slot_lst.resize(tdd_period_slots);
+    dl_symbols_per_slot_lst.resize(tdd_period_slots);
+    ul_symbols_per_slot_lst.resize(tdd_period_slots);
     for (unsigned slot_period_idx = 0; slot_period_idx < dl_enabled_slot_lst.size(); ++slot_period_idx) {
       dl_enabled_slot_lst[slot_period_idx]     = has_active_tdd_dl_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
       ul_enabled_slot_lst[slot_period_idx]     = has_active_tdd_ul_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
@@ -49,6 +53,16 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
           *msg.tdd_ul_dl_cfg_common, slot_period_idx, dl_cfg_common.init_dl_bwp.generic_params.cp_extended, true);
       ul_symbols_per_slot_lst[slot_period_idx] = nof_active_symbols(
           *msg.tdd_ul_dl_cfg_common, slot_period_idx, ul_cfg_common.init_ul_bwp.generic_params.cp_extended, false);
+      fully_dl_enabled_slot_lst[slot_period_idx] =
+          dl_enabled_slot_lst[slot_period_idx] > 0 and
+          dl_symbols_per_slot_lst[slot_period_idx] == (dl_cfg_common.init_dl_bwp.generic_params.cp_extended
+                                                           ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                           : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+      fully_ul_enabled_slot_lst[slot_period_idx] =
+          ul_enabled_slot_lst[slot_period_idx] > 0 and
+          ul_symbols_per_slot_lst[slot_period_idx] == (ul_cfg_common.init_ul_bwp.generic_params.cp_extended
+                                                           ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                           : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     }
   }
 }

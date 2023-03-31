@@ -34,7 +34,7 @@ void pucch_guardbands_scheduler::run_slot(cell_resource_allocator& res_alloc)
     for (unsigned sl = 0; sl < res_alloc.RING_ALLOCATOR_SIZE; ++sl) {
       // Do not schedule PUCCH guardbands on DL slots.
       slot_point grid_sl_point{res_alloc[sl].slot};
-      if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
+      if (not cell_cfg.is_fully_ul_enabled(grid_sl_point)) {
         continue;
       }
       allocate_pucch_guardbands(res_alloc[sl]);
@@ -45,7 +45,7 @@ void pucch_guardbands_scheduler::run_slot(cell_resource_allocator& res_alloc)
   else {
     // Do not schedule PUCCH guardbands on DL slots.
     slot_point grid_sl_point{res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1].slot};
-    if (not cell_cfg.is_ul_enabled(grid_sl_point)) {
+    if (not cell_cfg.is_fully_ul_enabled(grid_sl_point)) {
       return;
     }
     allocate_pucch_guardbands(res_alloc[res_alloc.RING_ALLOCATOR_SIZE - 1]);

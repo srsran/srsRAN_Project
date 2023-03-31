@@ -32,7 +32,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
     // Check if the slot is UL enabled.
-    if (not cell_cfg.is_ul_enabled(sl_tx)) {
+    if (not cell_cfg.is_fully_ul_enabled(sl_tx)) {
       return;
     }
 

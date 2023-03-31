@@ -153,7 +153,7 @@ protected:
 
   void run_slot_until_next_rach_opportunity()
   {
-    while (not cell_cfg.is_ul_enabled(this->next_slot_rx() - 1)) {
+    while (not cell_cfg.is_fully_ul_enabled(this->next_slot_rx() - 1)) {
       run_slot();
     }
   }
@@ -299,21 +299,21 @@ protected:
     }
     slot_point pdcch_slot = res_grid[0].slot;
 
-    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
       return false;
     }
     const auto& pdsch_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
-          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
+          return cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0);
         })) {
       // slot for PDSCH is not DL slot.
       return false;
     }
     const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return cell_cfg.is_ul_enabled(pdcch_slot +
-                                        get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+          return cell_cfg.is_fully_ul_enabled(
+              pdcch_slot + get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
         })) {
       // slot for Msg3 PUSCH is not UL slot.
       return false;
@@ -329,14 +329,14 @@ protected:
     }
     slot_point pdcch_slot = res_grid[0].slot;
 
-    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
       return false;
     }
 
     const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return cell_cfg.is_ul_enabled(pdcch_slot + pusch.k2);
+          return cell_cfg.is_fully_ul_enabled(pdcch_slot + pusch.k2);
         })) {
       // slot for Msg3 reTx PUSCH is not UL slot.
       return false;
@@ -378,7 +378,7 @@ protected:
   {
     slot_point rar_win_start;
     for (unsigned i = 1; i != rach_slot_rx.nof_slots_per_frame(); ++i) {
-      if (cell_cfg.is_dl_enabled(rach_slot_rx + i)) {
+      if (cell_cfg.is_fully_dl_enabled(rach_slot_rx + i)) {
         rar_win_start = rach_slot_rx + i;
         break;
       }

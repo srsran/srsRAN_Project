@@ -55,6 +55,31 @@ public:
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// Checks if DL/UL is active for current slot
+  bool is_fully_dl_enabled(slot_point sl) const
+  {
+    if (dl_enabled_slot_lst.empty()) {
+      // Note: dl_enabled_slot_lst is empty in the FDD case.
+      return true;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return fully_dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()];
+  }
+  bool is_fully_ul_enabled(slot_point sl) const
+  {
+    if (ul_enabled_slot_lst.empty()) {
+      // Note: ul_enabled_slot_lst is empty in the FDD case.
+      return true;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return fully_ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()];
+  }
+
   bool is_dl_enabled(slot_point sl) const
   {
     if (dl_enabled_slot_lst.empty()) {
@@ -83,10 +108,12 @@ public:
 private:
   /// Vector circularly indexed by slot that indicates whether a slot has DL/UL enabled.
   /// Note: I use uint8_t to avoid vector<bool> special case.
-  std::vector<uint8_t> dl_enabled_slot_lst;
-  std::vector<uint8_t> ul_enabled_slot_lst;
-  std::vector<uint8_t> dl_symbols_per_slot_lst;
-  std::vector<uint8_t> ul_symbols_per_slot_lst;
+  std::vector<uint8_t>  dl_enabled_slot_lst;
+  std::vector<uint8_t>  ul_enabled_slot_lst;
+  std::vector<uint8_t>  fully_dl_enabled_slot_lst;
+  std::vector<uint8_t>  fully_ul_enabled_slot_lst;
+  std::vector<unsigned> dl_symbols_per_slot_lst;
+  std::vector<unsigned> ul_symbols_per_slot_lst;
 };
 
 } // namespace srsran

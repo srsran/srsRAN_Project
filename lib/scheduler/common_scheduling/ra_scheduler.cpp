@@ -193,7 +193,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
       unsigned period = nof_slots_per_tdd_period(*cell_cfg.tdd_cfg_common);
       for (unsigned sl_idx = 0; sl_idx < period; ++sl_idx) {
         slot_point sl_start = rar_req->prach_slot_rx + prach_duration + sl_idx;
-        if (cell_cfg.is_dl_enabled(sl_start)) {
+        if (cell_cfg.is_fully_dl_enabled(sl_start)) {
           rar_req->rar_window = {sl_start, sl_start + ra_win_nof_slots};
           break;
         }
@@ -295,7 +295,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 
   // Ensure slot for RAR PDCCH+PDSCH has DL enabled.
-  if (not cell_cfg.is_dl_enabled(pdcch_slot) or not cell_cfg.is_dl_enabled(pdsch_slot)) {
+  if (not cell_cfg.is_fully_dl_enabled(pdcch_slot) or not cell_cfg.is_fully_dl_enabled(pdsch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH and PDSCH are available.
     return;
   }
@@ -319,7 +319,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   for (const auto& pusch_td_alloc :
        get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common)) {
     unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs);
-    if (cell_cfg.is_ul_enabled(pdcch_slot + msg3_delay)) {
+    if (cell_cfg.is_fully_ul_enabled(pdcch_slot + msg3_delay)) {
       pusch_slots_available = true;
       break;
     }
@@ -423,7 +423,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     // >> Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.
     unsigned                      msg3_delay = get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs);
     cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
-    if (not cell_cfg.is_ul_enabled(msg3_alloc.slot)) {
+    if (not cell_cfg.is_fully_ul_enabled(msg3_alloc.slot)) {
       continue;
     }
 
@@ -572,7 +572,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
       get_pusch_time_domain_resource_table(*cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common);
   const bwp_configuration& bwp_ul_cmn = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+  if (not cell_cfg.is_fully_dl_enabled(pdcch_alloc.slot)) {
     // Not possible to schedule Msg3s in this TDD slot.
     return;
   }
@@ -587,7 +587,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     const unsigned                k2          = get_pusch_cfg().pusch_td_alloc_list[pusch_td_res_index].k2;
     cell_slot_resource_allocator& pusch_alloc = res_alloc[k2];
 
-    if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
+    if (not cell_cfg.is_fully_ul_enabled(pusch_alloc.slot)) {
       // Not possible to schedule Msg3s in this TDD slot.
       continue;
     }

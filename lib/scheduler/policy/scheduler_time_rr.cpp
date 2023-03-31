@@ -100,7 +100,7 @@ static bool alloc_dl_ue(const ue&                    u,
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
-    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
+    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_fully_dl_enabled(pdcch_slot)) {
       // DL needs to be active for PDCCH in this slot.
       continue;
     }
@@ -143,7 +143,7 @@ static bool alloc_dl_ue(const ue&                    u,
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
         const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
-        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot + pdsch.k0)) {
+        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_fully_dl_enabled(pdcch_slot + pdsch.k0)) {
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
@@ -208,7 +208,7 @@ static bool alloc_ul_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell&            ue_cc           = u.get_cell(to_ue_cell_index(i));
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
-    if (not cell_cfg_common.is_dl_enabled(res_grid.get_pdcch_slot())) {
+    if (not cell_cfg_common.is_fully_dl_enabled(res_grid.get_pdcch_slot())) {
       // DL needs to be active for PDCCH in this slot.
       continue;
     }
@@ -232,7 +232,7 @@ static bool alloc_ul_ue(const ue&                    u,
       // Search minimum k2 that corresponds to a UL slot.
       unsigned time_res = 0;
       for (; time_res != pusch_list.size(); ++time_res) {
-        if (cell_cfg_common.is_ul_enabled(pdcch_slot + pusch_list[time_res].k2)) {
+        if (cell_cfg_common.is_fully_ul_enabled(pdcch_slot + pusch_list[time_res].k2)) {
           // UL needs to be active for PUSCH in this slot.
           break;
         }

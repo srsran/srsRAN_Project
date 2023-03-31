@@ -111,7 +111,7 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
 {
   // If any of the slots over which the PRACH preamble should be allocated isn't an UL slot, return.
   for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
-    if (not cell_cfg.is_ul_enabled(sl + sl_idx)) {
+    if (not cell_cfg.is_fully_ul_enabled(sl + sl_idx)) {
       return;
     }
   }
