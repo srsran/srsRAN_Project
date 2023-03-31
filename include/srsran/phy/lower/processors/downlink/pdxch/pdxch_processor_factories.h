@@ -49,10 +49,10 @@ public:
 /// \brief Creates a software based PDxCH processor factory.
 ///
 /// \param[in] request_queue_size Number of PDxCH processing requests that can be enqueued.
-/// \param[in] ofdm_mod_factory OFDM modulator factory.
+/// \param[in] ofdm_mod_factory   OFDM modulator factory.
 /// \return A PDxCH processor factory.
 std::shared_ptr<pdxch_processor_factory>
 create_pdxch_processor_factory_sw(unsigned                                request_queue_size,
-                                  std::shared_ptr<ofdm_modulator_factory> ofdm_demod_factory);
+                                  std::shared_ptr<ofdm_modulator_factory> ofdm_mod_factory);
 
 } // namespace srsran

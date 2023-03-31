@@ -6,9 +6,7 @@
 # the distribution.
 #
 
-add_subdirectory(pdxch)
-
-add_library(srsran_lower_phy_downlink_processor STATIC
-        downlink_processor_baseband_impl.cpp
-        downlink_processor_factories.cpp
-        downlink_processor_impl.cpp)
+add_library(srsran_lower_phy_pdxch_processor STATIC
+        pdxch_processor_factories.cpp
+        pdxch_processor_impl.cpp)
+target_link_libraries(srsran_lower_phy_pdxch_processor srsran_lower_phy_modulation)
