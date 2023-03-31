@@ -263,7 +263,7 @@ public:
   /// The constructed bitset size is equal to \c values size. The values in the list are mapped one to one.
   ///
   /// \param[in] values Boolean initializer list.
-  constexpr bounded_bitset(std::initializer_list<const bool> values)
+  constexpr bounded_bitset(const std::initializer_list<const bool>& values)
   {
     resize(values.size());
     std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable {
