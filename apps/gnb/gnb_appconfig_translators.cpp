@@ -370,6 +370,11 @@ static std::vector<std::string> extract_zmq_ports(const std::string& driver_args
   return ports;
 }
 
+static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset_Hz, double calibration_ppm)
+{
+  return (center_freq_Hz + freq_offset_Hz) * (1.0 + calibration_ppm * 1e-6);
+}
+
 radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&                  config,
                                                          const radio_configuration::validator& validator)
 {
@@ -398,15 +403,29 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
     double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
     double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn));
 
+    // Correct actual RF center frequencies considering offset and PPM calibration.
+    double center_tx_freq_cal_Hz = calibrate_center_freq_Hz(
+        cell_tx_freq_Hz, config.rf_driver_cfg.center_freq_offset_Hz, config.rf_driver_cfg.calibrate_clock_ppm);
+    double center_rx_freq_cal_Hz = calibrate_center_freq_Hz(
+        cell_rx_freq_Hz, config.rf_driver_cfg.center_freq_offset_Hz, config.rf_driver_cfg.calibrate_clock_ppm);
+
+    // Calculate actual LO frequencies considering LO frequency offset and the frequency correction.
+    double lo_tx_freq_cal_Hz = calibrate_center_freq_Hz(cell_tx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6,
+                                                        config.rf_driver_cfg.center_freq_offset_Hz,
+                                                        config.rf_driver_cfg.calibrate_clock_ppm);
+    double lo_rx_freq_cal_Hz = calibrate_center_freq_Hz(cell_rx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6,
+                                                        config.rf_driver_cfg.center_freq_offset_Hz,
+                                                        config.rf_driver_cfg.calibrate_clock_ppm);
+
     // For each port in the cell...
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
-      tx_ch_config.freq.center_frequency_hz     = cell_tx_freq_Hz + config.rf_driver_cfg.center_freq_offset_Hz;
+      tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
       if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
-        tx_ch_config.freq.lo_frequency_hz = cell_tx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
+        tx_ch_config.freq.lo_frequency_hz = lo_tx_freq_cal_Hz;
       } else {
-        tx_ch_config.freq.lo_frequency_hz = 0.0f;
+        tx_ch_config.freq.lo_frequency_hz = 0.0;
       }
       tx_ch_config.gain_dB = config.rf_driver_cfg.tx_gain_dB;
 
@@ -421,11 +440,11 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config = {};
-      rx_ch_config.freq.center_frequency_hz     = cell_rx_freq_Hz + config.rf_driver_cfg.center_freq_offset_Hz;
+      rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
       if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
-        rx_ch_config.freq.lo_frequency_hz = cell_rx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
+        rx_ch_config.freq.lo_frequency_hz = lo_rx_freq_cal_Hz;
       } else {
-        rx_ch_config.freq.lo_frequency_hz = 0.0f;
+        rx_ch_config.freq.lo_frequency_hz = 0.0;
       }
       rx_ch_config.gain_dB = config.rf_driver_cfg.rx_gain_dB;
 
