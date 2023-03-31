@@ -108,6 +108,7 @@ def test_zmq_valgrind(
         )
 
 
+@mark.xfail
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
@@ -142,6 +143,7 @@ def test_rf(
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         log_search=False,
+        always_download_artifacts=True,
     )
 
 

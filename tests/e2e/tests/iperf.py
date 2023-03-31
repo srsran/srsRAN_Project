@@ -151,7 +151,7 @@ def test_rf_udp(
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         log_search=False,
-        always_download_artifacts=False,
+        always_download_artifacts=True,
     )
 
 

@@ -119,7 +119,7 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     LOG_LEVEL: "warning"
   allow_failure: true
-  
+
 rf:
   extends: .e2e-run
   rules:
@@ -131,6 +131,7 @@ rf:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf"
     LOG_LEVEL: "warning"
+    RETINA_ARGS: gnb.all.pcap=False
   needs:
     - job: "avx2 [basic]"
       artifacts: true
@@ -151,7 +152,6 @@ rf-tsan:
     - job: "avx2 [tsan, clean]"
       artifacts: true
       optional: true
-  allow_failure: true
 
 rf-asan:
   extends: rf
