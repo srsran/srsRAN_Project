@@ -41,11 +41,9 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   init_msg->gnb_du_ue_f1ap_id->value               = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
   init_msg->nr_cgi.value                           = nr_cgi;
   init_msg->c_rnti->value                          = ue_ctxt.rnti;
-  init_msg->rrc_container.value.resize(sdu.length());
-  std::copy(sdu.begin(), sdu.end(), init_msg->rrc_container->begin());
-  init_msg->du_to_cu_rrc_container_present = true;
-  init_msg->du_to_cu_rrc_container->resize(du_cu_rrc_container.length());
-  std::copy(du_cu_rrc_container.begin(), du_cu_rrc_container.end(), init_msg->du_to_cu_rrc_container->begin());
+  init_msg->rrc_container.value.append(sdu.begin(), sdu.end());
+  init_msg->du_to_cu_rrc_container_present           = true;
+  init_msg->du_to_cu_rrc_container.value             = std::move(du_cu_rrc_container);
   init_msg->sul_access_ind_present                   = false;
   init_msg->transaction_id->value                    = transaction.id();
   init_msg->ran_ue_id_present                        = false;
@@ -94,8 +92,7 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   ul_msg->gnb_du_ue_f1ap_id->value          = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
   ul_msg->gnb_cu_ue_f1ap_id->value          = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
   ul_msg->srb_id->value                     = srb_id_to_uint(srb_id);
-  ul_msg->rrc_container->resize(sdu.length());
-  std::copy(sdu.begin(), sdu.end(), ul_msg->rrc_container->begin());
+  ul_msg->rrc_container->append(sdu.begin(), sdu.end());
   ul_msg->sel_plmn_id_present           = false;
   ul_msg->new_gnb_du_ue_f1ap_id_present = false;
 
