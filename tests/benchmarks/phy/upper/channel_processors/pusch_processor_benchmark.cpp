@@ -141,12 +141,12 @@ static const std::vector<test_profile> profile_set = {
      {106},
      {{modulation_scheme::QAM16, 658.0F}}},
 
-    {"pusch_scs15_20MHz_64qam_high",
-     "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
+    {"pusch_scs15_50MHz_64qam_max",
+     "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
      subcarrier_spacing::kHz15,
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
-     {106},
+     {270},
      {{modulation_scheme::QAM64, 873.0F}}},
 
     {"pusch_scs15_20MHz_256qam_max",
