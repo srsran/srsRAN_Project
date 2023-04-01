@@ -22,7 +22,6 @@ e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_noti
 
 void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_)
 {
-  using namespace asn1::e2ap;
   logger.info("E2AP: Received subscription request");
   sub_notif.handle_subscription(request_);
 

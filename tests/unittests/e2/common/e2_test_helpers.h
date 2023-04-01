@@ -117,9 +117,9 @@ public:
       msg.request_id = last_subscription->ri_crequest_id.value;
 
       logger.info("Sending subscription result for Request instance ID {}", msg.request_id.ric_instance_id);
-      int action_list_size = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size();
+      unsigned action_list_size = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size();
       msg.admitted_list.resize(action_list_size);
-      for (int i = 0; i < action_list_size; i++) {
+      for (unsigned i = 0; i < action_list_size; i++) {
         auto& item = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list[i]
                          .value()
                          .ri_caction_to_be_setup_item();
