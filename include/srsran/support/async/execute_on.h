@@ -26,9 +26,13 @@ auto execute_on(TaskExecutor& exec)
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      success = exec.execute([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
-      if (not success) {
+      bool res = exec.execute([this, suspending_awaitable]() mutable {
+        success = true;
+        suspending_awaitable.resume();
+      });
+      if (not res) {
         // Failed to dispatch task. Resume it from current thread, but with "success == false".
+        success = false;
         suspending_awaitable.resume();
       }
     }
@@ -39,7 +43,7 @@ auto execute_on(TaskExecutor& exec)
 
   private:
     TaskExecutor& exec;
-    bool          success = false;
+    bool          success;
   };
 
   return task_executor_awaiter{exec};
@@ -56,9 +60,13 @@ auto defer_to(TaskExecutor& exec)
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      success = exec.defer([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
-      if (not success) {
+      bool res = exec.defer([this, suspending_awaitable]() mutable {
+        success = true;
+        suspending_awaitable.resume();
+      });
+      if (not res) {
         // Failed to dispatch task. Resume it from current thread, but with "success == false".
+        success = false;
         suspending_awaitable.resume();
       }
     }
@@ -69,7 +77,7 @@ auto defer_to(TaskExecutor& exec)
 
   private:
     TaskExecutor& exec;
-    bool          success = false;
+    bool          success;
   };
 
   return task_executor_awaiter{exec};
