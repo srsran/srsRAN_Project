@@ -804,6 +804,18 @@ TEST(byte_buffer, reserve_prepend)
   TESTASSERT(view2 == big_vec);
 }
 
+TEST(byte_buffer_test, resize_and_copy)
+{
+  std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(4096);
+  byte_buffer          pdu;
+
+  pdu.resize(bytes.size());
+  std::copy(bytes.begin(), bytes.end(), pdu.begin());
+
+  ASSERT_EQ(pdu.length(), bytes.size());
+  ASSERT_EQ(pdu, bytes);
+}
+
 TEST(byte_buffer_chain, all)
 {
   byte_buffer pdu;

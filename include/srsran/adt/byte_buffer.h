@@ -488,7 +488,7 @@ public:
 private:
   bool append_segment()
   {
-    if (empty()) {
+    if (ctrl_blk_ptr == nullptr) {
       ctrl_blk_ptr = std::make_shared<control_block>();
       // For first segment of byte_buffer, add a headroom.
       std::unique_ptr<byte_buffer_segment> p{new (std::nothrow)
@@ -519,7 +519,7 @@ private:
       warn_alloc_failure();
       return false;
     }
-    if (empty()) {
+    if (ctrl_blk_ptr == nullptr) {
       ctrl_blk_ptr       = std::make_shared<control_block>();
       ctrl_blk_ptr->tail = p.get();
       ctrl_blk_ptr->head = std::move(p);
