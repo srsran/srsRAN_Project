@@ -863,140 +863,140 @@ void global_ng_enb_id_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-// GlobalRANNodeID ::= CHOICE
-void global_ran_node_id_c::destroy_()
+// GlobalNGRANNodeID ::= CHOICE
+void global_ngran_node_id_c::destroy_()
 {
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       c.destroy<global_gnb_id_s>();
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       c.destroy<global_ng_enb_id_s>();
       break;
     default:
       break;
   }
 }
-void global_ran_node_id_c::set(types::options e)
+void global_ngran_node_id_c::set(types::options e)
 {
   destroy_();
   type_ = e;
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       c.init<global_gnb_id_s>();
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       c.init<global_ng_enb_id_s>();
       break;
     case types::nulltype:
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
   }
 }
-global_ran_node_id_c::global_ran_node_id_c(const global_ran_node_id_c& other)
+global_ngran_node_id_c::global_ngran_node_id_c(const global_ngran_node_id_c& other)
 {
   type_ = other.type();
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       c.init(other.c.get<global_gnb_id_s>());
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       c.init(other.c.get<global_ng_enb_id_s>());
       break;
     case types::nulltype:
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
   }
 }
-global_ran_node_id_c& global_ran_node_id_c::operator=(const global_ran_node_id_c& other)
+global_ngran_node_id_c& global_ngran_node_id_c::operator=(const global_ngran_node_id_c& other)
 {
   if (this == &other) {
     return *this;
   }
   set(other.type());
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       c.set(other.c.get<global_gnb_id_s>());
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       c.set(other.c.get<global_ng_enb_id_s>());
       break;
     case types::nulltype:
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
   }
 
   return *this;
 }
-global_gnb_id_s& global_ran_node_id_c::set_global_gnb_id()
+global_gnb_id_s& global_ngran_node_id_c::set_gnb()
 {
-  set(types::global_gnb_id);
+  set(types::gnb);
   return c.get<global_gnb_id_s>();
 }
-global_ng_enb_id_s& global_ran_node_id_c::set_global_ng_enb_id()
+global_ng_enb_id_s& global_ngran_node_id_c::set_ng_enb()
 {
-  set(types::global_ng_enb_id);
+  set(types::ng_enb);
   return c.get<global_ng_enb_id_s>();
 }
-void global_ran_node_id_c::to_json(json_writer& j) const
+void global_ngran_node_id_c::to_json(json_writer& j) const
 {
   j.start_obj();
   switch (type_) {
-    case types::global_gnb_id:
-      j.write_fieldname("globalGNB-ID");
+    case types::gnb:
+      j.write_fieldname("gNB");
       c.get<global_gnb_id_s>().to_json(j);
       break;
-    case types::global_ng_enb_id:
-      j.write_fieldname("globalNgENB-ID");
+    case types::ng_enb:
+      j.write_fieldname("ng-eNB");
       c.get<global_ng_enb_id_s>().to_json(j);
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
   }
   j.end_obj();
 }
-SRSASN_CODE global_ran_node_id_c::pack(bit_ref& bref) const
+SRSASN_CODE global_ngran_node_id_c::pack(bit_ref& bref) const
 {
   type_.pack(bref);
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       HANDLE_CODE(c.get<global_gnb_id_s>().pack(bref));
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       HANDLE_CODE(c.get<global_ng_enb_id_s>().pack(bref));
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
       return SRSASN_ERROR_ENCODE_FAIL;
   }
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE global_ran_node_id_c::unpack(cbit_ref& bref)
+SRSASN_CODE global_ngran_node_id_c::unpack(cbit_ref& bref)
 {
   types e;
   e.unpack(bref);
   set(e);
   switch (type_) {
-    case types::global_gnb_id:
+    case types::gnb:
       HANDLE_CODE(c.get<global_gnb_id_s>().unpack(bref));
       break;
-    case types::global_ng_enb_id:
+    case types::ng_enb:
       HANDLE_CODE(c.get<global_ng_enb_id_s>().unpack(bref));
       break;
     default:
-      log_invalid_choice_id(type_, "global_ran_node_id_c");
+      log_invalid_choice_id(type_, "global_ngran_node_id_c");
       return SRSASN_ERROR_DECODE_FAIL;
   }
   return SRSASN_SUCCESS;
 }
 
-const char* global_ran_node_id_c::types_opts::to_string() const
+const char* global_ngran_node_id_c::types_opts::to_string() const
 {
-  static const char* names[] = {"globalGNB-ID", "globalNgENB-ID"};
-  return convert_enum_idx(names, 2, value, "global_ran_node_id_c::types");
+  static const char* names[] = {"gNB", "ng-eNB"};
+  return convert_enum_idx(names, 2, value, "global_ngran_node_id_c::types");
 }
 
 // EN-GNB-ID ::= CHOICE
@@ -1175,7 +1175,7 @@ uint8_t group_id_c::types_opts::to_number() const
 SRSASN_CODE interface_id_e1_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(global_ng_ran_id.pack(bref));
+  HANDLE_CODE(global_gnb_id.pack(bref));
   HANDLE_CODE(pack_integer(bref, gnb_cu_up_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
 
   return SRSASN_SUCCESS;
@@ -1183,7 +1183,7 @@ SRSASN_CODE interface_id_e1_s::pack(bit_ref& bref) const
 SRSASN_CODE interface_id_e1_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(global_ng_ran_id.unpack(bref));
+  HANDLE_CODE(global_gnb_id.unpack(bref));
   HANDLE_CODE(unpack_integer(gnb_cu_up_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
 
   return SRSASN_SUCCESS;
@@ -1191,8 +1191,8 @@ SRSASN_CODE interface_id_e1_s::unpack(cbit_ref& bref)
 void interface_id_e1_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_fieldname("global-NG-RAN-ID");
-  global_ng_ran_id.to_json(j);
+  j.write_fieldname("globalGNB-ID");
+  global_gnb_id.to_json(j);
   j.write_int("gNB-CU-UP-ID", gnb_cu_up_id);
   j.end_obj();
 }
@@ -1201,7 +1201,7 @@ void interface_id_e1_s::to_json(json_writer& j) const
 SRSASN_CODE interface_id_f1_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(global_ng_ran_id.pack(bref));
+  HANDLE_CODE(global_gnb_id.pack(bref));
   HANDLE_CODE(pack_integer(bref, gnb_du_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
 
   return SRSASN_SUCCESS;
@@ -1209,7 +1209,7 @@ SRSASN_CODE interface_id_f1_s::pack(bit_ref& bref) const
 SRSASN_CODE interface_id_f1_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(global_ng_ran_id.unpack(bref));
+  HANDLE_CODE(global_gnb_id.unpack(bref));
   HANDLE_CODE(unpack_integer(gnb_du_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
 
   return SRSASN_SUCCESS;
@@ -1217,8 +1217,8 @@ SRSASN_CODE interface_id_f1_s::unpack(cbit_ref& bref)
 void interface_id_f1_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_fieldname("global-NG-RAN-ID");
-  global_ng_ran_id.to_json(j);
+  j.write_fieldname("globalGNB-ID");
+  global_gnb_id.to_json(j);
   j.write_int("gNB-DU-ID", gnb_du_id);
   j.end_obj();
 }
@@ -1748,34 +1748,11 @@ const char* interface_id_c::types_opts::to_string() const
   return convert_enum_idx(names, 7, value, "interface_id_c::types");
 }
 
-// FreqBandNrItem ::= SEQUENCE
-SRSASN_CODE freq_band_nr_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE freq_band_nr_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  return SRSASN_SUCCESS;
-}
-void freq_band_nr_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
-  j.end_obj();
-}
-
 // NR-ARFCN ::= SEQUENCE
 SRSASN_CODE nr_arfcn_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
   HANDLE_CODE(pack_integer(bref, nrarfcn, (uint32_t)0u, (uint32_t)3279165u, false, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, freq_band_list_nr, 1, 32, true));
 
   return SRSASN_SUCCESS;
 }
@@ -1783,7 +1760,6 @@ SRSASN_CODE nr_arfcn_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
   HANDLE_CODE(unpack_integer(nrarfcn, bref, (uint32_t)0u, (uint32_t)3279165u, false, true));
-  HANDLE_CODE(unpack_dyn_seq_of(freq_band_list_nr, bref, 1, 32, true));
 
   return SRSASN_SUCCESS;
 }
@@ -1791,11 +1767,107 @@ void nr_arfcn_s::to_json(json_writer& j) const
 {
   j.start_obj();
   j.write_int("nRARFCN", nrarfcn);
-  j.start_array("freqBandListNr");
-  for (const auto& e1 : freq_band_list_nr) {
+  j.end_obj();
+}
+
+// SupportedSULFreqBandItem ::= SEQUENCE
+SRSASN_CODE supported_sul_freq_band_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE supported_sul_freq_band_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
+
+  return SRSASN_SUCCESS;
+}
+void supported_sul_freq_band_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
+  j.end_obj();
+}
+
+// NRFrequencyBandItem ::= SEQUENCE
+SRSASN_CODE nr_freq_band_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
+  HANDLE_CODE(pack_dyn_seq_of(bref, supported_sul_band_list, 0, 32, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE nr_freq_band_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
+  HANDLE_CODE(unpack_dyn_seq_of(supported_sul_band_list, bref, 0, 32, true));
+
+  return SRSASN_SUCCESS;
+}
+void nr_freq_band_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
+  j.start_array("supportedSULBandList");
+  for (const auto& e1 : supported_sul_band_list) {
     e1.to_json(j);
   }
   j.end_array();
+  j.end_obj();
+}
+
+// NRFrequencyShift7p5khz ::= ENUMERATED
+const char* nr_freq_shift7p5khz_opts::to_string() const
+{
+  static const char* names[] = {"false", "true"};
+  return convert_enum_idx(names, 2, value, "nr_freq_shift7p5khz_e");
+}
+
+// NRFrequencyInfo ::= SEQUENCE
+SRSASN_CODE nr_freq_info_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(freq_shift7p5khz_present, 1));
+
+  HANDLE_CODE(nr_arfcn.pack(bref));
+  HANDLE_CODE(pack_dyn_seq_of(bref, freq_band_list, 1, 32, true));
+  if (freq_shift7p5khz_present) {
+    HANDLE_CODE(freq_shift7p5khz.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE nr_freq_info_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(freq_shift7p5khz_present, 1));
+
+  HANDLE_CODE(nr_arfcn.unpack(bref));
+  HANDLE_CODE(unpack_dyn_seq_of(freq_band_list, bref, 1, 32, true));
+  if (freq_shift7p5khz_present) {
+    HANDLE_CODE(freq_shift7p5khz.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void nr_freq_info_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("nrARFCN");
+  nr_arfcn.to_json(j);
+  j.start_array("frequencyBand-List");
+  for (const auto& e1 : freq_band_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (freq_shift7p5khz_present) {
+    j.write_str("frequencyShift7p5khz", freq_shift7p5khz.to_string());
+  }
   j.end_obj();
 }
 
@@ -2570,6 +2642,13 @@ SRSASN_CODE ueid_gnb_s::pack(bit_ref& bref) const
     HANDLE_CODE(global_gnb_id.pack(bref));
   }
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(global_ng_ran_node_id.is_present(), 1));
+
+    if (global_ng_ran_node_id.is_present()) {
+      HANDLE_CODE(global_ng_ran_node_id->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ueid_gnb_s::unpack(cbit_ref& bref)
@@ -2601,6 +2680,15 @@ SRSASN_CODE ueid_gnb_s::unpack(cbit_ref& bref)
     HANDLE_CODE(global_gnb_id.unpack(bref));
   }
 
+  if (ext) {
+    bool global_ng_ran_node_id_present;
+    HANDLE_CODE(bref.unpack(global_ng_ran_node_id_present, 1));
+    global_ng_ran_node_id.set_present(global_ng_ran_node_id_present);
+
+    if (global_ng_ran_node_id.is_present()) {
+      HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ueid_gnb_s::to_json(json_writer& j) const
@@ -2632,6 +2720,12 @@ void ueid_gnb_s::to_json(json_writer& j) const
   if (global_gnb_id_present) {
     j.write_fieldname("globalGNB-ID");
     global_gnb_id.to_json(j);
+  }
+  if (ext) {
+    if (global_ng_ran_node_id.is_present()) {
+      j.write_fieldname("globalNG-RANNode-ID");
+      global_ng_ran_node_id->to_json(j);
+    }
   }
   j.end_obj();
 }
@@ -2726,6 +2820,13 @@ SRSASN_CODE ueid_ng_enb_s::pack(bit_ref& bref) const
     HANDLE_CODE(global_ng_enb_id.pack(bref));
   }
 
+  if (ext) {
+    HANDLE_CODE(bref.pack(global_ng_ran_node_id.is_present(), 1));
+
+    if (global_ng_ran_node_id.is_present()) {
+      HANDLE_CODE(global_ng_ran_node_id->pack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE ueid_ng_enb_s::unpack(cbit_ref& bref)
@@ -2747,6 +2848,15 @@ SRSASN_CODE ueid_ng_enb_s::unpack(cbit_ref& bref)
     HANDLE_CODE(global_ng_enb_id.unpack(bref));
   }
 
+  if (ext) {
+    bool global_ng_ran_node_id_present;
+    HANDLE_CODE(bref.unpack(global_ng_ran_node_id_present, 1));
+    global_ng_ran_node_id.set_present(global_ng_ran_node_id_present);
+
+    if (global_ng_ran_node_id.is_present()) {
+      HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
+    }
+  }
   return SRSASN_SUCCESS;
 }
 void ueid_ng_enb_s::to_json(json_writer& j) const
@@ -2764,6 +2874,12 @@ void ueid_ng_enb_s::to_json(json_writer& j) const
   if (global_ng_enb_id_present) {
     j.write_fieldname("globalNgENB-ID");
     global_ng_enb_id.to_json(j);
+  }
+  if (ext) {
+    if (global_ng_ran_node_id.is_present()) {
+      j.write_fieldname("globalNG-RANNode-ID");
+      global_ng_ran_node_id->to_json(j);
+    }
   }
   j.end_obj();
 }

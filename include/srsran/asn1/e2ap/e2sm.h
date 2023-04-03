@@ -388,48 +388,48 @@ struct global_ng_enb_id_s {
   void        to_json(json_writer& j) const;
 };
 
-// GlobalRANNodeID ::= CHOICE
-struct global_ran_node_id_c {
+// GlobalNGRANNodeID ::= CHOICE
+struct global_ngran_node_id_c {
   struct types_opts {
-    enum options { global_gnb_id, global_ng_enb_id, /*...*/ nulltype } value;
+    enum options { gnb, ng_enb, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
   typedef enumerated<types_opts, true> types;
 
   // choice methods
-  global_ran_node_id_c() = default;
-  global_ran_node_id_c(const global_ran_node_id_c& other);
-  global_ran_node_id_c& operator=(const global_ran_node_id_c& other);
-  ~global_ran_node_id_c() { destroy_(); }
+  global_ngran_node_id_c() = default;
+  global_ngran_node_id_c(const global_ngran_node_id_c& other);
+  global_ngran_node_id_c& operator=(const global_ngran_node_id_c& other);
+  ~global_ngran_node_id_c() { destroy_(); }
   void        set(types::options e = types::nulltype);
   types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  global_gnb_id_s& global_gnb_id()
+  global_gnb_id_s& gnb()
   {
-    assert_choice_type(types::global_gnb_id, type_, "GlobalRANNodeID");
+    assert_choice_type(types::gnb, type_, "GlobalNGRANNodeID");
     return c.get<global_gnb_id_s>();
   }
-  global_ng_enb_id_s& global_ng_enb_id()
+  global_ng_enb_id_s& ng_enb()
   {
-    assert_choice_type(types::global_ng_enb_id, type_, "GlobalRANNodeID");
+    assert_choice_type(types::ng_enb, type_, "GlobalNGRANNodeID");
     return c.get<global_ng_enb_id_s>();
   }
-  const global_gnb_id_s& global_gnb_id() const
+  const global_gnb_id_s& gnb() const
   {
-    assert_choice_type(types::global_gnb_id, type_, "GlobalRANNodeID");
+    assert_choice_type(types::gnb, type_, "GlobalNGRANNodeID");
     return c.get<global_gnb_id_s>();
   }
-  const global_ng_enb_id_s& global_ng_enb_id() const
+  const global_ng_enb_id_s& ng_enb() const
   {
-    assert_choice_type(types::global_ng_enb_id, type_, "GlobalRANNodeID");
+    assert_choice_type(types::ng_enb, type_, "GlobalNGRANNodeID");
     return c.get<global_ng_enb_id_s>();
   }
-  global_gnb_id_s&    set_global_gnb_id();
-  global_ng_enb_id_s& set_global_ng_enb_id();
+  global_gnb_id_s&    set_gnb();
+  global_ng_enb_id_s& set_ng_enb();
 
 private:
   types                                                type_;
@@ -527,9 +527,9 @@ private:
 
 // InterfaceID-E1 ::= SEQUENCE
 struct interface_id_e1_s {
-  bool                 ext = false;
-  global_ran_node_id_c global_ng_ran_id;
-  uint64_t             gnb_cu_up_id = 0;
+  bool            ext = false;
+  global_gnb_id_s global_gnb_id;
+  uint64_t        gnb_cu_up_id = 0;
   // ...
 
   // sequence methods
@@ -540,9 +540,9 @@ struct interface_id_e1_s {
 
 // InterfaceID-F1 ::= SEQUENCE
 struct interface_id_f1_s {
-  bool                 ext = false;
-  global_ran_node_id_c global_ng_ran_id;
-  uint64_t             gnb_du_id = 0;
+  bool            ext = false;
+  global_gnb_id_s global_gnb_id;
+  uint64_t        gnb_du_id = 0;
   // ...
 
   // sequence methods
@@ -652,8 +652,8 @@ struct interface_id_x2_s {
 
 // InterfaceID-Xn ::= SEQUENCE
 struct interface_id_xn_s {
-  bool                 ext = false;
-  global_ran_node_id_c global_ng_ran_id;
+  bool                   ext = false;
+  global_ngran_node_id_c global_ng_ran_id;
   // ...
 
   // sequence methods
@@ -774,8 +774,20 @@ private:
   void destroy_();
 };
 
-// FreqBandNrItem ::= SEQUENCE
-struct freq_band_nr_item_s {
+// NR-ARFCN ::= SEQUENCE
+struct nr_arfcn_s {
+  bool     ext     = false;
+  uint32_t nrarfcn = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// SupportedSULFreqBandItem ::= SEQUENCE
+struct supported_sul_freq_band_item_s {
   bool     ext              = false;
   uint16_t freq_band_ind_nr = 1;
   // ...
@@ -786,14 +798,40 @@ struct freq_band_nr_item_s {
   void        to_json(json_writer& j) const;
 };
 
-// NR-ARFCN ::= SEQUENCE
-struct nr_arfcn_s {
-  using freq_band_list_nr_l_ = dyn_array<freq_band_nr_item_s>;
+// SupportedSULBandList ::= SEQUENCE (SIZE (0..32)) OF SupportedSULFreqBandItem
+using supported_sul_band_list_l = dyn_array<supported_sul_freq_band_item_s>;
 
-  // member variables
-  bool                 ext     = false;
-  uint32_t             nrarfcn = 0;
-  freq_band_list_nr_l_ freq_band_list_nr;
+// NRFrequencyBandItem ::= SEQUENCE
+struct nr_freq_band_item_s {
+  bool                      ext              = false;
+  uint16_t                  freq_band_ind_nr = 1;
+  supported_sul_band_list_l supported_sul_band_list;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// NRFrequencyBand-List ::= SEQUENCE (SIZE (1..32)) OF NRFrequencyBandItem
+using nr_freq_band_list_l = dyn_array<nr_freq_band_item_s>;
+
+// NRFrequencyShift7p5khz ::= ENUMERATED
+struct nr_freq_shift7p5khz_opts {
+  enum options { false_value, true_value, /*...*/ nulltype } value;
+
+  const char* to_string() const;
+};
+typedef enumerated<nr_freq_shift7p5khz_opts, true> nr_freq_shift7p5khz_e;
+
+// NRFrequencyInfo ::= SEQUENCE
+struct nr_freq_info_s {
+  bool                  ext                      = false;
+  bool                  freq_shift7p5khz_present = false;
+  nr_arfcn_s            nr_arfcn;
+  nr_freq_band_list_l   freq_band_list;
+  nr_freq_shift7p5khz_e freq_shift7p5khz;
   // ...
 
   // sequence methods
@@ -1147,6 +1185,7 @@ struct ueid_gnb_s {
   uint64_t                       m_ng_ran_ue_xn_ap_id = 0;
   global_gnb_id_s                global_gnb_id;
   // ...
+  copy_ptr<global_ngran_node_id_c> global_ng_ran_node_id;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1194,6 +1233,7 @@ struct ueid_ng_enb_s {
   uint64_t           m_ng_ran_ue_xn_ap_id  = 0;
   global_ng_enb_id_s global_ng_enb_id;
   // ...
+  copy_ptr<global_ngran_node_id_c> global_ng_ran_node_id;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;

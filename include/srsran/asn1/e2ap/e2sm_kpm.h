@@ -27,19 +27,118 @@ namespace e2sm_kpm {
  *                             Constant Definitions
  ******************************************************************************/
 
-#define ASN1_E2SM_KPM_MAXOF_MSG_PROTOCOL_TESTS 15
-#define ASN1_E2SM_KPM_MAXOF_RICSTYLES 63
-#define ASN1_E2SM_KPM_MAXNOOF_QCI 256
-#define ASN1_E2SM_KPM_MAXNOOF_QOSFLOWS 64
-#define ASN1_E2SM_KPM_MAXNOOF_SLICE_ITEMS 1024
-#define ASN1_E2SM_KPM_MAXNOOF_CONTAINER_LIST_ITEMS 3
-#define ASN1_E2SM_KPM_MAX_CELLING_NBDU 512
-#define ASN1_E2SM_KPM_MAXOF_CONTAINERS 8
-#define ASN1_E2SM_KPM_MAX_PLMN 12
+#define ASN1_E2SM_KPM_MAXNOOF_CELLS 16384
+#define ASN1_E2SM_KPM_MAXNOOF_RIC_STYLES 63
+#define ASN1_E2SM_KPM_MAXNOOF_MEAS_INFO 65535
+#define ASN1_E2SM_KPM_MAXNOOF_LABEL_INFO 2147483647
+#define ASN1_E2SM_KPM_MAXNOOF_MEAS_RECORD 65535
+#define ASN1_E2SM_KPM_MAXNOOF_MEAS_VALUE 2147483647
+#define ASN1_E2SM_KPM_MAXNOOF_CONDITION_INFO 32768
+#define ASN1_E2SM_KPM_MAXNOOF_UEID 65535
+#define ASN1_E2SM_KPM_MAXNOOF_CONDITION_INFO_PER_SUB 32768
+#define ASN1_E2SM_KPM_MAXNOOF_UEID_PER_SUB 65535
+#define ASN1_E2SM_KPM_MAXNOOF_UE_MEAS_REPORT 65535
+#define ASN1_E2SM_KPM_MAXNOOF_BIN 65535
 
 /*******************************************************************************
  *                              Struct Definitions
  ******************************************************************************/
+const uint32_t None = 2147483647;
+
+struct real_s {
+  SRSASN_CODE pack(bit_ref& bref) const
+  {
+    printf(" WARNING using unimplemented REAL packing function\n");
+    return SRSASN_SUCCESS;
+  };
+  SRSASN_CODE unpack(cbit_ref& bref) const
+  {
+    printf(" WARNING using unimplemented REAL unpacking function\n");
+    return SRSASN_SUCCESS;
+  };
+  void to_json(json_writer& j) const { printf(" WARNING using unimplemented REAL json function\n"); };
+};
+
+// BinRangeValue ::= CHOICE
+struct bin_range_value_c {
+  struct types_opts {
+    enum options { value_int, value_real, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true> types;
+
+  // choice methods
+  bin_range_value_c() = default;
+  bin_range_value_c(const bin_range_value_c& other);
+  bin_range_value_c& operator=(const bin_range_value_c& other);
+  ~bin_range_value_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  int64_t& value_int()
+  {
+    assert_choice_type(types::value_int, type_, "BinRangeValue");
+    return c.get<int64_t>();
+  }
+  real_s& value_real()
+  {
+    assert_choice_type(types::value_real, type_, "BinRangeValue");
+    return c.get<real_s>();
+  }
+  const int64_t& value_int() const
+  {
+    assert_choice_type(types::value_int, type_, "BinRangeValue");
+    return c.get<int64_t>();
+  }
+  const real_s& value_real() const
+  {
+    assert_choice_type(types::value_real, type_, "BinRangeValue");
+    return c.get<real_s>();
+  }
+  int64_t& set_value_int();
+  real_s&  set_value_real();
+
+private:
+  types                   type_;
+  choice_buffer_t<real_s> c;
+
+  void destroy_();
+};
+
+// BinRangeItem ::= SEQUENCE
+struct bin_range_item_s {
+  bool              ext     = false;
+  uint32_t          bin_idx = 1;
+  bin_range_value_c start_value;
+  bin_range_value_c end_value;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// BinRangeList ::= SEQUENCE (SIZE (1..65535)) OF BinRangeItem
+using bin_range_list_l = dyn_array<bin_range_item_s>;
+
+// BinRangeDefinition ::= SEQUENCE
+struct bin_range_definition_s {
+  bool             ext = false;
+  bin_range_list_l bin_range_list_x;
+  bin_range_list_l bin_range_list_y;
+  bin_range_list_l bin_range_list_z;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
 
 // EUTRA-CGI ::= SEQUENCE
 struct eutra_cgi_s {
@@ -115,252 +214,6 @@ private:
   choice_buffer_t<eutra_cgi_s, nr_cgi_s> c;
 
   void destroy_();
-};
-
-// FQIPERSlicesPerPlmnListItem ::= SEQUENCE
-struct fqiper_slices_per_plmn_list_item_s {
-  bool     ext                   = false;
-  bool     pdcp_bytes_dl_present = false;
-  bool     pdcp_bytes_ul_present = false;
-  uint16_t five_qi               = 0;
-  uint64_t pdcp_bytes_dl         = 0;
-  uint64_t pdcp_bytes_ul         = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SNSSAI ::= SEQUENCE
-struct snssai_s {
-  bool                     sd_present = false;
-  fixed_octstring<1, true> sst;
-  fixed_octstring<3, true> sd;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// PerQCIReportListItemFormat ::= SEQUENCE
-struct per_qci_report_list_item_format_s {
-  bool     ext                   = false;
-  bool     pdcp_bytes_dl_present = false;
-  bool     pdcp_bytes_ul_present = false;
-  uint16_t qci                   = 0;
-  uint64_t pdcp_bytes_dl         = 0;
-  uint64_t pdcp_bytes_ul         = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SliceToReportListItem ::= SEQUENCE
-struct slice_to_report_list_item_s {
-  using fqiper_slices_per_plmn_list_l_ = dyn_array<fqiper_slices_per_plmn_list_item_s>;
-
-  // member variables
-  bool                           ext = false;
-  snssai_s                       slice_id;
-  fqiper_slices_per_plmn_list_l_ fqiper_slices_per_plmn_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// EPC-CUUP-PM-Format ::= SEQUENCE
-struct epc_cuup_pm_format_s {
-  using per_qci_report_list_l_ = dyn_array<per_qci_report_list_item_format_s>;
-
-  // member variables
-  bool                   ext = false;
-  per_qci_report_list_l_ per_qci_report_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// FGC-CUUP-PM-Format ::= SEQUENCE
-struct fgc_cuup_pm_format_s {
-  using slice_to_report_list_l_ = dyn_array<slice_to_report_list_item_s>;
-
-  // member variables
-  bool                    ext = false;
-  slice_to_report_list_l_ slice_to_report_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// PlmnID-List ::= SEQUENCE
-struct plmn_id_list_s {
-  bool                     ext                        = false;
-  bool                     cu_up_pm_minus5_gc_present = false;
-  bool                     cu_up_pm_epc_present       = false;
-  fixed_octstring<3, true> plmn_id;
-  fgc_cuup_pm_format_s     cu_up_pm_minus5_gc;
-  epc_cuup_pm_format_s     cu_up_pm_epc;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// CUUPMeasurement-Container ::= SEQUENCE
-struct cuup_meas_container_s {
-  using plmn_list_l_ = dyn_array<plmn_id_list_s>;
-
-  // member variables
-  bool         ext = false;
-  plmn_list_l_ plmn_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// FQIPERSlicesPerPlmnPerCellListItem ::= SEQUENCE
-struct fqiper_slices_per_plmn_per_cell_list_item_s {
-  bool     ext                 = false;
-  bool     dl_prbusage_present = false;
-  bool     ul_prbusage_present = false;
-  uint16_t five_qi             = 0;
-  uint8_t  dl_prbusage         = 0;
-  uint8_t  ul_prbusage         = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// PerQCIReportListItem ::= SEQUENCE
-struct per_qci_report_list_item_s {
-  bool     ext                 = false;
-  bool     dl_prbusage_present = false;
-  bool     ul_prbusage_present = false;
-  uint16_t qci                 = 0;
-  uint8_t  dl_prbusage         = 0;
-  uint8_t  ul_prbusage         = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// SlicePerPlmnPerCellListItem ::= SEQUENCE
-struct slice_per_plmn_per_cell_list_item_s {
-  using fqiper_slices_per_plmn_per_cell_list_l_ = dyn_array<fqiper_slices_per_plmn_per_cell_list_item_s>;
-
-  // member variables
-  bool                                    ext = false;
-  snssai_s                                slice_id;
-  fqiper_slices_per_plmn_per_cell_list_l_ fqiper_slices_per_plmn_per_cell_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// EPC-DU-PM-Container ::= SEQUENCE
-struct epc_du_pm_container_s {
-  using per_qci_report_list_l_ = dyn_array<per_qci_report_list_item_s>;
-
-  // member variables
-  bool                   ext = false;
-  per_qci_report_list_l_ per_qci_report_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// FGC-DU-PM-Container ::= SEQUENCE
-struct fgc_du_pm_container_s {
-  using slice_per_plmn_per_cell_list_l_ = dyn_array<slice_per_plmn_per_cell_list_item_s>;
-
-  // member variables
-  bool                            ext = false;
-  slice_per_plmn_per_cell_list_l_ slice_per_plmn_per_cell_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// NRCGI ::= SEQUENCE
-struct nrcgi_s {
-  fixed_octstring<3, true>         plmn_id;
-  fixed_bitstring<36, false, true> nrcell_id;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// ServedPlmnPerCellListItem ::= SEQUENCE
-struct served_plmn_per_cell_list_item_s {
-  bool                     ext                     = false;
-  bool                     du_pm_minus5_gc_present = false;
-  bool                     du_pm_epc_present       = false;
-  fixed_octstring<3, true> plmn_id;
-  fgc_du_pm_container_s    du_pm_minus5_gc;
-  epc_du_pm_container_s    du_pm_epc;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// CellResourceReportListItem ::= SEQUENCE
-struct cell_res_report_list_item_s {
-  using served_plmn_per_cell_list_l_ = dyn_array<served_plmn_per_cell_list_item_s>;
-
-  // member variables
-  bool                         ext                               = false;
-  bool                         dl_totalof_available_prbs_present = false;
-  bool                         ul_totalof_available_prbs_present = false;
-  nrcgi_s                      nrcgi;
-  uint8_t                      dl_totalof_available_prbs = 0;
-  uint8_t                      ul_totalof_available_prbs = 0;
-  served_plmn_per_cell_list_l_ served_plmn_per_cell_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
 };
 
 // GUAMI ::= SEQUENCE
@@ -444,10 +297,61 @@ private:
   void destroy_();
 };
 
-// E2SM-KPM-ActionDefinition ::= SEQUENCE
-struct e2_sm_kpm_action_definition_s {
-  bool    ext            = false;
-  int64_t ric_style_type = 0;
+// MeasurementType ::= CHOICE
+struct meas_type_c {
+  struct types_opts {
+    enum options { meas_name, meas_id, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true> types;
+
+  // choice methods
+  meas_type_c() = default;
+  meas_type_c(const meas_type_c& other);
+  meas_type_c& operator=(const meas_type_c& other);
+  ~meas_type_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  printable_string<1, 150, true, true>& meas_name()
+  {
+    assert_choice_type(types::meas_name, type_, "MeasurementType");
+    return c.get<printable_string<1, 150, true, true>>();
+  }
+  uint32_t& meas_id()
+  {
+    assert_choice_type(types::meas_id, type_, "MeasurementType");
+    return c.get<uint32_t>();
+  }
+  const printable_string<1, 150, true, true>& meas_name() const
+  {
+    assert_choice_type(types::meas_name, type_, "MeasurementType");
+    return c.get<printable_string<1, 150, true, true>>();
+  }
+  const uint32_t& meas_id() const
+  {
+    assert_choice_type(types::meas_id, type_, "MeasurementType");
+    return c.get<uint32_t>();
+  }
+  printable_string<1, 150, true, true>& set_meas_name();
+  uint32_t&                             set_meas_id();
+
+private:
+  types                                                 type_;
+  choice_buffer_t<printable_string<1, 150, true, true>> c;
+
+  void destroy_();
+};
+
+// DistMeasurementBinRangeItem ::= SEQUENCE
+struct dist_meas_bin_range_item_s {
+  bool                   ext = false;
+  meas_type_c            meas_type;
+  bin_range_definition_s bin_range_def;
   // ...
 
   // sequence methods
@@ -456,88 +360,373 @@ struct e2_sm_kpm_action_definition_s {
   void        to_json(json_writer& j) const;
 };
 
-// RT-Period-IE ::= ENUMERATED
-struct rt_period_ie_opts {
-  enum options {
-    ms10,
-    ms20,
-    ms32,
-    ms40,
-    ms60,
-    ms64,
-    ms70,
-    ms80,
-    ms128,
-    ms160,
-    ms256,
-    ms320,
-    ms512,
-    ms640,
-    ms1024,
-    ms1280,
-    ms2048,
-    ms2560,
-    ms5120,
-    ms10240,
-    // ...
-    nulltype
-  } value;
-  typedef uint16_t number_type;
+// DistMeasurementBinRangeList ::= SEQUENCE (SIZE (1..65535)) OF DistMeasurementBinRangeItem
+using dist_meas_bin_range_list_l = dyn_array<dist_meas_bin_range_item_s>;
+
+// S-NSSAI ::= SEQUENCE
+struct s_nssai_s {
+  bool                     ext        = false;
+  bool                     sd_present = false;
+  fixed_octstring<1, true> sst;
+  fixed_octstring<3, true> sd;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// TestCond-Expression ::= ENUMERATED
+struct test_cond_expression_opts {
+  enum options { equal, greaterthan, lessthan, contains, present, /*...*/ nulltype } value;
 
   const char* to_string() const;
-  uint16_t    to_number() const;
 };
-typedef enumerated<rt_period_ie_opts, true> rt_period_ie_e;
+typedef enumerated<test_cond_expression_opts, true> test_cond_expression_e;
 
-// Trigger-ConditionIE-Item ::= SEQUENCE
-struct trigger_condition_ie_item_s {
-  bool           ext = false;
-  rt_period_ie_e report_period_ie;
-  // ...
+// TestCond-Type ::= CHOICE
+struct test_cond_type_c {
+  struct gbr_opts {
+    enum options { true_value, /*...*/ nulltype } value;
 
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
+    const char* to_string() const;
+  };
+  typedef enumerated<gbr_opts, true> gbr_e_;
+  struct ambr_opts {
+    enum options { true_value, /*...*/ nulltype } value;
 
-// E2SM-KPM-EventTriggerDefinition-Format1 ::= SEQUENCE
-struct e2_sm_kpm_event_trigger_definition_format1_s {
-  using policy_test_list_l_ = dyn_array<trigger_condition_ie_item_s>;
+    const char* to_string() const;
+  };
+  typedef enumerated<ambr_opts, true> ambr_e_;
+  struct is_stat_opts {
+    enum options { true_value, /*...*/ nulltype } value;
 
-  // member variables
-  bool                ext = false;
-  policy_test_list_l_ policy_test_list;
-  // ...
+    const char* to_string() const;
+  };
+  typedef enumerated<is_stat_opts, true> is_stat_e_;
+  struct is_cat_m_opts {
+    enum options { true_value, /*...*/ nulltype } value;
 
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
+    const char* to_string() const;
+  };
+  typedef enumerated<is_cat_m_opts, true> is_cat_m_e_;
+  struct rsrp_opts {
+    enum options { true_value, /*...*/ nulltype } value;
 
-// E2SM-KPM-EventTriggerDefinition ::= CHOICE
-struct e2_sm_kpm_event_trigger_definition_c {
+    const char* to_string() const;
+  };
+  typedef enumerated<rsrp_opts, true> rsrp_e_;
+  struct rsrq_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<rsrq_opts, true> rsrq_e_;
+  struct ul_r_srp_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<ul_r_srp_opts, true> ul_r_srp_e_;
+  struct cqi_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<cqi_opts, true> cqi_e_;
+  struct five_qi_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<five_qi_opts, true> five_qi_e_;
+  struct qci_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<qci_opts, true> qci_e_;
+  struct snssai_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<snssai_opts, true> snssai_e_;
   struct types_opts {
-    enum options { event_definition_format1, /*...*/ nulltype } value;
+    enum options {
+      gbr,
+      ambr,
+      is_stat,
+      is_cat_m,
+      rsrp,
+      rsrq,
+      /*...*/ ul_r_srp,
+      cqi,
+      five_qi,
+      qci,
+      snssai,
+      nulltype
+    } value;
     typedef uint8_t number_type;
 
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts, true> types;
+  typedef enumerated<types_opts, true, 5> types;
 
   // choice methods
-  types       type() const { return types::event_definition_format1; }
+  test_cond_type_c() = default;
+  test_cond_type_c(const test_cond_type_c& other);
+  test_cond_type_c& operator=(const test_cond_type_c& other);
+  ~test_cond_type_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
   // getters
-  e2_sm_kpm_event_trigger_definition_format1_s&       event_definition_format1() { return c; }
-  const e2_sm_kpm_event_trigger_definition_format1_s& event_definition_format1() const { return c; }
+  gbr_e_& gbr()
+  {
+    assert_choice_type(types::gbr, type_, "TestCond-Type");
+    return c.get<gbr_e_>();
+  }
+  ambr_e_& ambr()
+  {
+    assert_choice_type(types::ambr, type_, "TestCond-Type");
+    return c.get<ambr_e_>();
+  }
+  is_stat_e_& is_stat()
+  {
+    assert_choice_type(types::is_stat, type_, "TestCond-Type");
+    return c.get<is_stat_e_>();
+  }
+  is_cat_m_e_& is_cat_m()
+  {
+    assert_choice_type(types::is_cat_m, type_, "TestCond-Type");
+    return c.get<is_cat_m_e_>();
+  }
+  rsrp_e_& rsrp()
+  {
+    assert_choice_type(types::rsrp, type_, "TestCond-Type");
+    return c.get<rsrp_e_>();
+  }
+  rsrq_e_& rsrq()
+  {
+    assert_choice_type(types::rsrq, type_, "TestCond-Type");
+    return c.get<rsrq_e_>();
+  }
+  ul_r_srp_e_& ul_r_srp()
+  {
+    assert_choice_type(types::ul_r_srp, type_, "TestCond-Type");
+    return c.get<ul_r_srp_e_>();
+  }
+  cqi_e_& cqi()
+  {
+    assert_choice_type(types::cqi, type_, "TestCond-Type");
+    return c.get<cqi_e_>();
+  }
+  five_qi_e_& five_qi()
+  {
+    assert_choice_type(types::five_qi, type_, "TestCond-Type");
+    return c.get<five_qi_e_>();
+  }
+  qci_e_& qci()
+  {
+    assert_choice_type(types::qci, type_, "TestCond-Type");
+    return c.get<qci_e_>();
+  }
+  snssai_e_& snssai()
+  {
+    assert_choice_type(types::snssai, type_, "TestCond-Type");
+    return c.get<snssai_e_>();
+  }
+  const gbr_e_& gbr() const
+  {
+    assert_choice_type(types::gbr, type_, "TestCond-Type");
+    return c.get<gbr_e_>();
+  }
+  const ambr_e_& ambr() const
+  {
+    assert_choice_type(types::ambr, type_, "TestCond-Type");
+    return c.get<ambr_e_>();
+  }
+  const is_stat_e_& is_stat() const
+  {
+    assert_choice_type(types::is_stat, type_, "TestCond-Type");
+    return c.get<is_stat_e_>();
+  }
+  const is_cat_m_e_& is_cat_m() const
+  {
+    assert_choice_type(types::is_cat_m, type_, "TestCond-Type");
+    return c.get<is_cat_m_e_>();
+  }
+  const rsrp_e_& rsrp() const
+  {
+    assert_choice_type(types::rsrp, type_, "TestCond-Type");
+    return c.get<rsrp_e_>();
+  }
+  const rsrq_e_& rsrq() const
+  {
+    assert_choice_type(types::rsrq, type_, "TestCond-Type");
+    return c.get<rsrq_e_>();
+  }
+  const ul_r_srp_e_& ul_r_srp() const
+  {
+    assert_choice_type(types::ul_r_srp, type_, "TestCond-Type");
+    return c.get<ul_r_srp_e_>();
+  }
+  const cqi_e_& cqi() const
+  {
+    assert_choice_type(types::cqi, type_, "TestCond-Type");
+    return c.get<cqi_e_>();
+  }
+  const five_qi_e_& five_qi() const
+  {
+    assert_choice_type(types::five_qi, type_, "TestCond-Type");
+    return c.get<five_qi_e_>();
+  }
+  const qci_e_& qci() const
+  {
+    assert_choice_type(types::qci, type_, "TestCond-Type");
+    return c.get<qci_e_>();
+  }
+  const snssai_e_& snssai() const
+  {
+    assert_choice_type(types::snssai, type_, "TestCond-Type");
+    return c.get<snssai_e_>();
+  }
+  gbr_e_&      set_gbr();
+  ambr_e_&     set_ambr();
+  is_stat_e_&  set_is_stat();
+  is_cat_m_e_& set_is_cat_m();
+  rsrp_e_&     set_rsrp();
+  rsrq_e_&     set_rsrq();
+  ul_r_srp_e_& set_ul_r_srp();
+  cqi_e_&      set_cqi();
+  five_qi_e_&  set_five_qi();
+  qci_e_&      set_qci();
+  snssai_e_&   set_snssai();
 
 private:
-  e2_sm_kpm_event_trigger_definition_format1_s c;
+  types               type_;
+  pod_choice_buffer_t c;
+
+  void destroy_();
+};
+
+// TestCond-Value ::= CHOICE
+struct test_cond_value_c {
+  struct types_opts {
+    enum options {
+      value_int,
+      value_enum,
+      value_bool,
+      value_bit_s,
+      value_oct_s,
+      value_prt_s,
+      /*...*/ value_real,
+      nulltype
+    } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true, 1> types;
+
+  // choice methods
+  test_cond_value_c() = default;
+  test_cond_value_c(const test_cond_value_c& other);
+  test_cond_value_c& operator=(const test_cond_value_c& other);
+  ~test_cond_value_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  int64_t& value_int()
+  {
+    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  int64_t& value_enum()
+  {
+    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  bool& value_bool()
+  {
+    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    return c.get<bool>();
+  }
+  dyn_bitstring& value_bit_s()
+  {
+    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    return c.get<dyn_bitstring>();
+  }
+  unbounded_octstring<true>& value_oct_s()
+  {
+    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    return c.get<unbounded_octstring<true>>();
+  }
+  printable_string<0, None, false, true>& value_prt_s()
+  {
+    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    return c.get<printable_string<0, None, false, true>>();
+  }
+  real_s& value_real()
+  {
+    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    return c.get<real_s>();
+  }
+  const int64_t& value_int() const
+  {
+    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  const int64_t& value_enum() const
+  {
+    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    return c.get<int64_t>();
+  }
+  const bool& value_bool() const
+  {
+    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    return c.get<bool>();
+  }
+  const dyn_bitstring& value_bit_s() const
+  {
+    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    return c.get<dyn_bitstring>();
+  }
+  const unbounded_octstring<true>& value_oct_s() const
+  {
+    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    return c.get<unbounded_octstring<true>>();
+  }
+  const printable_string<0, None, false, true>& value_prt_s() const
+  {
+    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    return c.get<printable_string<0, None, false, true>>();
+  }
+  const real_s& value_real() const
+  {
+    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    return c.get<real_s>();
+  }
+  int64_t&                                set_value_int();
+  int64_t&                                set_value_enum();
+  bool&                                   set_value_bool();
+  dyn_bitstring&                          set_value_bit_s();
+  unbounded_octstring<true>&              set_value_oct_s();
+  printable_string<0, None, false, true>& set_value_prt_s();
+  real_s&                                 set_value_real();
+
+private:
+  types                                                                                                           type_;
+  choice_buffer_t<bool, dyn_bitstring, printable_string<0, None, false, true>, real_s, unbounded_octstring<true>> c;
+
+  void destroy_();
 };
 
 // ENB-ID ::= CHOICE
@@ -612,623 +801,6 @@ private:
   void destroy_();
 };
 
-// ENB-ID-Choice ::= CHOICE
-struct enb_id_choice_c {
-  struct types_opts {
-    enum options { enb_id_macro, enb_id_shortmacro, enb_id_longmacro, /*...*/ nulltype } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  enb_id_choice_c() = default;
-  enb_id_choice_c(const enb_id_choice_c& other);
-  enb_id_choice_c& operator=(const enb_id_choice_c& other);
-  ~enb_id_choice_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  fixed_bitstring<20, false, true>& enb_id_macro()
-  {
-    assert_choice_type(types::enb_id_macro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<20, false, true>>();
-  }
-  fixed_bitstring<18, false, true>& enb_id_shortmacro()
-  {
-    assert_choice_type(types::enb_id_shortmacro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<18, false, true>>();
-  }
-  fixed_bitstring<21, false, true>& enb_id_longmacro()
-  {
-    assert_choice_type(types::enb_id_longmacro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<21, false, true>>();
-  }
-  const fixed_bitstring<20, false, true>& enb_id_macro() const
-  {
-    assert_choice_type(types::enb_id_macro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<20, false, true>>();
-  }
-  const fixed_bitstring<18, false, true>& enb_id_shortmacro() const
-  {
-    assert_choice_type(types::enb_id_shortmacro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<18, false, true>>();
-  }
-  const fixed_bitstring<21, false, true>& enb_id_longmacro() const
-  {
-    assert_choice_type(types::enb_id_longmacro, type_, "ENB-ID-Choice");
-    return c.get<fixed_bitstring<21, false, true>>();
-  }
-  fixed_bitstring<20, false, true>& set_enb_id_macro();
-  fixed_bitstring<18, false, true>& set_enb_id_shortmacro();
-  fixed_bitstring<21, false, true>& set_enb_id_longmacro();
-
-private:
-  types                                             type_;
-  choice_buffer_t<fixed_bitstring<21, false, true>> c;
-
-  void destroy_();
-};
-
-// ENGNB-ID ::= CHOICE
-struct engnb_id_c {
-  struct types_opts {
-    enum options { gnb_id, /*...*/ nulltype } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  types       type() const { return types::gnb_id; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  bounded_bitstring<22, 32, false, true>&       gnb_id() { return c; }
-  const bounded_bitstring<22, 32, false, true>& gnb_id() const { return c; }
-
-private:
-  bounded_bitstring<22, 32, false, true> c;
-};
-
-// GNB-ID-Choice ::= CHOICE
-struct gnb_id_choice_c {
-  struct types_opts {
-    enum options { gnb_id, /*...*/ nulltype } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  types       type() const { return types::gnb_id; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  bounded_bitstring<22, 32, false, true>&       gnb_id() { return c; }
-  const bounded_bitstring<22, 32, false, true>& gnb_id() const { return c; }
-
-private:
-  bounded_bitstring<22, 32, false, true> c;
-};
-
-// GlobalENB-ID ::= SEQUENCE
-struct global_enb_id_s {
-  bool                     ext = false;
-  fixed_octstring<3, true> plmn_id;
-  enb_id_c                 enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalenGNB-ID ::= SEQUENCE
-struct globalen_gnb_id_s {
-  bool                     ext = false;
-  fixed_octstring<3, true> plmn_id;
-  engnb_id_c               gnb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalgNB-ID ::= SEQUENCE
-struct globalg_nb_id_s {
-  bool                     ext = false;
-  fixed_octstring<3, true> plmn_id;
-  gnb_id_choice_c          gnb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalngeNB-ID ::= SEQUENCE
-struct globalngenb_id_s {
-  bool                     ext = false;
-  fixed_octstring<3, true> plmn_id;
-  enb_id_choice_c          enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalKPMnode-eNB-ID ::= SEQUENCE
-struct global_kp_mnode_enb_id_s {
-  bool            ext = false;
-  global_enb_id_s global_enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalKPMnode-en-gNB-ID ::= SEQUENCE
-struct global_kp_mnode_en_g_nb_id_s {
-  bool              ext = false;
-  globalen_gnb_id_s global_g_nb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalKPMnode-gNB-ID ::= SEQUENCE
-struct global_kp_mnode_g_nb_id_s {
-  bool            ext                  = false;
-  bool            gnb_cu_up_id_present = false;
-  bool            gnb_du_id_present    = false;
-  globalg_nb_id_s global_g_nb_id;
-  uint64_t        gnb_cu_up_id = 0;
-  uint64_t        gnb_du_id    = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalKPMnode-ng-eNB-ID ::= SEQUENCE
-struct global_kp_mnode_ng_enb_id_s {
-  bool             ext = false;
-  globalngenb_id_s global_ng_enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// GlobalKPMnode-ID ::= CHOICE
-struct global_kp_mnode_id_c {
-  struct types_opts {
-    enum options { gnb, en_g_nb, ng_enb, enb, /*...*/ nulltype } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  global_kp_mnode_id_c() = default;
-  global_kp_mnode_id_c(const global_kp_mnode_id_c& other);
-  global_kp_mnode_id_c& operator=(const global_kp_mnode_id_c& other);
-  ~global_kp_mnode_id_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  global_kp_mnode_g_nb_id_s& gnb()
-  {
-    assert_choice_type(types::gnb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_g_nb_id_s>();
-  }
-  global_kp_mnode_en_g_nb_id_s& en_g_nb()
-  {
-    assert_choice_type(types::en_g_nb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_en_g_nb_id_s>();
-  }
-  global_kp_mnode_ng_enb_id_s& ng_enb()
-  {
-    assert_choice_type(types::ng_enb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_ng_enb_id_s>();
-  }
-  global_kp_mnode_enb_id_s& enb()
-  {
-    assert_choice_type(types::enb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_enb_id_s>();
-  }
-  const global_kp_mnode_g_nb_id_s& gnb() const
-  {
-    assert_choice_type(types::gnb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_g_nb_id_s>();
-  }
-  const global_kp_mnode_en_g_nb_id_s& en_g_nb() const
-  {
-    assert_choice_type(types::en_g_nb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_en_g_nb_id_s>();
-  }
-  const global_kp_mnode_ng_enb_id_s& ng_enb() const
-  {
-    assert_choice_type(types::ng_enb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_ng_enb_id_s>();
-  }
-  const global_kp_mnode_enb_id_s& enb() const
-  {
-    assert_choice_type(types::enb, type_, "GlobalKPMnode-ID");
-    return c.get<global_kp_mnode_enb_id_s>();
-  }
-  global_kp_mnode_g_nb_id_s&    set_gnb();
-  global_kp_mnode_en_g_nb_id_s& set_en_g_nb();
-  global_kp_mnode_ng_enb_id_s&  set_ng_enb();
-  global_kp_mnode_enb_id_s&     set_enb();
-
-private:
-  types type_;
-  choice_buffer_t<global_kp_mnode_en_g_nb_id_s,
-                  global_kp_mnode_enb_id_s,
-                  global_kp_mnode_g_nb_id_s,
-                  global_kp_mnode_ng_enb_id_s>
-      c;
-
-  void destroy_();
-};
-
-// E2SM-KPM-IndicationHeader-Format1 ::= SEQUENCE
-struct e2_sm_kpm_ind_hdr_format1_s {
-  bool                     ext                           = false;
-  bool                     id_global_kp_mnode_id_present = false;
-  bool                     nrcgi_present                 = false;
-  bool                     plmn_id_present               = false;
-  bool                     slice_id_present              = false;
-  bool                     five_qi_present               = false;
-  bool                     qci_present                   = false;
-  global_kp_mnode_id_c     id_global_kp_mnode_id;
-  nrcgi_s                  nrcgi;
-  fixed_octstring<3, true> plmn_id;
-  snssai_s                 slice_id;
-  uint16_t                 five_qi = 0;
-  uint16_t                 qci     = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// E2SM-KPM-IndicationHeader ::= CHOICE
-struct e2_sm_kpm_ind_hdr_c {
-  struct types_opts {
-    enum options { ind_hdr_format1, /*...*/ nulltype } value;
-    typedef uint8_t number_type;
-
-    const char* to_string() const;
-    uint8_t     to_number() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  types       type() const { return types::ind_hdr_format1; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  e2_sm_kpm_ind_hdr_format1_s&       ind_hdr_format1() { return c; }
-  const e2_sm_kpm_ind_hdr_format1_s& ind_hdr_format1() const { return c; }
-
-private:
-  e2_sm_kpm_ind_hdr_format1_s c;
-};
-
-// NI-Type ::= ENUMERATED
-struct ni_type_opts {
-  enum options { x2_u, xn_u, f1_u, /*...*/ nulltype } value;
-  typedef uint8_t number_type;
-
-  const char* to_string() const;
-  uint8_t     to_number() const;
-};
-typedef enumerated<ni_type_opts, true> ni_type_e;
-
-// PF-ContainerListItem ::= SEQUENCE
-struct pf_container_list_item_s {
-  bool                  ext = false;
-  ni_type_e             interface_type;
-  cuup_meas_container_s o_cu_up_pm_container;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// OCUCP-PF-Container ::= SEQUENCE
-struct ocucp_pf_container_s {
-  struct cu_cp_res_status_s_ {
-    bool     nof_active_ues_present = false;
-    uint32_t nof_active_ues         = 1;
-  };
-
-  // member variables
-  bool                                 gnb_cu_cp_name_present = false;
-  printable_string<1, 150, true, true> gnb_cu_cp_name;
-  cu_cp_res_status_s_                  cu_cp_res_status;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// OCUUP-PF-Container ::= SEQUENCE
-struct ocuup_pf_container_s {
-  using pf_container_list_l_ = dyn_array<pf_container_list_item_s>;
-
-  // member variables
-  bool                                 ext                    = false;
-  bool                                 gnb_cu_up_name_present = false;
-  printable_string<1, 150, true, true> gnb_cu_up_name;
-  pf_container_list_l_                 pf_container_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// ODU-PF-Container ::= SEQUENCE
-struct odu_pf_container_s {
-  using cell_res_report_list_l_ = dyn_array<cell_res_report_list_item_s>;
-
-  // member variables
-  bool                    ext = false;
-  cell_res_report_list_l_ cell_res_report_list;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// PF-Container ::= CHOICE
-struct pf_container_c {
-  struct types_opts {
-    enum options { odu, ocu_cp, ocu_up, nulltype } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts> types;
-
-  // choice methods
-  pf_container_c() = default;
-  pf_container_c(const pf_container_c& other);
-  pf_container_c& operator=(const pf_container_c& other);
-  ~pf_container_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  odu_pf_container_s& odu()
-  {
-    assert_choice_type(types::odu, type_, "PF-Container");
-    return c.get<odu_pf_container_s>();
-  }
-  ocucp_pf_container_s& ocu_cp()
-  {
-    assert_choice_type(types::ocu_cp, type_, "PF-Container");
-    return c.get<ocucp_pf_container_s>();
-  }
-  ocuup_pf_container_s& ocu_up()
-  {
-    assert_choice_type(types::ocu_up, type_, "PF-Container");
-    return c.get<ocuup_pf_container_s>();
-  }
-  const odu_pf_container_s& odu() const
-  {
-    assert_choice_type(types::odu, type_, "PF-Container");
-    return c.get<odu_pf_container_s>();
-  }
-  const ocucp_pf_container_s& ocu_cp() const
-  {
-    assert_choice_type(types::ocu_cp, type_, "PF-Container");
-    return c.get<ocucp_pf_container_s>();
-  }
-  const ocuup_pf_container_s& ocu_up() const
-  {
-    assert_choice_type(types::ocu_up, type_, "PF-Container");
-    return c.get<ocuup_pf_container_s>();
-  }
-  odu_pf_container_s&   set_odu();
-  ocucp_pf_container_s& set_ocu_cp();
-  ocuup_pf_container_s& set_ocu_up();
-
-private:
-  types                                                                           type_;
-  choice_buffer_t<ocucp_pf_container_s, ocuup_pf_container_s, odu_pf_container_s> c;
-
-  void destroy_();
-};
-
-// PM-Containers-List ::= SEQUENCE
-struct pm_containers_list_s {
-  bool                      ext                           = false;
-  bool                      performance_container_present = false;
-  pf_container_c            performance_container;
-  unbounded_octstring<true> the_ran_container;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// E2SM-KPM-IndicationMessage-Format1 ::= SEQUENCE
-struct e2_sm_kpm_ind_msg_format1_s {
-  using pm_containers_l_ = dyn_array<pm_containers_list_s>;
-
-  // member variables
-  bool             ext = false;
-  pm_containers_l_ pm_containers;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// E2SM-KPM-IndicationMessage ::= CHOICE
-struct e2_sm_kpm_ind_msg_c {
-  struct types_opts {
-    enum options { ric_style_type, ind_msg_format1, /*...*/ nulltype } value;
-    typedef uint8_t number_type;
-
-    const char* to_string() const;
-    uint8_t     to_number() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  e2_sm_kpm_ind_msg_c() = default;
-  e2_sm_kpm_ind_msg_c(const e2_sm_kpm_ind_msg_c& other);
-  e2_sm_kpm_ind_msg_c& operator=(const e2_sm_kpm_ind_msg_c& other);
-  ~e2_sm_kpm_ind_msg_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  int64_t& ric_style_type()
-  {
-    assert_choice_type(types::ric_style_type, type_, "E2SM-KPM-IndicationMessage");
-    return c.get<int64_t>();
-  }
-  e2_sm_kpm_ind_msg_format1_s& ind_msg_format1()
-  {
-    assert_choice_type(types::ind_msg_format1, type_, "E2SM-KPM-IndicationMessage");
-    return c.get<e2_sm_kpm_ind_msg_format1_s>();
-  }
-  const int64_t& ric_style_type() const
-  {
-    assert_choice_type(types::ric_style_type, type_, "E2SM-KPM-IndicationMessage");
-    return c.get<int64_t>();
-  }
-  const e2_sm_kpm_ind_msg_format1_s& ind_msg_format1() const
-  {
-    assert_choice_type(types::ind_msg_format1, type_, "E2SM-KPM-IndicationMessage");
-    return c.get<e2_sm_kpm_ind_msg_format1_s>();
-  }
-  int64_t&                     set_ric_style_type();
-  e2_sm_kpm_ind_msg_format1_s& set_ind_msg_format1();
-
-private:
-  types                                        type_;
-  choice_buffer_t<e2_sm_kpm_ind_msg_format1_s> c;
-
-  void destroy_();
-};
-
-// RANfunction-Name ::= SEQUENCE
-struct ra_nfunction_name_s {
-  bool                                  ext                           = false;
-  bool                                  ran_function_instance_present = false;
-  printable_string<1, 150, true, true>  ran_function_short_name;
-  printable_string<1, 1000, true, true> ran_function_e2_sm_oid;
-  printable_string<1, 150, true, true>  ran_function_description;
-  int64_t                               ran_function_instance = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// RIC-EventTriggerStyle-List ::= SEQUENCE
-struct ric_event_trigger_style_list_s {
-  bool                                 ext                          = false;
-  int64_t                              ric_event_trigger_style_type = 0;
-  printable_string<1, 150, true, true> ric_event_trigger_style_name;
-  int64_t                              ric_event_trigger_format_type = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// RIC-ReportStyle-List ::= SEQUENCE
-struct ric_report_style_list_s {
-  bool                                 ext                   = false;
-  int64_t                              ric_report_style_type = 0;
-  printable_string<1, 150, true, true> ric_report_style_name;
-  int64_t                              ric_ind_hdr_format_type = 0;
-  int64_t                              ric_ind_msg_format_type = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// E2SM-KPM-RANfunction-Description ::= SEQUENCE
-struct e2_sm_kpm_ra_nfunction_description_s {
-  struct e2_sm_kpm_ra_nfunction_item_s_ {
-    using ric_event_trigger_style_list_l_ = dyn_array<ric_event_trigger_style_list_s>;
-    using ric_report_style_list_l_        = dyn_array<ric_report_style_list_s>;
-
-    // member variables
-    bool                            ext = false;
-    ric_event_trigger_style_list_l_ ric_event_trigger_style_list;
-    ric_report_style_list_l_        ric_report_style_list;
-    // ...
-  };
-
-  // member variables
-  bool                           ext = false;
-  ra_nfunction_name_s            ran_function_name;
-  e2_sm_kpm_ra_nfunction_item_s_ e2_sm_kpm_ra_nfunction_item;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // GNB-ID ::= CHOICE
 struct gnb_id_c {
   struct types_opts {
@@ -1251,12 +823,102 @@ private:
   bounded_bitstring<22, 32, false, true> c;
 };
 
-// GlobalGNB-ID ::= SEQUENCE
-struct global_gnb_id_s {
-  bool                     ext = false;
+// MeasurementLabel ::= SEQUENCE
+struct meas_label_s {
+  struct no_label_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<no_label_opts, true> no_label_e_;
+  struct sum_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<sum_opts, true> sum_e_;
+  struct pre_label_override_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<pre_label_override_opts, true> pre_label_override_e_;
+  struct start_end_ind_opts {
+    enum options { start, end, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<start_end_ind_opts, true> start_end_ind_e_;
+  struct min_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<min_opts, true> min_e_;
+  struct max_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<max_opts, true> max_e_;
+  struct avg_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<avg_opts, true> avg_e_;
+
+  // member variables
+  bool                     ext                        = false;
+  bool                     no_label_present           = false;
+  bool                     plmn_id_present            = false;
+  bool                     slice_id_present           = false;
+  bool                     five_qi_present            = false;
+  bool                     qfi_present                = false;
+  bool                     qci_present                = false;
+  bool                     qcimax_present             = false;
+  bool                     qcimin_present             = false;
+  bool                     arpmax_present             = false;
+  bool                     arpmin_present             = false;
+  bool                     bitrate_range_present      = false;
+  bool                     layer_mu_mimo_present      = false;
+  bool                     sum_present                = false;
+  bool                     dist_bin_x_present         = false;
+  bool                     dist_bin_y_present         = false;
+  bool                     dist_bin_z_present         = false;
+  bool                     pre_label_override_present = false;
+  bool                     start_end_ind_present      = false;
+  bool                     min_present                = false;
+  bool                     max_present                = false;
+  bool                     avg_present                = false;
+  no_label_e_              no_label;
   fixed_octstring<3, true> plmn_id;
-  gnb_id_c                 gnb_id;
+  s_nssai_s                slice_id;
+  uint16_t                 five_qi       = 0;
+  uint8_t                  qfi           = 0;
+  uint16_t                 qci           = 0;
+  uint16_t                 qcimax        = 0;
+  uint16_t                 qcimin        = 0;
+  uint8_t                  arpmax        = 1;
+  uint8_t                  arpmin        = 1;
+  uint32_t                 bitrate_range = 1;
+  uint32_t                 layer_mu_mimo = 1;
+  sum_e_                   sum;
+  uint32_t                 dist_bin_x = 1;
+  uint32_t                 dist_bin_y = 1;
+  uint32_t                 dist_bin_z = 1;
+  pre_label_override_e_    pre_label_override;
+  start_end_ind_e_         start_end_ind;
+  min_e_                   min;
+  max_e_                   max;
+  avg_e_                   avg;
   // ...
+  bool     ssb_idx_present             = false;
+  bool     non_go_b_bfmode_idx_present = false;
+  bool     mimo_mode_idx_present       = false;
+  uint32_t ssb_idx                     = 1;
+  uint32_t non_go_b_bfmode_idx         = 1;
+  uint8_t  mimo_mode_idx               = 1;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -1325,11 +987,1180 @@ private:
   void destroy_();
 };
 
+// TestCondInfo ::= SEQUENCE
+struct test_cond_info_s {
+  bool                   ext                = false;
+  bool                   test_expr_present  = false;
+  bool                   test_value_present = false;
+  test_cond_type_c       test_type;
+  test_cond_expression_e test_expr;
+  test_cond_value_c      test_value;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
+struct ueid_gnb_cu_cp_e1_ap_id_item_s {
+  bool     ext                   = false;
+  uint64_t gnb_cu_cp_ue_e1_ap_id = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE
+struct ueid_gnb_cu_cp_f1_ap_id_item_s {
+  bool     ext                = false;
+  uint64_t gnb_cu_ue_f1_ap_id = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// GlobalENB-ID ::= SEQUENCE
+struct global_enb_id_s {
+  bool                     ext = false;
+  fixed_octstring<3, true> plmn_id;
+  enb_id_c                 enb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// GlobalGNB-ID ::= SEQUENCE
+struct global_gnb_id_s {
+  bool                     ext = false;
+  fixed_octstring<3, true> plmn_id;
+  gnb_id_c                 gnb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // GlobalNgENB-ID ::= SEQUENCE
 struct global_ng_enb_id_s {
   bool                     ext = false;
   fixed_octstring<3, true> plmn_id;
   ng_enb_id_c              ng_enb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// LabelInfoItem ::= SEQUENCE
+struct label_info_item_s {
+  bool         ext = false;
+  meas_label_s meas_label;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// LogicalOR ::= ENUMERATED
+struct lc_or_opts {
+  enum options { true_value, /*...*/ nulltype } value;
+
+  const char* to_string() const;
+};
+typedef enumerated<lc_or_opts, true> lc_or_e;
+
+// MatchingCondItem-Choice ::= CHOICE
+struct matching_cond_item_choice_c {
+  struct types_opts {
+    enum options { meas_label, test_cond_info, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true> types;
+
+  // choice methods
+  matching_cond_item_choice_c() = default;
+  matching_cond_item_choice_c(const matching_cond_item_choice_c& other);
+  matching_cond_item_choice_c& operator=(const matching_cond_item_choice_c& other);
+  ~matching_cond_item_choice_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  meas_label_s& meas_label()
+  {
+    assert_choice_type(types::meas_label, type_, "MatchingCondItem-Choice");
+    return c.get<meas_label_s>();
+  }
+  test_cond_info_s& test_cond_info()
+  {
+    assert_choice_type(types::test_cond_info, type_, "MatchingCondItem-Choice");
+    return c.get<test_cond_info_s>();
+  }
+  const meas_label_s& meas_label() const
+  {
+    assert_choice_type(types::meas_label, type_, "MatchingCondItem-Choice");
+    return c.get<meas_label_s>();
+  }
+  const test_cond_info_s& test_cond_info() const
+  {
+    assert_choice_type(types::test_cond_info, type_, "MatchingCondItem-Choice");
+    return c.get<test_cond_info_s>();
+  }
+  meas_label_s&     set_meas_label();
+  test_cond_info_s& set_test_cond_info();
+
+private:
+  types                                           type_;
+  choice_buffer_t<meas_label_s, test_cond_info_s> c;
+
+  void destroy_();
+};
+
+// UEID-GNB-CU-CP-E1AP-ID-List ::= SEQUENCE (SIZE (1..65535)) OF UEID-GNB-CU-CP-E1AP-ID-Item
+using ueid_gnb_cu_cp_e1_ap_id_list_l = dyn_array<ueid_gnb_cu_cp_e1_ap_id_item_s>;
+
+// UEID-GNB-CU-F1AP-ID-List ::= SEQUENCE (SIZE (1..4)) OF UEID-GNB-CU-CP-F1AP-ID-Item
+using ueid_gnb_cu_f1_ap_id_list_l = dyn_array<ueid_gnb_cu_cp_f1_ap_id_item_s>;
+
+// LabelInfoList ::= SEQUENCE (SIZE (1..2147483647)) OF LabelInfoItem
+using label_info_list_l = dyn_array<label_info_item_s>;
+
+// MatchingCondItem ::= SEQUENCE
+struct matching_cond_item_s {
+  bool                        ext           = false;
+  bool                        lc_or_present = false;
+  matching_cond_item_choice_c matching_cond_choice;
+  lc_or_e                     lc_or;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-EN-GNB ::= SEQUENCE
+struct ueid_en_gnb_s {
+  bool                           ext                          = false;
+  bool                           m_enb_ue_x2ap_id_ext_present = false;
+  bool                           gnb_cu_ue_f1_ap_id_present   = false;
+  bool                           ran_ueid_present             = false;
+  uint16_t                       m_enb_ue_x2ap_id             = 0;
+  uint16_t                       m_enb_ue_x2ap_id_ext         = 0;
+  global_enb_id_s                global_enb_id;
+  uint64_t                       gnb_cu_ue_f1_ap_id = 0;
+  ueid_gnb_cu_cp_e1_ap_id_list_l gnb_cu_cp_ue_e1_ap_id_list;
+  fixed_octstring<8, true>       ran_ueid;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-ENB ::= SEQUENCE
+struct ueid_enb_s {
+  bool            ext                          = false;
+  bool            m_enb_ue_x2ap_id_present     = false;
+  bool            m_enb_ue_x2ap_id_ext_present = false;
+  bool            global_enb_id_present        = false;
+  uint64_t        mme_ue_s1ap_id               = 0;
+  gummei_s        gummei;
+  uint16_t        m_enb_ue_x2ap_id     = 0;
+  uint16_t        m_enb_ue_x2ap_id_ext = 0;
+  global_enb_id_s global_enb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-GNB ::= SEQUENCE
+struct ueid_gnb_s {
+  bool                           ext                          = false;
+  bool                           ran_ueid_present             = false;
+  bool                           m_ng_ran_ue_xn_ap_id_present = false;
+  bool                           global_gnb_id_present        = false;
+  uint64_t                       amf_ue_ngap_id               = 0;
+  guami_s                        guami;
+  ueid_gnb_cu_f1_ap_id_list_l    gnb_cu_ue_f1_ap_id_list;
+  ueid_gnb_cu_cp_e1_ap_id_list_l gnb_cu_cp_ue_e1_ap_id_list;
+  fixed_octstring<8, true>       ran_ueid;
+  uint64_t                       m_ng_ran_ue_xn_ap_id = 0;
+  global_gnb_id_s                global_gnb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-GNB-CU-UP ::= SEQUENCE
+struct ueid_gnb_cu_up_s {
+  bool                     ext                   = false;
+  bool                     ran_ueid_present      = false;
+  uint64_t                 gnb_cu_cp_ue_e1_ap_id = 0;
+  fixed_octstring<8, true> ran_ueid;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-GNB-DU ::= SEQUENCE
+struct ueid_gnb_du_s {
+  bool                     ext                = false;
+  bool                     ran_ueid_present   = false;
+  uint64_t                 gnb_cu_ue_f1_ap_id = 0;
+  fixed_octstring<8, true> ran_ueid;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-NG-ENB ::= SEQUENCE
+struct ueid_ng_enb_s {
+  bool               ext                           = false;
+  bool               ng_enb_cu_ue_w1_ap_id_present = false;
+  bool               m_ng_ran_ue_xn_ap_id_present  = false;
+  bool               global_ng_enb_id_present      = false;
+  uint64_t           amf_ue_ngap_id                = 0;
+  guami_s            guami;
+  uint64_t           ng_enb_cu_ue_w1_ap_id = 0;
+  uint64_t           m_ng_ran_ue_xn_ap_id  = 0;
+  global_ng_enb_id_s global_ng_enb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID-NG-ENB-DU ::= SEQUENCE
+struct ueid_ng_enb_du_s {
+  bool     ext                   = false;
+  uint64_t ng_enb_cu_ue_w1_ap_id = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingCondList ::= SEQUENCE (SIZE (1..32768)) OF MatchingCondItem
+using matching_cond_list_l = dyn_array<matching_cond_item_s>;
+
+// MeasurementInfoItem ::= SEQUENCE
+struct meas_info_item_s {
+  bool              ext = false;
+  meas_type_c       meas_type;
+  label_info_list_l label_info_list;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEID ::= CHOICE
+struct ueid_c {
+  struct types_opts {
+    enum options {
+      gnb_ueid,
+      gnb_du_ueid,
+      gnb_cu_up_ueid,
+      ng_enb_ueid,
+      ng_enb_du_ueid,
+      en_g_nb_ueid,
+      enb_ueid,
+      // ...
+      nulltype
+    } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true> types;
+
+  // choice methods
+  ueid_c() = default;
+  ueid_c(const ueid_c& other);
+  ueid_c& operator=(const ueid_c& other);
+  ~ueid_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  ueid_gnb_s& gnb_ueid()
+  {
+    assert_choice_type(types::gnb_ueid, type_, "UEID");
+    return c.get<ueid_gnb_s>();
+  }
+  ueid_gnb_du_s& gnb_du_ueid()
+  {
+    assert_choice_type(types::gnb_du_ueid, type_, "UEID");
+    return c.get<ueid_gnb_du_s>();
+  }
+  ueid_gnb_cu_up_s& gnb_cu_up_ueid()
+  {
+    assert_choice_type(types::gnb_cu_up_ueid, type_, "UEID");
+    return c.get<ueid_gnb_cu_up_s>();
+  }
+  ueid_ng_enb_s& ng_enb_ueid()
+  {
+    assert_choice_type(types::ng_enb_ueid, type_, "UEID");
+    return c.get<ueid_ng_enb_s>();
+  }
+  ueid_ng_enb_du_s& ng_enb_du_ueid()
+  {
+    assert_choice_type(types::ng_enb_du_ueid, type_, "UEID");
+    return c.get<ueid_ng_enb_du_s>();
+  }
+  ueid_en_gnb_s& en_g_nb_ueid()
+  {
+    assert_choice_type(types::en_g_nb_ueid, type_, "UEID");
+    return c.get<ueid_en_gnb_s>();
+  }
+  ueid_enb_s& enb_ueid()
+  {
+    assert_choice_type(types::enb_ueid, type_, "UEID");
+    return c.get<ueid_enb_s>();
+  }
+  const ueid_gnb_s& gnb_ueid() const
+  {
+    assert_choice_type(types::gnb_ueid, type_, "UEID");
+    return c.get<ueid_gnb_s>();
+  }
+  const ueid_gnb_du_s& gnb_du_ueid() const
+  {
+    assert_choice_type(types::gnb_du_ueid, type_, "UEID");
+    return c.get<ueid_gnb_du_s>();
+  }
+  const ueid_gnb_cu_up_s& gnb_cu_up_ueid() const
+  {
+    assert_choice_type(types::gnb_cu_up_ueid, type_, "UEID");
+    return c.get<ueid_gnb_cu_up_s>();
+  }
+  const ueid_ng_enb_s& ng_enb_ueid() const
+  {
+    assert_choice_type(types::ng_enb_ueid, type_, "UEID");
+    return c.get<ueid_ng_enb_s>();
+  }
+  const ueid_ng_enb_du_s& ng_enb_du_ueid() const
+  {
+    assert_choice_type(types::ng_enb_du_ueid, type_, "UEID");
+    return c.get<ueid_ng_enb_du_s>();
+  }
+  const ueid_en_gnb_s& en_g_nb_ueid() const
+  {
+    assert_choice_type(types::en_g_nb_ueid, type_, "UEID");
+    return c.get<ueid_en_gnb_s>();
+  }
+  const ueid_enb_s& enb_ueid() const
+  {
+    assert_choice_type(types::enb_ueid, type_, "UEID");
+    return c.get<ueid_enb_s>();
+  }
+  ueid_gnb_s&       set_gnb_ueid();
+  ueid_gnb_du_s&    set_gnb_du_ueid();
+  ueid_gnb_cu_up_s& set_gnb_cu_up_ueid();
+  ueid_ng_enb_s&    set_ng_enb_ueid();
+  ueid_ng_enb_du_s& set_ng_enb_du_ueid();
+  ueid_en_gnb_s&    set_en_g_nb_ueid();
+  ueid_enb_s&       set_enb_ueid();
+
+private:
+  types type_;
+  choice_buffer_t<ueid_en_gnb_s,
+                  ueid_enb_s,
+                  ueid_gnb_cu_up_s,
+                  ueid_gnb_du_s,
+                  ueid_gnb_s,
+                  ueid_ng_enb_du_s,
+                  ueid_ng_enb_s>
+      c;
+
+  void destroy_();
+};
+
+// MatchingUEidPerSubItem ::= SEQUENCE
+struct matching_ueid_per_sub_item_s {
+  bool   ext = false;
+  ueid_c ue_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingUeCondPerSubItem ::= SEQUENCE
+struct matching_ue_cond_per_sub_item_s {
+  bool             ext = false;
+  test_cond_info_s test_cond_info;
+  // ...
+  bool    lc_or_present = false;
+  lc_or_e lc_or;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementCondItem ::= SEQUENCE
+struct meas_cond_item_s {
+  bool                 ext = false;
+  meas_type_c          meas_type;
+  matching_cond_list_l matching_cond;
+  // ...
+  copy_ptr<bin_range_definition_s> bin_range_def;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementInfoList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementInfoItem
+using meas_info_list_l = dyn_array<meas_info_item_s>;
+
+// E2SM-KPM-ActionDefinition-Format1 ::= SEQUENCE
+struct e2_sm_kpm_action_definition_format1_s {
+  bool             ext                    = false;
+  bool             cell_global_id_present = false;
+  meas_info_list_l meas_info_list;
+  uint64_t         granul_period = 1;
+  cgi_c            cell_global_id;
+  // ...
+  copy_ptr<dist_meas_bin_range_list_l> dist_meas_bin_range_info;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingUEidPerSubList ::= SEQUENCE (SIZE (2..65535)) OF MatchingUEidPerSubItem
+using matching_ueid_per_sub_list_l = dyn_array<matching_ueid_per_sub_item_s>;
+
+// MatchingUeCondPerSubList ::= SEQUENCE (SIZE (1..32768)) OF MatchingUeCondPerSubItem
+using matching_ue_cond_per_sub_list_l = dyn_array<matching_ue_cond_per_sub_item_s>;
+
+// MeasurementCondList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementCondItem
+using meas_cond_list_l = dyn_array<meas_cond_item_s>;
+
+// E2SM-KPM-ActionDefinition-Format2 ::= SEQUENCE
+struct e2_sm_kpm_action_definition_format2_s {
+  bool                                  ext = false;
+  ueid_c                                ue_id;
+  e2_sm_kpm_action_definition_format1_s subscript_info;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-ActionDefinition-Format3 ::= SEQUENCE
+struct e2_sm_kpm_action_definition_format3_s {
+  bool             ext                    = false;
+  bool             cell_global_id_present = false;
+  meas_cond_list_l meas_cond_list;
+  uint64_t         granul_period = 1;
+  cgi_c            cell_global_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-ActionDefinition-Format4 ::= SEQUENCE
+struct e2_sm_kpm_action_definition_format4_s {
+  bool                                  ext = false;
+  matching_ue_cond_per_sub_list_l       matching_ue_cond_list;
+  e2_sm_kpm_action_definition_format1_s subscription_info;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-ActionDefinition-Format5 ::= SEQUENCE
+struct e2_sm_kpm_action_definition_format5_s {
+  bool                                  ext = false;
+  matching_ueid_per_sub_list_l          matching_ueid_list;
+  e2_sm_kpm_action_definition_format1_s subscription_info;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-ActionDefinition ::= SEQUENCE
+struct e2_sm_kpm_action_definition_s {
+  struct action_definition_formats_c_ {
+    struct types_opts {
+      enum options {
+        action_definition_format1,
+        action_definition_format2,
+        action_definition_format3,
+        // ...
+        action_definition_format4,
+        action_definition_format5,
+        nulltype
+      } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    typedef enumerated<types_opts, true, 2> types;
+
+    // choice methods
+    action_definition_formats_c_() = default;
+    action_definition_formats_c_(const action_definition_formats_c_& other);
+    action_definition_formats_c_& operator=(const action_definition_formats_c_& other);
+    ~action_definition_formats_c_() { destroy_(); }
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    e2_sm_kpm_action_definition_format1_s& action_definition_format1()
+    {
+      assert_choice_type(types::action_definition_format1, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format1_s>();
+    }
+    e2_sm_kpm_action_definition_format2_s& action_definition_format2()
+    {
+      assert_choice_type(types::action_definition_format2, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format2_s>();
+    }
+    e2_sm_kpm_action_definition_format3_s& action_definition_format3()
+    {
+      assert_choice_type(types::action_definition_format3, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format3_s>();
+    }
+    e2_sm_kpm_action_definition_format4_s& action_definition_format4()
+    {
+      assert_choice_type(types::action_definition_format4, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format4_s>();
+    }
+    e2_sm_kpm_action_definition_format5_s& action_definition_format5()
+    {
+      assert_choice_type(types::action_definition_format5, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format5_s>();
+    }
+    const e2_sm_kpm_action_definition_format1_s& action_definition_format1() const
+    {
+      assert_choice_type(types::action_definition_format1, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format1_s>();
+    }
+    const e2_sm_kpm_action_definition_format2_s& action_definition_format2() const
+    {
+      assert_choice_type(types::action_definition_format2, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format2_s>();
+    }
+    const e2_sm_kpm_action_definition_format3_s& action_definition_format3() const
+    {
+      assert_choice_type(types::action_definition_format3, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format3_s>();
+    }
+    const e2_sm_kpm_action_definition_format4_s& action_definition_format4() const
+    {
+      assert_choice_type(types::action_definition_format4, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format4_s>();
+    }
+    const e2_sm_kpm_action_definition_format5_s& action_definition_format5() const
+    {
+      assert_choice_type(types::action_definition_format5, type_, "actionDefinition-formats");
+      return c.get<e2_sm_kpm_action_definition_format5_s>();
+    }
+    e2_sm_kpm_action_definition_format1_s& set_action_definition_format1();
+    e2_sm_kpm_action_definition_format2_s& set_action_definition_format2();
+    e2_sm_kpm_action_definition_format3_s& set_action_definition_format3();
+    e2_sm_kpm_action_definition_format4_s& set_action_definition_format4();
+    e2_sm_kpm_action_definition_format5_s& set_action_definition_format5();
+
+  private:
+    types type_;
+    choice_buffer_t<e2_sm_kpm_action_definition_format1_s,
+                    e2_sm_kpm_action_definition_format2_s,
+                    e2_sm_kpm_action_definition_format3_s,
+                    e2_sm_kpm_action_definition_format4_s,
+                    e2_sm_kpm_action_definition_format5_s>
+        c;
+
+    void destroy_();
+  };
+
+  // member variables
+  bool                         ext            = false;
+  int64_t                      ric_style_type = 0;
+  action_definition_formats_c_ action_definition_formats;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-EventTriggerDefinition-Format1 ::= SEQUENCE
+struct e2_sm_kpm_event_trigger_definition_format1_s {
+  bool     ext           = false;
+  uint64_t report_period = 1;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-EventTriggerDefinition ::= SEQUENCE
+struct e2_sm_kpm_event_trigger_definition_s {
+  struct event_definition_formats_c_ {
+    struct types_opts {
+      enum options { event_definition_format1, /*...*/ nulltype } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    typedef enumerated<types_opts, true> types;
+
+    // choice methods
+    types       type() const { return types::event_definition_format1; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    e2_sm_kpm_event_trigger_definition_format1_s&       event_definition_format1() { return c; }
+    const e2_sm_kpm_event_trigger_definition_format1_s& event_definition_format1() const { return c; }
+
+  private:
+    e2_sm_kpm_event_trigger_definition_format1_s c;
+  };
+
+  // member variables
+  bool                        ext = false;
+  event_definition_formats_c_ event_definition_formats;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-IndicationHeader-Format1 ::= SEQUENCE
+struct e2_sm_kpm_ind_hdr_format1_s {
+  bool                                  ext                        = false;
+  bool                                  file_formatversion_present = false;
+  bool                                  sender_name_present        = false;
+  bool                                  sender_type_present        = false;
+  bool                                  vendor_name_present        = false;
+  fixed_octstring<4, true>              collet_start_time;
+  printable_string<0, 15, false, true>  file_formatversion;
+  printable_string<0, 400, false, true> sender_name;
+  printable_string<0, 8, false, true>   sender_type;
+  printable_string<0, 32, false, true>  vendor_name;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-IndicationHeader ::= SEQUENCE
+struct e2_sm_kpm_ind_hdr_s {
+  struct ind_hdr_formats_c_ {
+    struct types_opts {
+      enum options { ind_hdr_format1, /*...*/ nulltype } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    typedef enumerated<types_opts, true> types;
+
+    // choice methods
+    types       type() const { return types::ind_hdr_format1; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    e2_sm_kpm_ind_hdr_format1_s&       ind_hdr_format1() { return c; }
+    const e2_sm_kpm_ind_hdr_format1_s& ind_hdr_format1() const { return c; }
+
+  private:
+    e2_sm_kpm_ind_hdr_format1_s c;
+  };
+
+  // member variables
+  bool               ext = false;
+  ind_hdr_formats_c_ ind_hdr_formats;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementRecordItem ::= CHOICE
+struct meas_record_item_c {
+  struct types_opts {
+    enum options { integer, real, no_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<types_opts, true> types;
+
+  // choice methods
+  meas_record_item_c() = default;
+  meas_record_item_c(const meas_record_item_c& other);
+  meas_record_item_c& operator=(const meas_record_item_c& other);
+  ~meas_record_item_c() { destroy_(); }
+  void        set(types::options e = types::nulltype);
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+  // getters
+  uint64_t& integer()
+  {
+    assert_choice_type(types::integer, type_, "MeasurementRecordItem");
+    return c.get<uint64_t>();
+  }
+  real_s& real()
+  {
+    assert_choice_type(types::real, type_, "MeasurementRecordItem");
+    return c.get<real_s>();
+  }
+  const uint64_t& integer() const
+  {
+    assert_choice_type(types::integer, type_, "MeasurementRecordItem");
+    return c.get<uint64_t>();
+  }
+  const real_s& real() const
+  {
+    assert_choice_type(types::real, type_, "MeasurementRecordItem");
+    return c.get<real_s>();
+  }
+  uint64_t& set_integer();
+  real_s&   set_real();
+  void      set_no_value();
+
+private:
+  types                   type_;
+  choice_buffer_t<real_s> c;
+
+  void destroy_();
+};
+
+// MatchingUEidItem-PerGP ::= SEQUENCE
+struct matching_ueid_item_per_gp_s {
+  bool   ext = false;
+  ueid_c ue_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementRecord ::= SEQUENCE (SIZE (1..2147483647)) OF MeasurementRecordItem
+using meas_record_l = dyn_array<meas_record_item_c>;
+
+// MatchingUEidList-PerGP ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidItem-PerGP
+using matching_ueid_list_per_gp_l = dyn_array<matching_ueid_item_per_gp_s>;
+
+// MeasurementDataItem ::= SEQUENCE
+struct meas_data_item_s {
+  struct incomplete_flag_opts {
+    enum options { true_value, /*...*/ nulltype } value;
+
+    const char* to_string() const;
+  };
+  typedef enumerated<incomplete_flag_opts, true> incomplete_flag_e_;
+
+  // member variables
+  bool               ext                     = false;
+  bool               incomplete_flag_present = false;
+  meas_record_l      meas_record;
+  incomplete_flag_e_ incomplete_flag;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingUEidItem ::= SEQUENCE
+struct matching_ueid_item_s {
+  bool   ext = false;
+  ueid_c ue_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingUEidPerGP-Item ::= SEQUENCE
+struct matching_ueid_per_gp_item_s {
+  struct matched_per_gp_c_ {
+    struct no_uematched_opts {
+      enum options { true_value, /*...*/ nulltype } value;
+
+      const char* to_string() const;
+    };
+    typedef enumerated<no_uematched_opts, true> no_uematched_e_;
+    struct types_opts {
+      enum options { no_uematched, one_or_more_uematched, /*...*/ nulltype } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    typedef enumerated<types_opts, true> types;
+
+    // choice methods
+    matched_per_gp_c_() = default;
+    matched_per_gp_c_(const matched_per_gp_c_& other);
+    matched_per_gp_c_& operator=(const matched_per_gp_c_& other);
+    ~matched_per_gp_c_() { destroy_(); }
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    no_uematched_e_& no_uematched()
+    {
+      assert_choice_type(types::no_uematched, type_, "matchedPerGP");
+      return c.get<no_uematched_e_>();
+    }
+    matching_ueid_list_per_gp_l& one_or_more_uematched()
+    {
+      assert_choice_type(types::one_or_more_uematched, type_, "matchedPerGP");
+      return c.get<matching_ueid_list_per_gp_l>();
+    }
+    const no_uematched_e_& no_uematched() const
+    {
+      assert_choice_type(types::no_uematched, type_, "matchedPerGP");
+      return c.get<no_uematched_e_>();
+    }
+    const matching_ueid_list_per_gp_l& one_or_more_uematched() const
+    {
+      assert_choice_type(types::one_or_more_uematched, type_, "matchedPerGP");
+      return c.get<matching_ueid_list_per_gp_l>();
+    }
+    no_uematched_e_&             set_no_uematched();
+    matching_ueid_list_per_gp_l& set_one_or_more_uematched();
+
+  private:
+    types                                        type_;
+    choice_buffer_t<matching_ueid_list_per_gp_l> c;
+
+    void destroy_();
+  };
+
+  // member variables
+  bool              ext = false;
+  matched_per_gp_c_ matched_per_gp;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementData ::= SEQUENCE (SIZE (1..65535)) OF MeasurementDataItem
+using meas_data_l = dyn_array<meas_data_item_s>;
+
+// E2SM-KPM-IndicationMessage-Format1 ::= SEQUENCE
+struct e2_sm_kpm_ind_msg_format1_s {
+  bool             ext                   = false;
+  bool             granul_period_present = false;
+  meas_data_l      meas_data;
+  meas_info_list_l meas_info_list;
+  uint64_t         granul_period = 1;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MatchingUEidList ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidItem
+using matching_ueid_list_l = dyn_array<matching_ueid_item_s>;
+
+// MatchingUEidPerGP ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidPerGP-Item
+using matching_ueid_per_gp_l = dyn_array<matching_ueid_per_gp_item_s>;
+
+// MeasurementCondUEidItem ::= SEQUENCE
+struct meas_cond_ueid_item_s {
+  bool                 ext = false;
+  meas_type_c          meas_type;
+  matching_cond_list_l matching_cond;
+  matching_ueid_list_l matching_ueid_list;
+  // ...
+  copy_ptr<matching_ueid_per_gp_l> matching_ueid_per_gp;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// UEMeasurementReportItem ::= SEQUENCE
+struct ue_meas_report_item_s {
+  bool                        ext = false;
+  ueid_c                      ue_id;
+  e2_sm_kpm_ind_msg_format1_s meas_report;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementCondUEidList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementCondUEidItem
+using meas_cond_ueid_list_l = dyn_array<meas_cond_ueid_item_s>;
+
+// UEMeasurementReportList ::= SEQUENCE (SIZE (1..65535)) OF UEMeasurementReportItem
+using ue_meas_report_list_l = dyn_array<ue_meas_report_item_s>;
+
+// E2SM-KPM-IndicationMessage-Format2 ::= SEQUENCE
+struct e2_sm_kpm_ind_msg_format2_s {
+  bool                  ext                   = false;
+  bool                  granul_period_present = false;
+  meas_data_l           meas_data;
+  meas_cond_ueid_list_l meas_cond_ueid_list;
+  uint64_t              granul_period = 1;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-IndicationMessage-Format3 ::= SEQUENCE
+struct e2_sm_kpm_ind_msg_format3_s {
+  bool                  ext = false;
+  ue_meas_report_list_l ue_meas_report_list;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-IndicationMessage ::= SEQUENCE
+struct e2_sm_kpm_ind_msg_s {
+  struct ind_msg_formats_c_ {
+    struct types_opts {
+      enum options { ind_msg_format1, ind_msg_format2, /*...*/ ind_msg_format3, nulltype } value;
+      typedef uint8_t number_type;
+
+      const char* to_string() const;
+      uint8_t     to_number() const;
+    };
+    typedef enumerated<types_opts, true, 1> types;
+
+    // choice methods
+    ind_msg_formats_c_() = default;
+    ind_msg_formats_c_(const ind_msg_formats_c_& other);
+    ind_msg_formats_c_& operator=(const ind_msg_formats_c_& other);
+    ~ind_msg_formats_c_() { destroy_(); }
+    void        set(types::options e = types::nulltype);
+    types       type() const { return type_; }
+    SRSASN_CODE pack(bit_ref& bref) const;
+    SRSASN_CODE unpack(cbit_ref& bref);
+    void        to_json(json_writer& j) const;
+    // getters
+    e2_sm_kpm_ind_msg_format1_s& ind_msg_format1()
+    {
+      assert_choice_type(types::ind_msg_format1, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format1_s>();
+    }
+    e2_sm_kpm_ind_msg_format2_s& ind_msg_format2()
+    {
+      assert_choice_type(types::ind_msg_format2, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format2_s>();
+    }
+    e2_sm_kpm_ind_msg_format3_s& ind_msg_format3()
+    {
+      assert_choice_type(types::ind_msg_format3, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format3_s>();
+    }
+    const e2_sm_kpm_ind_msg_format1_s& ind_msg_format1() const
+    {
+      assert_choice_type(types::ind_msg_format1, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format1_s>();
+    }
+    const e2_sm_kpm_ind_msg_format2_s& ind_msg_format2() const
+    {
+      assert_choice_type(types::ind_msg_format2, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format2_s>();
+    }
+    const e2_sm_kpm_ind_msg_format3_s& ind_msg_format3() const
+    {
+      assert_choice_type(types::ind_msg_format3, type_, "indicationMessage-formats");
+      return c.get<e2_sm_kpm_ind_msg_format3_s>();
+    }
+    e2_sm_kpm_ind_msg_format1_s& set_ind_msg_format1();
+    e2_sm_kpm_ind_msg_format2_s& set_ind_msg_format2();
+    e2_sm_kpm_ind_msg_format3_s& set_ind_msg_format3();
+
+  private:
+    types                                                                                                  type_;
+    choice_buffer_t<e2_sm_kpm_ind_msg_format1_s, e2_sm_kpm_ind_msg_format2_s, e2_sm_kpm_ind_msg_format3_s> c;
+
+    void destroy_();
+  };
+
+  // member variables
+  bool               ext = false;
+  ind_msg_formats_c_ ind_msg_formats;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementInfo-Action-Item ::= SEQUENCE
+struct meas_info_action_item_s {
+  bool                                 ext             = false;
+  bool                                 meas_id_present = false;
+  printable_string<1, 150, true, true> meas_name;
+  uint32_t                             meas_id = 1;
+  // ...
+  copy_ptr<bin_range_definition_s> bin_range_def;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// MeasurementInfo-Action-List ::= SEQUENCE (SIZE (1..65535)) OF MeasurementInfo-Action-Item
+using meas_info_action_list_l = dyn_array<meas_info_action_item_s>;
+
+// RANfunction-Name ::= SEQUENCE
+struct ra_nfunction_name_s {
+  bool                                  ext                           = false;
+  bool                                  ran_function_instance_present = false;
+  printable_string<1, 150, true, true>  ran_function_short_name;
+  printable_string<1, 1000, true, true> ran_function_e2_sm_oid;
+  printable_string<1, 150, true, true>  ran_function_description;
+  int64_t                               ran_function_instance = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// RIC-EventTriggerStyle-Item ::= SEQUENCE
+struct ric_event_trigger_style_item_s {
+  bool                                 ext                          = false;
+  int64_t                              ric_event_trigger_style_type = 0;
+  printable_string<1, 150, true, true> ric_event_trigger_style_name;
+  int64_t                              ric_event_trigger_format_type = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// RIC-ReportStyle-Item ::= SEQUENCE
+struct ric_report_style_item_s {
+  bool                                 ext                   = false;
+  int64_t                              ric_report_style_type = 0;
+  printable_string<1, 150, true, true> ric_report_style_name;
+  int64_t                              ric_action_format_type = 0;
+  meas_info_action_list_l              meas_info_action_list;
+  int64_t                              ric_ind_hdr_format_type = 0;
+  int64_t                              ric_ind_msg_format_type = 0;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
+// E2SM-KPM-RANfunction-Description ::= SEQUENCE
+struct e2_sm_kpm_ra_nfunction_description_s {
+  using ric_event_trigger_style_list_l_ = dyn_array<ric_event_trigger_style_item_s>;
+  using ric_report_style_list_l_        = dyn_array<ric_report_style_item_s>;
+
+  // member variables
+  bool                            ext = false;
+  ra_nfunction_name_s             ran_function_name;
+  ric_event_trigger_style_list_l_ ric_event_trigger_style_list;
+  ric_report_style_list_l_        ric_report_style_list;
   // ...
 
   // sequence methods
@@ -1408,6 +2239,19 @@ struct en_gnb_id_c {
 
 private:
   bounded_bitstring<22, 32, false, true> c;
+};
+
+// GlobalenGNB-ID ::= SEQUENCE
+struct globalen_gnb_id_s {
+  bool                     ext = false;
+  fixed_octstring<3, true> plmn_id;
+  en_gnb_id_c              en_g_nb_id;
+  // ...
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
 };
 
 // GroupID ::= CHOICE
@@ -1887,20 +2731,6 @@ struct rrc_msg_id_s {
   void        to_json(json_writer& j) const;
 };
 
-// S-NSSAI ::= SEQUENCE
-struct s_nssai_s {
-  bool                     ext        = false;
-  bool                     sd_present = false;
-  fixed_octstring<1, true> sst;
-  fixed_octstring<3, true> sd;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // ServingCell-ARFCN ::= CHOICE
 struct serving_cell_arfcn_c {
   struct types_opts {
@@ -1997,277 +2827,6 @@ struct serving_cell_pci_c {
 private:
   types               type_;
   pod_choice_buffer_t c;
-
-  void destroy_();
-};
-
-// UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
-struct ueid_gnb_cu_cp_e1_ap_id_item_s {
-  bool     ext                   = false;
-  uint64_t gnb_cu_cp_ue_e1_ap_id = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE
-struct ueid_gnb_cu_cp_f1_ap_id_item_s {
-  bool     ext                = false;
-  uint64_t gnb_cu_ue_f1_ap_id = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-GNB-CU-CP-E1AP-ID-List ::= SEQUENCE (SIZE (1..65535)) OF UEID-GNB-CU-CP-E1AP-ID-Item
-using ueid_gnb_cu_cp_e1_ap_id_list_l = dyn_array<ueid_gnb_cu_cp_e1_ap_id_item_s>;
-
-// UEID-GNB-CU-F1AP-ID-List ::= SEQUENCE (SIZE (1..4)) OF UEID-GNB-CU-CP-F1AP-ID-Item
-using ueid_gnb_cu_f1_ap_id_list_l = dyn_array<ueid_gnb_cu_cp_f1_ap_id_item_s>;
-
-// UEID-EN-GNB ::= SEQUENCE
-struct ueid_en_gnb_s {
-  bool                           ext                          = false;
-  bool                           m_enb_ue_x2ap_id_ext_present = false;
-  bool                           gnb_cu_ue_f1_ap_id_present   = false;
-  bool                           ran_ueid_present             = false;
-  uint16_t                       m_enb_ue_x2ap_id             = 0;
-  uint16_t                       m_enb_ue_x2ap_id_ext         = 0;
-  global_enb_id_s                global_enb_id;
-  uint64_t                       gnb_cu_ue_f1_ap_id = 0;
-  ueid_gnb_cu_cp_e1_ap_id_list_l gnb_cu_cp_ue_e1_ap_id_list;
-  fixed_octstring<8, true>       ran_ueid;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-ENB ::= SEQUENCE
-struct ueid_enb_s {
-  bool            ext                          = false;
-  bool            m_enb_ue_x2ap_id_present     = false;
-  bool            m_enb_ue_x2ap_id_ext_present = false;
-  bool            global_enb_id_present        = false;
-  uint64_t        mme_ue_s1ap_id               = 0;
-  gummei_s        gummei;
-  uint16_t        m_enb_ue_x2ap_id     = 0;
-  uint16_t        m_enb_ue_x2ap_id_ext = 0;
-  global_enb_id_s global_enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-GNB ::= SEQUENCE
-struct ueid_gnb_s {
-  bool                           ext                          = false;
-  bool                           ran_ueid_present             = false;
-  bool                           m_ng_ran_ue_xn_ap_id_present = false;
-  bool                           global_gnb_id_present        = false;
-  uint64_t                       amf_ue_ngap_id               = 0;
-  guami_s                        guami;
-  ueid_gnb_cu_f1_ap_id_list_l    gnb_cu_ue_f1_ap_id_list;
-  ueid_gnb_cu_cp_e1_ap_id_list_l gnb_cu_cp_ue_e1_ap_id_list;
-  fixed_octstring<8, true>       ran_ueid;
-  uint64_t                       m_ng_ran_ue_xn_ap_id = 0;
-  global_gnb_id_s                global_gnb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-GNB-CU-UP ::= SEQUENCE
-struct ueid_gnb_cu_up_s {
-  bool                     ext                   = false;
-  bool                     ran_ueid_present      = false;
-  uint64_t                 gnb_cu_cp_ue_e1_ap_id = 0;
-  fixed_octstring<8, true> ran_ueid;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-GNB-DU ::= SEQUENCE
-struct ueid_gnb_du_s {
-  bool                     ext                = false;
-  bool                     ran_ueid_present   = false;
-  uint64_t                 gnb_cu_ue_f1_ap_id = 0;
-  fixed_octstring<8, true> ran_ueid;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-NG-ENB ::= SEQUENCE
-struct ueid_ng_enb_s {
-  bool               ext                           = false;
-  bool               ng_enb_cu_ue_w1_ap_id_present = false;
-  bool               m_ng_ran_ue_xn_ap_id_present  = false;
-  bool               global_ng_enb_id_present      = false;
-  uint64_t           amf_ue_ngap_id                = 0;
-  guami_s            guami;
-  uint64_t           ng_enb_cu_ue_w1_ap_id = 0;
-  uint64_t           m_ng_ran_ue_xn_ap_id  = 0;
-  global_ng_enb_id_s global_ng_enb_id;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID-NG-ENB-DU ::= SEQUENCE
-struct ueid_ng_enb_du_s {
-  bool     ext                   = false;
-  uint64_t ng_enb_cu_ue_w1_ap_id = 0;
-  // ...
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
-// UEID ::= CHOICE
-struct ueid_c {
-  struct types_opts {
-    enum options {
-      gnb_ueid,
-      gnb_du_ueid,
-      gnb_cu_up_ueid,
-      ng_enb_ueid,
-      ng_enb_du_ueid,
-      en_g_nb_ueid,
-      enb_ueid,
-      // ...
-      nulltype
-    } value;
-
-    const char* to_string() const;
-  };
-  typedef enumerated<types_opts, true> types;
-
-  // choice methods
-  ueid_c() = default;
-  ueid_c(const ueid_c& other);
-  ueid_c& operator=(const ueid_c& other);
-  ~ueid_c() { destroy_(); }
-  void        set(types::options e = types::nulltype);
-  types       type() const { return type_; }
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-  // getters
-  ueid_gnb_s& gnb_ueid()
-  {
-    assert_choice_type(types::gnb_ueid, type_, "UEID");
-    return c.get<ueid_gnb_s>();
-  }
-  ueid_gnb_du_s& gnb_du_ueid()
-  {
-    assert_choice_type(types::gnb_du_ueid, type_, "UEID");
-    return c.get<ueid_gnb_du_s>();
-  }
-  ueid_gnb_cu_up_s& gnb_cu_up_ueid()
-  {
-    assert_choice_type(types::gnb_cu_up_ueid, type_, "UEID");
-    return c.get<ueid_gnb_cu_up_s>();
-  }
-  ueid_ng_enb_s& ng_enb_ueid()
-  {
-    assert_choice_type(types::ng_enb_ueid, type_, "UEID");
-    return c.get<ueid_ng_enb_s>();
-  }
-  ueid_ng_enb_du_s& ng_enb_du_ueid()
-  {
-    assert_choice_type(types::ng_enb_du_ueid, type_, "UEID");
-    return c.get<ueid_ng_enb_du_s>();
-  }
-  ueid_en_gnb_s& en_g_nb_ueid()
-  {
-    assert_choice_type(types::en_g_nb_ueid, type_, "UEID");
-    return c.get<ueid_en_gnb_s>();
-  }
-  ueid_enb_s& enb_ueid()
-  {
-    assert_choice_type(types::enb_ueid, type_, "UEID");
-    return c.get<ueid_enb_s>();
-  }
-  const ueid_gnb_s& gnb_ueid() const
-  {
-    assert_choice_type(types::gnb_ueid, type_, "UEID");
-    return c.get<ueid_gnb_s>();
-  }
-  const ueid_gnb_du_s& gnb_du_ueid() const
-  {
-    assert_choice_type(types::gnb_du_ueid, type_, "UEID");
-    return c.get<ueid_gnb_du_s>();
-  }
-  const ueid_gnb_cu_up_s& gnb_cu_up_ueid() const
-  {
-    assert_choice_type(types::gnb_cu_up_ueid, type_, "UEID");
-    return c.get<ueid_gnb_cu_up_s>();
-  }
-  const ueid_ng_enb_s& ng_enb_ueid() const
-  {
-    assert_choice_type(types::ng_enb_ueid, type_, "UEID");
-    return c.get<ueid_ng_enb_s>();
-  }
-  const ueid_ng_enb_du_s& ng_enb_du_ueid() const
-  {
-    assert_choice_type(types::ng_enb_du_ueid, type_, "UEID");
-    return c.get<ueid_ng_enb_du_s>();
-  }
-  const ueid_en_gnb_s& en_g_nb_ueid() const
-  {
-    assert_choice_type(types::en_g_nb_ueid, type_, "UEID");
-    return c.get<ueid_en_gnb_s>();
-  }
-  const ueid_enb_s& enb_ueid() const
-  {
-    assert_choice_type(types::enb_ueid, type_, "UEID");
-    return c.get<ueid_enb_s>();
-  }
-  ueid_gnb_s&       set_gnb_ueid();
-  ueid_gnb_du_s&    set_gnb_du_ueid();
-  ueid_gnb_cu_up_s& set_gnb_cu_up_ueid();
-  ueid_ng_enb_s&    set_ng_enb_ueid();
-  ueid_ng_enb_du_s& set_ng_enb_du_ueid();
-  ueid_en_gnb_s&    set_en_g_nb_ueid();
-  ueid_enb_s&       set_enb_ueid();
-
-private:
-  types type_;
-  choice_buffer_t<ueid_en_gnb_s,
-                  ueid_enb_s,
-                  ueid_gnb_cu_up_s,
-                  ueid_gnb_du_s,
-                  ueid_gnb_s,
-                  ueid_ng_enb_du_s,
-                  ueid_ng_enb_s>
-      c;
 
   void destroy_();
 };

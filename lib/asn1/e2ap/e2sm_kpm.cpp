@@ -18,6 +18,227 @@ using namespace asn1::e2sm_kpm;
  *                                Struct Methods
  ******************************************************************************/
 
+// BinRangeValue ::= CHOICE
+void bin_range_value_c::destroy_()
+{
+  switch (type_) {
+    case types::value_real:
+      c.destroy<real_s>();
+      break;
+    default:
+      break;
+  }
+}
+void bin_range_value_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::value_int:
+      break;
+    case types::value_real:
+      c.init<real_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+  }
+}
+bin_range_value_c::bin_range_value_c(const bin_range_value_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::value_int:
+      c.init(other.c.get<int64_t>());
+      break;
+    case types::value_real:
+      c.init(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+  }
+}
+bin_range_value_c& bin_range_value_c::operator=(const bin_range_value_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::value_int:
+      c.set(other.c.get<int64_t>());
+      break;
+    case types::value_real:
+      c.set(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+  }
+
+  return *this;
+}
+int64_t& bin_range_value_c::set_value_int()
+{
+  set(types::value_int);
+  return c.get<int64_t>();
+}
+real_s& bin_range_value_c::set_value_real()
+{
+  set(types::value_real);
+  return c.get<real_s>();
+}
+void bin_range_value_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::value_int:
+      j.write_int("valueInt", c.get<int64_t>());
+      break;
+    case types::value_real:
+      j.write_fieldname("valueReal");
+      c.get<real_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE bin_range_value_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
+      break;
+    case types::value_real:
+      HANDLE_CODE(c.get<real_s>().pack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE bin_range_value_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
+      break;
+    case types::value_real:
+      HANDLE_CODE(c.get<real_s>().unpack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "bin_range_value_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* bin_range_value_c::types_opts::to_string() const
+{
+  static const char* names[] = {"valueInt", "valueReal"};
+  return convert_enum_idx(names, 2, value, "bin_range_value_c::types");
+}
+
+// BinRangeItem ::= SEQUENCE
+SRSASN_CODE bin_range_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, bin_idx, (uint32_t)1u, (uint32_t)65535u, true, true));
+  HANDLE_CODE(start_value.pack(bref));
+  HANDLE_CODE(end_value.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE bin_range_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(bin_idx, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  HANDLE_CODE(start_value.unpack(bref));
+  HANDLE_CODE(end_value.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void bin_range_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("binIndex", bin_idx);
+  j.write_fieldname("startValue");
+  start_value.to_json(j);
+  j.write_fieldname("endValue");
+  end_value.to_json(j);
+  j.end_obj();
+}
+
+// BinRangeDefinition ::= SEQUENCE
+SRSASN_CODE bin_range_definition_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(bin_range_list_y.size() > 0, 1));
+  HANDLE_CODE(bref.pack(bin_range_list_z.size() > 0, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, bin_range_list_x, 1, 65535, true));
+  if (bin_range_list_y.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, bin_range_list_y, 1, 65535, true));
+  }
+  if (bin_range_list_z.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, bin_range_list_z, 1, 65535, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE bin_range_definition_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  bool bin_range_list_y_present;
+  HANDLE_CODE(bref.unpack(bin_range_list_y_present, 1));
+  bool bin_range_list_z_present;
+  HANDLE_CODE(bref.unpack(bin_range_list_z_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(bin_range_list_x, bref, 1, 65535, true));
+  if (bin_range_list_y_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(bin_range_list_y, bref, 1, 65535, true));
+  }
+  if (bin_range_list_z_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(bin_range_list_z, bref, 1, 65535, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void bin_range_definition_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("binRangeListX");
+  for (const auto& e1 : bin_range_list_x) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (bin_range_list_y.size() > 0) {
+    j.start_array("binRangeListY");
+    for (const auto& e1 : bin_range_list_y) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (bin_range_list_z.size() > 0) {
+    j.start_array("binRangeListZ");
+    for (const auto& e1 : bin_range_list_z) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  j.end_obj();
+}
+
 // EUTRA-CGI ::= SEQUENCE
 SRSASN_CODE eutra_cgi_s::pack(bit_ref& bref) const
 {
@@ -202,586 +423,6 @@ const char* cgi_c::types_opts::to_string() const
 {
   static const char* names[] = {"nR-CGI", "eUTRA-CGI"};
   return convert_enum_idx(names, 2, value, "cgi_c::types");
-}
-
-// FQIPERSlicesPerPlmnListItem ::= SEQUENCE
-SRSASN_CODE fqiper_slices_per_plmn_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(pdcp_bytes_dl_present, 1));
-  HANDLE_CODE(bref.pack(pdcp_bytes_ul_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (pdcp_bytes_dl_present) {
-    HANDLE_CODE(pack_integer(bref, pdcp_bytes_dl, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-  if (pdcp_bytes_ul_present) {
-    HANDLE_CODE(pack_integer(bref, pdcp_bytes_ul, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE fqiper_slices_per_plmn_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(pdcp_bytes_dl_present, 1));
-  HANDLE_CODE(bref.unpack(pdcp_bytes_ul_present, 1));
-
-  HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (pdcp_bytes_dl_present) {
-    HANDLE_CODE(unpack_integer(pdcp_bytes_dl, bref, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-  if (pdcp_bytes_ul_present) {
-    HANDLE_CODE(unpack_integer(pdcp_bytes_ul, bref, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void fqiper_slices_per_plmn_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("fiveQI", five_qi);
-  if (pdcp_bytes_dl_present) {
-    j.write_int("pDCPBytesDL", pdcp_bytes_dl);
-  }
-  if (pdcp_bytes_ul_present) {
-    j.write_int("pDCPBytesUL", pdcp_bytes_ul);
-  }
-  j.end_obj();
-}
-
-// SNSSAI ::= SEQUENCE
-SRSASN_CODE snssai_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(sd_present, 1));
-
-  HANDLE_CODE(sst.pack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE snssai_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(sd_present, 1));
-
-  HANDLE_CODE(sst.unpack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void snssai_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("sST", sst.to_string());
-  if (sd_present) {
-    j.write_str("sD", sd.to_string());
-  }
-  j.end_obj();
-}
-
-// PerQCIReportListItemFormat ::= SEQUENCE
-SRSASN_CODE per_qci_report_list_item_format_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(pdcp_bytes_dl_present, 1));
-  HANDLE_CODE(bref.pack(pdcp_bytes_ul_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, qci, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (pdcp_bytes_dl_present) {
-    HANDLE_CODE(pack_integer(bref, pdcp_bytes_dl, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-  if (pdcp_bytes_ul_present) {
-    HANDLE_CODE(pack_integer(bref, pdcp_bytes_ul, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE per_qci_report_list_item_format_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(pdcp_bytes_dl_present, 1));
-  HANDLE_CODE(bref.unpack(pdcp_bytes_ul_present, 1));
-
-  HANDLE_CODE(unpack_integer(qci, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (pdcp_bytes_dl_present) {
-    HANDLE_CODE(unpack_integer(pdcp_bytes_dl, bref, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-  if (pdcp_bytes_ul_present) {
-    HANDLE_CODE(unpack_integer(pdcp_bytes_ul, bref, (uint64_t)0u, (uint64_t)10000000000u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void per_qci_report_list_item_format_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("qci", qci);
-  if (pdcp_bytes_dl_present) {
-    j.write_int("pDCPBytesDL", pdcp_bytes_dl);
-  }
-  if (pdcp_bytes_ul_present) {
-    j.write_int("pDCPBytesUL", pdcp_bytes_ul);
-  }
-  j.end_obj();
-}
-
-// SliceToReportListItem ::= SEQUENCE
-SRSASN_CODE slice_to_report_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(slice_id.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, fqiper_slices_per_plmn_list, 1, 64, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE slice_to_report_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(slice_id.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(fqiper_slices_per_plmn_list, bref, 1, 64, true));
-
-  return SRSASN_SUCCESS;
-}
-void slice_to_report_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("sliceID");
-  slice_id.to_json(j);
-  j.start_array("fQIPERSlicesPerPlmnList");
-  for (const auto& e1 : fqiper_slices_per_plmn_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// EPC-CUUP-PM-Format ::= SEQUENCE
-SRSASN_CODE epc_cuup_pm_format_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, per_qci_report_list, 1, 256, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE epc_cuup_pm_format_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(per_qci_report_list, bref, 1, 256, true));
-
-  return SRSASN_SUCCESS;
-}
-void epc_cuup_pm_format_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("perQCIReportList");
-  for (const auto& e1 : per_qci_report_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// FGC-CUUP-PM-Format ::= SEQUENCE
-SRSASN_CODE fgc_cuup_pm_format_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, slice_to_report_list, 1, 1024, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE fgc_cuup_pm_format_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(slice_to_report_list, bref, 1, 1024, true));
-
-  return SRSASN_SUCCESS;
-}
-void fgc_cuup_pm_format_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("sliceToReportList");
-  for (const auto& e1 : slice_to_report_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// PlmnID-List ::= SEQUENCE
-SRSASN_CODE plmn_id_list_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(cu_up_pm_minus5_gc_present, 1));
-  HANDLE_CODE(bref.pack(cu_up_pm_epc_present, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  if (cu_up_pm_minus5_gc_present) {
-    HANDLE_CODE(cu_up_pm_minus5_gc.pack(bref));
-  }
-  if (cu_up_pm_epc_present) {
-    HANDLE_CODE(cu_up_pm_epc.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE plmn_id_list_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(cu_up_pm_minus5_gc_present, 1));
-  HANDLE_CODE(bref.unpack(cu_up_pm_epc_present, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  if (cu_up_pm_minus5_gc_present) {
-    HANDLE_CODE(cu_up_pm_minus5_gc.unpack(bref));
-  }
-  if (cu_up_pm_epc_present) {
-    HANDLE_CODE(cu_up_pm_epc.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void plmn_id_list_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  if (cu_up_pm_minus5_gc_present) {
-    j.write_fieldname("cu-UP-PM-5GC");
-    cu_up_pm_minus5_gc.to_json(j);
-  }
-  if (cu_up_pm_epc_present) {
-    j.write_fieldname("cu-UP-PM-EPC");
-    cu_up_pm_epc.to_json(j);
-  }
-  j.end_obj();
-}
-
-// CUUPMeasurement-Container ::= SEQUENCE
-SRSASN_CODE cuup_meas_container_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, plmn_list, 1, 12, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE cuup_meas_container_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(plmn_list, bref, 1, 12, true));
-
-  return SRSASN_SUCCESS;
-}
-void cuup_meas_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("plmnList");
-  for (const auto& e1 : plmn_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// FQIPERSlicesPerPlmnPerCellListItem ::= SEQUENCE
-SRSASN_CODE fqiper_slices_per_plmn_per_cell_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(dl_prbusage_present, 1));
-  HANDLE_CODE(bref.pack(ul_prbusage_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (dl_prbusage_present) {
-    HANDLE_CODE(pack_integer(bref, dl_prbusage, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_prbusage_present) {
-    HANDLE_CODE(pack_integer(bref, ul_prbusage, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE fqiper_slices_per_plmn_per_cell_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(dl_prbusage_present, 1));
-  HANDLE_CODE(bref.unpack(ul_prbusage_present, 1));
-
-  HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (dl_prbusage_present) {
-    HANDLE_CODE(unpack_integer(dl_prbusage, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_prbusage_present) {
-    HANDLE_CODE(unpack_integer(ul_prbusage, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void fqiper_slices_per_plmn_per_cell_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("fiveQI", five_qi);
-  if (dl_prbusage_present) {
-    j.write_int("dl-PRBUsage", dl_prbusage);
-  }
-  if (ul_prbusage_present) {
-    j.write_int("ul-PRBUsage", ul_prbusage);
-  }
-  j.end_obj();
-}
-
-// PerQCIReportListItem ::= SEQUENCE
-SRSASN_CODE per_qci_report_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(dl_prbusage_present, 1));
-  HANDLE_CODE(bref.pack(ul_prbusage_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, qci, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (dl_prbusage_present) {
-    HANDLE_CODE(pack_integer(bref, dl_prbusage, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_prbusage_present) {
-    HANDLE_CODE(pack_integer(bref, ul_prbusage, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE per_qci_report_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(dl_prbusage_present, 1));
-  HANDLE_CODE(bref.unpack(ul_prbusage_present, 1));
-
-  HANDLE_CODE(unpack_integer(qci, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  if (dl_prbusage_present) {
-    HANDLE_CODE(unpack_integer(dl_prbusage, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_prbusage_present) {
-    HANDLE_CODE(unpack_integer(ul_prbusage, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void per_qci_report_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("qci", qci);
-  if (dl_prbusage_present) {
-    j.write_int("dl-PRBUsage", dl_prbusage);
-  }
-  if (ul_prbusage_present) {
-    j.write_int("ul-PRBUsage", ul_prbusage);
-  }
-  j.end_obj();
-}
-
-// SlicePerPlmnPerCellListItem ::= SEQUENCE
-SRSASN_CODE slice_per_plmn_per_cell_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(slice_id.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, fqiper_slices_per_plmn_per_cell_list, 1, 64, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE slice_per_plmn_per_cell_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(slice_id.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(fqiper_slices_per_plmn_per_cell_list, bref, 1, 64, true));
-
-  return SRSASN_SUCCESS;
-}
-void slice_per_plmn_per_cell_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("sliceID");
-  slice_id.to_json(j);
-  j.start_array("fQIPERSlicesPerPlmnPerCellList");
-  for (const auto& e1 : fqiper_slices_per_plmn_per_cell_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// EPC-DU-PM-Container ::= SEQUENCE
-SRSASN_CODE epc_du_pm_container_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, per_qci_report_list, 1, 256, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE epc_du_pm_container_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(per_qci_report_list, bref, 1, 256, true));
-
-  return SRSASN_SUCCESS;
-}
-void epc_du_pm_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("perQCIReportList");
-  for (const auto& e1 : per_qci_report_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// FGC-DU-PM-Container ::= SEQUENCE
-SRSASN_CODE fgc_du_pm_container_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, slice_per_plmn_per_cell_list, 1, 1024, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE fgc_du_pm_container_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(slice_per_plmn_per_cell_list, bref, 1, 1024, true));
-
-  return SRSASN_SUCCESS;
-}
-void fgc_du_pm_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("slicePerPlmnPerCellList");
-  for (const auto& e1 : slice_per_plmn_per_cell_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// NRCGI ::= SEQUENCE
-SRSASN_CODE nrcgi_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(nrcell_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE nrcgi_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(nrcell_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void nrcgi_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  j.write_str("nRCellIdentity", nrcell_id.to_string());
-  j.end_obj();
-}
-
-// ServedPlmnPerCellListItem ::= SEQUENCE
-SRSASN_CODE served_plmn_per_cell_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(du_pm_minus5_gc_present, 1));
-  HANDLE_CODE(bref.pack(du_pm_epc_present, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  if (du_pm_minus5_gc_present) {
-    HANDLE_CODE(du_pm_minus5_gc.pack(bref));
-  }
-  if (du_pm_epc_present) {
-    HANDLE_CODE(du_pm_epc.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE served_plmn_per_cell_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(du_pm_minus5_gc_present, 1));
-  HANDLE_CODE(bref.unpack(du_pm_epc_present, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  if (du_pm_minus5_gc_present) {
-    HANDLE_CODE(du_pm_minus5_gc.unpack(bref));
-  }
-  if (du_pm_epc_present) {
-    HANDLE_CODE(du_pm_epc.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void served_plmn_per_cell_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  if (du_pm_minus5_gc_present) {
-    j.write_fieldname("du-PM-5GC");
-    du_pm_minus5_gc.to_json(j);
-  }
-  if (du_pm_epc_present) {
-    j.write_fieldname("du-PM-EPC");
-    du_pm_epc.to_json(j);
-  }
-  j.end_obj();
-}
-
-// CellResourceReportListItem ::= SEQUENCE
-SRSASN_CODE cell_res_report_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(dl_totalof_available_prbs_present, 1));
-  HANDLE_CODE(bref.pack(ul_totalof_available_prbs_present, 1));
-
-  HANDLE_CODE(nrcgi.pack(bref));
-  if (dl_totalof_available_prbs_present) {
-    HANDLE_CODE(pack_integer(bref, dl_totalof_available_prbs, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_totalof_available_prbs_present) {
-    HANDLE_CODE(pack_integer(bref, ul_totalof_available_prbs, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  HANDLE_CODE(pack_dyn_seq_of(bref, served_plmn_per_cell_list, 1, 12, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE cell_res_report_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(dl_totalof_available_prbs_present, 1));
-  HANDLE_CODE(bref.unpack(ul_totalof_available_prbs_present, 1));
-
-  HANDLE_CODE(nrcgi.unpack(bref));
-  if (dl_totalof_available_prbs_present) {
-    HANDLE_CODE(unpack_integer(dl_totalof_available_prbs, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  if (ul_totalof_available_prbs_present) {
-    HANDLE_CODE(unpack_integer(ul_totalof_available_prbs, bref, (uint8_t)0u, (uint8_t)100u, false, true));
-  }
-  HANDLE_CODE(unpack_dyn_seq_of(served_plmn_per_cell_list, bref, 1, 12, true));
-
-  return SRSASN_SUCCESS;
-}
-void cell_res_report_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("nRCGI");
-  nrcgi.to_json(j);
-  if (dl_totalof_available_prbs_present) {
-    j.write_int("dl-TotalofAvailablePRBs", dl_totalof_available_prbs);
-  }
-  if (ul_totalof_available_prbs_present) {
-    j.write_int("ul-TotalofAvailablePRBs", ul_totalof_available_prbs);
-  }
-  j.start_array("servedPlmnPerCellList");
-  for (const auto& e1 : served_plmn_per_cell_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
 }
 
 // GUAMI ::= SEQUENCE
@@ -984,137 +625,838 @@ uint8_t core_cpid_c::types_opts::to_number() const
   return map_enum_number(numbers, 1, value, "core_cpid_c::types");
 }
 
-// E2SM-KPM-ActionDefinition ::= SEQUENCE
-SRSASN_CODE e2_sm_kpm_action_definition_s::pack(bit_ref& bref) const
+// MeasurementType ::= CHOICE
+void meas_type_c::destroy_()
 {
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_style_type, false, true));
-
-  return SRSASN_SUCCESS;
+  switch (type_) {
+    case types::meas_name:
+      c.destroy<printable_string<1, 150, true, true>>();
+      break;
+    default:
+      break;
+  }
 }
-SRSASN_CODE e2_sm_kpm_action_definition_s::unpack(cbit_ref& bref)
+void meas_type_c::set(types::options e)
 {
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_unconstrained_integer(ric_style_type, bref, false, true));
-
-  return SRSASN_SUCCESS;
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::meas_name:
+      c.init<printable_string<1, 150, true, true>>();
+      break;
+    case types::meas_id:
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
+  }
 }
-void e2_sm_kpm_action_definition_s::to_json(json_writer& j) const
+meas_type_c::meas_type_c(const meas_type_c& other)
 {
-  j.start_obj();
-  j.write_int("ric-Style-Type", ric_style_type);
-  j.end_obj();
+  type_ = other.type();
+  switch (type_) {
+    case types::meas_name:
+      c.init(other.c.get<printable_string<1, 150, true, true>>());
+      break;
+    case types::meas_id:
+      c.init(other.c.get<uint32_t>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
+  }
 }
-
-// RT-Period-IE ::= ENUMERATED
-const char* rt_period_ie_opts::to_string() const
+meas_type_c& meas_type_c::operator=(const meas_type_c& other)
 {
-  static const char* names[] = {"ms10",   "ms20",   "ms32",   "ms40",   "ms60",   "ms64",   "ms70",
-                                "ms80",   "ms128",  "ms160",  "ms256",  "ms320",  "ms512",  "ms640",
-                                "ms1024", "ms1280", "ms2048", "ms2560", "ms5120", "ms10240"};
-  return convert_enum_idx(names, 20, value, "rt_period_ie_e");
-}
-uint16_t rt_period_ie_opts::to_number() const
-{
-  static const uint16_t numbers[] = {10,  20,  32,  40,  60,   64,   70,   80,   128,  160,
-                                     256, 320, 512, 640, 1024, 1280, 2048, 2560, 5120, 10240};
-  return map_enum_number(numbers, 20, value, "rt_period_ie_e");
-}
-
-// Trigger-ConditionIE-Item ::= SEQUENCE
-SRSASN_CODE trigger_condition_ie_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(report_period_ie.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE trigger_condition_ie_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(report_period_ie.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void trigger_condition_ie_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("report-Period-IE", report_period_ie.to_string());
-  j.end_obj();
-}
-
-// E2SM-KPM-EventTriggerDefinition-Format1 ::= SEQUENCE
-SRSASN_CODE e2_sm_kpm_event_trigger_definition_format1_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(policy_test_list.size() > 0, 1));
-
-  if (policy_test_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, policy_test_list, 1, 15, true));
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::meas_name:
+      c.set(other.c.get<printable_string<1, 150, true, true>>());
+      break;
+    case types::meas_id:
+      c.set(other.c.get<uint32_t>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
   }
 
-  return SRSASN_SUCCESS;
+  return *this;
 }
-SRSASN_CODE e2_sm_kpm_event_trigger_definition_format1_s::unpack(cbit_ref& bref)
+printable_string<1, 150, true, true>& meas_type_c::set_meas_name()
 {
-  bref.unpack(ext, 1);
-  bool policy_test_list_present;
-  HANDLE_CODE(bref.unpack(policy_test_list_present, 1));
-
-  if (policy_test_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(policy_test_list, bref, 1, 15, true));
-  }
-
-  return SRSASN_SUCCESS;
+  set(types::meas_name);
+  return c.get<printable_string<1, 150, true, true>>();
 }
-void e2_sm_kpm_event_trigger_definition_format1_s::to_json(json_writer& j) const
+uint32_t& meas_type_c::set_meas_id()
+{
+  set(types::meas_id);
+  return c.get<uint32_t>();
+}
+void meas_type_c::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (policy_test_list.size() > 0) {
-    j.start_array("policyTest-List");
-    for (const auto& e1 : policy_test_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
+  switch (type_) {
+    case types::meas_name:
+      j.write_str("measName", c.get<printable_string<1, 150, true, true>>().to_string());
+      break;
+    case types::meas_id:
+      j.write_int("measID", c.get<uint32_t>());
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
   }
   j.end_obj();
 }
-
-// E2SM-KPM-EventTriggerDefinition ::= CHOICE
-void e2_sm_kpm_event_trigger_definition_c::to_json(json_writer& j) const
+SRSASN_CODE meas_type_c::pack(bit_ref& bref) const
 {
-  j.start_obj();
-  j.write_fieldname("eventDefinition-Format1");
-  c.to_json(j);
-  j.end_obj();
-}
-SRSASN_CODE e2_sm_kpm_event_trigger_definition_c::pack(bit_ref& bref) const
-{
-  pack_enum(bref, type());
-  HANDLE_CODE(c.pack(bref));
+  type_.pack(bref);
+  switch (type_) {
+    case types::meas_name:
+      HANDLE_CODE((c.get<printable_string<1, 150, true, true>>().pack(bref)));
+      break;
+    case types::meas_id:
+      HANDLE_CODE(pack_integer(bref, c.get<uint32_t>(), (uint32_t)1u, (uint32_t)65536u, true, true));
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE e2_sm_kpm_event_trigger_definition_c::unpack(cbit_ref& bref)
+SRSASN_CODE meas_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  unpack_enum(e, bref);
-  if (e != type()) {
-    log_invalid_choice_id(e, "e2_sm_kpm_event_trigger_definition_c");
-    return SRSASN_ERROR_DECODE_FAIL;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::meas_name:
+      HANDLE_CODE((c.get<printable_string<1, 150, true, true>>().unpack(bref)));
+      break;
+    case types::meas_id:
+      HANDLE_CODE(unpack_integer(c.get<uint32_t>(), bref, (uint32_t)1u, (uint32_t)65536u, true, true));
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_type_c");
+      return SRSASN_ERROR_DECODE_FAIL;
   }
-  HANDLE_CODE(c.unpack(bref));
   return SRSASN_SUCCESS;
 }
 
-const char* e2_sm_kpm_event_trigger_definition_c::types_opts::to_string() const
+const char* meas_type_c::types_opts::to_string() const
 {
-  static const char* names[] = {"eventDefinition-Format1"};
-  return convert_enum_idx(names, 1, value, "e2_sm_kpm_event_trigger_definition_c::types");
+  static const char* names[] = {"measName", "measID"};
+  return convert_enum_idx(names, 2, value, "meas_type_c::types");
 }
-uint8_t e2_sm_kpm_event_trigger_definition_c::types_opts::to_number() const
+
+// DistMeasurementBinRangeItem ::= SEQUENCE
+SRSASN_CODE dist_meas_bin_range_item_s::pack(bit_ref& bref) const
 {
-  static const uint8_t numbers[] = {1};
-  return map_enum_number(numbers, 1, value, "e2_sm_kpm_event_trigger_definition_c::types");
+  bref.pack(ext, 1);
+  HANDLE_CODE(meas_type.pack(bref));
+  HANDLE_CODE(bin_range_def.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE dist_meas_bin_range_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(meas_type.unpack(bref));
+  HANDLE_CODE(bin_range_def.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void dist_meas_bin_range_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measType");
+  meas_type.to_json(j);
+  j.write_fieldname("binRangeDef");
+  bin_range_def.to_json(j);
+  j.end_obj();
+}
+
+// S-NSSAI ::= SEQUENCE
+SRSASN_CODE s_nssai_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(sd_present, 1));
+
+  HANDLE_CODE(sst.pack(bref));
+  if (sd_present) {
+    HANDLE_CODE(sd.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE s_nssai_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(sd_present, 1));
+
+  HANDLE_CODE(sst.unpack(bref));
+  if (sd_present) {
+    HANDLE_CODE(sd.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void s_nssai_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("sST", sst.to_string());
+  if (sd_present) {
+    j.write_str("sD", sd.to_string());
+  }
+  j.end_obj();
+}
+
+// TestCond-Expression ::= ENUMERATED
+const char* test_cond_expression_opts::to_string() const
+{
+  static const char* names[] = {"equal", "greaterthan", "lessthan", "contains", "present"};
+  return convert_enum_idx(names, 5, value, "test_cond_expression_e");
+}
+
+// TestCond-Type ::= CHOICE
+void test_cond_type_c::destroy_() {}
+void test_cond_type_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+}
+test_cond_type_c::test_cond_type_c(const test_cond_type_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::gbr:
+      c.init(other.c.get<gbr_e_>());
+      break;
+    case types::ambr:
+      c.init(other.c.get<ambr_e_>());
+      break;
+    case types::is_stat:
+      c.init(other.c.get<is_stat_e_>());
+      break;
+    case types::is_cat_m:
+      c.init(other.c.get<is_cat_m_e_>());
+      break;
+    case types::rsrp:
+      c.init(other.c.get<rsrp_e_>());
+      break;
+    case types::rsrq:
+      c.init(other.c.get<rsrq_e_>());
+      break;
+    case types::ul_r_srp:
+      c.init(other.c.get<ul_r_srp_e_>());
+      break;
+    case types::cqi:
+      c.init(other.c.get<cqi_e_>());
+      break;
+    case types::five_qi:
+      c.init(other.c.get<five_qi_e_>());
+      break;
+    case types::qci:
+      c.init(other.c.get<qci_e_>());
+      break;
+    case types::snssai:
+      c.init(other.c.get<snssai_e_>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_type_c");
+  }
+}
+test_cond_type_c& test_cond_type_c::operator=(const test_cond_type_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::gbr:
+      c.set(other.c.get<gbr_e_>());
+      break;
+    case types::ambr:
+      c.set(other.c.get<ambr_e_>());
+      break;
+    case types::is_stat:
+      c.set(other.c.get<is_stat_e_>());
+      break;
+    case types::is_cat_m:
+      c.set(other.c.get<is_cat_m_e_>());
+      break;
+    case types::rsrp:
+      c.set(other.c.get<rsrp_e_>());
+      break;
+    case types::rsrq:
+      c.set(other.c.get<rsrq_e_>());
+      break;
+    case types::ul_r_srp:
+      c.set(other.c.get<ul_r_srp_e_>());
+      break;
+    case types::cqi:
+      c.set(other.c.get<cqi_e_>());
+      break;
+    case types::five_qi:
+      c.set(other.c.get<five_qi_e_>());
+      break;
+    case types::qci:
+      c.set(other.c.get<qci_e_>());
+      break;
+    case types::snssai:
+      c.set(other.c.get<snssai_e_>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_type_c");
+  }
+
+  return *this;
+}
+test_cond_type_c::gbr_e_& test_cond_type_c::set_gbr()
+{
+  set(types::gbr);
+  return c.get<gbr_e_>();
+}
+test_cond_type_c::ambr_e_& test_cond_type_c::set_ambr()
+{
+  set(types::ambr);
+  return c.get<ambr_e_>();
+}
+test_cond_type_c::is_stat_e_& test_cond_type_c::set_is_stat()
+{
+  set(types::is_stat);
+  return c.get<is_stat_e_>();
+}
+test_cond_type_c::is_cat_m_e_& test_cond_type_c::set_is_cat_m()
+{
+  set(types::is_cat_m);
+  return c.get<is_cat_m_e_>();
+}
+test_cond_type_c::rsrp_e_& test_cond_type_c::set_rsrp()
+{
+  set(types::rsrp);
+  return c.get<rsrp_e_>();
+}
+test_cond_type_c::rsrq_e_& test_cond_type_c::set_rsrq()
+{
+  set(types::rsrq);
+  return c.get<rsrq_e_>();
+}
+test_cond_type_c::ul_r_srp_e_& test_cond_type_c::set_ul_r_srp()
+{
+  set(types::ul_r_srp);
+  return c.get<ul_r_srp_e_>();
+}
+test_cond_type_c::cqi_e_& test_cond_type_c::set_cqi()
+{
+  set(types::cqi);
+  return c.get<cqi_e_>();
+}
+test_cond_type_c::five_qi_e_& test_cond_type_c::set_five_qi()
+{
+  set(types::five_qi);
+  return c.get<five_qi_e_>();
+}
+test_cond_type_c::qci_e_& test_cond_type_c::set_qci()
+{
+  set(types::qci);
+  return c.get<qci_e_>();
+}
+test_cond_type_c::snssai_e_& test_cond_type_c::set_snssai()
+{
+  set(types::snssai);
+  return c.get<snssai_e_>();
+}
+void test_cond_type_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::gbr:
+      j.write_str("gBR", "true");
+      break;
+    case types::ambr:
+      j.write_str("aMBR", "true");
+      break;
+    case types::is_stat:
+      j.write_str("isStat", "true");
+      break;
+    case types::is_cat_m:
+      j.write_str("isCatM", "true");
+      break;
+    case types::rsrp:
+      j.write_str("rSRP", "true");
+      break;
+    case types::rsrq:
+      j.write_str("rSRQ", "true");
+      break;
+    case types::ul_r_srp:
+      j.write_str("ul-rSRP", "true");
+      break;
+    case types::cqi:
+      j.write_str("cQI", "true");
+      break;
+    case types::five_qi:
+      j.write_str("fiveQI", "true");
+      break;
+    case types::qci:
+      j.write_str("qCI", "true");
+      break;
+    case types::snssai:
+      j.write_str("sNSSAI", "true");
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_type_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE test_cond_type_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::gbr:
+      HANDLE_CODE(c.get<gbr_e_>().pack(bref));
+      break;
+    case types::ambr:
+      HANDLE_CODE(c.get<ambr_e_>().pack(bref));
+      break;
+    case types::is_stat:
+      HANDLE_CODE(c.get<is_stat_e_>().pack(bref));
+      break;
+    case types::is_cat_m:
+      HANDLE_CODE(c.get<is_cat_m_e_>().pack(bref));
+      break;
+    case types::rsrp:
+      HANDLE_CODE(c.get<rsrp_e_>().pack(bref));
+      break;
+    case types::rsrq:
+      HANDLE_CODE(c.get<rsrq_e_>().pack(bref));
+      break;
+    case types::ul_r_srp: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<ul_r_srp_e_>().pack(bref));
+    } break;
+    case types::cqi: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<cqi_e_>().pack(bref));
+    } break;
+    case types::five_qi: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<five_qi_e_>().pack(bref));
+    } break;
+    case types::qci: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<qci_e_>().pack(bref));
+    } break;
+    case types::snssai: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<snssai_e_>().pack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_type_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE test_cond_type_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::gbr:
+      HANDLE_CODE(c.get<gbr_e_>().unpack(bref));
+      break;
+    case types::ambr:
+      HANDLE_CODE(c.get<ambr_e_>().unpack(bref));
+      break;
+    case types::is_stat:
+      HANDLE_CODE(c.get<is_stat_e_>().unpack(bref));
+      break;
+    case types::is_cat_m:
+      HANDLE_CODE(c.get<is_cat_m_e_>().unpack(bref));
+      break;
+    case types::rsrp:
+      HANDLE_CODE(c.get<rsrp_e_>().unpack(bref));
+      break;
+    case types::rsrq:
+      HANDLE_CODE(c.get<rsrq_e_>().unpack(bref));
+      break;
+    case types::ul_r_srp: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<ul_r_srp_e_>().unpack(bref));
+    } break;
+    case types::cqi: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<cqi_e_>().unpack(bref));
+    } break;
+    case types::five_qi: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<five_qi_e_>().unpack(bref));
+    } break;
+    case types::qci: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<qci_e_>().unpack(bref));
+    } break;
+    case types::snssai: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<snssai_e_>().unpack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_type_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* test_cond_type_c::gbr_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::gbr_e_");
+}
+
+const char* test_cond_type_c::ambr_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::ambr_e_");
+}
+
+const char* test_cond_type_c::is_stat_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::is_stat_e_");
+}
+
+const char* test_cond_type_c::is_cat_m_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::is_cat_m_e_");
+}
+
+const char* test_cond_type_c::rsrp_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::rsrp_e_");
+}
+
+const char* test_cond_type_c::rsrq_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::rsrq_e_");
+}
+
+const char* test_cond_type_c::ul_r_srp_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::ul_r_srp_e_");
+}
+
+const char* test_cond_type_c::cqi_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::cqi_e_");
+}
+
+const char* test_cond_type_c::five_qi_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::five_qi_e_");
+}
+
+const char* test_cond_type_c::qci_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::qci_e_");
+}
+
+const char* test_cond_type_c::snssai_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "test_cond_type_c::snssai_e_");
+}
+
+const char* test_cond_type_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "gBR", "aMBR", "isStat", "isCatM", "rSRP", "rSRQ", "ul-rSRP", "cQI", "fiveQI", "qCI", "sNSSAI"};
+  return convert_enum_idx(names, 11, value, "test_cond_type_c::types");
+}
+uint8_t test_cond_type_c::types_opts::to_number() const
+{
+  if (value == five_qi) {
+    return 5;
+  }
+  invalid_enum_number(value, "test_cond_type_c::types");
+  return 0;
+}
+
+// TestCond-Value ::= CHOICE
+void test_cond_value_c::destroy_()
+{
+  switch (type_) {
+    case types::value_bool:
+      c.destroy<bool>();
+      break;
+    case types::value_bit_s:
+      c.destroy<dyn_bitstring>();
+      break;
+    case types::value_oct_s:
+      c.destroy<unbounded_octstring<true>>();
+      break;
+    case types::value_prt_s:
+      c.destroy<printable_string<0, None, false, true>>();
+      break;
+    case types::value_real:
+      c.destroy<real_s>();
+      break;
+    default:
+      break;
+  }
+}
+void test_cond_value_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::value_int:
+      break;
+    case types::value_enum:
+      break;
+    case types::value_bool:
+      c.init<bool>();
+      break;
+    case types::value_bit_s:
+      c.init<dyn_bitstring>();
+      break;
+    case types::value_oct_s:
+      c.init<unbounded_octstring<true>>();
+      break;
+    case types::value_prt_s:
+      c.init<printable_string<0, None, false, true>>();
+      break;
+    case types::value_real:
+      c.init<real_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+}
+test_cond_value_c::test_cond_value_c(const test_cond_value_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::value_int:
+      c.init(other.c.get<int64_t>());
+      break;
+    case types::value_enum:
+      c.init(other.c.get<int64_t>());
+      break;
+    case types::value_bool:
+      c.init(other.c.get<bool>());
+      break;
+    case types::value_bit_s:
+      c.init(other.c.get<dyn_bitstring>());
+      break;
+    case types::value_oct_s:
+      c.init(other.c.get<unbounded_octstring<true>>());
+      break;
+    case types::value_prt_s:
+      c.init(other.c.get<printable_string<0, None, false, true>>());
+      break;
+    case types::value_real:
+      c.init(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+}
+test_cond_value_c& test_cond_value_c::operator=(const test_cond_value_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::value_int:
+      c.set(other.c.get<int64_t>());
+      break;
+    case types::value_enum:
+      c.set(other.c.get<int64_t>());
+      break;
+    case types::value_bool:
+      c.set(other.c.get<bool>());
+      break;
+    case types::value_bit_s:
+      c.set(other.c.get<dyn_bitstring>());
+      break;
+    case types::value_oct_s:
+      c.set(other.c.get<unbounded_octstring<true>>());
+      break;
+    case types::value_prt_s:
+      c.set(other.c.get<printable_string<0, None, false, true>>());
+      break;
+    case types::value_real:
+      c.set(other.c.get<real_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+
+  return *this;
+}
+int64_t& test_cond_value_c::set_value_int()
+{
+  set(types::value_int);
+  return c.get<int64_t>();
+}
+int64_t& test_cond_value_c::set_value_enum()
+{
+  set(types::value_enum);
+  return c.get<int64_t>();
+}
+bool& test_cond_value_c::set_value_bool()
+{
+  set(types::value_bool);
+  return c.get<bool>();
+}
+dyn_bitstring& test_cond_value_c::set_value_bit_s()
+{
+  set(types::value_bit_s);
+  return c.get<dyn_bitstring>();
+}
+unbounded_octstring<true>& test_cond_value_c::set_value_oct_s()
+{
+  set(types::value_oct_s);
+  return c.get<unbounded_octstring<true>>();
+}
+printable_string<0, None, false, true>& test_cond_value_c::set_value_prt_s()
+{
+  set(types::value_prt_s);
+  return c.get<printable_string<0, None, false, true>>();
+}
+real_s& test_cond_value_c::set_value_real()
+{
+  set(types::value_real);
+  return c.get<real_s>();
+}
+void test_cond_value_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::value_int:
+      j.write_int("valueInt", c.get<int64_t>());
+      break;
+    case types::value_enum:
+      j.write_int("valueEnum", c.get<int64_t>());
+      break;
+    case types::value_bool:
+      j.write_bool("valueBool", c.get<bool>());
+      break;
+    case types::value_bit_s:
+      j.write_str("valueBitS", c.get<dyn_bitstring>().to_string());
+      break;
+    case types::value_oct_s:
+      j.write_str("valueOctS", c.get<unbounded_octstring<true>>().to_string());
+      break;
+    case types::value_prt_s:
+      j.write_str("valuePrtS", c.get<printable_string<0, None, false, true>>().to_string());
+      break;
+    case types::value_real:
+      j.write_fieldname("valueReal");
+      c.get<real_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE test_cond_value_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
+      break;
+    case types::value_enum:
+      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
+      break;
+    case types::value_bool:
+      HANDLE_CODE(bref.pack(c.get<bool>(), 1));
+      break;
+    case types::value_bit_s:
+      HANDLE_CODE(c.get<dyn_bitstring>().pack(bref));
+      break;
+    case types::value_oct_s:
+      HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
+      break;
+    case types::value_prt_s:
+      HANDLE_CODE((c.get<printable_string<0, None, false, true>>().pack(bref)));
+      break;
+    case types::value_real: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<real_s>().pack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE test_cond_value_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::value_int:
+      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
+      break;
+    case types::value_enum:
+      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
+      break;
+    case types::value_bool:
+      HANDLE_CODE(bref.unpack(c.get<bool>(), 1));
+      break;
+    case types::value_bit_s:
+      HANDLE_CODE(c.get<dyn_bitstring>().unpack(bref));
+      break;
+    case types::value_oct_s:
+      HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
+      break;
+    case types::value_prt_s:
+      HANDLE_CODE((c.get<printable_string<0, None, false, true>>().unpack(bref)));
+      break;
+    case types::value_real: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<real_s>().unpack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "test_cond_value_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* test_cond_value_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "valueInt", "valueEnum", "valueBool", "valueBitS", "valueOctS", "valuePrtS", "valueReal"};
+  return convert_enum_idx(names, 7, value, "test_cond_value_c::types");
 }
 
 // ENB-ID ::= CHOICE
@@ -1307,1460 +1649,6 @@ const char* enb_id_c::types_opts::to_string() const
   return convert_enum_idx(names, 4, value, "enb_id_c::types");
 }
 
-// ENB-ID-Choice ::= CHOICE
-void enb_id_choice_c::destroy_()
-{
-  switch (type_) {
-    case types::enb_id_macro:
-      c.destroy<fixed_bitstring<20, false, true>>();
-      break;
-    case types::enb_id_shortmacro:
-      c.destroy<fixed_bitstring<18, false, true>>();
-      break;
-    case types::enb_id_longmacro:
-      c.destroy<fixed_bitstring<21, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
-void enb_id_choice_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::enb_id_macro:
-      c.init<fixed_bitstring<20, false, true>>();
-      break;
-    case types::enb_id_shortmacro:
-      c.init<fixed_bitstring<18, false, true>>();
-      break;
-    case types::enb_id_longmacro:
-      c.init<fixed_bitstring<21, false, true>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-  }
-}
-enb_id_choice_c::enb_id_choice_c(const enb_id_choice_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::enb_id_macro:
-      c.init(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::enb_id_shortmacro:
-      c.init(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::enb_id_longmacro:
-      c.init(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-  }
-}
-enb_id_choice_c& enb_id_choice_c::operator=(const enb_id_choice_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::enb_id_macro:
-      c.set(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::enb_id_shortmacro:
-      c.set(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::enb_id_longmacro:
-      c.set(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-  }
-
-  return *this;
-}
-fixed_bitstring<20, false, true>& enb_id_choice_c::set_enb_id_macro()
-{
-  set(types::enb_id_macro);
-  return c.get<fixed_bitstring<20, false, true>>();
-}
-fixed_bitstring<18, false, true>& enb_id_choice_c::set_enb_id_shortmacro()
-{
-  set(types::enb_id_shortmacro);
-  return c.get<fixed_bitstring<18, false, true>>();
-}
-fixed_bitstring<21, false, true>& enb_id_choice_c::set_enb_id_longmacro()
-{
-  set(types::enb_id_longmacro);
-  return c.get<fixed_bitstring<21, false, true>>();
-}
-void enb_id_choice_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::enb_id_macro:
-      j.write_str("enb-ID-macro", c.get<fixed_bitstring<20, false, true>>().to_string());
-      break;
-    case types::enb_id_shortmacro:
-      j.write_str("enb-ID-shortmacro", c.get<fixed_bitstring<18, false, true>>().to_string());
-      break;
-    case types::enb_id_longmacro:
-      j.write_str("enb-ID-longmacro", c.get<fixed_bitstring<21, false, true>>().to_string());
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE enb_id_choice_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::enb_id_macro:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().pack(bref)));
-      break;
-    case types::enb_id_shortmacro:
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().pack(bref)));
-      break;
-    case types::enb_id_longmacro:
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().pack(bref)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE enb_id_choice_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::enb_id_macro:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().unpack(bref)));
-      break;
-    case types::enb_id_shortmacro:
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().unpack(bref)));
-      break;
-    case types::enb_id_longmacro:
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().unpack(bref)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_choice_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* enb_id_choice_c::types_opts::to_string() const
-{
-  static const char* names[] = {"enb-ID-macro", "enb-ID-shortmacro", "enb-ID-longmacro"};
-  return convert_enum_idx(names, 3, value, "enb_id_choice_c::types");
-}
-
-// ENGNB-ID ::= CHOICE
-void engnb_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("gNB-ID", c.to_string());
-  j.end_obj();
-}
-SRSASN_CODE engnb_id_c::pack(bit_ref& bref) const
-{
-  pack_enum(bref, type());
-  HANDLE_CODE(c.pack(bref));
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE engnb_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  unpack_enum(e, bref);
-  if (e != type()) {
-    log_invalid_choice_id(e, "engnb_id_c");
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(c.unpack(bref));
-  return SRSASN_SUCCESS;
-}
-
-const char* engnb_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"gNB-ID"};
-  return convert_enum_idx(names, 1, value, "engnb_id_c::types");
-}
-
-// GNB-ID-Choice ::= CHOICE
-void gnb_id_choice_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("gnb-ID", c.to_string());
-  j.end_obj();
-}
-SRSASN_CODE gnb_id_choice_c::pack(bit_ref& bref) const
-{
-  pack_enum(bref, type());
-  HANDLE_CODE(c.pack(bref));
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE gnb_id_choice_c::unpack(cbit_ref& bref)
-{
-  types e;
-  unpack_enum(e, bref);
-  if (e != type()) {
-    log_invalid_choice_id(e, "gnb_id_choice_c");
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(c.unpack(bref));
-  return SRSASN_SUCCESS;
-}
-
-const char* gnb_id_choice_c::types_opts::to_string() const
-{
-  static const char* names[] = {"gnb-ID"};
-  return convert_enum_idx(names, 1, value, "gnb_id_choice_c::types");
-}
-
-// GlobalENB-ID ::= SEQUENCE
-SRSASN_CODE global_enb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(enb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_enb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(enb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void global_enb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  j.write_fieldname("eNB-ID");
-  enb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalenGNB-ID ::= SEQUENCE
-SRSASN_CODE globalen_gnb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(gnb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE globalen_gnb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(gnb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void globalen_gnb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  j.write_fieldname("gNB-ID");
-  gnb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalgNB-ID ::= SEQUENCE
-SRSASN_CODE globalg_nb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(gnb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE globalg_nb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(gnb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void globalg_nb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("plmn-id", plmn_id.to_string());
-  j.write_fieldname("gnb-id");
-  gnb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalngeNB-ID ::= SEQUENCE
-SRSASN_CODE globalngenb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(enb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE globalngenb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(enb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void globalngenb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("plmn-id", plmn_id.to_string());
-  j.write_fieldname("enb-id");
-  enb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalKPMnode-eNB-ID ::= SEQUENCE
-SRSASN_CODE global_kp_mnode_enb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(global_enb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_kp_mnode_enb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(global_enb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void global_kp_mnode_enb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-eNB-ID");
-  global_enb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalKPMnode-en-gNB-ID ::= SEQUENCE
-SRSASN_CODE global_kp_mnode_en_g_nb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(global_g_nb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_kp_mnode_en_g_nb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(global_g_nb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void global_kp_mnode_en_g_nb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-gNB-ID");
-  global_g_nb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalKPMnode-gNB-ID ::= SEQUENCE
-SRSASN_CODE global_kp_mnode_g_nb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(gnb_cu_up_id_present, 1));
-  HANDLE_CODE(bref.pack(gnb_du_id_present, 1));
-
-  HANDLE_CODE(global_g_nb_id.pack(bref));
-  if (gnb_cu_up_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_cu_up_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-  }
-  if (gnb_du_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_du_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_kp_mnode_g_nb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(gnb_cu_up_id_present, 1));
-  HANDLE_CODE(bref.unpack(gnb_du_id_present, 1));
-
-  HANDLE_CODE(global_g_nb_id.unpack(bref));
-  if (gnb_cu_up_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_cu_up_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-  }
-  if (gnb_du_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_du_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void global_kp_mnode_g_nb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-gNB-ID");
-  global_g_nb_id.to_json(j);
-  if (gnb_cu_up_id_present) {
-    j.write_int("gNB-CU-UP-ID", gnb_cu_up_id);
-  }
-  if (gnb_du_id_present) {
-    j.write_int("gNB-DU-ID", gnb_du_id);
-  }
-  j.end_obj();
-}
-
-// GlobalKPMnode-ng-eNB-ID ::= SEQUENCE
-SRSASN_CODE global_kp_mnode_ng_enb_id_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(global_ng_enb_id.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_kp_mnode_ng_enb_id_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(global_ng_enb_id.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void global_kp_mnode_ng_enb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-ng-eNB-ID");
-  global_ng_enb_id.to_json(j);
-  j.end_obj();
-}
-
-// GlobalKPMnode-ID ::= CHOICE
-void global_kp_mnode_id_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb:
-      c.destroy<global_kp_mnode_g_nb_id_s>();
-      break;
-    case types::en_g_nb:
-      c.destroy<global_kp_mnode_en_g_nb_id_s>();
-      break;
-    case types::ng_enb:
-      c.destroy<global_kp_mnode_ng_enb_id_s>();
-      break;
-    case types::enb:
-      c.destroy<global_kp_mnode_enb_id_s>();
-      break;
-    default:
-      break;
-  }
-}
-void global_kp_mnode_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::gnb:
-      c.init<global_kp_mnode_g_nb_id_s>();
-      break;
-    case types::en_g_nb:
-      c.init<global_kp_mnode_en_g_nb_id_s>();
-      break;
-    case types::ng_enb:
-      c.init<global_kp_mnode_ng_enb_id_s>();
-      break;
-    case types::enb:
-      c.init<global_kp_mnode_enb_id_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-  }
-}
-global_kp_mnode_id_c::global_kp_mnode_id_c(const global_kp_mnode_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb:
-      c.init(other.c.get<global_kp_mnode_g_nb_id_s>());
-      break;
-    case types::en_g_nb:
-      c.init(other.c.get<global_kp_mnode_en_g_nb_id_s>());
-      break;
-    case types::ng_enb:
-      c.init(other.c.get<global_kp_mnode_ng_enb_id_s>());
-      break;
-    case types::enb:
-      c.init(other.c.get<global_kp_mnode_enb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-  }
-}
-global_kp_mnode_id_c& global_kp_mnode_id_c::operator=(const global_kp_mnode_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb:
-      c.set(other.c.get<global_kp_mnode_g_nb_id_s>());
-      break;
-    case types::en_g_nb:
-      c.set(other.c.get<global_kp_mnode_en_g_nb_id_s>());
-      break;
-    case types::ng_enb:
-      c.set(other.c.get<global_kp_mnode_ng_enb_id_s>());
-      break;
-    case types::enb:
-      c.set(other.c.get<global_kp_mnode_enb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-  }
-
-  return *this;
-}
-global_kp_mnode_g_nb_id_s& global_kp_mnode_id_c::set_gnb()
-{
-  set(types::gnb);
-  return c.get<global_kp_mnode_g_nb_id_s>();
-}
-global_kp_mnode_en_g_nb_id_s& global_kp_mnode_id_c::set_en_g_nb()
-{
-  set(types::en_g_nb);
-  return c.get<global_kp_mnode_en_g_nb_id_s>();
-}
-global_kp_mnode_ng_enb_id_s& global_kp_mnode_id_c::set_ng_enb()
-{
-  set(types::ng_enb);
-  return c.get<global_kp_mnode_ng_enb_id_s>();
-}
-global_kp_mnode_enb_id_s& global_kp_mnode_id_c::set_enb()
-{
-  set(types::enb);
-  return c.get<global_kp_mnode_enb_id_s>();
-}
-void global_kp_mnode_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::gnb:
-      j.write_fieldname("gNB");
-      c.get<global_kp_mnode_g_nb_id_s>().to_json(j);
-      break;
-    case types::en_g_nb:
-      j.write_fieldname("en-gNB");
-      c.get<global_kp_mnode_en_g_nb_id_s>().to_json(j);
-      break;
-    case types::ng_enb:
-      j.write_fieldname("ng-eNB");
-      c.get<global_kp_mnode_ng_enb_id_s>().to_json(j);
-      break;
-    case types::enb:
-      j.write_fieldname("eNB");
-      c.get<global_kp_mnode_enb_id_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE global_kp_mnode_id_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::gnb:
-      HANDLE_CODE(c.get<global_kp_mnode_g_nb_id_s>().pack(bref));
-      break;
-    case types::en_g_nb:
-      HANDLE_CODE(c.get<global_kp_mnode_en_g_nb_id_s>().pack(bref));
-      break;
-    case types::ng_enb:
-      HANDLE_CODE(c.get<global_kp_mnode_ng_enb_id_s>().pack(bref));
-      break;
-    case types::enb:
-      HANDLE_CODE(c.get<global_kp_mnode_enb_id_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE global_kp_mnode_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::gnb:
-      HANDLE_CODE(c.get<global_kp_mnode_g_nb_id_s>().unpack(bref));
-      break;
-    case types::en_g_nb:
-      HANDLE_CODE(c.get<global_kp_mnode_en_g_nb_id_s>().unpack(bref));
-      break;
-    case types::ng_enb:
-      HANDLE_CODE(c.get<global_kp_mnode_ng_enb_id_s>().unpack(bref));
-      break;
-    case types::enb:
-      HANDLE_CODE(c.get<global_kp_mnode_enb_id_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_kp_mnode_id_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* global_kp_mnode_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"gNB", "en-gNB", "ng-eNB", "eNB"};
-  return convert_enum_idx(names, 4, value, "global_kp_mnode_id_c::types");
-}
-
-// E2SM-KPM-IndicationHeader-Format1 ::= SEQUENCE
-SRSASN_CODE e2_sm_kpm_ind_hdr_format1_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(id_global_kp_mnode_id_present, 1));
-  HANDLE_CODE(bref.pack(nrcgi_present, 1));
-  HANDLE_CODE(bref.pack(plmn_id_present, 1));
-  HANDLE_CODE(bref.pack(slice_id_present, 1));
-  HANDLE_CODE(bref.pack(five_qi_present, 1));
-  HANDLE_CODE(bref.pack(qci_present, 1));
-
-  if (id_global_kp_mnode_id_present) {
-    HANDLE_CODE(id_global_kp_mnode_id.pack(bref));
-  }
-  if (nrcgi_present) {
-    HANDLE_CODE(nrcgi.pack(bref));
-  }
-  if (plmn_id_present) {
-    HANDLE_CODE(plmn_id.pack(bref));
-  }
-  if (slice_id_present) {
-    HANDLE_CODE(slice_id.pack(bref));
-  }
-  if (five_qi_present) {
-    HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, false, true));
-  }
-  if (qci_present) {
-    HANDLE_CODE(pack_integer(bref, qci, (uint16_t)0u, (uint16_t)255u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE e2_sm_kpm_ind_hdr_format1_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(id_global_kp_mnode_id_present, 1));
-  HANDLE_CODE(bref.unpack(nrcgi_present, 1));
-  HANDLE_CODE(bref.unpack(plmn_id_present, 1));
-  HANDLE_CODE(bref.unpack(slice_id_present, 1));
-  HANDLE_CODE(bref.unpack(five_qi_present, 1));
-  HANDLE_CODE(bref.unpack(qci_present, 1));
-
-  if (id_global_kp_mnode_id_present) {
-    HANDLE_CODE(id_global_kp_mnode_id.unpack(bref));
-  }
-  if (nrcgi_present) {
-    HANDLE_CODE(nrcgi.unpack(bref));
-  }
-  if (plmn_id_present) {
-    HANDLE_CODE(plmn_id.unpack(bref));
-  }
-  if (slice_id_present) {
-    HANDLE_CODE(slice_id.unpack(bref));
-  }
-  if (five_qi_present) {
-    HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  }
-  if (qci_present) {
-    HANDLE_CODE(unpack_integer(qci, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void e2_sm_kpm_ind_hdr_format1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (id_global_kp_mnode_id_present) {
-    j.write_fieldname("id-GlobalKPMnode-ID");
-    id_global_kp_mnode_id.to_json(j);
-  }
-  if (nrcgi_present) {
-    j.write_fieldname("nRCGI");
-    nrcgi.to_json(j);
-  }
-  if (plmn_id_present) {
-    j.write_str("pLMN-Identity", plmn_id.to_string());
-  }
-  if (slice_id_present) {
-    j.write_fieldname("sliceID");
-    slice_id.to_json(j);
-  }
-  if (five_qi_present) {
-    j.write_int("fiveQI", five_qi);
-  }
-  if (qci_present) {
-    j.write_int("qci", qci);
-  }
-  j.end_obj();
-}
-
-// E2SM-KPM-IndicationHeader ::= CHOICE
-void e2_sm_kpm_ind_hdr_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("indicationHeader-Format1");
-  c.to_json(j);
-  j.end_obj();
-}
-SRSASN_CODE e2_sm_kpm_ind_hdr_c::pack(bit_ref& bref) const
-{
-  pack_enum(bref, type());
-  HANDLE_CODE(c.pack(bref));
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE e2_sm_kpm_ind_hdr_c::unpack(cbit_ref& bref)
-{
-  types e;
-  unpack_enum(e, bref);
-  if (e != type()) {
-    log_invalid_choice_id(e, "e2_sm_kpm_ind_hdr_c");
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(c.unpack(bref));
-  return SRSASN_SUCCESS;
-}
-
-const char* e2_sm_kpm_ind_hdr_c::types_opts::to_string() const
-{
-  static const char* names[] = {"indicationHeader-Format1"};
-  return convert_enum_idx(names, 1, value, "e2_sm_kpm_ind_hdr_c::types");
-}
-uint8_t e2_sm_kpm_ind_hdr_c::types_opts::to_number() const
-{
-  static const uint8_t numbers[] = {1};
-  return map_enum_number(numbers, 1, value, "e2_sm_kpm_ind_hdr_c::types");
-}
-
-// NI-Type ::= ENUMERATED
-const char* ni_type_opts::to_string() const
-{
-  static const char* names[] = {"x2-u", "xn-u", "f1-u"};
-  return convert_enum_idx(names, 3, value, "ni_type_e");
-}
-uint8_t ni_type_opts::to_number() const
-{
-  switch (value) {
-    case x2_u:
-      return 2;
-    case f1_u:
-      return 1;
-    default:
-      invalid_enum_number(value, "ni_type_e");
-  }
-  return 0;
-}
-
-// PF-ContainerListItem ::= SEQUENCE
-SRSASN_CODE pf_container_list_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(interface_type.pack(bref));
-  HANDLE_CODE(o_cu_up_pm_container.pack(bref));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE pf_container_list_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(interface_type.unpack(bref));
-  HANDLE_CODE(o_cu_up_pm_container.unpack(bref));
-
-  return SRSASN_SUCCESS;
-}
-void pf_container_list_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("interface-type", interface_type.to_string());
-  j.write_fieldname("o-CU-UP-PM-Container");
-  o_cu_up_pm_container.to_json(j);
-  j.end_obj();
-}
-
-// OCUCP-PF-Container ::= SEQUENCE
-SRSASN_CODE ocucp_pf_container_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(gnb_cu_cp_name_present, 1));
-
-  if (gnb_cu_cp_name_present) {
-    HANDLE_CODE(gnb_cu_cp_name.pack(bref));
-  }
-  HANDLE_CODE(bref.pack(cu_cp_res_status.nof_active_ues_present, 1));
-  if (cu_cp_res_status.nof_active_ues_present) {
-    HANDLE_CODE(pack_integer(bref, cu_cp_res_status.nof_active_ues, (uint32_t)1u, (uint32_t)65536u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ocucp_pf_container_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(gnb_cu_cp_name_present, 1));
-
-  if (gnb_cu_cp_name_present) {
-    HANDLE_CODE(gnb_cu_cp_name.unpack(bref));
-  }
-  HANDLE_CODE(bref.unpack(cu_cp_res_status.nof_active_ues_present, 1));
-  if (cu_cp_res_status.nof_active_ues_present) {
-    HANDLE_CODE(unpack_integer(cu_cp_res_status.nof_active_ues, bref, (uint32_t)1u, (uint32_t)65536u, true, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ocucp_pf_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (gnb_cu_cp_name_present) {
-    j.write_str("gNB-CU-CP-Name", gnb_cu_cp_name.to_string());
-  }
-  j.write_fieldname("cu-CP-Resource-Status");
-  j.start_obj();
-  if (cu_cp_res_status.nof_active_ues_present) {
-    j.write_int("numberOfActive-UEs", cu_cp_res_status.nof_active_ues);
-  }
-  j.end_obj();
-  j.end_obj();
-}
-
-// OCUUP-PF-Container ::= SEQUENCE
-SRSASN_CODE ocuup_pf_container_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(gnb_cu_up_name_present, 1));
-
-  if (gnb_cu_up_name_present) {
-    HANDLE_CODE(gnb_cu_up_name.pack(bref));
-  }
-  HANDLE_CODE(pack_dyn_seq_of(bref, pf_container_list, 1, 3, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ocuup_pf_container_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(gnb_cu_up_name_present, 1));
-
-  if (gnb_cu_up_name_present) {
-    HANDLE_CODE(gnb_cu_up_name.unpack(bref));
-  }
-  HANDLE_CODE(unpack_dyn_seq_of(pf_container_list, bref, 1, 3, true));
-
-  return SRSASN_SUCCESS;
-}
-void ocuup_pf_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (gnb_cu_up_name_present) {
-    j.write_str("gNB-CU-UP-Name", gnb_cu_up_name.to_string());
-  }
-  j.start_array("pf-ContainerList");
-  for (const auto& e1 : pf_container_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// ODU-PF-Container ::= SEQUENCE
-SRSASN_CODE odu_pf_container_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, cell_res_report_list, 1, 512, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE odu_pf_container_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(cell_res_report_list, bref, 1, 512, true));
-
-  return SRSASN_SUCCESS;
-}
-void odu_pf_container_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("cellResourceReportList");
-  for (const auto& e1 : cell_res_report_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
-
-// PF-Container ::= CHOICE
-void pf_container_c::destroy_()
-{
-  switch (type_) {
-    case types::odu:
-      c.destroy<odu_pf_container_s>();
-      break;
-    case types::ocu_cp:
-      c.destroy<ocucp_pf_container_s>();
-      break;
-    case types::ocu_up:
-      c.destroy<ocuup_pf_container_s>();
-      break;
-    default:
-      break;
-  }
-}
-void pf_container_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::odu:
-      c.init<odu_pf_container_s>();
-      break;
-    case types::ocu_cp:
-      c.init<ocucp_pf_container_s>();
-      break;
-    case types::ocu_up:
-      c.init<ocuup_pf_container_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-  }
-}
-pf_container_c::pf_container_c(const pf_container_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::odu:
-      c.init(other.c.get<odu_pf_container_s>());
-      break;
-    case types::ocu_cp:
-      c.init(other.c.get<ocucp_pf_container_s>());
-      break;
-    case types::ocu_up:
-      c.init(other.c.get<ocuup_pf_container_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-  }
-}
-pf_container_c& pf_container_c::operator=(const pf_container_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::odu:
-      c.set(other.c.get<odu_pf_container_s>());
-      break;
-    case types::ocu_cp:
-      c.set(other.c.get<ocucp_pf_container_s>());
-      break;
-    case types::ocu_up:
-      c.set(other.c.get<ocuup_pf_container_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-  }
-
-  return *this;
-}
-odu_pf_container_s& pf_container_c::set_odu()
-{
-  set(types::odu);
-  return c.get<odu_pf_container_s>();
-}
-ocucp_pf_container_s& pf_container_c::set_ocu_cp()
-{
-  set(types::ocu_cp);
-  return c.get<ocucp_pf_container_s>();
-}
-ocuup_pf_container_s& pf_container_c::set_ocu_up()
-{
-  set(types::ocu_up);
-  return c.get<ocuup_pf_container_s>();
-}
-void pf_container_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::odu:
-      j.write_fieldname("oDU");
-      c.get<odu_pf_container_s>().to_json(j);
-      break;
-    case types::ocu_cp:
-      j.write_fieldname("oCU-CP");
-      c.get<ocucp_pf_container_s>().to_json(j);
-      break;
-    case types::ocu_up:
-      j.write_fieldname("oCU-UP");
-      c.get<ocuup_pf_container_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE pf_container_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::odu:
-      HANDLE_CODE(c.get<odu_pf_container_s>().pack(bref));
-      break;
-    case types::ocu_cp:
-      HANDLE_CODE(c.get<ocucp_pf_container_s>().pack(bref));
-      break;
-    case types::ocu_up:
-      HANDLE_CODE(c.get<ocuup_pf_container_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE pf_container_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::odu:
-      HANDLE_CODE(c.get<odu_pf_container_s>().unpack(bref));
-      break;
-    case types::ocu_cp:
-      HANDLE_CODE(c.get<ocucp_pf_container_s>().unpack(bref));
-      break;
-    case types::ocu_up:
-      HANDLE_CODE(c.get<ocuup_pf_container_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "pf_container_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* pf_container_c::types_opts::to_string() const
-{
-  static const char* names[] = {"oDU", "oCU-CP", "oCU-UP"};
-  return convert_enum_idx(names, 3, value, "pf_container_c::types");
-}
-
-// PM-Containers-List ::= SEQUENCE
-SRSASN_CODE pm_containers_list_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(performance_container_present, 1));
-  HANDLE_CODE(bref.pack(the_ran_container.size() > 0, 1));
-
-  if (performance_container_present) {
-    HANDLE_CODE(performance_container.pack(bref));
-  }
-  if (the_ran_container.size() > 0) {
-    HANDLE_CODE(the_ran_container.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE pm_containers_list_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(performance_container_present, 1));
-  bool the_ran_container_present;
-  HANDLE_CODE(bref.unpack(the_ran_container_present, 1));
-
-  if (performance_container_present) {
-    HANDLE_CODE(performance_container.unpack(bref));
-  }
-  if (the_ran_container_present) {
-    HANDLE_CODE(the_ran_container.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void pm_containers_list_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (performance_container_present) {
-    j.write_fieldname("performanceContainer");
-    performance_container.to_json(j);
-  }
-  if (the_ran_container.size() > 0) {
-    j.write_str("theRANContainer", the_ran_container.to_string());
-  }
-  j.end_obj();
-}
-
-// E2SM-KPM-IndicationMessage-Format1 ::= SEQUENCE
-SRSASN_CODE e2_sm_kpm_ind_msg_format1_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_dyn_seq_of(bref, pm_containers, 1, 512, true));
-
-  bref.align_bytes_zero();
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE e2_sm_kpm_ind_msg_format1_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_dyn_seq_of(pm_containers, bref, 1, 512, true));
-
-  bref.align_bytes();
-
-  return SRSASN_SUCCESS;
-}
-void e2_sm_kpm_ind_msg_format1_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Format1");
-  j.start_array("pm-Containers");
-  for (const auto& e1 : pm_containers) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
-
-// E2SM-KPM-IndicationMessage ::= CHOICE
-void e2_sm_kpm_ind_msg_c::destroy_()
-{
-  switch (type_) {
-    case types::ind_msg_format1:
-      c.destroy<e2_sm_kpm_ind_msg_format1_s>();
-      break;
-    default:
-      break;
-  }
-}
-void e2_sm_kpm_ind_msg_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ric_style_type:
-      break;
-    case types::ind_msg_format1:
-      c.init<e2_sm_kpm_ind_msg_format1_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-  }
-}
-e2_sm_kpm_ind_msg_c::e2_sm_kpm_ind_msg_c(const e2_sm_kpm_ind_msg_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ric_style_type:
-      c.init(other.c.get<int64_t>());
-      break;
-    case types::ind_msg_format1:
-      c.init(other.c.get<e2_sm_kpm_ind_msg_format1_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-  }
-}
-e2_sm_kpm_ind_msg_c& e2_sm_kpm_ind_msg_c::operator=(const e2_sm_kpm_ind_msg_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ric_style_type:
-      c.set(other.c.get<int64_t>());
-      break;
-    case types::ind_msg_format1:
-      c.set(other.c.get<e2_sm_kpm_ind_msg_format1_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-  }
-
-  return *this;
-}
-int64_t& e2_sm_kpm_ind_msg_c::set_ric_style_type()
-{
-  set(types::ric_style_type);
-  return c.get<int64_t>();
-}
-e2_sm_kpm_ind_msg_format1_s& e2_sm_kpm_ind_msg_c::set_ind_msg_format1()
-{
-  set(types::ind_msg_format1);
-  return c.get<e2_sm_kpm_ind_msg_format1_s>();
-}
-void e2_sm_kpm_ind_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ric_style_type:
-      j.write_int("ric-Style-Type", c.get<int64_t>());
-      break;
-    case types::ind_msg_format1:
-      j.write_fieldname("indicationMessage-Format1");
-      c.get<e2_sm_kpm_ind_msg_format1_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE e2_sm_kpm_ind_msg_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::ric_style_type:
-      HANDLE_CODE(pack_unconstrained_integer(bref, c.get<int64_t>(), false, true));
-      break;
-    case types::ind_msg_format1:
-      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format1_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE e2_sm_kpm_ind_msg_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::ric_style_type:
-      HANDLE_CODE(unpack_unconstrained_integer(c.get<int64_t>(), bref, false, true));
-      break;
-    case types::ind_msg_format1:
-      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format1_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* e2_sm_kpm_ind_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"ric-Style-Type", "indicationMessage-Format1"};
-  return convert_enum_idx(names, 2, value, "e2_sm_kpm_ind_msg_c::types");
-}
-uint8_t e2_sm_kpm_ind_msg_c::types_opts::to_number() const
-{
-  if (value == ind_msg_format1) {
-    return 1;
-  }
-  invalid_enum_number(value, "e2_sm_kpm_ind_msg_c::types");
-  return 0;
-}
-
-// RANfunction-Name ::= SEQUENCE
-SRSASN_CODE ra_nfunction_name_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(ran_function_instance_present, 1));
-
-  HANDLE_CODE(ran_function_short_name.pack(bref));
-  HANDLE_CODE(ran_function_e2_sm_oid.pack(bref));
-  HANDLE_CODE(ran_function_description.pack(bref));
-  if (ran_function_instance_present) {
-    HANDLE_CODE(pack_unconstrained_integer(bref, ran_function_instance, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ra_nfunction_name_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(ran_function_instance_present, 1));
-
-  HANDLE_CODE(ran_function_short_name.unpack(bref));
-  HANDLE_CODE(ran_function_e2_sm_oid.unpack(bref));
-  HANDLE_CODE(ran_function_description.unpack(bref));
-  if (ran_function_instance_present) {
-    HANDLE_CODE(unpack_unconstrained_integer(ran_function_instance, bref, false, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ra_nfunction_name_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("ranFunction-ShortName", ran_function_short_name.to_string());
-  j.write_str("ranFunction-E2SM-OID", ran_function_e2_sm_oid.to_string());
-  j.write_str("ranFunction-Description", ran_function_description.to_string());
-  if (ran_function_instance_present) {
-    j.write_int("ranFunction-Instance", ran_function_instance);
-  }
-  j.end_obj();
-}
-
-// RIC-EventTriggerStyle-List ::= SEQUENCE
-SRSASN_CODE ric_event_trigger_style_list_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_event_trigger_style_type, false, true));
-  HANDLE_CODE(ric_event_trigger_style_name.pack(bref));
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_event_trigger_format_type, false, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ric_event_trigger_style_list_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_unconstrained_integer(ric_event_trigger_style_type, bref, false, true));
-  HANDLE_CODE(ric_event_trigger_style_name.unpack(bref));
-  HANDLE_CODE(unpack_unconstrained_integer(ric_event_trigger_format_type, bref, false, true));
-
-  return SRSASN_SUCCESS;
-}
-void ric_event_trigger_style_list_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("ric-EventTriggerStyle-Type", ric_event_trigger_style_type);
-  j.write_str("ric-EventTriggerStyle-Name", ric_event_trigger_style_name.to_string());
-  j.write_int("ric-EventTriggerFormat-Type", ric_event_trigger_format_type);
-  j.end_obj();
-}
-
-// RIC-ReportStyle-List ::= SEQUENCE
-SRSASN_CODE ric_report_style_list_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_report_style_type, false, true));
-  HANDLE_CODE(ric_report_style_name.pack(bref));
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_ind_hdr_format_type, false, true));
-  HANDLE_CODE(pack_unconstrained_integer(bref, ric_ind_msg_format_type, false, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ric_report_style_list_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_unconstrained_integer(ric_report_style_type, bref, false, true));
-  HANDLE_CODE(ric_report_style_name.unpack(bref));
-  HANDLE_CODE(unpack_unconstrained_integer(ric_ind_hdr_format_type, bref, false, true));
-  HANDLE_CODE(unpack_unconstrained_integer(ric_ind_msg_format_type, bref, false, true));
-
-  return SRSASN_SUCCESS;
-}
-void ric_report_style_list_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("ric-ReportStyle-Type", ric_report_style_type);
-  j.write_str("ric-ReportStyle-Name", ric_report_style_name.to_string());
-  j.write_int("ric-IndicationHeaderFormat-Type", ric_ind_hdr_format_type);
-  j.write_int("ric-IndicationMessageFormat-Type", ric_ind_msg_format_type);
-  j.end_obj();
-}
-
-// E2SM-KPM-RANfunction-Description ::= SEQUENCE
-SRSASN_CODE e2_sm_kpm_ra_nfunction_description_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(ran_function_name.pack(bref));
-  bref.pack(e2_sm_kpm_ra_nfunction_item.ext, 1);
-  HANDLE_CODE(bref.pack(e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list.size() > 0, 1));
-  HANDLE_CODE(bref.pack(e2_sm_kpm_ra_nfunction_item.ric_report_style_list.size() > 0, 1));
-  if (e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list, 1, 63, true));
-  }
-  if (e2_sm_kpm_ra_nfunction_item.ric_report_style_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, e2_sm_kpm_ra_nfunction_item.ric_report_style_list, 1, 63, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE e2_sm_kpm_ra_nfunction_description_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(ran_function_name.unpack(bref));
-  bref.unpack(e2_sm_kpm_ra_nfunction_item.ext, 1);
-  bool ric_event_trigger_style_list_present;
-  HANDLE_CODE(bref.unpack(ric_event_trigger_style_list_present, 1));
-  bool ric_report_style_list_present;
-  HANDLE_CODE(bref.unpack(ric_report_style_list_present, 1));
-  if (ric_event_trigger_style_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list, bref, 1, 63, true));
-  }
-  if (ric_report_style_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(e2_sm_kpm_ra_nfunction_item.ric_report_style_list, bref, 1, 63, true));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void e2_sm_kpm_ra_nfunction_description_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("ranFunction-Name");
-  ran_function_name.to_json(j);
-  j.write_fieldname("e2SM-KPM-RANfunction-Item");
-  j.start_obj();
-  if (e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list.size() > 0) {
-    j.start_array("ric-EventTriggerStyle-List");
-    for (const auto& e1 : e2_sm_kpm_ra_nfunction_item.ric_event_trigger_style_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (e2_sm_kpm_ra_nfunction_item.ric_report_style_list.size() > 0) {
-    j.start_array("ric-ReportStyle-List");
-    for (const auto& e1 : e2_sm_kpm_ra_nfunction_item.ric_report_style_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-  j.end_obj();
-}
-
 // GNB-ID ::= CHOICE
 void gnb_id_c::to_json(json_writer& j) const
 {
@@ -2792,30 +1680,340 @@ const char* gnb_id_c::types_opts::to_string() const
   return convert_enum_idx(names, 1, value, "gnb_id_c::types");
 }
 
-// GlobalGNB-ID ::= SEQUENCE
-SRSASN_CODE global_gnb_id_s::pack(bit_ref& bref) const
+// MeasurementLabel ::= SEQUENCE
+SRSASN_CODE meas_label_s::pack(bit_ref& bref) const
 {
   bref.pack(ext, 1);
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(gnb_id.pack(bref));
+  HANDLE_CODE(bref.pack(no_label_present, 1));
+  HANDLE_CODE(bref.pack(plmn_id_present, 1));
+  HANDLE_CODE(bref.pack(slice_id_present, 1));
+  HANDLE_CODE(bref.pack(five_qi_present, 1));
+  HANDLE_CODE(bref.pack(qfi_present, 1));
+  HANDLE_CODE(bref.pack(qci_present, 1));
+  HANDLE_CODE(bref.pack(qcimax_present, 1));
+  HANDLE_CODE(bref.pack(qcimin_present, 1));
+  HANDLE_CODE(bref.pack(arpmax_present, 1));
+  HANDLE_CODE(bref.pack(arpmin_present, 1));
+  HANDLE_CODE(bref.pack(bitrate_range_present, 1));
+  HANDLE_CODE(bref.pack(layer_mu_mimo_present, 1));
+  HANDLE_CODE(bref.pack(sum_present, 1));
+  HANDLE_CODE(bref.pack(dist_bin_x_present, 1));
+  HANDLE_CODE(bref.pack(dist_bin_y_present, 1));
+  HANDLE_CODE(bref.pack(dist_bin_z_present, 1));
+  HANDLE_CODE(bref.pack(pre_label_override_present, 1));
+  HANDLE_CODE(bref.pack(start_end_ind_present, 1));
+  HANDLE_CODE(bref.pack(min_present, 1));
+  HANDLE_CODE(bref.pack(max_present, 1));
+  HANDLE_CODE(bref.pack(avg_present, 1));
 
+  if (no_label_present) {
+    HANDLE_CODE(no_label.pack(bref));
+  }
+  if (plmn_id_present) {
+    HANDLE_CODE(plmn_id.pack(bref));
+  }
+  if (slice_id_present) {
+    HANDLE_CODE(slice_id.pack(bref));
+  }
+  if (five_qi_present) {
+    HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, true, true));
+  }
+  if (qfi_present) {
+    HANDLE_CODE(pack_integer(bref, qfi, (uint8_t)0u, (uint8_t)63u, true, true));
+  }
+  if (qci_present) {
+    HANDLE_CODE(pack_integer(bref, qci, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (qcimax_present) {
+    HANDLE_CODE(pack_integer(bref, qcimax, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (qcimin_present) {
+    HANDLE_CODE(pack_integer(bref, qcimin, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (arpmax_present) {
+    HANDLE_CODE(pack_integer(bref, arpmax, (uint8_t)1u, (uint8_t)15u, true, true));
+  }
+  if (arpmin_present) {
+    HANDLE_CODE(pack_integer(bref, arpmin, (uint8_t)1u, (uint8_t)15u, true, true));
+  }
+  if (bitrate_range_present) {
+    HANDLE_CODE(pack_integer(bref, bitrate_range, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (layer_mu_mimo_present) {
+    HANDLE_CODE(pack_integer(bref, layer_mu_mimo, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (sum_present) {
+    HANDLE_CODE(sum.pack(bref));
+  }
+  if (dist_bin_x_present) {
+    HANDLE_CODE(pack_integer(bref, dist_bin_x, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (dist_bin_y_present) {
+    HANDLE_CODE(pack_integer(bref, dist_bin_y, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (dist_bin_z_present) {
+    HANDLE_CODE(pack_integer(bref, dist_bin_z, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (pre_label_override_present) {
+    HANDLE_CODE(pre_label_override.pack(bref));
+  }
+  if (start_end_ind_present) {
+    HANDLE_CODE(start_end_ind.pack(bref));
+  }
+  if (min_present) {
+    HANDLE_CODE(min.pack(bref));
+  }
+  if (max_present) {
+    HANDLE_CODE(max.pack(bref));
+  }
+  if (avg_present) {
+    HANDLE_CODE(avg.pack(bref));
+  }
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(ssb_idx_present, 1));
+    HANDLE_CODE(bref.pack(non_go_b_bfmode_idx_present, 1));
+    HANDLE_CODE(bref.pack(mimo_mode_idx_present, 1));
+
+    if (ssb_idx_present) {
+      HANDLE_CODE(pack_integer(bref, ssb_idx, (uint32_t)1u, (uint32_t)65535u, true, true));
+    }
+    if (non_go_b_bfmode_idx_present) {
+      HANDLE_CODE(pack_integer(bref, non_go_b_bfmode_idx, (uint32_t)1u, (uint32_t)65535u, true, true));
+    }
+    if (mimo_mode_idx_present) {
+      HANDLE_CODE(pack_integer(bref, mimo_mode_idx, (uint8_t)1u, (uint8_t)2u, true, true));
+    }
+  }
   return SRSASN_SUCCESS;
 }
-SRSASN_CODE global_gnb_id_s::unpack(cbit_ref& bref)
+SRSASN_CODE meas_label_s::unpack(cbit_ref& bref)
 {
   bref.unpack(ext, 1);
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(gnb_id.unpack(bref));
+  HANDLE_CODE(bref.unpack(no_label_present, 1));
+  HANDLE_CODE(bref.unpack(plmn_id_present, 1));
+  HANDLE_CODE(bref.unpack(slice_id_present, 1));
+  HANDLE_CODE(bref.unpack(five_qi_present, 1));
+  HANDLE_CODE(bref.unpack(qfi_present, 1));
+  HANDLE_CODE(bref.unpack(qci_present, 1));
+  HANDLE_CODE(bref.unpack(qcimax_present, 1));
+  HANDLE_CODE(bref.unpack(qcimin_present, 1));
+  HANDLE_CODE(bref.unpack(arpmax_present, 1));
+  HANDLE_CODE(bref.unpack(arpmin_present, 1));
+  HANDLE_CODE(bref.unpack(bitrate_range_present, 1));
+  HANDLE_CODE(bref.unpack(layer_mu_mimo_present, 1));
+  HANDLE_CODE(bref.unpack(sum_present, 1));
+  HANDLE_CODE(bref.unpack(dist_bin_x_present, 1));
+  HANDLE_CODE(bref.unpack(dist_bin_y_present, 1));
+  HANDLE_CODE(bref.unpack(dist_bin_z_present, 1));
+  HANDLE_CODE(bref.unpack(pre_label_override_present, 1));
+  HANDLE_CODE(bref.unpack(start_end_ind_present, 1));
+  HANDLE_CODE(bref.unpack(min_present, 1));
+  HANDLE_CODE(bref.unpack(max_present, 1));
+  HANDLE_CODE(bref.unpack(avg_present, 1));
 
+  if (no_label_present) {
+    HANDLE_CODE(no_label.unpack(bref));
+  }
+  if (plmn_id_present) {
+    HANDLE_CODE(plmn_id.unpack(bref));
+  }
+  if (slice_id_present) {
+    HANDLE_CODE(slice_id.unpack(bref));
+  }
+  if (five_qi_present) {
+    HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, true, true));
+  }
+  if (qfi_present) {
+    HANDLE_CODE(unpack_integer(qfi, bref, (uint8_t)0u, (uint8_t)63u, true, true));
+  }
+  if (qci_present) {
+    HANDLE_CODE(unpack_integer(qci, bref, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (qcimax_present) {
+    HANDLE_CODE(unpack_integer(qcimax, bref, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (qcimin_present) {
+    HANDLE_CODE(unpack_integer(qcimin, bref, (uint16_t)0u, (uint16_t)255u, false, true));
+  }
+  if (arpmax_present) {
+    HANDLE_CODE(unpack_integer(arpmax, bref, (uint8_t)1u, (uint8_t)15u, true, true));
+  }
+  if (arpmin_present) {
+    HANDLE_CODE(unpack_integer(arpmin, bref, (uint8_t)1u, (uint8_t)15u, true, true));
+  }
+  if (bitrate_range_present) {
+    HANDLE_CODE(unpack_integer(bitrate_range, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (layer_mu_mimo_present) {
+    HANDLE_CODE(unpack_integer(layer_mu_mimo, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (sum_present) {
+    HANDLE_CODE(sum.unpack(bref));
+  }
+  if (dist_bin_x_present) {
+    HANDLE_CODE(unpack_integer(dist_bin_x, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (dist_bin_y_present) {
+    HANDLE_CODE(unpack_integer(dist_bin_y, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (dist_bin_z_present) {
+    HANDLE_CODE(unpack_integer(dist_bin_z, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+  }
+  if (pre_label_override_present) {
+    HANDLE_CODE(pre_label_override.unpack(bref));
+  }
+  if (start_end_ind_present) {
+    HANDLE_CODE(start_end_ind.unpack(bref));
+  }
+  if (min_present) {
+    HANDLE_CODE(min.unpack(bref));
+  }
+  if (max_present) {
+    HANDLE_CODE(max.unpack(bref));
+  }
+  if (avg_present) {
+    HANDLE_CODE(avg.unpack(bref));
+  }
+
+  if (ext) {
+    HANDLE_CODE(bref.unpack(ssb_idx_present, 1));
+    HANDLE_CODE(bref.unpack(non_go_b_bfmode_idx_present, 1));
+    HANDLE_CODE(bref.unpack(mimo_mode_idx_present, 1));
+
+    if (ssb_idx_present) {
+      HANDLE_CODE(unpack_integer(ssb_idx, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+    }
+    if (non_go_b_bfmode_idx_present) {
+      HANDLE_CODE(unpack_integer(non_go_b_bfmode_idx, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
+    }
+    if (mimo_mode_idx_present) {
+      HANDLE_CODE(unpack_integer(mimo_mode_idx, bref, (uint8_t)1u, (uint8_t)2u, true, true));
+    }
+  }
   return SRSASN_SUCCESS;
 }
-void global_gnb_id_s::to_json(json_writer& j) const
+void meas_label_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("gNB-ID");
-  gnb_id.to_json(j);
+  if (no_label_present) {
+    j.write_str("noLabel", "true");
+  }
+  if (plmn_id_present) {
+    j.write_str("plmnID", plmn_id.to_string());
+  }
+  if (slice_id_present) {
+    j.write_fieldname("sliceID");
+    slice_id.to_json(j);
+  }
+  if (five_qi_present) {
+    j.write_int("fiveQI", five_qi);
+  }
+  if (qfi_present) {
+    j.write_int("qFI", qfi);
+  }
+  if (qci_present) {
+    j.write_int("qCI", qci);
+  }
+  if (qcimax_present) {
+    j.write_int("qCImax", qcimax);
+  }
+  if (qcimin_present) {
+    j.write_int("qCImin", qcimin);
+  }
+  if (arpmax_present) {
+    j.write_int("aRPmax", arpmax);
+  }
+  if (arpmin_present) {
+    j.write_int("aRPmin", arpmin);
+  }
+  if (bitrate_range_present) {
+    j.write_int("bitrateRange", bitrate_range);
+  }
+  if (layer_mu_mimo_present) {
+    j.write_int("layerMU-MIMO", layer_mu_mimo);
+  }
+  if (sum_present) {
+    j.write_str("sUM", "true");
+  }
+  if (dist_bin_x_present) {
+    j.write_int("distBinX", dist_bin_x);
+  }
+  if (dist_bin_y_present) {
+    j.write_int("distBinY", dist_bin_y);
+  }
+  if (dist_bin_z_present) {
+    j.write_int("distBinZ", dist_bin_z);
+  }
+  if (pre_label_override_present) {
+    j.write_str("preLabelOverride", "true");
+  }
+  if (start_end_ind_present) {
+    j.write_str("startEndInd", start_end_ind.to_string());
+  }
+  if (min_present) {
+    j.write_str("min", "true");
+  }
+  if (max_present) {
+    j.write_str("max", "true");
+  }
+  if (avg_present) {
+    j.write_str("avg", "true");
+  }
+  if (ext) {
+    if (ssb_idx_present) {
+      j.write_int("ssbIndex", ssb_idx);
+    }
+    if (non_go_b_bfmode_idx_present) {
+      j.write_int("nonGoB-BFmode-Index", non_go_b_bfmode_idx);
+    }
+    if (mimo_mode_idx_present) {
+      j.write_int("mIMO-mode-Index", mimo_mode_idx);
+    }
+  }
   j.end_obj();
+}
+
+const char* meas_label_s::no_label_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::no_label_e_");
+}
+
+const char* meas_label_s::sum_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::sum_e_");
+}
+
+const char* meas_label_s::pre_label_override_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::pre_label_override_e_");
+}
+
+const char* meas_label_s::start_end_ind_opts::to_string() const
+{
+  static const char* names[] = {"start", "end"};
+  return convert_enum_idx(names, 2, value, "meas_label_s::start_end_ind_e_");
+}
+
+const char* meas_label_s::min_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::min_e_");
+}
+
+const char* meas_label_s::max_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::max_e_");
+}
+
+const char* meas_label_s::avg_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_label_s::avg_e_");
 }
 
 // NgENB-ID ::= CHOICE
@@ -2978,6 +2176,150 @@ const char* ng_enb_id_c::types_opts::to_string() const
   return convert_enum_idx(names, 3, value, "ng_enb_id_c::types");
 }
 
+// TestCondInfo ::= SEQUENCE
+SRSASN_CODE test_cond_info_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(test_expr_present, 1));
+  HANDLE_CODE(bref.pack(test_value_present, 1));
+
+  HANDLE_CODE(test_type.pack(bref));
+  if (test_expr_present) {
+    HANDLE_CODE(test_expr.pack(bref));
+  }
+  if (test_value_present) {
+    HANDLE_CODE(test_value.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE test_cond_info_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(test_expr_present, 1));
+  HANDLE_CODE(bref.unpack(test_value_present, 1));
+
+  HANDLE_CODE(test_type.unpack(bref));
+  if (test_expr_present) {
+    HANDLE_CODE(test_expr.unpack(bref));
+  }
+  if (test_value_present) {
+    HANDLE_CODE(test_value.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void test_cond_info_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("testType");
+  test_type.to_json(j);
+  if (test_expr_present) {
+    j.write_str("testExpr", test_expr.to_string());
+  }
+  if (test_value_present) {
+    j.write_fieldname("testValue");
+    test_value.to_json(j);
+  }
+  j.end_obj();
+}
+
+// UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
+SRSASN_CODE ueid_gnb_cu_cp_e1_ap_id_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_gnb_cu_cp_e1_ap_id_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void ueid_gnb_cu_cp_e1_ap_id_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1_ap_id);
+  j.end_obj();
+}
+
+// UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE
+SRSASN_CODE ueid_gnb_cu_cp_f1_ap_id_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_gnb_cu_cp_f1_ap_id_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void ueid_gnb_cu_cp_f1_ap_id_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
+  j.end_obj();
+}
+
+// GlobalENB-ID ::= SEQUENCE
+SRSASN_CODE global_enb_id_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(plmn_id.pack(bref));
+  HANDLE_CODE(enb_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE global_enb_id_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(plmn_id.unpack(bref));
+  HANDLE_CODE(enb_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void global_enb_id_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("pLMNIdentity", plmn_id.to_string());
+  j.write_fieldname("eNB-ID");
+  enb_id.to_json(j);
+  j.end_obj();
+}
+
+// GlobalGNB-ID ::= SEQUENCE
+SRSASN_CODE global_gnb_id_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(plmn_id.pack(bref));
+  HANDLE_CODE(gnb_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE global_gnb_id_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(plmn_id.unpack(bref));
+  HANDLE_CODE(gnb_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void global_gnb_id_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("pLMNIdentity", plmn_id.to_string());
+  j.write_fieldname("gNB-ID");
+  gnb_id.to_json(j);
+  j.end_obj();
+}
+
 // GlobalNgENB-ID ::= SEQUENCE
 SRSASN_CODE global_ng_enb_id_s::pack(bit_ref& bref) const
 {
@@ -3001,6 +2343,2770 @@ void global_ng_enb_id_s::to_json(json_writer& j) const
   j.write_str("pLMNIdentity", plmn_id.to_string());
   j.write_fieldname("ngENB-ID");
   ng_enb_id.to_json(j);
+  j.end_obj();
+}
+
+// LabelInfoItem ::= SEQUENCE
+SRSASN_CODE label_info_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(meas_label.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE label_info_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(meas_label.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void label_info_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measLabel");
+  meas_label.to_json(j);
+  j.end_obj();
+}
+
+// LogicalOR ::= ENUMERATED
+const char* lc_or_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "lc_or_e");
+}
+
+// MatchingCondItem-Choice ::= CHOICE
+void matching_cond_item_choice_c::destroy_()
+{
+  switch (type_) {
+    case types::meas_label:
+      c.destroy<meas_label_s>();
+      break;
+    case types::test_cond_info:
+      c.destroy<test_cond_info_s>();
+      break;
+    default:
+      break;
+  }
+}
+void matching_cond_item_choice_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::meas_label:
+      c.init<meas_label_s>();
+      break;
+    case types::test_cond_info:
+      c.init<test_cond_info_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+  }
+}
+matching_cond_item_choice_c::matching_cond_item_choice_c(const matching_cond_item_choice_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::meas_label:
+      c.init(other.c.get<meas_label_s>());
+      break;
+    case types::test_cond_info:
+      c.init(other.c.get<test_cond_info_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+  }
+}
+matching_cond_item_choice_c& matching_cond_item_choice_c::operator=(const matching_cond_item_choice_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::meas_label:
+      c.set(other.c.get<meas_label_s>());
+      break;
+    case types::test_cond_info:
+      c.set(other.c.get<test_cond_info_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+  }
+
+  return *this;
+}
+meas_label_s& matching_cond_item_choice_c::set_meas_label()
+{
+  set(types::meas_label);
+  return c.get<meas_label_s>();
+}
+test_cond_info_s& matching_cond_item_choice_c::set_test_cond_info()
+{
+  set(types::test_cond_info);
+  return c.get<test_cond_info_s>();
+}
+void matching_cond_item_choice_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::meas_label:
+      j.write_fieldname("measLabel");
+      c.get<meas_label_s>().to_json(j);
+      break;
+    case types::test_cond_info:
+      j.write_fieldname("testCondInfo");
+      c.get<test_cond_info_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE matching_cond_item_choice_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::meas_label:
+      HANDLE_CODE(c.get<meas_label_s>().pack(bref));
+      break;
+    case types::test_cond_info:
+      HANDLE_CODE(c.get<test_cond_info_s>().pack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_cond_item_choice_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::meas_label:
+      HANDLE_CODE(c.get<meas_label_s>().unpack(bref));
+      break;
+    case types::test_cond_info:
+      HANDLE_CODE(c.get<test_cond_info_s>().unpack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_cond_item_choice_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* matching_cond_item_choice_c::types_opts::to_string() const
+{
+  static const char* names[] = {"measLabel", "testCondInfo"};
+  return convert_enum_idx(names, 2, value, "matching_cond_item_choice_c::types");
+}
+
+// MatchingCondItem ::= SEQUENCE
+SRSASN_CODE matching_cond_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(lc_or_present, 1));
+
+  HANDLE_CODE(matching_cond_choice.pack(bref));
+  if (lc_or_present) {
+    HANDLE_CODE(lc_or.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_cond_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(lc_or_present, 1));
+
+  HANDLE_CODE(matching_cond_choice.unpack(bref));
+  if (lc_or_present) {
+    HANDLE_CODE(lc_or.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void matching_cond_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("matchingCondChoice");
+  matching_cond_choice.to_json(j);
+  if (lc_or_present) {
+    j.write_str("logicalOR", "true");
+  }
+  j.end_obj();
+}
+
+// UEID-EN-GNB ::= SEQUENCE
+SRSASN_CODE ueid_en_gnb_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.pack(gnb_cu_ue_f1_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(gnb_cu_cp_ue_e1_ap_id_list.size() > 0, 1));
+  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  HANDLE_CODE(global_enb_id.pack(bref));
+  if (gnb_cu_ue_f1_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1_ap_id_list, 1, 65535, true));
+  }
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_en_gnb_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.unpack(gnb_cu_ue_f1_ap_id_present, 1));
+  bool gnb_cu_cp_ue_e1_ap_id_list_present;
+  HANDLE_CODE(bref.unpack(gnb_cu_cp_ue_e1_ap_id_list_present, 1));
+  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
+
+  HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  HANDLE_CODE(global_enb_id.unpack(bref));
+  if (gnb_cu_ue_f1_ap_id_present) {
+    HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1_ap_id_list, bref, 1, 65535, true));
+  }
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_en_gnb_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
+  if (m_enb_ue_x2ap_id_ext_present) {
+    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
+  }
+  j.write_fieldname("globalENB-ID");
+  global_enb_id.to_json(j);
+  if (gnb_cu_ue_f1_ap_id_present) {
+    j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
+    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
+    for (const auto& e1 : gnb_cu_cp_ue_e1_ap_id_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (ran_ueid_present) {
+    j.write_str("ran-UEID", ran_ueid.to_string());
+  }
+  j.end_obj();
+}
+
+// UEID-ENB ::= SEQUENCE
+SRSASN_CODE ueid_enb_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_present, 1));
+  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.pack(global_enb_id_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, mme_ue_s1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  HANDLE_CODE(gummei.pack(bref));
+  if (m_enb_ue_x2ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  if (global_enb_id_present) {
+    HANDLE_CODE(global_enb_id.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_enb_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_ext_present, 1));
+  HANDLE_CODE(bref.unpack(global_enb_id_present, 1));
+
+  HANDLE_CODE(unpack_integer(mme_ue_s1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  HANDLE_CODE(gummei.unpack(bref));
+  if (m_enb_ue_x2ap_id_present) {
+    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
+  }
+  if (global_enb_id_present) {
+    HANDLE_CODE(global_enb_id.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_enb_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("mME-UE-S1AP-ID", mme_ue_s1ap_id);
+  j.write_fieldname("gUMMEI");
+  gummei.to_json(j);
+  if (m_enb_ue_x2ap_id_present) {
+    j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
+  }
+  if (m_enb_ue_x2ap_id_ext_present) {
+    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
+  }
+  if (global_enb_id_present) {
+    j.write_fieldname("globalENB-ID");
+    global_enb_id.to_json(j);
+  }
+  j.end_obj();
+}
+
+// UEID-GNB ::= SEQUENCE
+SRSASN_CODE ueid_gnb_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(gnb_cu_ue_f1_ap_id_list.size() > 0, 1));
+  HANDLE_CODE(bref.pack(gnb_cu_cp_ue_e1_ap_id_list.size() > 0, 1));
+  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
+  HANDLE_CODE(bref.pack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(global_gnb_id_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  HANDLE_CODE(guami.pack(bref));
+  if (gnb_cu_ue_f1_ap_id_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_ue_f1_ap_id_list, 1, 4, true));
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1_ap_id_list, 1, 65535, true));
+  }
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.pack(bref));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xn_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_gnb_id_present) {
+    HANDLE_CODE(global_gnb_id.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_gnb_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  bool gnb_cu_ue_f1_ap_id_list_present;
+  HANDLE_CODE(bref.unpack(gnb_cu_ue_f1_ap_id_list_present, 1));
+  bool gnb_cu_cp_ue_e1_ap_id_list_present;
+  HANDLE_CODE(bref.unpack(gnb_cu_cp_ue_e1_ap_id_list_present, 1));
+  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
+  HANDLE_CODE(bref.unpack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(global_gnb_id_present, 1));
+
+  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  HANDLE_CODE(guami.unpack(bref));
+  if (gnb_cu_ue_f1_ap_id_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_ue_f1_ap_id_list, bref, 1, 4, true));
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1_ap_id_list, bref, 1, 65535, true));
+  }
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.unpack(bref));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xn_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_gnb_id_present) {
+    HANDLE_CODE(global_gnb_id.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_gnb_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("amf-UE-NGAP-ID", amf_ue_ngap_id);
+  j.write_fieldname("guami");
+  guami.to_json(j);
+  if (gnb_cu_ue_f1_ap_id_list.size() > 0) {
+    j.start_array("gNB-CU-UE-F1AP-ID-List");
+    for (const auto& e1 : gnb_cu_ue_f1_ap_id_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
+    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
+    for (const auto& e1 : gnb_cu_cp_ue_e1_ap_id_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (ran_ueid_present) {
+    j.write_str("ran-UEID", ran_ueid.to_string());
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    j.write_int("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xn_ap_id);
+  }
+  if (global_gnb_id_present) {
+    j.write_fieldname("globalGNB-ID");
+    global_gnb_id.to_json(j);
+  }
+  j.end_obj();
+}
+
+// UEID-GNB-CU-UP ::= SEQUENCE
+SRSASN_CODE ueid_gnb_cu_up_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_gnb_cu_up_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
+
+  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_gnb_cu_up_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1_ap_id);
+  if (ran_ueid_present) {
+    j.write_str("ran-UEID", ran_ueid.to_string());
+  }
+  j.end_obj();
+}
+
+// UEID-GNB-DU ::= SEQUENCE
+SRSASN_CODE ueid_gnb_du_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_gnb_du_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
+
+  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  if (ran_ueid_present) {
+    HANDLE_CODE(ran_ueid.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_gnb_du_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
+  if (ran_ueid_present) {
+    j.write_str("ran-UEID", ran_ueid.to_string());
+  }
+  j.end_obj();
+}
+
+// UEID-NG-ENB ::= SEQUENCE
+SRSASN_CODE ueid_ng_enb_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(ng_enb_cu_ue_w1_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.pack(global_ng_enb_id_present, 1));
+
+  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  HANDLE_CODE(guami.pack(bref));
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xn_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_ng_enb_id_present) {
+    HANDLE_CODE(global_ng_enb_id.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_ng_enb_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(ng_enb_cu_ue_w1_ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(m_ng_ran_ue_xn_ap_id_present, 1));
+  HANDLE_CODE(bref.unpack(global_ng_enb_id_present, 1));
+
+  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
+  HANDLE_CODE(guami.unpack(bref));
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xn_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+  }
+  if (global_ng_enb_id_present) {
+    HANDLE_CODE(global_ng_enb_id.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ueid_ng_enb_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("amf-UE-NGAP-ID", amf_ue_ngap_id);
+  j.write_fieldname("guami");
+  guami.to_json(j);
+  if (ng_enb_cu_ue_w1_ap_id_present) {
+    j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
+  }
+  if (m_ng_ran_ue_xn_ap_id_present) {
+    j.write_int("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xn_ap_id);
+  }
+  if (global_ng_enb_id_present) {
+    j.write_fieldname("globalNgENB-ID");
+    global_ng_enb_id.to_json(j);
+  }
+  j.end_obj();
+}
+
+// UEID-NG-ENB-DU ::= SEQUENCE
+SRSASN_CODE ueid_ng_enb_du_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_ng_enb_du_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void ueid_ng_enb_du_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
+  j.end_obj();
+}
+
+// MeasurementInfoItem ::= SEQUENCE
+SRSASN_CODE meas_info_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(meas_type.pack(bref));
+  HANDLE_CODE(pack_dyn_seq_of(bref, label_info_list, 1, 2147483647, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_info_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(meas_type.unpack(bref));
+  HANDLE_CODE(unpack_dyn_seq_of(label_info_list, bref, 1, 2147483647, true));
+
+  return SRSASN_SUCCESS;
+}
+void meas_info_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measType");
+  meas_type.to_json(j);
+  j.start_array("labelInfoList");
+  for (const auto& e1 : label_info_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.end_obj();
+}
+
+// UEID ::= CHOICE
+void ueid_c::destroy_()
+{
+  switch (type_) {
+    case types::gnb_ueid:
+      c.destroy<ueid_gnb_s>();
+      break;
+    case types::gnb_du_ueid:
+      c.destroy<ueid_gnb_du_s>();
+      break;
+    case types::gnb_cu_up_ueid:
+      c.destroy<ueid_gnb_cu_up_s>();
+      break;
+    case types::ng_enb_ueid:
+      c.destroy<ueid_ng_enb_s>();
+      break;
+    case types::ng_enb_du_ueid:
+      c.destroy<ueid_ng_enb_du_s>();
+      break;
+    case types::en_g_nb_ueid:
+      c.destroy<ueid_en_gnb_s>();
+      break;
+    case types::enb_ueid:
+      c.destroy<ueid_enb_s>();
+      break;
+    default:
+      break;
+  }
+}
+void ueid_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::gnb_ueid:
+      c.init<ueid_gnb_s>();
+      break;
+    case types::gnb_du_ueid:
+      c.init<ueid_gnb_du_s>();
+      break;
+    case types::gnb_cu_up_ueid:
+      c.init<ueid_gnb_cu_up_s>();
+      break;
+    case types::ng_enb_ueid:
+      c.init<ueid_ng_enb_s>();
+      break;
+    case types::ng_enb_du_ueid:
+      c.init<ueid_ng_enb_du_s>();
+      break;
+    case types::en_g_nb_ueid:
+      c.init<ueid_en_gnb_s>();
+      break;
+    case types::enb_ueid:
+      c.init<ueid_enb_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+  }
+}
+ueid_c::ueid_c(const ueid_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::gnb_ueid:
+      c.init(other.c.get<ueid_gnb_s>());
+      break;
+    case types::gnb_du_ueid:
+      c.init(other.c.get<ueid_gnb_du_s>());
+      break;
+    case types::gnb_cu_up_ueid:
+      c.init(other.c.get<ueid_gnb_cu_up_s>());
+      break;
+    case types::ng_enb_ueid:
+      c.init(other.c.get<ueid_ng_enb_s>());
+      break;
+    case types::ng_enb_du_ueid:
+      c.init(other.c.get<ueid_ng_enb_du_s>());
+      break;
+    case types::en_g_nb_ueid:
+      c.init(other.c.get<ueid_en_gnb_s>());
+      break;
+    case types::enb_ueid:
+      c.init(other.c.get<ueid_enb_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+  }
+}
+ueid_c& ueid_c::operator=(const ueid_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::gnb_ueid:
+      c.set(other.c.get<ueid_gnb_s>());
+      break;
+    case types::gnb_du_ueid:
+      c.set(other.c.get<ueid_gnb_du_s>());
+      break;
+    case types::gnb_cu_up_ueid:
+      c.set(other.c.get<ueid_gnb_cu_up_s>());
+      break;
+    case types::ng_enb_ueid:
+      c.set(other.c.get<ueid_ng_enb_s>());
+      break;
+    case types::ng_enb_du_ueid:
+      c.set(other.c.get<ueid_ng_enb_du_s>());
+      break;
+    case types::en_g_nb_ueid:
+      c.set(other.c.get<ueid_en_gnb_s>());
+      break;
+    case types::enb_ueid:
+      c.set(other.c.get<ueid_enb_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+  }
+
+  return *this;
+}
+ueid_gnb_s& ueid_c::set_gnb_ueid()
+{
+  set(types::gnb_ueid);
+  return c.get<ueid_gnb_s>();
+}
+ueid_gnb_du_s& ueid_c::set_gnb_du_ueid()
+{
+  set(types::gnb_du_ueid);
+  return c.get<ueid_gnb_du_s>();
+}
+ueid_gnb_cu_up_s& ueid_c::set_gnb_cu_up_ueid()
+{
+  set(types::gnb_cu_up_ueid);
+  return c.get<ueid_gnb_cu_up_s>();
+}
+ueid_ng_enb_s& ueid_c::set_ng_enb_ueid()
+{
+  set(types::ng_enb_ueid);
+  return c.get<ueid_ng_enb_s>();
+}
+ueid_ng_enb_du_s& ueid_c::set_ng_enb_du_ueid()
+{
+  set(types::ng_enb_du_ueid);
+  return c.get<ueid_ng_enb_du_s>();
+}
+ueid_en_gnb_s& ueid_c::set_en_g_nb_ueid()
+{
+  set(types::en_g_nb_ueid);
+  return c.get<ueid_en_gnb_s>();
+}
+ueid_enb_s& ueid_c::set_enb_ueid()
+{
+  set(types::enb_ueid);
+  return c.get<ueid_enb_s>();
+}
+void ueid_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::gnb_ueid:
+      j.write_fieldname("gNB-UEID");
+      c.get<ueid_gnb_s>().to_json(j);
+      break;
+    case types::gnb_du_ueid:
+      j.write_fieldname("gNB-DU-UEID");
+      c.get<ueid_gnb_du_s>().to_json(j);
+      break;
+    case types::gnb_cu_up_ueid:
+      j.write_fieldname("gNB-CU-UP-UEID");
+      c.get<ueid_gnb_cu_up_s>().to_json(j);
+      break;
+    case types::ng_enb_ueid:
+      j.write_fieldname("ng-eNB-UEID");
+      c.get<ueid_ng_enb_s>().to_json(j);
+      break;
+    case types::ng_enb_du_ueid:
+      j.write_fieldname("ng-eNB-DU-UEID");
+      c.get<ueid_ng_enb_du_s>().to_json(j);
+      break;
+    case types::en_g_nb_ueid:
+      j.write_fieldname("en-gNB-UEID");
+      c.get<ueid_en_gnb_s>().to_json(j);
+      break;
+    case types::enb_ueid:
+      j.write_fieldname("eNB-UEID");
+      c.get<ueid_enb_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE ueid_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::gnb_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_s>().pack(bref));
+      break;
+    case types::gnb_du_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_du_s>().pack(bref));
+      break;
+    case types::gnb_cu_up_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_cu_up_s>().pack(bref));
+      break;
+    case types::ng_enb_ueid:
+      HANDLE_CODE(c.get<ueid_ng_enb_s>().pack(bref));
+      break;
+    case types::ng_enb_du_ueid:
+      HANDLE_CODE(c.get<ueid_ng_enb_du_s>().pack(bref));
+      break;
+    case types::en_g_nb_ueid:
+      HANDLE_CODE(c.get<ueid_en_gnb_s>().pack(bref));
+      break;
+    case types::enb_ueid:
+      HANDLE_CODE(c.get<ueid_enb_s>().pack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ueid_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::gnb_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_s>().unpack(bref));
+      break;
+    case types::gnb_du_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_du_s>().unpack(bref));
+      break;
+    case types::gnb_cu_up_ueid:
+      HANDLE_CODE(c.get<ueid_gnb_cu_up_s>().unpack(bref));
+      break;
+    case types::ng_enb_ueid:
+      HANDLE_CODE(c.get<ueid_ng_enb_s>().unpack(bref));
+      break;
+    case types::ng_enb_du_ueid:
+      HANDLE_CODE(c.get<ueid_ng_enb_du_s>().unpack(bref));
+      break;
+    case types::en_g_nb_ueid:
+      HANDLE_CODE(c.get<ueid_en_gnb_s>().unpack(bref));
+      break;
+    case types::enb_ueid:
+      HANDLE_CODE(c.get<ueid_enb_s>().unpack(bref));
+      break;
+    default:
+      log_invalid_choice_id(type_, "ueid_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* ueid_c::types_opts::to_string() const
+{
+  static const char* names[] = {
+      "gNB-UEID", "gNB-DU-UEID", "gNB-CU-UP-UEID", "ng-eNB-UEID", "ng-eNB-DU-UEID", "en-gNB-UEID", "eNB-UEID"};
+  return convert_enum_idx(names, 7, value, "ueid_c::types");
+}
+
+// MatchingUEidPerSubItem ::= SEQUENCE
+SRSASN_CODE matching_ueid_per_sub_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ue_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ueid_per_sub_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ue_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void matching_ueid_per_sub_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ueID");
+  ue_id.to_json(j);
+  j.end_obj();
+}
+
+// MatchingUeCondPerSubItem ::= SEQUENCE
+SRSASN_CODE matching_ue_cond_per_sub_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(test_cond_info.pack(bref));
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(lc_or_present, 1));
+
+    if (lc_or_present) {
+      HANDLE_CODE(lc_or.pack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ue_cond_per_sub_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(test_cond_info.unpack(bref));
+
+  if (ext) {
+    HANDLE_CODE(bref.unpack(lc_or_present, 1));
+
+    if (lc_or_present) {
+      HANDLE_CODE(lc_or.unpack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+void matching_ue_cond_per_sub_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("testCondInfo");
+  test_cond_info.to_json(j);
+  if (ext) {
+    if (lc_or_present) {
+      j.write_str("logicalOR", "true");
+    }
+  }
+  j.end_obj();
+}
+
+// MeasurementCondItem ::= SEQUENCE
+SRSASN_CODE meas_cond_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(meas_type.pack(bref));
+  HANDLE_CODE(pack_dyn_seq_of(bref, matching_cond, 1, 32768, true));
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(bin_range_def.is_present(), 1));
+
+    if (bin_range_def.is_present()) {
+      HANDLE_CODE(bin_range_def->pack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_cond_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(meas_type.unpack(bref));
+  HANDLE_CODE(unpack_dyn_seq_of(matching_cond, bref, 1, 32768, true));
+
+  if (ext) {
+    bool bin_range_def_present;
+    HANDLE_CODE(bref.unpack(bin_range_def_present, 1));
+    bin_range_def.set_present(bin_range_def_present);
+
+    if (bin_range_def.is_present()) {
+      HANDLE_CODE(bin_range_def->unpack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+void meas_cond_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measType");
+  meas_type.to_json(j);
+  j.start_array("matchingCond");
+  for (const auto& e1 : matching_cond) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (ext) {
+    if (bin_range_def.is_present()) {
+      j.write_fieldname("binRangeDef");
+      bin_range_def->to_json(j);
+    }
+  }
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition-Format1 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_format1_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(cell_global_id_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_info_list, 1, 65535, true));
+  HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  if (cell_global_id_present) {
+    HANDLE_CODE(cell_global_id.pack(bref));
+  }
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(dist_meas_bin_range_info.is_present(), 1));
+
+    if (dist_meas_bin_range_info.is_present()) {
+      HANDLE_CODE(pack_dyn_seq_of(bref, *dist_meas_bin_range_info, 1, 65535, true));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_format1_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(cell_global_id_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(meas_info_list, bref, 1, 65535, true));
+  HANDLE_CODE(unpack_integer(granul_period, bref, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  if (cell_global_id_present) {
+    HANDLE_CODE(cell_global_id.unpack(bref));
+  }
+
+  if (ext) {
+    bool dist_meas_bin_range_info_present;
+    HANDLE_CODE(bref.unpack(dist_meas_bin_range_info_present, 1));
+    dist_meas_bin_range_info.set_present(dist_meas_bin_range_info_present);
+
+    if (dist_meas_bin_range_info.is_present()) {
+      HANDLE_CODE(unpack_dyn_seq_of(*dist_meas_bin_range_info, bref, 1, 65535, true));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_format1_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("measInfoList");
+  for (const auto& e1 : meas_info_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.write_int("granulPeriod", granul_period);
+  if (cell_global_id_present) {
+    j.write_fieldname("cellGlobalID");
+    cell_global_id.to_json(j);
+  }
+  if (ext) {
+    if (dist_meas_bin_range_info.is_present()) {
+      j.start_array("distMeasBinRangeInfo");
+      for (const auto& e1 : *dist_meas_bin_range_info) {
+        e1.to_json(j);
+      }
+      j.end_array();
+    }
+  }
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition-Format2 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_format2_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ue_id.pack(bref));
+  HANDLE_CODE(subscript_info.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_format2_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ue_id.unpack(bref));
+  HANDLE_CODE(subscript_info.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_format2_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ueID");
+  ue_id.to_json(j);
+  j.write_fieldname("subscriptInfo");
+  subscript_info.to_json(j);
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition-Format3 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_format3_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(cell_global_id_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_cond_list, 1, 65535, true));
+  HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  if (cell_global_id_present) {
+    HANDLE_CODE(cell_global_id.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_format3_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(cell_global_id_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(meas_cond_list, bref, 1, 65535, true));
+  HANDLE_CODE(unpack_integer(granul_period, bref, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  if (cell_global_id_present) {
+    HANDLE_CODE(cell_global_id.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_format3_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("measCondList");
+  for (const auto& e1 : meas_cond_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.write_int("granulPeriod", granul_period);
+  if (cell_global_id_present) {
+    j.write_fieldname("cellGlobalID");
+    cell_global_id.to_json(j);
+  }
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition-Format4 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_format4_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_dyn_seq_of(bref, matching_ue_cond_list, 1, 32768, true));
+  HANDLE_CODE(subscription_info.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_format4_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_dyn_seq_of(matching_ue_cond_list, bref, 1, 32768, true));
+  HANDLE_CODE(subscription_info.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_format4_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("matchingUeCondList");
+  for (const auto& e1 : matching_ue_cond_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.write_fieldname("subscriptionInfo");
+  subscription_info.to_json(j);
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition-Format5 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_format5_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_dyn_seq_of(bref, matching_ueid_list, 2, 65535, true));
+  HANDLE_CODE(subscription_info.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_format5_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_dyn_seq_of(matching_ueid_list, bref, 2, 65535, true));
+  HANDLE_CODE(subscription_info.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_format5_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("matchingUEidList");
+  for (const auto& e1 : matching_ueid_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.write_fieldname("subscriptionInfo");
+  subscription_info.to_json(j);
+  j.end_obj();
+}
+
+// E2SM-KPM-ActionDefinition ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_action_definition_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_style_type, false, true));
+  HANDLE_CODE(action_definition_formats.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_unconstrained_integer(ric_style_type, bref, false, true));
+  HANDLE_CODE(action_definition_formats.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_action_definition_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("ric-Style-Type", ric_style_type);
+  j.write_fieldname("actionDefinition-formats");
+  action_definition_formats.to_json(j);
+  j.end_obj();
+}
+
+void e2_sm_kpm_action_definition_s::action_definition_formats_c_::destroy_()
+{
+  switch (type_) {
+    case types::action_definition_format1:
+      c.destroy<e2_sm_kpm_action_definition_format1_s>();
+      break;
+    case types::action_definition_format2:
+      c.destroy<e2_sm_kpm_action_definition_format2_s>();
+      break;
+    case types::action_definition_format3:
+      c.destroy<e2_sm_kpm_action_definition_format3_s>();
+      break;
+    case types::action_definition_format4:
+      c.destroy<e2_sm_kpm_action_definition_format4_s>();
+      break;
+    case types::action_definition_format5:
+      c.destroy<e2_sm_kpm_action_definition_format5_s>();
+      break;
+    default:
+      break;
+  }
+}
+void e2_sm_kpm_action_definition_s::action_definition_formats_c_::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::action_definition_format1:
+      c.init<e2_sm_kpm_action_definition_format1_s>();
+      break;
+    case types::action_definition_format2:
+      c.init<e2_sm_kpm_action_definition_format2_s>();
+      break;
+    case types::action_definition_format3:
+      c.init<e2_sm_kpm_action_definition_format3_s>();
+      break;
+    case types::action_definition_format4:
+      c.init<e2_sm_kpm_action_definition_format4_s>();
+      break;
+    case types::action_definition_format5:
+      c.init<e2_sm_kpm_action_definition_format5_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+  }
+}
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::action_definition_formats_c_(
+    const e2_sm_kpm_action_definition_s::action_definition_formats_c_& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::action_definition_format1:
+      c.init(other.c.get<e2_sm_kpm_action_definition_format1_s>());
+      break;
+    case types::action_definition_format2:
+      c.init(other.c.get<e2_sm_kpm_action_definition_format2_s>());
+      break;
+    case types::action_definition_format3:
+      c.init(other.c.get<e2_sm_kpm_action_definition_format3_s>());
+      break;
+    case types::action_definition_format4:
+      c.init(other.c.get<e2_sm_kpm_action_definition_format4_s>());
+      break;
+    case types::action_definition_format5:
+      c.init(other.c.get<e2_sm_kpm_action_definition_format5_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+  }
+}
+e2_sm_kpm_action_definition_s::action_definition_formats_c_&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::operator=(
+    const e2_sm_kpm_action_definition_s::action_definition_formats_c_& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::action_definition_format1:
+      c.set(other.c.get<e2_sm_kpm_action_definition_format1_s>());
+      break;
+    case types::action_definition_format2:
+      c.set(other.c.get<e2_sm_kpm_action_definition_format2_s>());
+      break;
+    case types::action_definition_format3:
+      c.set(other.c.get<e2_sm_kpm_action_definition_format3_s>());
+      break;
+    case types::action_definition_format4:
+      c.set(other.c.get<e2_sm_kpm_action_definition_format4_s>());
+      break;
+    case types::action_definition_format5:
+      c.set(other.c.get<e2_sm_kpm_action_definition_format5_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+  }
+
+  return *this;
+}
+e2_sm_kpm_action_definition_format1_s&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::set_action_definition_format1()
+{
+  set(types::action_definition_format1);
+  return c.get<e2_sm_kpm_action_definition_format1_s>();
+}
+e2_sm_kpm_action_definition_format2_s&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::set_action_definition_format2()
+{
+  set(types::action_definition_format2);
+  return c.get<e2_sm_kpm_action_definition_format2_s>();
+}
+e2_sm_kpm_action_definition_format3_s&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::set_action_definition_format3()
+{
+  set(types::action_definition_format3);
+  return c.get<e2_sm_kpm_action_definition_format3_s>();
+}
+e2_sm_kpm_action_definition_format4_s&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::set_action_definition_format4()
+{
+  set(types::action_definition_format4);
+  return c.get<e2_sm_kpm_action_definition_format4_s>();
+}
+e2_sm_kpm_action_definition_format5_s&
+e2_sm_kpm_action_definition_s::action_definition_formats_c_::set_action_definition_format5()
+{
+  set(types::action_definition_format5);
+  return c.get<e2_sm_kpm_action_definition_format5_s>();
+}
+void e2_sm_kpm_action_definition_s::action_definition_formats_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::action_definition_format1:
+      j.write_fieldname("actionDefinition-Format1");
+      c.get<e2_sm_kpm_action_definition_format1_s>().to_json(j);
+      break;
+    case types::action_definition_format2:
+      j.write_fieldname("actionDefinition-Format2");
+      c.get<e2_sm_kpm_action_definition_format2_s>().to_json(j);
+      break;
+    case types::action_definition_format3:
+      j.write_fieldname("actionDefinition-Format3");
+      c.get<e2_sm_kpm_action_definition_format3_s>().to_json(j);
+      break;
+    case types::action_definition_format4:
+      j.write_fieldname("actionDefinition-Format4");
+      c.get<e2_sm_kpm_action_definition_format4_s>().to_json(j);
+      break;
+    case types::action_definition_format5:
+      j.write_fieldname("actionDefinition-Format5");
+      c.get<e2_sm_kpm_action_definition_format5_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+  }
+  j.end_obj();
+}
+SRSASN_CODE e2_sm_kpm_action_definition_s::action_definition_formats_c_::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::action_definition_format1:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format1_s>().pack(bref));
+      break;
+    case types::action_definition_format2:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format2_s>().pack(bref));
+      break;
+    case types::action_definition_format3:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format3_s>().pack(bref));
+      break;
+    case types::action_definition_format4: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format4_s>().pack(bref));
+    } break;
+    case types::action_definition_format5: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format5_s>().pack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_action_definition_s::action_definition_formats_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::action_definition_format1:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format1_s>().unpack(bref));
+      break;
+    case types::action_definition_format2:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format2_s>().unpack(bref));
+      break;
+    case types::action_definition_format3:
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format3_s>().unpack(bref));
+      break;
+    case types::action_definition_format4: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format4_s>().unpack(bref));
+    } break;
+    case types::action_definition_format5: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_action_definition_format5_s>().unpack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_action_definition_s::action_definition_formats_c_");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"actionDefinition-Format1",
+                                "actionDefinition-Format2",
+                                "actionDefinition-Format3",
+                                "actionDefinition-Format4",
+                                "actionDefinition-Format5"};
+  return convert_enum_idx(names, 5, value, "e2_sm_kpm_action_definition_s::action_definition_formats_c_::types");
+}
+uint8_t e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 3, 4, 5};
+  return map_enum_number(numbers, 5, value, "e2_sm_kpm_action_definition_s::action_definition_formats_c_::types");
+}
+
+// E2SM-KPM-EventTriggerDefinition-Format1 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_format1_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_integer(bref, report_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_format1_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_integer(report_period, bref, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_event_trigger_definition_format1_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("reportingPeriod", report_period);
+  j.end_obj();
+}
+
+// E2SM-KPM-EventTriggerDefinition ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(event_definition_formats.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(event_definition_formats.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_event_trigger_definition_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("eventDefinition-formats");
+  event_definition_formats.to_json(j);
+  j.end_obj();
+}
+
+void e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("eventDefinition-Format1");
+  c.to_json(j);
+  j.end_obj();
+}
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::pack(bit_ref& bref) const
+{
+  pack_enum(bref, type());
+  HANDLE_CODE(c.pack(bref));
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  unpack_enum(e, bref);
+  if (e != type()) {
+    log_invalid_choice_id(e, "e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  HANDLE_CODE(c.unpack(bref));
+  return SRSASN_SUCCESS;
+}
+
+const char* e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"eventDefinition-Format1"};
+  return convert_enum_idx(names, 1, value, "e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types");
+}
+uint8_t e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "e2_sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types");
+}
+
+// E2SM-KPM-IndicationHeader-Format1 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_hdr_format1_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(file_formatversion_present, 1));
+  HANDLE_CODE(bref.pack(sender_name_present, 1));
+  HANDLE_CODE(bref.pack(sender_type_present, 1));
+  HANDLE_CODE(bref.pack(vendor_name_present, 1));
+
+  HANDLE_CODE(collet_start_time.pack(bref));
+  if (file_formatversion_present) {
+    HANDLE_CODE(file_formatversion.pack(bref));
+  }
+  if (sender_name_present) {
+    HANDLE_CODE(sender_name.pack(bref));
+  }
+  if (sender_type_present) {
+    HANDLE_CODE(sender_type.pack(bref));
+  }
+  if (vendor_name_present) {
+    HANDLE_CODE(vendor_name.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_hdr_format1_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(file_formatversion_present, 1));
+  HANDLE_CODE(bref.unpack(sender_name_present, 1));
+  HANDLE_CODE(bref.unpack(sender_type_present, 1));
+  HANDLE_CODE(bref.unpack(vendor_name_present, 1));
+
+  HANDLE_CODE(collet_start_time.unpack(bref));
+  if (file_formatversion_present) {
+    HANDLE_CODE(file_formatversion.unpack(bref));
+  }
+  if (sender_name_present) {
+    HANDLE_CODE(sender_name.unpack(bref));
+  }
+  if (sender_type_present) {
+    HANDLE_CODE(sender_type.unpack(bref));
+  }
+  if (vendor_name_present) {
+    HANDLE_CODE(vendor_name.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_hdr_format1_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("colletStartTime", collet_start_time.to_string());
+  if (file_formatversion_present) {
+    j.write_str("fileFormatversion", file_formatversion.to_string());
+  }
+  if (sender_name_present) {
+    j.write_str("senderName", sender_name.to_string());
+  }
+  if (sender_type_present) {
+    j.write_str("senderType", sender_type.to_string());
+  }
+  if (vendor_name_present) {
+    j.write_str("vendorName", vendor_name.to_string());
+  }
+  j.end_obj();
+}
+
+// E2SM-KPM-IndicationHeader ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_hdr_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ind_hdr_formats.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_hdr_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ind_hdr_formats.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_hdr_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("indicationHeader-formats");
+  ind_hdr_formats.to_json(j);
+  j.end_obj();
+}
+
+void e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("indicationHeader-Format1");
+  c.to_json(j);
+  j.end_obj();
+}
+SRSASN_CODE e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::pack(bit_ref& bref) const
+{
+  pack_enum(bref, type());
+  HANDLE_CODE(c.pack(bref));
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  unpack_enum(e, bref);
+  if (e != type()) {
+    log_invalid_choice_id(e, "e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  HANDLE_CODE(c.unpack(bref));
+  return SRSASN_SUCCESS;
+}
+
+const char* e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"indicationHeader-Format1"};
+  return convert_enum_idx(names, 1, value, "e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::types");
+}
+uint8_t e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1};
+  return map_enum_number(numbers, 1, value, "e2_sm_kpm_ind_hdr_s::ind_hdr_formats_c_::types");
+}
+
+// MeasurementRecordItem ::= CHOICE
+void meas_record_item_c::destroy_()
+{
+  switch (type_) {
+    case types::real:
+      c.destroy<real_s>();
+      break;
+    default:
+      break;
+  }
+}
+void meas_record_item_c::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::integer:
+      break;
+    case types::real:
+      c.init<real_s>();
+      break;
+    case types::no_value:
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+  }
+}
+meas_record_item_c::meas_record_item_c(const meas_record_item_c& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::integer:
+      c.init(other.c.get<uint64_t>());
+      break;
+    case types::real:
+      c.init(other.c.get<real_s>());
+      break;
+    case types::no_value:
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+  }
+}
+meas_record_item_c& meas_record_item_c::operator=(const meas_record_item_c& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::integer:
+      c.set(other.c.get<uint64_t>());
+      break;
+    case types::real:
+      c.set(other.c.get<real_s>());
+      break;
+    case types::no_value:
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+  }
+
+  return *this;
+}
+uint64_t& meas_record_item_c::set_integer()
+{
+  set(types::integer);
+  return c.get<uint64_t>();
+}
+real_s& meas_record_item_c::set_real()
+{
+  set(types::real);
+  return c.get<real_s>();
+}
+void meas_record_item_c::set_no_value()
+{
+  set(types::no_value);
+}
+void meas_record_item_c::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::integer:
+      j.write_int("integer", c.get<uint64_t>());
+      break;
+    case types::real:
+      j.write_fieldname("real");
+      c.get<real_s>().to_json(j);
+      break;
+    case types::no_value:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+  }
+  j.end_obj();
+}
+SRSASN_CODE meas_record_item_c::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::integer:
+      HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
+      break;
+    case types::real:
+      HANDLE_CODE(c.get<real_s>().pack(bref));
+      break;
+    case types::no_value:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_record_item_c::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::integer:
+      HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
+      break;
+    case types::real:
+      HANDLE_CODE(c.get<real_s>().unpack(bref));
+      break;
+    case types::no_value:
+      break;
+    default:
+      log_invalid_choice_id(type_, "meas_record_item_c");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* meas_record_item_c::types_opts::to_string() const
+{
+  static const char* names[] = {"integer", "real", "noValue"};
+  return convert_enum_idx(names, 3, value, "meas_record_item_c::types");
+}
+
+// MatchingUEidItem-PerGP ::= SEQUENCE
+SRSASN_CODE matching_ueid_item_per_gp_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ue_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ueid_item_per_gp_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ue_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void matching_ueid_item_per_gp_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ueID");
+  ue_id.to_json(j);
+  j.end_obj();
+}
+
+// MeasurementDataItem ::= SEQUENCE
+SRSASN_CODE meas_data_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(incomplete_flag_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_record, 1, 2147483647, true));
+  if (incomplete_flag_present) {
+    HANDLE_CODE(incomplete_flag.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_data_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(incomplete_flag_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(meas_record, bref, 1, 2147483647, true));
+  if (incomplete_flag_present) {
+    HANDLE_CODE(incomplete_flag.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void meas_data_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("measRecord");
+  for (const auto& e1 : meas_record) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (incomplete_flag_present) {
+    j.write_str("incompleteFlag", "true");
+  }
+  j.end_obj();
+}
+
+const char* meas_data_item_s::incomplete_flag_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "meas_data_item_s::incomplete_flag_e_");
+}
+
+// MatchingUEidItem ::= SEQUENCE
+SRSASN_CODE matching_ueid_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ue_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ueid_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ue_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void matching_ueid_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ueID");
+  ue_id.to_json(j);
+  j.end_obj();
+}
+
+// MatchingUEidPerGP-Item ::= SEQUENCE
+SRSASN_CODE matching_ueid_per_gp_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(matched_per_gp.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ueid_per_gp_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(matched_per_gp.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void matching_ueid_per_gp_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("matchedPerGP");
+  matched_per_gp.to_json(j);
+  j.end_obj();
+}
+
+void matching_ueid_per_gp_item_s::matched_per_gp_c_::destroy_()
+{
+  switch (type_) {
+    case types::one_or_more_uematched:
+      c.destroy<matching_ueid_list_per_gp_l>();
+      break;
+    default:
+      break;
+  }
+}
+void matching_ueid_per_gp_item_s::matched_per_gp_c_::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::no_uematched:
+      break;
+    case types::one_or_more_uematched:
+      c.init<matching_ueid_list_per_gp_l>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+  }
+}
+matching_ueid_per_gp_item_s::matched_per_gp_c_::matched_per_gp_c_(
+    const matching_ueid_per_gp_item_s::matched_per_gp_c_& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::no_uematched:
+      c.init(other.c.get<no_uematched_e_>());
+      break;
+    case types::one_or_more_uematched:
+      c.init(other.c.get<matching_ueid_list_per_gp_l>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+  }
+}
+matching_ueid_per_gp_item_s::matched_per_gp_c_&
+matching_ueid_per_gp_item_s::matched_per_gp_c_::operator=(const matching_ueid_per_gp_item_s::matched_per_gp_c_& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::no_uematched:
+      c.set(other.c.get<no_uematched_e_>());
+      break;
+    case types::one_or_more_uematched:
+      c.set(other.c.get<matching_ueid_list_per_gp_l>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+  }
+
+  return *this;
+}
+matching_ueid_per_gp_item_s::matched_per_gp_c_::no_uematched_e_&
+matching_ueid_per_gp_item_s::matched_per_gp_c_::set_no_uematched()
+{
+  set(types::no_uematched);
+  return c.get<no_uematched_e_>();
+}
+matching_ueid_list_per_gp_l& matching_ueid_per_gp_item_s::matched_per_gp_c_::set_one_or_more_uematched()
+{
+  set(types::one_or_more_uematched);
+  return c.get<matching_ueid_list_per_gp_l>();
+}
+void matching_ueid_per_gp_item_s::matched_per_gp_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::no_uematched:
+      j.write_str("noUEmatched", "true");
+      break;
+    case types::one_or_more_uematched:
+      j.start_array("oneOrMoreUEmatched");
+      for (const auto& e1 : c.get<matching_ueid_list_per_gp_l>()) {
+        e1.to_json(j);
+      }
+      j.end_array();
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+  }
+  j.end_obj();
+}
+SRSASN_CODE matching_ueid_per_gp_item_s::matched_per_gp_c_::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::no_uematched:
+      HANDLE_CODE(c.get<no_uematched_e_>().pack(bref));
+      break;
+    case types::one_or_more_uematched:
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<matching_ueid_list_per_gp_l>(), 1, 65535, true));
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE matching_ueid_per_gp_item_s::matched_per_gp_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::no_uematched:
+      HANDLE_CODE(c.get<no_uematched_e_>().unpack(bref));
+      break;
+    case types::one_or_more_uematched:
+      HANDLE_CODE(unpack_dyn_seq_of(c.get<matching_ueid_list_per_gp_l>(), bref, 1, 65535, true));
+      break;
+    default:
+      log_invalid_choice_id(type_, "matching_ueid_per_gp_item_s::matched_per_gp_c_");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* matching_ueid_per_gp_item_s::matched_per_gp_c_::no_uematched_opts::to_string() const
+{
+  static const char* names[] = {"true"};
+  return convert_enum_idx(names, 1, value, "matching_ueid_per_gp_item_s::matched_per_gp_c_::no_uematched_e_");
+}
+
+const char* matching_ueid_per_gp_item_s::matched_per_gp_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"noUEmatched", "oneOrMoreUEmatched"};
+  return convert_enum_idx(names, 2, value, "matching_ueid_per_gp_item_s::matched_per_gp_c_::types");
+}
+uint8_t matching_ueid_per_gp_item_s::matched_per_gp_c_::types_opts::to_number() const
+{
+  if (value == one_or_more_uematched) {
+    return 1;
+  }
+  invalid_enum_number(value, "matching_ueid_per_gp_item_s::matched_per_gp_c_::types");
+  return 0;
+}
+
+// E2SM-KPM-IndicationMessage-Format1 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_msg_format1_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(meas_info_list.size() > 0, 1));
+  HANDLE_CODE(bref.pack(granul_period_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_data, 1, 65535, true));
+  if (meas_info_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, meas_info_list, 1, 65535, true));
+  }
+  if (granul_period_present) {
+    HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  }
+
+  bref.align_bytes_zero();
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_format1_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  bool meas_info_list_present;
+  HANDLE_CODE(bref.unpack(meas_info_list_present, 1));
+  HANDLE_CODE(bref.unpack(granul_period_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(meas_data, bref, 1, 65535, true));
+  if (meas_info_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(meas_info_list, bref, 1, 65535, true));
+  }
+  if (granul_period_present) {
+    HANDLE_CODE(unpack_integer(granul_period, bref, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  }
+
+  bref.align_bytes();
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_msg_format1_s::to_json(json_writer& j) const
+{
+  j.start_array();
+  j.start_obj();
+  j.start_obj("E2SM-KPM-IndicationMessage-Format1");
+  j.start_array("measData");
+  for (const auto& e1 : meas_data) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (meas_info_list.size() > 0) {
+    j.start_array("measInfoList");
+    for (const auto& e1 : meas_info_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (granul_period_present) {
+    j.write_int("granulPeriod", granul_period);
+  }
+  j.end_obj();
+  j.end_obj();
+  j.end_array();
+}
+
+// MeasurementCondUEidItem ::= SEQUENCE
+SRSASN_CODE meas_cond_ueid_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(matching_ueid_list.size() > 0, 1));
+
+  HANDLE_CODE(meas_type.pack(bref));
+  HANDLE_CODE(pack_dyn_seq_of(bref, matching_cond, 1, 32768, true));
+  if (matching_ueid_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, matching_ueid_list, 1, 65535, true));
+  }
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(matching_ueid_per_gp.is_present(), 1));
+
+    if (matching_ueid_per_gp.is_present()) {
+      HANDLE_CODE(pack_dyn_seq_of(bref, *matching_ueid_per_gp, 1, 65535, true));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_cond_ueid_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  bool matching_ueid_list_present;
+  HANDLE_CODE(bref.unpack(matching_ueid_list_present, 1));
+
+  HANDLE_CODE(meas_type.unpack(bref));
+  HANDLE_CODE(unpack_dyn_seq_of(matching_cond, bref, 1, 32768, true));
+  if (matching_ueid_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(matching_ueid_list, bref, 1, 65535, true));
+  }
+
+  if (ext) {
+    bool matching_ueid_per_gp_present;
+    HANDLE_CODE(bref.unpack(matching_ueid_per_gp_present, 1));
+    matching_ueid_per_gp.set_present(matching_ueid_per_gp_present);
+
+    if (matching_ueid_per_gp.is_present()) {
+      HANDLE_CODE(unpack_dyn_seq_of(*matching_ueid_per_gp, bref, 1, 65535, true));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+void meas_cond_ueid_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("measType");
+  meas_type.to_json(j);
+  j.start_array("matchingCond");
+  for (const auto& e1 : matching_cond) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (matching_ueid_list.size() > 0) {
+    j.start_array("matchingUEidList");
+    for (const auto& e1 : matching_ueid_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (ext) {
+    if (matching_ueid_per_gp.is_present()) {
+      j.start_array("matchingUEidPerGP");
+      for (const auto& e1 : *matching_ueid_per_gp) {
+        e1.to_json(j);
+      }
+      j.end_array();
+    }
+  }
+  j.end_obj();
+}
+
+// UEMeasurementReportItem ::= SEQUENCE
+SRSASN_CODE ue_meas_report_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ue_id.pack(bref));
+  HANDLE_CODE(meas_report.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ue_meas_report_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ue_id.unpack(bref));
+  HANDLE_CODE(meas_report.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void ue_meas_report_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ueID");
+  ue_id.to_json(j);
+  j.write_fieldname("measReport");
+  meas_report.to_json(j);
+  j.end_obj();
+}
+
+// E2SM-KPM-IndicationMessage-Format2 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_msg_format2_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(granul_period_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_data, 1, 65535, true));
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_cond_ueid_list, 1, 65535, true));
+  if (granul_period_present) {
+    HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  }
+
+  bref.align_bytes_zero();
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_format2_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(granul_period_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(meas_data, bref, 1, 65535, true));
+  HANDLE_CODE(unpack_dyn_seq_of(meas_cond_ueid_list, bref, 1, 65535, true));
+  if (granul_period_present) {
+    HANDLE_CODE(unpack_integer(granul_period, bref, (uint64_t)1u, (uint64_t)4294967295u, false, true));
+  }
+
+  bref.align_bytes();
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_msg_format2_s::to_json(json_writer& j) const
+{
+  j.start_array();
+  j.start_obj();
+  j.start_obj("E2SM-KPM-IndicationMessage-Format2");
+  j.start_array("measData");
+  for (const auto& e1 : meas_data) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.start_array("measCondUEidList");
+  for (const auto& e1 : meas_cond_ueid_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (granul_period_present) {
+    j.write_int("granulPeriod", granul_period);
+  }
+  j.end_obj();
+  j.end_obj();
+  j.end_array();
+}
+
+// E2SM-KPM-IndicationMessage-Format3 ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_msg_format3_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_dyn_seq_of(bref, ue_meas_report_list, 1, 65535, true));
+
+  bref.align_bytes_zero();
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_format3_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_dyn_seq_of(ue_meas_report_list, bref, 1, 65535, true));
+
+  bref.align_bytes();
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_msg_format3_s::to_json(json_writer& j) const
+{
+  j.start_array();
+  j.start_obj();
+  j.start_obj("E2SM-KPM-IndicationMessage-Format3");
+  j.start_array("ueMeasReportList");
+  for (const auto& e1 : ue_meas_report_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.end_obj();
+  j.end_obj();
+  j.end_array();
+}
+
+// E2SM-KPM-IndicationMessage ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ind_msg_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(ind_msg_formats.pack(bref));
+
+  bref.align_bytes_zero();
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(ind_msg_formats.unpack(bref));
+
+  bref.align_bytes();
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ind_msg_s::to_json(json_writer& j) const
+{
+  j.start_array();
+  j.start_obj();
+  j.start_obj("E2SM-KPM-IndicationMessage");
+  j.write_fieldname("indicationMessage-formats");
+  ind_msg_formats.to_json(j);
+  j.end_obj();
+  j.end_obj();
+  j.end_array();
+}
+
+void e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::destroy_()
+{
+  switch (type_) {
+    case types::ind_msg_format1:
+      c.destroy<e2_sm_kpm_ind_msg_format1_s>();
+      break;
+    case types::ind_msg_format2:
+      c.destroy<e2_sm_kpm_ind_msg_format2_s>();
+      break;
+    case types::ind_msg_format3:
+      c.destroy<e2_sm_kpm_ind_msg_format3_s>();
+      break;
+    default:
+      break;
+  }
+}
+void e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::set(types::options e)
+{
+  destroy_();
+  type_ = e;
+  switch (type_) {
+    case types::ind_msg_format1:
+      c.init<e2_sm_kpm_ind_msg_format1_s>();
+      break;
+    case types::ind_msg_format2:
+      c.init<e2_sm_kpm_ind_msg_format2_s>();
+      break;
+    case types::ind_msg_format3:
+      c.init<e2_sm_kpm_ind_msg_format3_s>();
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+  }
+}
+e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::ind_msg_formats_c_(const e2_sm_kpm_ind_msg_s::ind_msg_formats_c_& other)
+{
+  type_ = other.type();
+  switch (type_) {
+    case types::ind_msg_format1:
+      c.init(other.c.get<e2_sm_kpm_ind_msg_format1_s>());
+      break;
+    case types::ind_msg_format2:
+      c.init(other.c.get<e2_sm_kpm_ind_msg_format2_s>());
+      break;
+    case types::ind_msg_format3:
+      c.init(other.c.get<e2_sm_kpm_ind_msg_format3_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+  }
+}
+e2_sm_kpm_ind_msg_s::ind_msg_formats_c_&
+e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::operator=(const e2_sm_kpm_ind_msg_s::ind_msg_formats_c_& other)
+{
+  if (this == &other) {
+    return *this;
+  }
+  set(other.type());
+  switch (type_) {
+    case types::ind_msg_format1:
+      c.set(other.c.get<e2_sm_kpm_ind_msg_format1_s>());
+      break;
+    case types::ind_msg_format2:
+      c.set(other.c.get<e2_sm_kpm_ind_msg_format2_s>());
+      break;
+    case types::ind_msg_format3:
+      c.set(other.c.get<e2_sm_kpm_ind_msg_format3_s>());
+      break;
+    case types::nulltype:
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+  }
+
+  return *this;
+}
+e2_sm_kpm_ind_msg_format1_s& e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::set_ind_msg_format1()
+{
+  set(types::ind_msg_format1);
+  return c.get<e2_sm_kpm_ind_msg_format1_s>();
+}
+e2_sm_kpm_ind_msg_format2_s& e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::set_ind_msg_format2()
+{
+  set(types::ind_msg_format2);
+  return c.get<e2_sm_kpm_ind_msg_format2_s>();
+}
+e2_sm_kpm_ind_msg_format3_s& e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::set_ind_msg_format3()
+{
+  set(types::ind_msg_format3);
+  return c.get<e2_sm_kpm_ind_msg_format3_s>();
+}
+void e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::to_json(json_writer& j) const
+{
+  j.start_obj();
+  switch (type_) {
+    case types::ind_msg_format1:
+      j.write_fieldname("indicationMessage-Format1");
+      c.get<e2_sm_kpm_ind_msg_format1_s>().to_json(j);
+      break;
+    case types::ind_msg_format2:
+      j.write_fieldname("indicationMessage-Format2");
+      c.get<e2_sm_kpm_ind_msg_format2_s>().to_json(j);
+      break;
+    case types::ind_msg_format3:
+      j.write_fieldname("indicationMessage-Format3");
+      c.get<e2_sm_kpm_ind_msg_format3_s>().to_json(j);
+      break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+  }
+  j.end_obj();
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::pack(bit_ref& bref) const
+{
+  type_.pack(bref);
+  switch (type_) {
+    case types::ind_msg_format1:
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format1_s>().pack(bref));
+      break;
+    case types::ind_msg_format2:
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format2_s>().pack(bref));
+      break;
+    case types::ind_msg_format3: {
+      varlength_field_pack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format3_s>().pack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+      return SRSASN_ERROR_ENCODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::unpack(cbit_ref& bref)
+{
+  types e;
+  e.unpack(bref);
+  set(e);
+  switch (type_) {
+    case types::ind_msg_format1:
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format1_s>().unpack(bref));
+      break;
+    case types::ind_msg_format2:
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format2_s>().unpack(bref));
+      break;
+    case types::ind_msg_format3: {
+      varlength_field_unpack_guard varlen_scope(bref, true);
+      HANDLE_CODE(c.get<e2_sm_kpm_ind_msg_format3_s>().unpack(bref));
+    } break;
+    default:
+      log_invalid_choice_id(type_, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_");
+      return SRSASN_ERROR_DECODE_FAIL;
+  }
+  return SRSASN_SUCCESS;
+}
+
+const char* e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::to_string() const
+{
+  static const char* names[] = {"indicationMessage-Format1", "indicationMessage-Format2", "indicationMessage-Format3"};
+  return convert_enum_idx(names, 3, value, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types");
+}
+uint8_t e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 3};
+  return map_enum_number(numbers, 3, value, "e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types");
+}
+
+// MeasurementInfo-Action-Item ::= SEQUENCE
+SRSASN_CODE meas_info_action_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(meas_id_present, 1));
+
+  HANDLE_CODE(meas_name.pack(bref));
+  if (meas_id_present) {
+    HANDLE_CODE(pack_integer(bref, meas_id, (uint32_t)1u, (uint32_t)65536u, true, true));
+  }
+
+  if (ext) {
+    HANDLE_CODE(bref.pack(bin_range_def.is_present(), 1));
+
+    if (bin_range_def.is_present()) {
+      HANDLE_CODE(bin_range_def->pack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE meas_info_action_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(meas_id_present, 1));
+
+  HANDLE_CODE(meas_name.unpack(bref));
+  if (meas_id_present) {
+    HANDLE_CODE(unpack_integer(meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true));
+  }
+
+  if (ext) {
+    bool bin_range_def_present;
+    HANDLE_CODE(bref.unpack(bin_range_def_present, 1));
+    bin_range_def.set_present(bin_range_def_present);
+
+    if (bin_range_def.is_present()) {
+      HANDLE_CODE(bin_range_def->unpack(bref));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+void meas_info_action_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("measName", meas_name.to_string());
+  if (meas_id_present) {
+    j.write_int("measID", meas_id);
+  }
+  if (ext) {
+    if (bin_range_def.is_present()) {
+      j.write_fieldname("binRangeDef");
+      bin_range_def->to_json(j);
+    }
+  }
+  j.end_obj();
+}
+
+// RANfunction-Name ::= SEQUENCE
+SRSASN_CODE ra_nfunction_name_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(ran_function_instance_present, 1));
+
+  HANDLE_CODE(ran_function_short_name.pack(bref));
+  HANDLE_CODE(ran_function_e2_sm_oid.pack(bref));
+  HANDLE_CODE(ran_function_description.pack(bref));
+  if (ran_function_instance_present) {
+    HANDLE_CODE(pack_unconstrained_integer(bref, ran_function_instance, false, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ra_nfunction_name_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(bref.unpack(ran_function_instance_present, 1));
+
+  HANDLE_CODE(ran_function_short_name.unpack(bref));
+  HANDLE_CODE(ran_function_e2_sm_oid.unpack(bref));
+  HANDLE_CODE(ran_function_description.unpack(bref));
+  if (ran_function_instance_present) {
+    HANDLE_CODE(unpack_unconstrained_integer(ran_function_instance, bref, false, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void ra_nfunction_name_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("ranFunction-ShortName", ran_function_short_name.to_string());
+  j.write_str("ranFunction-E2SM-OID", ran_function_e2_sm_oid.to_string());
+  j.write_str("ranFunction-Description", ran_function_description.to_string());
+  if (ran_function_instance_present) {
+    j.write_int("ranFunction-Instance", ran_function_instance);
+  }
+  j.end_obj();
+}
+
+// RIC-EventTriggerStyle-Item ::= SEQUENCE
+SRSASN_CODE ric_event_trigger_style_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_event_trigger_style_type, false, true));
+  HANDLE_CODE(ric_event_trigger_style_name.pack(bref));
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_event_trigger_format_type, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ric_event_trigger_style_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_unconstrained_integer(ric_event_trigger_style_type, bref, false, true));
+  HANDLE_CODE(ric_event_trigger_style_name.unpack(bref));
+  HANDLE_CODE(unpack_unconstrained_integer(ric_event_trigger_format_type, bref, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void ric_event_trigger_style_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("ric-EventTriggerStyle-Type", ric_event_trigger_style_type);
+  j.write_str("ric-EventTriggerStyle-Name", ric_event_trigger_style_name.to_string());
+  j.write_int("ric-EventTriggerFormat-Type", ric_event_trigger_format_type);
+  j.end_obj();
+}
+
+// RIC-ReportStyle-Item ::= SEQUENCE
+SRSASN_CODE ric_report_style_item_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_report_style_type, false, true));
+  HANDLE_CODE(ric_report_style_name.pack(bref));
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_action_format_type, false, true));
+  HANDLE_CODE(pack_dyn_seq_of(bref, meas_info_action_list, 1, 65535, true));
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_ind_hdr_format_type, false, true));
+  HANDLE_CODE(pack_unconstrained_integer(bref, ric_ind_msg_format_type, false, true));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE ric_report_style_item_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(unpack_unconstrained_integer(ric_report_style_type, bref, false, true));
+  HANDLE_CODE(ric_report_style_name.unpack(bref));
+  HANDLE_CODE(unpack_unconstrained_integer(ric_action_format_type, bref, false, true));
+  HANDLE_CODE(unpack_dyn_seq_of(meas_info_action_list, bref, 1, 65535, true));
+  HANDLE_CODE(unpack_unconstrained_integer(ric_ind_hdr_format_type, bref, false, true));
+  HANDLE_CODE(unpack_unconstrained_integer(ric_ind_msg_format_type, bref, false, true));
+
+  return SRSASN_SUCCESS;
+}
+void ric_report_style_item_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_int("ric-ReportStyle-Type", ric_report_style_type);
+  j.write_str("ric-ReportStyle-Name", ric_report_style_name.to_string());
+  j.write_int("ric-ActionFormat-Type", ric_action_format_type);
+  j.start_array("measInfo-Action-List");
+  for (const auto& e1 : meas_info_action_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  j.write_int("ric-IndicationHeaderFormat-Type", ric_ind_hdr_format_type);
+  j.write_int("ric-IndicationMessageFormat-Type", ric_ind_msg_format_type);
+  j.end_obj();
+}
+
+// E2SM-KPM-RANfunction-Description ::= SEQUENCE
+SRSASN_CODE e2_sm_kpm_ra_nfunction_description_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(bref.pack(ric_event_trigger_style_list.size() > 0, 1));
+  HANDLE_CODE(bref.pack(ric_report_style_list.size() > 0, 1));
+
+  HANDLE_CODE(ran_function_name.pack(bref));
+  if (ric_event_trigger_style_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, ric_event_trigger_style_list, 1, 63, true));
+  }
+  if (ric_report_style_list.size() > 0) {
+    HANDLE_CODE(pack_dyn_seq_of(bref, ric_report_style_list, 1, 63, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE e2_sm_kpm_ra_nfunction_description_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  bool ric_event_trigger_style_list_present;
+  HANDLE_CODE(bref.unpack(ric_event_trigger_style_list_present, 1));
+  bool ric_report_style_list_present;
+  HANDLE_CODE(bref.unpack(ric_report_style_list_present, 1));
+
+  HANDLE_CODE(ran_function_name.unpack(bref));
+  if (ric_event_trigger_style_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(ric_event_trigger_style_list, bref, 1, 63, true));
+  }
+  if (ric_report_style_list_present) {
+    HANDLE_CODE(unpack_dyn_seq_of(ric_report_style_list, bref, 1, 63, true));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void e2_sm_kpm_ra_nfunction_description_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_fieldname("ranFunction-Name");
+  ran_function_name.to_json(j);
+  if (ric_event_trigger_style_list.size() > 0) {
+    j.start_array("ric-EventTriggerStyle-List");
+    for (const auto& e1 : ric_event_trigger_style_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
+  if (ric_report_style_list.size() > 0) {
+    j.start_array("ric-ReportStyle-List");
+    for (const auto& e1 : ric_report_style_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
+  }
   j.end_obj();
 }
 
@@ -3169,6 +5275,32 @@ const char* en_gnb_id_c::types_opts::to_string() const
 {
   static const char* names[] = {"en-gNB-ID"};
   return convert_enum_idx(names, 1, value, "en_gnb_id_c::types");
+}
+
+// GlobalenGNB-ID ::= SEQUENCE
+SRSASN_CODE globalen_gnb_id_s::pack(bit_ref& bref) const
+{
+  bref.pack(ext, 1);
+  HANDLE_CODE(plmn_id.pack(bref));
+  HANDLE_CODE(en_g_nb_id.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE globalen_gnb_id_s::unpack(cbit_ref& bref)
+{
+  bref.unpack(ext, 1);
+  HANDLE_CODE(plmn_id.unpack(bref));
+  HANDLE_CODE(en_g_nb_id.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void globalen_gnb_id_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("pLMN-Identity", plmn_id.to_string());
+  j.write_fieldname("en-gNB-ID");
+  en_g_nb_id.to_json(j);
+  j.end_obj();
 }
 
 // GroupID ::= CHOICE
@@ -4198,41 +6330,6 @@ const char* rrc_msg_id_s::rrc_type_c_::types_opts::to_string() const
   return convert_enum_idx(names, 2, value, "rrc_msg_id_s::rrc_type_c_::types");
 }
 
-// S-NSSAI ::= SEQUENCE
-SRSASN_CODE s_nssai_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(sd_present, 1));
-
-  HANDLE_CODE(sst.pack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE s_nssai_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(sd_present, 1));
-
-  HANDLE_CODE(sst.unpack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void s_nssai_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("sST", sst.to_string());
-  if (sd_present) {
-    j.write_str("sD", sd.to_string());
-  }
-  j.end_obj();
-}
-
 // ServingCell-ARFCN ::= CHOICE
 void serving_cell_arfcn_c::destroy_()
 {
@@ -4472,707 +6569,4 @@ const char* serving_cell_pci_c::types_opts::to_string() const
 {
   static const char* names[] = {"nR", "eUTRA"};
   return convert_enum_idx(names, 2, value, "serving_cell_pci_c::types");
-}
-
-// UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
-SRSASN_CODE ueid_gnb_cu_cp_e1_ap_id_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_gnb_cu_cp_e1_ap_id_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-void ueid_gnb_cu_cp_e1_ap_id_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1_ap_id);
-  j.end_obj();
-}
-
-// UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE
-SRSASN_CODE ueid_gnb_cu_cp_f1_ap_id_item_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_gnb_cu_cp_f1_ap_id_item_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-void ueid_gnb_cu_cp_f1_ap_id_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
-  j.end_obj();
-}
-
-// UEID-EN-GNB ::= SEQUENCE
-SRSASN_CODE ueid_en_gnb_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_ext_present, 1));
-  HANDLE_CODE(bref.pack(gnb_cu_ue_f1_ap_id_present, 1));
-  HANDLE_CODE(bref.pack(gnb_cu_cp_ue_e1_ap_id_list.size() > 0, 1));
-  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  HANDLE_CODE(global_enb_id.pack(bref));
-  if (gnb_cu_ue_f1_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1_ap_id_list, 1, 65535, true));
-  }
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_en_gnb_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_ext_present, 1));
-  HANDLE_CODE(bref.unpack(gnb_cu_ue_f1_ap_id_present, 1));
-  bool gnb_cu_cp_ue_e1_ap_id_list_present;
-  HANDLE_CODE(bref.unpack(gnb_cu_cp_ue_e1_ap_id_list_present, 1));
-  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
-
-  HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  HANDLE_CODE(global_enb_id.unpack(bref));
-  if (gnb_cu_ue_f1_ap_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1_ap_id_list, bref, 1, 65535, true));
-  }
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_en_gnb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
-  if (m_enb_ue_x2ap_id_ext_present) {
-    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
-  }
-  j.write_fieldname("globalENB-ID");
-  global_enb_id.to_json(j);
-  if (gnb_cu_ue_f1_ap_id_present) {
-    j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
-    for (const auto& e1 : gnb_cu_cp_ue_e1_ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (ran_ueid_present) {
-    j.write_str("ran-UEID", ran_ueid.to_string());
-  }
-  j.end_obj();
-}
-
-// UEID-ENB ::= SEQUENCE
-SRSASN_CODE ueid_enb_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_present, 1));
-  HANDLE_CODE(bref.pack(m_enb_ue_x2ap_id_ext_present, 1));
-  HANDLE_CODE(bref.pack(global_enb_id_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, mme_ue_s1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(gummei.pack(bref));
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_enb_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_present, 1));
-  HANDLE_CODE(bref.unpack(m_enb_ue_x2ap_id_ext_present, 1));
-  HANDLE_CODE(bref.unpack(global_enb_id_present, 1));
-
-  HANDLE_CODE(unpack_integer(mme_ue_s1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(gummei.unpack(bref));
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_enb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("mME-UE-S1AP-ID", mme_ue_s1ap_id);
-  j.write_fieldname("gUMMEI");
-  gummei.to_json(j);
-  if (m_enb_ue_x2ap_id_present) {
-    j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
-  }
-  if (global_enb_id_present) {
-    j.write_fieldname("globalENB-ID");
-    global_enb_id.to_json(j);
-  }
-  j.end_obj();
-}
-
-// UEID-GNB ::= SEQUENCE
-SRSASN_CODE ueid_gnb_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(gnb_cu_ue_f1_ap_id_list.size() > 0, 1));
-  HANDLE_CODE(bref.pack(gnb_cu_cp_ue_e1_ap_id_list.size() > 0, 1));
-  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
-  HANDLE_CODE(bref.pack(m_ng_ran_ue_xn_ap_id_present, 1));
-  HANDLE_CODE(bref.pack(global_gnb_id_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.pack(bref));
-  if (gnb_cu_ue_f1_ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_ue_f1_ap_id_list, 1, 4, true));
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1_ap_id_list, 1, 65535, true));
-  }
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.pack(bref));
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xn_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_gnb_id_present) {
-    HANDLE_CODE(global_gnb_id.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_gnb_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  bool gnb_cu_ue_f1_ap_id_list_present;
-  HANDLE_CODE(bref.unpack(gnb_cu_ue_f1_ap_id_list_present, 1));
-  bool gnb_cu_cp_ue_e1_ap_id_list_present;
-  HANDLE_CODE(bref.unpack(gnb_cu_cp_ue_e1_ap_id_list_present, 1));
-  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
-  HANDLE_CODE(bref.unpack(m_ng_ran_ue_xn_ap_id_present, 1));
-  HANDLE_CODE(bref.unpack(global_gnb_id_present, 1));
-
-  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.unpack(bref));
-  if (gnb_cu_ue_f1_ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_ue_f1_ap_id_list, bref, 1, 4, true));
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1_ap_id_list, bref, 1, 65535, true));
-  }
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.unpack(bref));
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xn_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_gnb_id_present) {
-    HANDLE_CODE(global_gnb_id.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_gnb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("amf-UE-NGAP-ID", amf_ue_ngap_id);
-  j.write_fieldname("guami");
-  guami.to_json(j);
-  if (gnb_cu_ue_f1_ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-UE-F1AP-ID-List");
-    for (const auto& e1 : gnb_cu_ue_f1_ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (gnb_cu_cp_ue_e1_ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
-    for (const auto& e1 : gnb_cu_cp_ue_e1_ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (ran_ueid_present) {
-    j.write_str("ran-UEID", ran_ueid.to_string());
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    j.write_int("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xn_ap_id);
-  }
-  if (global_gnb_id_present) {
-    j.write_fieldname("globalGNB-ID");
-    global_gnb_id.to_json(j);
-  }
-  j.end_obj();
-}
-
-// UEID-GNB-CU-UP ::= SEQUENCE
-SRSASN_CODE ueid_gnb_cu_up_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_gnb_cu_up_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_gnb_cu_up_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1_ap_id);
-  if (ran_ueid_present) {
-    j.write_str("ran-UEID", ran_ueid.to_string());
-  }
-  j.end_obj();
-}
-
-// UEID-GNB-DU ::= SEQUENCE
-SRSASN_CODE ueid_gnb_du_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(ran_ueid_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_gnb_du_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(ran_ueid_present, 1));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ueid_present) {
-    HANDLE_CODE(ran_ueid.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_gnb_du_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1_ap_id);
-  if (ran_ueid_present) {
-    j.write_str("ran-UEID", ran_ueid.to_string());
-  }
-  j.end_obj();
-}
-
-// UEID-NG-ENB ::= SEQUENCE
-SRSASN_CODE ueid_ng_enb_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(bref.pack(ng_enb_cu_ue_w1_ap_id_present, 1));
-  HANDLE_CODE(bref.pack(m_ng_ran_ue_xn_ap_id_present, 1));
-  HANDLE_CODE(bref.pack(global_ng_enb_id_present, 1));
-
-  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.pack(bref));
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xn_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_enb_id_present) {
-    HANDLE_CODE(global_ng_enb_id.pack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_ng_enb_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(bref.unpack(ng_enb_cu_ue_w1_ap_id_present, 1));
-  HANDLE_CODE(bref.unpack(m_ng_ran_ue_xn_ap_id_present, 1));
-  HANDLE_CODE(bref.unpack(global_ng_enb_id_present, 1));
-
-  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.unpack(bref));
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xn_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_enb_id_present) {
-    HANDLE_CODE(global_ng_enb_id.unpack(bref));
-  }
-
-  return SRSASN_SUCCESS;
-}
-void ueid_ng_enb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("amf-UE-NGAP-ID", amf_ue_ngap_id);
-  j.write_fieldname("guami");
-  guami.to_json(j);
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
-  }
-  if (m_ng_ran_ue_xn_ap_id_present) {
-    j.write_int("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xn_ap_id);
-  }
-  if (global_ng_enb_id_present) {
-    j.write_fieldname("globalNgENB-ID");
-    global_ng_enb_id.to_json(j);
-  }
-  j.end_obj();
-}
-
-// UEID-NG-ENB-DU ::= SEQUENCE
-SRSASN_CODE ueid_ng_enb_du_s::pack(bit_ref& bref) const
-{
-  bref.pack(ext, 1);
-  HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_ng_enb_du_s::unpack(cbit_ref& bref)
-{
-  bref.unpack(ext, 1);
-  HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return SRSASN_SUCCESS;
-}
-void ueid_ng_enb_du_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
-  j.end_obj();
-}
-
-// UEID ::= CHOICE
-void ueid_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb_ueid:
-      c.destroy<ueid_gnb_s>();
-      break;
-    case types::gnb_du_ueid:
-      c.destroy<ueid_gnb_du_s>();
-      break;
-    case types::gnb_cu_up_ueid:
-      c.destroy<ueid_gnb_cu_up_s>();
-      break;
-    case types::ng_enb_ueid:
-      c.destroy<ueid_ng_enb_s>();
-      break;
-    case types::ng_enb_du_ueid:
-      c.destroy<ueid_ng_enb_du_s>();
-      break;
-    case types::en_g_nb_ueid:
-      c.destroy<ueid_en_gnb_s>();
-      break;
-    case types::enb_ueid:
-      c.destroy<ueid_enb_s>();
-      break;
-    default:
-      break;
-  }
-}
-void ueid_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::gnb_ueid:
-      c.init<ueid_gnb_s>();
-      break;
-    case types::gnb_du_ueid:
-      c.init<ueid_gnb_du_s>();
-      break;
-    case types::gnb_cu_up_ueid:
-      c.init<ueid_gnb_cu_up_s>();
-      break;
-    case types::ng_enb_ueid:
-      c.init<ueid_ng_enb_s>();
-      break;
-    case types::ng_enb_du_ueid:
-      c.init<ueid_ng_enb_du_s>();
-      break;
-    case types::en_g_nb_ueid:
-      c.init<ueid_en_gnb_s>();
-      break;
-    case types::enb_ueid:
-      c.init<ueid_enb_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-  }
-}
-ueid_c::ueid_c(const ueid_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_ueid:
-      c.init(other.c.get<ueid_gnb_s>());
-      break;
-    case types::gnb_du_ueid:
-      c.init(other.c.get<ueid_gnb_du_s>());
-      break;
-    case types::gnb_cu_up_ueid:
-      c.init(other.c.get<ueid_gnb_cu_up_s>());
-      break;
-    case types::ng_enb_ueid:
-      c.init(other.c.get<ueid_ng_enb_s>());
-      break;
-    case types::ng_enb_du_ueid:
-      c.init(other.c.get<ueid_ng_enb_du_s>());
-      break;
-    case types::en_g_nb_ueid:
-      c.init(other.c.get<ueid_en_gnb_s>());
-      break;
-    case types::enb_ueid:
-      c.init(other.c.get<ueid_enb_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-  }
-}
-ueid_c& ueid_c::operator=(const ueid_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_ueid:
-      c.set(other.c.get<ueid_gnb_s>());
-      break;
-    case types::gnb_du_ueid:
-      c.set(other.c.get<ueid_gnb_du_s>());
-      break;
-    case types::gnb_cu_up_ueid:
-      c.set(other.c.get<ueid_gnb_cu_up_s>());
-      break;
-    case types::ng_enb_ueid:
-      c.set(other.c.get<ueid_ng_enb_s>());
-      break;
-    case types::ng_enb_du_ueid:
-      c.set(other.c.get<ueid_ng_enb_du_s>());
-      break;
-    case types::en_g_nb_ueid:
-      c.set(other.c.get<ueid_en_gnb_s>());
-      break;
-    case types::enb_ueid:
-      c.set(other.c.get<ueid_enb_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-  }
-
-  return *this;
-}
-ueid_gnb_s& ueid_c::set_gnb_ueid()
-{
-  set(types::gnb_ueid);
-  return c.get<ueid_gnb_s>();
-}
-ueid_gnb_du_s& ueid_c::set_gnb_du_ueid()
-{
-  set(types::gnb_du_ueid);
-  return c.get<ueid_gnb_du_s>();
-}
-ueid_gnb_cu_up_s& ueid_c::set_gnb_cu_up_ueid()
-{
-  set(types::gnb_cu_up_ueid);
-  return c.get<ueid_gnb_cu_up_s>();
-}
-ueid_ng_enb_s& ueid_c::set_ng_enb_ueid()
-{
-  set(types::ng_enb_ueid);
-  return c.get<ueid_ng_enb_s>();
-}
-ueid_ng_enb_du_s& ueid_c::set_ng_enb_du_ueid()
-{
-  set(types::ng_enb_du_ueid);
-  return c.get<ueid_ng_enb_du_s>();
-}
-ueid_en_gnb_s& ueid_c::set_en_g_nb_ueid()
-{
-  set(types::en_g_nb_ueid);
-  return c.get<ueid_en_gnb_s>();
-}
-ueid_enb_s& ueid_c::set_enb_ueid()
-{
-  set(types::enb_ueid);
-  return c.get<ueid_enb_s>();
-}
-void ueid_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::gnb_ueid:
-      j.write_fieldname("gNB-UEID");
-      c.get<ueid_gnb_s>().to_json(j);
-      break;
-    case types::gnb_du_ueid:
-      j.write_fieldname("gNB-DU-UEID");
-      c.get<ueid_gnb_du_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_ueid:
-      j.write_fieldname("gNB-CU-UP-UEID");
-      c.get<ueid_gnb_cu_up_s>().to_json(j);
-      break;
-    case types::ng_enb_ueid:
-      j.write_fieldname("ng-eNB-UEID");
-      c.get<ueid_ng_enb_s>().to_json(j);
-      break;
-    case types::ng_enb_du_ueid:
-      j.write_fieldname("ng-eNB-DU-UEID");
-      c.get<ueid_ng_enb_du_s>().to_json(j);
-      break;
-    case types::en_g_nb_ueid:
-      j.write_fieldname("en-gNB-UEID");
-      c.get<ueid_en_gnb_s>().to_json(j);
-      break;
-    case types::enb_ueid:
-      j.write_fieldname("eNB-UEID");
-      c.get<ueid_enb_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-  }
-  j.end_obj();
-}
-SRSASN_CODE ueid_c::pack(bit_ref& bref) const
-{
-  type_.pack(bref);
-  switch (type_) {
-    case types::gnb_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_s>().pack(bref));
-      break;
-    case types::gnb_du_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_du_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_cu_up_s>().pack(bref));
-      break;
-    case types::ng_enb_ueid:
-      HANDLE_CODE(c.get<ueid_ng_enb_s>().pack(bref));
-      break;
-    case types::ng_enb_du_ueid:
-      HANDLE_CODE(c.get<ueid_ng_enb_du_s>().pack(bref));
-      break;
-    case types::en_g_nb_ueid:
-      HANDLE_CODE(c.get<ueid_en_gnb_s>().pack(bref));
-      break;
-    case types::enb_ueid:
-      HANDLE_CODE(c.get<ueid_enb_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-      return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-SRSASN_CODE ueid_c::unpack(cbit_ref& bref)
-{
-  types e;
-  e.unpack(bref);
-  set(e);
-  switch (type_) {
-    case types::gnb_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_s>().unpack(bref));
-      break;
-    case types::gnb_du_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_du_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_ueid:
-      HANDLE_CODE(c.get<ueid_gnb_cu_up_s>().unpack(bref));
-      break;
-    case types::ng_enb_ueid:
-      HANDLE_CODE(c.get<ueid_ng_enb_s>().unpack(bref));
-      break;
-    case types::ng_enb_du_ueid:
-      HANDLE_CODE(c.get<ueid_ng_enb_du_s>().unpack(bref));
-      break;
-    case types::en_g_nb_ueid:
-      HANDLE_CODE(c.get<ueid_en_gnb_s>().unpack(bref));
-      break;
-    case types::enb_ueid:
-      HANDLE_CODE(c.get<ueid_enb_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ueid_c");
-      return SRSASN_ERROR_DECODE_FAIL;
-  }
-  return SRSASN_SUCCESS;
-}
-
-const char* ueid_c::types_opts::to_string() const
-{
-  static const char* names[] = {
-      "gNB-UEID", "gNB-DU-UEID", "gNB-CU-UP-UEID", "ng-eNB-UEID", "ng-eNB-DU-UEID", "en-gNB-UEID", "eNB-UEID"};
-  return convert_enum_idx(names, 7, value, "ueid_c::types");
 }
