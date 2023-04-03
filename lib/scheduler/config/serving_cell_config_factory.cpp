@@ -76,10 +76,10 @@ srsran::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_b
   tdd_ul_dl_config_common cfg{};
   cfg.ref_scs                            = params.scs_common;
   cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
-  cfg.pattern1.nof_dl_slots              = 6;
-  cfg.pattern1.nof_dl_symbols            = 0;
-  cfg.pattern1.nof_ul_slots              = 3;
-  cfg.pattern1.nof_ul_symbols            = 0;
+  cfg.pattern1.nof_dl_slots              = 5;
+  cfg.pattern1.nof_dl_symbols            = 7;
+  cfg.pattern1.nof_ul_slots              = 4;
+  cfg.pattern1.nof_ul_symbols            = 7;
   return cfg;
 }
 
@@ -206,6 +206,16 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
       ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 7};
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 5};
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;

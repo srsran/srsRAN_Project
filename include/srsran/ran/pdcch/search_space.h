@@ -94,6 +94,20 @@ struct search_space_configuration {
            ((type == type_t::common and common == rhs.common) or
             (type == type_t::ue_dedicated and ue_specific == rhs.ue_specific));
   }
+
+  unsigned get_first_symbol_index() const
+  {
+    if (not monitoring_symbols_within_slot.has_value()) {
+      // Assume the first SearchSpace monitoring symbol is 0 when no specified.
+      return 0;
+    }
+    for (unsigned n = 0; n < monitoring_symbols_within_slot.value().size(); ++n) {
+      if (monitoring_symbols_within_slot.value().test(monitoring_symbols_within_slot.value().size() - n - 1)) {
+        return n;
+      }
+    }
+    return monitoring_symbols_within_slot.value().size();
+  }
 };
 
 } // namespace srsran

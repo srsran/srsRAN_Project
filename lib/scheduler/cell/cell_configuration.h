@@ -57,7 +57,7 @@ public:
   /// Checks if DL/UL is active for current slot
   bool is_fully_dl_enabled(slot_point sl) const
   {
-    if (dl_enabled_slot_lst.empty()) {
+    if (fully_dl_enabled_slot_lst.empty()) {
       // Note: dl_enabled_slot_lst is empty in the FDD case.
       return true;
     }
@@ -65,11 +65,11 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
     }
-    return fully_dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()];
+    return fully_dl_enabled_slot_lst[sl.to_uint() % fully_dl_enabled_slot_lst.size()];
   }
   bool is_fully_ul_enabled(slot_point sl) const
   {
-    if (ul_enabled_slot_lst.empty()) {
+    if (fully_ul_enabled_slot_lst.empty()) {
       // Note: ul_enabled_slot_lst is empty in the FDD case.
       return true;
     }
@@ -77,7 +77,7 @@ public:
       // Convert slot into equivalent reference SCS.
       sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
     }
-    return fully_ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()];
+    return fully_ul_enabled_slot_lst[sl.to_uint() % fully_ul_enabled_slot_lst.size()];
   }
 
   bool is_dl_enabled(slot_point sl) const
@@ -104,14 +104,41 @@ public:
     }
     return ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()];
   }
+  unsigned get_nof_dl_symbol_per_slot(slot_point sl) const
+  {
+    if (dl_enabled_slot_lst.empty()) {
+      // Note: dl_enabled_slot_lst is empty in the FDD case.
+      return dl_cfg_common.init_dl_bwp.generic_params.cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                                  : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return dl_symbols_per_slot_lst[sl.to_uint() % dl_symbols_per_slot_lst.size()];
+  }
+  unsigned get_nof_ul_symbol_per_slot(slot_point sl) const
+  {
+    if (ul_enabled_slot_lst.empty()) {
+      // Note: ul_enabled_slot_lst is empty in the FDD case.
+      return ul_cfg_common.init_ul_bwp.generic_params.cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                                  : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()];
+  }
 
 private:
   /// Vector circularly indexed by slot that indicates whether a slot has DL/UL enabled.
   /// Note: I use uint8_t to avoid vector<bool> special case.
-  std::vector<uint8_t>  dl_enabled_slot_lst;
-  std::vector<uint8_t>  ul_enabled_slot_lst;
-  std::vector<uint8_t>  fully_dl_enabled_slot_lst;
-  std::vector<uint8_t>  fully_ul_enabled_slot_lst;
+  std::vector<uint8_t> dl_enabled_slot_lst;
+  std::vector<uint8_t> ul_enabled_slot_lst;
+  std::vector<uint8_t> fully_dl_enabled_slot_lst;
+  std::vector<uint8_t> fully_ul_enabled_slot_lst;
+  // List of active DL/UL symbols per slot.
   std::vector<unsigned> dl_symbols_per_slot_lst;
   std::vector<unsigned> ul_symbols_per_slot_lst;
 };

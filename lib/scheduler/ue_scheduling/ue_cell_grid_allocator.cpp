@@ -82,11 +82,11 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
   cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
 
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot", pdsch_alloc.slot);
     return false;
   }
-  if (not cell_cfg.is_fully_dl_enabled(pdsch_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
     return false;
   }

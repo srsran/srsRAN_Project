@@ -38,7 +38,7 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // Update all UEs state.
   ue_db.slot_indication(slot_tx);
 
-  if (not ue_res_grid_view.get_cell_cfg_common(to_du_cell_index(0)).is_fully_dl_enabled(slot_tx)) {
+  if (not ue_res_grid_view.get_cell_cfg_common(to_du_cell_index(0)).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
     // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
     // only allocates PDCCHs for the current slot_tx.
