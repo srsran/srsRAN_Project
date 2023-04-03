@@ -140,7 +140,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell_scheduler& cell = *cells[cell_index];
 
   if (cell_index == to_du_cell_index(0)) {
-    // Set scheduler logger context.
+    // Set scheduler logger context only once per slot.
     logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
   }
 
