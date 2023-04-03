@@ -49,7 +49,7 @@ inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_con
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms0;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms50;
 
     cfg.pdcp    = pdcp_cfg;
     qos_list[7] = cfg;
@@ -72,7 +72,7 @@ inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_con
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms0;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms120;
 
     cfg.pdcp    = pdcp_cfg;
     qos_list[9] = cfg;
