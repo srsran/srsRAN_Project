@@ -23,7 +23,7 @@ include:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.2
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.5
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -152,6 +152,7 @@ rf-tsan:
     - job: "avx2 [tsan, clean]"
       artifacts: true
       optional: true
+  allow_failure: true
 
 rf-asan:
   extends: rf

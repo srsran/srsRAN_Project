@@ -8,8 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_9cbbc85_c231804b2_0.3.3
-  debug-labels: [retina.cpu-performance.high]
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_9cbbc85_c231804b2_0.3.4
   resources:
     - type: zmq
     - type: license
@@ -17,12 +16,11 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.1.2_0.3.3
-  debug-labels: [retina.cpu-performance.low]
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.1.2_0.3.4
   resources:
     - type: zmq
   path: ../../build/apps/gnb/gnb
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.3.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.3.4
