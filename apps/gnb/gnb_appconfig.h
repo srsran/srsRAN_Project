@@ -70,7 +70,7 @@ struct prach_appconfig {
 };
 
 /// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
-struct tdd_ul_dl_config_pattern {
+struct tdd_ul_dl_pattern_config {
   /// Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
   float dl_ul_tx_period = 5.0F;
   /// Values: {0,...,maxNrofSlots=80}.
@@ -85,8 +85,8 @@ struct tdd_ul_dl_config_pattern {
 
 /// TDD configuration. See TS 38.331, \c TDD-UL-DL-ConfigCommon.
 struct tdd_ul_dl_config {
-  tdd_ul_dl_config_pattern           pattern1;
-  optional<tdd_ul_dl_config_pattern> pattern2;
+  tdd_ul_dl_pattern_config           pattern1;
+  optional<tdd_ul_dl_pattern_config> pattern2;
 };
 
 /// PDCCH application configuration.

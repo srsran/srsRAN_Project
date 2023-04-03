@@ -231,7 +231,7 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
-static void configure_cli11_tdd_pattern_args(CLI::App& app, tdd_ul_dl_config_pattern& tdd_pattern_params)
+static void configure_cli11_tdd_pattern_args(CLI::App& app, tdd_ul_dl_pattern_config& tdd_pattern_params)
 {
   app.add_option("--dl_ul_tx_period", tdd_pattern_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
       ->capture_default_str()
