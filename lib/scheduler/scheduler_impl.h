@@ -51,9 +51,8 @@ public:
   void handle_uci_indication(const uci_indication& uci) override;
 
 private:
-  const scheduler_expert_config  expert_params;
-  sched_configuration_notifier&  config_notifier;
-  scheduler_ue_metrics_notifier& metrics_notifier;
+  const scheduler_expert_config expert_params;
+  sched_configuration_notifier& config_notifier;
 
   srslog::basic_logger&  logger;
   scheduler_event_logger sched_ev_logger;
