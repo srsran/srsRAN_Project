@@ -59,7 +59,7 @@ class mac_pcap
 public:
   virtual ~mac_pcap() = default;
 
-  virtual void open(const char* filename_)                                    = 0;
+  virtual void open(const std::string& filename_)                             = 0;
   virtual void close()                                                        = 0;
   virtual bool is_write_enabled()                                             = 0;
   virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
@@ -76,10 +76,10 @@ class dlt_pcap
 public:
   virtual ~dlt_pcap() = default;
 
-  virtual void open(const char* filename_)       = 0;
-  virtual void close()                           = 0;
-  virtual bool is_write_enabled()                = 0;
-  virtual void push_pdu(const_span<uint8_t> pdu) = 0;
-  virtual void push_pdu(byte_buffer pdu)         = 0;
+  virtual void open(const std::string& filename_) = 0;
+  virtual void close()                            = 0;
+  virtual bool is_write_enabled()                 = 0;
+  virtual void push_pdu(const_span<uint8_t> pdu)  = 0;
+  virtual void push_pdu(byte_buffer pdu)          = 0;
 };
 } // namespace srsran

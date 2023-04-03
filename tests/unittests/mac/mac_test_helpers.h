@@ -144,7 +144,7 @@ class dummy_mac_pcap : public mac_pcap
 public:
   ~dummy_mac_pcap() override = default;
 
-  void open(const char* filename_) override {}
+  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}

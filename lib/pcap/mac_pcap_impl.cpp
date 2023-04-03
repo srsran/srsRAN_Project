@@ -32,7 +32,7 @@ mac_pcap_impl::~mac_pcap_impl()
   close();
 }
 
-void mac_pcap_impl::open(const char* filename_)
+void mac_pcap_impl::open(const std::string& filename_)
 {
   auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);

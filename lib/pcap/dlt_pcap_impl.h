@@ -27,7 +27,7 @@ public:
   dlt_pcap_impl(dlt_pcap_impl&& other)                 = delete;
   dlt_pcap_impl& operator=(dlt_pcap_impl&& other)      = delete;
 
-  void open(const char* filename_) override;
+  void open(const std::string& filename_) override;
   void close() override;
   bool is_write_enabled() override;
   void push_pdu(srsran::byte_buffer pdu) override;

@@ -26,7 +26,7 @@ dlt_pcap_impl::~dlt_pcap_impl()
   close();
 }
 
-void dlt_pcap_impl::open(const char* filename_)
+void dlt_pcap_impl::open(const std::string& filename_)
 {
   auto fn = [this, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
   worker.push_task_blocking(fn);
