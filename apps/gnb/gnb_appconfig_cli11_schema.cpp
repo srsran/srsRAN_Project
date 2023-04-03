@@ -231,53 +231,43 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
+static void configure_cli11_tdd_pattern_args(CLI::App& app, tdd_ul_dl_config_pattern& tdd_pattern_params)
+{
+  app.add_option("--dl_ul_tx_period", tdd_pattern_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 10.0));
+  app.add_option("--nof_dl_slots", tdd_pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--nof_dl_symbols",
+                 tdd_pattern_params.nof_dl_symbols,
+                 "TDD pattern nof. DL symbols at the beginning of the slot following full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+  app.add_option("--nof_ul_slots", tdd_pattern_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--nof_ul_symbols",
+                 tdd_pattern_params.nof_ul_symbols,
+                 "TDD pattern nof. UL symbols at the end of the slot preceding the first full UL slot")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+}
+
 static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_config& tdd_ul_dl_params)
 {
-  app.add_option("--pattern1_dl_ul_tx_period",
-                 tdd_ul_dl_params.pattern1_dl_ul_tx_period,
-                 "TDD pattern 1 periodicity in milliseconds")
-      ->capture_default_str()
-      ->check(CLI::Range(0.0, 10.0));
-  app.add_option("--pattern1_nof_dl_slots",
-                 tdd_ul_dl_params.pattern1_nof_dl_slots,
-                 "TDD pattern 1 nof. consecutive full DL slots")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 80));
-  app.add_option("--pattern1_nof_dl_symbols",
-                 tdd_ul_dl_params.pattern1_nof_dl_symbols,
-                 "TDD pattern 1 nof. DL symbols at the beginning of the slot following full DL slots")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 13));
-  app.add_option("--pattern1_nof_ul_slots",
-                 tdd_ul_dl_params.pattern1_nof_ul_slots,
-                 "TDD pattern 1 nof. consecutive full UL slots")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 80));
-  app.add_option("--pattern1_nof_ul_symbols",
-                 tdd_ul_dl_params.pattern1_nof_ul_symbols,
-                 "TDD pattern 1 nof. UL symbols at the end of the slot preceding the first full UL slot")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 13));
-  app.add_option("--pattern2_dl_ul_tx_period",
-                 tdd_ul_dl_params.pattern2_dl_ul_tx_period,
-                 "TDD pattern 2 periodicity in milliseconds")
-      ->check(CLI::Range(0.0, 10.0));
-  app.add_option("--pattern2_nof_dl_slots",
-                 tdd_ul_dl_params.pattern2_nof_dl_slots,
-                 "TDD pattern 2 nof. consecutive full DL slots")
-      ->check(CLI::Range(0, 80));
-  app.add_option("--pattern2_nof_dl_symbols",
-                 tdd_ul_dl_params.pattern2_nof_dl_symbols,
-                 "TDD pattern 2 nof. DL symbols at the beginning of the slot following full DL slots")
-      ->check(CLI::Range(0, 13));
-  app.add_option("--pattern2_nof_ul_slots",
-                 tdd_ul_dl_params.pattern2_nof_ul_slots,
-                 "TDD pattern 2 nof. consecutive full UL slots")
-      ->check(CLI::Range(0, 80));
-  app.add_option("--pattern2_nof_ul_symbols",
-                 tdd_ul_dl_params.pattern2_nof_ul_symbols,
-                 "TDD pattern 2 nof. UL symbols at the end of the slot preceding the first full UL slot")
-      ->check(CLI::Range(0, 13));
+  CLI::App* pattern1_subcmd = app.add_subcommand("pattern1", "TDD pattern 1 configuration parameters")->configurable();
+  configure_cli11_tdd_pattern_args(*pattern1_subcmd, tdd_ul_dl_params.pattern1);
+
+  CLI::App* pattern2_subcmd = app.add_subcommand("pattern2", "TDD pattern 2 configuration parameters")->configurable();
+  configure_cli11_tdd_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
+  auto tdd_pattern2_verify_callback = [&]() {
+    CLI::App* tdd_pattern_cfg = app.get_subcommand("pattern2");
+    if (tdd_pattern_cfg->count_all() == 0) {
+      tdd_ul_dl_params.pattern2.reset();
+    }
+  };
+  app.callback(tdd_pattern2_verify_callback);
 }
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
@@ -361,6 +351,13 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   CLI::App* tdd_ul_dl_subcmd =
       app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
   configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_params.tdd_pattern_cfg.emplace());
+  auto tdd_ul_dl_verify_callback = [&]() {
+    CLI::App* tdd_cfg = app.get_subcommand("tdd_ul_dl_cfg");
+    if (tdd_cfg->count_all() == 0) {
+      cell_params.tdd_pattern_cfg.reset();
+    }
+  };
+  app.callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

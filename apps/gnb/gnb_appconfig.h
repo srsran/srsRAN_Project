@@ -69,28 +69,24 @@ struct prach_appconfig {
   optional<unsigned> total_nof_ra_preambles;
 };
 
-/// TDD slot configuration. See TS 38.331, \c TDD-UL-DL-Pattern and \c TDD-UL-DL-ConfigCommon.
+/// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
+struct tdd_ul_dl_config_pattern {
+  /// Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
+  float dl_ul_tx_period = 5.0F;
+  /// Values: {0,...,maxNrofSlots=80}.
+  unsigned nof_dl_slots = 6;
+  /// Values: {0,...,maxNrofSymbols-1=13}.
+  unsigned nof_dl_symbols = 0;
+  /// Values: {0,...,maxNrofSlots=80}.
+  unsigned nof_ul_slots = 3;
+  /// Values: {0,...,maxNrofSymbols-1=13}.
+  unsigned nof_ul_symbols = 0;
+};
+
+/// TDD configuration. See TS 38.331, \c TDD-UL-DL-ConfigCommon.
 struct tdd_ul_dl_config {
-  /// Pattern 1: Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
-  float pattern1_dl_ul_tx_period = 5.0F;
-  /// Pattern 1: Values: {0,...,maxNrofSlots=80}.
-  unsigned pattern1_nof_dl_slots = 6;
-  /// Pattern 1: Values: {0,...,maxNrofSymbols-1=13}.
-  unsigned pattern1_nof_dl_symbols = 0;
-  /// Pattern 1: Values: {0,...,maxNrofSlots=80}.
-  unsigned pattern1_nof_ul_slots = 3;
-  /// Pattern 1: Values: {0,...,maxNrofSymbols-1=13}.
-  unsigned pattern1_nof_ul_symbols = 0;
-  /// Pattern 2: Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
-  optional<float> pattern2_dl_ul_tx_period;
-  /// Pattern 2: Values: {0,...,maxNrofSlots=80}.
-  optional<unsigned> pattern2_nof_dl_slots;
-  /// Pattern 2: Values: {0,...,maxNrofSymbols-1=13}.
-  optional<unsigned> pattern2_nof_dl_symbols;
-  /// Pattern 2: Values: {0,...,maxNrofSlots=80}.
-  optional<unsigned> pattern2_nof_ul_slots;
-  /// Pattern 2: Values: {0,...,maxNrofSymbols-1=13}.
-  optional<unsigned> pattern2_nof_ul_symbols;
+  tdd_ul_dl_config_pattern           pattern1;
+  optional<tdd_ul_dl_config_pattern> pattern2;
 };
 
 /// PDCCH application configuration.

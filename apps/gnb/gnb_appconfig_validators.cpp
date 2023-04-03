@@ -72,141 +72,122 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_config& config, subcarr
     fmt::print("Invalid TDD UL DL reference SCS={}. Must be 15, 30 or 60 kHz for FR1.\n", common_scs);
     return false;
   }
-  if (config.pattern1_dl_ul_tx_period != 0.5F and config.pattern1_dl_ul_tx_period != 0.625F and
-      config.pattern1_dl_ul_tx_period != 1.0F and config.pattern1_dl_ul_tx_period != 1.25F and
-      config.pattern1_dl_ul_tx_period != 2.0F and config.pattern1_dl_ul_tx_period != 2.5F and
-      config.pattern1_dl_ul_tx_period != 5.0F and config.pattern1_dl_ul_tx_period != 10.0F) {
+  if (config.pattern1.dl_ul_tx_period != 0.5F and config.pattern1.dl_ul_tx_period != 0.625F and
+      config.pattern1.dl_ul_tx_period != 1.0F and config.pattern1.dl_ul_tx_period != 1.25F and
+      config.pattern1.dl_ul_tx_period != 2.0F and config.pattern1.dl_ul_tx_period != 2.5F and
+      config.pattern1.dl_ul_tx_period != 5.0F and config.pattern1.dl_ul_tx_period != 10.0F) {
     fmt::print(
         "Invalid TDD pattern 1 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
-        config.pattern1_dl_ul_tx_period);
+        config.pattern1.dl_ul_tx_period);
     return false;
   }
   // See TS 38.213, clause 11.1.
-  if (config.pattern1_dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
+  if (config.pattern1.dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 kHz when using "
                "periodicity of {} ms.\n",
                common_scs,
-               config.pattern1_dl_ul_tx_period);
+               config.pattern1.dl_ul_tx_period);
     return false;
   }
-  if (config.pattern1_dl_ul_tx_period == 1.25F and
+  if (config.pattern1.dl_ul_tx_period == 1.25F and
       (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 or 60 kHz when using "
                "periodicity of {} ms.\n",
                common_scs,
-               config.pattern1_dl_ul_tx_period);
+               config.pattern1.dl_ul_tx_period);
     return false;
   }
-  if (config.pattern1_dl_ul_tx_period == 2.5F and
+  if (config.pattern1.dl_ul_tx_period == 2.5F and
       (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
        common_scs != subcarrier_spacing::kHz30)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120, 60 or 30 kHz when using "
                "periodicity of {} ms.\n",
                common_scs,
-               config.pattern1_dl_ul_tx_period);
+               config.pattern1.dl_ul_tx_period);
     return false;
   }
-  if (config.pattern1_nof_dl_slots > 80) {
+  if (config.pattern1.nof_dl_slots > 80) {
     fmt::print("Invalid TDD pattern 1 consecutive full DL slots={} slots. Must be less than 80 for release 15.\n",
-               config.pattern1_nof_dl_slots);
+               config.pattern1.nof_dl_slots);
     return false;
   }
-  if (config.pattern1_nof_ul_slots > 80) {
+  if (config.pattern1.nof_ul_slots > 80) {
     fmt::print("Invalid TDD pattern 1 consecutive full UL slots={} slots. Must be less than 80 for release 15.\n",
-               config.pattern1_nof_ul_slots);
+               config.pattern1.nof_ul_slots);
     return false;
   }
-  if (config.pattern1_nof_dl_symbols > 13) {
+  if (config.pattern1.nof_dl_symbols > 13) {
     fmt::print(
         "Invalid TDD pattern 1 consecutive DL symbols={} in the beginning of the slot following the last full DL slot. "
         "Must be less than 14.\n",
-        config.pattern1_nof_dl_symbols);
+        config.pattern1.nof_dl_symbols);
     return false;
   }
-  if (config.pattern1_nof_ul_symbols > 13) {
+  if (config.pattern1.nof_ul_symbols > 13) {
     fmt::print(
         "Invalid TDD pattern 1 consecutive UL symbols={} in the end of the slot preceding the first full UL slot. "
         "Must be less than 14.\n",
-        config.pattern1_nof_ul_symbols);
+        config.pattern1.nof_ul_symbols);
     return false;
   }
 
-  if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period != 0.5F and
-      *config.pattern2_dl_ul_tx_period != 0.625F and *config.pattern2_dl_ul_tx_period != 1.0F and
-      *config.pattern2_dl_ul_tx_period != 1.25F and *config.pattern2_dl_ul_tx_period != 2.0F and
-      *config.pattern2_dl_ul_tx_period != 2.5F and *config.pattern2_dl_ul_tx_period != 5.0F and
-      *config.pattern2_dl_ul_tx_period != 10.0F) {
-    fmt::print(
-        "Invalid TDD pattern 2 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
-        *config.pattern2_dl_ul_tx_period);
-    return false;
-  }
   // See TS 38.213, clause 11.1.
-  if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 0.625F and
-      common_scs != subcarrier_spacing::kHz120) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               *config.pattern2_dl_ul_tx_period);
-    return false;
-  }
-  if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 1.25F and
-      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 or 60 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               *config.pattern2_dl_ul_tx_period);
-    return false;
-  }
-  if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 2.5F and
-      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
-       common_scs != subcarrier_spacing::kHz30)) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120, 60 or 30 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               *config.pattern2_dl_ul_tx_period);
-    return false;
-  }
-  if (config.pattern2_nof_dl_slots.has_value() and *config.pattern2_nof_dl_slots > 80) {
-    fmt::print("Invalid TDD pattern 2 consecutive full DL slots={} slots. Must be less than 80 for release 15.\n",
-               *config.pattern2_nof_dl_slots);
-    return false;
-  }
-  if (config.pattern2_nof_ul_slots.has_value() and *config.pattern2_nof_ul_slots > 80) {
-    fmt::print("Invalid TDD pattern 2 consecutive full UL slots={} slots. Must be less than 80 for release 15.\n",
-               *config.pattern2_nof_ul_slots);
-    return false;
-  }
-  if (config.pattern2_nof_dl_symbols.has_value() and *config.pattern2_nof_dl_symbols > 13) {
-    fmt::print(
-        "Invalid TDD pattern 2 consecutive DL symbols={} in the beginning of the slot following the last full DL slot. "
-        "Must be less than 14.\n",
-        *config.pattern2_nof_dl_symbols);
-    return false;
-  }
-  if (config.pattern2_nof_ul_symbols.has_value() and *config.pattern2_nof_ul_symbols > 13) {
-    fmt::print(
-        "Invalid TDD pattern 2 consecutive UL symbols={} in the end of the slot preceding the first full UL slot. "
-        "Must be less than 14.\n",
-        *config.pattern2_nof_ul_symbols);
-    return false;
-  }
-
-  if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period > 0.0) {
-    if (not config.pattern2_nof_dl_slots.has_value()) {
-      fmt::print("Missing TDD pattern 2 consecutive full DL slots.\n");
+  if (config.pattern2.has_value()) {
+    if (config.pattern2->dl_ul_tx_period != 0.5F and config.pattern2->dl_ul_tx_period != 0.625F and
+        config.pattern2->dl_ul_tx_period != 1.0F and config.pattern2->dl_ul_tx_period != 1.25F and
+        config.pattern2->dl_ul_tx_period != 2.0F and config.pattern2->dl_ul_tx_period != 2.5F and
+        config.pattern2->dl_ul_tx_period != 5.0F and config.pattern2->dl_ul_tx_period != 10.0F) {
+      fmt::print(
+          "Invalid TDD pattern 2 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
+          config.pattern2->dl_ul_tx_period);
       return false;
     }
-    if (not config.pattern2_nof_dl_symbols.has_value()) {
-      fmt::print("Missing TDD pattern 2 consecutive DL symbols.\n");
+    if (config.pattern2->dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
+      fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 kHz when using "
+                 "periodicity of {} ms.\n",
+                 common_scs,
+                 config.pattern2->dl_ul_tx_period);
       return false;
     }
-    if (not config.pattern2_nof_ul_slots.has_value()) {
-      fmt::print("Missing TDD pattern 2 consecutive full UL slots.\n");
+    if (config.pattern2->dl_ul_tx_period == 1.25F and
+        (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
+      fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 or 60 kHz when using "
+                 "periodicity of {} ms.\n",
+                 common_scs,
+                 config.pattern2->dl_ul_tx_period);
       return false;
     }
-    if (not config.pattern2_nof_ul_symbols.has_value()) {
-      fmt::print("Missing TDD pattern 2 consecutive UL symbols.\n");
+    if (config.pattern2->dl_ul_tx_period == 2.5F and
+        (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
+         common_scs != subcarrier_spacing::kHz30)) {
+      fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120, 60 or 30 kHz when using "
+                 "periodicity of {} ms.\n",
+                 common_scs,
+                 config.pattern2->dl_ul_tx_period);
+      return false;
+    }
+    if (config.pattern2->nof_dl_slots > 80) {
+      fmt::print("Invalid TDD pattern 2 consecutive full DL slots={} slots. Must be less than 80 for release 15.\n",
+                 config.pattern2->nof_dl_slots);
+      return false;
+    }
+    if (config.pattern2->nof_ul_slots > 80) {
+      fmt::print("Invalid TDD pattern 2 consecutive full UL slots={} slots. Must be less than 80 for release 15.\n",
+                 config.pattern2->nof_ul_slots);
+      return false;
+    }
+    if (config.pattern2->nof_dl_symbols > 13) {
+      fmt::print("Invalid TDD pattern 2 consecutive DL symbols={} in the beginning of the slot following the last full "
+                 "DL slot. "
+                 "Must be less than 14.\n",
+                 config.pattern2->nof_dl_symbols);
+      return false;
+    }
+    if (config.pattern2->nof_ul_symbols > 13) {
+      fmt::print(
+          "Invalid TDD pattern 2 consecutive UL symbols={} in the end of the slot preceding the first full UL slot. "
+          "Must be less than 14.\n",
+          config.pattern2->nof_ul_symbols);
       return false;
     }
   }
