@@ -64,7 +64,7 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
               if (lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] ==
                   rhs->nof_candidates[to_aggregation_level_index(agg_lvl)]) {
                 // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
-                // less as possible).
+                // little as possible).
                 return lhs->cs_id > rhs->cs_id;
               }
               return lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] >

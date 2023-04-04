@@ -76,10 +76,10 @@ srsran::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_b
   tdd_ul_dl_config_common cfg{};
   cfg.ref_scs                            = params.scs_common;
   cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
-  cfg.pattern1.nof_dl_slots              = 5;
-  cfg.pattern1.nof_dl_symbols            = 7;
-  cfg.pattern1.nof_ul_slots              = 4;
-  cfg.pattern1.nof_ul_symbols            = 7;
+  cfg.pattern1.nof_dl_slots              = 6;
+  cfg.pattern1.nof_dl_symbols            = 0;
+  cfg.pattern1.nof_ul_slots              = 3;
+  cfg.pattern1.nof_ul_symbols            = 0;
   return cfg;
 }
 
@@ -265,14 +265,14 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   auto get_pusch_res = [](unsigned k2) {
-    return pusch_time_domain_resource_allocation{.k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = {0, 14}};
+    return pusch_time_domain_resource_allocation{
+        .k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
   };
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {get_pusch_res(4)};
   } else {
     // TDD
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
-        get_pusch_res(4), get_pusch_res(5), get_pusch_res(6), get_pusch_res(7)};
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {get_pusch_res(4), get_pusch_res(5), get_pusch_res(6)};
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
