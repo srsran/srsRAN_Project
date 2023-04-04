@@ -36,7 +36,7 @@ struct rf_driver_appconfig {
   double rx_gain_dB = 60.0;
   /// Center frequency offset in hertz applied to all radio channels.
   double center_freq_offset_Hz = 0.0;
-  /// Clock calibration in Parts Per Million (PPM). It is applied to the center carrier and sampling frequencies.
+  /// Clock calibration in Parts Per Million (PPM). It is applied to the carrier frequency.
   double calibrate_clock_ppm = 0.0;
   /// LO Offset in MHz. It shifts the LO from the center frequency for moving the LO leakage out of the channel.
   double lo_offset_MHz = 0.0;
