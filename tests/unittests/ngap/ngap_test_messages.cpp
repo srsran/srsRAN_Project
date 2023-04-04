@@ -457,3 +457,25 @@ ngap_message srsran::srs_cu_cp::generate_invalid_paging_message()
 
   return ngap_msg;
 }
+
+ngap_message srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_ERROR_IND);
+
+  auto& error_indication = ngap_msg.pdu.init_msg().value.error_ind();
+
+  error_indication->amf_ue_ngap_id_present = true;
+  error_indication->amf_ue_ngap_id.value   = amf_ue_id_to_uint(amf_ue_id);
+
+  error_indication->ran_ue_ngap_id_present = true;
+  error_indication->ran_ue_ngap_id.value   = ran_ue_id_to_uint(ran_ue_id);
+
+  error_indication->cause_present = true;
+  auto& cause                     = error_indication->cause.value.set_radio_network();
+  cause                           = asn1::ngap::cause_radio_network_opts::options::unknown_pdu_session_id;
+
+  return ngap_msg;
+}

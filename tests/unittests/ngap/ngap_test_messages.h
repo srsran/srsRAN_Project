@@ -147,5 +147,8 @@ ngap_message generate_valid_paging_message();
 /// \brief Generate an invalid dummy Paging message.
 ngap_message generate_invalid_paging_message();
 
+/// \brief Generate an Error Indication message.
+ngap_message generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 } // namespace srs_cu_cp
 } // namespace srsran
