@@ -52,16 +52,16 @@ class fixed_size_memory_block_pool
   using pool_type = fixed_size_memory_block_pool<IdTag, DebugSanitizeAddress>;
 
   /// The number of blocks a worker tries to steal from the central memory block cache in a single batch.
-  constexpr static size_t batch_steal_size = 16;
+  constexpr static size_t max_local_cache1_size = 16;
 
   /// Ctor of the memory pool. It is set as private because the class works as a singleton.
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
-    srsran_assert(nof_blocks > batch_steal_size,
+    srsran_assert(nof_blocks > max_local_cache1_size,
                   "The number of segments in the pool must be larger than the thread cache size ({} <= {})",
                   nof_blocks,
-                  (size_t)batch_steal_size);
+                  (size_t)max_local_cache1_size);
     srsran_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
                   "Segment size is too small ({} <= {})",
                   mblock_size,
@@ -76,7 +76,7 @@ class fixed_size_memory_block_pool
       central_mem_cache.push(static_cast<void*>(allocated_memory.data() + (mblock_size * i)));
     }
 
-    local_growth_thres = std::max((size_t)(nof_blocks / 32U), (size_t)batch_steal_size);
+    max_cache2_size = max_local_cache_size() - max_local_cache1_size;
   }
 
 public:
@@ -105,6 +105,12 @@ public:
   /// Number of memory blocks contained in this memory pool.
   size_t nof_memory_blocks() const { return nof_blocks; }
 
+  /// Maximum number of blocks that can be stored in the thread-local memory block cache.
+  size_t max_local_cache_size() const
+  {
+    return max_local_cache1_size + std::max((size_t)max_local_cache1_size, nof_memory_blocks() / 32U);
+  }
+
   /// Allocate a node from the memory pool with the provided size.
   void* allocate_node(size_t sz) noexcept
   {
@@ -119,7 +125,7 @@ public:
     }
     if (node == nullptr) {
       // Local caches are depleted. Pop a batch of memory blocks from central cache.
-      free_memory_block_list popped_block_list = central_mem_cache.try_pop_list(batch_steal_size);
+      free_memory_block_list popped_block_list = central_mem_cache.try_pop_list(max_local_cache1_size);
       node                                     = popped_block_list.try_pop();
       w_ctx->local_cache1.push_list(popped_block_list);
     }
@@ -149,12 +155,12 @@ public:
     }
 
     // push to local memory block cache.
-    if (w_ctx->local_cache1.size() < batch_steal_size) {
+    if (w_ctx->local_cache1.size() < max_local_cache1_size) {
       w_ctx->local_cache1.push(p);
     } else {
       w_ctx->local_cache2.push(p);
 
-      if (w_ctx->local_cache2.size() >= local_growth_thres) {
+      if (w_ctx->local_cache2.size() >= max_cache2_size) {
         // if local cache 2 reached max capacity, send all its blocks back to central cache
         central_mem_cache.steal_blocks(w_ctx->local_cache2);
       }
@@ -194,7 +200,7 @@ private:
   const size_t mblock_size;
   const size_t nof_blocks;
 
-  size_t local_growth_thres = 0;
+  size_t max_cache2_size = 0;
 
   concurrent_free_memory_block_list central_mem_cache;
   std::mutex                        mutex;
