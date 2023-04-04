@@ -75,12 +75,12 @@ TEST_F(memory_block_list_tester, clear)
   ASSERT_EQ(list.try_pop(), nullptr);
 }
 
-TEST_F(memory_block_list_tester, try_pop_list)
+TEST_F(memory_block_list_tester, try_pop_batch)
 {
   create_and_push_blocks(test_rgen::uniform_int<unsigned>(1, 10));
 
   unsigned               n     = test_rgen::uniform_int<unsigned>(0, blocks.size());
-  free_memory_block_list list2 = list.try_pop_list(n);
+  free_memory_block_list list2 = list.try_pop_batch(n);
 
   ASSERT_EQ(list2.size(), n);
   ASSERT_EQ(list.size(), blocks.size() - n);

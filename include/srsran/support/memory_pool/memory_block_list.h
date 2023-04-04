@@ -28,6 +28,7 @@ public:
   };
 
   node*       head  = nullptr;
+  node*       tail  = nullptr;
   std::size_t count = 0;
 
   constexpr static std::size_t min_memory_block_size() { return sizeof(node); }
@@ -39,6 +40,9 @@ public:
     srsran_assert(is_aligned(block, min_memory_block_align()), "The provided memory block is not aligned");
     node* ptr = ::new (block) node(head);
     head      = ptr;
+    if (tail == nullptr) {
+      tail = ptr;
+    }
     count++;
   }
 
@@ -48,6 +52,9 @@ public:
     srsran_assert(not empty(), "pop() called on empty list");
     node* last_head = head;
     head            = head->next;
+    if (head == nullptr) {
+      tail = nullptr;
+    }
     last_head->~node();
     count--;
     return static_cast<void*>(last_head);
@@ -61,60 +68,51 @@ public:
     srsran_assert(not other.empty(), "Trying to steal from empty memory_block list");
     node* other_head = other.head;
     other.head       = other.head->next;
+    if (other.head == nullptr) {
+      other.tail = nullptr;
+    }
     other_head->next = head;
     head             = other_head;
+    if (tail == nullptr) {
+      head = tail;
+    }
     other.count--;
     count++;
   }
 
-  intrusive_memory_block_list try_pop_list(unsigned n)
+  intrusive_memory_block_list try_pop_batch(unsigned n)
   {
     intrusive_memory_block_list new_list{};
     if (n >= size()) {
-      new_list.head  = head;
-      new_list.count = count;
-      head           = nullptr;
-      count          = 0;
+      new_list.head  = std::exchange(head, nullptr);
+      new_list.tail  = std::exchange(tail, nullptr);
+      new_list.count = std::exchange(count, 0);
     } else if (n > 0) {
       node* prev = head;
       for (unsigned i = 0; i != n - 1; ++i) {
         prev = prev->next;
       }
       new_list.head  = head;
+      new_list.tail  = prev;
       new_list.count = n;
-      head           = prev->next;
+      head           = std::exchange(prev->next, nullptr);
       count -= n;
-      prev->next = nullptr;
     }
     return new_list;
   }
 
   void steal_blocks(intrusive_memory_block_list& list)
   {
-    if (list.size() == 0) {
+    if (list.empty()) {
       return;
     }
-    if (size() == 0) {
-      std::swap(list, *this);
-      return;
-    }
-    if (list.size() > size()) {
-      node* prev = head;
-      while (prev->next != nullptr) {
-        prev = prev->next;
-      }
-      prev->next = list.head;
+    if (empty()) {
+      head = std::exchange(list.head, nullptr);
     } else {
-      node* prev = list.head;
-      while (prev->next != nullptr) {
-        prev = prev->next;
-      }
-      prev->next = head;
-      head       = list.head;
+      tail->next = std::exchange(list.head, nullptr);
     }
-    count += list.count;
-    list.head  = nullptr;
-    list.count = 0;
+    tail = std::exchange(list.tail, nullptr);
+    count += std::exchange(list.count, 0);
   }
 
   bool empty() const noexcept { return head == nullptr; }
@@ -124,6 +122,7 @@ public:
   void clear() noexcept
   {
     head  = nullptr;
+    tail  = nullptr;
     count = 0;
   }
 };
@@ -191,7 +190,7 @@ public:
   free_memory_block_list try_pop_list(unsigned n) noexcept
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return stack.try_pop_list(n);
+    return stack.try_pop_batch(n);
   }
 
   template <size_t N>
