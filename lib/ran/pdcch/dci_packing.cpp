@@ -83,6 +83,7 @@ static unsigned bwp_indicator_size(unsigned nof_bwp_rrc)
   return bwp_ind_size;
 }
 
+// Determines the size of the frequency domain resource assignment field for DCI formats 0_1 and 1_1.
 static unsigned freq_resource_assignment_size(resource_allocation res_allocation_type,
                                               optional<unsigned>  nof_rb_groups,
                                               unsigned            nof_prb_bwp)
@@ -92,7 +93,8 @@ static unsigned freq_resource_assignment_size(resource_allocation res_allocation
     case resource_allocation::resource_allocation_type_0:
       srsran_assert(nof_rb_groups.has_value(), "The number of RBGs is required for resource allocation type 0");
 
-      // For resource allocation type 0, the field size is the number of UL RBG, as per TS38.214 Section 6.1.2.2.1.
+      // For resource allocation type 0, the field size is the number of UL/DL RBG, as per TS38.214 Section 6.1.2.2.1 /
+      // 5.1.2.2.1.
       freq_resource_size = nof_rb_groups.value();
       break;
     case resource_allocation::resource_allocation_type_1:
@@ -115,35 +117,35 @@ static unsigned freq_resource_assignment_size(resource_allocation res_allocation
 static unsigned ul_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len, bool transform_precoding)
 {
   // 2 bits as defined by Tables 7.3.1.1.2-6, if transform precoder is enabled, dmrs-Type=1, and maxLength=1.
-  if (transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len1) {
+  if (transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len1)) {
     return 2;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-7, if transform precoder is enabled, dmrs-Type=1, and maxLength=2.
-  if (transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len2) {
+  if (transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
     return 4;
   }
 
   // 3 bits as defined by Tables 7.3.1.1.2-8/9/10/11, if transform precoder is disabled, dmrs-Type=1, and maxLength=1.
-  if (!transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len1) {
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len1)) {
     return 3;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-12/13/14/15, if transform precoder is disabled, dmrs-Type=1, and
   // maxLength=2.
-  if (!transform_precoding && dmrs_type == dmrs_config_type::type1 && dmrs_len == dmrs_max_length::len2) {
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
     return 4;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-16/17/18/19, if transform precoder is disabled, dmrs-Type=2, and
   // maxLength=1.
-  if (!transform_precoding && dmrs_type == dmrs_config_type::type2 && dmrs_len == dmrs_max_length::len1) {
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len1)) {
     return 4;
   }
 
   // 5 bits as defined by Tables 7.3.1.1.2-20/21/22/23, if transform precoder is disabled, dmrs-Type=2, and
   // maxLength=2.
-  if (!transform_precoding && dmrs_type == dmrs_config_type::type2 && dmrs_len == dmrs_max_length::len2) {
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len2)) {
     return 5;
   }
 
@@ -214,6 +216,7 @@ static units::bits dl_ports_size(optional<dmrs_config_type> dmrs_A_type,
   return std::max(pdsch_dmrs_A_ports_size, pdsch_dmrs_B_ports_size);
 }
 
+// Computes the SRS resource indicator field size for DCI format 0_1.
 static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
 {
   unsigned srs_res_size;
@@ -303,7 +306,7 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
 
   // Second downlink assignment index - 0 or 2 bits.
   sizes.second_dl_assignment_idx =
-      (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) && dci_config.dynamic_dual_harq_ack_cb
+      (dci_config.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) && dci_config.dynamic_dual_harq_ack_cb.value()
           ? units::bits(2)
           : units::bits(0);
   sizes.total += sizes.second_dl_assignment_idx;
@@ -348,7 +351,8 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   }
 
   // PT-RS/DM-RS association - 0 or 2 bits.
-  if (dci_config.ptrs_uplink_configured && !dci_config.transform_precoding_enabled && (dci_config.max_rank > 1)) {
+  if (dci_config.ptrs_uplink_configured && !dci_config.transform_precoding_enabled &&
+      (dci_config.max_rank.value() > 1)) {
     srsran_assertion_failure("PT-RS/DM-RS association not currently supported");
   }
 
@@ -385,6 +389,7 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   // Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.2.2.
   sizes.frequency_resource = units::bits(freq_resource_assignment_size(
       dci_config.pdsch_res_allocation_type, dci_config.nof_dl_rb_groups, dci_config.dl_bwp_active_bw));
+  sizes.total += sizes.frequency_resource;
 
   // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
   srsran_assert(dci_config.nof_dl_time_domain_res <= 16,
@@ -415,6 +420,7 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
                 "Number of aperiodic ZP CSI-RS resource sets, i.e., {}, cannot be larger than 3",
                 dci_config.nof_aperiodic_zp_csi);
   sizes.zp_csi_rs_trigger = units::bits(log2_ceil(dci_config.nof_aperiodic_zp_csi + 1));
+  sizes.total += sizes.zp_csi_rs_trigger;
 
   // Modulation and coding scheme for TB 1 - 5 bits.
   sizes.total += units::bits(5);
@@ -501,7 +507,7 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
 {
   dci_sizes final_sizes = {};
 
-  // Step 0
+  // Step 0.
   // - Determine DCI format 0_0 monitored in a common search space according to TS38.212 Section 7.3.1.1.1 where
   // N_UL_BWP_RB is given by the size of the initial UL bandwidth part.
   const dci_0_0_size format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.ul_bwp_initial_bw);
@@ -546,7 +552,7 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
   srsran_assert(final_sizes.format1_0_common_size.total == final_sizes.format0_0_common_size.total,
                 "DCI format 0_0 and 1_0 payload sizes must match");
 
-  // Step 1
+  // Step 1.
   if (config.dci_0_0_and_1_0_ue_ss) {
     // - Determine DCI format 0_0 monitored in a UE-specific search space according to TS38.212 Section 7.3.1.1.1 where
     // N_UL_BWP_RB is the size of the active UL bandwidth part.
@@ -625,38 +631,37 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
   }
 
   // Step 3.
-
   // If both of the following conditions are fulfilled the size alignment procedure is complete.
   // - The total number of different DCI sizes configured to monitor is no more than 4 for the cell.
   // - The total number of different DCI sizes with C-RNTI configured to monitor is no more than 3 for the cell.
 
   // Maximum number of DCI payload sizes given the current implementation.
-  constexpr unsigned max_nof_c_rnti_sizes = 4;
-
-  std::unordered_set<unsigned> unique_dci_sizes(max_nof_c_rnti_sizes);
+  constexpr unsigned           max_nof_dci_sizes = 4;
+  std::unordered_set<unsigned> unique_dci_sizes(max_nof_dci_sizes);
 
   // Fallback DCI formats monitored in Common Search Space are always included.
   unique_dci_sizes.insert(final_sizes.format0_0_common_size.total.value());
 
-  // Fallback DCI formats monitored in UE-specific Search Space. Count if they are included in the DCI size alignment
-  // procedure and the resulting payload size is different from the fallback DCI formats monitored in a CSS.
+  // Fallback DCI formats monitored in UE-specific Search Space. Count them if they are included in the DCI size
+  // alignment procedure and the resulting payload size is different from the fallback DCI formats monitored in a CSS.
   if (config.dci_0_0_and_1_0_ue_ss) {
     unique_dci_sizes.insert(final_sizes.format0_0_ue_size.value().total.value());
   }
 
-  // Non-fallback DCI formats monitored in UE-specific Search Space.
+  // Non-fallback DCI formats monitored in UE-specific Search Space. Count them if they are included in the DCI size
+  // alignment procedure and the resulting payload size is different from other DCI formats.
   if (config.dci_0_1_and_1_1_ue_ss) {
     unique_dci_sizes.insert(final_sizes.format0_1_ue_size.value().total.value());
     unique_dci_sizes.insert(final_sizes.format1_1_ue_size.value().total.value());
   }
 
   // Get the actual number of distinct DCI payload sizes. No special DCI formats are implemented, so the most
-  // restrictive condition is no more than 3 DCI sizes scrambled by C-RNTI.
+  // restrictive condition imposed by the size alignment procedure is no more than 3 DCI sizes scrambled by C-RNTI.
   unsigned nof_c_rnti_dci_sizes = unique_dci_sizes.size();
 
   // Step 4.
-  // If the above conditions are not met, set the size of the fallback DCI formats in USS to the size of the fallback
-  // DCI formats monitored in a CSS.
+  // If the above conditions are not met, set the size of the fallback DCI formats in a UE-specific Search Space to the
+  // size of the fallback DCI formats monitored in a Common Search Space.
   if (nof_c_rnti_dci_sizes > 3) {
     final_sizes.format0_0_ue_size = final_sizes.format0_0_common_size;
     final_sizes.format1_0_ue_size = final_sizes.format1_0_common_size;
@@ -738,9 +743,9 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   }
 
   // Assert total payload size.
-  srsran_assert(payload.size() == config.payload_size.total.value(),
+  srsran_assert(units::bits(payload.size()) == config.payload_size.total,
                 "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
-                payload.size(),
+                units::bits(payload.size()),
                 config.payload_size.total);
 
   return payload;
@@ -814,11 +819,11 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
     payload.push_back(0x00U, config.payload_size.padding_incl_ul_sul.value());
   }
 
-  // Assert total payload size.
-  srsran_assert(payload.size() == config.payload_size.total.value(),
+  // Assert total payload size.`
+  srsran_assert(units::bits(payload.size()) == config.payload_size.total,
                 "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
-                payload.size(),
-                config.payload_size.total.value());
+                units::bits(payload.size()),
+                config.payload_size.total);
 
   return payload;
 }
@@ -869,9 +874,9 @@ dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   payload.push_back(0x00U, config.payload_size.padding.value());
 
   // Assert total payload size.
-  srsran_assert(payload.size() == config.payload_size.total.value(),
+  srsran_assert(units::bits(payload.size()) == config.payload_size.total,
                 "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
-                payload.size(),
+                units::bits(payload.size()),
                 config.payload_size.total);
 
   return payload;
@@ -1024,6 +1029,308 @@ dci_payload srsran::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
 
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   payload.push_back(config.pdsch_harq_fb_timing_indicator, 3);
+
+  return payload;
+}
+
+dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
+{
+  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
+  dci_payload payload;
+
+  // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
+  payload.push_back(0x00U, 1);
+
+  // Carrier indicator - 0 or 3 bits.
+  if (config.carrier_indicator.has_value()) {
+    payload.push_back(config.carrier_indicator.value(), config.payload_size.carrier_indicator.value());
+  }
+
+  // UL/SUL indicator - 0 or 1 bit.
+  if (config.ul_sul_indicator.has_value()) {
+    payload.push_back(config.ul_sul_indicator.value(), config.payload_size.ul_sul_indicator.value());
+  }
+
+  // Bandwidth part indicator - 0, 1 or 2 bits.
+  if (config.bwp_indicator.has_value()) {
+    payload.push_back(config.bwp_indicator.value(), config.payload_size.bwp_indicator.value());
+  }
+
+  units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
+
+  if (config.dynamic_pusch_res_allocation_type.has_value()) {
+    // Indicates the DCI resource allocation type if both resource allocation type 0 and type 1 are configured.
+    unsigned dynamic_alloc_type_indicator =
+        config.dynamic_pusch_res_allocation_type == dynamic_resource_allocation::type_0 ? 0 : 1;
+
+    // The MSB bit of the frequency domain allocation field is used to indicate the resource allocation type, as per
+    // TS38.212 Section 7.3.1.1.2.
+    payload.push_back(dynamic_alloc_type_indicator, 1);
+
+    // The rest of the LSB bits are used to pack the frequency domain resource allocation.
+    frequency_resource_nof_bits -= units::bits(1);
+  }
+
+  if (config.frequency_hopping_flag.has_value() && (config.frequency_hopping_flag.value() == 1)) {
+    // Assert that the number of bits used to pack the frequency hopping offset is valid.
+    srsran_assert((config.N_ul_hop.value() == 1) || (config.N_ul_hop.value() == 2),
+                  "DCI frequency offset number of bits must be either 1 or 2");
+
+    // Assert that the frequency resource field has enough bits to include the frequency hopping offset.
+    srsran_assert(config.N_ul_hop.value() < frequency_resource_nof_bits.value(),
+                  "The frequency resource field must have enough bits to hold the frequency hopping offset");
+
+    // Assert that the frequency hopping offset can be packed with the allocated bits.
+    srsran_assert(config.hopping_offset.value() < (1U << config.N_ul_hop.value()),
+                  "DCI frequency offset value, i.e., {} cannot be packed with the allocated number of bits, i.e., {}",
+                  config.hopping_offset,
+                  config.N_ul_hop);
+
+    // Truncate the frequency resource allocation field.
+    frequency_resource_nof_bits -= units::bits(config.N_ul_hop.value());
+
+    // Frequency hopping offset - 1 or 2 bits.
+    payload.push_back(config.hopping_offset.value(), config.N_ul_hop.value());
+  }
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  payload.push_back(config.frequency_resource, frequency_resource_nof_bits.value());
+
+  // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
+  if (config.time_resource.has_value()) {
+    payload.push_back(config.time_resource.value(), config.payload_size.time_resource.value());
+  }
+
+  // Frequency hopping flag - 0 or 1 bit.
+  if (config.frequency_hopping_flag.has_value()) {
+    payload.push_back(config.frequency_hopping_flag.value(), config.payload_size.freq_hopping_flag.value());
+  }
+
+  // Modulation coding scheme - 5 bits.
+  payload.push_back(config.modulation_coding_scheme, 5);
+
+  // New data indicator - 1 bit.
+  payload.push_back(config.new_data_indicator, 1);
+
+  // Redundancy version - 2 bits.
+  payload.push_back(config.redundancy_version, 2);
+
+  // HARQ process number - 4 bits.
+  payload.push_back(config.harq_process_number, 4);
+
+  // 1st downlink assignment index - 1 or 2 bits.
+  payload.push_back(config.first_dl_assignment_index, config.payload_size.first_dl_assignment_idx.value());
+
+  // 2nd downlink assignment index - 0 or 2 bits.
+  if (config.second_dl_assignment_index.has_value()) {
+    payload.push_back(config.second_dl_assignment_index.value(), config.payload_size.second_dl_assignment_idx.value());
+  }
+
+  // TPC command for scheduled PUSCH - 2 bits.
+  payload.push_back(config.tpc_command, 2);
+
+  // SRS resource indicator (SRI).
+  payload.push_back(config.srs_resource_indicator, config.payload_size.srs_resource_indicator.value());
+
+  // Precoding information and number of layers - 0 to 6 bits.
+  if (config.precoding_info_nof_layers.has_value()) {
+    payload.push_back(config.precoding_info_nof_layers.value(), config.payload_size.precoding_info_nof_layers.value());
+  }
+
+  // Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.
+  payload.push_back(config.antenna_ports, config.payload_size.antenna_ports.value());
+
+  // SRS request - 2 or 3 bits.
+  payload.push_back(config.srs_request, config.payload_size.srs_request.value());
+
+  // CSI request - 0 to 6 bits.
+  if (config.csi_request.has_value()) {
+    payload.push_back(config.csi_request.value(), config.payload_size.csi_request.value());
+  }
+
+  // CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
+  if (config.cbg_transmission_info.has_value()) {
+    payload.push_back(config.cbg_transmission_info.value(), config.payload_size.cbg_transmission_info.value());
+  }
+
+  // PT-RS/DM-RS association - 0 or 2 bits.
+  if (config.ptrs_dmrs_association.has_value()) {
+    payload.push_back(config.ptrs_dmrs_association.value(), config.payload_size.ptrs_dmrs_association.value());
+  }
+
+  // Beta offset indicator - 0 or 2 bits.
+  if (config.beta_offset_indicator.has_value()) {
+    payload.push_back(config.beta_offset_indicator.value(), config.payload_size.beta_offset_indicator.value());
+  }
+
+  // DM-RS sequence initialization - 0 or 1 bit.
+  if (config.dmrs_seq_initialization.has_value()) {
+    payload.push_back(config.dmrs_seq_initialization.value(), config.payload_size.dmrs_seq_initialization.value());
+  }
+
+  // UL-SCH indicator - 1 bit.
+  payload.push_back(config.ul_sch_indicator, 1);
+
+  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+  if (config.payload_size.padding.value() > 0) {
+    payload.push_back(0x00U, config.payload_size.padding.value());
+  }
+
+  // Assert total payload size.
+  srsran_assert(units::bits(payload.size()) == config.payload_size.total,
+                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                units::bits(payload.size()),
+                config.payload_size.total);
+
+  return payload;
+}
+
+dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
+{
+  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
+  dci_payload payload;
+
+  // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
+  payload.push_back(0x01U, 1);
+
+  // Carrier indicator - 0 or 3 bits.
+  if (config.carrier_indicator.has_value()) {
+    payload.push_back(config.carrier_indicator.value(), config.payload_size.carrier_indicator.value());
+  }
+
+  // Bandwidth part indicator - 0, 1 or 2 bits.
+  if (config.bwp_indicator.has_value()) {
+    payload.push_back(config.bwp_indicator.value(), config.payload_size.bwp_indicator.value());
+  }
+
+  units::bits frequency_resource_nof_bits = config.payload_size.frequency_resource;
+
+  if (config.dynamic_pdsch_res_allocation_type.has_value()) {
+    // Indicates the DCI resource allocation type if both resource allocation type 0 and type 1 are configured.
+    unsigned dynamic_alloc_type_indicator =
+        config.dynamic_pdsch_res_allocation_type == dynamic_resource_allocation::type_0 ? 0 : 1;
+
+    // The MSB bit of the frequency domain allocation field is used to indicate the resource allocation type, as per
+    // TS38.212 Section 7.3.1.2.2.
+    payload.push_back(dynamic_alloc_type_indicator, 1);
+
+    // The rest of the LSB bits are used to pack the frequency domain resource allocation.
+    frequency_resource_nof_bits -= units::bits(1);
+  }
+
+  // Frequency domain resource assignment - frequency_resource_nof_bits bits.
+  payload.push_back(config.frequency_resource, config.payload_size.frequency_resource.value());
+
+  // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
+  if (config.time_resource.has_value()) {
+    payload.push_back(config.time_resource.value(), config.payload_size.time_resource.value());
+  }
+
+  // VRB-to-PRB mapping - 0 or 1 bit.
+  if (config.vrb_prb_mapping.has_value()) {
+    payload.push_back(config.vrb_prb_mapping.value(), config.payload_size.vrb_prb_mapping.value());
+  }
+
+  // PRB bundling size indicator - 0 or 1 bit.
+  if (config.prb_bundling_size_indicator.has_value()) {
+    payload.push_back(config.prb_bundling_size_indicator.value(),
+                      config.payload_size.prb_bundling_size_indicator.value());
+  }
+
+  // Rate matching indicator - 0, 1 or 2 bits.
+  if (config.rate_matching_indicator.has_value()) {
+    payload.push_back(config.rate_matching_indicator.value(), config.payload_size.rate_matching_indicator.value());
+  }
+
+  // ZP CSI-RS trigger - 0, 1 or 2 bits.
+  if (config.zp_csi_rs_trigger.has_value()) {
+    payload.push_back(config.zp_csi_rs_trigger.value(), config.payload_size.zp_csi_rs_trigger.value());
+  }
+
+  // Modulation coding scheme for TB 1 - 5 bits.
+  payload.push_back(config.tb1_modulation_coding_scheme, 5);
+
+  // New data indicator for TB 1 - 1 bit.
+  payload.push_back(config.tb1_new_data_indicator, 1);
+
+  // Redundancy version for TB 1 - 2 bits.
+  payload.push_back(config.tb1_redundancy_version, 2);
+
+  // Modulation coding scheme for TB 2 - 0 or 5 bits.
+  if (config.tb2_modulation_coding_scheme.has_value()) {
+    payload.push_back(config.tb2_modulation_coding_scheme.value(),
+                      config.payload_size.tb2_modulation_coding_scheme.value());
+  }
+
+  // New data indicator for TB 2 - 0 or 1 bit.
+  if (config.tb2_new_data_indicator.has_value()) {
+    payload.push_back(config.tb2_new_data_indicator.value(), config.payload_size.tb2_new_data_indicator.value());
+  }
+
+  // Redundancy version for TB 2 - 0 or 2 bits.
+  if (config.tb2_redundancy_version.has_value()) {
+    payload.push_back(config.tb2_redundancy_version.value(), config.payload_size.tb2_redundancy_version.value());
+  }
+
+  // HARQ process number - 4 bits.
+  payload.push_back(config.harq_process_number, 4);
+
+  // Downlink Assignment Index (DAI) - 0, 2 or 4 bits.
+  if (config.downlink_assignment_index.has_value()) {
+    payload.push_back(config.downlink_assignment_index.value(), config.payload_size.downlink_assignment_index.value());
+  }
+
+  // TPC command for scheduled PUSCH - 2 bits.
+  payload.push_back(config.tpc_command, 2);
+
+  // PUCCH resource indicator - 3 bits.
+  payload.push_back(config.pucch_resource_indicator, 3);
+
+  // PDSCH to HARQ feedback timing indicator - 0, 1, 2 or 3 bits.
+  if (config.pdsch_harq_fb_timing_indicator.has_value()) {
+    payload.push_back(config.pdsch_harq_fb_timing_indicator.value(),
+                      config.payload_size.pdsch_harq_fb_timing_indicator.value());
+  }
+
+  // Antenna ports for PDSCH transmission - 4, 5 or 6 bits.
+  payload.push_back(config.antenna_ports, config.payload_size.antenna_ports.value());
+
+  // SRS request - 2 or 3 bits.
+  payload.push_back(config.srs_request, config.payload_size.srs_request.value());
+
+  // Transmission configuration indication - 0 or 3 bits.
+  if (config.tx_config_indication.has_value()) {
+    payload.push_back(config.tx_config_indication.value(), config.payload_size.tx_config_indication.value());
+  }
+
+  // SRS request - 2 or 3 bits.
+  payload.push_back(config.srs_request, config.payload_size.srs_request.value());
+
+  // CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
+  if (config.cbg_transmission_info.has_value()) {
+    payload.push_back(config.cbg_transmission_info.value(), config.payload_size.cbg_transmission_info.value());
+  }
+
+  // CBG Flushing Information (CBGFI) - 0 or 1 bit.
+  if (config.cbg_flushing_info.has_value()) {
+    payload.push_back(config.cbg_flushing_info.value(), config.payload_size.cbg_flushing_info.value());
+  }
+
+  // DM-RS sequence initialization - 1 bit.
+  payload.push_back(config.dmrs_seq_initialization, 1);
+
+  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+  if (config.payload_size.padding.value() > 0) {
+    payload.push_back(0x00U, config.payload_size.padding.value());
+  }
+
+  // Assert total payload size.
+  srsran_assert(units::bits(payload.size()) == config.payload_size.total,
+                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                units::bits(payload.size()),
+                config.payload_size.total);
 
   return payload;
 }
