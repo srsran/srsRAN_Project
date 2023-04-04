@@ -188,5 +188,36 @@ cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_l
   return asn1_user_location_info;
 }
 
+/// \brief Convert ASN.1 cause to a human-readable string.
+/// \param cause The ASN.1 cause.
+/// \return The humand-readable string.
+inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
+{
+  std::string cause_str = "";
+
+  switch (cause.type()) {
+    case asn1::ngap::cause_c::types_opts::radio_network:
+      cause_str = cause.radio_network().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::transport:
+      cause_str = cause.transport().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::protocol:
+      cause_str = cause.protocol().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::nas:
+      cause_str = cause.nas().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::misc:
+      cause_str = cause.misc().to_string();
+      break;
+    default:
+      cause_str = "unknown";
+      break;
+  }
+
+  return cause_str;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran
