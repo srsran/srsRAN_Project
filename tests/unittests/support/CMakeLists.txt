@@ -59,6 +59,10 @@ add_executable(async_event_observer_test async_event_observer_test.cpp protocol_
 target_link_libraries(async_event_observer_test srslog srsran_support gtest gtest_main)
 gtest_discover_tests(async_event_observer_test)
 
+add_executable(memory_block_list_test memory_block_list_test.cpp)
+target_link_libraries(memory_block_list_test srsran_support gtest gtest_main)
+add_test(memory_block_list_test memory_block_list_test)
+
 add_executable(ring_buffer_pool_test ring_buffer_pool_test.cpp)
 target_link_libraries(ring_buffer_pool_test srsran_support gtest gtest_main)
 add_test(ring_buffer_pool_test ring_buffer_pool_test)

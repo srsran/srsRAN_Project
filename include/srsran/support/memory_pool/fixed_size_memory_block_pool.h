@@ -76,8 +76,7 @@ class fixed_size_memory_block_pool
       central_mem_cache.push(static_cast<void*>(allocated_memory.data() + (mblock_size * i)));
     }
 
-    local_growth_thres = nof_blocks / 16;
-    local_growth_thres = std::max((size_t)local_growth_thres, (size_t)batch_steal_size);
+    local_growth_thres = std::max((size_t)(nof_blocks / 32U), (size_t)batch_steal_size);
   }
 
 public:
@@ -112,15 +111,17 @@ public:
     srsran_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
     worker_ctxt* w_ctx = get_worker_cache();
 
-    void* node = w_ctx->local_cache.try_pop();
+    // Attempt memory block pop from cache 1.
+    void* node = w_ctx->local_cache1.try_pop();
     if (node == nullptr) {
-      // fill the thread local cache enough for this and next allocations
-      std::array<void*, batch_steal_size> popped_blocks;
-      size_t                              n = central_mem_cache.try_pop(popped_blocks);
-      for (size_t i = 0; i < n; ++i) {
-        w_ctx->local_cache.push(static_cast<void*>(popped_blocks[i]));
-      }
-      node = w_ctx->local_cache.try_pop();
+      // Cache 1 is empty. Attempt memory block pop from cache 2.
+      node = w_ctx->local_cache2.try_pop();
+    }
+    if (node == nullptr) {
+      // Local caches are depleted. Pop a batch of memory blocks from central cache.
+      free_memory_block_list popped_block_list = central_mem_cache.try_pop_list(batch_steal_size);
+      node                                     = popped_block_list.try_pop();
+      w_ctx->local_cache1.push_list(popped_block_list);
     }
 
     return node;
@@ -148,11 +149,15 @@ public:
     }
 
     // push to local memory block cache.
-    w_ctx->local_cache.push(p);
+    if (w_ctx->local_cache1.size() < batch_steal_size) {
+      w_ctx->local_cache1.push(p);
+    } else {
+      w_ctx->local_cache2.push(p);
 
-    if (w_ctx->local_cache.size() >= local_growth_thres) {
-      // if local cache reached max capacity, send half of the blocks to central cache
-      central_mem_cache.steal_blocks(w_ctx->local_cache, w_ctx->local_cache.size() / 2);
+      if (w_ctx->local_cache2.size() >= local_growth_thres) {
+        // if local cache 2 reached max capacity, send all its blocks back to central cache
+        central_mem_cache.steal_blocks(w_ctx->local_cache2);
+      }
     }
   }
 
@@ -162,19 +167,21 @@ public:
     fmt::print("There are {}/{} buffers in central memory block cache. This thread contains {} in its local cache.\n",
                central_mem_cache.size(),
                nof_memory_blocks(),
-               worker->local_cache.size());
+               worker->local_cache1.size() + worker->local_cache2.size());
   }
 
 private:
   struct worker_ctxt {
     std::thread::id        id;
-    free_memory_block_list local_cache;
+    free_memory_block_list local_cache1;
+    free_memory_block_list local_cache2;
 
     worker_ctxt() : id(std::this_thread::get_id()) {}
     ~worker_ctxt()
     {
       concurrent_free_memory_block_list& central_cache = pool_type::get_instance().central_mem_cache;
-      central_cache.steal_blocks(local_cache, local_cache.size());
+      central_cache.steal_blocks(local_cache1);
+      central_cache.steal_blocks(local_cache2);
     }
   };
 
