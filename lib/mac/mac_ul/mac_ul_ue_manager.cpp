@@ -36,24 +36,6 @@ bool mac_ul_ue_manager::add_ue(const mac_ue_create_request_message& request)
   return true;
 }
 
-bool mac_ul_ue_manager::reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
-{
-  // 1. Remove UE bearers
-  if (not remove_bearers(request.ue_index, request.bearers_to_rem)) {
-    log_proc_failure(
-        logger, request.ue_index, request.crnti, "UE Reconfiguration Request", "Failed to update UL bearers in DEMUX");
-    return false;
-  }
-
-  // 2. Add/Mod UE Bearers
-  if (not addmod_bearers(request.ue_index, request.bearers_to_addmod)) {
-    log_proc_failure(
-        logger, request.ue_index, request.crnti, "UE Reconfiguration Request", "Failed to update UL bearers in DEMUX");
-    return false;
-  }
-  return true;
-}
-
 void mac_ul_ue_manager::remove_ue(du_ue_index_t ue_index)
 {
   if (not ue_db.contains(ue_index)) {
@@ -67,6 +49,7 @@ bool mac_ul_ue_manager::addmod_bearers(du_ue_index_t                            
                                        const std::vector<mac_logical_channel_config>& ul_logical_channels)
 {
   if (not ue_db.contains(ue_index)) {
+    logger.error("ue={} Interrupting DEMUX update. Cause: The provided index does not exist", ue_index);
     return false;
   }
   mac_ul_ue_context& u = ue_db[ue_index];
@@ -81,6 +64,7 @@ bool mac_ul_ue_manager::addmod_bearers(du_ue_index_t                            
 bool mac_ul_ue_manager::remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
 {
   if (not ue_db.contains(ue_index)) {
+    logger.error("ue={} Interrupting DEMUX update. Cause: The provided index does not exist", ue_index);
     return false;
   }
   mac_ul_ue_context& u = ue_db[ue_index];

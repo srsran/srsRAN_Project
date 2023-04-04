@@ -34,11 +34,13 @@ public:
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
-    // > Reconfigure UE UL context and channels.
-    // Note: We may need to delete bearers first from DL to avoid concurrent scheduling in erased bearers.
-    CORO_AWAIT_VALUE(add_ue_result, ul_unit.reconfigure_ue(req));
-    if (not add_ue_result) {
-      CORO_EARLY_RETURN(handle_result(false));
+    // If there are bearers to add or modify.
+    if (not req.bearers_to_addmod.empty()) {
+      // > Add/Mod logical channels in the UL direction.
+      CORO_AWAIT_VALUE(add_ue_result, ul_unit.addmod_bearers(req.ue_index, req.bearers_to_addmod));
+      if (not add_ue_result) {
+        CORO_EARLY_RETURN(handle_result(false));
+      }
     }
 
     // > Reconfigure UE DL context and channels.
@@ -48,6 +50,15 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
     CORO_AWAIT(sched_cfg.handle_ue_reconfiguration_request(req));
     log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
+
+    // If there are bearers to remove.
+    if (not req.bearers_to_rem.empty()) {
+      // > Remove logical channels in the UL direction.
+      CORO_AWAIT_VALUE(add_ue_result, ul_unit.remove_bearers(req.ue_index, req.bearers_to_rem));
+      if (not add_ue_result) {
+        CORO_EARLY_RETURN(handle_result(false));
+      }
+    }
 
     // > After UE insertion, send response to DU manager.
     CORO_RETURN(handle_result(add_ue_result));

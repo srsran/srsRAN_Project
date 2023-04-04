@@ -48,7 +48,11 @@ public:
   /// Adds UE in MAC UL UE repository
   bool add_ue(const mac_ue_create_request_message& request);
 
-  bool reconfigure_ue(const mac_ue_reconfiguration_request_message& request);
+  /// Add bearers to existing UE.
+  bool addmod_bearers(du_ue_index_t ue_index, const std::vector<mac_logical_channel_config>& ul_logical_channels);
+
+  /// Remove bearers based on LCID.
+  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
 
   void remove_ue(du_ue_index_t ue_index);
 
@@ -61,10 +65,6 @@ public:
   }
 
 private:
-  bool addmod_bearers(du_ue_index_t ue_index, const std::vector<mac_logical_channel_config>& ul_logical_channels);
-
-  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
-
   /// Arguments of UE manager.
   srslog::basic_logger& logger;
   du_rnti_table&        rnti_table;

@@ -33,12 +33,13 @@ public:
 class mac_ul_dummy_configurer final : public mac_ul_configurator
 {
 public:
-  bool                                             expected_result   = true;
-  bool                                             ul_ccch_forwarded = false;
-  manual_event_flag                                ue_created_ev;
-  optional<mac_ue_create_request_message>          last_ue_create_request;
-  optional<mac_ue_delete_request_message>          last_ue_delete_request;
-  optional<mac_ue_reconfiguration_request_message> last_ue_reconfiguration_request;
+  bool                                                                        expected_result   = true;
+  bool                                                                        ul_ccch_forwarded = false;
+  manual_event_flag                                                           ue_created_ev;
+  optional<mac_ue_create_request_message>                                     last_ue_create_request;
+  optional<mac_ue_delete_request_message>                                     last_ue_delete_request;
+  optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
+  optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
 
   async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
@@ -50,21 +51,32 @@ public:
     });
   }
 
+  async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
+                                  const std::vector<mac_logical_channel_config>& ul_logical_channels) override
+  {
+    return launch_async([this, ue_index, ul_logical_channels](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      last_ue_bearers_added = std::make_pair(ue_index, ul_logical_channels);
+      CORO_RETURN(true);
+    });
+  }
+
+  async_task<bool> remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids_to_rem) override
+  {
+    std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
+    return launch_async([this, ue_index, lcids](coro_context<async_task<bool>>& ctx) {
+      CORO_BEGIN(ctx);
+      last_ue_bearers_rem = std::make_pair(ue_index, lcids);
+      CORO_RETURN(true);
+    });
+  }
+
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_delete_request = msg;
       CORO_RETURN();
-    });
-  }
-
-  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_reconfiguration_request = msg;
-      CORO_RETURN(true);
     });
   }
 
