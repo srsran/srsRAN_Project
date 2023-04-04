@@ -40,7 +40,7 @@ public:
     srsran_assert(value != SentinelValue, "Invalid rnti_value_table value={}", value);
     std::atomic<T>& ue_pos      = get(crnti);
     T               prev_ue_idx = ue_pos.exchange(value, std::memory_order_relaxed);
-    if (prev_ue_idx != SentinelValue) {
+    if (prev_ue_idx == SentinelValue) {
       nof_ues_.fetch_add(1, std::memory_order_relaxed);
     }
   }
@@ -52,6 +52,7 @@ public:
     T               prev_ue_idx = ue_pos.exchange(SentinelValue, std::memory_order_relaxed);
     if (prev_ue_idx != SentinelValue) {
       nof_ues_.fetch_sub(1, std::memory_order_relaxed);
+      srsran_assert(nof_ues_.load(std::memory_order_relaxed) <= RNTI_RANGE, "Invalid rnti_table state");
     }
   }
 
