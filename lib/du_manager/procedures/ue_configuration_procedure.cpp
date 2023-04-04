@@ -149,6 +149,11 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
+
+  for (const std::unique_ptr<du_ue_drb>& drb : drbs_to_rem) {
+    mac_ue_reconf_req.bearers_to_rem.push_back(drb->lcid);
+  }
+
   for (const auto& drb : request.drbs_to_setup) {
     if (ue->bearers.drbs().count(drb.drb_id) == 0) {
       // The DRB failed to be setup. Carry on with other DRBs.
