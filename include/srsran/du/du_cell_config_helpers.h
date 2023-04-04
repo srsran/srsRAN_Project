@@ -99,7 +99,7 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.mode                  = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.t_reassembly    = 50;
+    cfg.rlc.um.rx.t_reassembly    = 45;
     qos_list[7]                   = cfg;
   }
   {
@@ -112,7 +112,7 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.am.tx.poll_byte         = 6500;
     cfg.rlc.am.tx.max_retx_thresh   = 8;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.rlc.am.rx.t_reassembly      = 50;
+    cfg.rlc.am.rx.t_reassembly      = 45;
     cfg.rlc.am.rx.t_status_prohibit = 45;
     qos_list[9]                     = cfg;
   }
