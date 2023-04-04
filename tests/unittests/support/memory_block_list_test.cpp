@@ -94,7 +94,7 @@ TEST_F(memory_block_list_tester, try_pop_list)
   ASSERT_EQ(list.try_pop(), nullptr);
 }
 
-TEST_F(memory_block_list_tester, push_list)
+TEST_F(memory_block_list_tester, steal_blocks)
 {
   create_and_push_blocks(test_rgen::uniform_int<unsigned>(1, 10));
   std::vector<std::array<uint8_t, 128>> blocks2(test_rgen::uniform_int<unsigned>(0, blocks.size()));
@@ -103,7 +103,7 @@ TEST_F(memory_block_list_tester, push_list)
     list2.push(&blocks2[i]);
   }
 
-  list2.push_list(list);
+  list2.steal_blocks(list);
   ASSERT_EQ(list2.size(), blocks2.size() + blocks.size());
   ASSERT_EQ(list.size(), 0);
 

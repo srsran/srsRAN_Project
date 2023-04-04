@@ -89,7 +89,7 @@ public:
     return new_list;
   }
 
-  void push_list(intrusive_memory_block_list& list)
+  void steal_blocks(intrusive_memory_block_list& list)
   {
     if (list.size() == 0) {
       return;
@@ -104,7 +104,7 @@ public:
         prev = prev->next;
       }
       prev->next = list.head;
-    } else if (list.size() > 0) {
+    } else {
       node* prev = list.head;
       while (prev->next != nullptr) {
         prev = prev->next;
@@ -166,7 +166,7 @@ public:
   void steal_blocks(free_memory_block_list& other) noexcept
   {
     std::lock_guard<std::mutex> lock(mutex);
-    stack.push_list(other);
+    stack.steal_blocks(other);
   }
 
   void steal_blocks(free_memory_block_list& other, size_t max_n) noexcept
