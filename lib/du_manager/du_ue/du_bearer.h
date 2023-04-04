@@ -77,14 +77,14 @@ struct du_ue_srb {
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
 /// layers.
 struct du_ue_drb {
-  drb_id_t                             drb_id;
-  lcid_t                               lcid;
-  std::vector<up_transport_layer_info> uluptnl_info_list;
-  std::vector<up_transport_layer_info> dluptnl_info_list;
-  rlc_config                           rlc_cfg;
-  std::unique_ptr<rlc_entity>          rlc_bearer;
-  f1u_bearer*                          drb_f1u;
-  du_drb_connector                     connector;
+  drb_id_t                                                      drb_id;
+  lcid_t                                                        lcid;
+  std::vector<up_transport_layer_info>                          uluptnl_info_list;
+  std::vector<up_transport_layer_info>                          dluptnl_info_list;
+  rlc_config                                                    rlc_cfg;
+  std::unique_ptr<rlc_entity>                                   rlc_bearer;
+  std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
+  du_drb_connector                                              connector;
 };
 
 /// \brief Creates a DRB instance.
@@ -103,7 +103,7 @@ public:
   du_ue_srb& add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
   void       add_drb(std::unique_ptr<du_ue_drb> drb);
 
-  void remove_drb(drb_id_t drb_id);
+  std::unique_ptr<du_ue_drb> remove_drb(drb_id_t drb_id);
 
   const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>& srbs() const { return srbs_; }
   slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&       srbs() { return srbs_; }

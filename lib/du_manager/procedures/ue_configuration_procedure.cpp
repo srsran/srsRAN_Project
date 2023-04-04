@@ -40,26 +40,27 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   // > Update DU UE bearers.
-  add_srbs_to_du_ue_context();
-  add_drbs_to_du_ue_context();
-  remove_drbs_from_du_ue_context();
+  update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT(update_mac_lcid_mux());
+  CORO_AWAIT(update_mac_mux_and_demux());
+
+  // > Destroy old DU UE bearers that are now detached from remaining layers.
+  clear_old_ue_context();
 
   log_proc_completed(logger, request.ue_index, ue->rnti, "UE Configuration");
 
   CORO_RETURN(make_ue_config_response());
 }
 
-void ue_configuration_procedure::add_srbs_to_du_ue_context()
+void ue_configuration_procedure::update_ue_context()
 {
   // > Create DU UE SRB objects.
   for (srb_id_t srbid : request.srbs_to_setup) {
     lcid_t lcid = srb_id_to_lcid(srbid);
     auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
-                           [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
+                               ue->resources->rlc_bearers.end(),
+                               [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
@@ -85,14 +86,26 @@ void ue_configuration_procedure::add_srbs_to_du_ue_context()
     srb.connector.connect(
         req.ue_index, bearer_added.srb_id, *bearer_added.bearer, *srb.rlc_bearer, du_params.rlc.mac_ue_info_handler);
   }
-}
 
-void ue_configuration_procedure::add_drbs_to_du_ue_context()
-{
+  // > Move DU UE DRBs to be removed out of the UE bearer manager.
+  // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
+  for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
+    srsran_assert(std::any_of(ue->resources->rlc_bearers.begin(),
+                              ue->resources->rlc_bearers.end(),
+                              [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; }),
+                  "The bearer config should be created at this point");
+
+    drbs_to_rem.push_back(ue->bearers.remove_drb(drb_to_rem));
+  }
+
   // > Create DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
     if (drbtoadd.uluptnl_info_list.empty()) {
       logger.warning("Failed to create DRB-Id={}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
+      continue;
+    }
+    if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
+      logger.warning("Failed to Motify DRB-Id={}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
       continue;
     }
 
@@ -106,38 +119,19 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
     std::unique_ptr<du_ue_drb> drb = create_drb(
         ue->ue_index, ue->pcell_index, drbtoadd.drb_id, it->lcid, it->rlc_cfg, drbtoadd.uluptnl_info_list, du_params);
     if (drb == nullptr) {
-      logger.warning("Failed to create DRB-Id={}.");
+      logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
       continue;
     }
     ue->bearers.add_drb(std::move(drb));
   }
 }
 
-void ue_configuration_procedure::remove_drbs_from_du_ue_context()
+void ue_configuration_procedure::clear_old_ue_context()
 {
-  // > Remove DU UE DRB objects.
-  for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
-    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
-                           ue->resources->rlc_bearers.end(),
-                           [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; });
-    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
-
-    // >> Get the DRB that is to be removed
-    srsran_assert(ue->bearers.drbs().count(drb_to_rem) > 0, "DRB-Id={} does not exist", drb_to_rem);
-    du_ue_drb& ue_drb  = *ue->bearers.drbs().at(drb_to_rem);
-    uint32_t   dl_teid = ue_drb.dluptnl_info_list[0].gtp_teid.value();
-
-    // >> TODO: Disconnect the other Layers, e.g. MAC
-
-    // >> Disconnect F1-U bearer from F1-U gateway
-    du_params.f1u.f1u_gw.remove_du_bearer(dl_teid);
-
-    // >> Remove DRB.
-    ue->bearers.remove_drb(drb_to_rem);
-  }
+  drbs_to_rem.clear();
 }
 
-async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_lcid_mux()
+async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_mux_and_demux()
 {
   // Create Request to MAC to reconfigure existing UE.
   mac_ue_reconfiguration_request_message mac_ue_reconf_req;

@@ -80,7 +80,7 @@ public:
 
   bool remove_ue(du_ue_index_t ue_index);
 
-  bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_to_setup> dl_logical_channels);
+  bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
   bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
 
@@ -111,7 +111,7 @@ private:
                      const byte_buffer*                ul_ccch_msg,
                      std::vector<std::vector<uint8_t>> dl_harq_buffers);
 
-  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_to_setup> dl_logical_channels);
+  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
   du_rnti_table& rnti_table;
 

@@ -156,14 +156,14 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
-    mac_logical_channel_to_setup& lc = mac_ue_create_msg.bearers.back();
+    mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();
     lc.lcid                          = bearer.lcid();
     lc.ul_bearer                     = &bearer.connector.mac_rx_sdu_notifier;
     lc.dl_bearer                     = &bearer.connector.mac_tx_sdu_notifier;
   }
   for (auto& bearer : ue_ctx->bearers.drbs()) {
     mac_ue_create_msg.bearers.emplace_back();
-    mac_logical_channel_to_setup& lc = mac_ue_create_msg.bearers.back();
+    mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();
     lc.lcid                          = bearer.second->lcid;
     lc.ul_bearer                     = &bearer.second->connector.mac_rx_sdu_notifier;
     lc.dl_bearer                     = &bearer.second->connector.mac_tx_sdu_notifier;

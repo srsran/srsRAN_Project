@@ -95,14 +95,21 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
-  drb->drb_f1u = du_params.f1u.f1u_gw.create_du_bearer(ue_index,
-                                                       drb->dluptnl_info_list[0].gtp_teid.value(),
-                                                       drb->uluptnl_info_list[0].gtp_teid.value(),
-                                                       drb->connector.f1u_rx_sdu_notif);
-  if (drb->drb_f1u == nullptr) {
+  f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(ue_index,
+                                                              drb->dluptnl_info_list[0].gtp_teid.value(),
+                                                              drb->uluptnl_info_list[0].gtp_teid.value(),
+                                                              drb->connector.f1u_rx_sdu_notif);
+  if (f1u_drb == nullptr) {
     // Failed to connect F1-U bearer to CU-UP.
     return nullptr;
   }
+  auto f1u_bearer_deleter = [f1u_gw  = &du_params.f1u.f1u_gw,
+                             dl_teid = drb->dluptnl_info_list[0].gtp_teid.value()](f1u_bearer* p) {
+    if (p != nullptr) {
+      f1u_gw->remove_du_bearer(dl_teid);
+    }
+  };
+  drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
 
   // > Create RLC DRB entity.
   drb->rlc_bearer =
@@ -135,10 +142,12 @@ void du_ue_bearer_manager::add_drb(std::unique_ptr<du_ue_drb> drb)
   drbs_.emplace(drb->drb_id, std::move(drb));
 }
 
-void du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
+std::unique_ptr<du_ue_drb> du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
 {
   srsran_assert(drbs().count(drb_id) > 0, "DRB-Id={} does not exist", drb_id);
+  std::unique_ptr<du_ue_drb> drb = std::move(drbs_.at(drb_id));
   drbs_.erase(drb_id);
+  return drb;
 }
 
 optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const

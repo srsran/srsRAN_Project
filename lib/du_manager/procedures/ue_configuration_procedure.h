@@ -28,12 +28,11 @@ public:
 private:
   /// \brief Update DU UE bearers. This stage includes the creation/modification/removal of SRBs/DRBs, creation of RLC
   /// and F1-U bearers.
-  void add_srbs_to_du_ue_context();
-  void add_drbs_to_du_ue_context();
-  void remove_drbs_from_du_ue_context();
+  void update_ue_context();
+  void clear_old_ue_context();
 
   /// \brief Update MAC MUX and DEMUX tables of the respective UE, given the newly added/modified/removed bearers.
-  async_task<mac_ue_reconfiguration_response_message> update_mac_lcid_mux();
+  async_task<mac_ue_reconfiguration_response_message> update_mac_mux_and_demux();
 
   f1ap_ue_context_update_response make_ue_config_response();
   f1ap_ue_context_update_response make_ue_config_failure();
@@ -46,6 +45,8 @@ private:
   du_ue*                ue     = nullptr;
 
   cell_group_config prev_cell_group;
+
+  std::vector<std::unique_ptr<du_ue_drb>> drbs_to_rem;
 };
 
 } // namespace srs_du

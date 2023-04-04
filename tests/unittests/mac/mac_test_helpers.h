@@ -127,7 +127,7 @@ public:
 struct mac_test_ue_bearer {
   mac_sdu_rx_test_notifier         ul_notifier;
   mac_sdu_tx_builder_test_notifier dl_notifier;
-  mac_logical_channel_to_setup     bearer;
+  mac_logical_channel_config       bearer;
 };
 
 struct mac_test_ue {
