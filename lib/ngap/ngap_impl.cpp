@@ -187,6 +187,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging(msg.value.paging());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
+      handle_error_indication(msg.value.error_ind());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -374,6 +377,33 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
   cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
+}
+
+void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
+{
+  ue_index_t ue_index = ue_index_t::invalid;
+  ngap_ue*   ue       = nullptr;
+  if (msg->amf_ue_ngap_id_present) {
+    ue_index = ue_manager.get_ue_index(uint_to_amf_ue_id(msg->amf_ue_ngap_id.value));
+    ue       = ue_manager.find_ngap_ue(ue_index);
+  } else if (msg->ran_ue_ngap_id_present) {
+    ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value));
+    ue       = ue_manager.find_ngap_ue(ue_index);
+  }
+
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping ErrorIndication", ue_index);
+    return;
+  } else {
+    std::string cause = "";
+    if (msg->cause_present) {
+      cause = asn1_cause_to_string(msg->cause.value);
+    }
+
+    logger.info("ue={} Received ErrorIndication (ran_ue_id={}) - cause {}", ue_index, ue->get_ran_ue_id(), cause);
+  }
+
+  // TODO: handle error indication
 }
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
