@@ -34,6 +34,7 @@ mac_pcap_impl::~mac_pcap_impl()
 
 void mac_pcap_impl::open(const std::string& filename_)
 {
+  // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
