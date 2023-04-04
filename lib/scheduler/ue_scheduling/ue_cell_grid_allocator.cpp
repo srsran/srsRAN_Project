@@ -165,10 +165,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
+  // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS REs.
+  sch_mcs_index adjusted_mcs{grant.mcs};
+  if (not pdsch_alloc.result.dl.csi_rs.empty()) {
+    adjusted_mcs = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
+  }
+
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
-    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length());
   } else {
     // It is a retx.
     mcs_tbs_info.emplace(
