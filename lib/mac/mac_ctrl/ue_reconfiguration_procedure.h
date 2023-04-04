@@ -36,15 +36,18 @@ public:
 
     // If there are bearers to add or modify.
     if (not req.bearers_to_addmod.empty()) {
-      // > Add/Mod logical channels in the UL direction.
+      // > Add/Mod logical channels in the DEMUX.
       CORO_AWAIT_VALUE(add_ue_result, ul_unit.addmod_bearers(req.ue_index, req.bearers_to_addmod));
       if (not add_ue_result) {
         CORO_EARLY_RETURN(handle_result(false));
       }
-    }
 
-    // > Reconfigure UE DL context and channels.
-    CORO_AWAIT_VALUE(add_ue_result, dl_unit.reconfigure_ue(req));
+      // > Add/Mod logical channels in the MUX.
+      CORO_AWAIT_VALUE(add_ue_result, dl_unit.addmod_bearers(req.ue_index, req.pcell_index, req.bearers_to_addmod));
+      if (not add_ue_result) {
+        CORO_EARLY_RETURN(handle_result(false));
+      }
+    }
 
     // > Reconfigure UE in Scheduler.
     log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
@@ -53,8 +56,14 @@ public:
 
     // If there are bearers to remove.
     if (not req.bearers_to_rem.empty()) {
-      // > Remove logical channels in the UL direction.
+      // > Remove logical channels in the DEMUX.
       CORO_AWAIT_VALUE(add_ue_result, ul_unit.remove_bearers(req.ue_index, req.bearers_to_rem));
+      if (not add_ue_result) {
+        CORO_EARLY_RETURN(handle_result(false));
+      }
+
+      // > Remove logical channels in the MUX.
+      CORO_AWAIT_VALUE(add_ue_result, dl_unit.remove_bearers(req.ue_index, req.pcell_index, req.bearers_to_rem));
       if (not add_ue_result) {
         CORO_EARLY_RETURN(handle_result(false));
       }
