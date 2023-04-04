@@ -125,9 +125,8 @@ public:
     }
     if (node == nullptr) {
       // Local caches are depleted. Pop a batch of memory blocks from central cache.
-      free_memory_block_list popped_block_list = central_mem_cache.try_pop_list(max_local_cache1_size);
-      node                                     = popped_block_list.try_pop();
-      w_ctx->local_cache1.steal_blocks(popped_block_list);
+      w_ctx->local_cache1 = central_mem_cache.try_pop_list(max_local_cache1_size + 1);
+      node                = w_ctx->local_cache1.try_pop();
     }
 
     return node;
