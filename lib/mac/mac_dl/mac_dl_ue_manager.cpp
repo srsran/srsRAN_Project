@@ -33,7 +33,7 @@ bool mac_dl_ue_manager::remove_ue(du_ue_index_t ue_index)
   return true;
 }
 
-bool mac_dl_ue_manager::addmod_bearers(du_ue_index_t                            ue_index,
+bool mac_dl_ue_manager::addmod_bearers(du_ue_index_t                          ue_index,
                                        span<const mac_logical_channel_config> dl_logical_channels)
 {
   std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
@@ -75,7 +75,7 @@ bool mac_dl_ue_manager::add_ue_nolock(du_ue_index_t                     ue_index
   return true;
 }
 
-bool mac_dl_ue_manager::addmod_bearers_nolock(du_ue_index_t                            ue_index,
+bool mac_dl_ue_manager::addmod_bearers_nolock(du_ue_index_t                          ue_index,
                                               span<const mac_logical_channel_config> dl_logical_channels)
 {
   if (not ue_db.contains(ue_index)) {

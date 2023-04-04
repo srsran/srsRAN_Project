@@ -59,8 +59,8 @@ void ue_configuration_procedure::update_ue_context()
   for (srb_id_t srbid : request.srbs_to_setup) {
     lcid_t lcid = srb_id_to_lcid(srbid);
     auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
-                               ue->resources->rlc_bearers.end(),
-                               [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
+                           ue->resources->rlc_bearers.end(),
+                           [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
