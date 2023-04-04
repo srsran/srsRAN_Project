@@ -64,8 +64,8 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
     auto& sched_lc_ch = sched_cfg.lc_config_list.back();
     sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
   }
-  for (const du_ue_drb& bearer : ue_ctx.bearers.drbs()) {
-    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid));
+  for (const auto& bearer : ue_ctx.bearers.drbs()) {
+    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.second->lcid));
     auto& sched_lc_ch = sched_cfg.lc_config_list.back();
     sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
   }

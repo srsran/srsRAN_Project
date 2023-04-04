@@ -96,35 +96,20 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
       continue;
     }
 
+    // Find the RLC configuration for this DRB.
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
-    du_ue_drb& drb = ue->bearers.add_drb(drbtoadd.drb_id, it->lcid, it->rlc_cfg);
 
-    // >> Create F1-U bearer.
-    // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
-    drb.uluptnl_info_list = drbtoadd.uluptnl_info_list;
-    drb.dluptnl_info_list.resize(1); // TODO: Handle more than one.
-    drb.dluptnl_info_list[0].gtp_teid   = int_to_gtp_teid((ue->ue_index << 5U) + (unsigned)drb.drb_id);
-    drb.dluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"}; // TODO: Set IP.
-    drb.drb_f1u                         = du_params.f1u.f1u_gw.create_du_bearer(ue->ue_index,
-                                                        drb.dluptnl_info_list[0].gtp_teid.value(),
-                                                        drb.uluptnl_info_list[0].gtp_teid.value(),
-                                                        drb.connector.f1u_rx_sdu_notif);
-    if (drb.drb_f1u == nullptr) {
-      // Failed to connect F1-U bearer to CU-UP.
-      ue->bearers.remove_drb(drbtoadd.drb_id);
+    // Create DU DRB instance.
+    std::unique_ptr<du_ue_drb> drb = create_drb(
+        ue->ue_index, ue->pcell_index, drbtoadd.drb_id, it->lcid, it->rlc_cfg, drbtoadd.uluptnl_info_list, du_params);
+    if (drb == nullptr) {
+      logger.warning("Failed to create DRB-Id={}.");
       continue;
     }
-
-    // >> Create RLC DRB entity.
-    drb.rlc_bearer =
-        create_rlc_entity(make_rlc_entity_creation_message(ue->ue_index, ue->pcell_index, drb, du_params.services));
-
-    // >> Connect DRB F1-U with RLC, and RLC with MAC logical channel notifier.
-    drb.connector.connect(
-        ue->ue_index, drb.drb_id, drb.lcid, *drb.drb_f1u, *drb.rlc_bearer, du_params.rlc.mac_ue_info_handler);
+    ue->bearers.add_drb(std::move(drb));
   }
 }
 
@@ -138,8 +123,8 @@ void ue_configuration_procedure::remove_drbs_from_du_ue_context()
     srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
 
     // >> Get the DRB that is to be removed
-    srsran_assert(ue->bearers.drbs().contains(drb_to_rem), "DRB-Id={} does not exist", drb_to_rem);
-    du_ue_drb& ue_drb  = ue->bearers.drbs()[drb_to_rem];
+    srsran_assert(ue->bearers.drbs().count(drb_to_rem) > 0, "DRB-Id={} does not exist", drb_to_rem);
+    du_ue_drb& ue_drb  = *ue->bearers.drbs().at(drb_to_rem);
     uint32_t   dl_teid = ue_drb.dluptnl_info_list[0].gtp_teid.value();
 
     // >> TODO: Disconnect the other Layers, e.g. MAC
@@ -171,11 +156,11 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
   for (const auto& drb : request.drbs_to_setup) {
-    if (not ue->bearers.drbs().contains(drb.drb_id)) {
+    if (ue->bearers.drbs().count(drb.drb_id) == 0) {
       // The DRB failed to be setup. Carry on with other DRBs.
       continue;
     }
-    du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
+    du_ue_drb& bearer = *ue->bearers.drbs().at(drb.drb_id);
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();
     lc_ch.lcid      = bearer.lcid;
@@ -196,11 +181,11 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // > Handle DRBs that were setup or failed to be setup.
   for (const f1ap_drb_to_setup& drb_req : request.drbs_to_setup) {
-    if (not ue->bearers.drbs().contains(drb_req.drb_id)) {
+    if (ue->bearers.drbs().count(drb_req.drb_id) == 0) {
       resp.drbs_failed_to_setup.push_back(drb_req.drb_id);
       continue;
     }
-    du_ue_drb& drb_added = ue->bearers.drbs()[drb_req.drb_id];
+    du_ue_drb& drb_added = *ue->bearers.drbs().at(drb_req.drb_id);
 
     resp.drbs_setup.emplace_back();
     f1ap_drb_setup& drb_setup   = resp.drbs_setup.back();

@@ -19,9 +19,12 @@
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/rlc/rlc_entity.h"
+#include <map>
 
 namespace srsran {
 namespace srs_du {
+
+struct du_manager_params;
 
 /// \brief Connector of the MAC, RLC and F1 for a given DU UE SRB bearer.
 struct du_srb_connector {
@@ -84,30 +87,33 @@ struct du_ue_drb {
   du_drb_connector                     connector;
 };
 
+/// \brief Creates a DRB instance.
+std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                       ue_index,
+                                      du_cell_index_t                     pcell_index,
+                                      drb_id_t                            drb_id,
+                                      lcid_t                              lcid,
+                                      const rlc_config&                   rlc_cfg,
+                                      span<const up_transport_layer_info> uluptnl_info_list,
+                                      const du_manager_params&            du_params);
+
 /// \brief Bearer container for a UE object in the DU manager.
 class du_ue_bearer_manager
 {
-  struct drb_id_to_index {
-    constexpr size_t   get_index(drb_id_t drb_id) const { return static_cast<size_t>(drb_id) - 1; }
-    constexpr drb_id_t get_id(size_t idx) const { return static_cast<drb_id_t>(idx + 1); }
-  };
-
 public:
   du_ue_srb& add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg);
-  du_ue_drb& add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg);
+  void       add_drb(std::unique_ptr<du_ue_drb> drb);
 
   void remove_drb(drb_id_t drb_id);
 
-  const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                        srbs() const { return srbs_; }
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&                              srbs() { return srbs_; }
-  const slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index>& drbs() const { return drbs_; };
-  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index>&       drbs() { return drbs_; };
+  const slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>& srbs() const { return srbs_; }
+  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>&       srbs() { return srbs_; }
+  const std::map<drb_id_t, std::unique_ptr<du_ue_drb>>&      drbs() const { return drbs_; };
 
   optional<lcid_t> allocate_lcid() const;
 
 private:
-  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS>                        srbs_;
-  slotted_id_table<drb_id_t, du_ue_drb, MAX_NOF_DRBS, true, drb_id_to_index> drbs_;
+  slotted_id_table<srb_id_t, du_ue_srb, MAX_NOF_SRBS> srbs_;
+  std::map<drb_id_t, std::unique_ptr<du_ue_drb>>      drbs_;
 };
 
 } // namespace srs_du
