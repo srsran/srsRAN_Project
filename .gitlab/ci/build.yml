@@ -22,7 +22,6 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
   variables:
-    DOCKER_BUILDER_VERSION: "1.7.7"
     # General
     OS: ubuntu-22.04
     # Build
@@ -42,6 +41,9 @@ stages:
     PROJECT: "testing-tools"
     # Test
     TEST_MODE: none # default, coverage, asan, tsan, valgrind, none
+    # CI
+    DOCKER_BUILDER_VERSION: "1.7.7"
+    UPLOAD_ARTIFACTS: "" # Empty by default
   needs: []
   before_script:
     - |
@@ -152,21 +154,20 @@ stages:
     - build_srsgnb
     - launch_tests
   after_script:
-    - mv ${CI_PROJECT_DIR}/build/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml               || true
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
-    - mv ${CI_PROJECT_DIR}/build/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID} || true
+    - |
+      if [ -z "${UPLOAD_ARTIFACTS}" ]; then
+        rm -Rf ${CI_PROJECT_DIR}/build
+      fi
   timeout: 2h
   artifacts:
     when: always
     reports:
-      junit: ${CI_JOB_ID}_xunit.xml
       coverage_report:
         coverage_format: cobertura
         path: ${CI_JOB_ID}_coverage.xml
     paths:
-      - ${CI_JOB_ID}_xunit.xml
       - ${CI_JOB_ID}_coverage.xml
-      - build/Testing/Temporary_${CI_JOB_ID}
       - build/apps/gnb/gnb
     expire_in: 10 minutes
   cache: &build_cache
@@ -541,6 +542,7 @@ sanitizers [valgrind]:
     COMPILER: gcc
     BUILD_TYPE: Release
     AUTO_DETECT_ISA: "True"
+    UPLOAD_ARTIFACTS: "True"
 
 avx2 [basic]:
   extends: .avx
@@ -621,6 +623,8 @@ avx extended:
   extends: .avx
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    UPLOAD_ARTIFACTS: ""
   parallel:
     matrix:
       - CPU_FLAG: ["avx2", "avx2-avx512"]

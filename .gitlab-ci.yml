@@ -191,8 +191,6 @@ intermediate commits:
         build_srsgnb
         sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
-  after_script:
-    - rm -Rf build
 
 ################################################################################
 # Doc generation
@@ -273,25 +271,6 @@ unit coverage:
       - coverage_html
     expire_in: 10 minutes
 
-unit tests web:
-  stage: documentation
-  extends: .depends on unit test jobs
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      when: always # Even if previous stages/required jobs fail
-  image: python:3.9-alpine # sh entrypoint
-  variables:
-    GIT_STRATEGY: none
-  before_script:
-    - pip install junit2html
-  script:
-    - junit2html *xunit.xml --merge merged_xunit.xml
-    - junit2html merged_xunit.xml ./test_report.html
-  artifacts:
-    paths:
-      - test_report.html
-    expire_in: 10 minutes
-
 pages:
   stage: documentation
   rules:
@@ -305,7 +284,6 @@ pages:
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
-    - mv test_report.html public/
     - mv docs/index.html public/index.html
     - doxygen_generator.sh
     - mv build/public/index.html build/public/index_doxygen.html
@@ -330,8 +308,6 @@ pages:
 
   needs:
     - job: unit coverage
-      artifacts: true
-    - job: unit tests web
       artifacts: true
     - job: clang-tidy
       artifacts: true
