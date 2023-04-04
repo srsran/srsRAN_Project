@@ -22,11 +22,36 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
   variables:
-    # General
-    OS: ubuntu-22.04
-    # Build
-    COMPILER: gcc
-    UHD_VERSION: "" # Empty for OS default
+    OS:
+      # description: Operating system
+      # options:
+      #   - "ubuntu-22.04"
+      #   - "ubuntu-20.04"
+      #   - "archlinux-latest"
+      #   - "rhel-8"
+      value: "ubuntu-22.04"
+    COMPILER:
+      # description: Compiler to use
+      # options:
+      #   - "gcc"
+      #   - "clang"
+      value: "gcc"
+    TEST_MODE:
+      # description: What tests to run. None won't run any test at all.
+      # options:
+      #   - "default"
+      #   - "coverage"
+      #   - "asan"
+      #   - "tsan"
+      #   - "valgrind"
+      #   - "none"
+      value: "default"
+    BUILD_ARGS:
+      # description: It will be passed to cmake
+      value: ""
+    UHD_VERSION:
+      # description: must be one version supported in the specified OS
+      value: ""
     BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
@@ -39,8 +64,6 @@ stages:
     AUTO_DETECT_ISA: "False"
     PLATFORM: "amd64"
     PROJECT: "testing-tools"
-    # Test
-    TEST_MODE: none # default, coverage, asan, tsan, valgrind, none
     # CI
     DOCKER_BUILDER_VERSION: "1.7.7"
     UPLOAD_ARTIFACTS: "" # Empty by default
@@ -646,17 +669,6 @@ custom build:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  variables:
-    # must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest
-    OS: "ubuntu-22.04"
-    # must be one of gcc, clang
-    COMPILER: "gcc"
-    # must be one of default, coverage, asan, tsan, valgrind, none
-    TEST_MODE: "default"
-    # it will be passed to cmake
-    BUILD_ARGS: ""
-    # must be one version supported in the specified OS
-    UHD_VERSION: ""
   cache: []
   timeout: 4 hours # valgrind mode
   parallel:
