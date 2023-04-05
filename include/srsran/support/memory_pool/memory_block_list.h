@@ -13,6 +13,7 @@
 #include "memory_pool_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include <mutex>
+#include <utility>
 
 namespace srsran {
 
