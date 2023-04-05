@@ -51,7 +51,7 @@ void ldpc_rate_dematcher_avx512_impl::combine_softbits(span<srsran::log_likeliho
   }
 }
 
-static inline void mm512_deinterleave(__m512i& out_even, __m512i& out_odd, __m512i in_lo, __m512i in_hi)
+static void mm512_deinterleave(__m512i& out_even, __m512i& out_odd, __m512i in_lo, __m512i in_hi)
 {
   // Convert AVX registers to a linear input.
   alignas(AVX512_SIZE_BYTE) std::array<int8_t, 2 * AVX512_SIZE_BYTE> in = {};
@@ -71,8 +71,7 @@ static inline void mm512_deinterleave(__m512i& out_even, __m512i& out_odd, __m51
   out_odd  = _mm512_load_si512(reinterpret_cast<const __m512i*>(out.data() + AVX512_SIZE_BYTE));
 }
 
-static inline void
-mm512_deinterleave(__m512i& out0, __m512i& out1, __m512i& out2, __m512i in0, __m512i in1, __m512i in2)
+static void mm512_deinterleave(__m512i& out0, __m512i& out1, __m512i& out2, __m512i in0, __m512i in1, __m512i in2)
 {
   // Convert AVX registers to a linear input.
   alignas(AVX512_SIZE_BYTE) std::array<int8_t, 3 * AVX512_SIZE_BYTE> in = {};

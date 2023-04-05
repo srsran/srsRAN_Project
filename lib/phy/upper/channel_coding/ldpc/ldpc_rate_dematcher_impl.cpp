@@ -186,7 +186,7 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 }
 
 template <unsigned Qm>
-inline void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
+static void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
 {
   unsigned E = out.size();
   unsigned K = E / Qm;

@@ -86,13 +86,13 @@ void ldpc_rate_dematcher_neon_impl::combine_softbits(span<log_likelihood_ratio> 
   }
 }
 
-static inline void neon_deinterleave(int8x16_t& out_even, int8x16_t& out_odd, int8x16_t in_lo, int8x16_t in_hi)
+static void neon_deinterleave(int8x16_t& out_even, int8x16_t& out_odd, int8x16_t in_lo, int8x16_t in_hi)
 {
   out_even = vuzp1q_s8(in_lo, in_hi);
   out_odd  = vuzp2q_s8(in_lo, in_hi);
 }
 
-static inline void
+static void
 neon_deinterleave(int8x16_t& out0, int8x16_t& out1, int8x16_t& out2, int8x16_t in0, int8x16_t in1, int8x16_t in2)
 {
   out0 = vsetq_lane_s8(vgetq_lane_s8(in0, 0), out0, 0);

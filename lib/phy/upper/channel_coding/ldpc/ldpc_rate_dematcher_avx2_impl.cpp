@@ -51,7 +51,7 @@ void ldpc_rate_dematcher_avx2_impl::combine_softbits(span<srsran::log_likelihood
   }
 }
 
-static inline void mm256_deinterleave(__m256i& out_even, __m256i& out_odd, __m256i in_lo, __m256i in_hi)
+static void mm256_deinterleave(__m256i& out_even, __m256i& out_odd, __m256i in_lo, __m256i in_hi)
 {
   // Convert AVX registers to a linear input.
   alignas(AVX2_SIZE_BYTE) std::array<int8_t, 2 * AVX2_SIZE_BYTE> in = {};
@@ -71,8 +71,7 @@ static inline void mm256_deinterleave(__m256i& out_even, __m256i& out_odd, __m25
   out_odd  = _mm256_load_si256(reinterpret_cast<const __m256i*>(out.data() + AVX2_SIZE_BYTE));
 }
 
-static inline void
-mm256_deinterleave(__m256i& out0, __m256i& out1, __m256i& out2, __m256i in0, __m256i in1, __m256i in2)
+static void mm256_deinterleave(__m256i& out0, __m256i& out1, __m256i& out2, __m256i in0, __m256i in1, __m256i in2)
 {
   // Convert AVX registers to a linear input.
   alignas(AVX2_SIZE_BYTE) std::array<int8_t, 3 * AVX2_SIZE_BYTE> in = {};
