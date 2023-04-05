@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2023 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -39,7 +39,7 @@ public:
     modulator(std::move(modulator_)),
     request_queue(config.request_queue_size)
   {
-    srsran_assert(modulator, "Invalid demodulator.");
+    srsran_assert(modulator, "Invalid modulator.");
   }
 
   // See interface for documentation.
@@ -58,7 +58,7 @@ private:
   // See interface for documentation.
   void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override;
 
-  /// Pairs a slot and resource grid demodulation for the queue.
+  /// Pairs a slot and resource grid reader for the queue.
   struct rg_grid_request {
     slot_point                  slot = {};
     const resource_grid_reader* grid = nullptr;

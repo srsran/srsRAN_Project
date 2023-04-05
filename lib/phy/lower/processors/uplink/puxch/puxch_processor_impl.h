@@ -57,7 +57,7 @@ private:
   // See interface for documentation.
   void handle_request(resource_grid& grid, const resource_grid_context& context) override;
 
-  /// Pairs a slot and resource grid demodulation for the queue.
+  /// Pairs a slot and resource grid to be demodulated for the queue.
   struct rg_grid_request {
     slot_point     slot = {};
     resource_grid* grid = nullptr;

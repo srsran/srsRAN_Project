@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2023 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -21,7 +21,7 @@ public:
   pdxch_processor_factory_sw(unsigned request_queue_size_, std::shared_ptr<ofdm_modulator_factory> ofdm_mod_factory_) :
     request_queue_size(request_queue_size_), ofdm_mod_factory(std::move(ofdm_mod_factory_))
   {
-    srsran_assert(request_queue_size != 0, "Request queue size must greater than zero.");
+    srsran_assert(request_queue_size != 0, "Requested queue size must be greater than zero.");
     srsran_assert(ofdm_mod_factory, "Invalid OFDM modulator factory.");
   }
 

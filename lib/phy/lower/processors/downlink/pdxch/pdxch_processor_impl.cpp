@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2023 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -66,7 +66,7 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer&              
   // Symbol index within the subframe.
   unsigned symbol_index_subframe = context.symbol + context.slot.subframe_slot_index() * nof_symbols_per_slot;
 
-  // Demodulate each of the ports.
+  // Modulate each of the ports.
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
     modulator->modulate(samples.get_channel_buffer(i_port), *current_grid, i_port, symbol_index_subframe);
   }
