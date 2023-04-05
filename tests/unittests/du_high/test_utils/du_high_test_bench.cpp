@@ -33,6 +33,30 @@ mac_rx_data_indication srsran::srs_du::create_ccch_message(slot_point sl_rx, rnt
       {mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
 }
 
+bool srsran::srs_du::is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti)
+{
+  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+          msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER)) {
+    return false;
+  }
+  const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+  return rrcmsg->c_rnti->value == rnti;
+}
+
+bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& msg,
+                                                          gnb_du_ue_f1ap_id_t du_ue_id,
+                                                          gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
+          msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE)) {
+    return false;
+  }
+  const asn1::f1ap::ue_context_release_complete_s& resp =
+      msg.pdu.successful_outcome().value.ue_context_release_complete();
+  return (gnb_cu_ue_f1ap_id_t)resp->gnb_cu_ue_f1ap_id->value == cu_ue_id and
+         (gnb_du_ue_f1ap_id_t) resp->gnb_du_ue_f1ap_id->value == du_ue_id;
+}
+
 phy_cell_test_dummy::phy_cell_test_dummy(task_executor& exec_) : test_exec(exec_) {}
 
 void phy_cell_test_dummy::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
@@ -98,7 +122,7 @@ void dummy_f1ap_tx_pdu_notifier::on_new_message(const f1ap_message& msg)
   // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
   bool result = test_exec.execute([this, msg]() {
     logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-    last_f1ap_msg = msg;
+    last_f1ap_msgs.push_back(msg);
   });
   EXPECT_TRUE(result);
 }
@@ -144,8 +168,7 @@ du_high_test_bench::du_high_test_bench() :
   du_obj.start();
 
   // Ensure the result is saved in the notifier.
-  run_until(
-      [this]() { return cu_notifier.last_f1ap_msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg; });
+  run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
 }
 
 du_high_test_bench::~du_high_test_bench()
@@ -168,16 +191,14 @@ bool du_high_test_bench::run_until(unique_function<bool()> condition)
 
 bool du_high_test_bench::add_ue(rnti_t rnti)
 {
-  cu_notifier.last_f1ap_msg.pdu = {};
+  cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
   du_obj.get_pdu_handler(to_du_cell_index(0)).handle_rx_data_indication(create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
-  run_until([this]() { return cu_notifier.last_f1ap_msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg; });
-  const asn1::f1ap::init_ul_rrc_msg_transfer_s& msg =
-      cu_notifier.last_f1ap_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return msg->c_rnti->value == rnti;
+  run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  return is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 
 void du_high_test_bench::run_slot()
