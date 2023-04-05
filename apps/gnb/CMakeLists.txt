@@ -17,6 +17,7 @@ add_executable(gnb
         phy_factory.cpp
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
+        helpers/metrics_hub.cpp
         )
 
 install(TARGETS gnb
