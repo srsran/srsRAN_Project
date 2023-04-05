@@ -10,47 +10,302 @@
 
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/support/srsran_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsran;
 
-static std::mt19937       rgen(1234);
-static constexpr unsigned nof_repetitions = 100;
+using DciFallbackPackingParams = std::tuple<unsigned, unsigned, unsigned, unsigned>;
 
-// Generate a DCI format 0_0 scrambled by TC-RNTI configuration.
-static dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(const dci_0_0_size& payload_size)
+namespace {
+
+class DciFallbackPackingFixture : public ::testing::TestWithParam<DciFallbackPackingParams>
 {
-  dci_0_0_tc_rnti_configuration config = {};
-  config.payload_size                  = payload_size;
+protected:
+  dci_size_config dci_config    = {};
+  dci_sizes       aligned_sizes = {};
 
-  std::uniform_int_distribution<unsigned> N_ul_hop_dist(1, 2);
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> ul_sul_indicator_presence_dist(0, 1);
+  std::mt19937 rgen{1234};
 
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(payload_size.frequency_resource.value()) - 1);
+  static constexpr unsigned nof_repetitions = 100;
 
-  config.payload_size = payload_size;
-  config.N_ul_hop     = N_ul_hop_dist(rgen);
+  // Pseudo random generators to generate content for the DCI formats 0_0 and 1_0 payloads.
+  std::uniform_int_distribution<unsigned> N_ul_hop_dist{1, 2};
+  std::uniform_int_distribution<unsigned> time_resource_dist{0, pow2(4) - 1};
+  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist{0, pow2(1) - 1};
+  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist{0, pow2(5) - 1};
+  std::uniform_int_distribution<unsigned> redundancy_version_dist{0, pow2(2) - 1};
+  std::uniform_int_distribution<unsigned> dl_assignment_index_dist{0, pow2(2) - 1};
+  std::uniform_int_distribution<unsigned> tpc_command_dist{0, pow2(2) - 1};
+  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist{0, pow2(3) - 1};
+  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist{0, pow2(3) - 1};
+  std::uniform_int_distribution<unsigned> ul_sul_indicator_presence_dist{0, 1};
+  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist{0, pow2(1) - 1};
+  std::uniform_int_distribution<unsigned> new_data_indicator_dist{0, pow2(1) - 1};
+  std::uniform_int_distribution<unsigned> harq_process_number_dist{0, pow2(4) - 1};
+  std::uniform_int_distribution<unsigned> short_messages_dist{0, pow2(8) - 1};
+  std::uniform_int_distribution<unsigned> system_information_indicator_dist{0, pow2(1) - 1};
 
-  // The hopping offset is packed with N_ul_hop bits.
-  std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
+  // Even though 2 bits are reserved for the TB scaling field, only the
+  // 0b00, 0b01 and 0b10 bit words are mapped to scaling factor values.
+  std::uniform_int_distribution<unsigned> tb_scaling_dist{0, pow2(1)};
 
-  config.hopping_offset           = hopping_offset_dist(rgen);
-  config.frequency_resource       = frequency_resource_dist(rgen);
-  config.time_resource            = time_resource_dist(rgen);
-  config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
-  config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
-  config.redundancy_version       = redundancy_version_dist(rgen);
-  config.tpc_command              = tpc_command_dist(rgen);
+  void SetUp() override
+  {
+    // Set the Bandwidth of the UL and DL, active and initial BWP.
+    dci_config.ul_bwp_initial_bw     = std::get<0>(GetParam());
+    dci_config.ul_bwp_active_bw      = std::get<1>(GetParam());
+    dci_config.dl_bwp_initial_bw     = std::get<2>(GetParam());
+    dci_config.dl_bwp_active_bw      = std::get<3>(GetParam());
+    dci_config.dci_0_0_and_1_0_ue_ss = true;
+    dci_config.dci_0_1_and_1_1_ue_ss = false;
 
-  return config;
+    // Perform the DCI size alignment procedure.
+    aligned_sizes = get_dci_sizes(dci_config);
+
+    // Check that the computed DCI format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
+    TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
+    TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
+  }
+
+  // Generate a DCI format 0_0 scrambled by TC-RNTI configuration.
+  dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(const dci_0_0_size& payload_size)
+  {
+    dci_0_0_tc_rnti_configuration config = {};
+    config.payload_size                  = payload_size;
+
+    std::uniform_int_distribution<unsigned> freq_resource_dist(0, pow2(payload_size.frequency_resource.value()) - 1);
+
+    config.N_ul_hop = N_ul_hop_dist(rgen);
+
+    // The hopping offset is packed with N_ul_hop bits.
+    std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
+
+    config.hopping_offset           = hopping_offset_dist(rgen);
+    config.frequency_resource       = freq_resource_dist(rgen);
+    config.time_resource            = time_resource_dist(rgen);
+    config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
+    config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
+    config.redundancy_version       = redundancy_version_dist(rgen);
+    config.tpc_command              = tpc_command_dist(rgen);
+
+    return config;
+  }
+
+  // Generate a DCI format 0_0 scrambled by C-RNTI configuration.
+  dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(const dci_0_0_size& payload_size)
+  {
+    dci_0_0_c_rnti_configuration config = {};
+
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0,
+                                                                    pow2(payload_size.frequency_resource.value()) - 1);
+
+    config.payload_size = payload_size;
+    config.N_ul_hop     = N_ul_hop_dist(rgen);
+
+    // The hopping offset is packed with N_ul_hop bits.
+    std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
+
+    config.hopping_offset           = hopping_offset_dist(rgen);
+    config.frequency_resource       = frequency_resource_dist(rgen);
+    config.time_resource            = time_resource_dist(rgen);
+    config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
+    config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
+    config.new_data_indicator       = new_data_indicator_dist(rgen);
+    config.redundancy_version       = redundancy_version_dist(rgen);
+    config.harq_process_number      = harq_process_number_dist(rgen);
+    config.tpc_command              = tpc_command_dist(rgen);
+
+    if (ul_sul_indicator_presence_dist(rgen) != 0) {
+      // Add the UL/SUL indicator field.
+      std::uniform_int_distribution<unsigned> ul_sul_indicator_dist(0, 1);
+      config.ul_sul_indicator.emplace(static_cast<bool>(ul_sul_indicator_dist(rgen)));
+    }
+
+    return config;
+  }
+
+  // Generate a DCI format 1_0 scrambled by C-RNTI configuration.
+  dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(const dci_1_0_size& payload_size)
+  {
+    dci_1_0_c_rnti_configuration config = {};
+
+    unsigned                                frequency_resource_nof_bits = payload_size.frequency_resource.value();
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+    config.payload_size                   = payload_size;
+    config.frequency_resource             = frequency_resource_dist(rgen);
+    config.time_resource                  = time_resource_dist(rgen);
+    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
+    config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
+    config.new_data_indicator             = new_data_indicator_dist(rgen);
+    config.redundancy_version             = redundancy_version_dist(rgen);
+    config.harq_process_number            = harq_process_number_dist(rgen);
+    config.dl_assignment_index            = dl_assignment_index_dist(rgen);
+    config.tpc_command                    = tpc_command_dist(rgen);
+    config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
+    config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
+
+    return config;
+  }
+
+  // Generate a DCI format 1_0 scrambled by P-RNTI configuration.
+  dci_1_0_p_rnti_configuration
+  build_dci_1_0_p_rnti_config(unsigned N_rb_dl_bwp, dci_1_0_p_rnti_configuration::payload_info short_messages_indicator)
+  {
+    dci_1_0_p_rnti_configuration config = {};
+
+    unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+    config.N_rb_dl_bwp              = N_rb_dl_bwp;
+    config.short_messages_indicator = short_messages_indicator;
+    config.short_messages           = short_messages_dist(rgen);
+    config.frequency_resource       = frequency_resource_dist(rgen);
+    config.time_resource            = time_resource_dist(rgen);
+    config.vrb_to_prb_mapping       = vrb_to_prb_mapping_dist(rgen);
+    config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
+    config.tb_scaling               = tb_scaling_dist(rgen);
+
+    return config;
+  }
+
+  // Generate a DCI format 1_0 scrambled by SI-RNTI configuration.
+  dci_1_0_si_rnti_configuration build_dci_1_0_si_rnti_config(unsigned N_rb_dl_bwp)
+  {
+    unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+    dci_1_0_si_rnti_configuration config = {};
+
+    config.N_rb_dl_bwp                  = N_rb_dl_bwp;
+    config.frequency_resource           = frequency_resource_dist(rgen);
+    config.time_resource                = time_resource_dist(rgen);
+    config.vrb_to_prb_mapping           = vrb_to_prb_mapping_dist(rgen);
+    config.modulation_coding_scheme     = modulation_coding_scheme_dist(rgen);
+    config.redundancy_version           = redundancy_version_dist(rgen);
+    config.system_information_indicator = system_information_indicator_dist(rgen);
+
+    return config;
+  }
+
+  // Generate a DCI format 1_0 scrambled by RA-RNTI configuration.
+  dci_1_0_ra_rnti_configuration build_dci_1_0_ra_rnti_config(unsigned N_rb_dl_bwp)
+  {
+    unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+    dci_1_0_ra_rnti_configuration config = {};
+    config.N_rb_dl_bwp                   = N_rb_dl_bwp;
+    config.frequency_resource            = frequency_resource_dist(rgen);
+    config.time_resource                 = time_resource_dist(rgen);
+    config.vrb_to_prb_mapping            = vrb_to_prb_mapping_dist(rgen);
+    config.modulation_coding_scheme      = modulation_coding_scheme_dist(rgen);
+    config.tb_scaling                    = tb_scaling_dist(rgen);
+
+    return config;
+  }
+
+  // Generate a DCI format 1_0 scrambled by TC-RNTI configuration.
+  dci_1_0_tc_rnti_configuration build_dci_1_0_tc_rnti_config(unsigned N_rb_dl_bwp)
+  {
+    dci_1_0_tc_rnti_configuration config = {};
+
+    unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
+    std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
+
+    config.N_rb_dl_bwp                    = N_rb_dl_bwp;
+    config.frequency_resource             = frequency_resource_dist(rgen);
+    config.time_resource                  = time_resource_dist(rgen);
+    config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
+    config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
+    config.new_data_indicator             = new_data_indicator_dist(rgen);
+    config.redundancy_version             = redundancy_version_dist(rgen);
+    config.harq_process_number            = harq_process_number_dist(rgen);
+    config.tpc_command                    = tpc_command_dist(rgen);
+    config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
+    config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
+
+    return config;
+  }
+};
+
+class DciRarPackingFixture : public ::testing::Test
+{
+protected:
+  std::mt19937 rgen{1234};
+
+  static constexpr unsigned nof_repetitions = 100;
+
+  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist{0, pow2(1) - 1};
+  std::uniform_int_distribution<unsigned> frequency_resource_dist{0, pow2(14) - 1};
+  std::uniform_int_distribution<unsigned> time_resource_dist{0, pow2(4) - 1};
+  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist{0, pow2(4) - 1};
+  std::uniform_int_distribution<unsigned> tpc_dist{0, pow2(3) - 1};
+  std::uniform_int_distribution<unsigned> csi_request_dist{0, pow2(3) - 1};
+};
+
+} // namespace
+
+TEST_F(DciRarPackingFixture, DciRarPacking)
+{
+  for (unsigned i = 0; i != nof_repetitions; ++i) {
+    // Test DCI RAR packing.
+    dci_rar_configuration config    = {};
+    config.frequency_hopping_flag   = DciRarPackingFixture::frequency_hopping_flag_dist(rgen);
+    config.frequency_resource       = DciRarPackingFixture::frequency_resource_dist(rgen);
+    config.time_resource            = DciRarPackingFixture::time_resource_dist(rgen);
+    config.modulation_coding_scheme = DciRarPackingFixture::modulation_coding_scheme_dist(rgen);
+    config.tpc                      = DciRarPackingFixture::tpc_dist(rgen);
+    config.csi_request              = DciRarPackingFixture::csi_request_dist(rgen);
+
+    dci_payload payload = dci_rar_pack(config);
+
+    // Generate expected payload.
+    static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
+
+    // Frequency hopping flag - 1 bit.
+    expected.push_back((config.frequency_hopping_flag >> 0U) & 1U);
+
+    // PUSCH frequency resource allocation - 14 bits.
+    expected.push_back((config.frequency_resource >> 13U) & 1U);
+    expected.push_back((config.frequency_resource >> 12U) & 1U);
+    expected.push_back((config.frequency_resource >> 11U) & 1U);
+    expected.push_back((config.frequency_resource >> 10U) & 1U);
+    expected.push_back((config.frequency_resource >> 9U) & 1U);
+    expected.push_back((config.frequency_resource >> 8U) & 1U);
+    expected.push_back((config.frequency_resource >> 7U) & 1U);
+    expected.push_back((config.frequency_resource >> 6U) & 1U);
+    expected.push_back((config.frequency_resource >> 5U) & 1U);
+    expected.push_back((config.frequency_resource >> 4U) & 1U);
+    expected.push_back((config.frequency_resource >> 3U) & 1U);
+    expected.push_back((config.frequency_resource >> 2U) & 1U);
+    expected.push_back((config.frequency_resource >> 1U) & 1U);
+    expected.push_back((config.frequency_resource >> 0U) & 1U);
+
+    // Time domain resource assignment - 4 bits.
+    expected.push_back((config.time_resource >> 3U) & 1U);
+    expected.push_back((config.time_resource >> 2U) & 1U);
+    expected.push_back((config.time_resource >> 1U) & 1U);
+    expected.push_back((config.time_resource >> 0U) & 1U);
+
+    // Time domain resource assignment - 4 bits.
+    expected.push_back((config.modulation_coding_scheme >> 3U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 2U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 1U) & 1U);
+    expected.push_back((config.modulation_coding_scheme >> 0U) & 1U);
+
+    // Transmission power control for PUSCH - 3 bits.
+    expected.push_back((config.tpc >> 2U) & 1U);
+    expected.push_back((config.tpc >> 1U) & 1U);
+    expected.push_back((config.tpc >> 0U) & 1U);
+
+    // CSI request - 1 bit.
+    expected.push_back((config.csi_request >> 0U) & 1U);
+
+    // Assert expected payload.
+    TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  }
 }
 
 static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& config, const dci_payload& payload)
@@ -133,52 +388,6 @@ static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& co
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
-}
-
-// Generate a DCI format 0_0 scrambled by C-RNTI configuration.
-static dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(const dci_0_0_size& payload_size)
-{
-  dci_0_0_c_rnti_configuration config = {};
-
-  std::uniform_int_distribution<unsigned> N_ul_hop_dist(1, 2);
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-  std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> ul_sul_indicator_presence_dist(0, 1);
-
-  unsigned                                frequency_resource_nof_bits = payload_size.frequency_resource.value();
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  config.payload_size = payload_size;
-  config.N_ul_hop     = N_ul_hop_dist(rgen);
-
-  // The hopping offset is packed with N_ul_hop bits.
-  std::uniform_int_distribution<unsigned> hopping_offset_dist(0, pow2(config.N_ul_hop) - 1);
-
-  config.hopping_offset           = hopping_offset_dist(rgen);
-  config.frequency_resource       = frequency_resource_dist(rgen);
-  config.time_resource            = time_resource_dist(rgen);
-  config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
-  config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
-  config.new_data_indicator       = new_data_indicator_dist(rgen);
-  config.redundancy_version       = redundancy_version_dist(rgen);
-  config.harq_process_number      = harq_process_number_dist(rgen);
-  config.tpc_command              = tpc_command_dist(rgen);
-
-  if (ul_sul_indicator_presence_dist(rgen) != 0) {
-    // Add the UL/SUL indicator field.
-    std::uniform_int_distribution<unsigned> ul_sul_indicator_dist(0, 1);
-    config.ul_sul_indicator.emplace(static_cast<bool>(ul_sul_indicator_dist(rgen)));
-  }
-
-  return config;
 }
 
 static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& config, const dci_payload& payload)
@@ -273,41 +482,6 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
 }
 
-// Generate a DCI format 1_0 scrambled by C-RNTI configuration.
-static dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(const dci_1_0_size& payload_size)
-{
-  dci_1_0_c_rnti_configuration config = {};
-
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-  std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> dl_assignment_index_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
-
-  unsigned                                frequency_resource_nof_bits = payload_size.frequency_resource.value();
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  config.payload_size                   = payload_size;
-  config.frequency_resource             = frequency_resource_dist(rgen);
-  config.time_resource                  = time_resource_dist(rgen);
-  config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
-  config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
-  config.new_data_indicator             = new_data_indicator_dist(rgen);
-  config.redundancy_version             = redundancy_version_dist(rgen);
-  config.harq_process_number            = harq_process_number_dist(rgen);
-  config.dl_assignment_index            = dl_assignment_index_dist(rgen);
-  config.tpc_command                    = tpc_command_dist(rgen);
-  config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
-  config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
-
-  return config;
-}
-
 static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& config, const dci_payload& payload)
 {
   // Generate the expected payload.
@@ -379,35 +553,6 @@ static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& conf
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
-}
-// Generate a DCI format 1_0 scrambled by P-RNTI configuration.
-static dci_1_0_p_rnti_configuration
-build_dci_1_0_p_rnti_config(unsigned N_rb_dl_bwp, dci_1_0_p_rnti_configuration::payload_info short_messages_indicator)
-{
-  std::uniform_int_distribution<unsigned> short_messages_dist(0, pow2(8) - 1);
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-
-  // Even though 2 bits are reserved for the TB scaling field, only the
-  // 0b00, 0b01 and 0b10 bit words are mapped to scaling factor values.
-  std::uniform_int_distribution<unsigned> tb_scaling_dist(0, pow2(1));
-
-  dci_1_0_p_rnti_configuration config = {};
-
-  unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  config.N_rb_dl_bwp              = N_rb_dl_bwp;
-  config.short_messages_indicator = short_messages_indicator;
-  config.short_messages           = short_messages_dist(rgen);
-  config.frequency_resource       = frequency_resource_dist(rgen);
-  config.time_resource            = time_resource_dist(rgen);
-  config.vrb_to_prb_mapping       = vrb_to_prb_mapping_dist(rgen);
-  config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
-  config.tb_scaling               = tb_scaling_dist(rgen);
-
-  return config;
 }
 
 static void test_dci_1_0_p_rnti_packing(const dci_1_0_p_rnti_configuration& config, const dci_payload& payload)
@@ -486,30 +631,6 @@ static void test_dci_1_0_p_rnti_packing(const dci_1_0_p_rnti_configuration& conf
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
 }
-// Generate a DCI format 1_0 scrambled by SI-RNTI configuration.
-static dci_1_0_si_rnti_configuration build_dci_1_0_si_rnti_config(unsigned N_rb_dl_bwp)
-{
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> system_information_indicator_dist(0, pow2(1) - 1);
-
-  unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  dci_1_0_si_rnti_configuration config = {};
-
-  config.N_rb_dl_bwp                  = N_rb_dl_bwp;
-  config.frequency_resource           = frequency_resource_dist(rgen);
-  config.time_resource                = time_resource_dist(rgen);
-  config.vrb_to_prb_mapping           = vrb_to_prb_mapping_dist(rgen);
-  config.modulation_coding_scheme     = modulation_coding_scheme_dist(rgen);
-  config.redundancy_version           = redundancy_version_dist(rgen);
-  config.system_information_indicator = system_information_indicator_dist(rgen);
-
-  return config;
-}
 
 static void test_dci_1_0_si_rnti_packing(const dci_1_0_si_rnti_configuration& config, const dci_payload& payload)
 {
@@ -554,31 +675,6 @@ static void test_dci_1_0_si_rnti_packing(const dci_1_0_si_rnti_configuration& co
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
 }
 
-// Generate a DCI format 1_0 scrambled by RA-RNTI configuration.
-static dci_1_0_ra_rnti_configuration build_dci_1_0_ra_rnti_config(unsigned N_rb_dl_bwp)
-{
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-
-  // Even though 2 bits are reserved for the TB scaling field, only the
-  // 0b00, 0b01 and 0b10 bit words are mapped to scaling factor values.
-  std::uniform_int_distribution<unsigned> tb_scaling_dist(0, pow2(1));
-
-  unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  dci_1_0_ra_rnti_configuration config = {};
-  config.N_rb_dl_bwp                   = N_rb_dl_bwp;
-  config.frequency_resource            = frequency_resource_dist(rgen);
-  config.time_resource                 = time_resource_dist(rgen);
-  config.vrb_to_prb_mapping            = vrb_to_prb_mapping_dist(rgen);
-  config.modulation_coding_scheme      = modulation_coding_scheme_dist(rgen);
-  config.tb_scaling                    = tb_scaling_dist(rgen);
-
-  return config;
-}
-
 static void test_dci_1_0_ra_rnti_packing(const dci_1_0_ra_rnti_configuration& config, const dci_payload& payload)
 {
   // Generate expected payload.
@@ -617,39 +713,6 @@ static void test_dci_1_0_ra_rnti_packing(const dci_1_0_ra_rnti_configuration& co
 
   // Assert expected payload.
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
-}
-
-// Generate a DCI format 1_0 scrambled by TC-RNTI configuration.
-static dci_1_0_tc_rnti_configuration build_dci_1_0_tc_rnti_config(unsigned N_rb_dl_bwp)
-{
-  dci_1_0_tc_rnti_configuration config = {};
-
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> vrb_to_prb_mapping_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
-  std::uniform_int_distribution<unsigned> new_data_indicator_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> harq_process_number_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> tpc_command_dist(0, pow2(2) - 1);
-  std::uniform_int_distribution<unsigned> pucch_resource_indicator_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> pdsch_harq_fb_timing_dist(0, pow2(3) - 1);
-
-  unsigned                                frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
-
-  config.N_rb_dl_bwp                    = N_rb_dl_bwp;
-  config.frequency_resource             = frequency_resource_dist(rgen);
-  config.time_resource                  = time_resource_dist(rgen);
-  config.vrb_to_prb_mapping             = vrb_to_prb_mapping_dist(rgen);
-  config.modulation_coding_scheme       = modulation_coding_scheme_dist(rgen);
-  config.new_data_indicator             = new_data_indicator_dist(rgen);
-  config.redundancy_version             = redundancy_version_dist(rgen);
-  config.harq_process_number            = harq_process_number_dist(rgen);
-  config.tpc_command                    = tpc_command_dist(rgen);
-  config.pucch_resource_indicator       = pucch_resource_indicator_dist(rgen);
-  config.pdsch_harq_fb_timing_indicator = pdsch_harq_fb_timing_dist(rgen);
-
-  return config;
 }
 
 static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& config, const dci_payload& payload)
@@ -718,212 +781,131 @@ static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& co
   TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
 }
 
-static void test_dci_rar_packing()
+TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
 {
-  std::uniform_int_distribution<unsigned> frequency_hopping_flag_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(14) - 1);
-  std::uniform_int_distribution<unsigned> time_resource_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(4) - 1);
-  std::uniform_int_distribution<unsigned> tpc_dist(0, pow2(3) - 1);
-  std::uniform_int_distribution<unsigned> csi_request_dist(0, pow2(3) - 1);
+  for (unsigned i = 0; i != nof_repetitions; ++i) {
+    // Generate DCI format 0_0 scrambled by TC-RNTI configuration.
+    dci_0_0_tc_rnti_configuration dci0_0_tc_rnti_cfg =
+        build_dci_0_0_tc_rnti_config(aligned_sizes.format0_0_common_size);
 
-  dci_rar_configuration config    = {};
-  config.frequency_hopping_flag   = frequency_hopping_flag_dist(rgen);
-  config.frequency_resource       = frequency_resource_dist(rgen);
-  config.time_resource            = time_resource_dist(rgen);
-  config.modulation_coding_scheme = modulation_coding_scheme_dist(rgen);
-  config.tpc                      = tpc_dist(rgen);
-  config.csi_request              = csi_request_dist(rgen);
+    // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
+    dci_payload dci0_0_tc_rnti_payload = dci_0_0_tc_rnti_pack(dci0_0_tc_rnti_cfg);
 
-  dci_payload payload = dci_rar_pack(config);
+    // Test DCI format 0_0 scrambled by TC-RNTI packing.
+    test_dci_0_0_tc_rnti_packing(dci0_0_tc_rnti_cfg, dci0_0_tc_rnti_payload);
 
-  // Generate expected payload.
-  static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
+    // Check DCI payload size.
+    TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_tc_rnti_payload.size());
 
-  // Frequency hopping flag - 1 bit.
-  expected.push_back((config.frequency_hopping_flag >> 0U) & 1U);
+    // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
+    // search space.
+    dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_common =
+        build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_common_size);
 
-  // PUSCH frequency resource allocation - 14 bits.
-  expected.push_back((config.frequency_resource >> 13U) & 1U);
-  expected.push_back((config.frequency_resource >> 12U) & 1U);
-  expected.push_back((config.frequency_resource >> 11U) & 1U);
-  expected.push_back((config.frequency_resource >> 10U) & 1U);
-  expected.push_back((config.frequency_resource >> 9U) & 1U);
-  expected.push_back((config.frequency_resource >> 8U) & 1U);
-  expected.push_back((config.frequency_resource >> 7U) & 1U);
-  expected.push_back((config.frequency_resource >> 6U) & 1U);
-  expected.push_back((config.frequency_resource >> 5U) & 1U);
-  expected.push_back((config.frequency_resource >> 4U) & 1U);
-  expected.push_back((config.frequency_resource >> 3U) & 1U);
-  expected.push_back((config.frequency_resource >> 2U) & 1U);
-  expected.push_back((config.frequency_resource >> 1U) & 1U);
-  expected.push_back((config.frequency_resource >> 0U) & 1U);
+    // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+    // UE-specific search space.
+    dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_ue =
+        build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_ue_size.value());
 
-  // Time domain resource assignment - 4 bits.
-  expected.push_back((config.time_resource >> 3U) & 1U);
-  expected.push_back((config.time_resource >> 2U) & 1U);
-  expected.push_back((config.time_resource >> 1U) & 1U);
-  expected.push_back((config.time_resource >> 0U) & 1U);
+    // Generate the DCI format 0_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+    dci_payload dci0_0_c_rnti_payload_common = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_common);
+    dci_payload dci0_0_c_rnti_payload_ue     = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_ue);
 
-  // Time domain resource assignment - 4 bits.
-  expected.push_back((config.modulation_coding_scheme >> 3U) & 1U);
-  expected.push_back((config.modulation_coding_scheme >> 2U) & 1U);
-  expected.push_back((config.modulation_coding_scheme >> 1U) & 1U);
-  expected.push_back((config.modulation_coding_scheme >> 0U) & 1U);
+    // Test DCI format 0_0 scrambled by C-RNTI packing.
+    test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_common, dci0_0_c_rnti_payload_common);
+    test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_ue, dci0_0_c_rnti_payload_ue);
 
-  // Transmission power control for PUSCH - 3 bits.
-  expected.push_back((config.tpc >> 2U) & 1U);
-  expected.push_back((config.tpc >> 1U) & 1U);
-  expected.push_back((config.tpc >> 0U) & 1U);
-
-  // CSI request - 1 bit.
-  expected.push_back((config.csi_request >> 0U) & 1U);
-
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
-}
-
-int main()
-{
-  for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
-    for (unsigned dl_bwp_initial_bw : {12U, 96U, MAX_RB}) {
-      for (unsigned dl_bwp_active_bw : {12U, 96U, MAX_RB}) {
-        for (unsigned ul_bwp_initial_bw : {12U, 96U, MAX_RB}) {
-          for (unsigned ul_bwp_active_bw : {12U, 96U, MAX_RB}) {
-            dci_size_config config = {};
-
-            // Set the Bandwidth of the UL and DL, active and initial BWP.
-            config.ul_bwp_initial_bw     = ul_bwp_initial_bw;
-            config.ul_bwp_active_bw      = ul_bwp_active_bw;
-            config.dl_bwp_initial_bw     = dl_bwp_initial_bw;
-            config.dl_bwp_active_bw      = dl_bwp_active_bw;
-            config.dci_0_0_and_1_0_ue_ss = true;
-            config.dci_0_1_and_1_1_ue_ss = false;
-
-            // Perform the DCI size alignment procedure.
-            dci_sizes aligned_sizes = get_dci_sizes(config);
-
-            // Check that the computed DCI format 0_0 and 1_0 payload sizes match for common and UE-specific search
-            // sets.
-            TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
-            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
-
-            // Generate DCI format 0_0 scrambled by TC-RNTI configuration.
-            dci_0_0_tc_rnti_configuration dci0_0_tc_rnti_cfg =
-                build_dci_0_0_tc_rnti_config(aligned_sizes.format0_0_common_size);
-
-            // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
-            dci_payload dci0_0_tc_rnti_payload = dci_0_0_tc_rnti_pack(dci0_0_tc_rnti_cfg);
-
-            // Test DCI format 0_0 scrambled by TC-RNTI packing.
-            test_dci_0_0_tc_rnti_packing(dci0_0_tc_rnti_cfg, dci0_0_tc_rnti_payload);
-
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_tc_rnti_payload.size());
-
-            // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
-            // search space.
-            dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_common =
-                build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_common_size);
-
-            // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
-            // UE-specific search space.
-            dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_ue =
-                build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_ue_size.value());
-
-            // Generate the DCI format 0_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
-            dci_payload dci0_0_c_rnti_payload_common = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_common);
-            dci_payload dci0_0_c_rnti_payload_ue     = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_ue);
-
-            // Test DCI format 0_0 scrambled by C-RNTI packing.
-            test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_common, dci0_0_c_rnti_payload_common);
-            test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_ue, dci0_0_c_rnti_payload_ue);
-
-            // Check DCI payload sizes.
-            TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_c_rnti_payload_common.size());
-            TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total.value(), dci0_0_c_rnti_payload_ue.size());
-
-            // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
-            dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(config.dl_bwp_initial_bw);
-
-            // Generate the DCI format 1_0 scrambled by TC-RNTI payload.
-            dci_payload dci1_0_tc_rnti_payload = dci_1_0_tc_rnti_pack(dci1_0_tc_rnti_cfg);
-
-            // Test DCI format 1_0 scrambled by TC-RNTI packing.
-            test_dci_1_0_tc_rnti_packing(dci1_0_tc_rnti_cfg, dci1_0_tc_rnti_payload);
-
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_tc_rnti_payload.size());
-
-            // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
-            // UE-specific search space.
-            dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
-                build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_ue_size.value());
-
-            // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
-            // common search space.
-            dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
-                build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_common_size);
-
-            // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
-            dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
-            dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
-
-            // Test DCI format 1_0 scrambled by C-RNTI packing.
-            test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_common, dci1_0_c_rnti_payload_common);
-            test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_ue, dci1_0_c_rnti_payload_ue);
-
-            // Check DCI payload sizes.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_c_rnti_payload_common.size());
-            TESTASSERT_EQ(aligned_sizes.format1_0_ue_size.value().total.value(), dci1_0_c_rnti_payload_ue.size());
-
-            for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
-                 {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
-                  dci_1_0_p_rnti_configuration::payload_info::short_messages,
-                  dci_1_0_p_rnti_configuration::payload_info::both}) {
-              // Generate the DCI format 1_0 scrambled by P-RNTI configuration.
-              dci_1_0_p_rnti_configuration dci1_0_p_rnti_cfg =
-                  build_dci_1_0_p_rnti_config(config.dl_bwp_initial_bw, short_messages_indicator);
-
-              // Generate the DCI format 1_0 scrambled by P-RNTI payload.
-              dci_payload dci1_0_p_rnti_payload = dci_1_0_p_rnti_pack(dci1_0_p_rnti_cfg);
-
-              // Test DCI format 1_0 scrambled by P-RNTI packing.
-              test_dci_1_0_p_rnti_packing(dci1_0_p_rnti_cfg, dci1_0_p_rnti_payload);
-
-              // Check DCI payload size.
-              TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_p_rnti_payload.size());
-            }
-
-            // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
-            dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(config.dl_bwp_initial_bw);
-
-            // Generate the DCI format 1_0 scrambled by SI-RNTI payload.
-            dci_payload dci1_0_si_rnti_payload = dci_1_0_si_rnti_pack(dci1_0_si_rnti_cfg);
-
-            // Test DCI format 1_0 scrambled by SI-RNTI packing.
-            test_dci_1_0_si_rnti_packing(dci1_0_si_rnti_cfg, dci1_0_si_rnti_payload);
-
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_si_rnti_payload.size());
-
-            // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
-            dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(config.dl_bwp_initial_bw);
-
-            // Generate the DCI format 1_0 scrambled by RA-RNTI payload.
-            dci_payload dci1_0_ra_rnti_payload = dci_1_0_ra_rnti_pack(dci1_0_ra_rnti_cfg);
-
-            // Test DCI format 1_0 scrambled by RA-RNTI packing.
-            test_dci_1_0_ra_rnti_packing(dci1_0_ra_rnti_cfg, dci1_0_ra_rnti_payload);
-
-            // Check DCI payload size.
-            TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_ra_rnti_payload.size());
-          }
-        }
-      }
-    }
-    // Test DCI RAR packing.
-    test_dci_rar_packing();
+    // Check DCI payload sizes.
+    TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_c_rnti_payload_common.size());
+    TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total.value(), dci0_0_c_rnti_payload_ue.size());
   }
-  return 0;
 }
+
+TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
+{
+  for (unsigned i = 0; i != nof_repetitions; ++i) {
+    // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
+    dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(dci_config.dl_bwp_initial_bw);
+
+    // Generate the DCI format 1_0 scrambled by TC-RNTI payload.
+    dci_payload dci1_0_tc_rnti_payload = dci_1_0_tc_rnti_pack(dci1_0_tc_rnti_cfg);
+
+    // Test DCI format 1_0 scrambled by TC-RNTI packing.
+    test_dci_1_0_tc_rnti_packing(dci1_0_tc_rnti_cfg, dci1_0_tc_rnti_payload);
+
+    // Check DCI payload size.
+    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_tc_rnti_payload.size());
+
+    // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+    // UE-specific search space.
+    dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
+        build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_ue_size.value());
+
+    // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+    // common search space.
+    dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
+        build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_common_size);
+
+    // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+    dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
+    dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
+
+    // Test DCI format 1_0 scrambled by C-RNTI packing.
+    test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_common, dci1_0_c_rnti_payload_common);
+    test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_ue, dci1_0_c_rnti_payload_ue);
+
+    // Check DCI payload sizes.
+    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_c_rnti_payload_common.size());
+    TESTASSERT_EQ(aligned_sizes.format1_0_ue_size.value().total.value(), dci1_0_c_rnti_payload_ue.size());
+
+    for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
+         {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
+          dci_1_0_p_rnti_configuration::payload_info::short_messages,
+          dci_1_0_p_rnti_configuration::payload_info::both}) {
+      // Generate the DCI format 1_0 scrambled by P-RNTI configuration.
+      dci_1_0_p_rnti_configuration dci1_0_p_rnti_cfg =
+          build_dci_1_0_p_rnti_config(dci_config.dl_bwp_initial_bw, short_messages_indicator);
+
+      // Generate the DCI format 1_0 scrambled by P-RNTI payload.
+      dci_payload dci1_0_p_rnti_payload = dci_1_0_p_rnti_pack(dci1_0_p_rnti_cfg);
+
+      // Test DCI format 1_0 scrambled by P-RNTI packing.
+      test_dci_1_0_p_rnti_packing(dci1_0_p_rnti_cfg, dci1_0_p_rnti_payload);
+
+      // Check DCI payload size.
+      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_p_rnti_payload.size());
+    }
+
+    // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
+    dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(dci_config.dl_bwp_initial_bw);
+
+    // Generate the DCI format 1_0 scrambled by SI-RNTI payload.
+    dci_payload dci1_0_si_rnti_payload = dci_1_0_si_rnti_pack(dci1_0_si_rnti_cfg);
+
+    // Test DCI format 1_0 scrambled by SI-RNTI packing.
+    test_dci_1_0_si_rnti_packing(dci1_0_si_rnti_cfg, dci1_0_si_rnti_payload);
+
+    // Check DCI payload size.
+    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_si_rnti_payload.size());
+
+    // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
+    dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(dci_config.dl_bwp_initial_bw);
+
+    // Generate the DCI format 1_0 scrambled by RA-RNTI payload.
+    dci_payload dci1_0_ra_rnti_payload = dci_1_0_ra_rnti_pack(dci1_0_ra_rnti_cfg);
+
+    // Test DCI format 1_0 scrambled by RA-RNTI packing.
+    test_dci_1_0_ra_rnti_packing(dci1_0_ra_rnti_cfg, dci1_0_ra_rnti_payload);
+
+    // Check DCI payload size.
+    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_ra_rnti_payload.size());
+  }
+}
+
+// Creates test suite that combines all possible parameters.
+INSTANTIATE_TEST_SUITE_P(DciPacking,
+                         DciFallbackPackingFixture,
+                         ::testing::Combine(::testing::Values(12, 96, MAX_RB),
+                                            ::testing::Values(12, 96, MAX_RB),
+                                            ::testing::Values(12, 96, MAX_RB),
+                                            ::testing::Values(12, 96, MAX_RB)));

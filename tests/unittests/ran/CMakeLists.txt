@@ -18,7 +18,7 @@ target_link_libraries(test_ssb_coreset0_freq_pos_generator srsran_support du_tes
 add_test(test_ssb_coreset0_freq_pos_generator test_ssb_coreset0_freq_pos_generator)
 
 add_executable(dci_packing_test pdcch/dci_packing_test.cpp)
-target_link_libraries(dci_packing_test srsran_support srsran_ran)
+target_link_libraries(dci_packing_test srsran_support srsran_ran gtest gtest_main)
 add_test(dci_packing_test dci_packing_test)
 
 add_executable(pdcch_candidates_common pdcch/pdcch_candidates_common_test.cpp)
