@@ -15,7 +15,7 @@
 
 namespace srsran {
 
-class mac_common_config_t;
+struct mac_common_config_t;
 class mac_scheduler_configurator;
 
 class mac_ue_reconfiguration_procedure

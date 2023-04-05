@@ -105,7 +105,7 @@ void ue_configuration_procedure::update_ue_context()
       continue;
     }
     if (ue->bearers.drbs().count(drbtoadd.drb_id) > 0) {
-      logger.warning("Failed to Motify DRB-Id={}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
+      logger.warning("Failed to Modify DRB-Id={}. Cause: DRB modifications not supported.", drbtoadd.drb_id);
       continue;
     }
 
