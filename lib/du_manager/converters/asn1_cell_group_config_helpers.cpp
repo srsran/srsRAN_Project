@@ -230,7 +230,8 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
     out.dmrs_type_present = true;
   }
 
-  if (cfg.additional_positions.has_value()) {
+  if (cfg.additional_positions.has_value() &&
+      cfg.additional_positions.value() != srsran::dmrs_additional_positions::pos2) {
     out.dmrs_add_position_present = true;
     switch (cfg.additional_positions.value()) {
       case dmrs_additional_positions::pos0:
