@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "3"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -63,7 +63,7 @@ stages:
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: "False"
     PLATFORM: "amd64"
-    PROJECT: "testing-tools"
+    PROJECT: "ci/tools"
     # CI
     DOCKER_BUILDER_VERSION: "1.7.7"
     UPLOAD_ARTIFACTS: "" # Empty by default

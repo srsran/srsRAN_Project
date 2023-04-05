@@ -13,13 +13,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "3"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "3"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "3"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/e2e.yml
@@ -354,3 +354,40 @@ promote code:
     - git rebase ${CI_COMMIT_SHA}
     - git push
   dependencies: []
+
+################################################################################
+# Enable / Disable pipelines
+################################################################################
+scheduler:
+  # Override default scheduler job
+  # Enabling branches on default_branch will also apply any change done
+  stage: ci
+  extends: .enable-schedule-by-branch
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+  variables:
+    ENABLE: "true"
+    BRANCH: $CI_COMMIT_BRANCH
+
+disable current schedule:
+  stage: .post
+  extends: .enable-schedule-by-description
+  rules:
+    - if: $GRADUATION_BRANCH
+      when: always
+  variables:
+    ENABLE: "false"
+    BRANCH: $CI_COMMIT_REF_NAME
+    DESCRIPTION: $CI_DESCRIPTION
+
+enable schedule on graduation branch:
+  stage: .post
+  extends: .enable-schedule-by-branch
+  rules:
+    - if: $GRADUATION_BRANCH
+  variables:
+    ENABLE: "true"
+    BRANCH: $GRADUATION_BRANCH
+  needs:
+    - job: promote code
+      artifacts: false
