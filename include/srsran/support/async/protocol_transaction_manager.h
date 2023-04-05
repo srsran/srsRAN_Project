@@ -156,7 +156,7 @@ public:
 
   /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and
   /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
-  void subscribe_to(event_source_type& publisher, unsigned time_to_cancel)
+  void subscribe_to(event_source_type& publisher, std::chrono::milliseconds time_to_cancel)
   {
     observer.subscribe_to(publisher, time_to_cancel, transaction_timeout{});
   }
