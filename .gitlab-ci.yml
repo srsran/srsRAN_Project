@@ -49,7 +49,7 @@ include-guards:
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
 .codechecker:
-  image: $CR_REGISTRY_URI/testing-tools/codechecker-gnb:1.0.3
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
   stage: static
   needs: []
   tags:
@@ -213,7 +213,7 @@ unit coverage:
   stage: documentation
   extends: .depends on unit test jobs
   image:
-    name: $CR_REGISTRY_URI/testing-tools/report-generator:5.1.10
+    name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   variables:
     GIT_STRATEGY: none
@@ -276,7 +276,7 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.5.0
   script:
     - ls
     - ls zmq

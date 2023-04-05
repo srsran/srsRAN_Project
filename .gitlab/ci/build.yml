@@ -17,7 +17,7 @@ stages:
 # Template job
 
 .build_and_unit:
-  image: ${CR_REGISTRY_URI}/${PROJECT}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
@@ -63,7 +63,6 @@ stages:
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: "False"
     PLATFORM: "amd64"
-    PROJECT: "ci/tools"
     # CI
     DOCKER_BUILDER_VERSION: "1.7.7"
     UPLOAD_ARTIFACTS: "" # Empty by default
