@@ -90,8 +90,8 @@ public:
     // However, the tested UEs only support k1 >= 4.
     static constexpr std::array<uint8_t, 5> dl_data_to_ul_ack_f1_0 = {4, 5, 6, 7, 8};
     const auto&                             pucch_cfg              = *cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
-    auto                                    asd                    = span<const uint8_t>{dl_data_to_ul_ack_f1_0};
-    return pucch_cfg.dl_data_to_ul_ack.empty() ? asd : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
+    return pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
+                                               : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
   }
 
 private:

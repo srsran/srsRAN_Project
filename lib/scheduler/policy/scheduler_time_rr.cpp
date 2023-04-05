@@ -159,6 +159,12 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
+        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+        // the first transmission.
+        if (is_retx and pdsch.symbols.length() != h->last_alloc_params().nof_symbols) {
+          continue;
+        }
+
         const cell_slot_resource_grid& grid      = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
         const prb_bitmap               used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
 
@@ -253,7 +259,12 @@ static bool alloc_ul_ue(const ue&                    u,
         const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;
         const unsigned   start_ul_symbols =
             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
-        if (cell_cfg_common.is_ul_enabled(pusch_slot) and pusch_list[time_res].symbols.start() >= start_ul_symbols) {
+        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+        // the first transmission.
+        const bool sym_length_match_prev_grant_for_rext =
+            is_retx ? pusch_list[time_res].symbols.length() != h->last_tx_params().nof_symbols : true;
+        if (cell_cfg_common.is_ul_enabled(pusch_slot) and pusch_list[time_res].symbols.start() >= start_ul_symbols and
+            sym_length_match_prev_grant_for_rext) {
           // UL needs to be active for PUSCH in this slot.
           break;
         }

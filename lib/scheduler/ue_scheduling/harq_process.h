@@ -217,6 +217,7 @@ public:
 
     dci_dl_rnti_config_type                                 dci_cfg_type;
     prb_grant                                               prbs;
+    unsigned                                                nof_symbols;
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
   };
 
@@ -276,6 +277,7 @@ public:
     pusch_mcs_table         mcs_table;
     sch_mcs_index           mcs;
     unsigned                tbs_bytes;
+    unsigned                nof_symbols;
   };
 
   using base_type::transport_block;

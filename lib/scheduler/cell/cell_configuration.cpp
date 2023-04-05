@@ -49,10 +49,14 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
     for (unsigned slot_period_idx = 0; slot_period_idx < dl_enabled_slot_lst.size(); ++slot_period_idx) {
       dl_enabled_slot_lst[slot_period_idx]     = has_active_tdd_dl_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
       ul_enabled_slot_lst[slot_period_idx]     = has_active_tdd_ul_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
-      dl_symbols_per_slot_lst[slot_period_idx] = nof_active_symbols(
-          *msg.tdd_ul_dl_cfg_common, slot_period_idx, dl_cfg_common.init_dl_bwp.generic_params.cp_extended, true);
-      ul_symbols_per_slot_lst[slot_period_idx] = nof_active_symbols(
-          *msg.tdd_ul_dl_cfg_common, slot_period_idx, ul_cfg_common.init_ul_bwp.generic_params.cp_extended, false);
+      dl_symbols_per_slot_lst[slot_period_idx] =
+          get_active_tdd_dl_symbols(
+              *msg.tdd_ul_dl_cfg_common, slot_period_idx, dl_cfg_common.init_dl_bwp.generic_params.cp_extended)
+              .length();
+      ul_symbols_per_slot_lst[slot_period_idx] =
+          get_active_tdd_ul_symbols(
+              *msg.tdd_ul_dl_cfg_common, slot_period_idx, ul_cfg_common.init_ul_bwp.generic_params.cp_extended)
+              .length();
       fully_dl_enabled_slot_lst[slot_period_idx] =
           dl_enabled_slot_lst[slot_period_idx] > 0 and
           dl_symbols_per_slot_lst[slot_period_idx] == (dl_cfg_common.init_dl_bwp.generic_params.cp_extended

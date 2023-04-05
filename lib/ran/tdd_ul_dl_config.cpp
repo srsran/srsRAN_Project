@@ -13,8 +13,8 @@
 
 using namespace srsran;
 
-unsigned
-srsran::nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended, bool is_dl)
+static unsigned
+nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended, bool is_dl)
 {
   const unsigned period_slots = nof_slots_per_tdd_period(cfg);
 

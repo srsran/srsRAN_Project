@@ -206,16 +206,6 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
       ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 7};
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 5};
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -272,7 +262,8 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {get_pusch_res(4)};
   } else {
     // TDD
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {get_pusch_res(4), get_pusch_res(5), get_pusch_res(6)};
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
+        get_pusch_res(4), get_pusch_res(5), get_pusch_res(6), get_pusch_res(7)};
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
