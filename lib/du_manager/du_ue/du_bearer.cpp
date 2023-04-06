@@ -95,10 +95,12 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
-  f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(ue_index,
-                                                              drb->dluptnl_info_list[0].gtp_teid.value(),
-                                                              drb->uluptnl_info_list[0].gtp_teid.value(),
-                                                              drb->connector.f1u_rx_sdu_notif);
+  f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
+      ue_index,
+      drb->dluptnl_info_list[0].gtp_teid.value(),
+      drb->uluptnl_info_list[0].gtp_teid.value(),
+      drb->connector.f1u_rx_sdu_notif,
+      timer_factory{du_params.services.timers, du_params.services.ue_execs.executor(ue_index)});
   if (f1u_drb == nullptr) {
     // Failed to connect F1-U bearer to CU-UP.
     return nullptr;

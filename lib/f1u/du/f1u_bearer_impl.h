@@ -15,6 +15,7 @@
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_du {
@@ -28,7 +29,8 @@ public:
   f1u_bearer_impl(uint32_t             ue_index,
                   drb_id_t             drb_id_,
                   f1u_rx_sdu_notifier& rx_sdu_notifier_,
-                  f1u_tx_pdu_notifier& tx_pdu_notifier_);
+                  f1u_tx_pdu_notifier& tx_pdu_notifier_,
+                  timer_factory        timers);
 
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -39,10 +41,25 @@ public:
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override;
   void handle_pdu(nru_dl_message msg) override;
 
+  void on_expired_ul_notif_timer();
+
 private:
   f1u_bearer_logger    logger;
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
+
+  /// Uplink notification timer that triggers periodic reports of highest delivered/transmitted PDCP SN towards upper
+  /// layers. The purpose of this timer is to avoid excessive uplink notifications for every PDCP SN that is notified by
+  /// lower layers.
+  unique_timer ul_notif_timer;
+  /// Holds the most recent highest transmitted PDCP SN that is frequently updated by lower layers (i.e. by RLC AM/UM)
+  std::atomic<uint32_t> highest_transmitted_pdcp_sn;
+  /// Holds the most recent highest delivered PDCP SN that is frequently updated by lower layers (i.e. by RLC AM)
+  std::atomic<uint32_t> highest_delivered_pdcp_sn;
+  /// Holds the last highest transmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
+  uint32_t notif_highest_transmitted_pdcp_sn = 0;
+  /// Holds the last highest delivered PDCP SN that was reported to upper layers (i.e. towards CU-UP)
+  uint32_t notif_highest_delivered_pdcp_sn = 0;
 };
 
 } // namespace srs_du

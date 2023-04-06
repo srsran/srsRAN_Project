@@ -17,9 +17,16 @@ using namespace srs_du;
 f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
                                  drb_id_t             drb_id_,
                                  f1u_rx_sdu_notifier& rx_sdu_notifier_,
-                                 f1u_tx_pdu_notifier& tx_pdu_notifier_) :
-  logger("F1-U", {ue_index, drb_id_}), rx_sdu_notifier(rx_sdu_notifier_), tx_pdu_notifier(tx_pdu_notifier_)
+                                 f1u_tx_pdu_notifier& tx_pdu_notifier_,
+                                 timer_factory        timers) :
+  logger("F1-U", {ue_index, drb_id_}),
+  rx_sdu_notifier(rx_sdu_notifier_),
+  tx_pdu_notifier(tx_pdu_notifier_),
+  ul_notif_timer(timers.create_timer()),
+  highest_transmitted_pdcp_sn(0),
+  highest_delivered_pdcp_sn(0)
 {
+  ul_notif_timer.set(std::chrono::milliseconds(35), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
@@ -75,3 +82,5 @@ void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
   msg.data_delivery_status           = std::move(status);
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
+
+void f1u_bearer_impl::on_expired_ul_notif_timer() {}

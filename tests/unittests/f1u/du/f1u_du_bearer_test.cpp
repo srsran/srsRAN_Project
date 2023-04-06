@@ -10,6 +10,7 @@
 
 #include "lib/f1u/du/f1u_bearer_impl.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
 
@@ -63,7 +64,7 @@ protected:
     logger.info("Creating F1-U bearer");
     tester          = std::make_unique<f1u_du_test_frame>();
     drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(0, drb_id, *tester, *tester);
+    f1u             = std::make_unique<f1u_bearer_impl>(0, drb_id, *tester, *tester, timer_factory{timers, ue_worker});
   }
 
   void TearDown() override
@@ -72,7 +73,15 @@ protected:
     srslog::flush();
   }
 
+  void tick()
+  {
+    timers.tick();
+    ue_worker.run_pending_tasks();
+  }
+
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
+  timer_manager                      timers;
+  manual_task_worker                 ue_worker{128};
   std::unique_ptr<f1u_du_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>   f1u;
 };
