@@ -368,6 +368,7 @@ scheduler:
   variables:
     ENABLE: "true"
     BRANCH: $CI_COMMIT_BRANCH
+  dependencies: []
 
 disable current schedule:
   stage: .post
@@ -379,6 +380,7 @@ disable current schedule:
     ENABLE: "false"
     BRANCH: $CI_COMMIT_REF_NAME
     DESCRIPTION: $CI_DESCRIPTION
+  dependencies: []
 
 enable schedule on graduation branch:
   stage: .post
@@ -391,3 +393,4 @@ enable schedule on graduation branch:
   needs:
     - job: promote code
       artifacts: false
+  dependencies: []

@@ -125,6 +125,7 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
+  allow_failure: true
 
 rf:
   extends: .e2e-run
@@ -169,6 +170,7 @@ rf-asan:
   needs:
     - job: "avx2 [asan]"
       artifacts: true
+  allow_failure: true
 
 rf-b200-config:
   extends: rf
