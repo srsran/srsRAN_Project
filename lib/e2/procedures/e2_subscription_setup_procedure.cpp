@@ -23,10 +23,8 @@ e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_noti
 void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_)
 {
   logger.info("E2AP: Received subscription request");
-  sub_notif.handle_subscription(request_);
-
   e2_subscribe_reponse_message response;
-  sub_notif.get_subscription_result(response, request_->ri_crequest_id.value);
+  response = sub_notif.handle_subscription_setup(request_);
   if (response.success) {
     send_e2_subscription_setup_response(response);
   } else {

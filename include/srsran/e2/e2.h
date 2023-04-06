@@ -108,13 +108,7 @@ public:
   virtual ~e2_subscriber() = default;
 
   /// \brief Handle the incoming subscription message.
-  virtual void handle_subscription(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
-
-  /// @brief providing the result of the subscription request
-  /// @param outcome  the result of the subscription request
-  /// @param request_id the request id of the subscription request
-  virtual void get_subscription_result(e2_subscribe_reponse_message& outcome,
-                                       asn1::e2ap::ri_crequest_id_s  request_id) = 0;
+  virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
 };
 
 } // namespace srsran
