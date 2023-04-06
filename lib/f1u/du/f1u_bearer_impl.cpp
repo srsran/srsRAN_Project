@@ -23,8 +23,8 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   ul_notif_timer(timers.create_timer()),
-  highest_transmitted_pdcp_sn(0),
-  highest_delivered_pdcp_sn(0)
+  highest_transmitted_pdcp_sn(unset_pdcp_sn),
+  highest_delivered_pdcp_sn(unset_pdcp_sn)
 {
   ul_notif_timer.set(std::chrono::milliseconds(35), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
 }
@@ -65,22 +65,65 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
-  logger.log_debug("Notifying highest transmitted pdcp_sn={}", highest_pdcp_sn);
-  nru_dl_data_delivery_status status = {};
-  status.highest_transmitted_pdcp_sn = highest_pdcp_sn;
-  nru_ul_message msg                 = {};
-  msg.data_delivery_status           = std::move(status);
+  logger.log_debug("Storing highest transmitted pdcp_sn={}", highest_pdcp_sn);
+  highest_transmitted_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
+
+  // TODO: remove code below
+  nru_ul_message msg = {};
+  fill_data_delivery_status(msg);
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
-  logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", highest_pdcp_sn);
-  nru_dl_data_delivery_status status = {};
-  status.highest_delivered_pdcp_sn   = highest_pdcp_sn;
-  nru_ul_message msg                 = {};
-  msg.data_delivery_status           = std::move(status);
+  logger.log_debug("Storing highest successfully delivered pdcp_sn={}", highest_pdcp_sn);
+  highest_delivered_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
+
+  // TODO: remove code below
+  nru_ul_message msg = {};
+  fill_data_delivery_status(msg);
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
-void f1u_bearer_impl::on_expired_ul_notif_timer() {}
+bool f1u_bearer_impl::fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status)
+{
+  uint32_t cur_highest_transmitted_pdcp_sn = highest_transmitted_pdcp_sn.load(std::memory_order_relaxed);
+  if (cur_highest_transmitted_pdcp_sn != notif_highest_transmitted_pdcp_sn) {
+    logger.log_debug("Adding highest transmitted pdcp_sn={}", cur_highest_transmitted_pdcp_sn);
+    notif_highest_transmitted_pdcp_sn  = cur_highest_transmitted_pdcp_sn;
+    status.highest_transmitted_pdcp_sn = cur_highest_transmitted_pdcp_sn;
+    return true;
+  }
+  return false;
+}
+
+bool f1u_bearer_impl::fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status& status)
+{
+  uint32_t cur_highest_delivered_pdcp_sn = highest_delivered_pdcp_sn.load(std::memory_order_relaxed);
+  if (cur_highest_delivered_pdcp_sn != notif_highest_delivered_pdcp_sn) {
+    logger.log_debug("Adding highest delivered pdcp_sn={}", cur_highest_delivered_pdcp_sn);
+    notif_highest_delivered_pdcp_sn  = cur_highest_delivered_pdcp_sn;
+    status.highest_delivered_pdcp_sn = cur_highest_delivered_pdcp_sn;
+    return true;
+  }
+  return false;
+}
+
+void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
+{
+  nru_dl_data_delivery_status status         = {};
+  bool                        status_changed = false;
+
+  status_changed |= fill_highest_transmitted_pdcp_sn(status);
+  status_changed |= fill_highest_delivered_pdcp_sn(status);
+
+  if (status_changed) {
+    logger.log_debug("Adding data delivery status to NR-U message");
+    msg.data_delivery_status = std::move(status);
+  }
+}
+
+void f1u_bearer_impl::on_expired_ul_notif_timer()
+{
+  // TODO
+}

@@ -48,6 +48,9 @@ private:
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
 
+  /// Sentinel value representing a not-yet set PDCP SN
+  static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;
+
   /// Uplink notification timer that triggers periodic reports of highest delivered/transmitted PDCP SN towards upper
   /// layers. The purpose of this timer is to avoid excessive uplink notifications for every PDCP SN that is notified by
   /// lower layers.
@@ -57,9 +60,13 @@ private:
   /// Holds the most recent highest delivered PDCP SN that is frequently updated by lower layers (i.e. by RLC AM)
   std::atomic<uint32_t> highest_delivered_pdcp_sn;
   /// Holds the last highest transmitted PDCP SN that was reported to upper layers (i.e. towards CU-UP)
-  uint32_t notif_highest_transmitted_pdcp_sn = 0;
+  uint32_t notif_highest_transmitted_pdcp_sn = unset_pdcp_sn;
   /// Holds the last highest delivered PDCP SN that was reported to upper layers (i.e. towards CU-UP)
-  uint32_t notif_highest_delivered_pdcp_sn = 0;
+  uint32_t notif_highest_delivered_pdcp_sn = unset_pdcp_sn;
+
+  bool fill_highest_transmitted_pdcp_sn(nru_dl_data_delivery_status& status);
+  bool fill_highest_delivered_pdcp_sn(nru_dl_data_delivery_status& status);
+  void fill_data_delivery_status(nru_ul_message& msg);
 };
 
 } // namespace srs_du
