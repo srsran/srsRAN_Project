@@ -33,7 +33,13 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 {
   logger.log_debug("F1-U bearer received SDU with size={}", sdu.length());
   nru_ul_message msg = {};
-  msg.t_pdu          = std::move(sdu);
+
+  // attach the SDU
+  msg.t_pdu = std::move(sdu);
+
+  // attach data delivery status (if anything has changed)
+  fill_data_delivery_status(msg);
+
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
