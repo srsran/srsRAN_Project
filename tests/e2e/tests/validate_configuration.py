@@ -19,8 +19,8 @@ B200_CONFIG_FILE: str = "configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 def test_rf_b200_config(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    gnb: GNBStub,
     epc: EPCStub,
+    gnb: GNBStub,
     timeout: int = RF_MAX_TIMEOUT,
 ):
     """

@@ -23,7 +23,7 @@ include:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.5
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.8
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -125,7 +125,6 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
-  allow_failure: true
 
 rf:
   extends: .e2e-run
@@ -159,7 +158,6 @@ rf-tsan:
     - job: "avx2 [tsan, clean]"
       artifacts: true
       optional: true
-  allow_failure: true
 
 rf-asan:
   extends: rf
@@ -170,7 +168,6 @@ rf-asan:
   needs:
     - job: "avx2 [asan]"
       artifacts: true
-  allow_failure: true
 
 rf-b200-config:
   extends: rf

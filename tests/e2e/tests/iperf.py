@@ -70,8 +70,8 @@ def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: UEStub,  # pylint: disable=invalid-name
-    gnb: GNBStub,
     epc: EPCStub,
+    gnb: GNBStub,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -124,8 +124,8 @@ def test_rf_udp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: UEStub,  # pylint: disable=invalid-name
-    gnb: GNBStub,
     epc: EPCStub,
+    gnb: GNBStub,
     band: int,
     common_scs: int,
     bandwidth: int,
@@ -160,8 +160,8 @@ def _iperf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: UEStub,  # pylint: disable=invalid-name
-    gnb: GNBStub,
     epc: EPCStub,
+    gnb: GNBStub,
     band: int,
     common_scs: int,
     bandwidth: int,
