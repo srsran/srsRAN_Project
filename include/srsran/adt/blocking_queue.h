@@ -294,7 +294,6 @@ protected:
     if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(t);
-      lock.unlock();
       cvar_empty.notify_one();
       return true;
     }
@@ -308,7 +307,6 @@ protected:
     if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(std::move(t));
-      lock.unlock();
       cvar_empty.notify_one();
       return {};
     }
@@ -333,7 +331,6 @@ protected:
         ++it;
       }
       count += n;
-      lock.unlock();
       cvar_empty.notify_one();
     }
     return count;
@@ -382,7 +379,6 @@ protected:
       obj = std::move(ring_buf.top());
       pop_func(obj);
       ring_buf.pop();
-      lock.unlock();
       cvar_full.notify_one();
       return result::success;
     }
@@ -431,7 +427,6 @@ protected:
       ring_buf.pop();
     }
     if (notify_needed) {
-      lock.unlock();
       cvar_full.notify_one();
     }
     return ret;
