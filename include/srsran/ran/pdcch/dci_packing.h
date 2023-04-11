@@ -32,11 +32,10 @@ enum class dynamic_resource_allocation { type_0, type_1 };
 
 /// \brief Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
 /// \remark See TS38.214, Section 6.1.1.1.
-enum class codebook_subset : unsigned {
+enum class tx_scheme_codebook_subset : unsigned {
   fully_and_partial_and_non_coherent,
   partial_and_non_coherent,
-  non_coherent,
-  not_set
+  non_coherent
 };
 
 /// \brief DCI configuration parameters required to perform the DCI size alignment procedure.
@@ -60,13 +59,15 @@ struct dci_size_config {
   /// by altering the size of the frequency domain resource assignment field.
   /// @{
 
-  /// \brief Indicates if the UE is expected to monitor fallback DCI formats on a UE-specific Search Space.
-  /// \remark Set to \c false to exclude from the DCI size alignment procedure. The payload size for this DCI and SS
-  /// configuration will not be computed, preventing DCI packing.
+  /// \brief Flag for fallback DCI formats on a UE-specific Search Space.
+  ///
+  /// Set to \c true if the UE is expected to monitor fallback DCI formats on a UE-specific Search Space. If set to \c
+  /// false, the payload size for this DCI and SS configuration will not be computed, preventing DCI packing.
   bool dci_0_0_and_1_0_ue_ss;
-  /// \brief Indicates if the UE is expected to monitor non-fallback DCI formats on a UE-specific Search Space.
-  /// \remark Set to \c false to exclude from the DCI size alignment procedure. The payload size for this DCI and SS
-  /// configuration will not be computed, preventing DCI packing.
+  /// \brief Flag for non-fallback DCI formats on a UE-specific Search Space.
+  ///
+  /// Set to \c true if the UE is expected to monitor non-fallback DCI formats on a UE-specific Search Space. If set to
+  /// \c false, the payload size for this DCI and SS configuration will not be computed, preventing DCI packing.
   bool dci_0_1_and_1_1_ue_ss;
   /// @}
 
@@ -88,78 +89,103 @@ struct dci_size_config {
   /// \name Common parameters for DCI formats 0_1 and 1_1.
   /// @{
 
-  /// \brief Indicates if cross carrier scheduling is configured.
-  /// \remark Set to \c true if the UE is configured with the higher layer parameter \e CrossCarrierSchedulingConfig
-  /// (see TS38.331 Section 6.3.2 &mdash; Information Element \e ServingCellConfig), as per TS38.212 Section 7.3.1.1.2.
+  /// \brief Cross carrier scheduling flag.
+  ///
+  /// Set to \c true if cross carrier scheduling is configured, i.e., if the UE is configured with the higher layer
+  /// parameter \e CrossCarrierSchedulingConfig (see TS38.331 Section 6.3.2, Information Element \e ServingCellConfig),
+  /// as per TS38.212 Section 7.3.1.1.2.
   bool cross_carrier_configured;
-  /// \brief Indicates if supplementary uplink is configured.
-  /// \remark Set to \c true if the UE is configured with the higher layer parameter \e supplementaryUplink (see
-  /// TS38.331 Section 6.3.2 &mdash; Information Element \e ServingCellConfig) and more than a single carrier in the
-  /// cell is configured for PUSCH transmission.
+  /// \brief Supplementary uplink flag.
+  ///
+  /// Set to \c true if supplementary uplink is configured, i.e., if the UE is configured with the higher layer
+  /// parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information Element \e ServingCellConfig) and more
+  /// than a single carrier in the cell is configured for PUSCH transmission.
   bool sul_configured;
   /// \brief PDSCH HARQ-ACK codebook type.
-  /// \remark Set according to the higher layer parameter \e pdsch-HARQ-ACK-Codebook (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e PhysicalCellGroupConfig).
+  ///
+  /// Set according to the higher layer parameter \e pdsch-HARQ-ACK-Codebook (see TS38.331 Section 6.3.2, Information
+  /// Element \e PhysicalCellGroupConfig).
   pdsch_harq_ack_codebook pdsch_harq_ack_cb;
   /// @}
 
   /// \name Parameters for DCI format 0_1.
   /// @{
 
-  /// Number of antenna ports used by the UE for PUSCH transmission. Values: {1, 2, 4}.
-  unsigned nof_antenna_ports;
   /// \brief parameter \f$n_{BWP,RRC}\f$ for DCI format 0_1, in TS38.212 Section 7.3.1.1.2.
-  /// \remark Set to the number of UL BWPs configured by higher layers, excluding the initial UL BWP.
+  ///
+  /// Set to the number of UL BWPs configured by higher layers, excluding the initial UL BWP.
   unsigned nof_ul_bwp_rrc;
   /// \brief parameter \f$I\f$ in TS38.212 Section 7.3.1.1.2.
   ///
-  /// Set to either:
-  ///   - The number of entries in the higher layer parameter \e pusch-TimeDomainAllocationList (see TS38.331 Section
-  ///     6.3.2 &mdash; Information Elements \e PUSCH-Config), if configured.
-  ///   - Otherwise, the number of entries in the default table (see TS38.214 Table 6.1.2.1.1-2).
+  /// As defined in TS38.214 Table 6.1.2.1.1-1, set to either:
+  ///   - The number of entries in the higher layer parameter \e pusch-TimeDomainAllocationList via the RRC Information
+  ///     Element \e PUSCH-Config (see TS38.331 Section 6.3.2), if configured.
+  ///   - The number of entries in the higher layer parameter \e pusch-TimeDomainAllocationList via the RRC Information
+  ///     Element \e PUSCH-ConfigCommon (see TS38.331 Section 6.3.2), if it is configured in \e PUSCH-ConfigCommon and
+  ///     not configured in \e PUSCH-Config.
+  ///   - 16 otherwise, which is the number of entries in the default table (see TS38.214 Table 6.1.2.1.1-2).
   unsigned nof_ul_time_domain_res;
   /// \brief Size of the CSI request DCI field. See TS38.214 Section 5.2.1.5.1.
-  /// \remark Indicated by the higher layer parameter \e reportTriggerSize (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e CSI-Measconfig).
-  unsigned report_trigger_size;
-  /// \brief Indicates if PUSCH frequency hopping is configured.
-  /// \remark set to \c true if the higher layer parameter \e frequencyHopping (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e PUSCH-Config) is configured.
-  bool frequency_hopping_configured;
-  /// \brief Indicates if non-codebook based transmission is configured.
   ///
-  /// Set to \c true if the higher layer parameter \e txConfig (see TS38.331 Section 6.3.2 &mdash; Information Element
-  /// \e PUSCH-Config) is set for non-codebook transmission.
+  /// Set according to the higher layer parameter \e reportTriggerSize (see TS38.331 Section 6.3.2, Information Element
+  /// \e CSI-Measconfig).
+  unsigned report_trigger_size;
+  /// \brief PUSCH frequency hopping flag.
+  ///
+  /// Set to \c true if PUSCH frequency hopping is configured, i.e., if the higher layer parameter \e frequencyHopping
+  /// (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) is configured.
+  bool frequency_hopping_configured;
+  /// \brief Non-codebook based transmission flag.
+  ///
+  /// Set to \c true if non-codebook based transmission is configured, i.e., if the higher layer parameter \e txConfig
+  /// (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) is set for non-codebook transmission.
   bool tx_config_non_codebook;
-  /// Indicates if UL transform precoding is enabled.
+  /// \brief UL transform precoding flag.
+  ///
+  /// Set to \c true if UL transform precoding is enabled.
   bool transform_precoding_enabled;
-  /// \brief Indicates if PT-RS signals are configured.
-  /// \remark See TS38.331 Section 6.3.2 &mdash; Information Element \e PTRS-UplinkConfig.
+  /// \brief PT-RS signals flag.
+  ///
+  /// Set to \c true if PT-RS signals are configured. See TS38.331 Section 6.3.2, Information Element \e
+  /// PTRS-UplinkConfig.
   bool ptrs_uplink_configured;
-  /// \brief Indicates if dynamic beta offsets are configured for UCI on PUSCH.
-  /// \remark See the higher layer parameter \e betaOffsets (see TS38.331 Section 6.3.2 &mdash; Information Element \e
-  /// PUSCH-Config).
+  /// \brief PUSCH dynamic beta offsets flag.
+  ///
+  /// Set to \c true if dynamic beta offsets are configured for UCI on PUSCH, i.e., if the higher layer parameter \e
+  /// betaOffsets (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) is set to \e dynamic.
   bool dynamic_beta_offsets;
-  /// \brief Indicates if the dynamic HARQ-ACK codebook has two sub-codebooks.
-  /// \remark Required if the PDSCH HARQ-ACK codebook type is set to \c dynamic (see \ref pdsch_harq_ack_cb).
+  /// \brief Dual dynamic HARQ-ACK codebook flag.
+  ///
+  /// Required if the PDSCH HARQ-ACK codebook type is set to \c dynamic (see \ref pdsch_harq_ack_cb). Set to \c true if
+  /// the dynamic HARQ-ACK codebook has two sub-codebooks, \c false otherwise.
   optional<bool> dynamic_dual_harq_ack_cb;
-  /// PUSCH resource allocation type for DCI format 0_1, as per TS38.214 Section 6.1.2.2.
+  /// \brief PUSCH resource allocation type for DCI format 0_1, as per TS38.214 Section 6.1.2.2.
+  ///
+  /// Set according to the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2, Information Element
+  /// \e PUSCH-Config).
   resource_allocation pusch_res_allocation_type;
   /// \brief parameter \f$N_{RBG}\f$, in TS38.214 Section 6.1.2.2.1.
-  /// Used to determine the DCI format 0_1 frequency domain resource assignment field size if the PUSCH resource
-  /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e PUSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch.
   ///
-  /// \remark Required if \c pusch_res_allocation_type is either \e resourceAllocationType0 or \e dynamicSwitch.
+  /// Used to determine the DCI format 0_1 frequency domain resource assignment field size if the PUSCH resource
+  /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch. Otherwise, leave
+  /// unset.
   optional<unsigned> nof_ul_rb_groups;
+  /// \brief Number of antenna ports used for PUSCH codebook-based transmission.
+  ///
+  /// Set according to the higher layer parameter \e nrofSRS-Ports (see TS38.331 Section 6.3.2, Information Element \e
+  /// SRS-Config), as per TS38.214 Section 6.1.1.1, if codebook-based PUSCH transmission is configured, i.e., if \ref
+  /// tx_config_non_codebook is set to \c false. Otherwise leave unset. Values: {1, 2, 4}.
+  optional<unsigned> nof_srs_ports;
   /// \brief Parameter \f$N_{SRS}\f$ in TS38.212 Section 7.3.1.1.2, indicating the number of SRS resources.
-  /// \remark Required if \ref tx_config_non_codebook is set to \c true, indicating non-codebook transmission. For
-  /// codebook transmission, the number of SRS resources is up to 2 (see TS38.212 Table 7.3.1.1.2-32).
+  ///
+  /// It is required if \ref tx_config_non_codebook is set to \c true, indicating non-codebook transmission. Leave unset
+  /// for codebook transmission, since the number of SRS resources is up to 2 (see TS38.212 Table 7.3.1.1.2-32).
   optional<unsigned> nof_srs_resources;
   /// \brief Parameter \f$L_{max}\f$ in TS38.212 Section 7.3.1.1.2.
   ///
   /// Indicates the maximum number of PUSCH layers supported by the UE for the serving cell for non-codebook based
-  /// operation. Set to the value of the higher layer parameter \e maxMIMO-Layers (see TS38.331 Section 6.3.2 &mdash;
+  /// operation. Set to the value of the higher layer parameter \e maxMIMO-Layers (see TS38.331 Section 6.3.2,
   /// Information Element \e PUSCH-ServingCellConfig) if it is configured in the serving cell and supported by the UE.
   /// Otherwise, set to the maximum number of layers supported by the UE for the serving cell and for non-codebook
   /// based operation.
@@ -169,47 +195,47 @@ struct dci_size_config {
   /// \brief Maximum UE transmission rank for codebook based operation.
   ///
   /// Specifies the maximum UE transmission rank, determined by the higher layer parameter \e maxRank (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e PUSCH-Config). Values: {1, ..., 4}.
+  /// Section 6.3.2, Information Element \e PUSCH-Config). Values: {1, ..., 4}.
   ///
-  /// \remark Required if PT-RS signals are configured, i.e., if \ref ptrs_uplink_configured is set to \c true.
+  /// \remark Required if PT-RS signals are configured, i.e., if \ref ptrs_uplink_configured is set to \c true, and for
+  /// codebook based transmission with more than one antenna port, i.e., if \ref cb_subset is set.
   optional<unsigned> max_rank;
   /// \brief Subset of PMIs addressed by TPMI.
   ///
   /// Restricts the available PMIs to those supported by the UE, according to its coherence capabilities. Its value is
-  /// indicated by the higher layer parameter \e codebookSubset (see TS38.331 Section 6.3.2 &mdash; Information Element
-  /// \e PUSCH-Config).
-  ///
-  /// \remark Required for codebook based transmission with more than one antenna port.
-  optional<codebook_subset> cb_subset;
+  /// indicated by the higher layer parameter \e codebookSubset (see TS38.331 Section 6.3.2, Information Element \e
+  /// PUSCH-Config). It is required for codebook based transmission with more than one antenna port, otherwise leave
+  /// unset.
+  optional<tx_scheme_codebook_subset> cb_subset;
   /// \brief UL DM-RS type for DM-RS mapping type A.
-  /// \remark Indicated by the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-UplinkConfig).
-  /// \remark Required if the UE is configured with PUSCH DM-RS mapping type A via the higher layer parameter
-  /// dmrs-UplinkForPUSCH-MappingTypeA (see TS38.331 Section 6.3.2 &mdash; Information Element \e PUSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-UplinkConfig) via the higher layer parameter dmrs-UplinkForPUSCH-MappingTypeA (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_config_type> pusch_dmrs_A_type;
   /// \brief Maximum number of OFDM symbols occupied by the front-loaded UL DM-RS for DM-RS mapping type A.
-  /// \remark Indicated by the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-UplinkConfig).
-  /// \remark Required if the UE is configured with PUSCH DM-RS mapping type A via the higher layer parameter
-  /// dmrs-UplinkForPUSCH-MappingTypeA (see TS38.331 Section 6.3.2 &mdash; Information Element \e PUSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-UplinkConfig) via the higher layer parameter dmrs-UplinkForPUSCH-MappingTypeA (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_max_length> pusch_dmrs_A_max_len;
   /// \brief UL DM-RS type for DM-RS mapping type B.
-  /// \remark Indicated by the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-UplinkConfig).
-  /// \remark Required if the UE is configured with PUSCH DM-RS mapping type B via the higher layer parameter
-  /// dmrs-UplinkForPUSCH-MappingTypeB (see TS38.331 Section 6.3.2 &mdash; Information Element \e PUSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-UplinkConfig) via the higher layer parameter dmrs-UplinkForPUSCH-MappingTypeB (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_config_type> pusch_dmrs_B_type;
   /// \brief Maximum number of OFDM symbols occupied by the front-loaded UL DM-RS for DM-RS mapping type B.
-  /// \remark Indicated by the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-UplinkConfig).
-  /// \remark Required if the UE is configured with PUSCH DM-RS mapping type B via the higher layer parameter
-  /// dmrs-UplinkForPUSCH-MappingTypeB (see TS38.331 Section 6.3.2 &mdash; Information Element \e PUSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-UplinkConfig) via the higher layer parameter dmrs-UplinkForPUSCH-MappingTypeB (see TS38.331 Section 6.3.2,
+  /// Information Element \e PUSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_max_length> pusch_dmrs_B_max_len;
   /// \brief Maximum number of PUSCH Code Block Groups (CBG) per Transport Block (TB).
-  /// \remark Determined by the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e PUSCH-ServingCellConfig).
-  /// \remark Required if CBGs are configured, i.e., if the higher layer parameter \e codeBlockGroupTransmission (see
-  /// TS38.331 Section 6.3.2 &mdash; Information Element \e PUSCH-ServingCellConfig) is configured.
+  ///
+  /// Set according to the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock if the higher layer parameter
+  /// \e codeBlockGroupTransmission is present (see TS38.331 Section 6.3.2, Information Element \e
+  /// PUSCH-ServingCellConfig). Otherwise, leave unset.
   optional<unsigned> max_cbg_tb_pusch;
   /// @}
 
@@ -217,97 +243,115 @@ struct dci_size_config {
   /// @{
 
   /// \brief parameter \f$n_{BWP,RRC}\f$ for DCI format 1_1, in TS38.212 Section 7.3.1.2.2.
-  /// \remark Set to the number of DL BWPs configured by higher layers, excluding the initial DL BWP.
+  ///
+  /// Set to the number of DL BWPs configured by higher layers, excluding the initial DL BWP.
   unsigned nof_dl_bwp_rrc;
   /// \brief parameter \f$I\f$ in TS38.212 Section 7.3.1.2.2.
   ///
-  /// Set to either:
-  ///   - The number of entries in the higher layer parameter \e pdsch-TimeDomainAllocationList (see TS38.331 Section
-  ///     6.3.2 &mdash; Information Elements \e PDSCH-Config), if configured.
-  ///   - Otherwise, the number of entries in the default table (see TS38.214 Table 5.1.2.1.1-2).
+  /// As defined in TS38.214 Table 5.1.2.1.1-1, set to either:
+  ///   - The number of entries in the higher layer parameter \e pdsch-TimeDomainAllocationList via the RRC Information
+  ///     Element \e PDSCH-Config (see TS38.331 Section 6.3.2), if configured.
+  ///   - The number of entries in the higher layer parameter \e pdsch-TimeDomainAllocationList via the RRC Information
+  ///     Element \e PDSCH-ConfigCommon (see TS38.331 Section 6.3.2), if it is configured in \e PDSCH-ConfigCommon and
+  ///     not configured in \e PDSCH-Config.
+  ///   - 16 otherwise, which is the number of entries in the default table (see TS38.214 Table 5.1.2.1.1-2).
   unsigned nof_dl_time_domain_res;
   /// \brief Number of configured aperiodic ZP CSI-RS resource sets.
   ///
   /// Parameter \f$n_{ZP}\f$ in TS38.212 Section 7.3.1.2.2, used to determine the size of the ZP CSI-RS trigger field,
-  /// as per TS38.214 Section 5.1.4.2. Values: {0, 1, 2, 3}.
-  ///
-  /// \remark See higher layer parameter \e aperiodic-ZP-CSI-RS-ResourceSetsToAddModList, in TS38.331 Section 6.3.2
-  /// &mdash; Information Element \e PDSCH-Config.
+  /// as per TS38.214 Section 5.1.4.2. Set according to the number of entries of the higher layer parameter \e
+  /// aperiodic-ZP-CSI-RS-ResourceSetsToAddModList, in TS38.331 Section 6.3.2, Information Element \e PDSCH-Config.
+  /// Values: {0, 1, 2, 3}.
   unsigned nof_aperiodic_zp_csi;
-  /// \brief Number of PDSCH to UL HARQ timings.
+  /// \brief Number of PDSCH to the DL ACK timings.
   ///
   /// Parameter \f$I\f$ in TS38.212 Section 7.3.1.2.2, representing the number of entries of the the higher layer
-  /// parameter \e dl_DataToUl-ACK (see TS38.331 Section 6.3.2 &mdash; Information Element \e PUCCH-Config). Values: {0,
-  /// 1, ..., 8}.
+  /// parameter \e dl-DataToUl-ACK (see TS38.331 Section 6.3.2, Information Element \e PUCCH-Config). Values: {1, ...,
+  /// 8}.
   unsigned nof_pdsch_ack_timings;
-  /// \brief Indicates if dynamic PRB bundling has been enabled.
-  /// \remark Set to \c true if the higher layer parameter \e prb-BundlingType (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e PDSCH-Config) is set to \e dynamicBundling.
-  bool dynamic_prb_bundling;
-  /// \brief Indicates if the higher layer parameter \e RateMatchPatternGroup1 is configured.
-  /// \remark See TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config.
-  bool rm_pattern_group1;
-  /// \brief Indicates if the higher layer parameter \e RateMatchPatternGroup2 is configured.
-  /// \remark See TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config.
-  bool rm_pattern_group2;
-  /// \brief Indicates if PDSCH has been configured to transmit two codewords.
+  /// \brief Dynamic PRB bundling flag.
   ///
-  /// A PDSCH transmission accommodates two codewords when the number of layers is greater than 4. DCI must schedule
-  /// two codewords when indicated by the higher layer parameter \e maxNrofCodeWordsScheduledByDCI (see TS38.331 Section
-  /// 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  /// Set to \c true if dynamic PRB bundling has been enabled, i.e., if the higher layer parameter \e prb-BundlingType
+  /// (see TS38.331 Section 6.3.2, Information Element \e PDSCH-Config) is set to \e dynamicBundling.
+  bool dynamic_prb_bundling;
+  /// \brief Rate matching pattern group 1 flag.
+  ///
+  /// Set to \c true if the higher layer parameter \e RateMatchPatternGroup1 (see TS38.331 Section 6.3.2, Information
+  /// Element \e PDSCH-Config) is configured.
+  bool rm_pattern_group1;
+  /// \brief Rate matching pattern group 2 flag.
+  ///
+  /// Set to \c true if the higher layer parameter \e RateMatchPatternGroup2 (see TS38.331 Section 6.3.2, Information
+  /// Element \e PDSCH-Config) is configured.
+  bool rm_pattern_group2;
+  /// \brief Two codewords in PDSCH flag.
+  ///
+  /// Set to \c true if PDSCH has been configured to transmit two codewords. A PDSCH transmission accommodates two
+  /// codewords when the number of layers is greater than 4. DCI must schedule two codewords when indicated by the
+  /// higher layer parameter \e maxNrofCodeWordsScheduledByDCI (see TS38.331 Section 6.3.2, Information Element \e
+  /// PDSCH-Config).
   bool pdsch_two_codewords;
-  /// Indicates if the UE has been configured with multiple serving cells.
+  /// \brief Multiple serving cells flag.
+  ///
+  /// Set to \c true if the UE has been configured with multiple serving cells.
   bool multiple_scells;
-  /// \brief Indicates if Transmission Configuration Indication (TCI) is present in DCI format 1_1.
-  /// \remark Set to \c true if the higher layer parameter \e tci-PresentInDCI (see TS38.331 Section 6.3.2 &mdash;
-  /// Information Element \e ControlResourceSet) is enabled, and \c false otherwise.
+  /// \brief Transmission Configuration Indication (TCI) flag.
+  ///
+  /// Set to \c true if Transmission Configuration Indication (TCI) is present in DCI format 1_1, i.e., if the higher
+  /// layer parameter \e tci-PresentInDCI (see TS38.331 Section 6.3.2, Information Element \e ControlResourceSet) is
+  /// enabled.
   bool pdsch_tci;
-  /// \brief Indicates if DCI format 1_1 will include the CBG flushing out information field.
-  /// \remark Set to the value of the higher layer parameter \e codeBlockGroupFlushIndicator (see TS38.331 Section 6.3.2
-  /// &mdash; Information Element \e PDSCH-ServingCellConfig).
+  /// \brief CBG flushing out information flag.
+  ///
+  /// Set to \c true if DCI format 1_1 will include the CBG flushing out information field, i.e., if the higher layer
+  /// parameter \e codeBlockGroupFlushIndicator (see TS38.331 Section 6.3.2, Information Element \e
+  /// PDSCH-ServingCellConfig) is enabled.
   bool cbg_flush_indicator;
   /// PDSCH resource allocation type for DCI format 1_1, as per TS38.214 Section 5.1.2.2.
   resource_allocation pdsch_res_allocation_type;
   /// \brief parameter \f$N_{RBG}\f$, in TS38.214 Section 5.1.2.2.1.
   ///
   /// Used to determine the DCI format 1_1 frequency domain resource assignment field size if the PDSCH resource
-  /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2 &mdash;
+  /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2,
   /// Information Element \e PDSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch.
   ///
   /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType0 or \e dynamicSwitch.
   optional<unsigned> nof_dl_rb_groups;
-  /// \brief Indicates if interleaved VRB-to-PRB mapping is configured.
+  /// \brief Interleaved VRB-to-PRB mapping flag.
+  ///
+  /// Set to \c true if interleaved VRB-to-PRB mapping is configured, \c false otherwise.
+  ///
   /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType1 or \e dynamicSwitch.
   optional<bool> interleaved_vrb_prb_mapping;
   /// \brief DM-RS type for PDSCH DM-RS mapping type A.
-  /// \remark Indicated by the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-DownlinkConfig).
-  /// \remark Required if the UE is configured with PDSCH DM-RS mapping type A via the higher layer parameter
-  /// dmrs-DownlinkForPDSCH-MappingTypeA (see TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-DownlinkConfig) via the higher layer parameter dmrs-DownlinkForPDSCH-MappingTypeA (see TS38.331 Section
+  /// 6.3.2, Information Element \e PDSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_config_type> pdsch_dmrs_A_type;
   /// \brief Maximum number of OFDM symbols occupied by the front-loaded DL DM-RS for DM-RS mapping type A.
-  /// \remark Indicated by the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-DownlinkConfig).
-  /// \remark Required if the UE is configured with PDSCH DM-RS mapping type A via the higher layer parameter
-  /// dmrs-DownlinkForPDSCH-MappingTypeA (see TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-DownlinkConfig) via the higher layer parameter dmrs-DownlinkForPDSCH-MappingTypeA (see TS38.331 Section
+  /// 6.3.2, Information Element \e PDSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_max_length> pdsch_dmrs_A_max_len;
   /// \brief DM-RS type for PDSCH DM-RS mapping type B.
-  /// \remark Indicated by the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-DownlinkConfig).
-  /// \remark Required if the UE is configured with PDSCH DM-RS mapping type B via the higher layer parameter
-  /// dmrs-DownlinkForPDSCH-MappingTypeB (see TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e dmrs-Type (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-DownlinkConfig) via the higher layer parameter dmrs-DownlinkForPDSCH-MappingTypeB (see TS38.331 Section
+  /// 6.3.2, Information Element \e PDSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_config_type> pdsch_dmrs_B_type;
   /// \brief Maximum number of OFDM symbols occupied by the front-loaded DL DM-RS for DM-RS mapping type B.
-  /// \remark Indicated by the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2 &mdash; Information
-  /// Element \e DMRS-DownlinkConfig).
-  /// \remark Required if the UE is configured with PDSCH DM-RS mapping type B via the higher layer parameter
-  /// dmrs-DownlinkForPDSCH-MappingTypeB (see TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  ///
+  /// Set according to the higher layer parameter \e maxLength (see TS38.331 Section 6.3.2, Information Element \e
+  /// DMRS-DownlinkConfig) via the higher layer parameter dmrs-DownlinkForPDSCH-MappingTypeB (see TS38.331 Section
+  /// 6.3.2, Information Element \e PDSCH-Config) if present. Otherwise, leave unset.
   optional<dmrs_max_length> pdsch_dmrs_B_max_len;
   /// \brief Maximum number of PDSCH Code Block Groups (CBG) per Transport Block (TB).
-  /// \remark Determined by the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e PDSCH-ServingCellConfig).
-  /// \remark Required if CBGs are configured, i.e., if the higher layer parameter \e codeBlockGroupTransmission (see
-  /// TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-ServingCellConfig) is configured.
+  ///
+  /// Set according to the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see TS38.331 Section 6.3.2,
+  /// Information Element \e PDSCH-ServingCellConfig) if the higher layer parameter \e codeBlockGroupTransmission (see
+  /// TS38.331 Section 6.3.2, Information Element \e PDSCH-ServingCellConfig) is present. Otherwise, leave unset.
   optional<unsigned> max_cbg_tb_pdsch;
   ///@}
 };
@@ -351,9 +395,9 @@ struct dci_0_1_size {
   units::bits ul_sul_indicator;
   /// BWP indicator field size - 0, 1 or 2 bits.
   units::bits bwp_indicator;
-  /// frequency domain resource assignment field size.
+  /// Frequency domain resource assignment field size.
   units::bits frequency_resource;
-  /// time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
+  /// Time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
   units::bits time_resource;
   /// Frequency hopping flag field size - 0 or 1 bit.
   units::bits freq_hopping_flag;
@@ -394,9 +438,9 @@ struct dci_1_1_size {
   units::bits carrier_indicator;
   /// BWP indicator field size - 0, 1 or 2 bits.
   units::bits bwp_indicator;
-  /// frequency domain resource assignment field size.
+  /// Frequency domain resource assignment field size.
   units::bits frequency_resource;
-  /// time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
+  /// Time domain resource assignment field size - 0, 1, 2, 3 or 4 bits.
   units::bits time_resource;
   /// VRP-to-PRB mapping field size - 0 or 1 bit.
   units::bits vrb_prb_mapping;
@@ -440,20 +484,20 @@ struct dci_sizes {
   /// Payload size parameters for a DCI format 1_0 message monitored in a common search space.
   dci_1_0_size format1_0_common_size;
   /// \brief Payload size parameters for a DCI format 0_0 message monitored in a UE-specific search space.
-  /// \remark Computed during the size alignment procedure if \ref dci_size_config::dci_0_0_and_1_0_ue_ss is set to \c
-  /// true.
+  ///
+  /// Computed during the size alignment procedure if \ref dci_size_config::dci_0_0_and_1_0_ue_ss is set to \c true.
   optional<dci_0_0_size> format0_0_ue_size;
   /// \brief Payload size parameters for a DCI format 1_0 message monitored in a UE-specific search space.
-  /// \remark Computed during the size alignment procedure if \ref dci_size_config::dci_0_0_and_1_0_ue_ss is set to \c
-  /// true.
+  ///
+  /// Computed during the size alignment procedure if \ref dci_size_config::dci_0_0_and_1_0_ue_ss is set to \c true.
   optional<dci_1_0_size> format1_0_ue_size;
   /// \brief Payload size parameters for a DCI format 0_1 message monitored in a UE-specific search space.
-  /// \remark Computed during the size alignment procedure if \ref dci_size_config::dci_0_1_and_1_1_ue_ss is set to \c
-  /// true.
+  ///
+  /// Computed during the size alignment procedure if \ref dci_size_config::dci_0_1_and_1_1_ue_ss is set to \c true.
   optional<dci_0_1_size> format0_1_ue_size;
   /// \brief Payload size parameters for a DCI format 1_1 message monitored in a UE-specific search space.
-  /// \remark Computed during the size alignment procedure if \ref dci_size_config::dci_0_1_and_1_1_ue_ss is set to \c
-  /// true.
+  ///
+  /// Computed during the size alignment procedure if \ref dci_size_config::dci_0_1_and_1_1_ue_ss is set to \c true.
   optional<dci_1_1_size> format1_1_ue_size;
 };
 
@@ -736,37 +780,32 @@ struct dci_0_1_configuration {
   dci_0_1_size payload_size;
   /// \brief Carrier indicator - 3 bits if present, as per TS38.213 Section 10.1.
   ///
-  /// It must be set to the value indicated by the higher layer parameter \e CrossCarrierSchedulingConfig (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e ServingCellConfig) if it is configured.
-  ///
-  /// \remark Required if \e CrossCarrierSchedulingConfig is configured.
+  /// Set to the value indicated by the higher layer parameter \e CrossCarrierSchedulingConfig (see TS38.331 Section
+  /// 6.3.2, Information Element \e ServingCellConfig) if configured, i.e., if \ref
+  /// dci_size_config::cross_carrier_configured is set to \c true when computing the DCI sizes. Otherwise, leave unset.
   optional<unsigned> carrier_indicator;
   /// \brief UL/SUL indicator - 1 bit if present, as per TS38.212 Table 7.3.1.1.1-1.
   ///
-  /// Set to \c true to signal a resource allocation on the Supplementary Uplink (SUL).
-  ///
-  /// \remark Required if the UE is configured with the higher layer parameter \e supplementaryUplink (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e ServingCellConfig) and more than a single carrier in the cell is
-  /// configured for PUSCH transmission, as per TS38.212 Section 7.3.1.1.2.
+  /// Set to \c true to signal a resource allocation on the Supplementary Uplink (SUL) if the UE is configured with the
+  /// higher layer parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information Element \e
+  /// ServingCellConfig) and more than a single carrier in the cell is configured for PUSCH transmission, i.e., if \ref
+  /// dci_size_config::sul_configured is set to \c true when computing the DCI sizes. Otherwise, leave unset.
   optional<bool> ul_sul_indicator;
   /// Bandwidth part indicator - 0, 1 or 2 bits.
   ///
   /// Identifies the BWP for the frequency domain allocation. The number of bits is determined by the number of UL BWP
   /// configured by higher layers, \f$n_{\textup{BWP,RRC}}\f$ (see dci_size_config::nof_ul_bwp_rrc). It can be either:
   ///   - \f$\bigl \lceil \log_2(n_{\textup{BWP,RRC}} + 1)\bigr \rceil\f$ bits if \f$n_{\textup{BWP,RRC}} \leq 3\f$, set
-  ///     according to the higher layer parameter \e BWP-Id (see TS38.331 Section 6.3.2 &mdash; Information Element \e
-  ///     BWP-Id)
+  ///     according to the higher layer parameter \e BWP-Id (see TS38.331 Section 6.3.2, Information Element \e BWP-Id).
   ///   - \f$\bigl \lceil \log_2(n_{\textup{BWP,RRC}})\bigr \rceil\f$ bits otherwise, as per TS38.212 Table 7.3.1.1.2-1.
   ///
-  /// \remark Required if any BWP besides the initial UL BWP is configured by higher layers.
+  /// It is required if any BWP besides the initial UL BWP is configured by higher layers, i.e., if \ref
+  /// dci_size_config::nof_ul_bwp_rrc is not 0.
   optional<unsigned> bwp_indicator;
   /// \brief PUSCH resource allocation type selector for dynamic PUSCH resource allocations.
   ///
-  /// Set this parameter to either \c type_0 or \c type_1 for UEs configured with dynamic PUSCH resource allocation.
-  ///
-  /// \remark Required if the UE is configured for dynamic PUSCH resource allocation, as indicated by the
-  /// higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2 &mdash; Information Element \e
-  /// PUSCH-Config).
+  /// Set this parameter for UEs configured with dynamic PUSCH resource allocation, as indicated by the higher layer
+  /// parameter \e resourceAllocation (see \ref dci_size_config::pusch_res_allocation_type). Otherwise, leave unset.
   optional<dynamic_resource_allocation> dynamic_pusch_res_allocation_type;
   /// \brief Frequency hopping offset, selected from the RRC parameter \e frequencyHoppingOffsetLists.
   ///
@@ -778,7 +817,7 @@ struct dci_0_1_configuration {
   ///   - (0, 1), if \e frequencyHoppingOffsetLists has 2 possible offsets.
   ///   - (0, 1, 2, 3), if \e frequencyHoppingOffsetLists has 4 possible offsets.
   ///
-  /// \remark Required if frequency hopping is enabled via the \ref frequency_hopping_flag.
+  /// It is required if frequency hopping is enabled via the \ref frequency_hopping_flag. Otherwise, leave unset.
   optional<unsigned> hopping_offset;
   /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.2.
   ///
@@ -788,9 +827,9 @@ struct dci_0_1_configuration {
   ///   - 1, if the RRC parameter \e frequencyHoppingOffsetLists has 2 possible offsets.
   ///   - 2, if the RRC parameter \e frequencyHoppingOffsetLists has 4 possible offsets.
   ///
-  /// \remark The frequency hopping offset is packed within the most significant bits of the frequency domain resource
-  /// assignment field, therefore, setting \c N_ul_hop does not affect the total payload size.
-  /// \remark Required if frequency hopping is enabled via the \ref frequency_hopping_flag.
+  /// The frequency hopping offset is packed within the most significant bits of the frequency domain resource
+  /// assignment field, therefore, setting \c N_ul_hop does not affect the total payload size. It is required if
+  /// frequency hopping is enabled via the \ref frequency_hopping_flag. Otherwise, leave unset.
   optional<unsigned> N_ul_hop;
   /// \brief Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.1.2.
   ///
@@ -805,16 +844,16 @@ struct dci_0_1_configuration {
   ///
   /// The number of bits is determined as \f$\Bigl \lceil \log_2(I) \Bigr \rceil\f$, where \f$I\f$ is either:
   ///   - The number of entries in the higher layer parameter \e pusch-TimeDomainAllocationList (see TS38.331 Section
-  ///     6.3.2 &mdash; Information Elements \e PUSCH-Config), if configured.
-  ///   - Otherwise, the number of entries in the default table (see TS38.214 Table 6.1.2.1.1-2).
-  ///
-  /// \remark Required if multiple time domain resources are present in the list of time domain allocations. See \ref
-  /// dci_size_config::nof_ul_time_domain_res.
-  optional<unsigned> time_resource;
+  ///     6.3.2, Information Element \e PUSCH-Config), if configured.
+  ///   - 16 otherwise, which is the number of entries in the default table (see TS38.214 Table 6.1.2.1.1-2).
+  unsigned time_resource;
   /// \brief Frequency hopping flag - 1 bit if present, as per TS38.212 Section 7.3.1.1.2 and TS38.214 Section 6.3.
-  /// \remark This parameter must be excluded from the DCI if only resource allocation type 0 is configured, or if the
-  /// higher layer parameter \e frequencyHopping (see TS38.331 Section 6.3.2 &mdash; Information Element \e
-  /// PUSCH-Config) is not configured. Otherwise, this field is required.
+  ///
+  /// Set as per TS38.212 Table 7.3.1.1.1-3 and TS38.214 Section 6.3 if the higher layer parameter \e frequencyHopping
+  /// (see TS38.331 Section 6.3.2, Information Element \e PUSCH-Config) and resource allocation type 1 are configured,
+  /// i.e., if \ref dci_size_config::frequency_hopping_configured is set to \c true and \ref
+  /// dci_size_config::pusch_res_allocation_type is not set to \c resource_allocation_type_0 when computing the DCI
+  /// sizes. Otherwise, leave unset.
   optional<unsigned> frequency_hopping_flag;
   /// Modulation and coding scheme - 5 bits as per TS38.214 Section 6.1.4.1.
   unsigned modulation_coding_scheme;
@@ -825,11 +864,13 @@ struct dci_0_1_configuration {
   /// HARQ process number - 4 bits.
   unsigned harq_process_number;
   /// \brief 1st downlink assignment index - 1 or 2 bits.
-  /// \remark It occupies 1 bit for semi-static HARQ-ACK codebook and 2 bits for dynamic HARQ-ACK codebook (see
+  ///
+  /// It occupies 1 bit for semi-static HARQ-ACK codebook and 2 bits for dynamic HARQ-ACK codebook (see
   /// dci_size_config::pdsch_harq_ack_cb).
   unsigned first_dl_assignment_index;
   /// \brief 2nd downlink assignment index - 2 bits if present.
-  /// \remark Required for dynamic HARQ-ACK codebooks with two HARQ-ACK sub-codebooks. (see \ref
+  ///
+  /// Required for dynamic HARQ-ACK codebooks with two HARQ-ACK sub-codebooks. (see \ref
   /// dci_size_config::pdsch_harq_ack_cb and dci_size_config::dynamic_dual_harq_ack_cb).
   optional<unsigned> second_dl_assignment_index;
   /// TPC command for scheduled PUSCH - 2 bits as per TS38.213 Section 7.1.1.
@@ -846,9 +887,9 @@ struct dci_0_1_configuration {
   ///
   /// The content and actual number of bits is defined by TS38.212 Tables 7.3.1.1.2-2/3/4/5, according to whether
   /// transform precoding is enabled or disabled, and the values of the higher layer parameters \e maxRank (see
-  /// dci_size_config::max_rank) and \e codebookSubset (see dci_size_config::cb_subset).
-  ///
-  /// \remark Required for codebook based transmission with more than one antenna port.
+  /// dci_size_config::max_rank) and \e codebookSubset (see dci_size_config::cb_subset). It is required for codebook
+  /// based transmission with more than one antenna port, i.e., if \ref dci_size_config::cb_subset is set when computing
+  /// the DCI sizes. Otherwise, leave unset.
   optional<unsigned> precoding_info_nof_layers;
   /// \brief Antenna ports for PUSCH transmission - 2, 3, 4 or 5 bits.
   ///
@@ -856,31 +897,26 @@ struct dci_0_1_configuration {
   /// Section 7.3.1.1.2 and Tables 7.3.1.1.2-6 to 7.3.1.1.2-23, according to wether transform precoding is enabled, the
   /// DM-RS type (see dci_size_config::pusch_dmrs_A_type and dci_size_config::pusch_dmrs_B_type) and the maximum DM-RS
   /// length (see dci_size_config::pusch_dmrs_A_max_len and dci_size_config::pusch_dmrs_B_max_len).
-  ///
-  /// \remark if both DM-RS mapping type A and B are configured, this field occupies the number of bits required to pack
-  /// either DM-RS port allocation.
   unsigned antenna_ports;
   /// \brief SRS request - 2 or 3 bits.
   ///
   /// This parameter occupies:
   ///   - 2 bits for a UE in a cell not configured with the higher layer parameter \e supplementaryUplink (see TS38.331
-  ///     Section 6.3.2 &mdash; Information Element \e ServingCellConfig), filled as per TS38.212 Table 7.3.1.1.2-24.
+  ///     Section 6.3.2, Information Element \e ServingCellConfig), filled as per TS38.212 Table 7.3.1.1.2-24.
   ///   - 3 bits for a UE in a cell configured with \e supplementaryUplink. The first bit is the UL/SUL indicator in
   ///     TS38.212 Table 7.3.1.1.1-1 and the remaining bits are filled as per TS38.212 Table 7.3.1.1.2-24.
   ///
-  /// \remark This field may also indicate the associated CSI-RS according to TS38.214 Section 6.1.1.2.
+  /// This field may also indicate the associated CSI-RS according to TS38.214 Section 6.1.1.2.
   unsigned srs_request;
   /// \brief CSI request - 0 to 6 bits.
-  /// \remark Number of bits according to the higher layer parameter \e reportTriggerSize
-  /// (see dci_size_config::report_trigger_size).
-  /// \remark Required if \e report_trigger_size is not zero.
+  ///
+  /// Required if the higher layer parameter \e reportTriggerSize (see dci_size_config::report_trigger_size) is not 0.
   optional<unsigned> csi_request;
   /// \brief CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
   ///
-  /// Number of bits determined by the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see
-  /// dci_size_config::max_cbg_tb_pusch), and  filled as per TS38.214 Section 6.1.5.2.
-  ///
-  /// \remark Required if the UE is configured to use CBGs.
+  /// Number of bits determined by the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see \ref
+  /// dci_size_config::max_cbg_tb_pusch). Set as per TS38.214 Section 6.1.5.2 if the UE is configured to use CBGs, i.e.,
+  /// if \ref dci_size_config::max_cbg_tb_pusch is set when computing the DCI sizes.
   optional<unsigned> cbg_transmission_info;
   /// \brief PT-RS/DM-RS association - 2 bit if present.
   ///
@@ -890,13 +926,13 @@ struct dci_0_1_configuration {
   optional<unsigned> ptrs_dmrs_association;
   /// \brief Beta offset indicator - 2 bits if present.
   ///
-  /// Indicates beta offset values as per TS38.213 Table 9.3-3.
-  ///
-  /// \remark Required if dynamic beta offsets are configured for UCI on PUSCH (see
-  /// dci_size_config::dynamic_beta_offsets).
+  /// Indicates beta offset values as per TS38.213 Table 9.3-3. Required if dynamic beta offsets are configured for UCI
+  /// on PUSCH, i.e., if \ref dci_size_config::dynamic_beta_offsets is set to \c true when computing the DCI sizes.
   optional<unsigned> beta_offset_indicator;
   /// \brief DM-RS sequence initialization - 1 bit if present.
-  /// \remark Required if transform precoding is disabled.
+  ///
+  /// Required if transform precoding is disabled, i.e., if \ref dci_size_config::transform_precoding_enabled is set to
+  /// \c false when computing the DCI sizes.
   optional<unsigned> dmrs_seq_initialization;
   /// \brief UL-SCH indicator - 1 bit.
   ///
@@ -919,28 +955,25 @@ struct dci_1_1_configuration {
   dci_1_1_size payload_size;
   /// \brief Carrier indicator - 3 bits if present, as per TS38.213 Section 10.1.
   ///
-  /// It must be set to the value indicated by the higher layer parameter \e CrossCarrierSchedulingConfig (see TS38.331
-  /// Section 6.3.2 &mdash; Information Element \e ServingCellConfig) if it is configured.
-  ///
-  /// \remark Required if \e CrossCarrierSchedulingConfig is configured.
+  /// Set to the value indicated by the higher layer parameter \e CrossCarrierSchedulingConfig (see TS38.331 Section
+  /// 6.3.2, Information Element \e ServingCellConfig) if configured, i.e., if \ref
+  /// dci_size_config::cross_carrier_configured is set to \c true when computing the DCI sizes. Otherwise, leave unset.
   optional<unsigned> carrier_indicator;
   /// Bandwidth part indicator - 0, 1 or 2 bits.
   ///
   /// Identifies the BWP for the frequency domain allocation. The number of bits is determined by the number of DL BWP
   /// configured by higher layers, \f$n_{\textup{BWP,RRC}}\f$ (see dci_size_config::nof_dl_bwp_rrc). It can be either:
   ///   - \f$\bigl \lceil \log_2(n_{\textup{BWP,RRC}} + 1)\bigr \rceil\f$ bits if \f$n_{\textup{BWP,RRC}} \leq 3\f$, set
-  ///     according to the higher layer parameter \e BWP-Id (see TS38.331 Section 6.3.2 &mdash; Information Element \e
-  ///     BWP-Id)
+  ///     according to the higher layer parameter \e BWP-Id (see TS38.331 Section 6.3.2, Information Element \e BWP-Id).
   ///   - \f$\bigl \lceil \log_2(n_{\textup{BWP,RRC}})\bigr \rceil\f$ bits otherwise, as per TS38.212 Table 7.3.1.1.2-1.
   ///
-  /// \remark Required if any BWP besides the initial DL BWP is configured by higher layers.
+  /// It is required if any BWP besides the initial DL BWP is configured by higher layers, i.e., if \ref
+  /// dci_size_config::nof_dl_bwp_rrc is not 0.
   optional<unsigned> bwp_indicator;
   /// \brief PDSCH resource allocation type selector for dynamic PDSCH resource allocations.
   ///
-  /// Set this parameter to either \c type_0 or \c type_1 for UEs configured with dynamic PDSCH resource allocation.
-  ///
-  /// \remark Required if the UE is configured for dynamic PDSCH resource allocation, as indicated by the higher layer
-  /// parameter \e resourceAllocation (see TS38.331 Section 6.3.2 &mdash; Information Element \e PDSCH-Config).
+  /// Set this parameter for UEs configured with dynamic PDSCH resource allocation, as indicated by the higher layer
+  /// parameter \e resourceAllocation (see \ref dci_size_config::pdsch_res_allocation_type). Otherwise, leave unset.
   optional<dynamic_resource_allocation> dynamic_pdsch_res_allocation_type;
   /// \brief Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.2.2.
   ///
@@ -955,40 +988,33 @@ struct dci_1_1_configuration {
   ///
   /// The number of bits is determined as \f$\Bigl \lceil \log_2(I) \Bigr \rceil\f$, where \f$I\f$ is either:
   ///   - The number of entries in the higher layer parameter \e pdsch-TimeDomainAllocationList (see TS38.331 Section
-  ///     6.3.2 &mdash; Information Elements \e PDSCH-Config), if configured.
+  ///     6.3.2, Information Elements \e PDSCH-Config), if configured.
   ///   - Otherwise, the number of entries in the default table (see TS38.214 Table 5.1.2.1.1-2).
-  ///
-  /// \remark Required if multiple time domain resources are present in the list of time domain allocations. See \ref
-  /// dci_size_config::nof_dl_time_domain_res.
-  optional<unsigned> time_resource;
+  unsigned time_resource;
   /// \brief VRB-to-PRB mapping - 1 bit if present.
   ///
-  /// Indicates if non-interleaved or interleaved VRB to PRB mapping is used, as defined in TS38.211 Section 7.3.1.6.
-  ///
-  /// \remark Required if resource allocation type 1 and interleaved VRB-to-PRB mapping are configured (see \ref
-  /// dci_size_config::pdsch_res_allocation_type and \ref dci_size_config::interleaved_vrb_prb_mapping).
+  /// Indicates if non-interleaved or interleaved VRB to PRB mapping is used. Set as per TS38.212 Table 7.3.1.2.2-5 if
+  /// resource allocation type 1 and interleaved VRB-to-PRB mapping are configured (see \ref
+  /// dci_size_config::pdsch_res_allocation_type and \ref dci_size_config::interleaved_vrb_prb_mapping). Otherwise,
+  /// leave unset.
   optional<unsigned> vrb_prb_mapping;
   /// \brief PRB bundling size indicator - 1 bit if present.
   ///
-  /// Dynamically selects between the configured PRB bundling size sets 1 and 2, as defined in TS38.214 Section 5.1.2.3.
-  ///
-  /// \remark Required if dynamic PRB bundling is used (see \ref dci_size_config::dynamic_prb_bundling).
+  /// Dynamically selects between the configured PRB bundling size sets 1 and 2. Set as per TS38.214 Section 5.1.2.3 if
+  /// dynamic PRB bundling is used, i.e., if \ref dci_size_config::dynamic_prb_bundling is set to \c true for the DCI
+  /// size alignment procedure. Otherwise, leave unset.
   optional<unsigned> prb_bundling_size_indicator;
   /// \brief Rate matching indicator - 0, 1 or 2 bits.
   ///
-  /// Indicates which pattern of reserved resources, if any, is applicable to the PDSCH transmission, as per TS38.212
-  /// Section 7.3.1.2.2. Used for reserved resource patterns with RB / OFDM symbol granularity.
-  ///
-  /// \remark Required if any \e RateMatchPattern is configured (see dci_size_config::rm_pattern_group1 and
-  /// dci_size_config::rm_pattern_group2).
+  /// Indicates which pattern of reserved resources with RB / OFDM symbol granularity, if any, is applicable to the
+  /// PDSCH transmission. Set as per TS38.212 Section 7.3.1.2.2, if any \e RateMatchPattern is configured (see
+  /// dci_size_config::rm_pattern_group1 and dci_size_config::rm_pattern_group2). Otherwise, leave unset.
   optional<unsigned> rate_matching_indicator;
   /// \brief ZP CSI-RS trigger - 0, 1 or 2 bits.
   ///
-  /// Indicates which set of aperiodic ZP SCI-RS reserved resources, if any, is applicable to the PDSCH transmission, as
-  /// per TS38.214 Section 5.1.4.2. Occupies \f$\Bigl \lceil \log_2(n_{ZP} + 1) \Bigr \rceil\f$ bits, where \f$n_{ZP}\f$
-  /// is the number of configured aperiodic ZP CSI-RS resource sets (see dci_size_config::nof_aperiodic_zp_csi).
-  ///
-  /// \remark Required if any aperiodic ZP CSI-RS resource set is configured.
+  /// Indicates which set of aperiodic ZP CSI-RS reserved resources, if any, is applicable to the PDSCH transmission.
+  /// Set as per TS38.214 Section 5.1.4.2 if any aperiodic ZP CSI-RS resource sets are configured, i.e., if \ref
+  /// dci_size_config::nof_aperiodic_zp_csi is not set to 0 when computing the DCI sizes. Otherwise, leave unset.
   optional<unsigned> zp_csi_rs_trigger;
   /// Modulation and coding scheme for TB 1 - 5 bits as per TS38.214 Section 5.1.3.1.
   unsigned tb1_modulation_coding_scheme;
@@ -996,14 +1022,20 @@ struct dci_1_1_configuration {
   unsigned tb1_new_data_indicator;
   /// Redundancy version for TB 1 - 2 bits as per TS38.212 Table 7.3.1.1.1-2.
   unsigned tb1_redundancy_version;
-  /// \brief Modulation and coding scheme for TB 2 - 5 bits if present, as per TS38.214 Section 5.1.3.1.
-  /// \remark Required if DCI is configured to schedule two codewords (see dci_size_config::pdsch_two_codewords).
+  /// \brief Modulation and coding scheme for TB 2 - 5 bits if present.
+  ///
+  /// Set as per TS38.214 Section 5.1.3.1 if DCI is configured to schedule two codewords, i.e., if \ref
+  /// dci_size_config::pdsch_two_codewords is set to \c true when computing the DCI sizes.
   optional<unsigned> tb2_modulation_coding_scheme;
   /// \brief New data indicator for TB 2 - 1 bit if present.
-  /// \remark Required if DCI is configured to schedule two codewords (see dci_size_config::pdsch_two_codewords).
+  ///
+  /// Set if DCI is configured to schedule two codewords, i.e., if \ref dci_size_config::pdsch_two_codewords is set to
+  /// \c true when computing the DCI sizes.
   optional<unsigned> tb2_new_data_indicator;
-  /// \brief Redundancy version for TB 2 - 2 bits if present, as per TS38.212 Table 7.3.1.1.1-2.
-  /// \remark Required if DCI is configured to schedule two codewords (see dci_size_config::pdsch_two_codewords).
+  /// \brief Redundancy version for TB 2 - 2 bits if present.
+  ///
+  /// Set as per TS38.212 Table 7.3.1.1.1-2 if DCI is configured to schedule two codewords, i.e., if \ref
+  /// dci_size_config::pdsch_two_codewords is set to \c true when computing the DCI sizes.
   optional<unsigned> tb2_redundancy_version;
   /// HARQ process number - 4 bits.
   unsigned harq_process_number;
@@ -1015,57 +1047,57 @@ struct dci_1_1_configuration {
   ///   - 2 bits if one serving cell is configured in the DL and PDSCH uses dynamic HARQ-ACK codebook, where the 2 bits
   ///     are the counter DAI.
   ///
-  /// \remark Required if dynamic HARQ-ACK codebook is used in the PDSCH (see dci_size_config::pdsch_harq_ack_cb).
+  /// It is required if dynamic HARQ-ACK codebook is used in the PDSCH (see \ref dci_size_config::pdsch_harq_ack_cb).
   optional<unsigned> downlink_assignment_index;
   /// TPC command for scheduled PUCCH - 2 bits as per TS38.213 Section 7.2.1.
   unsigned tpc_command;
   /// PUCCH resource indicator - 3 bits as per TS38.213 Section 9.2.3.
   unsigned pucch_resource_indicator;
-  /// \brief PDSCH to HARQ feedback timing indicator - 0, 1, 2 or 3 bits as per TS38.213 Section 9.2.3.
+  /// \brief PDSCH to HARQ feedback timing indicator - 0, 1, 2 or 3 bits.
   ///
-  /// It occupies \f$\log_2(I)\f$ bits, where \f$I\f$ is the the number of entries of the higher layer parameter \e
-  /// dl_DataToUl-ACK (see dci_size_config::nof_pdsch_ack_timings). Determines the number of slots between reception of
-  /// PDSCH and transmission of the HARQ-ACK.
   ///
-  /// \remark Required if \e dl_DataToUl-ACK is configured with more than a single value.
+  /// Number of slots between reception of PDSCH and transmission of the HARQ-ACK. It occupies \f$\log_2(I)\f$ bits,
+  /// where \f$I\f$ is the the number of entries of the higher layer parameter \e dl-DataToUl-ACK (see TS38.331 Section
+  /// 6.3.2, Information Element \e PUCCH-Config). Set as per TS38.213 Section 9.2.3 if The higher layer parameter \e
+  /// dl-DataToUl-ACK is configured with more than a single value, i.e., if \ref dci_size_config::nof_pdsch_ack_timings
+  /// is greater than 1 when computing the DCI sizes.
   optional<unsigned> pdsch_harq_fb_timing_indicator;
   /// \brief Antenna ports for PDSCH transmission - 4, 5 or 6 bits.
   ///
-  /// Indicates the antenna ports used to transmit the PDSCH and the corresponding DM-RS, as per TS38.212
-  /// Section 7.3.1.2.2 and Tables 7.3.1.2.2-1/2/3/4, according to the DM-RS type (see
+  /// Indicates the antenna ports used to transmit the PDSCH and the corresponding DM-RS, as per TS38.212 Section
+  /// 7.3.1.2.2 and Tables 7.3.1.2.2-1/2/3/4, according to the DM-RS type (see
   /// dci_size_config::pdsch_dmrs_A_type and dci_size_config::pdsch_dmrs_B_type) and the maximum DM-RS length (see
-  /// dci_size_config::pdsch_dmrs_A_max_len and dci_size_config::pdsch_dmrs_B_max_len).
-  ///
-  /// \remark if both DM-RS mapping type A and B are configured, this field occupies the number of bits required to pack
-  /// either DM-RS port allocation.
+  /// dci_size_config::pdsch_dmrs_A_max_len and dci_size_config::pdsch_dmrs_B_max_len). If both DM-RS mapping type A and
+  /// B are configured, this field occupies the number of bits required to pack either DM-RS port allocation.
   unsigned antenna_ports;
-  /// \brief Transmission configuration indication - 3 bits if present, as per TS38.214 Section 5.1.5.
-  /// \remark Required if the higher layer parameter \e tci-PresentInDCI is enabled (see dci_size_config::pdsch_tci).
+  /// \brief Transmission configuration indication - 3 bits if present.
+  ///
+  /// Set as per TS38.214 Section 5.1.5 if the higher layer parameter \e tci-PresentInDCI (see TS38.331 Section 6.3.2,
+  /// Information Element \e ControlResourceSet) is enabled, i.e., if \ref dci_size_config::pdsch_tci is set to \c true
+  /// when computing the DCI sizes.
   optional<unsigned> tx_config_indication;
   /// \brief SRS request - 2 or 3 bits.
   ///
   /// This parameter occupies:
   ///   - 2 bits for a UE in a cell not configured with the higher layer parameter \e supplementaryUplink (see TS38.331
-  ///     Section 6.3.2 &mdash; Information Element \e ServingCellConfig), filled as per TS38.212 Table 7.3.1.1.2-24.
+  ///     Section 6.3.2, Information Element \e ServingCellConfig), filled as per TS38.212 Table 7.3.1.1.2-24.
   ///   - 3 bits for a UE in a cell configured with \e supplementaryUplink. The first bit is the UL/SUL indicator in
   ///     TS38.212 Table 7.3.1.1.1-1 and the remaining bits are filled as per TS38.212 Table 7.3.1.1.2-24.
   ///
-  /// \remark This field may also indicate the associated CSI-RS according to TS38.214 Section 6.1.1.2.
+  /// This field may also indicate the associated CSI-RS according to TS38.214 Section 6.1.1.2.
   unsigned srs_request;
   /// \brief CBG Transmission Information (CBGTI) - 0, 2, 4, 6 or 8 bits.
   ///
-  /// Number of bits determined by the higher layer parameters \e maxCodeBlockGroupsPerTransportBlock (see
-  /// dci_size_config::max_cbg_tb_pdsch) and \e maxNrofCodeWordsScheduledByDCI (see
-  /// dci_size_config::pdsch_two_codewords), filled as per TS38.214 Section 5.1.7.
-  ///
-  /// \remark Required if the UE is configured to use CBGs.
+  /// Number of bits determined by the higher layer parameters \e maxCodeBlockGroupsPerTransportBlock (see \ref
+  /// dci_size_config::max_cbg_tb_pdsch) and \e maxNrofCodeWordsScheduledByDCI (see \ref
+  /// dci_size_config::pdsch_two_codewords). Set as per TS38.214 Section 5.1.7 if the UE is configured to use CBGs,
+  /// i.e., if \ref dci_size_config::max_cbg_tb_pdsch is set when computing the DCI sizes.
   optional<unsigned> cbg_transmission_info;
   /// \brief CBG Flushing Information (CBGFI) - 1 bit if present.
   ///
-  /// Indicates whether the set of CBG being transmitted can be combined with previous transmissions.
-  ///
-  /// \remark Required if the higher layer parameter \e codeBlockGroupFlushIndicator is set to \c true (see
-  /// dci_size_config::cbg_flush_indicator).
+  /// Indicates whether the set of CBGs being transmitted can be combined with previous transmissions. Required if the
+  /// higher layer parameter \e codeBlockGroupFlushIndicator is set to \c true, i.e., if \ref
+  /// dci_size_config::cbg_flush_indicator is set to \c true when computing the DCI sizes.
   optional<unsigned> cbg_flushing_info;
   /// DM-RS sequence initialization - 1 bit.
   unsigned dmrs_seq_initialization;

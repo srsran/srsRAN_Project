@@ -319,7 +319,7 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.total += sizes.srs_resource_indicator;
 
   // Precoding information and number of layers - 0, 1, 2, 3, 4, 5 or 6 bits.
-  if (!dci_config.tx_config_non_codebook && (dci_config.nof_antenna_ports > 1)) {
+  if (!dci_config.tx_config_non_codebook && (dci_config.nof_srs_ports.value() > 1)) {
     srsran_assertion_failure("Precoding is not currently supported");
   }
 
@@ -1098,8 +1098,8 @@ dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
   payload.push_back(config.frequency_resource, frequency_resource_nof_bits.value());
 
   // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
-  if (config.time_resource.has_value()) {
-    payload.push_back(config.time_resource.value(), config.payload_size.time_resource.value());
+  if (config.payload_size.time_resource != units::bits(0)) {
+    payload.push_back(config.time_resource, config.payload_size.time_resource.value());
   }
 
   // Frequency hopping flag - 0 or 1 bit.
@@ -1224,8 +1224,8 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
   payload.push_back(config.frequency_resource, config.payload_size.frequency_resource.value());
 
   // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
-  if (config.time_resource.has_value()) {
-    payload.push_back(config.time_resource.value(), config.payload_size.time_resource.value());
+  if (config.payload_size.time_resource != units::bits(0)) {
+    payload.push_back(config.time_resource, config.payload_size.time_resource.value());
   }
 
   // VRB-to-PRB mapping - 0 or 1 bit.
