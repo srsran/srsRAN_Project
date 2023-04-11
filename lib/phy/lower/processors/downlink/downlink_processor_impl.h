@@ -27,9 +27,11 @@ class downlink_processor_impl : public lower_phy_downlink_processor
 {
 public:
   /// \brief Constructs a software generic lower PHY downlink processor that can process downlink resource grids.
-  /// \param[in] pdxch_proc PDxCH processor.
-  /// \param[in] config     Downlink processor configuration.
+  /// \param[in] pdxch_proc        PDxCH processor.
+  /// \param[in] amplitude_control Amplitude controller.
+  /// \param[in] config            Downlink processor configuration.
   downlink_processor_impl(std::unique_ptr<pdxch_processor>                 pdxch_proc,
+                          std::unique_ptr<amplitude_controller>            amplitude_control,
                           const downlink_processor_baseband_configuration& config);
 
   // See interface for documentation.
@@ -44,6 +46,8 @@ public:
 private:
   /// PDxCH processor.
   std::unique_ptr<pdxch_processor> pdxch_proc;
+  /// Amplitude control.
+  std::unique_ptr<amplitude_controller> amplitude_control;
   /// Baseband processor.
   downlink_processor_baseband_impl downlink_proc_baseband;
 };

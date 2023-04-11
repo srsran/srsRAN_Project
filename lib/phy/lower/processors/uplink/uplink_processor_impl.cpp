@@ -55,25 +55,24 @@ void lower_phy_uplink_processor_impl::connect(uplink_processor_notifier& notifie
 
 prach_processor_request_handler& lower_phy_uplink_processor_impl::get_prach_request_handler()
 {
-  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   return prach_proc->get_request_handler();
 }
 
 puxch_processor_request_handler& lower_phy_uplink_processor_impl::get_puxch_request_handler()
 {
-  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   return puxch_proc->get_request_handler();
 }
 
 uplink_processor_baseband& lower_phy_uplink_processor_impl::get_baseband()
 {
-  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   return *this;
 }
 
-void lower_phy_uplink_processor_impl::process(baseband_gateway_buffer& samples)
+void lower_phy_uplink_processor_impl::process(const baseband_gateway_buffer& samples)
 {
+  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   srsran_assert(nof_rx_ports == samples.get_nof_channels(), "Invalid number of channels.");
+
   unsigned nof_samples           = samples.get_nof_samples();
   unsigned nof_processed_samples = 0;
 

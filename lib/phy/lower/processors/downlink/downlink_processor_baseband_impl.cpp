@@ -14,8 +14,12 @@ using namespace srsran;
 
 downlink_processor_baseband_impl::downlink_processor_baseband_impl(
     pdxch_processor_baseband&                        pdxch_proc_baseband_,
+    amplitude_controller&                            amplitude_control_,
     const downlink_processor_baseband_configuration& config) :
+  amplitude_control_logger(srslog::fetch_basic_logger("Low-PHY")),
   pdxch_proc_baseband(pdxch_proc_baseband_),
+  amplitude_control(amplitude_control_),
+  nof_slot_tti_in_advance(config.nof_slot_tti_in_advance),
   sector_id(config.sector_id),
   nof_rx_ports(config.nof_tx_ports),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
@@ -76,7 +80,7 @@ void downlink_processor_baseband_impl::process_new_symbol()
   if (current_symbol_index == 0) {
     // Notify slot boundary.
     lower_phy_timing_context context;
-    context.slot = current_slot;
+    context.slot = current_slot + nof_slot_tti_in_advance;
     notifier->on_tti_boundary(context);
   }
 
@@ -95,6 +99,65 @@ void downlink_processor_baseband_impl::process_new_symbol()
   pdxch_context.sector = sector_id;
   pdxch_context.symbol = current_symbol_index;
   pdxch_proc_baseband.process_symbol(temp_buffer, pdxch_context);
+
+  for (unsigned i_port = 0, i_port_end = temp_buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
+    // Control amplitude.
+    amplitude_controller_metrics amplitude_control_metrics =
+        amplitude_control.process(temp_buffer.get_channel_buffer(i_port), temp_buffer.get_channel_buffer(i_port));
+
+    // Add entries to long term power statistics when the signal carries power.
+    if (amplitude_control_metrics.avg_power_fs > 0.0F) {
+      avg_symbol_power.update(amplitude_control_metrics.avg_power_fs);
+      peak_symbol_power.update(amplitude_control_metrics.peak_power_fs);
+      symbol_papr.update(amplitude_control_metrics.papr_lin);
+    }
+
+    // Log amplitude controller metrics every 10 frames.
+    if ((current_slot.sfn() % 10 == 0) && (current_slot.slot_index() == 0) && (current_symbol_index == 0)) {
+      // Long term average signal power can be computed as the mean of the average power of each OFDM symbol.
+      float avg_power = avg_symbol_power.get_mean();
+
+      // Long term peak power is the maximum registered symbol peak power.
+      float peak_pwr = peak_symbol_power.get_max();
+
+      float papr = 1.0F;
+      if (std::isnormal(avg_power)) {
+        // Long term PAPR is the ratio between the maximum observed instantaneous power and the average power. This
+        // indicates the dynamic range of the signal in the entire analysis window.
+        papr = peak_pwr / avg_power;
+      }
+
+      // Mean symbol PAPR. This indicates the mean dynamic range of the signal for an analysis window of 1 OFDM
+      // symbol.
+      float mean_symb_papr = symbol_papr.get_mean();
+
+      if (amplitude_control_metrics.clipping_enabled) {
+        amplitude_control_logger.debug(
+            "Tx: gain={:+.2f}dB avg_pwr={:+.2f}dBFS peak_pwr={:+.2f}dBFS papr={:+.2f}dB mean_symb_papr={:+.2f}dB "
+            "clip_sps={} clip_prob={:.2e}",
+            amplitude_control_metrics.gain_dB,
+            convert_power_to_dB(avg_power),
+            convert_power_to_dB(peak_pwr),
+            convert_power_to_dB(papr),
+            convert_power_to_dB(mean_symb_papr),
+            amplitude_control_metrics.nof_clipped_samples,
+            amplitude_control_metrics.clipping_probability);
+      } else {
+        amplitude_control_logger.debug(
+            "Tx: gain={:+.2f}dB avg_pwr={:+.2f}dBFS peak_pwr={:+.2f}dBFS papr={:+.2f}dB mean_symb_papr={:+.2f}dB",
+            amplitude_control_metrics.gain_dB,
+            convert_power_to_dB(avg_power),
+            convert_power_to_dB(peak_pwr),
+            convert_power_to_dB(papr),
+            convert_power_to_dB(mean_symb_papr));
+      }
+
+      // Reset long term analysis window.
+      avg_symbol_power.reset();
+      peak_symbol_power.reset();
+      symbol_papr.reset();
+    }
+  }
 
   // Increment current symbol index.
   ++current_symbol_index;

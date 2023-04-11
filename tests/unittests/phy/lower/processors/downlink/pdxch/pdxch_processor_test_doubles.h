@@ -27,17 +27,17 @@ class pdxch_processor_baseband_spy : public pdxch_processor_baseband
 {
 public:
   struct entry_t {
-    const baseband_gateway_buffer* samples;
-    symbol_context                 context;
+    baseband_gateway_buffer_dynamic samples = baseband_gateway_buffer_dynamic(0, 0);
+    symbol_context                  context;
   };
 
   pdxch_processor_baseband_spy() : sample_dist(-1, 1) {}
 
   void process_symbol(baseband_gateway_buffer& samples, const symbol_context& context) override
   {
-    entries.emplace_back();
+    entries.emplace_back(
+        entry_t{baseband_gateway_buffer_dynamic(samples.get_nof_channels(), samples.get_nof_samples()), context});
     entry_t& entry = entries.back();
-    entry.samples  = &samples;
     entry.context  = context;
 
     for (unsigned i_channel = 0, i_channel_end = samples.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
@@ -45,6 +45,8 @@ public:
       std::generate(channel_samples.begin(), channel_samples.end(), [this]() {
         return cf_t(sample_dist(rgen), sample_dist(rgen));
       });
+
+      srsvec::copy(entry.samples.get_channel_buffer(i_channel), channel_samples);
     }
   }
 

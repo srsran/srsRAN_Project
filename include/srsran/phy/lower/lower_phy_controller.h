@@ -25,10 +25,13 @@ public:
   ///
   /// \param[in] realtime_task_executor Task executor for real time operation.
   /// \note The real time task executor is exclusively dedicated to the lower physical layer operation.
-  virtual void start(task_executor& realtime_task_executor) = 0;
+  virtual void start() = 0;
 
-  /// Stops the lower physical layer operation.
-  virtual void stop() = 0;
+  /// Requests to lower physical layer to stop the operation.
+  virtual void request_stop() = 0;
+
+  /// Waits for the lower physical layer to stop the operation.
+  virtual void wait_stop() = 0;
 };
 
 } // namespace srsran

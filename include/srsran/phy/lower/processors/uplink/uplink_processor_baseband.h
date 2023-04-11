@@ -30,7 +30,7 @@ public:
   ///
   /// \param[in] buffer Baseband samples to process.
   /// \remark The number of channels in \c buffer must be equal to the number of receive ports for the sector.
-  virtual void process(baseband_gateway_buffer& buffer) = 0;
+  virtual void process(const baseband_gateway_buffer& buffer) = 0;
 };
 
 } // namespace srsran

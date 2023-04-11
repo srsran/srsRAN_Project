@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "srsran/phy/lower/modulation/modulation_factories.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor.h"
 #include "srsran/phy/lower/sampling_rate.h"

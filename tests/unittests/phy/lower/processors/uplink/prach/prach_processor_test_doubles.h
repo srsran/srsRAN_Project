@@ -49,10 +49,25 @@ private:
 class prach_processor_request_handler_spy : public prach_processor_request_handler
 {
 public:
+  struct entry_t {
+    prach_buffer_context context;
+    const prach_buffer*  buffer;
+  };
+
   void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
   {
-    // TBD.
+    entries.emplace_back();
+    entry_t& entry = entries.back();
+    entry.context  = context;
+    entry.buffer   = &buffer;
   }
+
+  const std::vector<entry_t>& get_entries() const { return entries; }
+
+  void clear() { entries.clear(); }
+
+private:
+  std::vector<entry_t> entries;
 };
 
 class prach_processor_spy : public prach_processor

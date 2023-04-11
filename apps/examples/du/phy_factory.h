@@ -13,6 +13,7 @@
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 

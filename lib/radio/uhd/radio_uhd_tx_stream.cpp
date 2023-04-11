@@ -89,7 +89,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
                                          uhd::time_spec_t&        time_spec)
 {
   // Prepare metadata.
-  uhd::tx_metadata_t metadata = {};
+  uhd::tx_metadata_t md = {};
 
   // Extract number of samples.
   unsigned num_samples = buffs[0].size() - buffer_offset;
@@ -97,8 +97,8 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   // Make sure the number of channels is equal.
   report_fatal_error_if_not(buffs.get_nof_channels() == nof_channels, "Number of channels does not match.");
 
-  // Run states
-  if (!state_fsm.transmit_block(metadata, time_spec)) {
+  // Run states.
+  if (!state_fsm.transmit_block(md, time_spec)) {
     nof_txd_samples = num_samples;
     return true;
   }
@@ -113,7 +113,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   uhd::tx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
 
   // Notify start of burst.
-  if (metadata.start_of_burst) {
+  if (md.start_of_burst) {
     radio_notification_handler::event_description event_description = {};
     event_description.stream_id                                     = stream_id;
     event_description.channel_id                                    = 0;
@@ -124,7 +124,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   }
 
   // Notify end of burst.
-  if (metadata.end_of_burst) {
+  if (md.end_of_burst) {
     radio_notification_handler::event_description event_description = {};
     event_description.stream_id                                     = stream_id;
     event_description.channel_id                                    = 0;
@@ -135,8 +135,8 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   }
 
   // Safe transmission.
-  return safe_execution([this, &buffs_cpp, num_samples, &metadata, &nof_txd_samples]() {
-    nof_txd_samples = stream->send(buffs_cpp, num_samples, metadata, TRANSMIT_TIMEOUT_S);
+  return safe_execution([this, &buffs_cpp, num_samples, &md, &nof_txd_samples]() {
+    nof_txd_samples = stream->send(buffs_cpp, num_samples, md, TRANSMIT_TIMEOUT_S);
   });
 }
 
@@ -150,6 +150,8 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   srate_hz(description.srate_hz),
   nof_channels(description.ports.size())
 {
+  srsran_assert(std::isnormal(srate_hz) && (srate_hz > 0.0), "Invalid sampling rate {}.", srate_hz);
+
   // Build stream arguments.
   uhd::stream_args_t stream_args = {};
   stream_args.cpu_format         = "fc32";
@@ -180,10 +182,12 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   run_recv_async_msg();
 }
 
-bool radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, uhd::time_spec_t time_spec)
+void radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, const baseband_gateway_transmitter::metadata& tx_md)
 {
   // Protect stream transmitter.
   std::unique_lock<std::mutex> lock(stream_transmit_mutex);
+
+  uhd::time_spec_t time_spec = time_spec.from_ticks(tx_md.ts, srate_hz);
 
   unsigned nsamples          = data.get_nof_samples();
   unsigned txd_samples_total = 0;
@@ -193,7 +197,7 @@ bool radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, uhd::time_spec
     unsigned txd_samples = 0;
     if (!transmit_block(txd_samples, data, txd_samples_total, time_spec)) {
       printf("Error: failed transmitting packet. %s.\n", get_error_message().c_str());
-      return false;
+      return;
     }
 
     // Save timespec for first block.
@@ -202,18 +206,15 @@ bool radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, uhd::time_spec
     // Increment the total amount of received samples.
     txd_samples_total += txd_samples;
   }
-
-  // If it reaches here, there is no error.
-  return true;
 }
 
 void radio_uhd_tx_stream::stop()
 {
-  uhd::tx_metadata_t metadata;
-  state_fsm.stop(metadata);
+  uhd::tx_metadata_t md;
+  state_fsm.stop(md);
 
   // Send end-of-burst if it is in the middle of a burst.
-  if (metadata.end_of_burst) {
+  if (md.end_of_burst) {
     std::unique_lock<std::mutex> transmit_lock(stream_transmit_mutex);
 
     // Notify end of burst.
@@ -235,9 +236,9 @@ void radio_uhd_tx_stream::stop()
     uhd::tx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
 
     // Safe transmission. Ignore return.
-    safe_execution([this, &buffs_cpp, &metadata]() {
+    safe_execution([this, &buffs_cpp, &md]() {
       // Actual transmission. Ignore number of transmitted samples.
-      stream->send(buffs_cpp, 0, metadata, TRANSMIT_TIMEOUT_S);
+      stream->send(buffs_cpp, 0, md, TRANSMIT_TIMEOUT_S);
     });
   }
 }
@@ -245,4 +246,9 @@ void radio_uhd_tx_stream::stop()
 void radio_uhd_tx_stream::wait_stop()
 {
   state_fsm.wait_stop();
+}
+
+unsigned radio_uhd_tx_stream::get_buffer_size()
+{
+  return stream->get_max_num_samps();
 }

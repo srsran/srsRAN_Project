@@ -16,10 +16,14 @@
 using namespace srsran;
 
 downlink_processor_impl::downlink_processor_impl(std::unique_ptr<pdxch_processor>                 pdxch_proc_,
+                                                 std::unique_ptr<amplitude_controller>            amplitude_control_,
                                                  const downlink_processor_baseband_configuration& config) :
-  pdxch_proc(std::move(pdxch_proc_)), downlink_proc_baseband(pdxch_proc->get_baseband(), config)
+  pdxch_proc(std::move(pdxch_proc_)),
+  amplitude_control(std::move(amplitude_control_)),
+  downlink_proc_baseband(pdxch_proc->get_baseband(), *amplitude_control, config)
 {
   srsran_assert(pdxch_proc, "Invalid PDxCH processor.");
+  srsran_assert(amplitude_control, "Invalid amplitude controller.");
 }
 
 void downlink_processor_impl::connect(downlink_processor_notifier& notifier, pdxch_processor_notifier& pdxch_notifier)

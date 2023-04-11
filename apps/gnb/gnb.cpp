@@ -52,6 +52,7 @@
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
 #include "srsran/phy/adapters/phy_timing_adapter.h"
+#include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/radio/radio_factory.h"
@@ -166,7 +167,10 @@ struct worker_manager {
   std::unique_ptr<task_executor> du_ctrl_exec;
   std::unique_ptr<task_executor> du_ue_exec;
   std::unique_ptr<task_executor> du_cell_exec;
-  std::unique_ptr<task_executor> lower_phy_rt_exec;
+  std::unique_ptr<task_executor> lower_phy_tx_exec;
+  std::unique_ptr<task_executor> lower_phy_rx_exec;
+  std::unique_ptr<task_executor> lower_phy_dl_exec;
+  std::unique_ptr<task_executor> lower_phy_ul_exec;
   std::unique_ptr<task_executor> lower_prach_exec;
   std::unique_ptr<task_executor> upper_dl_exec;
   std::unique_ptr<task_executor> upper_pusch_exec;
@@ -215,8 +219,11 @@ private:
     if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
-      create_worker("lower_phy", 1, os_thread_realtime_priority::max());
-      create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 1);
+      create_worker("lower_phy_tx", 128, os_thread_realtime_priority::max());
+      create_worker("lower_phy_rx", 1, os_thread_realtime_priority::max() - 2);
+      create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max() - 1);
+      create_worker("lower_phy_ul", 128, os_thread_realtime_priority::max() - 3);
+      create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
       create_worker("upper_phy_dl", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
       create_worker_pool(
           "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
@@ -232,14 +239,20 @@ private:
     du_cell_exec  = std::make_unique<task_worker_executor>(*workers.at("du_cell"));
     if (blocking_mode_active) {
       task_worker& phy_worker = *workers.at("phy_worker");
-      lower_phy_rt_exec       = std::make_unique<task_worker_executor>(phy_worker);
+      lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
+      lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
+      lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
+      lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
       lower_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
       upper_dl_exec           = std::make_unique<task_worker_executor>(phy_worker);
       upper_pusch_exec        = std::make_unique<task_worker_executor>(phy_worker);
       upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
       upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
     } else {
-      lower_phy_rt_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy"));
+      lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_tx"));
+      lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_rx"));
+      lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
+      lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
       lower_prach_exec  = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
       upper_dl_exec     = std::make_unique<task_worker_executor>(*workers.at("upper_phy_dl"));
       upper_pusch_exec  = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
@@ -260,6 +273,10 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
                                                               lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                               lower_phy_timing_notifier*    timing_notifier,
                                                               lower_phy_error_notifier*     error_notifier,
+                                                              task_executor&                tx_executor,
+                                                              task_executor&                rx_executor,
+                                                              task_executor&                dl_executor,
+                                                              task_executor&                ul_executor,
                                                               task_executor&                prach_executor,
                                                               const gnb_appconfig&          app_cfg)
 {
@@ -269,6 +286,10 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.error_notifier       = error_notifier;
   phy_config.rx_symbol_notifier   = rx_symbol_notifier;
   phy_config.timing_notifier      = timing_notifier;
+  phy_config.tx_task_executor     = &tx_executor;
+  phy_config.rx_task_executor     = &rx_executor;
+  phy_config.dl_task_executor     = &dl_executor;
+  phy_config.ul_task_executor     = &ul_executor;
   phy_config.prach_async_executor = &prach_executor;
 
   return phy_config;
@@ -586,6 +607,10 @@ int main(int argc, char** argv)
                                                                             &phy_rx_adapter,
                                                                             &phy_time_adapter,
                                                                             &phy_err_printer,
+                                                                            *workers.lower_phy_tx_exec,
+                                                                            *workers.lower_phy_rx_exec,
+                                                                            *workers.lower_phy_dl_exec,
+                                                                            *workers.lower_phy_ul_exec,
                                                                             *workers.lower_prach_exec,
                                                                             gnb_cfg);
   static constexpr unsigned max_nof_prach_concurrent_requests = 11;
@@ -705,7 +730,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   gnb_logger.info("Starting lower PHY...");
-  lower->get_controller().start(*workers.lower_phy_rt_exec);
+  lower->get_controller().start();
   gnb_logger.info("Lower PHY started successfully");
 
   console.set_cells(du_hi_cfg.cells);
@@ -731,7 +756,8 @@ int main(int argc, char** argv)
   gnb_logger.info("Radio stopped successfully");
 
   gnb_logger.info("Stopping lower PHY...");
-  lower->get_controller().stop();
+  lower->get_controller().request_stop();
+  lower->get_controller().wait_stop();
   gnb_logger.info("Lower PHY stopped successfully");
 
   gnb_logger.info("Closing DU-high...");

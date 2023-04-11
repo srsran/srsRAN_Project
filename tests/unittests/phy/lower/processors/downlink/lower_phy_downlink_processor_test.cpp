@@ -8,6 +8,7 @@
  *
  */
 
+#include "../../amplitude_control/amplitude_controller_test_doubles.h"
 #include "downlink_processor_notifier_test_doubles.h"
 #include "pdxch/pdxch_processor_notifier_test_doubles.h"
 #include "pdxch/pdxch_processor_test_doubles.h"
@@ -116,7 +117,10 @@ protected:
       pdxch_proc_factory = std::make_shared<pdxch_processor_factory_spy>();
       ASSERT_NE(pdxch_proc_factory, nullptr);
 
-      ul_proc_factory = create_downlink_processor_factory_sw(pdxch_proc_factory);
+      amplitude_control_factory = std::make_shared<amplitude_controller_factory_spy>();
+      ASSERT_NE(amplitude_control_factory, nullptr);
+
+      ul_proc_factory = create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
       ASSERT_NE(ul_proc_factory, nullptr);
     }
   }
@@ -147,6 +151,9 @@ protected:
 
     // Select PDxCH processor spy.
     pdxch_proc_spy = &pdxch_proc_factory->get_spy();
+
+    // Select amplitude controller spy.
+    amplitude_control_spy = amplitude_control_factory->get_entries().back();
   }
 
   static constexpr unsigned                                    nof_frames_test = 10;
@@ -155,19 +162,22 @@ protected:
   static std::uniform_int_distribution<unsigned>               dist_bandwidth_prb;
   static std::uniform_real_distribution<double>                dist_center_freq_Hz;
   static std::shared_ptr<pdxch_processor_factory_spy>          pdxch_proc_factory;
+  static std::shared_ptr<amplitude_controller_factory_spy>     amplitude_control_factory;
   static std::shared_ptr<lower_phy_downlink_processor_factory> ul_proc_factory;
 
   downlink_processor_configuration              config;
-  std::unique_ptr<lower_phy_downlink_processor> ul_processor   = nullptr;
-  pdxch_processor_spy*                          pdxch_proc_spy = nullptr;
+  std::unique_ptr<lower_phy_downlink_processor> ul_processor          = nullptr;
+  pdxch_processor_spy*                          pdxch_proc_spy        = nullptr;
+  amplitude_controller_spy*                     amplitude_control_spy = nullptr;
 };
 
-std::mt19937                                          LowerPhyDownlinkProcessorFixture::rgen(0);
-std::uniform_int_distribution<unsigned>               LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
-std::uniform_int_distribution<unsigned>               LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
-std::uniform_real_distribution<double>                LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
-std::shared_ptr<pdxch_processor_factory_spy>          LowerPhyDownlinkProcessorFixture::pdxch_proc_factory = nullptr;
-std::shared_ptr<lower_phy_downlink_processor_factory> LowerPhyDownlinkProcessorFixture::ul_proc_factory    = nullptr;
+std::mt19937                                      LowerPhyDownlinkProcessorFixture::rgen(0);
+std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
+std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
+std::uniform_real_distribution<double>            LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
+std::shared_ptr<pdxch_processor_factory_spy>      LowerPhyDownlinkProcessorFixture::pdxch_proc_factory        = nullptr;
+std::shared_ptr<amplitude_controller_factory_spy> LowerPhyDownlinkProcessorFixture::amplitude_control_factory = nullptr;
+std::shared_ptr<lower_phy_downlink_processor_factory> LowerPhyDownlinkProcessorFixture::ul_proc_factory       = nullptr;
 
 } // namespace
 
@@ -249,6 +259,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
           downlink_proc_notifier_spy.clear_notifications();
           pdxch_proc_notifier_spy.clear_notifications();
           pdxch_proc_spy->clear();
+          amplitude_control_spy->clear();
 
           // Process baseband.
           dl_proc_baseband.process(buffer);
@@ -264,7 +275,18 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
           ASSERT_EQ(pdxch_proc_entries.size(), 1);
           auto& pdxch_proc_entry = pdxch_proc_entries.back();
           ASSERT_EQ(pdxch_proc_entry.context, pdxch_context);
-          ASSERT_EQ(*pdxch_proc_entry.samples, buffer);
+
+          // Assert amplitude controller.
+          auto& amplitude_controller_entries = amplitude_control_spy->get_entries();
+          ASSERT_EQ(amplitude_controller_entries.size(), config.nof_tx_ports);
+          for (unsigned i_port = 0, i_port_end = config.nof_tx_ports; i_port != i_port_end; ++i_port) {
+            // Make sure the amplitude controller input match with the PDxCH processor output.
+            ASSERT_EQ(span<const cf_t>(amplitude_controller_entries[i_port].input),
+                      span<const cf_t>(pdxch_proc_entry.samples.get_channel_buffer(i_port)));
+            // Make sure the amplitude controller output match with the resultant buffer contents.
+            ASSERT_EQ(span<const cf_t>(amplitude_controller_entries[i_port].output),
+                      span<const cf_t>(buffer.get_channel_buffer(i_port)));
+          }
 
           // No PDxCH notifications.
           ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);

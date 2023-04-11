@@ -25,6 +25,7 @@
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
 #include "srsran/phy/adapters/phy_timing_adapter.h"
+#include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include <atomic>
@@ -300,7 +301,8 @@ struct worker_manager {
     cell_workers.stop();
     ue_workers.stop();
     ctrl_worker.stop();
-    rt_task_worker.stop();
+    lower_dl_task_worker.stop();
+    lower_ul_task_worker.stop();
     upper_dl_worker.stop();
     upper_ul_worker.stop();
     lower_prach_worker.stop();
@@ -315,11 +317,16 @@ struct worker_manager {
   task_worker_executor     ue_execs{ue_workers};
   pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
   cell_executor_mapper     cell_exec_mapper{{&cell_execs}, false};
-  // Lower PHY RT task executor.
-  task_worker          rt_task_worker{"phy_rt_thread", 1, os_thread_realtime_priority::max()};
-  task_worker_executor rt_task_executor{{rt_task_worker}};
+  // Downlink Lower PHY task executors.
+  task_worker          lower_dl_task_worker{"low_dl", 1, os_thread_realtime_priority::max()};
+  task_worker_executor lower_tx_task_executor{{lower_dl_task_worker}};
+  task_worker_executor lower_dl_task_executor{{lower_dl_task_worker}};
+  // Uplink Lower PHY task executors.
+  task_worker          lower_ul_task_worker{"low_ul", 1, os_thread_realtime_priority::max()};
+  task_worker_executor lower_rx_task_executor{{lower_ul_task_worker}};
+  task_worker_executor lower_ul_task_executor{{lower_ul_task_worker}};
   // PRACH lower PHY executor.
-  task_worker          lower_prach_worker{"LoPHY_PRACH", task_worker_queue_size};
+  task_worker          lower_prach_worker{"low_prach", task_worker_queue_size};
   task_worker_executor lower_prach_executor{lower_prach_worker};
   // Upper phy task executor.
   task_worker          upper_dl_worker{"PHY_DL", task_worker_queue_size};
@@ -337,11 +344,14 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
                                                               lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                               lower_phy_timing_notifier*    timing_notifier,
                                                               lower_phy_error_notifier*     error_notifier,
+                                                              task_executor&                lower_tx_executor,
+                                                              task_executor&                lower_rx_executor,
+                                                              task_executor&                lower_dl_executor,
+                                                              task_executor&                lower_ul_executor,
                                                               task_executor&                prach_executor)
 {
   lower_phy_configuration phy_config;
 
-  phy_config.log_level                  = log_level;
   phy_config.scs                        = scs;
   phy_config.cp                         = cp;
   phy_config.dft_window_offset          = 0.5F;
@@ -353,12 +363,14 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.ta_offset                  = ta_offset;
   phy_config.time_alignment_calibration = time_alignmemt_calibration;
 
-  phy_config.tx_scale = 1.0F;
-
   phy_config.bb_gateway           = bb_gateway;
   phy_config.error_notifier       = error_notifier;
   phy_config.rx_symbol_notifier   = rx_symbol_notifier;
   phy_config.timing_notifier      = timing_notifier;
+  phy_config.tx_task_executor     = &lower_tx_executor;
+  phy_config.rx_task_executor     = &lower_rx_executor;
+  phy_config.dl_task_executor     = &lower_dl_executor;
+  phy_config.ul_task_executor     = &lower_ul_executor;
   phy_config.prach_async_executor = &prach_executor;
 
   // Amplitude controller configuration.
@@ -367,17 +379,14 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.amplitude_config.enable_clipping = enable_clipping;
   phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
 
+  // Sector configuration.
   lower_phy_sector_description sector_config;
   sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs, frequency_range::FR1);
   sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
   sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn));
-
-  lower_phy_sector_port_mapping port_mapping;
-  port_mapping.stream_id  = 0;
-  port_mapping.channel_id = 0;
-  sector_config.port_mapping.push_back(port_mapping);
+  sector_config.nof_rx_ports = 1;
+  sector_config.nof_tx_ports = 1;
   phy_config.sectors.push_back(sector_config);
-  phy_config.nof_channels_per_stream.push_back(1);
 
   return phy_config;
 }
@@ -592,6 +601,10 @@ int main(int argc, char** argv)
                                                                             &phy_rx_adapter,
                                                                             &phy_time_adapter,
                                                                             &phy_err_printer,
+                                                                            workers.lower_tx_task_executor,
+                                                                            workers.lower_rx_task_executor,
+                                                                            workers.lower_dl_task_executor,
+                                                                            workers.lower_ul_task_executor,
                                                                             workers.lower_prach_executor);
   auto                    lower            = create_lower_phy(lower_phy_config, max_nof_concurrent_requests);
   report_fatal_error_if_not(lower, "Unable to create lower PHY.");
@@ -725,7 +738,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   du_logger.info("Starting lower PHY...");
-  lower->get_controller().start(workers.rt_task_executor);
+  lower->get_controller().start();
   du_logger.info("Lower PHY started successfully");
 
   while (is_running) {
@@ -733,7 +746,8 @@ int main(int argc, char** argv)
   }
 
   du_logger.info("Stopping lower PHY...");
-  lower->get_controller().stop();
+  lower->get_controller().request_stop();
+  lower->get_controller().wait_stop();
   du_logger.info("Lower PHY stopped successfully");
 
   du_logger.info("Stopping executors...");

@@ -1,0 +1,138 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/phy/lower/processors/downlink/downlink_processor.h"
+#include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
+#include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
+#include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_notifier.h"
+#include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
+#include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/srsvec/copy.h"
+#include <random>
+#include <vector>
+
+namespace srsran {
+
+class pdxch_processor_request_handler_spy : public pdxch_processor_request_handler
+{
+public:
+  struct entry_t {
+    const resource_grid_reader* grid;
+    resource_grid_context       context;
+  };
+
+  void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override
+  {
+    entries.emplace_back();
+    entry_t& entry = entries.back();
+    entry.context  = context;
+    entry.grid     = &grid;
+  }
+
+  const std::vector<entry_t>& get_entries() const { return entries; }
+
+  void clear() { entries.clear(); }
+
+private:
+  std::vector<entry_t> entries;
+};
+
+class downlink_processor_baseband_spy : public downlink_processor_baseband
+{
+public:
+  using entry_t = baseband_gateway_buffer_dynamic;
+
+  void process(baseband_gateway_buffer& buffer) override
+  {
+    entries.emplace_back(baseband_gateway_buffer_dynamic(buffer.get_nof_channels(), buffer.get_nof_samples()));
+    entry_t& entry = entries.back();
+
+    for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
+      span<cf_t> samples = buffer.get_channel_buffer(i_channel);
+      std::generate(samples.begin(), samples.end(), [this]() { return cf_t(sample_dist(rgen), sample_dist(rgen)); });
+      srsvec::copy(entry.get_channel_buffer(i_channel), samples);
+    }
+  }
+
+  const std::vector<entry_t>& get_entries() const { return entries; }
+
+  void clear() { entries.clear(); }
+
+private:
+  std::mt19937                          rgen;
+  std::uniform_real_distribution<float> sample_dist;
+  std::vector<entry_t>                  entries;
+};
+
+class lower_phy_downlink_processor_spy : public lower_phy_downlink_processor
+{
+public:
+  lower_phy_downlink_processor_spy(downlink_processor_configuration config_) : config(config_) {}
+
+  void connect(downlink_processor_notifier& notifier_, pdxch_processor_notifier& pdxch_notifier_) override
+  {
+    notifier       = &notifier_;
+    pdxch_notifier = &pdxch_notifier_;
+  }
+
+  pdxch_processor_request_handler& get_downlink_request_handler() override { return pdxch_proc_request_handler_spy; }
+
+  downlink_processor_baseband& get_baseband() override { return downlink_proc_baseband_spy; }
+
+  const downlink_processor_configuration& get_config() const { return config; }
+
+  downlink_processor_notifier* get_notifier() { return notifier; }
+
+  pdxch_processor_notifier* get_pdxch_notifier() { return pdxch_notifier; }
+
+  const pdxch_processor_request_handler_spy& get_pdxch_proc_request_handler_spy() const
+  {
+    return pdxch_proc_request_handler_spy;
+  }
+
+  const downlink_processor_baseband_spy& get_downlink_proc_baseband_spy() const { return downlink_proc_baseband_spy; }
+
+  void clear()
+  {
+    notifier       = nullptr;
+    pdxch_notifier = nullptr;
+    pdxch_proc_request_handler_spy.clear();
+    downlink_proc_baseband_spy.clear();
+  }
+
+private:
+  downlink_processor_configuration    config;
+  downlink_processor_notifier*        notifier;
+  pdxch_processor_notifier*           pdxch_notifier;
+  pdxch_processor_request_handler_spy pdxch_proc_request_handler_spy;
+  downlink_processor_baseband_spy     downlink_proc_baseband_spy;
+};
+
+class lower_phy_downlink_processor_factory_spy : public lower_phy_downlink_processor_factory
+{
+public:
+  std::unique_ptr<lower_phy_downlink_processor> create(const downlink_processor_configuration& config) override
+  {
+    std::unique_ptr<lower_phy_downlink_processor_spy> proc = std::make_unique<lower_phy_downlink_processor_spy>(config);
+    entries.emplace_back(proc.get());
+    return proc;
+  }
+
+  std::vector<lower_phy_downlink_processor_spy*>& get_entries() { return entries; }
+
+  void clear() { entries.clear(); }
+
+private:
+  std::vector<lower_phy_downlink_processor_spy*> entries;
+};
+
+} // namespace srsran

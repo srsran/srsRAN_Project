@@ -1,0 +1,37 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
+
+namespace srsran {
+
+/// Describes a baseband gateway interface for transmission.
+class baseband_gateway_transmitter : public baseband_gateway_base
+{
+public:
+  /// Describes transmitter metadata.
+  struct metadata {
+    /// Baseband transmitter timestamp. Indicates the time the data needs to be transmitted.
+    baseband_gateway_timestamp ts;
+  };
+
+  /// \brief Gets the optimal transmitter buffer size.
+  virtual unsigned get_buffer_size() = 0;
+
+  /// \brief Transmits a given baseband buffer in a given time provided in the metadata.
+  /// \param[in] data Provides the baseband buffer to transmit.
+  /// \param[in] metadata Provides additional parameters for transmission.
+  /// \note The data buffers must the same number of channels than the stream.
+  /// \note The application terminates if the stream identifier is invalid.
+  virtual void transmit(baseband_gateway_buffer& data, const metadata& metadata) = 0;
+};
+
+} // namespace srsran

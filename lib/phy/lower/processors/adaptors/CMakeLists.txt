@@ -7,4 +7,6 @@
 #
 
 add_library(srsran_lower_phy_adaptors STATIC
+        processor_baseband_adaptor.cpp
+        processor_handler_adaptor.cpp
         processor_notifier_adaptor.cpp)

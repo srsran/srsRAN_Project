@@ -33,6 +33,8 @@ private:
   // See prach_processor_request_handler for documentation.
   void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
   {
+    srsran_assert(notifier, "Notifier has not been connected.");
+
     // Iterate all workers...
     for (std::unique_ptr<prach_processor_worker>& worker : workers) {
       // Select the first worker available.
@@ -80,18 +82,10 @@ public:
   }
 
   // See prach_processor for documentation.
-  prach_processor_request_handler& get_request_handler() override
-  {
-    srsran_assert(notifier != nullptr, "Notifier has not been connected.");
-    return *this;
-  }
+  prach_processor_request_handler& get_request_handler() override { return *this; }
 
   // See prach_processor for documentation.
-  prach_processor_baseband& get_baseband() override
-  {
-    srsran_assert(notifier, "Notifier has not been connected.");
-    return *this;
-  }
+  prach_processor_baseband& get_baseband() override { return *this; }
 };
 
 } // namespace srsran

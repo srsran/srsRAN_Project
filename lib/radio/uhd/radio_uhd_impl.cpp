@@ -380,6 +380,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     radio_uhd_rx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
     stream_description.otw_format                              = otw_format;
+    stream_description.srate_Hz                                = radio_config.sampling_rate_hz;
     stream_description.args                                    = stream.args;
 
     // Setup ports.
@@ -474,42 +475,29 @@ void radio_session_uhd_impl::stop()
   }
 }
 
-void radio_session_uhd_impl::transmit(unsigned int                                  stream_id,
-                                      const baseband_gateway_transmitter::metadata& metadata,
-                                      baseband_gateway_buffer&                      data)
+void radio_session_uhd_impl::start()
 {
-  report_fatal_error_if_not(stream_id < tx_streams.size(),
-                            "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
-                            stream_id,
-                            (int)rx_streams.size());
-
-  uhd::time_spec_t time_spec = time_spec.from_ticks(metadata.ts, sampling_rate_hz);
-  tx_streams[stream_id]->transmit(data, time_spec);
+  if (!start_rx_stream()) {
+    fmt::print("Failed to start Rx streams.\n");
+  }
 }
 
-// See interface for documentation.
-baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
+baseband_gateway_transmitter& radio_session_uhd_impl::get_transmitter(unsigned stream_id)
 {
-  baseband_gateway_receiver::metadata ret = {};
-  report_fatal_error_if_not(stream_id < rx_streams.size(),
-                            "Stream identifier ({}) exceeds the number of receive streams  ({}).",
-                            stream_id,
-                            rx_streams.size());
+  srsran_assert(stream_id < tx_streams.size(),
+                "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
+                stream_id,
+                (int)rx_streams.size());
+  return *tx_streams[stream_id];
+}
 
-  if (!start_rx_stream()) {
-    return ret;
-  }
-
-  uhd::time_spec_t time_spec = {};
-  if (!rx_streams[stream_id]->receive(data, time_spec)) {
-    return ret;
-  }
-
-  ret.ts = static_cast<baseband_gateway_timestamp>(time_spec.get_full_secs()) *
-               static_cast<baseband_gateway_timestamp>(sampling_rate_hz) +
-           static_cast<baseband_gateway_timestamp>(sampling_rate_hz * time_spec.get_frac_secs());
-
-  return ret;
+baseband_gateway_receiver& radio_session_uhd_impl::get_receiver(unsigned int stream_id)
+{
+  srsran_assert(stream_id < rx_streams.size(),
+                "Stream identifier ({}) exceeds the number of receive streams  ({}).",
+                stream_id,
+                (int)rx_streams.size());
+  return *rx_streams[stream_id];
 }
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,

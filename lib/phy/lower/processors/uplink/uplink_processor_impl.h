@@ -67,7 +67,7 @@ public:
 
 private:
   // See interface for documentation.
-  void process(baseband_gateway_buffer& samples) override;
+  void process(const baseband_gateway_buffer& samples) override;
 
   /// Processes a new symbol.
   void process_new_symbol();

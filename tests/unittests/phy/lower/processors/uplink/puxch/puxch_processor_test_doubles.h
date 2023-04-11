@@ -49,10 +49,23 @@ private:
 class puxch_processor_request_handler_spy : public puxch_processor_request_handler
 {
 public:
+  struct entry_t {
+    resource_grid*        grid;
+    resource_grid_context context;
+  };
+
   void handle_request(resource_grid& grid, const resource_grid_context& context) override
   {
-    // TBD.
+    entries.emplace_back();
+    entry_t& entry = entries.back();
+    entry.grid     = &grid;
+    entry.context  = context;
   }
+
+  const std::vector<entry_t>& get_entries() const { return entries; }
+
+private:
+  std::vector<entry_t> entries;
 };
 
 class puxch_processor_spy : public puxch_processor

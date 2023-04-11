@@ -51,19 +51,29 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
       create_puxch_processor_factory_sw(10, demodulator_factory);
   report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
 
-  // Create Uplink processor factory.
-  std::shared_ptr<lower_phy_uplink_processor_factory> uplink_proc_factory =
-      create_uplink_processor_factory_sw(prach_proc_factory, puxch_proc_factory);
-  report_fatal_error_if_not(uplink_proc_factory, "Failed to create uplink processor factory.");
-
   // Create amplitude control factory.
   std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
       create_amplitude_controller_clipping_factory(config.amplitude_config);
   report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
 
+  // Create PDxCH processor factory.
+  std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =
+      create_pdxch_processor_factory_sw(config.max_processing_delay_slots, modulator_factory);
+  report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
+
+  // Create downlink processor factory.
+  std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory =
+      create_downlink_processor_factory_sw(pdxch_proc_factory, amplitude_control_factory);
+  report_fatal_error_if_not(downlink_proc_factory, "Failed to create uplink processor factory.");
+
+  // Create uplink processor factory.
+  std::shared_ptr<lower_phy_uplink_processor_factory> uplink_proc_factory =
+      create_uplink_processor_factory_sw(prach_proc_factory, puxch_proc_factory);
+  report_fatal_error_if_not(uplink_proc_factory, "Failed to create uplink processor factory.");
+
   // Create Lower PHY factory.
   std::shared_ptr<lower_phy_factory> lphy_factory =
-      create_lower_phy_factory_sw(modulator_factory, uplink_proc_factory, amplitude_control_factory);
+      create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
   report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   return lphy_factory->create(config);

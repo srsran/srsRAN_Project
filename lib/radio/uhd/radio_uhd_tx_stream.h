@@ -14,13 +14,14 @@
 #include "radio_uhd_multi_usrp.h"
 #include "radio_uhd_tx_stream_fsm.h"
 #include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
 namespace srsran {
-class radio_uhd_tx_stream : public uhd_exception_handler
+class radio_uhd_tx_stream : public baseband_gateway_transmitter, public uhd_exception_handler
 {
 private:
   /// Receive asynchronous message timeout in seconds.
@@ -87,11 +88,10 @@ public:
                       task_executor&               async_executor_,
                       radio_notification_handler&  notifier_);
 
-  /// \brief Transmits baseband signal.
-  /// \param[in] data Provides the baseband buffers to transmit.
-  /// \param[in] time_spec Indicates the transmission time.
-  /// \return True if the transmission was successful. Otherwise, false.
-  bool transmit(baseband_gateway_buffer& data, uhd::time_spec_t time_spec);
+  unsigned int get_buffer_size() override;
+
+  // See interface for documentation.
+  void transmit(baseband_gateway_buffer& data, const metadata& metadata) override;
 
   /// Stop the transmission.
   void stop();

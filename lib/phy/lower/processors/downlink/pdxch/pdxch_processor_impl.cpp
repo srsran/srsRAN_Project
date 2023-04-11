@@ -8,23 +8,25 @@
  *
  */
 #include "pdxch_processor_impl.h"
+#include "srsran/phy/support/resource_grid_reader_empty.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
-void srsran::pdxch_processor_impl::connect(pdxch_processor_notifier& notifier_)
+const resource_grid_reader_empty pdxch_processor_impl::empty_rg;
+
+void pdxch_processor_impl::connect(pdxch_processor_notifier& notifier_)
 {
   notifier = &notifier_;
 }
 
-pdxch_processor_request_handler& srsran::pdxch_processor_impl::get_request_handler()
+pdxch_processor_request_handler& pdxch_processor_impl::get_request_handler()
 {
-  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   return *this;
 }
 
-pdxch_processor_baseband& srsran::pdxch_processor_impl::get_baseband()
+pdxch_processor_baseband& pdxch_processor_impl::get_baseband()
 {
-  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
   return *this;
 }
 
@@ -41,7 +43,7 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer&              
     if (!request_queue.try_pop(request)) {
       // No request available, then set the context slot and no grid.
       current_slot = context.slot;
-      current_grid = nullptr;
+      current_grid = &empty_rg;
     } else {
       // Request available, set the next slot and grid to process.
       current_slot = request.slot;
@@ -58,9 +60,10 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer&              
     }
   }
 
-  // Skip symbol processing if the context slot does not match with the current slot or no resource grid is available.
-  if ((context.slot != current_slot) || (current_grid == nullptr)) {
-    return;
+  // Use empty grid if the context slot does not match with the current slot or no resource grid is available.
+  const resource_grid_reader* rg_reader = current_grid;
+  if ((context.slot != current_slot) || (rg_reader == nullptr)) {
+    rg_reader = &empty_rg;
   }
 
   // Symbol index within the subframe.
@@ -68,12 +71,14 @@ void pdxch_processor_impl::process_symbol(baseband_gateway_buffer&              
 
   // Modulate each of the ports.
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-    modulator->modulate(samples.get_channel_buffer(i_port), *current_grid, i_port, symbol_index_subframe);
+    modulator->modulate(samples.get_channel_buffer(i_port), *rg_reader, i_port, symbol_index_subframe);
   }
 }
 
 void pdxch_processor_impl::handle_request(const resource_grid_reader& grid, const resource_grid_context& context)
 {
+  srsran_assert(notifier != nullptr, "Notifier has not been connected.");
+
   rg_grid_request request = {context.slot, &grid};
   if (!request_queue.try_push(request)) {
     notifier->on_overflow_resource_grid(context);

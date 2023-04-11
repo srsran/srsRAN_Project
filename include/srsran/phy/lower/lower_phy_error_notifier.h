@@ -24,10 +24,10 @@ public:
   /// Default destructor.
   virtual ~lower_phy_error_notifier() = default;
 
-  /// \brief Notifies the unavailability of a downlink resource grid.
+  /// \brief Notifies a resource grid outside the slot window.
   ///
-  /// This error happens in a sector when the resource grid for the processing slot is not available at the time when a
-  /// symbol is modulated.
+  /// This error occurs when a resource grid transmission request for slot \f$n\f$ is received after slot \f$n\f$
+  /// started being processed.
   ///
   /// The time window the lower physical layer can receive a resource grid for a slot starts with
   /// lower_phy_timing_notifier::on_tti_boundary() and finishes with the beginning of the processing of the first symbol
@@ -36,6 +36,13 @@ public:
   /// \param[in] context Context in which the resource grid is not available.
   /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const resource_grid_context& context) = 0;
+
+  /// \brief Notifies an excess of resource grids to transmit.
+  ///
+  /// This error occurs when the number of pending resource grids to transmit reaches the limit.
+  ///
+  /// \param[in] context Context of the resource grid raising the error notification.
+  virtual void on_overflow_resource_grid(const resource_grid_context& context) = 0;
 
   /// \brief Notifies a PRACH request outside the slot window.
   ///

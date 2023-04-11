@@ -29,6 +29,9 @@ public:
   /// \return The reference to the data plane for this radio session.
   virtual baseband_gateway& get_baseband_gateway() = 0;
 
+  /// Starts receive streams.
+  virtual void start() = 0;
+
   /// \brief Stops the radio session operation.
   /// \remark Any call to transmit or receive after calling stop() will return instantly without interacting with the
   /// physical radio.

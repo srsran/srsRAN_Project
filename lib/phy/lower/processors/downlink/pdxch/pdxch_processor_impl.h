@@ -18,6 +18,7 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader_empty.h"
 
 namespace srsran {
 
@@ -64,13 +65,14 @@ private:
     const resource_grid_reader* grid = nullptr;
   };
 
-  unsigned                               nof_symbols_per_slot;
-  unsigned                               nof_tx_ports;
-  pdxch_processor_notifier*              notifier = nullptr;
-  std::unique_ptr<ofdm_symbol_modulator> modulator;
-  slot_point                             current_slot = {};
-  const resource_grid_reader*            current_grid = nullptr;
-  blocking_queue<rg_grid_request>        request_queue;
+  unsigned                                nof_symbols_per_slot;
+  unsigned                                nof_tx_ports;
+  pdxch_processor_notifier*               notifier = nullptr;
+  std::unique_ptr<ofdm_symbol_modulator>  modulator;
+  slot_point                              current_slot = {};
+  const resource_grid_reader*             current_grid = &empty_rg;
+  blocking_queue<rg_grid_request>         request_queue;
+  static const resource_grid_reader_empty empty_rg;
 };
 
 } // namespace srsran

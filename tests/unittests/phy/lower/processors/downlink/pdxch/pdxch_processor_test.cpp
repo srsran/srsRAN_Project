@@ -248,7 +248,14 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowNoRequest)
 
           // Assert OFDM modulator call.
           auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-          ASSERT_EQ(ofdm_mod_entries.size(), 0);
+          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
+          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+            auto& entry = ofdm_mod_entries[i_port];
+            ASSERT_EQ(span<const cf_t>(entry.output), buffer.get_channel_buffer(i_port));
+            ASSERT_TRUE(entry.grid->is_empty(i_port));
+            ASSERT_EQ(entry.port_index, i_port);
+            ASSERT_EQ(entry.symbol_index, i_symbol_subframe);
+          }
 
           // Assert notification.
           ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);
@@ -399,19 +406,19 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
         pdxch_proc->get_baseband().process_symbol(buffer, pdxch_context);
 
         // Assert OFDM modulator call only for initial and next slot.
-        const auto& ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-        if ((i_slot == initial_slot) || (i_slot == next_slot)) {
-          resource_grid_spy* rg_spy = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
-          ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
-          for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
-            const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
-            ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer.get_channel_buffer(i_port));
+        const auto&        ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
+        resource_grid_spy* rg_spy           = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
+        ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
+        for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+          const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
+          ASSERT_EQ(span<const cf_t>(ofdm_mod_entry.output), buffer.get_channel_buffer(i_port));
+          if ((i_slot == initial_slot) || (i_slot == next_slot)) {
             ASSERT_EQ(static_cast<const void*>(ofdm_mod_entry.grid), static_cast<const void*>(rg_spy));
-            ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
-            ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
+          } else {
+            ASSERT_TRUE(ofdm_mod_entry.grid->is_empty(i_port));
           }
-        } else {
-          ASSERT_EQ(ofdm_mod_entries.size(), 0);
+          ASSERT_EQ(ofdm_mod_entry.port_index, i_port);
+          ASSERT_EQ(ofdm_mod_entry.symbol_index, i_symbol_subframe);
         }
 
         // Assert notifications.

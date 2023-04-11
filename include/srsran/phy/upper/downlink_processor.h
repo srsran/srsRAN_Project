@@ -57,7 +57,7 @@ public:
   /// \param[in] config NZP-CSI-RS configuration to process.
   virtual void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) = 0;
 
-  /// \brief Configures the resource grid of the downlink_processor.
+  /// \brief Configures the resource grid of the dl_bb_proc.
   ///
   /// \param[in] context Resource grid context that contains the information of the processing slot.
   /// \param[in] grid Resource grid that will contain the data of the processed downlink channels.

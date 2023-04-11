@@ -256,7 +256,8 @@ bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds t
   // If the channel has never transmitted, skip wait.
   if (is_tx_enabled && (timeout.count() != 0)) {
     // Otherwise, wait for the transmitter to transmit.
-    bool is_not_timeout = transmit_alignment_cvar.wait_for(lock, timeout, [&]() { return sample_count >= timestamp; });
+    bool is_not_timeout =
+        transmit_alignment_cvar.wait_for(lock, timeout, [this, timestamp]() { return sample_count >= timestamp; });
     if (is_not_timeout) {
       return sample_count > timestamp;
     }
