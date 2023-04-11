@@ -34,9 +34,10 @@ constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, 
 /// \param[in] nof_symbols       Transmission duration in symbols.
 /// \param[in] max_code_rate     Maximum code rate for PUCCH format 2; it corresponds to \c maxCodeRate, part of
 ///                              \c PUCCH-FormatConfig, TS 38.331.
-/// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2. If the estimated
-/// number of PRBs is more than the maximum allowed value of 16, the function returns -1.
-inline int get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned nof_symbols, float max_code_rate)
+/// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2.
+/// \remark The returned number of PRBs is not capped to the maximum value of \ref FORMAT2_MAX_NPRB; it's up to the
+///         caller to perform this check.
+inline unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned nof_symbols, float max_code_rate)
 {
   if (nof_payload_bits == 0 or nof_symbols == 0) {
     return 0;
@@ -50,11 +51,9 @@ inline int get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned no
   const unsigned NOF_BITS_QPSK_SYMBOL = 2;
   // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213. The
   // ceil operation guarantees that the number of PRBs is enough to satisfy the effective code rate constraint.
-  const unsigned estimated_nof_prbs = static_cast<unsigned>(std::ceil(
+  return static_cast<unsigned>(std::ceil(
       static_cast<float>(nof_payload_bits) /
       (static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * NOF_BITS_QPSK_SYMBOL) * max_code_rate)));
-
-  return estimated_nof_prbs <= pucch_constants::FORMAT2_MAX_NPRB ? static_cast<int>(estimated_nof_prbs) : -1;
 }
 
 /// \brief Calculates the num. of PRBs (capped to the configured max nof PRBs) given the PUCCH Format 2 payload size.
@@ -86,11 +85,9 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
   srsran_assert(max_nof_prbs <= pucch_constants::FORMAT2_MAX_NPRB, "Maximum number of payload bits supported is 11.");
   // TODO: Review this max payload.
 
-  const int      estimated_nof_prbs = get_pucch_format2_max_nof_prbs(nof_payload_bits, nof_symbols, max_code_rate);
-  const unsigned nof_prbs =
-      estimated_nof_prbs < 0 ? pucch_constants::FORMAT2_MAX_NPRB : static_cast<unsigned>(estimated_nof_prbs);
+  const unsigned estimated_nof_prbs = get_pucch_format2_max_nof_prbs(nof_payload_bits, nof_symbols, max_code_rate);
 
-  return std::min(nof_prbs, max_nof_prbs);
+  return std::min(estimated_nof_prbs, max_nof_prbs);
 }
 
 /// \brief Calculates the maximum payload for a PUCCH Format 2 transmission.
