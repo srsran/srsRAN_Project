@@ -111,6 +111,12 @@ private:
   // Storage for previous buffer state
   unsigned prev_buffer_state = 0;
 
+  /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
+  /// It helps to avoid queuing of redundant notification tasks in case of frequent changes of the buffer status.
+  /// If the flag is set, no further notification needs to be scheduled, because the already queued task will pick the
+  /// latest buffer state upon execution.
+  std::atomic_flag pending_buffer_state = ATOMIC_FLAG_INIT;
+
 public:
   rlc_tx_am_entity(du_ue_index_t                        du_index,
                    rb_id_t                              rb_id,
@@ -265,12 +271,19 @@ private:
   /// \param sn The SN of the PDU to check
   void check_sn_reached_max_retx(uint32_t sn);
 
-  /// Called when buffer state needs to be updated and forwarded to lower layers.
-  void handle_buffer_state_update();
-  /// Called when buffer state needs to be updated and forwarded to lower layers while already holding a lock.
-  void handle_buffer_state_update_nolock();
+  /// Called whenever the buffer state has been changed by upper layers (new SDUs, discard) or internal RLC events
+  /// (timer, retransmission, status report) so that lower layers need to be informed about the new buffer state.
+  /// This function should not be called from \c pull_pdu, since the lower layer accounts for the amount of extracted
+  /// data itself.
+  ///
+  /// Safe execution from: Any executor
+  void handle_changed_buffer_state();
 
-  uint32_t get_buffer_state_nolock();
+  /// Informs the lower layer of the current buffer state. This function is called from pcell_executor and its execution
+  /// is queued by \c handle_changed_buffer_state.
+  ///
+  /// Safe execution from: pcell_executor
+  void handle_buffer_state_update();
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
