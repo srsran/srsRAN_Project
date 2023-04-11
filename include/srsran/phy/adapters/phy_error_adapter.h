@@ -31,9 +31,8 @@ public:
   void on_late_resource_grid(const resource_grid_context& context) override
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.warning("Real-time failure in low-phy: Downlink data late for sector {}, slot {} and symbol {}.",
-                   context.sector,
-                   context.slot);
+    logger.warning(
+        "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.", context.sector, context.slot);
   }
 
   // See interface for documentation.
