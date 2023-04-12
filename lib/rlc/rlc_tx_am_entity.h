@@ -283,7 +283,7 @@ private:
   /// is queued by \c handle_changed_buffer_state.
   ///
   /// Safe execution from: pcell_executor
-  void handle_buffer_state_update();
+  void update_mac_buffer_state();
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
