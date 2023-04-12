@@ -17,11 +17,7 @@
 using namespace srsran;
 using namespace std::chrono;
 
-trace_point get_run_epoch()
-{
-  static trace_point epoch = trace_clock::now();
-  return epoch;
-}
+static trace_point run_epoch = trace_clock::now();
 
 /// Helper class to write trace events to a file.
 class event_trace_writer
@@ -149,7 +145,7 @@ struct formatter<trace_event_extended> : public basic_fmt_parser {
   template <typename FormatContext>
   auto format(const trace_event_extended& event, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    auto ts = duration_cast<microseconds>(event.start_tp - get_run_epoch()).count();
+    auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 
     return format_to(ctx.out(),
                      "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\","
@@ -171,7 +167,7 @@ struct formatter<instant_trace_event_extended> : public basic_fmt_parser {
   {
     static const char* scope_str[] = {"g", "p", "t"};
 
-    auto ts = duration_cast<microseconds>(event.tp - get_run_epoch()).count();
+    auto ts = duration_cast<microseconds>(event.tp - run_epoch).count();
 
     const timestamp_data timestamp = get_timestamp(event.tp);
 
@@ -225,10 +221,10 @@ void logger_event_tracer<true>::operator<<(const instant_trace_event& event) con
 
 void test_event_tracer::operator<<(const trace_event& event)
 {
-  last_event = fmt::format("{}", trace_event_extended{event});
+  last_events.push_back(fmt::format("{}", trace_event_extended{event}));
 }
 
 void test_event_tracer::operator<<(const instant_trace_event& event)
 {
-  last_event = fmt::format("{}", instant_trace_event_extended{event});
+  last_events.push_back(fmt::format("{}", instant_trace_event_extended{event}));
 }

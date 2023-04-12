@@ -13,12 +13,13 @@
 #include "srsran/support/compiler.h"
 #include <chrono>
 #include <string>
+#include <vector>
 
 namespace srslog {
 
 class log_channel;
 
-}
+} // namespace srslog
 
 namespace srsran {
 
@@ -37,14 +38,16 @@ void close_trace_file();
 bool is_trace_file_open();
 
 /// \brief Trace event used for events with defined name, starting point and duration.
+/// \remark The creation of this type should be trivial so that compiler optimizes it out for null tracers.
 struct trace_event {
   const char* name;
   trace_point start_tp;
 
-  trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
+  FORCE_INLINE trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
 };
 
-/// \brief Trace event with defined name, starting point but no duration.
+/// \brief Trace event type with defined name, starting point but no duration.
+/// \remark The creation of this type should be trivial so that compiler optimizes it out for null tracers.
 struct instant_trace_event {
   enum class cpu_scope { global, process, thread };
 
@@ -52,7 +55,10 @@ struct instant_trace_event {
   trace_point tp;
   cpu_scope   scope;
 
-  instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) : name(name_), tp(tp_), scope(scope_) {}
+  FORCE_INLINE instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) :
+    name(name_), tp(tp_), scope(scope_)
+  {
+  }
 };
 
 /// \brief Tracer that does not write any events. The compiler should eliminate all calls to this tracer when
@@ -113,10 +119,10 @@ public:
 
   void operator<<(const instant_trace_event& event);
 
-  const std::string& get_last_event() const { return last_event; }
+  std::vector<std::string> pop_last_events() { return std::move(last_events); }
 
 private:
-  std::string last_event;
+  std::vector<std::string> last_events;
 };
 
 } // namespace srsran

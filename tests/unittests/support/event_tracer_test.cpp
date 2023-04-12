@@ -10,6 +10,8 @@
 
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/event_tracing.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/trace_executor.h"
 #include <fstream>
 #include <gtest/gtest.h>
 
@@ -32,7 +34,7 @@ TEST(event_tracing_test, event_trace_formatting)
 
   tracer << trace_event("test_event", tp);
 
-  std::string event_out = tracer.get_last_event();
+  std::string event_out = tracer.pop_last_events()[0];
 
   fmt::print("event: {}\n", event_out);
 
@@ -51,7 +53,7 @@ TEST(event_tracing_test, instant_event_trace_formatting)
 
   tracer << instant_trace_event("test_event", tp, instant_trace_event::cpu_scope::global);
 
-  std::string event_out = tracer.get_last_event();
+  std::string event_out = tracer.pop_last_events()[0];
 
   fmt::print("event: {}\n", event_out);
 
@@ -126,4 +128,29 @@ TEST(event_tracing_test, deactivated_file_event_tracer)
   ASSERT_EQ(line, "[");
   ASSERT_TRUE(std::getline(fptr, line));
   ASSERT_EQ(line, "]");
+}
+
+TEST(trace_executor_test, enqueue_and_run_traces)
+{
+  manual_task_worker worker{128};
+  task_executor&     exec = worker;
+  test_event_tracer  test_tracer;
+
+  auto trace_exec1 = make_trace_executor("testexec1", exec, test_tracer);
+  auto trace_exec2 = make_trace_executor("testexec2", exec, test_tracer);
+
+  int counter = 0;
+  trace_exec1.defer([&counter]() mutable { counter++; });
+  trace_exec2.execute([&counter]() mutable { counter++; });
+
+  worker.run_pending_tasks();
+  ASSERT_EQ(counter, 2);
+
+  std::vector<std::string> events = test_tracer.pop_last_events();
+
+  fmt::print("events: {}\n", fmt::join(events, ",\n"));
+  ASSERT_NE(events[0].find("\"name\": \"testexec2_enqueue\""), std::string::npos);
+  ASSERT_NE(events[1].find("\"name\": \"testexec2_run\""), std::string::npos); // called with execute(...)
+  ASSERT_NE(events[2].find("\"name\": \"testexec1_enqueue\""), std::string::npos);
+  ASSERT_NE(events[3].find("\"name\": \"testexec1_run\""), std::string::npos); // called with defer(...)
 }
