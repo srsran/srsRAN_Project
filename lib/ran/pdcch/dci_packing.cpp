@@ -219,7 +219,6 @@ static units::bits dl_ports_size(optional<dmrs_config_type> dmrs_A_type,
 // Computes the SRS resource indicator field size for DCI format 0_1.
 static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
 {
-  unsigned srs_res_size;
   if (dci_config.tx_config_non_codebook) {
     srsran_assert(dci_config.pusch_max_layers.has_value(),
                   "Maximum number of PUSCH layers is required for non-codebook transmission");
@@ -231,21 +230,18 @@ static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
     // Derived from TS38.212 Table 7.3.1.1.2-28.
     switch (dci_config.nof_srs_resources.value()) {
       case 2:
-        srs_res_size = 1;
-        break;
+        return 1;
       case 3:
       case 4:
-        srs_res_size = 2;
-        break;
+        return 2;
       default:
         srsran_assertion_failure("Invalid number of SRS resources, i.e., {}", dci_config.nof_srs_resources.value());
     }
-  } else {
-    // For codebook based transmission, the number of SRS resources is up to 2, therefore, the SRS resource indicator
-    // always occupies 1 bit.
-    srs_res_size = 1;
   }
-  return srs_res_size;
+
+  // For codebook based transmission, the number of SRS resources is up to 2, therefore, the SRS resource indicator
+  // always occupies 1 bit.
+  return 1;
 }
 
 // Computes the number of information bits before padding for a DCI format 0_1 message.
