@@ -297,7 +297,7 @@ TEST_F(f1u_du_test, tx_transmit_notification)
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 
-  for (uint32_t t = 0; t < 35; t++) {
+  for (uint32_t t = 0; t < f1u_ul_notif_time_ms; t++) {
     EXPECT_TRUE(tester->tx_msg_list.empty());
     tick();
   }
@@ -332,7 +332,7 @@ TEST_F(f1u_du_test, tx_delivery_notification)
   EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 
-  for (uint32_t t = 0; t < 35; t++) {
+  for (uint32_t t = 0; t < f1u_ul_notif_time_ms; t++) {
     EXPECT_TRUE(tester->tx_msg_list.empty());
     tick();
   }
