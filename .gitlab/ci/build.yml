@@ -14,6 +14,67 @@ include:
 stages:
   - build and unit tests
 
+# Code to reuse. No jobs
+.cache_src_set: &cache_src_set
+  - key: srsgnb-src
+    paths: [$CI_PROJECT_DIR]
+    untracked: false
+    policy: push
+    when: on_success
+
+.cache_src_get: &cache_src_get
+  - key: srsgnb-src
+    paths: [$CI_PROJECT_DIR]
+    policy: pull
+
+.cache_build_set: &cache_build_set
+  - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
+    paths: [ccache]
+    policy: push
+
+.cache_build_get: &cache_build_get
+  - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
+    paths: [ccache]
+    policy: pull
+
+# Git source downloader job
+
+push_src_cache:
+  stage: .pre
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  tags:
+    - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
+  script:
+    - echo "Saving git repo in cache"
+  cache:
+    - *cache_src_set
+  parallel:
+    matrix:
+      - PLATFORM: amd64
+      - PLATFORM: arm64
+
+pull_src_cache:
+  stage: .pre
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  tags:
+    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: push_src_cache
+      artifacts: false
+      optional: true
+  script:
+    - echo "Reading git repo in cache"
+  cache:
+    - *cache_src_get
+  parallel:
+    matrix:
+      - PLATFORM: amd64
+      - PLATFORM: arm64
+
 # Template job
 
 .build_and_unit:
@@ -64,10 +125,17 @@ stages:
     AUTO_DETECT_ISA: "False"
     PLATFORM: "amd64"
     # CI
-    DOCKER_BUILDER_VERSION: "1.7.7"
+    DOCKER_BUILDER_VERSION: "1.7.8"
     UPLOAD_ARTIFACTS: "" # Empty by default
-  needs: []
+    GIT_STRATEGY: none
+  needs:
+    - job: pull_src_cache
+      artifacts: false
+      optional: true
   before_script:
+    - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
+    - git fetch --depth=1 origin $CI_COMMIT_SHA
+    - git reset --hard $CI_COMMIT_SHA
     - |
       build_srsgnb() {
         if [ -n "${UHD_VERSION}" ]; then
@@ -192,11 +260,8 @@ stages:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
     expire_in: 10 minutes
-  cache: &build_cache
-    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
-    paths:
-      - ccache
-    policy: pull
+  cache:
+    - *cache_src_get
 
 # Main combinations
 
@@ -232,8 +297,8 @@ build cached:
       when: never
     - if: $ON_MR
   cache:
-    <<: *build_cache
-    policy: pull
+    - *cache_src_get
+    - *cache_build_get
 
 build update cache:
   extends: .build_and_unit_main
@@ -242,14 +307,47 @@ build update cache:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   cache:
-    <<: *build_cache
-    policy: push
+    - *cache_src_get
+    - *cache_build_set
 
 build clean:
   extends: .build_and_unit_main
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache: []
+  cache:
+    - *cache_src_get
+
+# Intermediate commits
+
+intermediate commits:
+  extends: .build_and_unit
+  rules:
+    - if: $ON_MR
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: none
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    ENABLE_EXPORT: "False"
+    ENABLE_GCOV: "True"
+  script:
+    - git config advice.detachedHead false
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - |
+      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
+      do
+        echo "##################################################"
+        echo "#### $rev ####"
+        echo "##################################################"
+        git checkout $rev
+        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
+        build_srsgnb
+        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
+      done
+  cache:
+    - *cache_src_get
+    - *cache_build_get
 
 # Alt combinations
 
@@ -291,7 +389,6 @@ build alt [ubuntu-22.04, amd64, Debug]:
     OS: ubuntu-22.04
     PLATFORM: amd64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [ubuntu-22.04, amd64, Release]:
   extends: .build_and_unit_alt
@@ -301,7 +398,6 @@ build alt [ubuntu-22.04, amd64, Release]:
     OS: ubuntu-22.04
     PLATFORM: amd64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -311,7 +407,6 @@ build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
     OS: ubuntu-22.04
     PLATFORM: amd64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [ubuntu-22.04, arm64v8, Debug]:
   extends: .build_and_unit_alt
@@ -321,7 +416,6 @@ build alt [ubuntu-22.04, arm64v8, Debug]:
     OS: ubuntu-22.04
     PLATFORM: arm64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [ubuntu-22.04, arm64v8, Release]:
   extends: .build_and_unit_alt
@@ -331,7 +425,6 @@ build alt [ubuntu-22.04, arm64v8, Release]:
     OS: ubuntu-22.04
     PLATFORM: arm64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -341,7 +434,6 @@ build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
     OS: ubuntu-22.04
     PLATFORM: arm64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [ubuntu-20.04, amd64, Debug]:
   extends: .build_and_unit_alt
@@ -351,7 +443,6 @@ build alt [ubuntu-20.04, amd64, Debug]:
     OS: ubuntu-20.04
     PLATFORM: amd64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [ubuntu-20.04, amd64, Release]:
   extends: .build_and_unit_alt
@@ -361,7 +452,6 @@ build alt [ubuntu-20.04, amd64, Release]:
     OS: ubuntu-20.04
     PLATFORM: amd64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -371,7 +461,6 @@ build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
     OS: ubuntu-20.04
     PLATFORM: amd64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [ubuntu-20.04, arm64v8, Debug]:
   extends: .build_and_unit_alt
@@ -381,7 +470,6 @@ build alt [ubuntu-20.04, arm64v8, Debug]:
     OS: ubuntu-20.04
     PLATFORM: arm64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [ubuntu-20.04, arm64v8, Release]:
   extends: .build_and_unit_alt
@@ -391,7 +479,6 @@ build alt [ubuntu-20.04, arm64v8, Release]:
     OS: ubuntu-20.04
     PLATFORM: arm64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -401,7 +488,6 @@ build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
     OS: ubuntu-20.04
     PLATFORM: arm64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [archlinux-latest, amd64, Debug]:
   extends: .build_and_unit_alt
@@ -411,7 +497,6 @@ build alt [archlinux-latest, amd64, Debug]:
     OS: archlinux-latest
     PLATFORM: amd64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [archlinux-latest, amd64, Release]:
   extends: .build_and_unit_alt
@@ -421,7 +506,6 @@ build alt [archlinux-latest, amd64, Release]:
     OS: archlinux-latest
     PLATFORM: amd64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [archlinux-latest, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -431,7 +515,6 @@ build alt [archlinux-latest, amd64, RelWithDebInfo]:
     OS: archlinux-latest
     PLATFORM: amd64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [rhel-8, amd64, Debug]:
   extends: .build_and_unit_alt
@@ -441,7 +524,6 @@ build alt [rhel-8, amd64, Debug]:
     OS: rhel-8
     PLATFORM: amd64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [rhel-8, amd64, Release]:
   extends: .build_and_unit_alt
@@ -451,7 +533,6 @@ build alt [rhel-8, amd64, Release]:
     OS: rhel-8
     PLATFORM: amd64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [rhel-8, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -461,7 +542,6 @@ build alt [rhel-8, amd64, RelWithDebInfo]:
     OS: rhel-8
     PLATFORM: amd64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 build alt [rhel-8, arm64, Debug]:
   extends: .build_and_unit_alt
@@ -471,7 +551,6 @@ build alt [rhel-8, arm64, Debug]:
     OS: rhel-8
     PLATFORM: arm64
     BUILD_TYPE: Debug
-  cache: []
 
 build alt [rhel-8, arm64, Release]:
   extends: .build_and_unit_alt
@@ -481,7 +560,6 @@ build alt [rhel-8, arm64, Release]:
     OS: rhel-8
     PLATFORM: arm64
     BUILD_TYPE: Release
-  cache: []
 
 build alt [rhel-8, arm64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -491,7 +569,6 @@ build alt [rhel-8, arm64, RelWithDebInfo]:
     OS: rhel-8
     PLATFORM: arm64
     BUILD_TYPE: RelWithDebInfo
-  cache: []
 
 # UHD
 
@@ -510,7 +587,6 @@ build uhd alt:
       - OS: ubuntu-20.04
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
-  cache: []
 
 # Sanitizers
 sanitizers [asan]:
@@ -524,7 +600,6 @@ sanitizers [asan]:
     BUILD_TYPE: Debug
     ENABLE_ASAN: "True"
     ASSERT_LEVEL: PARANOID
-  cache: []
 
 sanitizers [tsan]:
   extends: .build_and_unit
@@ -537,7 +612,6 @@ sanitizers [tsan]:
     BUILD_TYPE: Debug
     ENABLE_TSAN: "True"
     ASSERT_LEVEL: PARANOID
-  cache: []
 
 sanitizers [valgrind]:
   extends: .build_and_unit
@@ -549,7 +623,6 @@ sanitizers [valgrind]:
     COMPILER: gcc
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
-  cache: []
   timeout: 4 hours # valgrind mode
 
 # AVX
@@ -595,8 +668,8 @@ avx2 [tsan, cached]:
     ENABLE_AVX512: "False"
     ENABLE_AVX2: "True"
   cache:
-    <<: *build_cache
-    policy: pull
+    - *cache_src_get
+    - *cache_build_get
 
 avx2 [tsan, update cache]:
   extends: "avx2 [tsan, cached]"
@@ -605,14 +678,15 @@ avx2 [tsan, update cache]:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   cache:
-    <<: *build_cache
-    policy: push
+    - *cache_src_get
+    - *cache_build_set
 
 avx2 [tsan, clean]:
   extends: "avx2 [tsan, cached]"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache: []
+  cache:
+    - *cache_src_get
 
 avx2 [asan]:
   extends: .avx
@@ -668,7 +742,6 @@ custom build:
     - if: $ON_MR
       when: manual
       allow_failure: true
-  cache: []
   timeout: 4 hours # valgrind mode
   parallel:
     matrix:

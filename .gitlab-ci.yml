@@ -163,35 +163,6 @@ coverity:
 
 # In build.yml
 
-intermediate commits:
-  extends: .build_and_unit
-  rules:
-    - if: $ON_MR
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: none
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    ASSERT_LEVEL: PARANOID
-    ENABLE_EXPORT: "False"
-    ENABLE_GCOV: "True"
-  script:
-    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
-    - git lfs install
-    - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
-    - |
-      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
-      do
-        echo "##################################################"
-        echo "#### $rev ####"
-        echo "##################################################"
-        git checkout $rev
-        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
-        build_srsgnb
-        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
-      done
-
 ################################################################################
 # Doc generation
 ################################################################################
