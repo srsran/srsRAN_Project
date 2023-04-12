@@ -73,12 +73,14 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
+  // This function may be called from pcell_executor, since it only writes to an atomic variable
   logger.log_debug("Storing highest transmitted pdcp_sn={}", highest_pdcp_sn);
   highest_transmitted_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
+  // This function may be called from pcell_executor, since it only writes to an atomic variable
   logger.log_debug("Storing highest successfully delivered pdcp_sn={}", highest_pdcp_sn);
   highest_delivered_pdcp_sn.store(highest_pdcp_sn, std::memory_order_relaxed);
 }
