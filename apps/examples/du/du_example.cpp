@@ -738,6 +738,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   du_logger.info("Starting lower PHY...");
+  radio->start();
   lower->get_controller().start();
   du_logger.info("Lower PHY started successfully");
 

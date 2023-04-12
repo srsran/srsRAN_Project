@@ -282,8 +282,23 @@ struct pcap_appconfig {
   } mac;
 };
 
+/// Lower physical layer thread profiles.
+enum class lower_phy_thread_profile {
+  /// Uses the same task worker than the rest of the PHY (ZMQ only).
+  blocking = 0,
+  /// Uses a single task worker for all the lower physical layer task executors.
+  single,
+  /// Uses a task worker for the downlink and another task worker for the uplink.
+  dual,
+  /// Uses a task worker for each of the subtasks (downlink processing, uplink processing, reception and
+  /// transmission).
+  quad
+};
+
 /// Expert physical layer configuration.
 struct expert_phy_appconfig {
+  /// Lower physical layer thread profile.
+  lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
   /// Number of thread for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited in which case will use a minimum of one thread.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);

@@ -88,7 +88,7 @@ public:
                       task_executor&               async_executor_,
                       radio_notification_handler&  notifier_);
 
-  unsigned int get_buffer_size() override;
+  unsigned get_buffer_size() override;
 
   // See interface for documentation.
   void transmit(baseband_gateway_buffer& data, const metadata& metadata) override;

@@ -153,6 +153,25 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
 {
+  app.add_option_function<std::string>(
+         "--low_phy_thread_profile",
+         [&expert_phy_params](const std::string& value) {
+           if (value == "single") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::single;
+           } else if (value == "dual") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::dual;
+           } else if (value == "quad") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::quad;
+           }
+         },
+         "Lower physical layer executor profile [single, dual, quad].")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "single") || (value == "dual") || (value == "quad")) {
+          return "";
+        }
+
+        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+      });
   app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
       ->capture_default_str()
       ->check(CLI::Number);
