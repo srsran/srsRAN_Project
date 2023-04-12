@@ -14,10 +14,6 @@
 #include "srsran/support/compiler.h"
 #include <cstdio>
 
-/// Verifies if compile-time symbol is defined.
-#define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
-#define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
-
 namespace srsran {
 
 namespace detail {

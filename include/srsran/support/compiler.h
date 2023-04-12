@@ -24,3 +24,7 @@
 
 /// States that it is undefined behavior for the compiler to reach this point.
 #define SRSRAN_UNREACHABLE __builtin_unreachable()
+
+/// Verifies if compile-time symbol is defined.
+#define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
+#define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))

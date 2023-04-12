@@ -1,0 +1,234 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsran/support/event_tracing.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/format_utils.h"
+#include "srsran/support/unique_thread.h"
+#include <sched.h>
+
+using namespace srsran;
+using namespace std::chrono;
+
+trace_point get_run_epoch()
+{
+  static trace_point epoch = trace_clock::now();
+  return epoch;
+}
+
+/// Helper class to write trace events to a file.
+class event_trace_writer
+{
+public:
+  explicit event_trace_writer(const char* trace_file) : fptr(fopen(trace_file, "w")) { fmt::print(fptr, "["); }
+  event_trace_writer(event_trace_writer&& other) noexcept                 = delete;
+  event_trace_writer(const event_trace_writer& other) noexcept            = delete;
+  event_trace_writer& operator=(event_trace_writer&& other) noexcept      = delete;
+  event_trace_writer& operator=(const event_trace_writer& other) noexcept = delete;
+
+  ~event_trace_writer()
+  {
+    if (fptr != nullptr) {
+      fmt::print(fptr, "\n]");
+      fclose(fptr);
+    }
+  }
+
+  template <typename... Args>
+  void print(const char* fmtstr, Args&&... args)
+  {
+    if (SRSRAN_LIKELY(not first_entry)) {
+      fmt::print(fptr, ",\n");
+    } else {
+      first_entry = false;
+      fmt::print(fptr, "\n");
+    }
+    fmt::print(fptr, fmtstr, std::forward<Args>(args)...);
+  }
+
+private:
+  FILE* fptr;
+
+  bool first_entry = true;
+};
+
+/// Unique event trace file writer.
+static std::unique_ptr<event_trace_writer> trace_file_writer;
+
+void srsran::open_trace_file(const char* trace_file_name)
+{
+  if (trace_file_writer != nullptr) {
+    report_fatal_error("Trace file already open");
+  }
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name);
+}
+
+void srsran::close_trace_file()
+{
+  if (trace_file_writer != nullptr) {
+    trace_file_writer = nullptr;
+  }
+}
+
+bool srsran::is_trace_file_open()
+{
+  return trace_file_writer != nullptr;
+}
+
+struct trace_event_extended : public trace_event {
+  unsigned       cpu;
+  const char*    thread_name;
+  trace_duration duration;
+
+  trace_event_extended(const trace_event& event) :
+    trace_event(event),
+    cpu([]() -> unsigned {
+      unsigned cpu_;
+      getcpu(&cpu_, nullptr);
+      return cpu_;
+    }()),
+    thread_name(this_thread_name()),
+    duration(duration_cast<microseconds>(trace_point::clock::now() - event.start_tp))
+  {
+  }
+};
+
+struct instant_trace_event_extended : public instant_trace_event {
+  unsigned    cpu;
+  const char* thread_name;
+
+  instant_trace_event_extended(const instant_trace_event& event) :
+    instant_trace_event(event),
+    cpu([]() -> unsigned {
+      unsigned cpu_;
+      getcpu(&cpu_, nullptr);
+      return cpu_;
+    }()),
+    thread_name(this_thread_name())
+  {
+  }
+};
+
+struct timestamp_data {
+  hours        h;
+  minutes      min;
+  seconds      sec;
+  microseconds usec;
+};
+
+static timestamp_data get_timestamp(trace_point tp)
+{
+  using days = duration<int, std::ratio_multiply<hours::period, std::ratio<24>>::type>;
+
+  timestamp_data ret;
+
+  system_clock::duration start_dur = tp.time_since_epoch();
+  start_dur -= duration_cast<days>(start_dur);
+  ret.h = duration_cast<hours>(start_dur);
+  start_dur -= ret.h;
+  ret.min = duration_cast<minutes>(start_dur);
+  start_dur -= ret.min;
+  ret.sec = duration_cast<seconds>(start_dur);
+  start_dur -= ret.sec;
+  ret.usec = duration_cast<microseconds>(start_dur);
+
+  return ret;
+}
+
+namespace fmt {
+
+template <>
+struct formatter<trace_event_extended> : public basic_fmt_parser {
+  template <typename FormatContext>
+  auto format(const trace_event_extended& event, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    auto ts = duration_cast<microseconds>(event.start_tp - get_run_epoch()).count();
+
+    return format_to(ctx.out(),
+                     "{{\"args\": {{}}, \"pid\": {}, \"tid\": \"{}\","
+                     "\"dur\": {}, \"ts\": {}, \"cat\": \"process\", \"ph\": \"X\","
+                     "\"name\": \"{}\"}}",
+                     event.cpu,
+                     event.thread_name,
+                     event.duration.count(),
+                     ts,
+                     event.name);
+  }
+};
+
+template <>
+struct formatter<instant_trace_event_extended> : public basic_fmt_parser {
+  template <typename FormatContext>
+  auto format(const instant_trace_event_extended& event, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    static const char* scope_str[] = {"g", "p", "t"};
+
+    auto ts = duration_cast<microseconds>(event.tp - get_run_epoch()).count();
+
+    const timestamp_data timestamp = get_timestamp(event.tp);
+
+    return format_to(ctx.out(),
+                     "{{\"args\": {{\"tstamp\": \"{}:{}:{}.{}\"}}, \"pid\": {}, \"tid\": \"{}\","
+                     "\"ts\": {}, \"cat\": \"process\", \"ph\": \"i\", \"s\": \"{}\","
+                     "\"name\": \"{}\"}}",
+                     timestamp.h.count(),
+                     timestamp.min.count(),
+                     timestamp.sec.count(),
+                     timestamp.usec.count(),
+                     event.cpu,
+                     event.thread_name,
+                     ts,
+                     scope_str[(unsigned)event.scope],
+                     event.name);
+  }
+};
+
+} // namespace fmt
+
+template <>
+void file_event_tracer<true>::operator<<(const trace_event& event) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  trace_file_writer->print("{}", trace_event_extended{event});
+}
+
+template <>
+void file_event_tracer<true>::operator<<(const instant_trace_event& event) const
+{
+  if (not is_trace_file_open()) {
+    return;
+  }
+  trace_file_writer->print("{}", instant_trace_event_extended{event});
+}
+
+template <>
+void logger_event_tracer<true>::operator<<(const trace_event& event) const
+{
+  log_ch("{}", trace_event_extended{event});
+}
+
+template <>
+void logger_event_tracer<true>::operator<<(const instant_trace_event& event) const
+{
+  log_ch("{}", instant_trace_event_extended{event});
+}
+
+void test_event_tracer::operator<<(const trace_event& event)
+{
+  last_event = fmt::format("{}", trace_event_extended{event});
+}
+
+void test_event_tracer::operator<<(const instant_trace_event& event)
+{
+  last_event = fmt::format("{}", instant_trace_event_extended{event});
+}
