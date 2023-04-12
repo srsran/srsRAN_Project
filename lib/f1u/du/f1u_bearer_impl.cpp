@@ -22,9 +22,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
   logger("F1-U", {ue_index, drb_id_}),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
-  ul_notif_timer(timers.create_timer()),
-  highest_transmitted_pdcp_sn(unset_pdcp_sn),
-  highest_delivered_pdcp_sn(unset_pdcp_sn)
+  ul_notif_timer(timers.create_timer())
 {
   ul_notif_timer.set(std::chrono::milliseconds(f1u_ul_notif_time_ms),
                      [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
