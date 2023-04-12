@@ -25,7 +25,21 @@ using namespace srsran;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
+namespace {
+
 enum class benchmark_modes : unsigned { silent, latency, throughput_total, throughput_thread, all, invalid };
+
+class pusch_processor_result_notifier_adaptor : public pusch_processor_result_notifier
+{
+public:
+  void on_csi(const channel_state_information& csi) override {}
+
+  void on_uci(const pusch_processor_result_control& uci) override {}
+
+  void on_sch(const pusch_processor_result_data& sch) override {}
+};
+
+} // namespace
 
 const char* to_string(benchmark_modes mode)
 {
@@ -460,7 +474,8 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
     unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
 
     // Process PDU.
-    proc->process(data, softbuffer.get(), *grid, config);
+    pusch_processor_result_notifier_adaptor result_notifier;
+    proc->process(data, softbuffer.get(), result_notifier, *grid, config);
 
     // Notify finish count.
     {
