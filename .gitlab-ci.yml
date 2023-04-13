@@ -13,13 +13,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "3"
+    ref: "5"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "3"
+    ref: "5"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "3"
+    ref: "5"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/e2e.yml
@@ -53,7 +53,7 @@ include-guards:
   stage: static
   needs: []
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+    - ${INFRASTRUCTURE_TAG}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
@@ -138,7 +138,7 @@ coverity:
     KUBERNETES_CPU_REQUEST: 7
     KUBERNETES_MEMORY_REQUEST: 13Gi
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+    - ${INFRASTRUCTURE_TAG}
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   script:

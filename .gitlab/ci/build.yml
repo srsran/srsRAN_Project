@@ -8,11 +8,51 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "3"
+    ref: "5"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
   - build and unit tests
+
+variables:
+  INFRASTRUCTURE_TAG:
+    description: Computer architecture and supported instruction sets
+    options:
+      - "aws-spot-amd64"
+      - "aws-spot-arm64"
+      - "aws-demand-amd64-avx2"
+      - "aws-demand-amd64-avx2-avx512"
+    value: "aws-spot-amd64"
+  OS:
+    description: Operating system
+    options:
+      - "ubuntu-22.04"
+      - "ubuntu-20.04"
+      - "archlinux-latest"
+      - "rhel-8"
+    value: "ubuntu-22.04"
+  COMPILER:
+    description: Compiler to use
+    options:
+      - "gcc"
+      - "clang"
+    value: "gcc"
+  TEST_MODE:
+    description: What tests to run. None won't run any test at all.
+    options:
+      - "default"
+      - "coverage"
+      - "asan"
+      - "tsan"
+      - "valgrind"
+      - "none"
+    value: "default"
+  BUILD_ARGS:
+    description: It will be passed to cmake
+    value: ""
+  UHD_VERSION:
+    description: must be one version supported in the specified OS
+    value: ""
 
 # Code to reuse. No jobs
 .cache_src_set: &cache_src_set
@@ -43,23 +83,19 @@ push_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-  tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   script:
     - echo "Saving git repo in cache"
   cache:
     - *cache_src_set
   parallel:
     matrix:
-      - PLATFORM: amd64
-      - PLATFORM: arm64
+      - INFRASTRUCTURE_TAG: aws-spot-amd64
+      - INFRASTRUCTURE_TAG: aws-spot-arm64
 
 pull_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-  tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-amd64
   variables:
     GIT_STRATEGY: none
   needs:
@@ -72,47 +108,17 @@ pull_src_cache:
     - *cache_src_get
   parallel:
     matrix:
-      - PLATFORM: amd64
-      - PLATFORM: arm64
+      - INFRASTRUCTURE_TAG: aws-spot-amd64
+      - INFRASTRUCTURE_TAG: aws-spot-arm64
 
 # Template job
 
 .build_and_unit:
   image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
+    - ${INFRASTRUCTURE_TAG}
   stage: build and unit tests
   variables:
-    OS:
-      # description: Operating system
-      # options:
-      #   - "ubuntu-22.04"
-      #   - "ubuntu-20.04"
-      #   - "archlinux-latest"
-      #   - "rhel-8"
-      value: "ubuntu-22.04"
-    COMPILER:
-      # description: Compiler to use
-      # options:
-      #   - "gcc"
-      #   - "clang"
-      value: "gcc"
-    TEST_MODE:
-      # description: What tests to run. None won't run any test at all.
-      # options:
-      #   - "default"
-      #   - "coverage"
-      #   - "asan"
-      #   - "tsan"
-      #   - "valgrind"
-      #   - "none"
-      value: "default"
-    BUILD_ARGS:
-      # description: It will be passed to cmake
-      value: ""
-    UHD_VERSION:
-      # description: must be one version supported in the specified OS
-      value: ""
     BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
@@ -123,7 +129,6 @@ pull_src_cache:
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: "False"
-    PLATFORM: "amd64"
     # CI
     DOCKER_BUILDER_VERSION: "1.7.8"
     UPLOAD_ARTIFACTS: "" # Empty by default
@@ -249,7 +254,7 @@ pull_src_cache:
       if [ -z "${UPLOAD_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
       fi
-  timeout: 2h
+  timeout: 4h
   artifacts:
     when: always
     reports:
@@ -369,7 +374,7 @@ build without rf:
   extends: .build_and_unit
   variables:
     OS: "" # Need to be specified
-    PLATFORM: "" # Need to be specified
+    INFRASTRUCTURE_TAG: "" # Need to be specified
     BUILD_TYPE: "" # Need to be specified
     TEST_MODE: default
     ENABLE_GCOV: "False"
@@ -387,7 +392,7 @@ build alt [ubuntu-22.04, amd64, Debug]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
 
 build alt [ubuntu-22.04, amd64, Release]:
@@ -396,7 +401,7 @@ build alt [ubuntu-22.04, amd64, Release]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
 
 build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
@@ -405,7 +410,7 @@ build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [ubuntu-22.04, arm64v8, Debug]:
@@ -414,7 +419,7 @@ build alt [ubuntu-22.04, arm64v8, Debug]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Debug
 
 build alt [ubuntu-22.04, arm64v8, Release]:
@@ -423,7 +428,7 @@ build alt [ubuntu-22.04, arm64v8, Release]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Release
 
 build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
@@ -432,7 +437,7 @@ build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [ubuntu-20.04, amd64, Debug]:
@@ -441,7 +446,7 @@ build alt [ubuntu-20.04, amd64, Debug]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
 
 build alt [ubuntu-20.04, amd64, Release]:
@@ -450,7 +455,7 @@ build alt [ubuntu-20.04, amd64, Release]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
 
 build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
@@ -459,7 +464,7 @@ build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [ubuntu-20.04, arm64v8, Debug]:
@@ -468,7 +473,7 @@ build alt [ubuntu-20.04, arm64v8, Debug]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Debug
 
 build alt [ubuntu-20.04, arm64v8, Release]:
@@ -477,7 +482,7 @@ build alt [ubuntu-20.04, arm64v8, Release]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Release
 
 build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
@@ -486,7 +491,7 @@ build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-20.04
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [archlinux-latest, amd64, Debug]:
@@ -495,7 +500,7 @@ build alt [archlinux-latest, amd64, Debug]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: archlinux-latest
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
 
 build alt [archlinux-latest, amd64, Release]:
@@ -504,7 +509,7 @@ build alt [archlinux-latest, amd64, Release]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: archlinux-latest
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
 
 build alt [archlinux-latest, amd64, RelWithDebInfo]:
@@ -513,7 +518,7 @@ build alt [archlinux-latest, amd64, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: archlinux-latest
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [rhel-8, amd64, Debug]:
@@ -522,7 +527,7 @@ build alt [rhel-8, amd64, Debug]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: rhel-8
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
 
 build alt [rhel-8, amd64, Release]:
@@ -531,7 +536,7 @@ build alt [rhel-8, amd64, Release]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: rhel-8
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
 
 build alt [rhel-8, amd64, RelWithDebInfo]:
@@ -540,7 +545,7 @@ build alt [rhel-8, amd64, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: rhel-8
-    PLATFORM: amd64
+    INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: RelWithDebInfo
 
 build alt [rhel-8, arm64, Debug]:
@@ -549,7 +554,7 @@ build alt [rhel-8, arm64, Debug]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: rhel-8
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Debug
 
 build alt [rhel-8, arm64, Release]:
@@ -558,7 +563,7 @@ build alt [rhel-8, arm64, Release]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: rhel-8
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: Release
 
 build alt [rhel-8, arm64, RelWithDebInfo]:
@@ -567,7 +572,7 @@ build alt [rhel-8, arm64, RelWithDebInfo]:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: rhel-8
-    PLATFORM: arm64
+    INFRASTRUCTURE_TAG: aws-spot-arm64
     BUILD_TYPE: RelWithDebInfo
 
 # UHD
@@ -623,14 +628,11 @@ sanitizers [valgrind]:
     COMPILER: gcc
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
-  timeout: 4 hours # valgrind mode
 
 # AVX
 
 .avx:
   extends: .build_and_unit
-  tags:
-    - aws-demand-amd64-$CPU_FLAG
   variables:
     OS: ubuntu-22.04
     TEST_MODE: default
@@ -642,12 +644,9 @@ sanitizers [valgrind]:
 avx2 [basic]:
   extends: .avx
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    CPU_FLAG: "avx2"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     ENABLE_AVX2: "True"
     ENABLE_AVX512: "False"
 
@@ -664,7 +663,7 @@ avx2 [tsan, cached]:
     BUILD_TYPE: Debug
     ENABLE_TSAN: "True"
     ASSERT_LEVEL: PARANOID
-    CPU_FLAG: "avx2"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     ENABLE_AVX512: "False"
     ENABLE_AVX2: "True"
   cache:
@@ -699,19 +698,16 @@ avx2 [asan]:
     BUILD_TYPE: Debug
     ENABLE_ASAN: "True"
     ASSERT_LEVEL: PARANOID
-    CPU_FLAG: "avx2"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     ENABLE_AVX512: "False"
     ENABLE_AVX2: "True"
 
 avx512:
   extends: .avx
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    CPU_FLAG: "avx2-avx512"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
     ENABLE_AVX2: "True"
     ENABLE_AVX512: "True"
 
@@ -723,27 +719,27 @@ avx extended:
     UPLOAD_ARTIFACTS: ""
   parallel:
     matrix:
-      - CPU_FLAG: ["avx2", "avx2-avx512"]
+      - INFRASTRUCTURE_TAG:
+          ["aws-demand-amd64-avx2", "aws-demand-amd64-avx2-avx512"]
         AUTO_DETECT_ISA: ["True", "False"]
         ENABLE_AVX2: "True"
         ENABLE_AVX512: ["True", "False"]
-      - CPU_FLAG: ["avx2", "avx2-avx512"]
+      - INFRASTRUCTURE_TAG:
+          ["aws-demand-amd64-avx2", "aws-demand-amd64-avx2-avx512"]
         AUTO_DETECT_ISA: ["True", "False"]
         ENABLE_AVX2: "False"
         ENABLE_AVX512: "False"
 
-# Custom
+# Web
 
-custom build:
-  tags:
-    - aws-spot-${PLATFORM}
+custom-build:
   extends: .build_and_unit
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-  timeout: 4 hours # valgrind mode
-  parallel:
-    matrix:
-      - PLATFORM: amd64
-      - PLATFORM: arm64
+    - if: $ON_WEB
+  variables:
+    ENABLE_ZEROMQ: ""
+    AUTO_DETECT_ISA: ""
+    UPLOAD_ARTIFACTS: "True"
+  cache:
+    - *cache_src_get
+    - *cache_build_get
