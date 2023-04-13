@@ -119,6 +119,10 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
     logger.log_debug("Adding data delivery status to NR-U message");
     msg.data_delivery_status = std::move(status);
   }
+
+  // restart UL notification timer
+  ul_notif_timer.stop();
+  ul_notif_timer.run();
 }
 
 void f1u_bearer_impl::on_expired_ul_notif_timer()
@@ -130,6 +134,4 @@ void f1u_bearer_impl::on_expired_ul_notif_timer()
     logger.log_debug("Sending data delivery status");
     tx_pdu_notifier.on_new_pdu(std::move(msg));
   }
-
-  ul_notif_timer.run();
 }

@@ -250,6 +250,13 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
   f1u->handle_delivery_notification(highest_pdcp_sn);
   f1u->handle_delivery_notification(highest_pdcp_sn + 1);
 
+  // advance time just before the timer-based UL notification is triggered
+  for (uint32_t t = 0; t < f1u_ul_notif_time_ms - 1; t++) {
+    EXPECT_TRUE(tester->tx_msg_list.empty());
+    tick();
+  }
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
   byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   f1u->handle_sdu(byte_buffer_slice_chain{tx_pdcp_pdu1.deep_copy()});
 
@@ -282,6 +289,36 @@ TEST_F(f1u_du_test, tx_pdcp_pdus_with_delivery_notification)
   EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
   EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
+  tester->tx_msg_list.pop_front();
+
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // handle another transmit notification; check UL notif timer has been reset to full time
+  f1u->handle_transmit_notification(highest_pdcp_sn + 2);
+
+  EXPECT_TRUE(tester->rx_discard_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_sdu_list.empty());
+
+  for (uint32_t t = 0; t < f1u_ul_notif_time_ms; t++) {
+    EXPECT_TRUE(tester->tx_msg_list.empty());
+    tick();
+  }
+
+  ASSERT_FALSE(tester->tx_msg_list.empty());
+  EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
+  EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
+  ASSERT_TRUE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  {
+    nru_dl_data_delivery_status& status = tester->tx_msg_list.front().data_delivery_status.value();
+    EXPECT_FALSE(status.final_frame_ind);
+    EXPECT_FALSE(status.lost_nru_sn_ranges.has_value());
+    EXPECT_FALSE(status.highest_delivered_pdcp_sn.has_value());
+    EXPECT_FALSE(status.cause_value.has_value());
+    EXPECT_FALSE(status.highest_delivered_retransmitted_pdcp_sn.has_value());
+    EXPECT_FALSE(status.highest_retransmitted_pdcp_sn.has_value());
+    ASSERT_TRUE(status.highest_transmitted_pdcp_sn.has_value());
+    EXPECT_EQ(status.highest_transmitted_pdcp_sn.value(), highest_pdcp_sn + 2);
+  }
   tester->tx_msg_list.pop_front();
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
