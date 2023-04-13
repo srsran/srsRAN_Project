@@ -193,7 +193,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
       const unsigned period = nof_slots_per_tdd_period(*cell_cfg.tdd_cfg_common);
       for (unsigned sl_idx = 0; sl_idx < period; ++sl_idx) {
         const slot_point sl_start = rar_req->prach_slot_rx + prach_duration + sl_idx;
-        if (cell_cfg.is_fully_dl_enabled(sl_start)) {
+        if (cell_cfg.is_dl_enabled(sl_start)) {
           rar_req->rar_window = {sl_start, sl_start + ra_win_nof_slots};
           break;
         }
