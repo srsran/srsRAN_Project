@@ -25,8 +25,6 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                     cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                                     rach_cfg_common().rach_cfg_generic.prach_config_index))
 {
-  srsran_assert(is_long_preamble(prach_cfg.format), "Short PRACH preamble not supported");
-
   // With SCS 15kHz and 30kHz, only normal CP is supported.
   static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 
@@ -39,9 +37,17 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       get_prach_duration_info(prach_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
 
   // Derive PRACH duration information.
-  const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
-  start_slot_pusch_scs                  = prach_duration_info.start_slot_pusch_scs;
-  prach_length_slots                    = prach_duration_info.prach_length_slots;
+  // The information we need are not related to whether it is the last PRACH occasion.
+  const bool                       is_last_prach_occasion = false;
+  const prach_preamble_information info =
+      is_long_preamble(prach_cfg.format)
+          ? get_prach_preamble_long_info(prach_cfg.format)
+          : get_prach_preamble_short_info(
+                prach_cfg.format,
+                to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs),
+                is_last_prach_occasion);
+  start_slot_pusch_scs = prach_duration_info.start_slot_pusch_scs;
+  prach_length_slots   = prach_duration_info.prach_length_slots;
 
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
@@ -52,18 +58,31 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     const prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs};
     const crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
-    // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
-    for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
-      // For the first slot, use the start_symbol_pusch_scs; in any other case, the preamble starts from the initial
-      // symbol. For the last slot, compute the final symbol; in any other case, the preamble ends at the last slot's
-      // symbol.
-      const ofdm_symbol_range prach_symbols{
-          prach_slot_idx == 0 ? prach_duration_info.start_symbol_pusch_scs : 0,
-          prach_slot_idx < prach_length_slots - 1
-              ? nof_symbols_per_slot
-              : (prach_duration_info.start_symbol_pusch_scs + prach_duration_info.nof_symbols) % nof_symbols_per_slot};
-      cached_prach.grant_list.emplace_back(
-          grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
+    if (is_long_preamble(prach_cfg.format)) {
+      // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
+      for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
+        // For the first slot, use the start_symbol_pusch_scs; in any other case, the preamble starts from the initial
+        // symbol. For the last slot, compute the final symbol; in any other case, the preamble ends at the last slot's
+        // symbol.
+        const ofdm_symbol_range prach_symbols{
+            prach_slot_idx == 0 ? prach_duration_info.start_symbol_pusch_scs : 0,
+            prach_slot_idx < prach_length_slots - 1
+                ? nof_symbols_per_slot
+                : (prach_duration_info.start_symbol_pusch_scs + prach_duration_info.nof_symbols) %
+                      nof_symbols_per_slot};
+        cached_prach.grant_list.emplace_back(
+            grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
+      }
+    } else {
+      const ofdm_symbol_range prach_symbols{prach_duration_info.start_symbol_pusch_scs,
+                                            prach_duration_info.start_symbol_pusch_scs +
+                                                prach_duration_info.nof_symbols};
+      // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
+      for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
+        // For the short PRACH formats, both grants (if more than 1) occupy the same symbols.
+        cached_prach.grant_list.emplace_back(
+            grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
+      }
     }
 
     // Pre-compute PRACH occasion parameters.
@@ -138,13 +157,23 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
       }
     }
 
-    // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over multiple slots) of the
-    // preamble.
-    for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
-      res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
-    }
+    if (is_long_preamble(prach_cfg.format)) {
+      // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over multiple slots) of the
+      // preamble.
+      for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
+        res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
+      }
 
-    // Add PRACH occasion to scheduler slot output (one PRACH PDU per preamble).
-    res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
+      // Add PRACH occasion to scheduler slot output (one PRACH PDU per preamble).
+      res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
+    } else {
+      // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over 1 or 2 slots) of the
+      // preamble and add PRACH occasions to scheduler slot output (1 or 2 PRACH PDU per preamble, depending on whether
+      // the preamble repeats over 2 slots).
+      for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
+        res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
+        res_grid[sl + sl_idx].result.ul.prachs.push_back(cached_prach.occasion);
+      }
+    }
   }
 }

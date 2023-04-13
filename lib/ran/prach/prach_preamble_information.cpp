@@ -190,20 +190,32 @@ prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configu
   static const double   symbol_duration_msec =
       (double)SUBFRAME_DURATION_MSEC / (double)(get_nof_slots_per_subframe(pusch_scs) * nof_symbols_per_slot);
 
-  // Derive PRACH subcarrier spacing and other parameters.
-  const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
+  if (is_long_preamble(prach_cfg.format)) {
+    // Derive PRACH subcarrier spacing and other parameters.
+    const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
 
-  const double length_msecs = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
-  output.nof_symbols        = ceil(length_msecs / symbol_duration_msec);
-  // Map the starting symbol with from the SCS 15kHz FR1 reference for PRACH into PUSCH SCS.
-  const unsigned start_symbol_pusch_scs_in_subframe =
-      prach_cfg.starting_symbol * (1U << to_numerology_value(pusch_scs));
-  // Start slot within the subframe. For FR1, the start_symbol_pusch_scs_in_subframe refers to the SCS 15kHz.
-  output.start_slot_pusch_scs   = start_symbol_pusch_scs_in_subframe / nof_symbols_per_slot;
-  output.start_symbol_pusch_scs = start_symbol_pusch_scs_in_subframe % nof_symbols_per_slot;
-  output.prach_length_slots =
-      static_cast<unsigned>(ceil(static_cast<double>(output.start_symbol_pusch_scs + output.nof_symbols) /
-                                 (static_cast<double>(nof_symbols_per_slot))));
+    const double length_msecs = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
+    output.nof_symbols        = ceil(length_msecs / symbol_duration_msec);
+    // Map the starting symbol with from the SCS 15kHz FR1 reference for PRACH into PUSCH SCS.
+    const unsigned start_symbol_pusch_scs_in_subframe =
+        prach_cfg.starting_symbol * (1U << to_numerology_value(pusch_scs));
+    // Start slot within the subframe. For FR1, the start_symbol_pusch_scs_in_subframe refers to the SCS 15kHz.
+    output.start_slot_pusch_scs   = start_symbol_pusch_scs_in_subframe / nof_symbols_per_slot;
+    output.start_symbol_pusch_scs = start_symbol_pusch_scs_in_subframe % nof_symbols_per_slot;
+    output.prach_length_slots =
+        static_cast<unsigned>(ceil(static_cast<double>(output.start_symbol_pusch_scs + output.nof_symbols) /
+                                   (static_cast<double>(nof_symbols_per_slot))));
+  } else {
+    const prach_subcarrier_spacing prach_scs = to_ra_subcarrier_spacing(pusch_scs);
+    output.nof_symbols = static_cast<unsigned>(prach_cfg.nof_occasions_within_slot * prach_cfg.duration);
+    // Start slot within the subframe.
+    const bool prach_starts_in_even_slot =
+        prach_scs == prach_subcarrier_spacing::kHz15 or
+        (prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1);
+    output.start_slot_pusch_scs = prach_starts_in_even_slot ? 0U : 1U;
+    output.prach_length_slots =
+        prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1 ? 2U : 1U;
+  }
 
   return output;
 }

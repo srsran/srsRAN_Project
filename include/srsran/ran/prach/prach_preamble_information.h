@@ -74,7 +74,8 @@ phy_time_unit get_prach_window_duration(prach_format_type  format,
 struct prach_symbols_slots_duration {
   /// Duration of the PRACH Preamble in slots, with reference to the PUSCH SCS.
   unsigned prach_length_slots;
-  /// PRACH starting slot within the subframe, with reference to the PUSCH SCS.
+  /// PRACH starting slot within the subframe, with reference to the PUSCH SCS. For 15kHz PUSCH SCS, values: {0}; for
+  /// 30kHz PUSCH SCS, values: {0, 1}
   unsigned start_slot_pusch_scs;
   /// PRACH duration in symbols, with reference to the PUSCH SCS.
   unsigned nof_symbols;
