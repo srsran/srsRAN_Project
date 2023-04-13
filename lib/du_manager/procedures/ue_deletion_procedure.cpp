@@ -68,7 +68,8 @@ async_task<mac_ue_delete_response_message> ue_deletion_procedure::launch_mac_ue_
 async_task<void> ue_deletion_procedure::disconnect_drbs()
 {
   // Note: If the DRB was not deleted on demand by the CU-CP via F1AP UE Context Modification Procedure, there is a
-  // chance that the CU-UP will keep pushing new F1-U PDUs to the DU.
+  // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,
+  // we start by first disconnecting the DRBs from the F1-U interface.
 
   return dispatch_and_resume_on(
       du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {

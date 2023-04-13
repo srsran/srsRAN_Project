@@ -9,8 +9,8 @@
  */
 
 #include "du_manager_impl.h"
+#include "procedures/du_disconnect_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <condition_variable>
 #include <future>
 
@@ -55,7 +55,22 @@ void du_manager_impl::start()
 
 void du_manager_impl::stop()
 {
-  // TODO.
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  if (not params.services.du_mng_exec.execute([this, &p]() mutable {
+        schedule_async_task(launch_async([this, &p](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(launch_async<du_disconnect_procedure>(params, ue_mng));
+          p.set_value();
+          CORO_RETURN();
+        }));
+      })) {
+    logger.error("Unable to initiate DU Manager shutdown procedure.");
+    return;
+  }
+
+  fut.wait_for(std::chrono::seconds(10));
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
