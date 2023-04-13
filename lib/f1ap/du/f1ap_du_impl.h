@@ -46,6 +46,7 @@ public:
   // F1AP UE configuration functions
   f1ap_ue_creation_response      handle_ue_creation_request(const f1ap_ue_creation_request& msg) override;
   f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) override;
+  void                           handle_ue_deletion_request(du_ue_index_t ue_index) override;
 
   // F1AP UE context manager functions
   async_task<f1ap_ue_context_modification_response_message>

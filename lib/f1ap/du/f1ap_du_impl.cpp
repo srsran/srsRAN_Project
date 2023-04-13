@@ -57,6 +57,11 @@ f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(con
   return update_f1ap_ue_config(msg, ues);
 }
 
+void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
+{
+  ues.remove_ue(ue_index);
+}
+
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
   du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1ap_notifier));

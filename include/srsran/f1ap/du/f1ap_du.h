@@ -134,6 +134,9 @@ public:
   /// \brief Updates the configuration of an existing UE context in the F1AP.
   virtual f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) = 0;
 
+  /// \brief Removes UE Context from F1AP.
+  virtual void handle_ue_deletion_request(du_ue_index_t ue_index) = 0;
+
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
   /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in

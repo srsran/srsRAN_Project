@@ -24,8 +24,8 @@ class ue_deletion_procedure
 {
 public:
   ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
-                        mac_ue_configurator&          mac_ue_mng_,
-                        du_ue_manager_repository&     ue_mng_);
+                        du_ue_manager_repository&     ue_mng_,
+                        const du_manager_params&      du_params);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -35,8 +35,8 @@ private:
   async_task<mac_ue_delete_response_message> launch_mac_ue_delete();
 
   const f1ap_ue_delete_request msg;
-  mac_ue_configurator&         mac_ue_mng;
   du_ue_manager_repository&    ue_mng;
+  const du_manager_params&     du_params;
   ue_procedure_logger          proc_logger;
 
   du_ue* ue = nullptr;

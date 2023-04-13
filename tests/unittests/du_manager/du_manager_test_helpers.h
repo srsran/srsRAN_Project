@@ -96,10 +96,11 @@ public:
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
   wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
-  optional<f1ap_ue_creation_request>                                      last_ue_create{};
+  optional<f1ap_ue_creation_request>                                      last_ue_create;
   f1ap_ue_creation_response                                               next_ue_create_response;
-  optional<f1ap_ue_configuration_request>                                 last_ue_config{};
+  optional<f1ap_ue_configuration_request>                                 last_ue_config;
   f1ap_ue_configuration_response                                          next_ue_config_response;
+  optional<du_ue_index_t>                                                 last_ue_deleted;
   optional<f1ap_ue_context_release_request_message>                       last_ue_release{};
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
@@ -120,6 +121,8 @@ public:
     last_ue_config = msg;
     return next_ue_config_response;
   }
+
+  void handle_ue_deletion_request(du_ue_index_t ue_index) override { last_ue_deleted = ue_index; }
 
   async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override
