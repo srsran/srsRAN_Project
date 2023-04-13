@@ -99,6 +99,12 @@ inline e2_message generate_e2_setup_request()
   return e2_msg;
 }
 
+class dummy_e2_du_metrics : public e2_du_metrics_interface
+{
+public:
+  void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
+};
+
 class dummy_e2_subscriber : public e2_subscriber
 {
 public:
@@ -212,7 +218,8 @@ protected:
 
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     subscriber   = std::make_unique<dummy_e2_subscriber>();
-    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber);
+    du_metrics   = std::make_unique<dummy_e2_du_metrics>();
+    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber, *du_metrics);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
@@ -227,6 +234,7 @@ protected:
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<dummy_e2_subscriber>                subscriber;
+  std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   timer_manager                                       timers;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;

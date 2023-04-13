@@ -15,6 +15,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -106,6 +107,13 @@ public:
   /// \remark The CU transmits the E2SetupRequest as per ______.
   /// and awaits the response. If a E2SetupFailure is received the E2 will handle the failure.
   virtual async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) = 0;
+};
+
+class e2_du_metrics_interface
+{
+public:
+  virtual ~e2_du_metrics_interface()                         = default;
+  virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
 };
 
 /// Combined entry point for E2 handling.

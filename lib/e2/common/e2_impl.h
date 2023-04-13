@@ -24,7 +24,10 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscriber& e2_sub_notif_);
+  e2_impl(timer_factory            timers_,
+          e2_message_notifier&     e2_pdu_notifier_,
+          e2_subscriber&           e2_sub_notif_,
+          e2_du_metrics_interface& du_metrics_interface_);
 
   /// E2 connection manager functions.
   async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) override;
@@ -59,6 +62,7 @@ private:
   e2_message_notifier&              pdu_notifier;
   e2_subscriber&                    e2_sub_notif;
   e2_subscription_setup_procedure   subscribe_proc;
+  e2_du_metrics_interface&          du_metrics_interface;
   std::unique_ptr<e2_event_manager> events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id
