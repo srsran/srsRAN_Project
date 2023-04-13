@@ -34,6 +34,8 @@ public:
 private:
   async_task<mac_ue_delete_response_message> launch_mac_ue_delete();
 
+  async_task<void> disconnect_drbs();
+
   const f1ap_ue_delete_request msg;
   du_ue_manager_repository&    ue_mng;
   const du_manager_params&     du_params;

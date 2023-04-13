@@ -85,6 +85,9 @@ struct du_ue_drb {
   std::unique_ptr<rlc_entity>                                   rlc_bearer;
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
+
+  /// \brief Disconnect DRB from F1-U interface.
+  void disconnect_f1u();
 };
 
 /// \brief Creates a DRB instance.

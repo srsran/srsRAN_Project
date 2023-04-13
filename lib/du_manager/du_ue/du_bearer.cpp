@@ -41,6 +41,30 @@ void du_srb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
+/// \brief Sink used to discard events while destroying the F1-U bearer.
+class null_sink_f1u_bearer : public f1u_bearer,
+                             public f1u_rx_pdu_handler,
+                             public f1u_tx_delivery_handler,
+                             public f1u_tx_sdu_handler
+{
+public:
+  f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
+  f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
+  f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
+
+  void handle_pdu(nru_dl_message msg) override {}
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
+  void handle_sdu(byte_buffer_slice_chain sdu) override {}
+} null_f1u_bearer;
+
+class null_sink_rlc_bearer : public rlc_tx_upper_layer_data_interface
+{
+public:
+  void handle_sdu(rlc_sdu sdu) override {}
+  void discard_sdu(uint32_t pdcp_sn) override {}
+} null_rlc_bearer;
+
 void du_drb_connector::connect(du_ue_index_t                       ue_index,
                                drb_id_t                            drb_id,
                                lcid_t                              lcid,
@@ -65,6 +89,17 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
 
   // > Connect MAC Tx SDU builder -> RLC Tx PDU builder.
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
+}
+
+void du_ue_drb::disconnect_f1u()
+{
+  // Disconnect F1-U <-> RLC interface.
+  connector.rlc_rx_sdu_notif.connect(null_f1u_bearer);
+  connector.rlc_tx_data_notif.connect(null_f1u_bearer);
+  connector.f1u_rx_sdu_notif.connect(null_rlc_bearer);
+
+  // Remove F1-U bearer.
+  drb_f1u.reset();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
