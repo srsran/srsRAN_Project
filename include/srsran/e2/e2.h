@@ -49,6 +49,18 @@ struct e2_subscribe_reponse_message {
   bool                                       success;
 };
 
+typedef struct {
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_definition;
+  uint16_t                                      ric_action_id;
+} ric_action_t;
+
+// here we define a subscription struct
+typedef struct {
+  asn1::e2ap::ri_crequest_id_s request_id;
+  std::vector<ric_action_t>    action_list;
+  uint64_t                     report_period;
+} e2_subscription_t;
+
 /// This interface is used to push E2 messages to the E2 interface.
 class e2_message_handler
 {
@@ -110,6 +122,8 @@ public:
 
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
+  /// @brief start the subscription request
+  virtual int start_subscription() = 0;
 };
 
 } // namespace srsran

@@ -112,6 +112,7 @@ public:
     get_subscription_result(msg);
     return msg;
   }
+  int start_subscription() override { return 0; }
 
 private:
   void get_subscription_result(e2_subscribe_reponse_message& msg)
