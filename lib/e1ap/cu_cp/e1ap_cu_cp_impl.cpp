@@ -114,6 +114,17 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
 async_task<e1ap_bearer_context_modification_response>
 e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
+  if (!ue_ctxt_list.contains(request.ue_index)) {
+    logger.error("ue={} Can't find bearer to modify", request.ue_index);
+    return launch_async([](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      e1ap_bearer_context_modification_response res{};
+      res.success = false;
+      res.cause   = cause_t::misc;
+      CORO_RETURN(res);
+    });
+  }
+
   // Get UE context
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[request.ue_index];
 
