@@ -104,7 +104,6 @@ void mac_controller::remove_ue(du_ue_index_t ue_index)
     logger.warning("Failed to find ue_index={:#x}", ue_index);
     return;
   }
-  logger.debug("Removing ue_index={:#x}", ue_index);
 
   rnti_table.rem_ue(ue_db[ue_index].rnti);
 

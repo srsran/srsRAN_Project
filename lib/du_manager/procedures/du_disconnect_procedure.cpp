@@ -35,7 +35,7 @@ void du_disconnect_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   // Wait for all UEs to be removed.
-  for (; wait_time.count() > 0; wait_time -= wait_step) {
+  for (; not ue_mng.get_ues().empty() and wait_time.count() > 0; wait_time -= wait_step) {
     CORO_AWAIT(async_wait_for(disconnect_timer, wait_step));
   }
 

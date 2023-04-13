@@ -98,3 +98,24 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
                                                    (gnb_du_ue_f1ap_id_t)cmd->gnb_du_ue_f1ap_id->value,
                                                    (gnb_cu_ue_f1ap_id_t)cmd->gnb_cu_ue_f1ap_id->value));
 }
+
+TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)
+{
+  // Create UE.
+  ASSERT_TRUE(add_ue(to_rnti(0x4601)));
+
+  // Stop DU from another thread, because stop() call is blocking.
+  std::atomic<bool> running{true};
+  task_worker       worker("phy_worker", 2048);
+  bool              ret = worker.push_task([this, &running]() {
+    this->du_obj.stop();
+    running = false;
+  });
+  ASSERT_TRUE(ret);
+
+  // Keep running slot indications until DU-high is stopped.
+  for (unsigned count = 0; count < 1000 and running; ++count) {
+    this->run_slot();
+  }
+  ASSERT_FALSE(running) << "stop() call is hanging";
+}

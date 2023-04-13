@@ -66,7 +66,7 @@ void du_manager_impl::stop()
           CORO_RETURN();
         }));
       })) {
-    logger.error("Unable to initiate DU Manager shutdown procedure.");
+    logger.error("Unable to stop DU Manager.");
     return;
   }
 

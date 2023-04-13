@@ -101,7 +101,10 @@ void du_high::start()
   du_manager->start();
 }
 
-void du_high::stop() {}
+void du_high::stop()
+{
+  du_manager->stop();
+}
 
 f1ap_message_handler& du_high::get_f1ap_message_handler()
 {
