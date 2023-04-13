@@ -22,7 +22,11 @@ using namespace srsran::srs_du;
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
                                                        du_ue_manager_repository&             ue_mng_,
                                                        const du_manager_params&              du_params_) :
-  request(request_), ue_mng(ue_mng_), du_params(du_params_), ue(ue_mng.find_ue(request.ue_index))
+  request(request_),
+  ue_mng(ue_mng_),
+  du_params(du_params_),
+  ue(ue_mng.find_ue(request.ue_index)),
+  proc_logger(logger, name(), request.ue_index, ue->rnti)
 {
   srsran_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
@@ -31,11 +35,11 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
-  log_proc_started(logger, request.ue_index, ue->rnti, "UE Configuration");
+  proc_logger.log_proc_started();
 
   prev_cell_group = ue->resources.value();
   if (ue->resources.update(ue->pcell_index, request).release_required) {
-    logger.warning("Failed to allocate ue={} resources", ue->ue_index);
+    proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
 
@@ -48,7 +52,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 
-  log_proc_completed(logger, request.ue_index, ue->rnti, "UE Configuration");
+  proc_logger.log_proc_completed();
 
   CORO_RETURN(make_ue_config_response());
 }

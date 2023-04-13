@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../du_ue/du_ue_manager_repository.h"
+#include "procedure_logger.h"
 #include "srsran/du_manager/du_manager_params.h"
 
 namespace srsran {
@@ -24,6 +25,8 @@ public:
                              const du_manager_params&              du_params_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
+
+  const char* name() const { return "UE Configuration"; }
 
 private:
   /// \brief Update DU UE bearers. This stage includes the creation/modification/removal of SRBs/DRBs, creation of RLC
@@ -43,6 +46,7 @@ private:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");
   du_ue*                ue     = nullptr;
+  ue_procedure_logger   proc_logger;
 
   cell_group_config prev_cell_group;
 
