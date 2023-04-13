@@ -34,6 +34,7 @@ mac_pcap_impl::~mac_pcap_impl()
 
 void mac_pcap_impl::open(const std::string& filename_)
 {
+  is_open = true;
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);
@@ -41,7 +42,8 @@ void mac_pcap_impl::open(const std::string& filename_)
 
 void mac_pcap_impl::close()
 {
-  if (is_write_enabled()) {
+  bool was_open = is_open.exchange(false, std::memory_order_relaxed);
+  if (was_open) {
     auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
     worker.wait_pending_tasks();
@@ -51,7 +53,7 @@ void mac_pcap_impl::close()
 
 bool mac_pcap_impl::is_write_enabled()
 {
-  return writter.is_write_enabled();
+  return is_open.load(std::memory_order_relaxed);
 }
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::const_span<uint8_t> pdu)

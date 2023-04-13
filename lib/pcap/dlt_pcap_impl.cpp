@@ -28,24 +28,26 @@ dlt_pcap_impl::~dlt_pcap_impl()
 
 void dlt_pcap_impl::open(const std::string& filename_)
 {
+  is_open.store(true, std::memory_order_relaxed);
   // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
   worker.push_task_blocking(fn);
 }
 
-bool dlt_pcap_impl::is_write_enabled()
-{
-  return writter.is_write_enabled();
-}
-
 void dlt_pcap_impl::close()
 {
-  if (is_write_enabled()) {
+  bool was_open = is_open.exchange(false, std::memory_order_relaxed);
+  if (was_open) {
     auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
     worker.wait_pending_tasks();
     worker.stop();
   }
+}
+
+bool dlt_pcap_impl::is_write_enabled()
+{
+  return is_open.load(std::memory_order_relaxed);
 }
 
 void dlt_pcap_impl::push_pdu(srsran::byte_buffer pdu)

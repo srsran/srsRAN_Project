@@ -49,5 +49,6 @@ private:
   std::vector<uint8_t> tmp_mem;
   task_worker          worker;
   pcap_file_base       writter;
+  std::atomic<bool>    is_open{false};
 };
 } // namespace srsran
