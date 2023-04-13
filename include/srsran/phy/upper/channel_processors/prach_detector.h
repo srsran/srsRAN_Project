@@ -40,7 +40,7 @@ public:
     /// \brief Number of preamble indices to monitor. Possible values are {1, ..., 64}.
     /// \note The sum <tt>start_preamble_index + nof_preamble_indices</tt> should be not larger than 64.
     unsigned nof_preamble_indices;
-    /// Random access subcarrier spacing.
+    /// Random access subcarrier spacing for short preambles.
     prach_subcarrier_spacing ra_scs;
   };
 

@@ -27,6 +27,7 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
   config.zero_correlation_zone = context.zero_correlation_zone;
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
+  config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
 
   return config;
 }
