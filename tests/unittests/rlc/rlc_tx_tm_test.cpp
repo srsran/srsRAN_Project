@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_tx_tm_entity.h"
 #include "rlc_test_helpers.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -74,10 +75,12 @@ protected:
     tester = std::make_unique<rlc_tx_tm_test_frame>();
 
     // Create RLC TM TX entity
-    rlc = std::make_unique<rlc_tx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester);
+    rlc = std::make_unique<rlc_tx_tm_entity>(
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester, pcell_worker);
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
+  manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_tm_test_frame> tester;
   std::unique_ptr<rlc_tx_tm_entity>     rlc;
 };
@@ -101,6 +104,7 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
@@ -111,32 +115,36 @@ TEST_F(rlc_tx_tm_test, test_tx)
   pdu = rlc->pull_pdu(sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->bsr, 0);
-  EXPECT_EQ(tester->bsr_count, 2);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1);
 
   // read another PDU from lower end but there is nothing to read
   pdu = rlc->pull_pdu(sdu_size);
   EXPECT_EQ(pdu.length(), 0);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->bsr, 0);
-  EXPECT_EQ(tester->bsr_count, 2); // unchanged
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1); // unchanged
 
   // write another SDU into upper end
   count++;
   sdu_buf = create_sdu(sdu_size, count);
   sdu     = {sdu_buf.deep_copy(), /* pdcp_sn = */ {}}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
-  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(tester->bsr_count, 2);
 
   // read PDU from lower end with insufficient space for the whole SDU
   pdu = rlc->pull_pdu(sdu_size - 1);
   EXPECT_EQ(pdu.length(), 0);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
-  EXPECT_EQ(tester->bsr_count, 3); // unchanged
+  EXPECT_EQ(tester->bsr_count, 2); // unchanged
 
   // write another SDU into upper end
   count++;
@@ -145,25 +153,28 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 2 * sdu_size);
   EXPECT_EQ(tester->bsr, 2 * sdu_size);
-  EXPECT_EQ(tester->bsr_count, 4);
+  EXPECT_EQ(tester->bsr_count, 3);
 
   // read first PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
-  EXPECT_EQ(tester->bsr, sdu_size);
-  EXPECT_EQ(tester->bsr_count, 5);
+  EXPECT_EQ(tester->bsr, 2 * sdu_size);
+  EXPECT_EQ(tester->bsr_count, 3);
 
   // read second PDU from lower end with oversized space
   pdu = rlc->pull_pdu(3 * sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf2);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->bsr, 0);
-  EXPECT_EQ(tester->bsr_count, 6);
+  EXPECT_EQ(tester->bsr, 2 * sdu_size);
+  EXPECT_EQ(tester->bsr_count, 3);
 }
 
 TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
@@ -178,12 +189,14 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // Try discard of valid SDU - but TM does not support any discard, discard failures are counted
   rlc->discard_sdu(0);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 0);
@@ -195,9 +208,10 @@ TEST_F(rlc_tx_tm_test, discard_sdu_increments_discard_failure_counter)
   pdu = rlc->pull_pdu(sdu_size);
   EXPECT_EQ(pdu.length(), sdu_size);
   EXPECT_EQ(pdu, sdu_buf);
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->bsr, 0);
-  EXPECT_EQ(tester->bsr_count, 2);
+  EXPECT_EQ(tester->bsr, sdu_size);
+  EXPECT_EQ(tester->bsr_count, 1);
 }
 
 TEST_F(rlc_tx_tm_test, test_tx_metrics)
@@ -212,6 +226,7 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
 
   // write SDU into upper end
   rlc->handle_sdu(std::move(sdu));
+  pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), sdu_size);
   EXPECT_EQ(tester->bsr, sdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
