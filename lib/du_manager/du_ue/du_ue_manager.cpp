@@ -67,25 +67,32 @@ async_task<void> du_ue_manager::stop()
 
     // Disconnect all UEs RLC->MAC buffer state adapters.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
+      for (auto& srb : (*ue_it)->bearers.srbs()) {
+        srb.connector.rlc_tx_buffer_state_notif.disconnect();
+      }
       for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
-
-        // Disconnect notifiers used in the cell_executor context.
         drb.connector.rlc_tx_buffer_state_notif.disconnect();
       }
     }
 
-    // Disconnect all UEs bearers.
+    // Disconnect notifiers of all UEs bearers from within the ue_executors context.
     for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
       CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.executor((*ue_it)->ue_index)));
       if (not res) {
         CORO_EARLY_RETURN();
       }
 
+      for (auto& srb : (*ue_it)->bearers.srbs()) {
+        srb.connector.mac_rx_sdu_notifier.disconnect();
+        srb.connector.rlc_tx_data_notif.disconnect();
+        srb.connector.rlc_rx_sdu_notif.disconnect();
+        srb.connector.f1c_rx_sdu_notif.disconnect();
+      }
+
       for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
 
-        // Disconnect notifiers used in the ue_executor context.
         drb.connector.mac_rx_sdu_notifier.disconnect();
         drb.connector.rlc_tx_data_notif.disconnect();
         drb.connector.rlc_rx_sdu_notif.disconnect();

@@ -30,6 +30,8 @@ class f1c_rx_sdu_rlc_adapter final : public f1c_rx_sdu_notifier
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
 
+  void disconnect();
+
   void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
@@ -74,6 +76,8 @@ class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 public:
   void connect(f1c_bearer& bearer_) { f1bearer = &bearer_; }
 
+  void disconnect();
+
   void on_new_sdu(byte_buffer_slice_chain pdu) override
   {
     srsran_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
@@ -105,6 +109,8 @@ class rlc_f1c_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
 {
 public:
   void connect(f1c_bearer& bearer_) { bearer = &bearer_; }
+
+  void disconnect();
 
   void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn) override
   {
