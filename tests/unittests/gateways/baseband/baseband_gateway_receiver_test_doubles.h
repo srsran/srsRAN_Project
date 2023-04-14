@@ -27,7 +27,7 @@ public:
   baseband_gateway_receiver_spy() : timestamp_dist(0, UINT32_MAX), sample_dist(-1.0F, +1.0F) {}
 
   // See interface for documentation.
-  unsigned get_buffer_size() override { return buffer_size; }
+  unsigned get_buffer_size() const override { return buffer_size; }
 
   // See interface for documentation.
   metadata receive(baseband_gateway_buffer& data) override

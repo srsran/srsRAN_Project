@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/baseband_gateway_buffer.h"
@@ -36,7 +37,7 @@ struct downlink_processor_baseband_configuration {
   unsigned nof_tx_ports;
   /// Initial slot index within the radio frame.
   unsigned initial_slot_index;
-  /// Number of slots notified in advanced in the TTI boundary event.
+  /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
 };
 

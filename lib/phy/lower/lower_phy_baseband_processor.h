@@ -7,14 +7,13 @@
  * the distribution.
  *
  */
+
 #pragma once
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway.h"
 #include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
-#include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
@@ -23,35 +22,50 @@
 
 namespace srsran {
 
-/// Adapts the lower physical layer baseband gateway to the internal processors baseband interfaces.
-class processor_baseband_adaptor : public lower_phy_controller
+/// \brief Implements the lower physical layer baseband processing core.
+///
+/// This class interfaces and manages the baseband data flow between the baseband gateways and the processors. This
+/// class is agnostic to the sampling rate and radio frame timing.
+class lower_phy_baseband_processor : public lower_phy_controller
 {
 public:
   /// Collects the parameters necessary to initialize the baseband adaptor.
   struct configuration {
-    task_executor*                rx_task_executor;
-    task_executor*                tx_task_executor;
-    task_executor*                ul_task_executor;
-    task_executor*                dl_task_executor;
-    baseband_gateway_receiver*    receiver;
+    /// Receive task executor - Main the lower PHY processing executor it receives baseband from \ref
+    /// baseband_gateway_receiver, reserves baseband buffers and pushes tasks to the other executors.
+    task_executor* rx_task_executor;
+    /// Transmit task executor - Transmits baseband buffers and releases the downlink baseband processing buffer to the
+    /// pool.
+    task_executor* tx_task_executor;
+    /// Uplink task executor - Notifies uplink-related time boundaries, runs the baseband demodulation and notifies
+    /// availability of data.
+    task_executor* ul_task_executor;
+    /// Downlink task executor - Notifies downlink-related time boundaries and runs the baseband modulation.
+    task_executor* dl_task_executor;
+    /// Baseband receiver gateway - Receives baseband samples from a radio.
+    baseband_gateway_receiver* receiver;
+    /// Baseband transmitter gateway - Transmits baseband samples through a radio.
     baseband_gateway_transmitter* transmitter;
-    uplink_processor_baseband*    ul_bb_proc;
-    downlink_processor_baseband*  dl_bb_proc;
-    unsigned                      nof_tx_ports;
-    unsigned                      nof_rx_ports;
-    baseband_gateway_timestamp    rx_to_tx_delay;
+    /// Uplink baseband processor - processes uplink baseband samples.
+    uplink_processor_baseband* ul_bb_proc;
+    /// Downlink processor baseband - processes downlink baseband samples.
+    downlink_processor_baseband* dl_bb_proc;
+    /// Number of transmit ports.
+    unsigned nof_tx_ports;
+    /// Number of receive ports.
+    unsigned nof_rx_ports;
+    /// Receive to transmit delay in samples.
+    baseband_gateway_timestamp rx_to_tx_delay;
   };
 
   /// Constructs a baseband adaptor.
-  processor_baseband_adaptor(const configuration& config);
+  lower_phy_baseband_processor(const configuration& config);
 
   // See interface for documentation.
   void start() override;
 
   // See interface for documentation.
-  void request_stop() override;
-
-  void wait_stop() override;
+  void stop() override;
 
 private:
   /// Internal finite state machine to control the internal state.
@@ -76,7 +90,7 @@ private:
       state_cvar.notify_all();
     }
 
-    /// Stops and waits for the asynchronous execution finishes.
+    /// Requests all asynchronous processing to stop.
     void request_stop()
     {
       std::unique_lock<std::mutex> lock(state_mutex);
@@ -90,7 +104,7 @@ private:
       state_cvar.notify_all();
     }
 
-    /// Stops and waits for the asynchronous execution finishes.
+    /// Waits until the asynchronous execution stops.
     void wait_stop()
     {
       std::unique_lock<std::mutex> lock(state_mutex);
@@ -112,7 +126,7 @@ private:
   private:
     /// Possible states.
     enum class states {
-      /// The asynchronous processing has bot been started.
+      /// The asynchronous processing has not been started.
       idle = 0,
       /// The asynchronous processing has started and not stopped.
       running,

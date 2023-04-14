@@ -97,7 +97,7 @@ bool radio_session_uhd_impl::wait_sensor_locked(const std::string& sensor_name, 
   return is_locked;
 }
 
-bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, double gain_dB)
+bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned port_idx, double gain_dB)
 {
   if (port_idx >= tx_port_map.size()) {
     fmt::print(
@@ -113,7 +113,7 @@ bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, doub
   return true;
 }
 
-bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, double gain_dB)
+bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned port_idx, double gain_dB)
 {
   if (port_idx >= rx_port_map.size()) {
     fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)rx_port_map.size());
@@ -129,7 +129,7 @@ bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, doub
   return true;
 }
 
-bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
+bool radio_session_uhd_impl::set_tx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= tx_port_map.size()) {
     fmt::print(
@@ -146,7 +146,7 @@ bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configurat
   return true;
 }
 
-bool radio_session_uhd_impl::set_rx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
+bool radio_session_uhd_impl::set_rx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= rx_port_map.size()) {
     fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
@@ -491,7 +491,7 @@ baseband_gateway_transmitter& radio_session_uhd_impl::get_transmitter(unsigned s
   return *tx_streams[stream_id];
 }
 
-baseband_gateway_receiver& radio_session_uhd_impl::get_receiver(unsigned int stream_id)
+baseband_gateway_receiver& radio_session_uhd_impl::get_receiver(unsigned stream_id)
 {
   srsran_assert(stream_id < rx_streams.size(),
                 "Stream identifier ({}) exceeds the number of receive streams  ({}).",

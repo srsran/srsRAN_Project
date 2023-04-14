@@ -200,7 +200,7 @@ void radio_uhd_rx_stream::wait_stop()
   return;
 }
 
-unsigned radio_uhd_rx_stream::get_buffer_size()
+unsigned radio_uhd_rx_stream::get_buffer_size() const
 {
   return max_packet_size;
 }

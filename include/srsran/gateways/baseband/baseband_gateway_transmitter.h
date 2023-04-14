@@ -23,14 +23,13 @@ public:
     baseband_gateway_timestamp ts;
   };
 
-  /// \brief Gets the optimal transmitter buffer size.
-  virtual unsigned get_buffer_size() = 0;
+  /// Gets the optimal transmitter buffer size.
+  virtual unsigned get_buffer_size() const = 0;
 
   /// \brief Transmits a given baseband buffer in a given time provided in the metadata.
-  /// \param[in] data Provides the baseband buffer to transmit.
-  /// \param[in] metadata Provides additional parameters for transmission.
-  /// \note The data buffers must the same number of channels than the stream.
-  /// \note The application terminates if the stream identifier is invalid.
+  /// \param[in] data     Baseband buffer to transmit.
+  /// \param[in] metadata Additional parameters for transmission.
+  /// \remark The data buffers must have the same number of channels than the stream.
   virtual void transmit(baseband_gateway_buffer& data, const metadata& metadata) = 0;
 };
 

@@ -25,7 +25,7 @@ public:
   };
 
   // See interface for documentation.
-  unsigned get_buffer_size() override { return buffer_size; }
+  unsigned get_buffer_size() const override { return buffer_size; }
 
   // See interface for documentation.
   void transmit(baseband_gateway_buffer& data, const baseband_gateway_transmitter::metadata& md) override

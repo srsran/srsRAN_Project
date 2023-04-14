@@ -331,10 +331,10 @@ int main(int argc, char** argv)
   while (!stop && sample_count < total_nof_samples) {
     // For each stream...
     for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
-      // Get transmitter data plane
+      // Get transmitter data plane.
       baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter(stream_id);
 
-      // Get receiver data plane
+      // Get receiver data plane.
       baseband_gateway_receiver& receiver = radio->get_baseband_gateway().get_receiver(stream_id);
 
       // Receive baseband.

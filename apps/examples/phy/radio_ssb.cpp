@@ -238,8 +238,7 @@ static void stop_execution()
 
   // Stop lower PHY.
   if (lower_phy_instance != nullptr) {
-    lower_phy_instance->get_controller().request_stop();
-    lower_phy_instance->get_controller().wait_stop();
+    lower_phy_instance->get_controller().stop();
   }
 }
 
@@ -591,7 +590,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.offset_pointA     = ssb_offset_pointA_subc_rb;
   upper_phy_sample_config.ssb_config.pattern_case      = ssb_pattern;
   upper_phy_sample_config.enable_random_data           = enable_random_data;
-  upper_phy_sample_config.enable_random_data           = enable_ul_processing;
+  upper_phy_sample_config.enable_ul_processing         = enable_ul_processing;
   upper_phy_sample_config.data_modulation              = data_mod_scheme;
   upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
   srsran_assert(upper_phy, "Failed to create upper physical layer.");

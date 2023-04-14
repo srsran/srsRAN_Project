@@ -89,7 +89,7 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
   return ret;
 }
 
-unsigned radio_zmq_rx_stream::get_buffer_size()
+unsigned radio_zmq_rx_stream::get_buffer_size() const
 {
   return RECEIVE_BUFFER_SIZE;
 }

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "processors/adaptors/processor_baseband_adaptor.h"
+#include "lower_phy_baseband_processor.h"
 #include "processors/adaptors/processor_handler_adaptor.h"
 #include "processors/adaptors/processor_notifier_adaptor.h"
 #include "srsran/adt/circular_array.h"
@@ -45,11 +45,11 @@ public:
     std::unique_ptr<lower_phy_uplink_processor> uplink_proc;
     /// Baseband controller.
     std::unique_ptr<lower_phy_controller> controller;
-    /// Provides a symbol handler to notify the reception of symbols.
+    /// Symbol handler to notify the reception of symbols.
     lower_phy_rx_symbol_notifier* rx_symbol_notifier;
-    /// Provides the timing handler to notify the timing boundaries.
+    /// The timing handler to notify the timing boundaries.
     lower_phy_timing_notifier* timing_notifier;
-    /// Provides the error handler to notify runtime errors.
+    /// Error handler to notify runtime errors.
     lower_phy_error_notifier* error_notifier;
   };
 

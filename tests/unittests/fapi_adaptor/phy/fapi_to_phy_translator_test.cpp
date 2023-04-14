@@ -143,7 +143,7 @@ TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
   slot_point slot2(1, 1, 1);
   translator.handle_new_slot(slot2);
 
-  // Assert that the finish processing PDUs method of the previous slot dl_bb_proc has been called.
+  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
   ASSERT_TRUE(dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());
@@ -174,7 +174,7 @@ TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
   slot_point slot2 = slot + 1;
   translator.handle_new_slot(slot2);
 
-  // Assert that the finish processing PDUs method of the previous slot dl_bb_proc has been called.
+  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
   ASSERT_TRUE(dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());

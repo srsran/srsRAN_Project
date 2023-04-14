@@ -87,7 +87,7 @@ public:
   bool start(const uhd::time_spec_t& time_spec);
 
   // See interface for documentation.
-  unsigned get_buffer_size() override;
+  unsigned get_buffer_size() const override;
 
   // See interface for documentation.
   metadata receive(baseband_gateway_buffer& data) override;

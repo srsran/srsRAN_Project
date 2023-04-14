@@ -849,15 +849,19 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
   }
 
   // Request stop streaming.
-  lphy_controller.request_stop();
+  std::thread stop_thread([&lphy_controller]() { lphy_controller.stop(); });
 
   // Run remaining tasks.
-  rx_task_executor.run_next_blocking();
+  rx_task_executor.run_pending_tasks();
+  tx_task_executor.run_pending_tasks();
+  ul_task_executor.run_pending_tasks();
+  dl_task_executor.run_pending_tasks();
 
-  // Wait for the stop is completed.
-  lphy_controller.wait_stop();
+  // Join thread.
+  stop_thread.join();
 
   // No task should be pending.
+  ASSERT_FALSE(tx_task_executor.has_pending_tasks());
   ASSERT_FALSE(rx_task_executor.has_pending_tasks());
   ASSERT_FALSE(ul_task_executor.has_pending_tasks());
   ASSERT_FALSE(dl_task_executor.has_pending_tasks());

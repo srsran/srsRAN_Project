@@ -64,7 +64,7 @@ public:
 
   uint64_t get_sample_count() const { return sample_count; }
 
-  unsigned int get_buffer_size() override;
+  unsigned get_buffer_size() const override;
 
   // See interface for documentation.
   metadata receive(baseband_gateway_buffer& data) override;

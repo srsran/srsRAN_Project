@@ -116,7 +116,7 @@ void radio_session_zmq_impl::stop()
   }
 }
 
-baseband_gateway_transmitter& radio_session_zmq_impl::get_transmitter(unsigned int stream_id)
+baseband_gateway_transmitter& radio_session_zmq_impl::get_transmitter(unsigned stream_id)
 {
   srsran_assert(stream_id < tx_streams.size(),
                 "Stream identifier ({}) exceeds the number of transmit streams ({})",
@@ -126,7 +126,7 @@ baseband_gateway_transmitter& radio_session_zmq_impl::get_transmitter(unsigned i
   return *tx_streams[stream_id];
 }
 
-baseband_gateway_receiver& radio_session_zmq_impl::get_receiver(unsigned int stream_id)
+baseband_gateway_receiver& radio_session_zmq_impl::get_receiver(unsigned stream_id)
 {
   srsran_assert(stream_id < rx_streams.size(),
                 "Stream identifier ({}) exceeds the number of receive streams ({})",

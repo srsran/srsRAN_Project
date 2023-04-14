@@ -63,7 +63,7 @@ public:
   // See interface for documentation.
   bool align(baseband_gateway_timestamp timestamp, std::chrono::milliseconds timeout) override;
 
-  unsigned int get_buffer_size() override;
+  unsigned get_buffer_size() const override;
 
   // See interface for documentation.
   void transmit(baseband_gateway_buffer& data, const metadata& md) override;

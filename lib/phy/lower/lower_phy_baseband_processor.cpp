@@ -7,12 +7,12 @@
  * the distribution.
  *
  */
-#include "processor_baseband_adaptor.h"
-#include "srsran/adt/static_vector.h"
+
+#include "lower_phy_baseband_processor.h"
 
 using namespace srsran;
 
-processor_baseband_adaptor::processor_baseband_adaptor(const processor_baseband_adaptor::configuration& config) :
+lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor::configuration& config) :
   rx_executor(*config.rx_task_executor),
   tx_executor(*config.tx_task_executor),
   uplink_executor(*config.ul_task_executor),
@@ -51,23 +51,19 @@ processor_baseband_adaptor::processor_baseband_adaptor(const processor_baseband_
   }
 }
 
-void processor_baseband_adaptor::start()
+void lower_phy_baseband_processor::start()
 {
   state.start();
   rx_executor.execute([this]() { process(); });
 }
 
-void processor_baseband_adaptor::request_stop()
+void lower_phy_baseband_processor::stop()
 {
   state.request_stop();
-}
-
-void processor_baseband_adaptor::wait_stop()
-{
   state.wait_stop();
 }
 
-void processor_baseband_adaptor::process()
+void lower_phy_baseband_processor::process()
 {
   // Check if it is running, notify stop and return without enqueueing more tasks.
   if (!state.is_running()) {

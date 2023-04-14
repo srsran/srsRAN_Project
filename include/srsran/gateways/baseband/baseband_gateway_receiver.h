@@ -20,18 +20,17 @@ class baseband_gateway_receiver : public baseband_gateway_base
 public:
   /// Describes receiver metadata.
   struct metadata {
-    /// Indicates the baseband signal received timestamp.
+    /// Timestamp of the received baseband signal.
     baseband_gateway_timestamp ts;
   };
 
   /// \brief Gets the buffer size.
-  virtual unsigned get_buffer_size() = 0;
+  virtual unsigned get_buffer_size() const = 0;
 
   /// \brief Receives a given baseband buffer.
   /// \param[out,in] data Provides the baseband buffer destination and the number of samples to receive.
   /// \return Receive metadata.
   /// \note The data buffers must the same number of channels than the stream.
-  /// \note The application terminates if the stream identifier is invalid.
   virtual metadata receive(baseband_gateway_buffer& data) = 0;
 };
 

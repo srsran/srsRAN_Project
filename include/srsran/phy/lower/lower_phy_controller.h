@@ -21,17 +21,11 @@ public:
   /// Default destructor.
   virtual ~lower_phy_controller() = default;
 
-  /// \brief Starts the lower physical layer operation.
-  ///
-  /// \param[in] realtime_task_executor Task executor for real time operation.
-  /// \note The real time task executor is exclusively dedicated to the lower physical layer operation.
+  /// Starts the lower physical layer operation.
   virtual void start() = 0;
 
   /// Requests to lower physical layer to stop the operation.
-  virtual void request_stop() = 0;
-
-  /// Waits for the lower physical layer to stop the operation.
-  virtual void wait_stop() = 0;
+  virtual void stop() = 0;
 };
 
 } // namespace srsran

@@ -170,7 +170,10 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   stream_args.args     = description.args;
   stream_args.channels = description.ports;
 
-  if (!safe_execution([this, usrp, &stream_args]() { stream = usrp->get_tx_stream(stream_args); })) {
+  if (!safe_execution([this, usrp, &stream_args]() {
+        stream          = usrp->get_tx_stream(stream_args);
+        max_packet_size = stream->get_max_num_samps();
+      })) {
     printf("Error:  failed to create transmit stream %d. %s.\n", stream_id, get_error_message().c_str());
     return;
   }
@@ -248,7 +251,7 @@ void radio_uhd_tx_stream::wait_stop()
   state_fsm.wait_stop();
 }
 
-unsigned radio_uhd_tx_stream::get_buffer_size()
+unsigned radio_uhd_tx_stream::get_buffer_size() const
 {
-  return stream->get_max_num_samps();
+  return max_packet_size;
 }

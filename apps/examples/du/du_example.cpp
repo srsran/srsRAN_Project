@@ -747,8 +747,7 @@ int main(int argc, char** argv)
   }
 
   du_logger.info("Stopping lower PHY...");
-  lower->get_controller().request_stop();
-  lower->get_controller().wait_stop();
+  lower->get_controller().stop();
   du_logger.info("Lower PHY stopped successfully");
 
   du_logger.info("Stopping executors...");

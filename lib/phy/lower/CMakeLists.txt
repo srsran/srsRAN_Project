@@ -11,6 +11,7 @@ add_subdirectory(processors)
 add_subdirectory(amplitude_controller)
 
 add_library(srsran_lower_phy STATIC
+        lower_phy_baseband_processor.cpp
         lower_phy_factory.cpp
         lower_phy_impl.cpp)
 target_link_libraries(srsran_lower_phy

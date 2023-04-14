@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #include "processor_handler_adaptor.h"
 
 using namespace srsran;

@@ -36,7 +36,7 @@ struct downlink_processor_configuration {
   unsigned nof_tx_ports;
   /// Initial slot index within the radio frame.
   unsigned initial_slot_index;
-  /// Number of slots notified in advanced in the TTI boundary event.
+  /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
 };
 

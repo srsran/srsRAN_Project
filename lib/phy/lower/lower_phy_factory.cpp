@@ -129,7 +129,7 @@ public:
     srsran_assert(dl_proc, "Failed to create UL processor.");
 
     // Prepare processor baseband adaptor configuration.
-    processor_baseband_adaptor::configuration proc_bb_adaptor_config;
+    lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
     proc_bb_adaptor_config.rx_task_executor = config.rx_task_executor;
     proc_bb_adaptor_config.tx_task_executor = config.tx_task_executor;
     proc_bb_adaptor_config.ul_task_executor = config.ul_task_executor;
@@ -145,7 +145,7 @@ public:
 
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =
-        std::make_unique<processor_baseband_adaptor>(proc_bb_adaptor_config);
+        std::make_unique<lower_phy_baseband_processor>(proc_bb_adaptor_config);
     srsran_assert(controller, "Failed to create controller.");
 
     // Prepare lower PHY configuration.

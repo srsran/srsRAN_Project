@@ -37,6 +37,8 @@ private:
   radio_notification_handler& notifier;
   /// Owns the UHD Tx stream.
   uhd::tx_streamer::sptr stream;
+  /// Maximum number of samples in a single packet.
+  unsigned max_packet_size;
   /// Protects concurrent stream transmit.
   std::mutex stream_transmit_mutex;
   /// Sampling rate in Hz.
@@ -54,9 +56,9 @@ private:
 
   /// \brief Transmits a single baseband block.
   /// \param[out] nof_txd_samples Number of transmitted samples.
-  /// \param[in] data Provides the buffers tpo transmit.
-  /// \param[in] offset Indicates the sample offset in the transmit buffers.
-  /// \param[in] time_spec Indicates the transmission timestamp.
+  /// \param[in] data             Buffer tpo transmit.
+  /// \param[in] offset           Sample offset in the transmit buffers.
+  /// \param[in] time_spec        Transmission timestamp.
   /// \return True if no exception is caught in the transmission process. Otherwise, false.
   bool transmit_block(unsigned&                nof_txd_samples,
                       baseband_gateway_buffer& data,
@@ -88,7 +90,7 @@ public:
                       task_executor&               async_executor_,
                       radio_notification_handler&  notifier_);
 
-  unsigned get_buffer_size() override;
+  unsigned get_buffer_size() const override;
 
   // See interface for documentation.
   void transmit(baseband_gateway_buffer& data, const metadata& metadata) override;

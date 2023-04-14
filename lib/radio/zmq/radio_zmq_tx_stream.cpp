@@ -94,7 +94,7 @@ void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data, const metadata
     channels[channel_id]->transmit(data.get_channel_buffer(channel_id));
   }
 }
-unsigned radio_zmq_tx_stream::get_buffer_size()
+unsigned radio_zmq_tx_stream::get_buffer_size() const
 {
   return TRANSMIT_BUFFER_SIZE;
 }

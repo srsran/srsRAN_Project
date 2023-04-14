@@ -69,7 +69,7 @@ private:
   class downlink_adaptor : public downlink_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer reception notifier.
+    /// Connects the adaptor with a lower physical layer timing notifier.
     void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
 
     // See interface for documentation.
@@ -84,7 +84,7 @@ private:
   class uplink_adaptor : public uplink_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer reception notifier.
+    /// Connects the adaptor with a lower physical layer timing notifier.
     void connect_timing_notifier(lower_phy_timing_notifier& notifier) { timing_notifier = &notifier; }
 
     // See interface for documentation.
@@ -102,7 +102,7 @@ private:
   class pdxch_adaptor : public pdxch_processor_notifier
   {
   public:
-    /// Connects the adaptor with a lower physical layer reception notifier.
+    /// Connects the adaptor with a lower physical layer error notifier.
     void connect_error_notifier(lower_phy_error_notifier& notifier) { error_notifier = &notifier; }
 
     // See interface for documentation.
@@ -112,7 +112,7 @@ private:
     void on_overflow_resource_grid(const resource_grid_context& context) override;
 
   private:
-    /// Timing notifier.
+    /// Error notifier.
     lower_phy_error_notifier* error_notifier = nullptr;
   };
 
