@@ -30,8 +30,6 @@ private:
   du_ue_manager& ue_mng;
 
   du_procedure_logger proc_logger;
-
-  du_ue* ue = nullptr;
 };
 
 } // namespace srs_du
