@@ -11,25 +11,27 @@
 #pragma once
 
 #include "../du_ue/du_ue_manager.h"
+#include "procedure_logger.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {
 
-class du_disconnect_procedure
+/// \brief Procedure used to interrupt all the DU activity.
+class du_stop_procedure
 {
 public:
-  du_disconnect_procedure(du_manager_params& params, du_ue_manager& ue_mng);
+  explicit du_stop_procedure(du_ue_manager& ue_mng);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  du_manager_params& params;
-  du_ue_manager&     ue_mng;
+  du_ue_manager& ue_mng;
 
-  unique_timer              disconnect_timer;
-  std::chrono::milliseconds wait_time = std::chrono::milliseconds{5000};
+  du_procedure_logger proc_logger;
+
+  du_ue* ue = nullptr;
 };
 
 } // namespace srs_du

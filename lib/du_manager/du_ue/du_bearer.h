@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "../adapters/f1ap_adapters.h"
-#include "../adapters/mac_adapters.h"
-#include "../adapters/rlc_adapters.h"
+#include "du_ue_adapters.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/ran/lcid.h"
@@ -86,8 +84,8 @@ struct du_ue_drb {
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
 
-  /// \brief Disconnect DRB from F1-U interface.
-  void disconnect_f1u();
+  /// \brief Disconnect DRB.
+  void disconnect();
 };
 
 /// \brief Creates a DRB instance.

@@ -31,8 +31,12 @@ public:
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
   async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
-  const slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
+  /// \brief Force the interruption of all UE activity.
+  async_task<void> stop();
 
+  const slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES>& get_ues() const { return ue_db; }
+
+  /// \brief Schedule an asynchronous task to be executed in the UE control loop.
   void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task)
   {
     ue_ctrl_loop[ue_index].schedule(std::move(task));

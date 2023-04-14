@@ -8,7 +8,7 @@
 
 set(SOURCES
         initial_du_setup_procedure.cpp
-        du_disconnect_procedure.cpp
+        du_stop_procedure.cpp
         ue_creation_procedure.cpp
         ue_configuration_procedure.cpp
         ue_deletion_procedure.cpp)

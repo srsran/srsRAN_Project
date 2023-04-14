@@ -11,12 +11,63 @@
 #pragma once
 
 #include "srsran/f1ap/du/f1c_bearer.h"
+#include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/mac/mac_sdu_handler.h"
 #include "srsran/mac/mac_ue_control_information_handler.h"
-#include "srsran/rlc/rlc_entity.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
 namespace srs_du {
+
+// F1AP
+
+/// \brief Adapter to connect F1AP Rx SDU notifier to RLC Tx SDU handler.
+class f1c_rx_sdu_rlc_adapter final : public f1c_rx_sdu_notifier
+{
+public:
+  void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
+
+  void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) override
+  {
+    srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
+
+    rlc_tx->handle_sdu(rlc_sdu{std::move(pdu), pdcp_sn});
+  }
+
+private:
+  rlc_tx_upper_layer_data_interface* rlc_tx = nullptr;
+};
+
+// F1-U
+
+/// \brief Adapter to connect F1-U Rx SDU notifier to RLC Tx SDU handler.
+class f1u_rx_rlc_sdu_adapter final : public f1u_rx_sdu_notifier
+{
+public:
+  void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
+
+  /// \brief Stop forwarding SDUs to the RLC layer.
+  void disconnect();
+
+  void on_new_sdu(pdcp_tx_pdu sdu) override
+  {
+    srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
+    rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_sn});
+  }
+
+  void on_discard_sdu(uint32_t pdcp_sn) override
+  {
+    // TODO.
+  }
+
+private:
+  rlc_tx_upper_layer_data_interface* rlc_tx = nullptr;
+};
+
+// RLC
 
 class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
@@ -37,6 +88,8 @@ class rlc_f1u_tx_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
 public:
   void connect(f1u_tx_sdu_handler& bearer_) { f1bearer = &bearer_; }
+
+  void disconnect();
 
   void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
@@ -74,6 +127,8 @@ class rlc_f1u_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
 public:
   void connect(f1u_tx_delivery_handler& handler_) { handler = &handler_; }
 
+  void disconnect();
+
   void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn) override
   {
     srsran_assert(handler != nullptr, "RLC to F1-U TX data notifier is disconnected");
@@ -109,25 +164,73 @@ class rlc_tx_mac_buffer_state_updater : public rlc_tx_lower_layer_notifier
 public:
   void connect(du_ue_index_t ue_index_, lcid_t lcid_, mac_ue_control_information_handler& mac_)
   {
+    srsran_assert(ue_index_ != INVALID_DU_UE_INDEX, "Invalid UE index");
+    srsran_assert(lcid_ != INVALID_LCID, "Invalid UE index");
     ue_index = ue_index_;
     lcid     = lcid_;
     mac      = &mac_;
   }
+
+  void disconnect() { lcid = INVALID_LCID; }
 
   void on_buffer_state_update(unsigned bsr) override
   {
     srsran_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_buffer_state_indication_message bs{};
     bs.ue_index = ue_index;
-    bs.lcid     = lcid;
+    bs.lcid     = lcid.load(std::memory_order_relaxed);
     bs.bs       = bsr;
+    if (SRSRAN_UNLIKELY(bs.lcid == INVALID_LCID)) {
+      // Discard.
+      return;
+    }
     mac->handle_dl_buffer_state_update_required(bs);
   }
 
 private:
   du_ue_index_t                       ue_index = INVALID_DU_UE_INDEX;
-  lcid_t                              lcid     = INVALID_LCID;
-  mac_ue_control_information_handler* mac      = nullptr;
+  std::atomic<lcid_t>                 lcid{INVALID_LCID};
+  mac_ue_control_information_handler* mac = nullptr;
+};
+
+// MAC
+
+class mac_sdu_rx_adapter : public mac_sdu_rx_notifier
+{
+public:
+  void connect(rlc_rx_lower_layer_interface& rlc_rx_) { rlc_handler = &rlc_rx_; }
+
+  void disconnect();
+
+  void on_new_sdu(byte_buffer_slice sdu) override
+  {
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    rlc_handler->handle_pdu(std::move(sdu));
+  }
+
+private:
+  rlc_rx_lower_layer_interface* rlc_handler = nullptr;
+};
+
+class mac_sdu_tx_adapter : public mac_sdu_tx_builder
+{
+public:
+  void connect(rlc_tx_lower_layer_interface& rlc_tx) { rlc_handler = &rlc_tx; }
+
+  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  {
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    return rlc_handler->pull_pdu(nof_bytes);
+  }
+
+  unsigned on_buffer_state_update() override
+  {
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    return rlc_handler->get_buffer_state();
+  }
+
+private:
+  rlc_tx_lower_layer_interface* rlc_handler = nullptr;
 };
 
 } // namespace srs_du

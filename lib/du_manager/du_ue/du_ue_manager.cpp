@@ -9,9 +9,11 @@
  */
 
 #include "du_ue_manager.h"
+#include "../procedures/procedure_logger.h"
 #include "../procedures/ue_configuration_procedure.h"
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -52,6 +54,65 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
 {
   // Enqueue UE deletion procedure
   return launch_async<ue_deletion_procedure>(msg, *this, cfg);
+}
+
+async_task<void> du_ue_manager::stop()
+{
+  auto ue_it = ue_db.begin();
+  return launch_async([this, ue_it, proc_logger = du_procedure_logger{logger, "DU UE Manager stop"}](
+                          coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    proc_logger.log_proc_started();
+
+    // Disconnect all UEs RLC->MAC buffer state adapters.
+    for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
+      for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
+        du_ue_drb& drb = *drb_pair.second;
+
+        // Disconnect notifiers used in the cell_executor context.
+        drb.connector.rlc_tx_buffer_state_notif.disconnect();
+      }
+    }
+
+    // Disconnect all UEs bearers.
+    for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
+      CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.ue_execs.executor((*ue_it)->ue_index)));
+      if (not res) {
+        CORO_EARLY_RETURN();
+      }
+
+      for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
+        du_ue_drb& drb = *drb_pair.second;
+
+        // Disconnect notifiers used in the ue_executor context.
+        drb.connector.mac_rx_sdu_notifier.disconnect();
+        drb.connector.rlc_tx_data_notif.disconnect();
+        drb.connector.rlc_rx_sdu_notif.disconnect();
+        drb.connector.f1u_rx_sdu_notif.disconnect();
+      }
+    }
+
+    proc_logger.log_progress("All UEs are disconnected");
+
+    CORO_AWAIT_VALUE(bool res, execute_on(cfg.services.du_mng_exec));
+    if (not res) {
+      CORO_EARLY_RETURN();
+    }
+
+    // Cancel all pending procedures.
+    for (ue_it = ue_db.begin(); ue_it != ue_db.end(); ++ue_it) {
+      eager_async_task<void> ctrl_loop = ue_ctrl_loop[(*ue_it)->ue_index].request_stop();
+
+      // destroy ctrl_loop by letting it go out of scope.
+    }
+
+    proc_logger.log_progress("All UE procedures are interrupted");
+
+    proc_logger.log_proc_completed();
+
+    CORO_RETURN();
+  });
 }
 
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)

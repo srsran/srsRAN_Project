@@ -9,7 +9,7 @@
  */
 
 #include "du_manager_impl.h"
-#include "procedures/du_disconnect_procedure.h"
+#include "procedures/du_stop_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
 #include <condition_variable>
 #include <future>
@@ -77,7 +77,7 @@ void du_manager_impl::stop()
       // First call. Initiate shutdown operations.
 
       // Start DU disconnect procedure.
-      schedule_async_task(launch_async<du_disconnect_procedure>(params, ue_mng));
+      schedule_async_task(launch_async<du_stop_procedure>(ue_mng));
 
       // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
       // thread.
