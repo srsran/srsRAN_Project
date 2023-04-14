@@ -304,11 +304,11 @@ TEST_F(DciRarPackingFixture, DciRarPacking)
     expected.push_back((config.csi_request >> 0U) & 1U);
 
     // Assert expected payload.
-    TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+    TESTASSERT_EQ(dci_payload(expected.begin(), expected.end()), payload);
   }
 }
 
-static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_0_0_tc_rnti_expected(const dci_0_0_tc_rnti_configuration& config)
 {
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -386,11 +386,10 @@ static void test_dci_0_0_tc_rnti_packing(const dci_0_0_tc_rnti_configuration& co
     std::fill_n(std::back_inserter(expected), padd_trunc_incl_ul_sul, 0);
   }
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_0_0_c_rnti_expected(const dci_0_0_c_rnti_configuration& config)
 {
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -478,11 +477,10 @@ static void test_dci_0_0_c_rnti_packing(const dci_0_0_c_rnti_configuration& conf
     }
   }
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_1_0_c_rnti_expected(const dci_1_0_c_rnti_configuration& config)
 {
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -551,11 +549,10 @@ static void test_dci_1_0_c_rnti_packing(const dci_1_0_c_rnti_configuration& conf
   // Padding bits.
   std::fill_n(std::back_inserter(expected), nof_padding_bits, 0);
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_1_0_p_rnti_packing(const dci_1_0_p_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_1_0_p_rnti_expected(const dci_1_0_p_rnti_configuration& config)
 {
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -628,11 +625,10 @@ static void test_dci_1_0_p_rnti_packing(const dci_1_0_p_rnti_configuration& conf
 
   // No padding, since DCI format 1_0 scrambled by P-RNTI is used in common search space.
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_1_0_si_rnti_packing(const dci_1_0_si_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_1_0_si_rnti_expected(const dci_1_0_si_rnti_configuration& config)
 {
   // Generate expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -671,11 +667,10 @@ static void test_dci_1_0_si_rnti_packing(const dci_1_0_si_rnti_configuration& co
 
   // No padding, since DCI format 1_0 scrambled by SI-RNTI is used in common search space.
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_1_0_ra_rnti_packing(const dci_1_0_ra_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_1_0_ra_rnti_expected(const dci_1_0_ra_rnti_configuration& config)
 {
   // Generate expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -711,11 +706,10 @@ static void test_dci_1_0_ra_rnti_packing(const dci_1_0_ra_rnti_configuration& co
 
   // No padding, since DCI format 1_0 scrambled by RA-RNTI is used in common search space.
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
-static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& config, const dci_payload& payload)
+static dci_payload build_dci_1_0_tc_rnti_expected(const dci_1_0_tc_rnti_configuration& config)
 {
   // Generate the expected payload.
   static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> expected;
@@ -777,8 +771,7 @@ static void test_dci_1_0_tc_rnti_packing(const dci_1_0_tc_rnti_configuration& co
 
   // No padding, since DCI format 1_0 scrambled by TC-RNTI is used in common search space.
 
-  // Assert expected payload.
-  TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);
+  return dci_payload(expected.begin(), expected.end());
 }
 
 TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
@@ -791,11 +784,13 @@ TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
     // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci0_0_tc_rnti_payload = dci_0_0_tc_rnti_pack(dci0_0_tc_rnti_cfg);
 
-    // Test DCI format 0_0 scrambled by TC-RNTI packing.
-    test_dci_0_0_tc_rnti_packing(dci0_0_tc_rnti_cfg, dci0_0_tc_rnti_payload);
+    // Generate expected DCI format 0_0 scrambled by TC-RNTI payload.
+    dci_payload dci0_0_tc_rnti_expected = build_dci_0_0_tc_rnti_expected(dci0_0_tc_rnti_cfg);
 
     // Check DCI payload size.
     TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_tc_rnti_payload.size());
+    // Assert payload.
+    TESTASSERT_EQ(dci0_0_tc_rnti_expected, dci0_0_tc_rnti_payload);
 
     // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
     // search space.
@@ -812,93 +807,123 @@ TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
     dci_payload dci0_0_c_rnti_payload_ue     = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_ue);
 
     // Test DCI format 0_0 scrambled by C-RNTI packing.
-    test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_common, dci0_0_c_rnti_payload_common);
-    test_dci_0_0_c_rnti_packing(dci0_0_c_rnti_cfg_ue, dci0_0_c_rnti_payload_ue);
+    dci_payload dci0_0_c_rnti_expected_common = build_dci_0_0_c_rnti_expected(dci0_0_c_rnti_cfg_common);
+    dci_payload dci0_0_c_rnti_expected_ue     = build_dci_0_0_c_rnti_expected(dci0_0_c_rnti_cfg_ue);
 
     // Check DCI payload sizes.
     TESTASSERT_EQ(aligned_sizes.format0_0_common_size.total.value(), dci0_0_c_rnti_payload_common.size());
     TESTASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total.value(), dci0_0_c_rnti_payload_ue.size());
+
+    // Assert payloads.
+    TESTASSERT_EQ(dci0_0_c_rnti_expected_common, dci0_0_c_rnti_payload_common);
+    TESTASSERT_EQ(dci0_0_c_rnti_expected_ue, dci0_0_c_rnti_payload_ue);
   }
 }
 
 TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
 {
   for (unsigned i = 0; i != nof_repetitions; ++i) {
-    // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
-    dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(dci_config.dl_bwp_initial_bw);
+    {
+      // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
+      dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(dci_config.dl_bwp_initial_bw);
 
-    // Generate the DCI format 1_0 scrambled by TC-RNTI payload.
-    dci_payload dci1_0_tc_rnti_payload = dci_1_0_tc_rnti_pack(dci1_0_tc_rnti_cfg);
+      // Generate the DCI format 1_0 scrambled by TC-RNTI payload.
+      dci_payload dci1_0_tc_rnti_payload = dci_1_0_tc_rnti_pack(dci1_0_tc_rnti_cfg);
 
-    // Test DCI format 1_0 scrambled by TC-RNTI packing.
-    test_dci_1_0_tc_rnti_packing(dci1_0_tc_rnti_cfg, dci1_0_tc_rnti_payload);
-
-    // Check DCI payload size.
-    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_tc_rnti_payload.size());
-
-    // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
-    // UE-specific search space.
-    dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
-        build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_ue_size.value());
-
-    // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
-    // common search space.
-    dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
-        build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_common_size);
-
-    // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
-    dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
-    dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
-
-    // Test DCI format 1_0 scrambled by C-RNTI packing.
-    test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_common, dci1_0_c_rnti_payload_common);
-    test_dci_1_0_c_rnti_packing(dci1_0_c_rnti_cfg_ue, dci1_0_c_rnti_payload_ue);
-
-    // Check DCI payload sizes.
-    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_c_rnti_payload_common.size());
-    TESTASSERT_EQ(aligned_sizes.format1_0_ue_size.value().total.value(), dci1_0_c_rnti_payload_ue.size());
-
-    for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
-         {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
-          dci_1_0_p_rnti_configuration::payload_info::short_messages,
-          dci_1_0_p_rnti_configuration::payload_info::both}) {
-      // Generate the DCI format 1_0 scrambled by P-RNTI configuration.
-      dci_1_0_p_rnti_configuration dci1_0_p_rnti_cfg =
-          build_dci_1_0_p_rnti_config(dci_config.dl_bwp_initial_bw, short_messages_indicator);
-
-      // Generate the DCI format 1_0 scrambled by P-RNTI payload.
-      dci_payload dci1_0_p_rnti_payload = dci_1_0_p_rnti_pack(dci1_0_p_rnti_cfg);
-
-      // Test DCI format 1_0 scrambled by P-RNTI packing.
-      test_dci_1_0_p_rnti_packing(dci1_0_p_rnti_cfg, dci1_0_p_rnti_payload);
+      // Test DCI format 1_0 scrambled by TC-RNTI packing.
+      dci_payload dci1_0_tc_rnti_expected = build_dci_1_0_tc_rnti_expected(dci1_0_tc_rnti_cfg);
 
       // Check DCI payload size.
-      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_p_rnti_payload.size());
+      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_tc_rnti_payload.size());
+
+      // Assert payload.
+      TESTASSERT_EQ(dci1_0_tc_rnti_expected, dci1_0_tc_rnti_payload);
     }
 
-    // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
-    dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(dci_config.dl_bwp_initial_bw);
+    {
+      // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+      // UE-specific search space.
+      dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
+          build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_ue_size.value());
 
-    // Generate the DCI format 1_0 scrambled by SI-RNTI payload.
-    dci_payload dci1_0_si_rnti_payload = dci_1_0_si_rnti_pack(dci1_0_si_rnti_cfg);
+      // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+      // common search space.
+      dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
+          build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_common_size);
 
-    // Test DCI format 1_0 scrambled by SI-RNTI packing.
-    test_dci_1_0_si_rnti_packing(dci1_0_si_rnti_cfg, dci1_0_si_rnti_payload);
+      // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+      dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
+      dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
 
-    // Check DCI payload size.
-    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_si_rnti_payload.size());
+      // Test DCI format 1_0 scrambled by C-RNTI packing.
+      dci_payload dci1_0_c_rnti_expected_common = build_dci_1_0_c_rnti_expected(dci1_0_c_rnti_cfg_common);
+      dci_payload dci1_0_c_rnti_expected_ue     = build_dci_1_0_c_rnti_expected(dci1_0_c_rnti_cfg_ue);
 
-    // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
-    dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(dci_config.dl_bwp_initial_bw);
+      // Check DCI payload sizes.
+      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_c_rnti_payload_common.size());
+      TESTASSERT_EQ(aligned_sizes.format1_0_ue_size.value().total.value(), dci1_0_c_rnti_payload_ue.size());
 
-    // Generate the DCI format 1_0 scrambled by RA-RNTI payload.
-    dci_payload dci1_0_ra_rnti_payload = dci_1_0_ra_rnti_pack(dci1_0_ra_rnti_cfg);
+      // Assert payloads.
+      TESTASSERT_EQ(dci1_0_c_rnti_expected_common, dci1_0_c_rnti_payload_common);
+      TESTASSERT_EQ(dci1_0_c_rnti_expected_ue, dci1_0_c_rnti_payload_ue);
+    }
 
-    // Test DCI format 1_0 scrambled by RA-RNTI packing.
-    test_dci_1_0_ra_rnti_packing(dci1_0_ra_rnti_cfg, dci1_0_ra_rnti_payload);
+    {
+      for (dci_1_0_p_rnti_configuration::payload_info short_messages_indicator :
+           {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
+            dci_1_0_p_rnti_configuration::payload_info::short_messages,
+            dci_1_0_p_rnti_configuration::payload_info::both}) {
+        // Generate the DCI format 1_0 scrambled by P-RNTI configuration.
+        dci_1_0_p_rnti_configuration dci1_0_p_rnti_cfg =
+            build_dci_1_0_p_rnti_config(dci_config.dl_bwp_initial_bw, short_messages_indicator);
 
-    // Check DCI payload size.
-    TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_ra_rnti_payload.size());
+        // Generate the DCI format 1_0 scrambled by P-RNTI payload.
+        dci_payload dci1_0_p_rnti_payload = dci_1_0_p_rnti_pack(dci1_0_p_rnti_cfg);
+
+        // Test DCI format 1_0 scrambled by P-RNTI packing.
+        dci_payload dci1_0_p_rnti_expected = build_dci_1_0_p_rnti_expected(dci1_0_p_rnti_cfg);
+
+        // Check DCI payload size.
+        TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_p_rnti_payload.size());
+
+        // Assert payload.
+        TESTASSERT_EQ(dci1_0_p_rnti_expected, dci1_0_p_rnti_payload);
+      }
+    }
+
+    {
+      // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
+      dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(dci_config.dl_bwp_initial_bw);
+
+      // Generate the DCI format 1_0 scrambled by SI-RNTI payload.
+      dci_payload dci1_0_si_rnti_payload = dci_1_0_si_rnti_pack(dci1_0_si_rnti_cfg);
+
+      // Test DCI format 1_0 scrambled by SI-RNTI packing.
+      dci_payload dci1_0_si_rnti_expected = build_dci_1_0_si_rnti_expected(dci1_0_si_rnti_cfg);
+
+      // Check DCI payload size.
+      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_si_rnti_payload.size());
+
+      // Assert payload.
+      TESTASSERT_EQ(dci1_0_si_rnti_expected, dci1_0_si_rnti_payload);
+    }
+
+    {
+      // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
+      dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(dci_config.dl_bwp_initial_bw);
+
+      // Generate the DCI format 1_0 scrambled by RA-RNTI payload.
+      dci_payload dci1_0_ra_rnti_payload = dci_1_0_ra_rnti_pack(dci1_0_ra_rnti_cfg);
+
+      // Test DCI format 1_0 scrambled by RA-RNTI packing.
+      dci_payload dci1_0_ra_rnti_expected = build_dci_1_0_ra_rnti_expected(dci1_0_ra_rnti_cfg);
+
+      // Check DCI payload size.
+      TESTASSERT_EQ(aligned_sizes.format1_0_common_size.total.value(), dci1_0_ra_rnti_payload.size());
+
+      // Assert payload.
+      TESTASSERT_EQ(dci1_0_ra_rnti_expected, dci1_0_ra_rnti_payload);
+    }
   }
 }
 
