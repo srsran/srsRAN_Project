@@ -352,7 +352,7 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   TESTASSERT(short_block_det_factory);
 
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_fast();
   if (!dft_factory) {
     dft_factory = create_dft_processor_factory_generic();
   }

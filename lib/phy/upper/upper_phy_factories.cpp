@@ -416,7 +416,7 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
 
 static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
 {
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_fast();
   if (!dft_factory) {
     dft_factory = create_dft_processor_factory_generic();
     report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
