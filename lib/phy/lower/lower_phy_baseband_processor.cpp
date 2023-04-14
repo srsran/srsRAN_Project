@@ -26,6 +26,7 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   rx_to_tx_delay(config.rx_to_tx_delay)
 {
   srsran_assert(config.rx_task_executor, "Invalid receive task executor.");
+  srsran_assert(config.tx_task_executor, "Invalid transmit task executor.");
   srsran_assert(config.ul_task_executor, "Invalid uplink task executor.");
   srsran_assert(config.dl_task_executor, "Invalid downlink task executor.");
   srsran_assert(config.receiver, "Invalid baseband receiver.");
@@ -59,8 +60,7 @@ void lower_phy_baseband_processor::start()
 
 void lower_phy_baseband_processor::stop()
 {
-  state.request_stop();
-  state.wait_stop();
+  state.stop_and_wait();
 }
 
 void lower_phy_baseband_processor::process()

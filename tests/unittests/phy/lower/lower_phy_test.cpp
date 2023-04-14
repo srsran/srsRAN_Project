@@ -773,7 +773,6 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
     uplink_proc_spy->clear();
 
     // A task should be pending in Rx task and no baseband transaction should have occcurred.
-    ASSERT_TRUE(rx_task_executor.has_pending_tasks());
     ASSERT_FALSE(tx_task_executor.has_pending_tasks());
     ASSERT_FALSE(ul_task_executor.has_pending_tasks());
     ASSERT_FALSE(dl_task_executor.has_pending_tasks());
@@ -781,7 +780,7 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
     ASSERT_TRUE(bb_gateway_spy.get_receive_entries().empty());
 
     // Execute Rx Task.
-    rx_task_executor.run_next_blocking();
+    ASSERT_TRUE(rx_task_executor.try_run_next());
 
     // Baseband receiver should have been called.
     auto& receive_entries = bb_gateway_spy.get_receive_entries();
@@ -794,10 +793,7 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
     // Run and assert downlink block.
     {
       // The DL task shall be pending.
-      ASSERT_TRUE(dl_task_executor.has_pending_tasks());
-
-      // Run DL task.
-      dl_task_executor.run_next_blocking();
+      ASSERT_TRUE(dl_task_executor.try_run_next());
 
       // Extract and assert DL processor output.
       const downlink_processor_baseband_spy& baseband_spy  = downlink_proc_spy->get_downlink_proc_baseband_spy();
@@ -806,11 +802,8 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
       auto& dl_bb_entry = dl_bb_entries.back();
 
       // The transmitter executor shall have the transmit task.
-      ASSERT_TRUE(tx_task_executor.has_pending_tasks());
       ASSERT_TRUE(bb_gateway_spy.get_transmit_entries().empty());
-
-      // Run transmit task.
-      tx_task_executor.run_pending_tasks();
+      ASSERT_TRUE(tx_task_executor.try_run_next());
 
       // Extract and assert baseband transmission.
       auto& transmit_entries = bb_gateway_spy.get_transmit_entries();
@@ -828,10 +821,7 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
     // Run and assert uplink block.
     {
       // The UL task shall be pending.
-      ASSERT_TRUE(ul_task_executor.has_pending_tasks());
-
-      // Run DL task.
-      ul_task_executor.run_next_blocking();
+      ASSERT_TRUE(ul_task_executor.try_run_next());
 
       // Extract and assert DL processor output.
       const uplink_processor_baseband_spy& baseband_spy  = uplink_proc_spy->get_uplink_proc_baseband_spy();
@@ -843,21 +833,24 @@ TEST_P(LowerPhyFixture, BasebandNormalFlow)
       ASSERT_EQ(ul_bb_entry, receive_entry.data);
     }
 
-    // No task should be pending in DL and UL.
+    // No task should be pending in DL, UL nor Tx.
     ASSERT_FALSE(dl_task_executor.has_pending_tasks());
     ASSERT_FALSE(ul_task_executor.has_pending_tasks());
+    ASSERT_FALSE(tx_task_executor.has_pending_tasks());
+    ASSERT_TRUE(rx_task_executor.has_pending_tasks());
   }
 
-  // Request stop streaming.
+  // Request stop streaming asynchronously. As executors run in the main thread, it avoids deadlock.
   std::thread stop_thread([&lphy_controller]() { lphy_controller.stop(); });
 
-  // Run remaining tasks.
-  rx_task_executor.run_pending_tasks();
-  tx_task_executor.run_pending_tasks();
-  ul_task_executor.run_pending_tasks();
-  dl_task_executor.run_pending_tasks();
+  // Flush pending tasks until no task is left.
+  while (rx_task_executor.try_run_next()) {
+    dl_task_executor.run_pending_tasks();
+    tx_task_executor.run_pending_tasks();
+    ul_task_executor.run_pending_tasks();
+  }
 
-  // Join thread.
+  // Join asynchronous thread.
   stop_thread.join();
 
   // No task should be pending.

@@ -91,7 +91,7 @@ private:
     }
 
     /// Requests all asynchronous processing to stop.
-    void request_stop()
+    void stop_and_wait()
     {
       std::unique_lock<std::mutex> lock(state_mutex);
 
@@ -102,16 +102,8 @@ private:
 
       state = states::wait_stop;
       state_cvar.notify_all();
-    }
 
-    /// Waits until the asynchronous execution stops.
-    void wait_stop()
-    {
-      std::unique_lock<std::mutex> lock(state_mutex);
-      report_fatal_error_if_not(state != states::running, "Unexpected state.");
-
-      // Stop is successful if the state is idle or stopped.
-      while ((state != states::idle) && (state != states::stopped)) {
+      while (state == states::wait_stop) {
         state_cvar.wait(lock);
       }
     }
