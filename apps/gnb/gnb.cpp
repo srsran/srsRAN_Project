@@ -734,6 +734,10 @@ int main(int argc, char** argv)
   lower->get_controller().stop();
   gnb_logger.info("Lower PHY stopped successfully");
 
+  gnb_logger.info("Closing DU-high...");
+  du_obj.stop();
+  gnb_logger.info("DU-high closed successfully");
+
   gnb_logger.info("Closing network connections...");
   ngap_adapter->disconnect_gateway();
   gnb_logger.info("Network connections closed successfully");

@@ -23,6 +23,7 @@ class du_manager_impl final : public du_manager_interface
 {
 public:
   explicit du_manager_impl(const du_manager_params& params_);
+  ~du_manager_impl();
 
   // Controller interface.
   void start() override;
@@ -54,6 +55,9 @@ private:
   du_cell_manager              cell_mng;
   du_ran_resource_manager_impl cell_res_alloc;
   du_ue_manager                ue_mng;
+
+  std::mutex mutex;
+  bool       running{false};
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;

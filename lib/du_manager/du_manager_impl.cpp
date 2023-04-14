@@ -27,13 +27,22 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
 {
 }
 
+du_manager_impl::~du_manager_impl()
+{
+  stop();
+}
+
 void du_manager_impl::start()
 {
+  std::unique_lock<std::mutex> lock(mutex);
+  if (std::exchange(running, true)) {
+    return;
+  }
+
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
   if (not params.services.du_mng_exec.execute([this, &p]() {
-        // start F1 setup procedure.
         main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
           CORO_BEGIN(ctx);
 
@@ -55,22 +64,40 @@ void du_manager_impl::start()
 
 void du_manager_impl::stop()
 {
-  std::promise<void> p;
-  std::future<void>  fut = p.get_future();
-
-  if (not params.services.du_mng_exec.execute([this, &p]() mutable {
-        schedule_async_task(launch_async([this, &p](coro_context<async_task<void>>& ctx) {
-          CORO_BEGIN(ctx);
-          CORO_AWAIT(launch_async<du_disconnect_procedure>(params, ue_mng));
-          p.set_value();
-          CORO_RETURN();
-        }));
-      })) {
-    logger.error("Unable to stop DU Manager.");
+  std::unique_lock<std::mutex> lock(mutex);
+  if (not std::exchange(running, false)) {
     return;
   }
 
-  fut.wait_for(std::chrono::seconds(10));
+  eager_async_task<void> main_loop;
+  std::atomic<bool>      main_loop_stopped{false};
+
+  auto stop_du_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
+    if (main_loop.empty()) {
+      // First call. Initiate shutdown operations.
+
+      // Start DU disconnect procedure.
+      schedule_async_task(launch_async<du_disconnect_procedure>(params, ue_mng));
+
+      // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
+      // thread.
+      main_loop = main_ctrl_loop.request_stop();
+    }
+
+    if (main_loop.ready()) {
+      // if the main loop finished, return back to the caller.
+      main_loop_stopped = true;
+    }
+  };
+
+  // Wait until the all tasks of the main loop are completed and main loop has stopped.
+  while (not main_loop_stopped) {
+    if (not params.services.du_mng_exec.execute(stop_du_main_loop)) {
+      logger.error("Unable to stop DU Manager.");
+      return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
@@ -101,22 +128,11 @@ async_task<void> du_manager_impl::handle_ue_delete_request(const f1ap_ue_delete_
 size_t du_manager_impl::nof_ues()
 {
   // TODO: This is temporary code.
-  static std::mutex              mutex;
-  static std::condition_variable cvar;
-  size_t                         result = MAX_NOF_DU_UES;
-  if (not params.services.du_mng_exec.execute([this, &result]() {
-        std::unique_lock<std::mutex> lock(mutex);
-        result = ue_mng.get_ues().size();
-        cvar.notify_one();
-      })) {
+  std::promise<size_t> p;
+  std::future<size_t>  fut = p.get_future();
+  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.get_ues().size()); })) {
     logger.warning("Unable to compute the number of UEs active in the DU");
     return std::numeric_limits<size_t>::max();
   }
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    while (result == MAX_NOF_DU_UES) {
-      cvar.wait(lock);
-    }
-  }
-  return result;
+  return fut.get();
 }
