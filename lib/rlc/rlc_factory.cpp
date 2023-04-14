@@ -32,6 +32,7 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
                                              *msg.timers,
+                                             *msg.pcell_executor,
                                              *msg.ue_executor);
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.ue_index,
