@@ -9,75 +9,9 @@
  */
 
 #include "csi_rs_scheduler.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 
 using namespace srsran;
-
-/// CSI-RS locations within a slot. See TS 38.211 Table 7.4.1.5.3-1.
-struct csi_rs_resource_mapping_info {
-  uint8_t                  row;
-  uint8_t                  nof_ports;
-  csi_rs_freq_density_type density;
-  csi_rs_cdm_type          cdm_type;
-};
-static const uint32_t nof_csi_rs_resource_mappings = 38;
-static constexpr std::array<csi_rs_resource_mapping_info, nof_csi_rs_resource_mappings>
-    csi_rs_resource_mapping_within_slot = {{
-        // clang-format off
-    {1,  1, csi_rs_freq_density_type::three, csi_rs_cdm_type::no_CDM},
-    {2,  1, csi_rs_freq_density_type::one, csi_rs_cdm_type::no_CDM},
-    {2,  1, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::no_CDM},
-    {2,  1, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::no_CDM},
-    {3,  2, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {3,  2, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::fd_CDM2},
-    {3,  2, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::fd_CDM2},
-    {4,  4, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {5,  4, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {6,  8, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {7,  8, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {8,  8, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {9,  12, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {10,  12, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {11,  16, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {11,  16, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::fd_CDM2},
-    {11,  16, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::fd_CDM2},
-    {12,  16, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {12,  16, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {12,  16, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {13,  24, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {13,  24, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::fd_CDM2},
-    {13,  24, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::fd_CDM2},
-    {14,  24, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {14,  24, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {14,  24, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {15,  24, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm8_FD2_TD4},
-    {15,  24, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::cdm8_FD2_TD4},
-    {15,  24, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::cdm8_FD2_TD4},
-    {16,  32, csi_rs_freq_density_type::one, csi_rs_cdm_type::fd_CDM2},
-    {16,  32, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::fd_CDM2},
-    {16,  32, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::fd_CDM2},
-    {17,  32, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {17,  32, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {17,  32, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::cdm4_FD2_TD2},
-    {18,  32, csi_rs_freq_density_type::one, csi_rs_cdm_type::cdm8_FD2_TD4},
-    {18,  32, csi_rs_freq_density_type::dot5_even_RB, csi_rs_cdm_type::cdm8_FD2_TD4},
-    {18,  32, csi_rs_freq_density_type::dot5_odd_RB, csi_rs_cdm_type::cdm8_FD2_TD4}
-        // clang-format on
-    }};
-
-static uint8_t
-get_csi_rs_resource_mapping_row_number(uint8_t nof_ports, csi_rs_freq_density_type density, csi_rs_cdm_type cdm_type)
-{
-  for (const csi_rs_resource_mapping_info& info : csi_rs_resource_mapping_within_slot) {
-    if (info.nof_ports == nof_ports and info.cdm_type == cdm_type and info.density == density) {
-      return info.row;
-    }
-  }
-
-  report_fatal_error("No CSI-RS resource mapping found for frequency density={}, CDM-type={}, nof. ports={}",
-                     density,
-                     cdm_type,
-                     nof_ports);
-}
 
 static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp_csi_rs_resource& nzp_csi_rs_res)
 {
@@ -89,8 +23,12 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.type    = srsran::csi_rs_type::CSI_RS_NZP;
 
   csi_rs.freq_domain = nzp_csi_rs_res.res_mapping.fd_alloc;
-  csi_rs.row         = get_csi_rs_resource_mapping_row_number(
-      nzp_csi_rs_res.res_mapping.nof_ports, nzp_csi_rs_res.res_mapping.freq_density, nzp_csi_rs_res.res_mapping.cdm);
+  csi_rs.row         = csi_rs::get_csi_rs_resource_mapping_row_number(nzp_csi_rs_res.res_mapping.nof_ports,
+                                                              nzp_csi_rs_res.res_mapping.freq_density,
+                                                              nzp_csi_rs_res.res_mapping.cdm,
+                                                              nzp_csi_rs_res.res_mapping.fd_alloc);
+  srsran_assert(csi_rs.row > 0, "The CSI-RS configuration resulted in an invalid row of Table 7.4.1.5.3-1, TS 38.211");
+
   csi_rs.symbol0                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td;
   csi_rs.symbol1                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2.has_value()
                                             ? *nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2

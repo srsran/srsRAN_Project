@@ -15,6 +15,7 @@
 #include "csi_rs_id.h"
 #include "csi_rs_pattern.h"
 #include "csi_rs_types.h"
+#include "frequency_allocation_type.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/variant.h"
@@ -29,7 +30,7 @@ struct csi_rs_resource_mapping {
   /// \brief Frequency domain allocation within a physical resource block in accordance with TS 38.211,
   /// clause 7.4.1.5.3, and \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping in TS38.331. Possible sizes:
   /// {row1: 4, row2: 12, row4: 3, row_other: 6}
-  bounded_bitset<12, true> fd_alloc;
+  csi_rs::freq_allocation_mask_type fd_alloc;
   /// Number of ports. Values {1, 2, 4, 8, 12, 16, 24, 32}.
   unsigned nof_ports;
   /// The time domain location reference \f$l_0\f$ in TS 38.211, clause 7.4.1.5.3. Values {0,...,13}.

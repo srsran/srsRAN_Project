@@ -12,6 +12,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
+#include "srsran/ran/csi_rs/frequency_allocation_type.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/ldpc_base_graph.h"
 #include "srsran/ran/modulation_scheme.h"
@@ -305,20 +306,20 @@ struct dl_csi_rs_maintenance_v3 {
 
 /// Downlink CSI-RS PDU information.
 struct dl_csi_rs_pdu {
-  subcarrier_spacing       scs;
-  cyclic_prefix            cp;
-  uint16_t                 start_rb;
-  uint16_t                 num_rbs;
-  csi_rs_type              type;
-  uint8_t                  row;
-  bounded_bitset<12, true> freq_domain;
-  uint8_t                  symb_L0;
-  uint8_t                  symb_L1;
-  csi_rs_cdm_type          cdm_type;
-  csi_rs_freq_density_type freq_density;
-  uint16_t                 scramb_id;
-  uint8_t                  power_control_offset_profile_nr;
-  nzp_csi_rs_epre_to_ssb   power_control_offset_ss_profile_nr;
+  subcarrier_spacing                scs;
+  cyclic_prefix                     cp;
+  uint16_t                          start_rb;
+  uint16_t                          num_rbs;
+  csi_rs_type                       type;
+  uint8_t                           row;
+  csi_rs::freq_allocation_mask_type freq_domain;
+  uint8_t                           symb_L0;
+  uint8_t                           symb_L1;
+  csi_rs_cdm_type                   cdm_type;
+  csi_rs_freq_density_type          freq_density;
+  uint16_t                          scramb_id;
+  uint8_t                           power_control_offset_profile_nr;
+  nzp_csi_rs_epre_to_ssb            power_control_offset_ss_profile_nr;
   //: TODO: beamforming struct
   dl_csi_rs_maintenance_v3 csi_rs_maintenance_v3;
   //: TODO: csi params v4
