@@ -18,7 +18,6 @@ f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues) :
   msg(msg_),
-  ue_db(ues),
   ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value))),
   cu_msg_notifier(ue.f1ap_msg_notifier),
   release_wait_timer(ue.du_handler.get_timer_factory().create_timer())
