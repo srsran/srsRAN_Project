@@ -9,6 +9,7 @@
  */
 
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/support/config/validator_helpers.h"
 
 using namespace srsran;
@@ -140,7 +141,9 @@ error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sche
   return {};
 }
 
-error_type<std::string> srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request_message& msg)
+error_type<std::string>
+srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request_message& msg,
+                                                 const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
 {
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     if (cell.serv_cell_cfg.csi_meas_cfg.has_value()) {
@@ -162,6 +165,46 @@ error_type<std::string> srsran::config_validators::validate_csi_meas_cfg(const s
       VERIFY(has_unique_ids(csi_meas_cfg.csi_report_cfg_list, &csi_report_config::report_cfg_id),
              "Duplication of CSI-ReportConfigId");
 
+      // NZP-CSI-RS-ResourceList. Verify if CSI-RS symbols allocation are on UL symbols.
+      if (tdd_cfg_common.has_value()) {
+        for (const auto& res : csi_meas_cfg.nzp_csi_rs_res_list) {
+          // Period and offset are specified only for periodic and semi-persistent NZP-CSI-RS-Resources.
+          if (res.csi_res_offset.has_value() and res.csi_res_period.has_value()) {
+            // Get the symbol mapping from the NZ-CSI-RS conconfiguration.
+            const auto&   res_mapping = res.res_mapping;
+            const uint8_t row_idx     = csi_rs::get_csi_rs_resource_mapping_row_number(
+                res_mapping.nof_ports, res_mapping.freq_density, res_mapping.cdm, res_mapping.fd_alloc);
+            csi_rs_pattern_configuration csi_rs_cfg{.start_rb                 = res_mapping.freq_band_start_rb,
+                                                    .nof_rb                   = res_mapping.freq_band_nof_rb,
+                                                    .csi_rs_mapping_table_row = static_cast<unsigned>(row_idx),
+                                                    .symbol_l0                = res_mapping.first_ofdm_symbol_in_td,
+                                                    .cdm                      = res_mapping.cdm,
+                                                    .freq_density             = res_mapping.freq_density,
+                                                    .nof_ports                = res_mapping.nof_ports};
+            csi_rs_cfg.symbol_l1 =
+                res_mapping.first_ofdm_symbol_in_td2.has_value() ? res_mapping.first_ofdm_symbol_in_td2.value() : 0;
+            csi_rs::convert_freq_domain(
+                csi_rs_cfg.freq_allocation_ref_idx, res.res_mapping.fd_alloc, static_cast<unsigned>(row_idx));
+            const csi_rs_pattern                                  csi_res_mapping = get_csi_rs_pattern(csi_rs_cfg);
+            const bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> csi_rs_symbol_mask{
+                csi_res_mapping.get_reserved_pattern().symbol_mask};
+
+            const unsigned tdd_period_slots    = nof_slots_per_tdd_period(tdd_cfg_common.value());
+            const unsigned csi_rs_period_slots = csi_resource_periodicity_to_uint(res.csi_res_period.value());
+
+            VERIFY(csi_rs_period_slots % tdd_period_slots == 0,
+                   "NZP-CSI-RS Resource Id. {}'s period is not a multiple of the TDD pattern period",
+                   res.res_id);
+            VERIFY(csi_rs_symbol_mask.find_highest() <
+                       get_active_tdd_dl_symbols(
+                           tdd_cfg_common.value(), res.csi_res_offset.value() % tdd_period_slots, false)
+                           .stop(),
+                   "NZP-CSI-RS Resource Id. {} configuration would result in being scheduled non-DL "
+                   "slots/symbols",
+                   res.res_id);
+          }
+        }
+      }
       // NZP-CSI-RS-ResourceSet.
       for (const auto& res_set : csi_meas_cfg.nzp_csi_rs_res_set_list) {
         for (const auto& res_id : res_set.nzp_csi_rs_res) {
@@ -265,8 +308,9 @@ error_type<std::string> srsran::config_validators::validate_csi_meas_cfg(const s
   return {};
 }
 
-error_type<std::string>
-srsran::config_validators::validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg)
+error_type<std::string> srsran::config_validators::validate_sched_ue_creation_request_message(
+    const sched_ue_creation_request_message& msg,
+    const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
 {
   // Verify the list of ServingCellConfig contains spCellConfig.
   VERIFY(not msg.cfg.cells.empty(), "Empty list of ServingCellConfig");
@@ -275,7 +319,7 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
 
   HANDLE_CODE(validate_pucch_cfg(msg));
 
-  HANDLE_CODE(validate_csi_meas_cfg(msg));
+  HANDLE_CODE(validate_csi_meas_cfg(msg, tdd_cfg_common));
 
   // TODO: Validate other parameters.
   return {};

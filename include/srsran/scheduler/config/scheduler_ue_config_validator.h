@@ -20,7 +20,9 @@ namespace config_validators {
 /// \brief Validates \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] msg scheduler ue creation request message to be validated.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg);
+error_type<std::string>
+validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg,
+                                           const optional<tdd_ul_dl_config_common>& tdd_cfg_common);
 
 /// \brief Validates PUCCH Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] msg scheduler ue creation request message to be validated.
@@ -35,7 +37,8 @@ error_type<std::string> validate_pdsch_cfg(const sched_ue_creation_request_messa
 /// \brief Validates CSI-MeasConfig in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] msg scheduler ue creation request message to be validated.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> validate_csi_meas_cfg(const sched_ue_creation_request_message& msg);
+error_type<std::string> validate_csi_meas_cfg(const sched_ue_creation_request_message& msg,
+                                              const optional<tdd_ul_dl_config_common>& tdd_cfg_common);
 
 } // namespace config_validators
 } // namespace srsran

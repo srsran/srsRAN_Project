@@ -51,13 +51,15 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  error_type<std::string> result = config_validators::validate_sched_ue_creation_request_message(ue_request);
+  // Add Mapping UE index -> DU Cell Group index.
+  du_cell_index_t pcell_index = ue_request.cfg.cells[0].serv_cell_cfg.cell_index;
+
+  error_type<std::string> result = config_validators::validate_sched_ue_creation_request_message(
+      ue_request, cells[pcell_index]->cell_cfg.tdd_cfg_common);
   if (result.is_error()) {
     report_fatal_error("Invalid ue={} creation request message. Cause: {}", ue_request.crnti, result.error());
   }
 
-  // Add Mapping UE index -> DU Cell Group index.
-  du_cell_index_t pcell_index = ue_request.cfg.cells[0].serv_cell_cfg.cell_index;
   ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);
 
   // Dispatch UE creation to UE scheduler associated to the PCell.

@@ -79,6 +79,11 @@ enum class csi_resource_periodicity {
   slots640 = 640
 };
 
+inline unsigned csi_resource_periodicity_to_uint(csi_resource_periodicity val)
+{
+  return static_cast<unsigned>(val);
+}
+
 /// \brief NZP-CSI-RS-Resource is used to configure Non-Zero-Power (NZP) CSI-RS transmitted in the cell.
 /// \remark See TS 38.331, \c NZP-CSI-RS-Resource and TS 38.214, clause 5.2.2.3.1.
 struct nzp_csi_rs_resource {
