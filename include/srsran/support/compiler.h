@@ -30,4 +30,4 @@
 #define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
 
 /// Ensures a function is always inlinable.
-#define FORCE_INLINE __attribute__((always_inline)) inline
+#define SRSRAN_FORCE_INLINE __attribute__((always_inline)) inline

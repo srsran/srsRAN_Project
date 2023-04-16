@@ -10,8 +10,8 @@
 
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/event_tracing.h"
+#include "srsran/support/executors/executor_tracer.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/executors/trace_executor.h"
 #include <fstream>
 #include <gtest/gtest.h>
 
@@ -19,7 +19,7 @@ using namespace srsran;
 
 TEST(event_tracing_test, null_tracer)
 {
-  null_event_tracer tracer;
+  detail::null_event_tracer tracer;
 
   trace_point tp = tracer.now();
 

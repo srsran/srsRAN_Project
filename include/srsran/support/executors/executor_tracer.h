@@ -15,11 +15,12 @@
 
 namespace srsran {
 
+/// \brief A task executor that traces the latencies of the task enqueuing/dequeuing and task invocation.
 template <typename Exec, typename Tracer>
-class trace_executor final : public task_executor
+class executor_tracer final : public task_executor
 {
 public:
-  trace_executor(Exec exec_, Tracer tracer_, const char* name_) :
+  executor_tracer(Exec exec_, Tracer tracer_, const char* name_) :
     exec(std::forward<Exec>(exec_)),
     tracer(tracer_),
     enqueue_event_name(fmt::format("{}_enqueue", name_)),
@@ -74,12 +75,12 @@ private:
   std::string run_event_name;
 };
 
-/// \brief Specialization for null event tracer.
+/// \brief Specialization for null event tracer. It should not add any overhead compared to the original executor.
 template <typename Exec>
-class trace_executor<Exec, null_event_tracer> final : public task_executor
+class executor_tracer<Exec, detail::null_event_tracer> final : public task_executor
 {
 public:
-  trace_executor(Exec exec_, null_event_tracer& /**/, const char* /**/) : exec(std::move(exec_)) {}
+  executor_tracer(Exec exec_, detail::null_event_tracer& /**/, const char* /**/) : exec(std::move(exec_)) {}
 
   bool execute(unique_task task) override { return get(exec).execute(std::move(task)); }
 
@@ -108,9 +109,9 @@ private:
 };
 
 template <typename Exec, typename Tracer>
-trace_executor<Exec, Tracer> make_trace_executor(const char* name, Exec&& exec, Tracer&& tracer)
+executor_tracer<Exec, Tracer> make_trace_executor(const char* name, Exec&& exec, Tracer&& tracer)
 {
-  return trace_executor<Exec, Tracer>(std::forward<Exec>(exec), std::forward<Tracer>(tracer), name);
+  return executor_tracer<Exec, Tracer>(std::forward<Exec>(exec), std::forward<Tracer>(tracer), name);
 }
 
 } // namespace srsran

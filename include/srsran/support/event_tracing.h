@@ -43,7 +43,7 @@ struct trace_event {
   const char* name;
   trace_point start_tp;
 
-  FORCE_INLINE trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
+  SRSRAN_FORCE_INLINE trace_event(const char* name_, trace_point start_tp_) : name(name_), start_tp(start_tp_) {}
 };
 
 /// \brief Trace event type with defined name, starting point but no duration.
@@ -55,47 +55,54 @@ struct instant_trace_event {
   trace_point tp;
   cpu_scope   scope;
 
-  FORCE_INLINE instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) :
+  SRSRAN_FORCE_INLINE instant_trace_event(const char* name_, trace_point tp_, cpu_scope scope_) :
     name(name_), tp(tp_), scope(scope_)
   {
   }
 };
+
+namespace detail {
 
 /// \brief Tracer that does not write any events. The compiler should eliminate all calls to this tracer when
 /// optimizations are enabled.
 class null_event_tracer
 {
 public:
-  trace_point now() const { return {}; }
+  static trace_point now() { return {}; }
 
   void operator<<(const trace_event& event) const {}
 
   void operator<<(const instant_trace_event& event) const {}
 };
 
+} // namespace detail
+
+/// \brief Class that writes trace events to a dedicated trace file.
 template <bool Enabled = true>
 class file_event_tracer
 {
 public:
-  trace_point now() const { return trace_clock::now(); }
+  static trace_point now() { return trace_clock::now(); }
 
   void operator<<(const trace_event& event) const;
 
   void operator<<(const instant_trace_event& event) const;
 };
 
+/// \brief Specialization of file_event_tracer that does not write any events.
 template <>
-class file_event_tracer<false> : public null_event_tracer
+class file_event_tracer<false> : public detail::null_event_tracer
 {
 };
 
+/// \brief Class that repurposes a log channel to write trace events.
 template <bool Enabled = true>
 class logger_event_tracer
 {
 public:
   explicit logger_event_tracer(srslog::log_channel& log_ch_) : log_ch(log_ch_) {}
 
-  trace_point now() const { return trace_clock::now(); }
+  static trace_point now() { return trace_clock::now(); }
 
   void operator<<(const trace_event& event) const;
 
@@ -106,14 +113,15 @@ private:
 };
 
 template <>
-class logger_event_tracer<false> : public null_event_tracer
+class logger_event_tracer<false> : public detail::null_event_tracer
 {
 };
 
+/// \brief Class that writes trace events to a vector of strings for testing purposes.
 class test_event_tracer
 {
 public:
-  trace_point now() const { return trace_clock::now(); }
+  static trace_point now() { return trace_clock::now(); }
 
   void operator<<(const trace_event& event);
 
