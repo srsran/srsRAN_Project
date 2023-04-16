@@ -17,7 +17,9 @@
 using namespace srsran;
 using namespace std::chrono;
 
-static trace_point run_epoch = trace_clock::now();
+namespace {
+
+trace_point run_epoch = trace_clock::now();
 
 /// Helper class to write trace events to a file.
 class event_trace_writer
@@ -56,27 +58,7 @@ private:
 };
 
 /// Unique event trace file writer.
-static std::unique_ptr<event_trace_writer> trace_file_writer;
-
-void srsran::open_trace_file(const char* trace_file_name)
-{
-  if (trace_file_writer != nullptr) {
-    report_fatal_error("Trace file already open");
-  }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name);
-}
-
-void srsran::close_trace_file()
-{
-  if (trace_file_writer != nullptr) {
-    trace_file_writer = nullptr;
-  }
-}
-
-bool srsran::is_trace_file_open()
-{
-  return trace_file_writer != nullptr;
-}
+std::unique_ptr<event_trace_writer> trace_file_writer;
 
 struct trace_event_extended : public trace_event {
   unsigned       cpu;
@@ -119,7 +101,7 @@ struct timestamp_data {
   microseconds usec;
 };
 
-static timestamp_data get_timestamp(trace_point tp)
+timestamp_data get_timestamp(trace_point tp)
 {
   using days = duration<int, std::ratio_multiply<hours::period, std::ratio<24>>::type>;
 
@@ -136,6 +118,28 @@ static timestamp_data get_timestamp(trace_point tp)
   ret.usec = duration_cast<microseconds>(start_dur);
 
   return ret;
+}
+
+} // namespace
+
+void srsran::open_trace_file(const char* trace_file_name)
+{
+  if (trace_file_writer != nullptr) {
+    report_fatal_error("Trace file already open");
+  }
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name);
+}
+
+void srsran::close_trace_file()
+{
+  if (trace_file_writer != nullptr) {
+    trace_file_writer = nullptr;
+  }
+}
+
+bool srsran::is_trace_file_open()
+{
+  return trace_file_writer != nullptr;
 }
 
 namespace fmt {
