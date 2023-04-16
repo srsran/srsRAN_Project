@@ -25,7 +25,13 @@ trace_point run_epoch = trace_clock::now();
 class event_trace_writer
 {
 public:
-  explicit event_trace_writer(const char* trace_file) : fptr(fopen(trace_file, "w")) { fmt::print(fptr, "["); }
+  explicit event_trace_writer(const char* trace_file) : fptr(fopen(trace_file, "w"))
+  {
+    if (fptr == nullptr) {
+      report_fatal_error("ERROR: Failed to open trace file {}", trace_file);
+    }
+    fmt::print(fptr, "[");
+  }
   event_trace_writer(event_trace_writer&& other) noexcept                 = delete;
   event_trace_writer(const event_trace_writer& other) noexcept            = delete;
   event_trace_writer& operator=(event_trace_writer&& other) noexcept      = delete;
@@ -33,10 +39,8 @@ public:
 
   ~event_trace_writer()
   {
-    if (fptr != nullptr) {
-      fmt::print(fptr, "\n]");
-      fclose(fptr);
-    }
+    fmt::print(fptr, "\n]");
+    fclose(fptr);
   }
 
   template <typename... Args>
@@ -132,9 +136,7 @@ void srsran::open_trace_file(const char* trace_file_name)
 
 void srsran::close_trace_file()
 {
-  if (trace_file_writer != nullptr) {
-    trace_file_writer = nullptr;
-  }
+  trace_file_writer = nullptr;
 }
 
 bool srsran::is_trace_file_open()
