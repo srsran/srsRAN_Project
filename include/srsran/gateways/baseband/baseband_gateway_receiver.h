@@ -14,6 +14,8 @@
 
 namespace srsran {
 
+class baseband_gateway_buffer;
+
 /// Describes a baseband gateway interface for reception.
 class baseband_gateway_receiver : public baseband_gateway_base
 {

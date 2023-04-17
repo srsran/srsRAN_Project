@@ -37,6 +37,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 phy_fapi_adaptor_factory
                 srsran_fapi
                 srsran_phy_support
+                srsran_lower_phy
                 srsran_upper_phy
                 srsran_signal_processors
                 srsran_channel_processors

@@ -9,9 +9,12 @@
  */
 
 #pragma once
+#include "srsran/gateways/baseband/baseband_gateway_base.h"
 #include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 
 namespace srsran {
+
+class baseband_gateway_buffer;
 
 /// Describes a baseband gateway interface for transmission.
 class baseband_gateway_transmitter : public baseband_gateway_base
