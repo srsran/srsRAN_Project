@@ -82,6 +82,7 @@ variables:
 
 custom-e2e:
   extends: .e2e-run
+  interruptible: false # Web jobs are standalone
   rules:
     - if: $TESTBED == "none"
       when: never

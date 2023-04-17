@@ -749,6 +749,7 @@ custom-build:
   extends: .build_and_unit
   rules:
     - if: $ON_WEB
+  interruptible: false # Web jobs are standalone
   variables:
     ENABLE_ZEROMQ: ""
     AUTO_DETECT_ISA: ""
