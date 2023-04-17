@@ -480,7 +480,7 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   app.callback(verify_callback);
 }
 
-static void configure_cli11_test_mode_args(CLI::App& app, test_mod_appconfig& test_params) {}
+static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params) {}
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {

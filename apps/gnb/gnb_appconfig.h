@@ -16,6 +16,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
@@ -315,8 +316,20 @@ struct expert_phy_appconfig {
   bool pusch_decoder_early_stop = true;
 };
 
+struct test_mode_ue_appconfig {
+  /// C-RNTI to assign to the test UE.
+  rnti_t rnti = to_rnti(0x4601);
+  /// Whether PDSCH grants are automatically assigned to the test UE.
+  bool pdsch_active = true;
+  /// Whether PUSCH grants are automatically assigned to the test UE.
+  bool pusch_active = true;
+};
+
 /// gNB app Test Mode configuration.
-struct test_mod_appconfig {};
+struct test_mode_appconfig {
+  /// Creates a UE with the given the given params for testing purposes.
+  test_mode_ue_appconfig test_ue;
+};
 
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
@@ -353,7 +366,7 @@ struct gnb_appconfig {
   expert_phy_appconfig expert_phy_cfg;
 
   /// Configuration for testing purposes.
-  test_mod_appconfig test_mode_cfg = {};
+  test_mode_appconfig test_mode_cfg = {};
 };
 
 } // namespace srsran
