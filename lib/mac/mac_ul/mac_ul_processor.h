@@ -83,11 +83,15 @@ public:
   void handle_rx_data_indication(mac_rx_data_indication msg) override
   {
     for (mac_rx_pdu& pdu : msg.pdus) {
+      // > Convert C-RNTI to DU-specific UE index.
+      // Note: for Msg3, the UE context is not yet created, and ue_index will be an invalid index. This situation is
+      // handled inside the pdu_handler.
       du_ue_index_t ue_index = rnti_table[pdu.rnti];
-      // 1. Fork each PDU handling to different executors based on the PDU RNTI.
+
+      // > Fork each PDU handling to different executors based on the PDU RNTI.
       if (not cfg.ue_exec_mapper.executor(ue_index).execute(
               [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
-                // 2. Decode Rx PDU and handle respective subPDUs.
+                // > Decode Rx PDU and handle respective subPDUs.
                 pdu_handler.handle_rx_pdu(slot_rx, cell_idx, std::move(pdu));
               })) {
         logger.warning(

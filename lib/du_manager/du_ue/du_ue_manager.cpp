@@ -21,6 +21,7 @@ using namespace srs_du;
 du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc_) :
   cfg(cfg_), cell_res_alloc(cell_res_alloc_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
+  // Initialize a control loop for all UE indexes.
   const size_t max_number_of_pending_procedures = 16U;
   for (size_t i = 0; i < MAX_NOF_DU_UES; ++i) {
     ue_ctrl_loop.emplace(i, max_number_of_pending_procedures);

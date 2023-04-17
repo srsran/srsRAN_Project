@@ -71,7 +71,8 @@ du_high::du_high(const du_high_configuration& config_) :
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
-                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
+                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier,
+                              cfg.test_cfg.test_ue});
   f1ap = create_f1ap(
       *cfg.f1ap_notifier, f1ap_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors, f1ap_paging_notifier);
   du_manager =
@@ -89,6 +90,19 @@ du_high::du_high(const du_high_configuration& config_) :
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);
+
+  // If test mode is enabled.
+  if (cfg.test_cfg.test_ue.has_value()) {
+    // Push an UL-CCCH message that will trigger a UE creation for testing purposes.
+    mac->get_pdu_handler(to_du_cell_index(0))
+        .handle_rx_data_indication(
+            mac_rx_data_indication{slot_point{0, 0},
+                                   to_du_cell_index(0),
+                                   {mac_rx_pdu{cfg.test_cfg.test_ue->rnti,
+                                               0,
+                                               0,
+                                               {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}});
+  }
 }
 
 du_high::~du_high()

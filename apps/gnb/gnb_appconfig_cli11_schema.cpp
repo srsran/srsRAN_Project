@@ -480,7 +480,20 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   app.callback(verify_callback);
 }
 
-static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params) {}
+static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appconfig& test_params)
+{
+  app.add_option("--rnti", test_params.rnti, "C-RNTI (0x0 if not configured)")
+      ->capture_default_str()
+      ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
+  app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
+  app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
+}
+
+static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)
+{
+  CLI::App* test_ue = app.add_subcommand("test_ue", "automatically created UE for testing purposes");
+  configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
+}
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {

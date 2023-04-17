@@ -70,20 +70,20 @@ pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
-  // 0. Store PCAP
+  // > Store PCAP
   write_pcap_rx_pdu(sl_rx, pdu);
 
-  // 1. Fetch UE index based on PDU RNTI.
+  // > Fetch UE index based on PDU RNTI.
   du_ue_index_t ue_index = rnti_table[pdu.rnti];
 
-  // 2. Decode MAC UL PDU.
+  // > Decode MAC UL PDU.
   decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
   if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
     logger.warning("{}: Failed to decode PDU", create_prefix(ctx));
     return false;
   }
 
-  // 3. Log MAC UL PDU.
+  // > Log MAC UL PDU.
   if (logger.info.enabled()) {
     // Note: Since subPDUs are just views, they should not be passed by value to the logging backend.
     fmt::memory_buffer fmtbuf;
@@ -91,17 +91,17 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
   }
 
-  // 4. Check if MAC CRNTI CE is present.
+  // > Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
     const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
 
     if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
-      // 4. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+      // >> Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
       return handle_crnti_ce(ctx, subpdu);
     }
   }
 
-  // 5. Handle remaining MAC UL subPDUs.
+  // > Handle remaining MAC UL subPDUs.
   return handle_rx_subpdus(ctx);
 }
 

@@ -12,6 +12,7 @@
 
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"

@@ -73,18 +73,21 @@ struct mac_ue_delete_response_message {
   bool result;
 };
 
-/// Interface used to manage the creation/reconfiguration/deletion of UEs in MAC
+/// \brief Interface used to manage the creation, reconfiguration and deletion of UEs in MAC
 class mac_ue_configurator
 {
 public:
   virtual ~mac_ue_configurator() = default;
   virtual async_task<mac_ue_create_response_message>
   handle_ue_create_request(const mac_ue_create_request_message& cfg) = 0;
+
   virtual async_task<mac_ue_reconfiguration_response_message>
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+
   virtual async_task<mac_ue_delete_response_message>
-               handle_ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
-  virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)        = 0;
+  handle_ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
+
+  virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
 };
 
 } // namespace srsran

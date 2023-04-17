@@ -3,6 +3,7 @@
 
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
@@ -34,6 +35,7 @@ struct du_high_configuration {
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
   scheduler_expert_config            sched_cfg;
   mac_pcap*                          pcap = nullptr;
+  du_test_config                     test_cfg;
 };
 
 } // namespace srs_du
