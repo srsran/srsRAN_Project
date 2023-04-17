@@ -22,7 +22,6 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 )
 
         install(TARGETS gnb
-                CONFIGURATIONS Release
                 RUNTIME)
 
         target_link_libraries(gnb
