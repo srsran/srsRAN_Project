@@ -649,6 +649,20 @@ avx2 [basic]:
     ENABLE_AVX2: "True"
     ENABLE_AVX512: "False"
 
+avx2 [debug]:
+  extends: .avx
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: default
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+    ENABLE_AVX512: "False"
+    ENABLE_AVX2: "True"
+
 avx2 [tsan, cached]:
   extends: .avx
   rules:

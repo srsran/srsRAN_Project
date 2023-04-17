@@ -155,6 +155,9 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
+  needs:
+    - job: "avx2 [debug]"
+      artifacts: true
 
 rf:
   extends: .e2e-run
