@@ -77,7 +77,7 @@ async_task<void> ue_deletion_procedure::disconnect_drbs()
           du_ue_drb& drb = *drb_pair.second;
 
           // > Disconnect DRBs from F1-U and remove F1-U bearer.
-          drb.disconnect();
+          drb.disconnect_rx();
         }
       });
 }

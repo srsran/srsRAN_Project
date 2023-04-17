@@ -67,15 +67,19 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
-void du_ue_drb::disconnect()
+void du_drb_connector::disconnect_rx()
 {
   // Disconnect F1-U <-> RLC interface.
-  connector.rlc_rx_sdu_notif.disconnect();
-  connector.rlc_tx_data_notif.disconnect();
-  connector.f1u_rx_sdu_notif.disconnect();
+  rlc_rx_sdu_notif.disconnect();
+  f1u_rx_sdu_notif.disconnect();
 
   // Disconnect MAC -> RLC interface.
-  connector.mac_rx_sdu_notifier.disconnect();
+  mac_rx_sdu_notifier.disconnect();
+}
+
+void du_ue_drb::disconnect_rx()
+{
+  connector.disconnect_rx();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
