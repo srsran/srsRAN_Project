@@ -84,8 +84,6 @@ struct pdsch_config {
   /// \remark See TS 38.214, clause 5.1.2.1.
   enum class pdsch_aggregation_factor { n2, n4, n8 };
 
-  /// \brief Maximum number of code words a single DCI may schedule.
-  /// \remark See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
@@ -121,8 +119,9 @@ struct pdsch_config {
   /// Indicates which MCS table the UE shall use for PDSCH. (see TS 38.214 [19], clause 5.1.3.1). The field mcs-Table
   /// applies to DCI format 1_0 and DCI format 1_1.
   pdsch_mcs_table mcs_table{pdsch_mcs_table::qam64};
-  /// This changes the number of MCS/RV/NDI bits in the DCI message from 1 to 2.
-  optional<max_no_codeword_scheduled_by_dci> nof_cw_sched_by_dci;
+  /// Maximum number of code words a single DCI may schedule. This changes the number of MCS/RV/NDI bits in the DCI
+  /// message from 1 to 2. See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
+  bool is_max_cw_sched_by_dci_is_two{false};
   /// Indicates the PRB bundle type and bundle size(s). If dynamic is chosen, the actual bundleSizeSet1 or
   /// bundleSizeSet2 to use is indicated via DCI. Constraints on bundleSize(Set) setting depending on
   /// vrb-ToPRB-Interleaver and rbg-Size settings are described in TS 38.214, clause 5.1.2.3. If a bundleSize(Set)
@@ -138,8 +137,8 @@ struct pdsch_config {
            pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
            tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
-           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table && nof_cw_sched_by_dci == rhs.nof_cw_sched_by_dci &&
-           prb_bndlg == rhs.prb_bndlg;
+           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
+           is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg;
   }
   bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };

@@ -56,7 +56,7 @@ struct dci_dl_info {
     dci_1_0_c_rnti_configuration  c_rnti_f1_0;
     dci_1_0_tc_rnti_configuration tc_rnti_f1_0;
     dci_1_0_p_rnti_configuration  p_rnti_f1_0;
-    // TODO: Add DCI Format 1_1 for C-RNTI.
+    dci_1_1_configuration         c_rnti_f1_1;
   };
 
   dci_dl_info() : type(dci_dl_rnti_config_type::si_f1_0) { new (&si_f1_0) dci_1_0_si_rnti_configuration(); }
@@ -84,7 +84,7 @@ struct dci_ul_info {
   union {
     dci_0_0_c_rnti_configuration  c_rnti_f0_0;
     dci_0_0_tc_rnti_configuration tc_rnti_f0_0;
-    // TODO: Add DCI Format 0_1 for C-RNTI.
+    dci_0_1_configuration         c_rnti_f0_1;
   };
 
   dci_ul_info() : type(dci_ul_rnti_config_type::c_rnti_f0_0) { new (&c_rnti_f0_0) dci_0_0_c_rnti_configuration(); }

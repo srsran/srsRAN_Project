@@ -10,6 +10,7 @@
 #pragma once
 
 #include "harq_process.h"
+#include "ue_configuration.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
@@ -46,6 +47,20 @@ void build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
                            unsigned                           dai,
                            sch_mcs_index                      mcs_index,
                            const dl_harq_process&             h_dl);
+
+/// Builds DCI f1_1 for C-RNTI.
+void build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
+                           const ue_cell_configuration& ue_cell_cfg,
+                           bool                         is_ue_configured_multiple_serving_cells,
+                           bwp_id_t                     active_bwp_id,
+                           search_space_id              ss_id,
+                           prb_interval                 prbs,
+                           unsigned                     time_resource,
+                           unsigned                     k1,
+                           unsigned                     pucch_res_indicator,
+                           unsigned                     dai,
+                           sch_mcs_index                tb1_mcs_index,
+                           const dl_harq_process&       h_dl);
 
 /// Builds DCI f0_0 for TC-RNTI, used in Msg3 retxs.
 void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,

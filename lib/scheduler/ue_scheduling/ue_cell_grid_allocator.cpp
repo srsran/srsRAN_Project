@@ -238,7 +238,19 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             h_dl);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      // TODO: Build DCI format 1_1.
+      build_dci_f1_1_c_rnti(pdcch->dci,
+                            ue_cell_cfg,
+                            u.nof_cells() > 1,
+                            ue_cc->active_bwp_id(),
+                            grant.ss_id,
+                            prbs,
+                            grant.time_res_index,
+                            k1,
+                            uci.pucch_grant.pucch_res_indicator,
+                            uci.dai,
+                            mcs_tbs_info.value().mcs,
+                            h_dl);
+      break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
   }
