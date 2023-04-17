@@ -204,9 +204,7 @@ pull_src_cache:
             ctest_extra="-L tsan"
             ;;
           valgrind)
-            cp DartConfiguration.tcl ${test_folder}/
-            sed -i "s/${CI_PROJECT_DIR//\//\\/}\/build/${CI_PROJECT_DIR//\//\\/}\/build\/${test_folder//\//\\/}/" ${test_folder}/DartConfiguration.tcl
-            sed -i "s/MemoryCheckCommandOptions: /MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes/" ${test_folder}/DartConfiguration.tcl
+            sed -i "s/MemoryCheckCommandOptions: /MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes --exit-on-first-error=yes --error-exitcode=22/" DartConfiguration.tcl
             G_DEBUG=gc-friendly G_SLICE=always-malloc
             ctest_extra="-T memcheck --timeout 10800"
             ;;
@@ -264,6 +262,7 @@ pull_src_cache:
     paths:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
+      - build//Testing/Temporary/MemoryChecker.*.log
     expire_in: 10 minutes
   cache:
     - *cache_src_get
