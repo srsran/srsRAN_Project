@@ -11,6 +11,7 @@ add_library(mac_configuration_helpers STATIC ${SOURCES})
 target_link_libraries(mac_configuration_helpers srsran_support srsran_ran)
 set(SOURCES mac_factory.cpp
             mac_impl.cpp
+            mac_test_mode_impl.cpp
             mac_ctrl/mac_controller.cpp
             mac_ctrl/ue_reconfiguration_procedure.cpp
             mac_dl/mac_dl_processor.cpp
