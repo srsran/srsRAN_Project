@@ -165,7 +165,20 @@ srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request
       VERIFY(has_unique_ids(csi_meas_cfg.csi_report_cfg_list, &csi_report_config::report_cfg_id),
              "Duplication of CSI-ReportConfigId");
 
-      // NZP-CSI-RS-ResourceList. Verify if CSI-RS symbols allocation are on UL symbols.
+      // NZP-CSI-RS-Resource List. Verify firstOFDMSymbolInTimeDomain2 parameter.
+      for (const auto& res : csi_meas_cfg.nzp_csi_rs_res_list) {
+        const auto&   res_mapping = res.res_mapping;
+        const uint8_t row_idx     = csi_rs::get_csi_rs_resource_mapping_row_number(
+            res_mapping.nof_ports, res_mapping.freq_density, res_mapping.cdm, res_mapping.fd_alloc);
+        // As per Table 7.4.1.5.3-1,Section 38.211, the parameter firstOFDMSymbolInTimeDomain2 for symbol \f$l_1\f$
+        // should be given by higher layers for Tables rows 13, 14, 16, 17.
+        if (row_idx == 13 or row_idx == 14 or row_idx == 16 or row_idx == 17) {
+          VERIFY(res_mapping.first_ofdm_symbol_in_td2.has_value(),
+                 "Missing parameter firstOFDMSymbolInTimeDomain2 for NZP-CSI-RS Resource Id. {} ",
+                 res.res_id);
+        }
+      }
+      // NZP-CSI-RS-ResourceList. Verify if CSI-RS symbols allocation are on DL symbols.
       if (tdd_cfg_common.has_value()) {
         for (const auto& res : csi_meas_cfg.nzp_csi_rs_res_list) {
           // Period and offset are specified only for periodic and semi-persistent NZP-CSI-RS-Resources.
@@ -181,6 +194,8 @@ srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request
                                                     .cdm                      = res_mapping.cdm,
                                                     .freq_density             = res_mapping.freq_density,
                                                     .nof_ports                = res_mapping.nof_ports};
+            // symbol_l1 is only used in some configuration, and might not be provided by the higher layers; in such
+            // cases, we set an invalid value for symbol_l1, as a way to let the PHY know this value should not be used.
             csi_rs_cfg.symbol_l1 =
                 res_mapping.first_ofdm_symbol_in_td2.has_value() ? res_mapping.first_ofdm_symbol_in_td2.value() : 0;
             csi_rs::convert_freq_domain(

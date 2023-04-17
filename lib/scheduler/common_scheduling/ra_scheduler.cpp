@@ -639,7 +639,9 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
     // Check if there are enough UL symbols to allocate the PDCCH
     const search_space_configuration& ss_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
-    if (ss_cfg.get_first_symbol_index() + ss_cfg.duration > cell_cfg.get_nof_dl_symbol_per_slot(pdcch_alloc.slot)) {
+    if (ss_cfg.get_first_symbol_index() +
+            cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().duration >
+        cell_cfg.get_nof_dl_symbol_per_slot(pdcch_alloc.slot)) {
       // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
       return;
     }

@@ -99,6 +99,7 @@ struct search_space_configuration {
   {
     if (not monitoring_symbols_within_slot.has_value()) {
       // Assume the first SearchSpace monitoring symbol is 0 when no specified.
+      srsran_assertion_failure("Monitoring symbols within slot for SSid {} not found", id);
       return 0;
     }
     for (unsigned n = 0; n < monitoring_symbols_within_slot.value().size(); ++n) {
@@ -106,6 +107,7 @@ struct search_space_configuration {
         return n;
       }
     }
+    srsran_assertion_failure("Monitoring symbols within slot for SSid {} doesn't have any symbols set to 1", id);
     return monitoring_symbols_within_slot.value().size();
   }
 };
