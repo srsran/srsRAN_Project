@@ -115,7 +115,7 @@ async_task<e1ap_bearer_context_modification_response>
 e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
   if (!ue_ctxt_list.contains(request.ue_index)) {
-    logger.error("ue={} Can't find bearer to modify", request.ue_index);
+    logger.error("ue={} Can't find UE to modify bearer context", request.ue_index);
     return launch_async([](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
       e1ap_bearer_context_modification_response res{};
@@ -145,7 +145,7 @@ async_task<void>
 e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
   if (!ue_ctxt_list.contains(command.ue_index)) {
-    logger.error("ue={} Can't find bearer to release", command.ue_index);
+    logger.error("ue={} Can't find UE to release bearer context", command.ue_index);
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
