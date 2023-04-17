@@ -219,22 +219,25 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
         }
       } break;
       case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
-          scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT: {
-        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
-                                    .scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
-        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
-          first_pmo_of_po.push_back(v);
-        }
-      } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneEighthT_scs60khzOneSixteenthT: {
+          scs480khzOneT_scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT: {
         auto& first_pmo_of_po =
-            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                .scs480_kh_zone_t_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneSixteenthT: {
-        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_sixteenth_t();
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
+          scs480khzHalfT_scs120khzOneEighthT_scs60khzOneSixteenthT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                                    .scs480_kh_zhalf_t_scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs480khzQuarterT_scs120khzOneSixteenthT: {
+        auto& first_pmo_of_po =
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs480_kh_zquarter_t_scs120_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
@@ -474,9 +477,9 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   sib1.cell_sel_info.q_qual_min_present = true;
   sib1.cell_sel_info.q_qual_min         = -20;
 
-  sib1.cell_access_related_info.plmn_id_list.resize(1);
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
-  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0];
+  sib1.cell_access_related_info.plmn_id_info_list.resize(1);
+  sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);
+  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list[0];
   plmn.mcc_present = true;
   plmn.mcc[0]      = du_cfg.nr_cgi.plmn[0] - '0';
   plmn.mcc[1]      = du_cfg.nr_cgi.plmn[1] - '0';
@@ -485,10 +488,10 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   for (unsigned i = 3; i < du_cfg.nr_cgi.plmn.size(); ++i) {
     plmn.mnc[i - 3] = du_cfg.nr_cgi.plmn[i] - '0';
   }
-  sib1.cell_access_related_info.plmn_id_list[0].tac_present = true;
-  sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_reserved_for_oper.value =
+  sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;
+  sib1.cell_access_related_info.plmn_id_info_list[0].tac.from_number(du_cfg.tac);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 
   sib1.conn_est_fail_ctrl_present                   = true;
