@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/e2/common/e2_subscriber_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
@@ -208,9 +209,22 @@ public:
 };
 
 /// Fixture class for E2AP
-class e2_test : public ::testing::Test
+class e2_test_base : public ::testing::Test
 {
 protected:
+  std::unique_ptr<dummy_network_gateway_data_handler> gw;
+  std::unique_ptr<e2_interface>                       e2;
+  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
+  std::unique_ptr<e2_subscriber>                      subscriber;
+  std::unique_ptr<e2_du_metrics_interface>            du_metrics;
+  timer_manager                                       timers;
+  manual_task_worker                                  task_worker{64};
+  std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
+  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+};
+
+class e2_test : public e2_test_base
+{
   void SetUp() override
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -230,14 +244,28 @@ protected:
     // flush logger after each test
     srslog::flush();
   }
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<e2_interface>                       e2;
-  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
-  std::unique_ptr<dummy_e2_subscriber>                subscriber;
-  std::unique_ptr<e2_du_metrics_interface>            du_metrics;
-  timer_manager                                       timers;
-  manual_task_worker                                  task_worker{64};
-  std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+};
+
+class e2_test_subscriber : public e2_test_base
+{
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+    subscriber   = std::make_unique<e2_subscriber_impl>();
+    du_metrics   = std::make_unique<dummy_e2_du_metrics>();
+    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber, *du_metrics);
+    gw           = std::make_unique<dummy_network_gateway_data_handler>();
+    packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    msg_notifier->attach_handler(&(*packer));
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
 };
 } // namespace srsran
