@@ -85,14 +85,13 @@ uint8_t srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t          
           return 7U;
         } else if (fd_alloc.count() == 4U) {
           return 6U;
-        } else {
-          continue;
         }
+        continue;
       }
       return info.row;
     }
   }
-
+  srsran_assertion_failure("The CSI-RS resource config does not match any row of Table 7.4.1.5.3-1, TS 38.211.");
   const uint8_t invalid_row_index = 0;
   return invalid_row_index;
 }

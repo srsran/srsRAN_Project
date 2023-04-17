@@ -23,7 +23,9 @@ namespace csi_rs {
 /// \param[in] cdm_type CDM-type, as per Table 7.4.1.5.3-1, TS 38.211.
 /// \param[in] fd_alloc Freq. Domain Allocation, as per \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping,
 ///            TS 38.331.
-/// \return The row index of Table 7.4.1.5.3-1, TS 38.211 corresponding to the inputs.
+/// \return The row index of Table 7.4.1.5.3-1, TS 38.211 corresponding to the inputs. If the given input configuration
+///         does not match any of the rows in the table, the function triggers an assert and returns an invalid value
+///         (i.e., 0).
 uint8_t get_csi_rs_resource_mapping_row_number(uint8_t                          nof_ports,
                                                csi_rs_freq_density_type         density,
                                                csi_rs_cdm_type                  cdm_type,
