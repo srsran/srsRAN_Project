@@ -315,6 +315,9 @@ struct expert_phy_appconfig {
   bool pusch_decoder_early_stop = true;
 };
 
+/// gNB app Test Mode configuration.
+struct test_mod_appconfig {};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -341,13 +344,16 @@ struct gnb_appconfig {
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
-  std::vector<cell_appconfig> cells_cfg = {{}};
+  std::vector<cell_appconfig> cells_cfg;
 
   /// \brief QoS configuration.
-  std::vector<qos_appconfig> qos_cfg = {};
+  std::vector<qos_appconfig> qos_cfg;
 
   /// Expert physical layer configuration.
   expert_phy_appconfig expert_phy_cfg;
+
+  /// Configuration for testing purposes.
+  test_mod_appconfig test_mode_cfg = {};
 };
 
 } // namespace srsran
