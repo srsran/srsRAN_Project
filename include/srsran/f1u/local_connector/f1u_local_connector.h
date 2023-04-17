@@ -23,7 +23,7 @@ namespace srsran {
 struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter> cu_tx      = nullptr;
   srs_cu_up::f1u_bearer*                f1u_bearer = nullptr;
-  optional<uint32_t>                    dl_teid; ///< holds the dl_teid to disconnect_rx UL at DU upon bearer removal
+  optional<uint32_t>                    dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
   f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, srs_cu_up::f1u_bearer* f1u_bearer_) :
     cu_tx(std::move(cu_tx_)), f1u_bearer(f1u_bearer_)
   {
