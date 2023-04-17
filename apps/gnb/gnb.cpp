@@ -752,6 +752,11 @@ int main(int argc, char** argv)
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
   du_hi_cfg.pcap                          = mac_p.get();
+  if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
+    du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.pusch_active};
+  }
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");

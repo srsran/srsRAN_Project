@@ -93,7 +93,7 @@ du_high::du_high(const du_high_configuration& config_) :
 
   // If test mode is enabled.
   if (cfg.test_cfg.test_ue.has_value()) {
-    // Push an UL-CCCH message that will trigger a UE creation for testing purposes.
+    // Push an UL-CCCH message that will trigger the creation of a UE for testing purposes.
     mac->get_pdu_handler(to_du_cell_index(0))
         .handle_rx_data_indication(
             mac_rx_data_indication{slot_point{0, 0},

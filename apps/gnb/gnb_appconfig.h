@@ -357,7 +357,7 @@ struct gnb_appconfig {
   /// \brief Cell configuration.
   ///
   /// \note Add one cell by default.
-  std::vector<cell_appconfig> cells_cfg;
+  std::vector<cell_appconfig> cells_cfg = {{}};
 
   /// \brief QoS configuration.
   std::vector<qos_appconfig> qos_cfg;
