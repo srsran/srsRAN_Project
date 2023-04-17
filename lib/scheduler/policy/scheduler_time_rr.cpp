@@ -130,16 +130,10 @@ static bool alloc_dl_ue(const ue&                    u,
     }
 
     for (const search_space_configuration* ss_cfg : search_spaces) {
+      // The existence of the Coreset has been verified by the validator.
+      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
       // Ensure there are enough symbols where to allocate the PDCCH.
-      const coreset_configuration* cs_cfg = ue_cc.cfg().find_coreset(ss_cfg->cs_id);
-      if (cs_cfg == nullptr) {
-        logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: No Coreset Id. {} not found",
-                     ue_cc.ue_index,
-                     ue_cc.rnti(),
-                     ss_cfg->cs_id);
-        return false;
-      }
-      if (ss_cfg->get_first_symbol_index() + cs_cfg->duration >
+      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
           res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot)) {
         continue;
       }
@@ -251,17 +245,10 @@ static bool alloc_ul_ue(const ue&                    u,
     }
 
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
+      // The existence of the Coreset has been verified by the validator.
+      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
       // Ensure the symbols where the PDCCH gets allocated are all DL.
-      // Ensure there are enough symbols where to allocate the PDCCH.
-      const coreset_configuration* cs_cfg = ue_cc.cfg().find_coreset(ss_cfg->cs_id);
-      if (cs_cfg == nullptr) {
-        logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: No Coreset Id. {} not found",
-                     ue_cc.ue_index,
-                     ue_cc.rnti(),
-                     ss_cfg->cs_id);
-        return false;
-      }
-      if (ss_cfg->get_first_symbol_index() + cs_cfg->duration >
+      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
           cell_cfg_common.get_nof_dl_symbol_per_slot(res_grid.get_pdcch_slot())) {
         continue;
       }

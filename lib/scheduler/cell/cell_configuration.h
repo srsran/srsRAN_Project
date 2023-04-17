@@ -134,6 +134,14 @@ public:
     }
     return ul_symbols_per_slot_lst[sl.to_uint() % ul_symbols_per_slot_lst.size()];
   }
+  const coreset_configuration& get_common_coreset(coreset_id cs_id) const
+  {
+    // The existence of the Coreset (either CommonCoreset or Coreset0) has been verified by the validator.
+    return dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value() and
+                   dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == cs_id
+               ? dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value()
+               : dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value();
+  }
 
 private:
   /// Vector circularly indexed by slot with the list of nof active DL/UL symbols per slot.

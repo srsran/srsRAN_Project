@@ -32,6 +32,23 @@ using namespace config_validators;
     }                                                                                                                  \
   }
 
+static error_type<std::string> validate_pdcch_cfg_common(const sched_cell_configuration_request_message& msg)
+{
+  for (const auto& ss : msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+    bool cset_id_exits_in_common = msg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()
+                                       ? ss.cs_id == msg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->id
+                                       : false;
+    bool cset_id_exits_in_cset0 =
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value() ? ss.cs_id == 0 : false;
+    VERIFY(cset_id_exits_in_common or cset_id_exits_in_cset0,
+           "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Common Coresets",
+           ss.cs_id,
+           ss.id);
+  }
+
+  return {};
+}
+
 static error_type<std::string> validate_rach_cfg_common(const sched_cell_configuration_request_message& msg)
 {
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
@@ -140,6 +157,8 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
       VERIFY(pusch.k2 <= SCHEDULER_MAX_K2, "k2={} value exceeds maximum supported k2", pusch.k2);
     }
   }
+
+  HANDLE_CODE(validate_pdcch_cfg_common(msg));
 
   HANDLE_CODE(validate_rach_cfg_common(msg));
 

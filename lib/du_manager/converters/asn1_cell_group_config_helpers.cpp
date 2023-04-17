@@ -106,10 +106,8 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
     ss.dur_present = true;
     ss.dur         = cfg.duration;
   }
-  if (cfg.monitoring_symbols_within_slot.has_value()) {
-    ss.monitoring_symbols_within_slot_present = true;
-    ss.monitoring_symbols_within_slot.from_number(cfg.monitoring_symbols_within_slot->to_ulong());
-  }
+  ss.monitoring_symbols_within_slot_present = true;
+  ss.monitoring_symbols_within_slot.from_number(cfg.monitoring_symbols_within_slot.to_ulong());
   ss.nrof_candidates_present = true;
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.nof_candidates[0]);
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level2, cfg.nof_candidates[1]);

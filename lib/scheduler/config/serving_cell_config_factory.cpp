@@ -149,8 +149,7 @@ search_space_configuration srsran::config_helpers::make_default_common_search_sp
   search_space_configuration cfg = make_default_search_space_zero_config();
   cfg.id                         = to_search_space_id(1);
   cfg.nof_candidates             = {0, 0, 1, 0, 0};
-  cfg.monitoring_symbols_within_slot.emplace();
-  cfg.monitoring_symbols_within_slot->set(cfg.monitoring_symbols_within_slot->size() - 1, true);
+  cfg.monitoring_symbols_within_slot.set(cfg.monitoring_symbols_within_slot.size() - 1, true);
   return cfg;
 }
 

@@ -75,7 +75,7 @@ struct search_space_configuration {
   unsigned duration;
   /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring. The most significant bit represents
   /// the first OFDM in a slot.
-  optional<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>> monitoring_symbols_within_slot;
+  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
   /// Number of PDCCH candidates per aggregation level. The aggregation level for the array element with index "x"
   /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> nof_candidates;
@@ -97,18 +97,13 @@ struct search_space_configuration {
 
   unsigned get_first_symbol_index() const
   {
-    if (not monitoring_symbols_within_slot.has_value()) {
-      // Assume the first SearchSpace monitoring symbol is 0 when no specified.
-      srsran_assertion_failure("Monitoring symbols within slot for SSid {} not found", id);
-      return 0;
-    }
-    for (unsigned n = 0; n < monitoring_symbols_within_slot.value().size(); ++n) {
-      if (monitoring_symbols_within_slot.value().test(monitoring_symbols_within_slot.value().size() - n - 1)) {
+    for (unsigned n = 0; n < monitoring_symbols_within_slot.size(); ++n) {
+      if (monitoring_symbols_within_slot.test(monitoring_symbols_within_slot.size() - n - 1)) {
         return n;
       }
     }
     srsran_assertion_failure("Monitoring symbols within slot for SSid {} doesn't have any symbols set to 1", id);
-    return monitoring_symbols_within_slot.value().size();
+    return monitoring_symbols_within_slot.size();
   }
 };
 

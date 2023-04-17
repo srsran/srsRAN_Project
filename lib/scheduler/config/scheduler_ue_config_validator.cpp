@@ -141,6 +141,35 @@ error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sche
   return {};
 }
 
+error_type<std::string> srsran::config_validators::validate_pdcch_cfg(const sched_ue_creation_request_message& msg,
+                                                                      const cell_configuration&                cell_cfg)
+{
+  for (const cell_config_dedicated& cell : msg.cfg.cells) {
+    const auto& init_dl_bwp = cell.serv_cell_cfg.init_dl_bwp;
+    if (init_dl_bwp.pdcch_cfg.has_value()) {
+      const auto& pdcch_cfg = init_dl_bwp.pdcch_cfg.value();
+      for (const auto& ss : pdcch_cfg.search_spaces) {
+        const bool cset_id_found_in_ded = std::find_if(pdcch_cfg.coresets.begin(),
+                                                       pdcch_cfg.coresets.end(),
+                                                       [cs_id = ss.cs_id](const coreset_configuration& cset_cfg) {
+                                                         return cset_cfg.id == cs_id;
+                                                       }) != pdcch_cfg.coresets.end();
+        const bool cst_id_found_in_common =
+            cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()
+                ? cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == ss.cs_id
+                : false;
+        const bool cst_id_found_in_coreset0 = ss.cs_id == 0;
+        VERIFY(cset_id_found_in_ded or cst_id_found_in_common or cst_id_found_in_coreset0,
+               "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Coresets",
+               ss.cs_id,
+               ss.id);
+      }
+    }
+  }
+  // TODO: Validate other parameters.
+  return {};
+}
+
 error_type<std::string>
 srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request_message& msg,
                                                  const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
@@ -323,18 +352,20 @@ srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request
   return {};
 }
 
-error_type<std::string> srsran::config_validators::validate_sched_ue_creation_request_message(
-    const sched_ue_creation_request_message& msg,
-    const optional<tdd_ul_dl_config_common>& tdd_cfg_common)
+error_type<std::string>
+srsran::config_validators::validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg,
+                                                                      const cell_configuration&                cell_cfg)
 {
   // Verify the list of ServingCellConfig contains spCellConfig.
   VERIFY(not msg.cfg.cells.empty(), "Empty list of ServingCellConfig");
 
   HANDLE_CODE(validate_pdsch_cfg(msg));
 
+  HANDLE_CODE(validate_pdcch_cfg(msg, cell_cfg));
+
   HANDLE_CODE(validate_pucch_cfg(msg));
 
-  HANDLE_CODE(validate_csi_meas_cfg(msg, tdd_cfg_common));
+  HANDLE_CODE(validate_csi_meas_cfg(msg, cell_cfg.tdd_cfg_common));
 
   // TODO: Validate other parameters.
   return {};
