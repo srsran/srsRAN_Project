@@ -471,8 +471,8 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.total += sizes.antenna_ports;
 
   // Transmission configuration indication - 0 or 3 bits.
-  sizes.cbg_transmission_info = dci_config.pdsch_tci ? units::bits(3) : units::bits(0);
-  sizes.total += sizes.cbg_transmission_info;
+  sizes.tx_config_indication = dci_config.pdsch_tci ? units::bits(3) : units::bits(0);
+  sizes.total += sizes.tx_config_indication;
 
   // SRS request - 2 or 3 bits.
   sizes.srs_request = dci_config.sul_configured ? units::bits(3) : units::bits(2);
@@ -1217,7 +1217,7 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
   }
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
-  payload.push_back(config.frequency_resource, config.payload_size.frequency_resource.value());
+  payload.push_back(config.frequency_resource, frequency_resource_nof_bits.value());
 
   // Time domain resource assignment - 0, 1, 2, 3 or 4 bits.
   if (config.payload_size.time_resource != units::bits(0)) {
@@ -1292,9 +1292,6 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
 
   // Antenna ports for PDSCH transmission - 4, 5 or 6 bits.
   payload.push_back(config.antenna_ports, config.payload_size.antenna_ports.value());
-
-  // SRS request - 2 or 3 bits.
-  payload.push_back(config.srs_request, config.payload_size.srs_request.value());
 
   // Transmission configuration indication - 0 or 3 bits.
   if (config.tx_config_indication.has_value()) {

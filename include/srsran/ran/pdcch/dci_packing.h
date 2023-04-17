@@ -128,7 +128,7 @@ struct dci_size_config {
   /// \brief Size of the CSI request DCI field. See TS38.214 Section 5.2.1.5.1.
   ///
   /// Set according to the higher layer parameter \e reportTriggerSize (see TS38.331 Section 6.3.2, Information Element
-  /// \e CSI-Measconfig).
+  /// \e CSI-Measconfig). Values: {0, 1, ..., 6}.
   unsigned report_trigger_size;
   /// \brief PUSCH frequency hopping flag.
   ///
@@ -786,10 +786,11 @@ struct dci_0_1_configuration {
   optional<unsigned> carrier_indicator;
   /// \brief UL/SUL indicator - 1 bit if present, as per TS38.212 Table 7.3.1.1.1-1.
   ///
-  /// Set to \c true to signal a resource allocation on the Supplementary Uplink (SUL) if the UE is configured with the
-  /// higher layer parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information Element \e
-  /// ServingCellConfig) and more than a single carrier in the cell is configured for PUSCH transmission, i.e., if \ref
-  /// dci_size_config::sul_configured is set to \c true when computing the DCI sizes. Otherwise, leave unset.
+  /// Set as per TS38.212 Table 7.3.1.1.1-1 to signal a resource allocation on the Supplementary Uplink (SUL) if the UE
+  /// is configured with the higher layer parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information
+  /// Element \e ServingCellConfig) and more than a single carrier in the cell is configured for PUSCH transmission,
+  /// i.e., if \ref dci_size_config::sul_configured is set to \c true when computing the DCI sizes. Otherwise, leave
+  /// unset.
   optional<bool> ul_sul_indicator;
   /// Bandwidth part indicator - 0, 1 or 2 bits.
   ///
@@ -840,7 +841,7 @@ struct dci_0_1_configuration {
   /// the resource allocation type with the largest field size. In this case, the MSB bit is used to pack the resource
   /// allocation type (see \ref dynamic_pusch_res_allocation_type).
   unsigned frequency_resource;
-  /// \brief Time domain resource assignment - 0, 1, 2, 3 or 4 bit, as per TS38.214 Section 6.1.2.1
+  /// \brief Time domain resource assignment - 0, 1, 2, 3 or 4 bits, as per TS38.214 Section 6.1.2.1
   ///
   /// The number of bits is determined as \f$\Bigl \lceil \log_2(I) \Bigr \rceil\f$, where \f$I\f$ is either:
   ///   - The number of entries in the higher layer parameter \e pusch-TimeDomainAllocationList (see TS38.331 Section
@@ -875,7 +876,7 @@ struct dci_0_1_configuration {
   optional<unsigned> second_dl_assignment_index;
   /// TPC command for scheduled PUSCH - 2 bits as per TS38.213 Section 7.1.1.
   unsigned tpc_command;
-  /// \brief SRS resource indicator (SRI).
+  /// \brief SRS Resource Indicator (SRI).
   ///
   /// For codebook based transmission, the SRI selects between one of two SRS resources belonging to different antenna
   /// pannels, and occupies 1 bit (see TS38.212 Table 7.3.1.1.2-32). For non-codebook based transmission, the SRI is set
