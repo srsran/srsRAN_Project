@@ -53,6 +53,7 @@ variables:
     entrypoint: ["/bin/sh", "-c"]
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
   tags:
     - on-prem-amd64
   extends:
