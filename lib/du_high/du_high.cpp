@@ -10,6 +10,7 @@
 
 #include "du_high.h"
 #include "du_high_executor_strategies.h"
+#include "mac_test_mode_adapter.h"
 #include "srsran/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
@@ -64,15 +65,18 @@ du_high::du_high(const du_high_configuration& config_) :
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac  = create_mac(mac_config{*cfg.pcap,
+  mac = create_mac(mac_config{*cfg.pcap,
                               mac_ev_notifier,
                               *cfg.ue_executors,
                               *cfg.cell_executors,
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
-                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier,
-                              cfg.test_cfg.test_ue});
+                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
+  if (cfg.test_cfg.test_ue.has_value()) {
+    mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
+  }
+
   f1ap = create_f1ap(
       *cfg.f1ap_notifier, f1ap_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors, f1ap_paging_notifier);
   du_manager =

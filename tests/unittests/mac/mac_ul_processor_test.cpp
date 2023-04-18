@@ -160,16 +160,16 @@ struct test_bench {
   }
 
 private:
-  srslog::basic_logger&     logger = srslog::fetch_basic_logger("MAC", true);
-  timer_manager             timers;
-  manual_task_worker        task_exec{128};
-  dummy_ue_executor_mapper  ul_exec_mapper{task_exec};
-  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
-  dummy_mac_result_notifier phy_notifier;
-  dummy_mac_event_indicator du_mng_notifier;
-  dummy_mac_pcap            pcap;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier, pcap, {}};
-  du_rnti_table             rnti_table;
+  srslog::basic_logger&            logger = srslog::fetch_basic_logger("MAC", true);
+  timer_manager                    timers;
+  manual_task_worker               task_exec{128};
+  dummy_ue_executor_mapper         ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper         dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier        phy_notifier;
+  dummy_mac_event_indicator        du_mng_notifier;
+  dummy_mac_pcap                   pcap;
+  mac_common_config_t              cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier, pcap};
+  du_rnti_table                    rnti_table;
   dummy_scheduler_feedback_handler sched_feedback;
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;

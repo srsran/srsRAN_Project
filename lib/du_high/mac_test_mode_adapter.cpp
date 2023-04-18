@@ -8,7 +8,7 @@
  *
  */
 
-#include "mac_test_mode_impl.h"
+#include "mac_test_mode_adapter.h"
 
 using namespace srsran;
 
@@ -31,14 +31,44 @@ private:
   byte_buffer tx_sdu = {};
 };
 
+class test_ue_info_handler : public mac_ue_control_information_handler
+{
+public:
+  test_ue_info_handler(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
+                       const du_ue_index_t&                          test_ue_index_,
+                       mac_ue_control_information_handler&           adapted_) :
+    test_ue_cfg(test_ue_cfg_), test_ue_index(test_ue_index_), adapted(adapted_)
+  {
+  }
+
+  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override
+  {
+    mac_dl_buffer_state_indication_message dl_bs_copy = dl_bs;
+    if (test_ue_index == dl_bs.ue_index and test_ue_cfg.pdsch_active) {
+      // It is the test UE. Set a positive DL buffer state if PDSCH is set to "activated".
+      dl_bs_copy.bs = TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE;
+    }
+
+    adapted.handle_dl_buffer_state_update_required(dl_bs_copy);
+  }
+
+private:
+  const srs_du::du_test_config::test_ue_config& test_ue_cfg;
+  const du_ue_index_t&                          test_ue_index;
+  mac_ue_control_information_handler&           adapted;
+};
+
 class test_ue_configurator : public mac_ue_configurator
 {
 public:
   explicit test_ue_configurator(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
                                 du_ue_index_t&                                test_ue_index_,
                                 mac_ue_configurator&                          cfg_adaptee_,
-                                mac_ue_control_information_handler&           info_adaptee_) :
-    test_ue_cfg(test_ue_cfg_), test_ue_index(test_ue_index_), cfg_adaptee(cfg_adaptee_), info_adaptee(info_adaptee_)
+                                mac_ue_control_information_handler&           ue_info_handler_) :
+    test_ue_cfg(test_ue_cfg_),
+    test_ue_index(test_ue_index_),
+    ue_cfg_adapted(cfg_adaptee_),
+    ue_info_handler(ue_info_handler_)
   {
   }
 
@@ -57,13 +87,13 @@ public:
 
     return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      CORO_AWAIT_VALUE(mac_ue_create_response_message ret, cfg_adaptee.handle_ue_create_request(cfg_adapted));
+      CORO_AWAIT_VALUE(mac_ue_create_response_message ret, ue_cfg_adapted.handle_ue_create_request(cfg_adapted));
       if (test_ue_cfg.rnti == cfg_adapted.crnti) {
         // It is the test UE.
 
         if (test_ue_cfg.pdsch_active) {
           // Update buffer states automatically.
-          info_adaptee.handle_dl_buffer_state_update_required(
+          ue_info_handler.handle_dl_buffer_state_update_required(
               {ret.ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
         }
       }
@@ -81,21 +111,21 @@ public:
       // Add adapters to the UE config bearers before passing it to MAC.
       cfg_adapted.bearers_to_addmod = adapt_bearers(cfg.bearers_to_addmod);
 
-      return cfg_adaptee.handle_ue_reconfiguration_request(cfg_adapted);
+      return ue_cfg_adapted.handle_ue_reconfiguration_request(cfg_adapted);
     }
 
     // otherwise, just forward config.
-    return cfg_adaptee.handle_ue_reconfiguration_request(cfg);
+    return ue_cfg_adapted.handle_ue_reconfiguration_request(cfg);
   }
 
   async_task<mac_ue_delete_response_message> handle_ue_delete_request(const mac_ue_delete_request_message& cfg) override
   {
-    return cfg_adaptee.handle_ue_delete_request(cfg);
+    return ue_cfg_adapted.handle_ue_delete_request(cfg);
   }
 
   void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {
-    cfg_adaptee.handle_ul_ccch_msg(ue_index, std::move(pdu));
+    ue_cfg_adapted.handle_ul_ccch_msg(ue_index, std::move(pdu));
   }
 
 private:
@@ -117,8 +147,8 @@ private:
 
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;
   du_ue_index_t&                                test_ue_index;
-  mac_ue_configurator&                          cfg_adaptee;
-  mac_ue_control_information_handler&           info_adaptee;
+  mac_ue_configurator&                          ue_cfg_adapted;
+  mac_ue_control_information_handler&           ue_info_handler;
 };
 
 class test_ue_cell_info_handler : public mac_cell_control_information_handler
@@ -126,11 +156,11 @@ class test_ue_cell_info_handler : public mac_cell_control_information_handler
 public:
   test_ue_cell_info_handler(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
                             mac_cell_control_information_handler&         adaptee_) :
-    test_ue_cfg(test_ue_cfg_), adaptee(adaptee_)
+    test_ue_cfg(test_ue_cfg_), adapted(adaptee_)
   {
   }
 
-  void handle_crc(const mac_crc_indication_message& msg) override { return adaptee.handle_crc(msg); }
+  void handle_crc(const mac_crc_indication_message& msg) override { return adapted.handle_crc(msg); }
 
   void handle_uci(const mac_uci_indication_message& msg) override
   {
@@ -164,46 +194,34 @@ public:
       }
     }
 
-    adaptee.handle_uci(msg_copy);
+    adapted.handle_uci(msg_copy);
   }
 
 private:
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;
-  mac_cell_control_information_handler&         adaptee;
+  mac_cell_control_information_handler&         adapted;
 };
 
-mac_test_mode_impl::mac_test_mode_impl(const mac_config& mac_cfg) : mac_impl(mac_cfg), test_ue(*mac_cfg.test_ue)
+mac_test_mode_adapter::mac_test_mode_adapter(std::unique_ptr<mac_interface>                mac_ptr_,
+                                             const srs_du::du_test_config::test_ue_config& test_ue_cfg) :
+  test_ue(test_ue_cfg), mac_ptr(std::move(mac_ptr_))
 {
-  adapter.ue_configurator =
-      std::make_unique<test_ue_configurator>(test_ue, test_ue_index, mac_impl::get_ue_configurator(), *this);
+  ue_control_info_handler =
+      std::make_unique<test_ue_info_handler>(test_ue, test_ue_index, mac_ptr->get_ue_control_info_handler());
+  ue_configurator = std::make_unique<test_ue_configurator>(
+      test_ue, test_ue_index, mac_ptr->get_ue_configurator(), *ue_control_info_handler);
 }
 
-mac_test_mode_impl::~mac_test_mode_impl() = default;
+mac_test_mode_adapter::~mac_test_mode_adapter() = default;
 
-mac_ue_configurator& mac_test_mode_impl::get_ue_configurator()
+mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_handler(du_cell_index_t cell_index)
 {
-  return *adapter.ue_configurator;
-}
-
-mac_cell_control_information_handler& mac_test_mode_impl::get_control_info_handler(du_cell_index_t cell_index)
-{
-  if (adapter.cell_info_handler.size() <= cell_index) {
-    adapter.cell_info_handler.resize(cell_index + 1);
+  if (cell_info_handler.size() <= cell_index) {
+    cell_info_handler.resize(cell_index + 1);
   }
-  if (adapter.cell_info_handler[cell_index] == nullptr) {
-    adapter.cell_info_handler[cell_index] =
-        std::make_unique<test_ue_cell_info_handler>(test_ue, mac_impl::get_control_info_handler(cell_index));
+  if (cell_info_handler[cell_index] == nullptr) {
+    cell_info_handler[cell_index] =
+        std::make_unique<test_ue_cell_info_handler>(test_ue, mac_ptr->get_control_info_handler(cell_index));
   }
-  return *adapter.cell_info_handler[cell_index];
-}
-
-void mac_test_mode_impl::handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs)
-{
-  mac_dl_buffer_state_indication_message dl_bs_copy = dl_bs;
-  if (test_ue_index == dl_bs.ue_index and test_ue.pdsch_active) {
-    // It is the test UE. Set a positive DL buffer state if PDSCH is set to "activated".
-    dl_bs_copy.bs = TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE;
-  }
-
-  mac_impl::handle_dl_buffer_state_update_required(dl_bs_copy);
+  return *cell_info_handler[cell_index];
 }
