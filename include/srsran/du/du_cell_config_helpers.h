@@ -14,6 +14,7 @@
 #include "srsran/du/du_qos_config.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/tdd_ul_dl_config.h"
@@ -90,9 +91,9 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 }
 
 /// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
-inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
+inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
 {
-  std::map<uint8_t, du_qos_config> qos_list = {};
+  std::map<five_qi_t, du_qos_config> qos_list = {};
   {
     // 5QI=7
     du_qos_config cfg{};
@@ -100,7 +101,7 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.t_reassembly    = 45;
-    qos_list[7]                   = cfg;
+    qos_list[uint_to_five_qi(7)]  = cfg;
   }
   {
     // 5QI=9
@@ -114,7 +115,7 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
     cfg.rlc.am.rx.t_reassembly      = 45;
     cfg.rlc.am.rx.t_status_prohibit = 45;
-    qos_list[9]                     = cfg;
+    qos_list[uint_to_five_qi(9)]    = cfg;
   }
   return qos_list;
 }

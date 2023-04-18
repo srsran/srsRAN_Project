@@ -12,6 +12,7 @@
 
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/five_qi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/search_space.h"
@@ -231,7 +232,7 @@ struct pdcp_appconfig {
 };
 /// QoS configuration
 struct qos_appconfig {
-  uint8_t        five_qi = 9;
+  five_qi_t      five_qi = uint_to_five_qi(9);
   rlc_appconfig  rlc;
   pdcp_appconfig pdcp;
 };

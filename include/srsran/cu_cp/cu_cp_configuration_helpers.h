@@ -16,9 +16,6 @@
 namespace srsran {
 namespace config_helpers {
 
-/// Generates a map of 5QI to default QoS configurations.
-std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list();
-
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
@@ -28,9 +25,9 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 }
 
 /// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
-inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
+inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
 {
-  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
+  std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
   {
     // 5QI=7
     srs_cu_cp::cu_cp_qos_config cfg{};
@@ -51,8 +48,8 @@ inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_con
     pdcp_cfg.rx.out_of_order_delivery = false;
     pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms50;
 
-    cfg.pdcp    = pdcp_cfg;
-    qos_list[7] = cfg;
+    cfg.pdcp                     = pdcp_cfg;
+    qos_list[uint_to_five_qi(7)] = cfg;
   }
   {
     // 5QI=9
@@ -74,8 +71,8 @@ inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_con
     pdcp_cfg.rx.out_of_order_delivery = false;
     pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms120;
 
-    cfg.pdcp    = pdcp_cfg;
-    qos_list[9] = cfg;
+    cfg.pdcp                     = pdcp_cfg;
+    qos_list[uint_to_five_qi(9)] = cfg;
   }
   return qos_list;
 }

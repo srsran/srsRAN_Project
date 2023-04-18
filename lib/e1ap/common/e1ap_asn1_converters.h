@@ -1044,7 +1044,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       dyn_5qi.packet_error_rate.per_scalar   = asn1_dyn_5qi.packet_error_rate.per_scalar;
 
       if (asn1_dyn_5qi.five_qi_present) {
-        dyn_5qi.five_qi = asn1_dyn_5qi.five_qi;
+        dyn_5qi.five_qi = uint_to_five_qi(asn1_dyn_5qi.five_qi);
       }
       if (asn1_dyn_5qi.delay_crit_present) {
         dyn_5qi.delay_crit = asn1_dyn_5qi.delay_crit.to_string();
@@ -1061,7 +1061,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
       non_dyn_5qi_descriptor_t non_dyn_5qi;
-      non_dyn_5qi.five_qi = asn1_non_dyn_5qi.five_qi;
+      non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
       if (asn1_non_dyn_5qi.qos_prio_level_present) {
         non_dyn_5qi.qos_prio_level = asn1_non_dyn_5qi.qos_prio_level;
       }

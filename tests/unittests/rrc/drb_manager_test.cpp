@@ -31,11 +31,11 @@ protected:
     rrc_logger.set_hex_dump_max_size(32);
 
     drb_manager_cfg cfg;
-    cfg.five_qi_config[9] = {};
+    cfg.five_qi_config[uint_to_five_qi(9)] = {};
     pdcp_config p_cfg;
-    p_cfg.rb_type              = pdcp_rb_type::drb;
-    cfg.five_qi_config[9].pdcp = p_cfg;
-    manager                    = std::make_unique<drb_manager_impl>(cfg);
+    p_cfg.rb_type                               = pdcp_rb_type::drb;
+    cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
+    manager                                     = std::make_unique<drb_manager_impl>(cfg);
   }
 
   void TearDown() override

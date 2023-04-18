@@ -61,7 +61,7 @@ void pdu_session_resource_setup_routine::operator()(
   for (const qos_flow_setup_request_item& flow_item :
        setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items) {
     if (not valid_5qi(flow_item)) {
-      uint16_t five_qi;
+      five_qi_t five_qi;
       if (flow_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
         five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
       } else if (flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {

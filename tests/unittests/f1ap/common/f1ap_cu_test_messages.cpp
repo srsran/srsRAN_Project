@@ -268,7 +268,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   // qos flow level qos params
   // qos characteristics
   non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                        = 8;
+  non_dyn_5qi.five_qi                                                        = uint_to_five_qi(8);
   non_dyn_5qi.qos_prio_level                                                 = 1;
   non_dyn_5qi.averaging_win                                                  = 3;
   non_dyn_5qi.max_data_burst_volume                                          = 1000;

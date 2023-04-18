@@ -137,7 +137,7 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
 
     if (qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
       asn1_dyn_5qi.five_qi_present = true;
-      asn1_dyn_5qi.five_qi         = qos_characteristics.dyn_5qi.value().five_qi.value();
+      asn1_dyn_5qi.five_qi         = five_qi_to_uint(qos_characteristics.dyn_5qi.value().five_qi.value());
     }
 
     if (qos_characteristics.dyn_5qi.value().delay_crit.has_value()) {
@@ -158,7 +158,7 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   } else if (qos_characteristics.non_dyn_5qi.has_value()) {
     auto& asn1_non_dyn_5qi = asn1_qos_characteristics.set_non_dyn_5qi();
 
-    asn1_non_dyn_5qi.five_qi = qos_characteristics.non_dyn_5qi.value().five_qi;
+    asn1_non_dyn_5qi.five_qi = five_qi_to_uint(qos_characteristics.non_dyn_5qi.value().five_qi);
 
     if (qos_characteristics.non_dyn_5qi.value().qos_prio_level.has_value()) {
       asn1_non_dyn_5qi.qos_prio_level_present = true;

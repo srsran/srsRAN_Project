@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "five_qi.h"
 #include "nr_cgi.h"
 #include "s_nssai.h"
 #include "srsran/adt/optional.h"
@@ -90,14 +91,14 @@ struct dyn_5qi_descriptor_t {
   uint8_t               qos_prio_level;
   uint16_t              packet_delay_budget;
   packet_error_rate_t   packet_error_rate;
-  optional<uint16_t>    five_qi;
+  optional<five_qi_t>   five_qi;
   optional<std::string> delay_crit;
   optional<uint16_t>    averaging_win;
   optional<uint16_t>    max_data_burst_volume;
 };
 
 struct non_dyn_5qi_descriptor_t {
-  uint16_t           five_qi;
+  five_qi_t          five_qi;
   optional<uint8_t>  qos_prio_level;
   optional<uint16_t> averaging_win;
   optional<uint16_t> max_data_burst_volume;

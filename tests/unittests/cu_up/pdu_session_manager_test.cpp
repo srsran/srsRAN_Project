@@ -89,7 +89,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
   non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                                 = 8;
+  non_dyn_5qi.five_qi                                                                 = uint_to_five_qi(8);
   qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
@@ -167,6 +167,8 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.emplace();
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = uint_to_five_qi(9);
 
   drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
   pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);
@@ -238,6 +240,8 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.emplace();
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = uint_to_five_qi(9);
 
   drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
   pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);

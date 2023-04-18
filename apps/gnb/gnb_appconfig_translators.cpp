@@ -145,9 +145,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   return out_cfg;
 }
 
-std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
+std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
 {
-  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
+  std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
     out_cfg = config_helpers::make_default_cu_cp_qos_config_list();
     return out_cfg;
@@ -213,9 +213,9 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
   return out_cfg;
 }
 
-std::map<uint8_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appconfig& config)
+std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appconfig& config)
 {
-  std::map<uint8_t, du_qos_config> out_cfg = {};
+  std::map<five_qi_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
     out_cfg = config_helpers::make_default_du_qos_config_list();
     return out_cfg;

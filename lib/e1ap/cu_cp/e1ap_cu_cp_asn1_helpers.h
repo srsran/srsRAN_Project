@@ -134,7 +134,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
           asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.packet_error_rate.per_exponent;
           if (dynamic_5qi.five_qi.has_value()) {
             asn1_dynamic_5qi.five_qi_present = true;
-            asn1_dynamic_5qi.five_qi         = dynamic_5qi.five_qi.value();
+            asn1_dynamic_5qi.five_qi         = five_qi_to_uint(dynamic_5qi.five_qi.value());
           }
           if (dynamic_5qi.delay_crit.has_value()) {
             asn1_dynamic_5qi.delay_crit_present = true;
@@ -154,7 +154,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
           auto& asn1_non_dynamic_5qi =
               asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
-          asn1_non_dynamic_5qi.five_qi = non_dynamic_5qi.five_qi;
+          asn1_non_dynamic_5qi.five_qi = five_qi_to_uint(non_dynamic_5qi.five_qi);
 
           if (non_dynamic_5qi.qos_prio_level.has_value()) {
             asn1_non_dynamic_5qi.qos_prio_level_present = true;

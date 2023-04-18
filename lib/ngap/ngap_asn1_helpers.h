@@ -146,7 +146,8 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
           asn1::ngap::qos_characteristics_c::types::dyn5qi) {
         dyn_5qi_descriptor_t dyn_5qi = {};
         if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
-          dyn_5qi.five_qi = asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
+          dyn_5qi.five_qi =
+              uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
         }
         // TODO: Add optional values
 
@@ -157,7 +158,8 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
       } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                  asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
         non_dyn_5qi_descriptor_t non_dyn_5qi = {};
-        non_dyn_5qi.five_qi = asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
+        non_dyn_5qi.five_qi =
+            uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
         qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
         // TODO: Add optional values

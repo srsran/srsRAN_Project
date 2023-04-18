@@ -323,7 +323,7 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 }
 
 /// Validates the given PDCP configuration. Returns true on success, otherwise false.
-static bool validate_pdcp_appconfig(uint8_t five_qi, const pdcp_appconfig& config)
+static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& config)
 {
   if (config.integrity_protection_required) {
     fmt::print("PDCP DRB integrity protection is not supported yet. 5QI={}\n", five_qi);

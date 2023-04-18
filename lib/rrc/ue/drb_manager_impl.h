@@ -22,7 +22,7 @@ struct drb_context {
   pdu_session_id_t           pdu_session_id = pdu_session_id_t::min;
   s_nssai_t                  s_nssai        = {};
   bool                       default_drb    = false;
-  uint16_t                   five_qi        = 0;
+  five_qi_t                  five_qi        = five_qi_t::invalid;
   std::vector<qos_flow_id_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
 
   pdcp_config   pdcp_cfg;
@@ -45,20 +45,20 @@ public:
   pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
   s_nssai_t                  get_s_nssai(const drb_id_t drb_id) override;
   size_t                     get_nof_drbs() override;
-  bool                       valid_5qi(uint8_t five_qi) override;
+  bool                       valid_5qi(const five_qi_t five_qi) override;
 
 private:
   drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it
 
   // returns valid RRC PDCP config for a given FiveQI
-  pdcp_config   set_rrc_pdcp_config(uint8_t five_qi);
+  pdcp_config   set_rrc_pdcp_config(const five_qi_t five_qi);
   sdap_config_t set_rrc_sdap_config(const drb_context& context);
 
   drb_manager_cfg       cfg;
   srslog::basic_logger& logger;
 
   std::map<drb_id_t, drb_context> drbs;        // Stores existing DRBs
-  std::map<uint16_t, drb_id_t>    five_qi_map; // Maps QoS flow characteristics to existing DRBs
+  std::map<five_qi_t, drb_id_t>   five_qi_map; // Maps QoS flow characteristics to existing DRBs
 };
 
 } // namespace srs_cu_cp
