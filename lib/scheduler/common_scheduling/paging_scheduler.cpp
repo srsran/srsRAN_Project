@@ -34,6 +34,20 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
+    bool ss_cfg_set = false;
+    for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+      if (cfg.id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
+        continue;
+      }
+      ss_cfg     = cfg;
+      ss_cfg_set = true;
+      break;
+    }
+
+    if (not ss_cfg_set) {
+      srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
+    }
+
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
       // PDCCH monitoring occasions for paging are same as for RMSI. See TS 38.304, clause 7.1.
       sib1_period = std::max(ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period),
@@ -48,20 +62,6 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
             precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
-      bool ss_cfg_set = false;
-      for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-        if (cfg.id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
-          continue;
-        }
-        ss_cfg     = cfg;
-        ss_cfg_set = true;
-        break;
-      }
-
-      if (not ss_cfg_set) {
-        srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
-      }
-
       if (ss_cfg.cs_id != to_coreset_id(0) and
           ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) or
            (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg.cs_id))) {
