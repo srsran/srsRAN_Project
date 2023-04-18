@@ -87,12 +87,15 @@ public:
 
     return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response_message>>& ctx) mutable {
       CORO_BEGIN(ctx);
+
+      // Create the UE in mac instance.
       CORO_AWAIT_VALUE(mac_ue_create_response_message ret, ue_cfg_adapted.handle_ue_create_request(cfg_adapted));
+
       if (test_ue_cfg.rnti == cfg_adapted.crnti) {
         // It is the test UE.
 
         if (test_ue_cfg.pdsch_active) {
-          // Update buffer states automatically.
+          // Update DL buffer state automatically.
           ue_info_handler.handle_dl_buffer_state_update_required(
               {ret.ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
         }
@@ -160,7 +163,21 @@ public:
   {
   }
 
-  void handle_crc(const mac_crc_indication_message& msg) override { return adapted.handle_crc(msg); }
+  void handle_crc(const mac_crc_indication_message& msg) override
+  {
+    mac_crc_indication_message msg_copy = msg;
+    for (auto& crc : msg_copy.crcs) {
+      if (crc.rnti != test_ue_cfg.rnti) {
+        // It is not the test UE.
+        continue;
+      }
+
+      // Force CRC=OK for test UE.
+      crc.tb_crc_success = true;
+    }
+
+    return adapted.handle_crc(msg_copy);
+  }
 
   void handle_uci(const mac_uci_indication_message& msg) override
   {
