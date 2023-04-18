@@ -451,6 +451,13 @@ build alt [ubuntu-20.04, amd64, Debug]:
     OS: ubuntu-20.04
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
+  needs:
+    - job: build alt [ubuntu-22.04, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [ubuntu-22.04, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [ubuntu-20.04, amd64, Release]:
   extends: .build_and_unit_alt
@@ -460,6 +467,13 @@ build alt [ubuntu-20.04, amd64, Release]:
     OS: ubuntu-20.04
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
+  needs:
+    - job: build alt [ubuntu-22.04, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [ubuntu-22.04, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -505,6 +519,13 @@ build alt [archlinux-latest, amd64, Debug]:
     OS: archlinux-latest
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
+  needs:
+    - job: build alt [ubuntu-20.04, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [ubuntu-20.04, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [archlinux-latest, amd64, Release]:
   extends: .build_and_unit_alt
@@ -514,6 +535,13 @@ build alt [archlinux-latest, amd64, Release]:
     OS: archlinux-latest
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
+  needs:
+    - job: build alt [ubuntu-20.04, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [ubuntu-20.04, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [archlinux-latest, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -532,6 +560,13 @@ build alt [rhel-8, amd64, Debug]:
     OS: rhel-8
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Debug
+  needs:
+    - job: build alt [archlinux-latest, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [archlinux-latest, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [rhel-8, amd64, Release]:
   extends: .build_and_unit_alt
@@ -541,6 +576,13 @@ build alt [rhel-8, amd64, Release]:
     OS: rhel-8
     INFRASTRUCTURE_TAG: aws-spot-amd64
     BUILD_TYPE: Release
+  needs:
+    - job: build alt [archlinux-latest, amd64, Debug]
+      optional: true
+      artifacts: false
+    - job: build alt [archlinux-latest, amd64, Release]
+      optional: true
+      artifacts: false
 
 build alt [rhel-8, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
@@ -554,7 +596,7 @@ build alt [rhel-8, amd64, RelWithDebInfo]:
 build alt [rhel-8, arm64, Debug]:
   extends: .build_and_unit_alt
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: rhel-8
     INFRASTRUCTURE_TAG: aws-spot-arm64
@@ -563,7 +605,7 @@ build alt [rhel-8, arm64, Debug]:
 build alt [rhel-8, arm64, Release]:
   extends: .build_and_unit_alt
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: rhel-8
     INFRASTRUCTURE_TAG: aws-spot-arm64
