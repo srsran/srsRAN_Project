@@ -26,10 +26,10 @@ namespace csi_rs {
 /// \return The row index of Table 7.4.1.5.3-1, TS 38.211 corresponding to the inputs. If the given input configuration
 ///         does not match any of the rows in the table, the function triggers an assert and returns an invalid value
 ///         (i.e., 0).
-uint8_t get_csi_rs_resource_mapping_row_number(uint8_t                          nof_ports,
-                                               csi_rs_freq_density_type         density,
-                                               csi_rs_cdm_type                  cdm_type,
-                                               const freq_allocation_mask_type& fd_alloc);
+unsigned get_csi_rs_resource_mapping_row_number(uint8_t                          nof_ports,
+                                                csi_rs_freq_density_type         density,
+                                                csi_rs_cdm_type                  cdm_type,
+                                                const freq_allocation_mask_type& fd_alloc);
 
 } // namespace csi_rs
 

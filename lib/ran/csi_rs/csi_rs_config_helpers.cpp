@@ -14,12 +14,14 @@ using namespace srsran;
 using namespace csi_rs;
 
 // CSI-RS locations within a slot. See TS 38.211 Table 7.4.1.5.3-1.
+namespace {
 struct csi_rs_resource_mapping_info {
-  uint8_t                  row;
+  unsigned                 row;
   uint8_t                  nof_ports;
   csi_rs_freq_density_type density;
   csi_rs_cdm_type          cdm_type;
 };
+} // namespace
 
 // The following entries are taken from Table 7.4.1.5.3-1, TS 38.211, which is spread out over all possible combinations
 // of nof_ports, density, cdm_type.
@@ -68,10 +70,10 @@ static constexpr std::array<csi_rs_resource_mapping_info, nof_csi_rs_resource_ma
         // clang-format on
     }};
 
-uint8_t srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t                          nof_ports,
-                                                               csi_rs_freq_density_type         density,
-                                                               csi_rs_cdm_type                  cdm_type,
-                                                               const freq_allocation_mask_type& fd_alloc)
+unsigned srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t                          nof_ports,
+                                                                csi_rs_freq_density_type         density,
+                                                                csi_rs_cdm_type                  cdm_type,
+                                                                const freq_allocation_mask_type& fd_alloc)
 {
   // The following mapping can be inferred from Section 7.4.1.5.3, TS 38.211.
   for (const csi_rs_resource_mapping_info& info : csi_rs_resource_mapping_within_slot) {
@@ -92,6 +94,6 @@ uint8_t srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t          
     }
   }
   srsran_assertion_failure("The CSI-RS resource config does not match any row of Table 7.4.1.5.3-1, TS 38.211.");
-  const uint8_t invalid_row_index = 0;
+  const unsigned invalid_row_index = 0;
   return invalid_row_index;
 }
