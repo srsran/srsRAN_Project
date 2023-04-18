@@ -32,7 +32,7 @@ target_compile_options(e2ap_asn1 PRIVATE "-Os")
 target_link_libraries(e2ap_asn1 asn1_utils)
 
 # NGAP ASN1
-add_library(ngap_asn1 STATIC ngap/ngap.cpp)
+add_library(ngap_asn1 STATIC ngap/common.cpp ngap/ngap_ies.cpp ngap/ngap_pdu_contents.cpp ngap/ngap.cpp)
 target_compile_options(ngap_asn1 PRIVATE "-Os")
 target_link_libraries(ngap_asn1 asn1_utils)
 
