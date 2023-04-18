@@ -71,11 +71,7 @@ struct trace_event_extended : public trace_event {
 
   trace_event_extended(const trace_event& event) :
     trace_event(event),
-    cpu([]() -> unsigned {
-      unsigned cpu_;
-      getcpu(&cpu_, nullptr);
-      return cpu_;
-    }()),
+    cpu(sched_getcpu()),
     thread_name(this_thread_name()),
     duration(duration_cast<microseconds>(trace_point::clock::now() - event.start_tp))
   {
@@ -87,13 +83,7 @@ struct instant_trace_event_extended : public instant_trace_event {
   const char* thread_name;
 
   instant_trace_event_extended(const instant_trace_event& event) :
-    instant_trace_event(event),
-    cpu([]() -> unsigned {
-      unsigned cpu_;
-      getcpu(&cpu_, nullptr);
-      return cpu_;
-    }()),
-    thread_name(this_thread_name())
+    instant_trace_event(event), cpu(sched_getcpu()), thread_name(this_thread_name())
   {
   }
 };
