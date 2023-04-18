@@ -25,18 +25,6 @@ namespace rrc_nr {
  *                              Struct Definitions
  ******************************************************************************/
 
-// PLMN-Identity ::= SEQUENCE
-struct plmn_id_s {
-  bool  mcc_present = false;
-  mcc_l mcc;
-  mnc_l mnc;
-
-  // sequence methods
-  SRSASN_CODE pack(bit_ref& bref) const;
-  SRSASN_CODE unpack(cbit_ref& bref);
-  void        to_json(json_writer& j) const;
-};
-
 // MIMO-LayersDL ::= ENUMERATED
 struct mimo_layers_dl_opts {
   enum options { two_layers, four_layers, eight_layers, nulltype } value;

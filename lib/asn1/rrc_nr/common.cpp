@@ -31,6 +31,47 @@ uint16_t subcarrier_spacing_opts::to_number() const
   return map_enum_number(numbers, 7, value, "subcarrier_spacing_e");
 }
 
+// PLMN-Identity ::= SEQUENCE
+SRSASN_CODE plmn_id_s::pack(bit_ref& bref) const
+{
+  HANDLE_CODE(bref.pack(mcc_present, 1));
+
+  if (mcc_present) {
+    HANDLE_CODE(pack_fixed_seq_of(bref, mcc, mcc.size(), integer_packer<uint8_t>(0, 9)));
+  }
+  HANDLE_CODE(pack_dyn_seq_of(bref, mnc, 2, 3, integer_packer<uint8_t>(0, 9)));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE plmn_id_s::unpack(cbit_ref& bref)
+{
+  HANDLE_CODE(bref.unpack(mcc_present, 1));
+
+  if (mcc_present) {
+    HANDLE_CODE(unpack_fixed_seq_of(mcc, bref, mcc.size(), integer_packer<uint8_t>(0, 9)));
+  }
+  HANDLE_CODE(unpack_dyn_seq_of(mnc, bref, 2, 3, integer_packer<uint8_t>(0, 9)));
+
+  return SRSASN_SUCCESS;
+}
+void plmn_id_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  if (mcc_present) {
+    j.start_array("mcc");
+    for (const auto& e1 : mcc) {
+      j.write_int(e1);
+    }
+    j.end_array();
+  }
+  j.start_array("mnc");
+  for (const auto& e1 : mnc) {
+    j.write_int(e1);
+  }
+  j.end_array();
+  j.end_obj();
+}
+
 // SRS-PeriodicityAndOffset ::= CHOICE
 void srs_periodicity_and_offset_c::destroy_() {}
 void srs_periodicity_and_offset_c::set(types::options e)

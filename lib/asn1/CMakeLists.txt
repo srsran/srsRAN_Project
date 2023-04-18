@@ -12,7 +12,9 @@ add_library(asn1_utils STATIC asn1_utils.cpp)
 target_link_libraries(asn1_utils srslog)
 
 # RRC NR ASN1
-add_library(rrc_nr_asn1 STATIC rrc_nr/rrc_nr.cpp rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp)
+add_library(rrc_nr_asn1 STATIC rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp
+        rrc_nr/msg_common.cpp rrc_nr/dl_dcch_msg.cpp rrc_nr/ul_dcch_msg.cpp rrc_nr/nr_ue_variables.cpp
+        rrc_nr/pc5_rrc_definitions.cpp rrc_nr/rrc_nr.cpp)
 target_compile_options(rrc_nr_asn1 PRIVATE "-Os")
 target_link_libraries(rrc_nr_asn1 asn1_utils)
 

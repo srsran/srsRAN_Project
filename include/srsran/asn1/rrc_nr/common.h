@@ -17,8 +17,6 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
-#include <cstdio>
-#include <stdarg.h>
 
 namespace asn1 {
 namespace rrc_nr {
@@ -410,6 +408,18 @@ using mcc_l = std::array<uint8_t, 3>;
 
 // MNC ::= SEQUENCE (SIZE (2..3)) OF INTEGER (0..9)
 using mnc_l = bounded_array<uint8_t, 3>;
+
+// PLMN-Identity ::= SEQUENCE
+struct plmn_id_s {
+  bool  mcc_present = false;
+  mcc_l mcc;
+  mnc_l mnc;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
 
 // SRS-PeriodicityAndOffset ::= CHOICE
 struct srs_periodicity_and_offset_c {
