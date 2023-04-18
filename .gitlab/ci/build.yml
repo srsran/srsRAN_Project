@@ -133,6 +133,7 @@ pull_src_cache:
     DOCKER_BUILDER_VERSION: "1.7.8"
     UPLOAD_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
+    KUBERNETES_MEMORY_REQUEST: 12Gi
   needs:
     - job: pull_src_cache
       artifacts: false
@@ -296,6 +297,8 @@ pull_src_cache:
 
 build cached:
   extends: .build_and_unit_main
+  variables:
+    KUBERNETES_MEMORY_REQUEST: 7Gi
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -335,6 +338,7 @@ intermediate commits:
     ASSERT_LEVEL: PARANOID
     ENABLE_EXPORT: "False"
     ENABLE_GCOV: "True"
+    KUBERNETES_MEMORY_REQUEST: 7Gi
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
