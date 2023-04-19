@@ -430,7 +430,11 @@ int main(int argc, char** argv)
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   // Parse arguments.
-  CLI11_PARSE(app, argc, argv);
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError& e) {
+    report_error("Error parsing config file: {}\n", e.what());
+  }
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
