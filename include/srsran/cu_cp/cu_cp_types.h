@@ -620,5 +620,12 @@ struct cu_cp_paging_message {
   optional<cu_cp_assist_data_for_paging>      assist_data_for_paging;
 };
 
+struct cu_cp_inactivity_notification {
+  ue_index_t                    ue_index    = ue_index_t::invalid;
+  bool                          ue_inactive = false;
+  std::vector<drb_id_t>         inactive_drbs;
+  std::vector<pdu_session_id_t> inactive_pdu_sessions;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
