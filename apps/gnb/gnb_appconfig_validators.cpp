@@ -47,12 +47,13 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
   bool           is_paired_spectrum          = band_helper::is_paired_spectrum(band);
-  const unsigned max_supported_prach_cfg_idx = is_paired_spectrum ? 86U : 66U;
+  const unsigned max_supported_prach_cfg_idx = is_paired_spectrum ? 107U : 86U;
   if (config.prach_config_index > max_supported_prach_cfg_idx) {
-    fmt::print(
-        "Short PRACH preamble formats not supported. For {}, the max PRACH configuration index supported is {} \n",
-        is_paired_spectrum ? "FDD" : "TDD",
-        max_supported_prach_cfg_idx);
+    fmt::print("PRACH configuration index {} not supported. For {}, the max PRACH configuration index "
+               "supported is {} \n",
+               config.prach_config_index,
+               is_paired_spectrum ? "FDD" : "TDD",
+               max_supported_prach_cfg_idx);
     return false;
   }
 
