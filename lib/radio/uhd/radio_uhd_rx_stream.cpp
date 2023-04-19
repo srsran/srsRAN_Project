@@ -126,7 +126,7 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
                static_cast<baseband_gateway_timestamp>(srate_Hz * md.time_spec.get_frac_secs());
     }
 
-    // Increment the total amount of received samples.
+    // Increase the total amount of received samples.
     rxd_samples_total += rxd_samples;
 
     // Prepare notification event.

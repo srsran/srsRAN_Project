@@ -1029,7 +1029,7 @@ private:
   /// \param start first bit index of the bounded_bitset.
   /// \param stop end bit index of the bounded_bitset.
   /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
-  ///          When this callback returns true, the iteration is stopped.
+  ///          When this callback returns true, the iteration is notify_stop.
   /// \return true if the provided callback returns true for a given word. False otherwise.
   template <typename C>
   bool find_first_word_(size_t start, size_t stop, const C& c) const

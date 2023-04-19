@@ -284,13 +284,13 @@ struct pcap_appconfig {
 
 /// Lower physical layer thread profiles.
 enum class lower_phy_thread_profile {
-  /// Uses the same task worker than the rest of the PHY (ZMQ only).
+  /// Same task worker as the rest of the PHY (ZMQ only).
   blocking = 0,
-  /// Uses a single task worker for all the lower physical layer task executors.
+  /// Single task worker for all the lower physical layer task executors.
   single,
-  /// Uses a task worker for the downlink and another task worker for the uplink.
+  /// Two task workers - one for the downlink and one for the uplink.
   dual,
-  /// Uses a task worker for each of the subtasks (downlink processing, uplink processing, reception and
+  /// Dedicated task workers for each of the subtasks (downlink processing, uplink processing, reception and
   /// transmission).
   quad
 };
@@ -299,8 +299,8 @@ enum class lower_phy_thread_profile {
 struct expert_phy_appconfig {
   /// Lower physical layer thread profile.
   lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
-  /// Number of thread for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
-  /// concurrency is limited in which case will use a minimum of one thread.
+  /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
+  /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;

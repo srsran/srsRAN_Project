@@ -91,7 +91,8 @@ private:
 
   void log_state(srslog::basic_levels level)
   {
-    logger.log(level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "stopped");
+    logger.log(
+        level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "notify_stop");
   }
 
 public:

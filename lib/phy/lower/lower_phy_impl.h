@@ -37,7 +37,7 @@ namespace srsran {
 class lower_phy_impl : public lower_phy
 {
 public:
-  /// Collects the configuration parameters required to create a lower physical layer.
+  /// Collects the injected dependencies of the lower physical layer.
   struct configuration {
     /// Downlink processor.
     std::unique_ptr<lower_phy_downlink_processor> downlink_proc;

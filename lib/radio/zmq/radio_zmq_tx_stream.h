@@ -18,6 +18,7 @@
 
 namespace srsran {
 
+/// Implements a gateway receiver based on ZMQ transmit socket.
 class radio_zmq_tx_stream : public baseband_gateway_transmitter, public radio_zmq_tx_align_interface
 {
 private:

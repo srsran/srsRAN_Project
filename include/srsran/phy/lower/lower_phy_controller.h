@@ -24,7 +24,7 @@ public:
   /// Starts the lower physical layer operation.
   virtual void start() = 0;
 
-  /// Requests to lower physical layer to stop the operation.
+  /// Requests the lower physical layer to stop the operation.
   virtual void stop() = 0;
 };
 

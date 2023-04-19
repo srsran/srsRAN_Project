@@ -175,7 +175,7 @@ private:
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
   /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
-  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be stopped.
+  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be notify_stop.
   void stop_discard_timer(uint32_t highest_sn);
 
   /// Discard timer information. We keep both the discard timer

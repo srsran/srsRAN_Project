@@ -45,7 +45,7 @@ private:
     WAIT_END_OF_BURST,
     /// Signals a stop to the asynchronous thread.
     WAIT_STOP,
-    /// Indicates the asynchronous thread is stopped.
+    /// Indicates the asynchronous thread is notify_stop.
     STOPPED
   };
 
@@ -163,7 +163,7 @@ public:
     }
   }
 
-  /// Notifies the asynchronous task has stopped.
+  /// Notifies the asynchronous task has notify_stop.
   void async_task_stopped()
   {
     std::unique_lock<std::mutex> lock(mutex);

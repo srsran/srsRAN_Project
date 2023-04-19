@@ -55,7 +55,8 @@ public:
   base_blocking_queue& operator=(const base_blocking_queue&) = delete;
   base_blocking_queue& operator=(base_blocking_queue&&)      = delete;
 
-  /// \brief Sets queue state to "stopped" and awake any threads currently blocked waiting (either pushing or popping).
+  /// \brief Sets queue state to "notify_stop" and awake any threads currently blocked waiting (either pushing or
+  /// popping).
   void stop()
   {
     std::unique_lock<std::mutex> lock(mutex);

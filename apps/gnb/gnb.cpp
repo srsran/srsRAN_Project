@@ -797,11 +797,11 @@ int main(int argc, char** argv)
 
   gnb_logger.info("Stopping radio...");
   radio->stop();
-  gnb_logger.info("Radio stopped successfully");
+  gnb_logger.info("Radio notify_stop successfully");
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
-  gnb_logger.info("Lower PHY stopped successfully");
+  gnb_logger.info("Lower PHY notify_stop successfully");
 
   gnb_logger.info("Closing DU-high...");
   du_obj.stop();
@@ -813,7 +813,7 @@ int main(int argc, char** argv)
 
   gnb_logger.info("Stopping executors...");
   workers.stop();
-  gnb_logger.info("Executors stopped successfully");
+  gnb_logger.info("Executors notify_stop successfully");
 
   srslog::flush();
 

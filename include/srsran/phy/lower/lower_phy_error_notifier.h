@@ -26,8 +26,8 @@ public:
 
   /// \brief Notifies a resource grid outside the slot window.
   ///
-  /// This error occurs when a resource grid transmission request for slot \f$n\f$ is received after slot \f$n\f$
-  /// started being processed.
+  /// This error occurs when a resource grid transmission request for slot \f$n\f$ is received after the processing
+  /// of slot \f$n\f$ has started.
   ///
   /// The time window the lower physical layer can receive a resource grid for a slot starts with
   /// lower_phy_timing_notifier::on_tti_boundary() and finishes with the beginning of the processing of the first symbol

@@ -16,11 +16,11 @@ namespace srsran {
 
 class baseband_gateway_buffer;
 
-/// Describes a baseband gateway interface for reception.
+/// Baseband gateway - reception interface.
 class baseband_gateway_receiver : public baseband_gateway_base
 {
 public:
-  /// Describes receiver metadata.
+  /// Receiver metadata.
   struct metadata {
     /// Timestamp of the received baseband signal.
     baseband_gateway_timestamp ts;
@@ -29,10 +29,12 @@ public:
   /// \brief Gets the buffer size.
   virtual unsigned get_buffer_size() const = 0;
 
-  /// \brief Receives a given baseband buffer.
-  /// \param[out,in] data Provides the baseband buffer destination and the number of samples to receive.
-  /// \return Receive metadata.
-  /// \note The data buffers must the same number of channels than the stream.
+  /// \brief Receives a number of baseband samples.
+  /// \param[out,in] data Buffer of baseband samples.
+  /// \return Receiver metadata.
+  /// \note The \c data buffer provides the number of samples to receive through \ref
+  ///       baseband_gateway_buffer::get_nof_samples.
+  /// \note The \c data buffer must have the same number of channels as the stream.
   virtual metadata receive(baseband_gateway_buffer& data) = 0;
 };
 

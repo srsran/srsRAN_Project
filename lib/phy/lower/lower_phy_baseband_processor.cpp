@@ -67,7 +67,7 @@ void lower_phy_baseband_processor::process()
 {
   // Check if it is running, notify stop and return without enqueueing more tasks.
   if (!state.is_running()) {
-    state.stopped();
+    state.notify_stop();
     return;
   }
 

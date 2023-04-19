@@ -28,8 +28,6 @@ private:
   static constexpr unsigned DEFAULT_LINGER_TIMEOUT_MS = 0;
   /// Default stream buffer size in samples.
   static constexpr unsigned DEFAULT_STREAM_BUFFER_SIZE = 614400;
-  /// Default data buffer size.
-  static constexpr unsigned DEFAULT_DATA_BUFFER_SIZE = 1920;
 
   /// Radio session logger.
   srslog::basic_logger& logger;

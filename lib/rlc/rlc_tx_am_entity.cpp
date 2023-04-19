@@ -522,7 +522,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       logger.log_debug("Received ACK or NACK for poll_sn={}. Stopping t-PollRetransmit.", st.poll_sn);
       poll_retransmit_timer.stop();
     } else {
-      logger.log_debug("Received ACK or NACK for poll_sn={}. t-PollRetransmit already stopped.", st.poll_sn);
+      logger.log_debug("Received ACK or NACK for poll_sn={}. t-PollRetransmit already notify_stop.", st.poll_sn);
     }
   } else {
     logger.log_debug("poll_sn={} > ack_sn={}. Not stopping t-PollRetransmit.", st.poll_sn, status.ack_sn);

@@ -923,7 +923,7 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
 
 /// Verify reassembly timer is triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:
@@ -968,7 +968,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
 
 /// Verify reassembly timer is triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:
@@ -1018,7 +1018,7 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer
 
 /// Verify reassembly timer is *not* triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:

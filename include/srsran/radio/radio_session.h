@@ -31,18 +31,19 @@ public:
 
   /// \brief Starts the radio operation.
   ///
-  /// It requests all radio streams to start simultaneously. The radio streams must be stopped .
+  /// It requests all radio streams to start simultaneously.
   ///
-  /// \remark Calling start() more than once has undefined behaviour even after calling stop().
+  /// \remark Radio streams run until halted by a call of the stop() method.
+  /// \remark Calling start() more than once results in undefined behavior, even after calling stop().
   virtual void start() = 0;
 
   /// \brief Stops the radio session operation.
   ///
-  /// Any call to transmit or receive after calling stop() will return instantly without interacting with the physical
+  /// Any call to radio operation after calling stop() will return instantly without interacting with the physical
   /// radio.
   ///
-  /// \remark Calling stop() without having called start() earlier behaviour is undefined.
-  /// \remark Calling start() after stop() behaviour is undefined.
+  /// \remark Calling stop() without having called start() results in undefined behavior.
+  /// \remark Calling start() after stop() results in undefined behavior.
   virtual void stop() = 0;
 };
 

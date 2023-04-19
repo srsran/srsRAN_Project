@@ -21,6 +21,8 @@
 #include <mutex>
 
 namespace srsran {
+
+/// Implements a gateway transmitter based on UHD transmit stream.
 class radio_uhd_tx_stream : public baseband_gateway_transmitter, public uhd_exception_handler
 {
 private:
@@ -56,10 +58,10 @@ private:
 
   /// \brief Transmits a single baseband block.
   /// \param[out] nof_txd_samples Number of transmitted samples.
-  /// \param[in] data             Buffer tpo transmit.
+  /// \param[in] data             Buffer to transmit.
   /// \param[in] offset           Sample offset in the transmit buffers.
   /// \param[in] time_spec        Transmission timestamp.
-  /// \return True if no exception is caught in the transmission process. Otherwise, false.
+  /// \return True if no exception is caught in the transmission process, false otherwise.
   bool transmit_block(unsigned&                nof_txd_samples,
                       baseband_gateway_buffer& data,
                       unsigned                 offset,
@@ -98,7 +100,7 @@ public:
   /// Stop the transmission.
   void stop();
 
-  /// Wait until radio is stopped.
+  /// Wait until radio is notify_stop.
   void wait_stop();
 };
 } // namespace srsran

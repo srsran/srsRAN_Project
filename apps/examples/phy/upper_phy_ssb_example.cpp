@@ -97,7 +97,7 @@ public:
     // Wait for TTI boundary to be cleared.
     cvar_tti_boundary.wait(lock, [this]() { return ((!tti_boundary) || quit); });
 
-    // Request RX symbo if UL processing is enabled.
+    // Request RX symbol if UL processing is enabled.
     if (enable_ul_processing) {
       resource_grid_context rx_symb_context;
       rx_symb_context.sector = 0;

@@ -83,7 +83,7 @@ class timer_manager
     /// Atomic is used because we let the timer_manager back-end fetch this value to get a coarse estimation of the
     /// last cmd_id at the front-end side, and avoid an unnecessary timeout callback trigger.
     std::atomic<cmd_id_t> cmd_id{0};
-    /// The current state of timer (e.g. running/expired/stopped) from the perspective of the timer front-end.
+    /// The current state of timer (e.g. running/expired/notify_stop) from the perspective of the timer front-end.
     state_t state = state_t::stopped;
     /// Duration of each timer run.
     timer_duration duration = INVALID_DURATION;

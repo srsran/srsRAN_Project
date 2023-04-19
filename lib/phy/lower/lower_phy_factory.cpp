@@ -34,7 +34,7 @@ using namespace srsran;
 /// (i.e., it is the sum of the delay experienced by a received sample before reaching the lower PHY plus the delay
 /// undergone by a downlink sample leaving the lower PHY, before transmission). Also, let \f$N_{\textup{TA,
 /// offset}}\f$ be the time-advance offset between downlink and uplink, as defined in TS38.211 Section 4.3.1. Finally,
-/// let \f$N_{\textup{cal}}\f$ be a calibration term that takes into account time-advance impairments due radio
+/// let \f$N_{\textup{cal}}\f$ be a calibration term that takes into account time-advance impairments due to radio
 /// device buffering. All three offsets are expressed as a number of samples. Then, the Rx-to-Tx delay \f$N\f$ is
 /// given by \f[ N=N_{\textup{offset}} - N_{\textup{cal}} + N_{\textup{TA, offset}} \f] samples or, equivalently,
 /// physical layer units of time.
@@ -49,10 +49,10 @@ using namespace srsran;
 ///                                       maps to \f$N_{\textup{TA, offset}}\f$.
 /// \param[in] srate                      Sampling rate.
 /// \return The reception-to-transmission delay as a number of samples.
-static inline unsigned get_rx_to_tx_delay(unsigned      ul_to_dl_subframe_offset,
-                                          int           time_alignment_calibration,
-                                          n_ta_offset   ta_offset,
-                                          sampling_rate srate)
+static unsigned get_rx_to_tx_delay(unsigned      ul_to_dl_subframe_offset,
+                                   int           time_alignment_calibration,
+                                   n_ta_offset   ta_offset,
+                                   sampling_rate srate)
 {
   // Calculate time between the UL signal reception and the transmission.
   phy_time_unit ul_to_dl_delay = phy_time_unit::from_seconds(0.001 * static_cast<double>(ul_to_dl_subframe_offset));
@@ -90,7 +90,7 @@ public:
 
     const lower_phy_sector_description& sector = config.sectors.front();
 
-    // Calculate the uplink processor initial slot.
+    // Set the uplink processor initial slot to zero.
     unsigned ul_init_slot_idx = 0;
 
     // Calculate the downlink processor initial slot.
@@ -126,7 +126,7 @@ public:
 
     // Create uplink processor.
     std::unique_ptr<lower_phy_uplink_processor> ul_proc = uplink_proc_factory->create(ul_proc_config);
-    srsran_assert(dl_proc, "Failed to create UL processor.");
+    srsran_assert(dl_proc, "Failed to create the UL processor.");
 
     // Prepare processor baseband adaptor configuration.
     lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
@@ -146,7 +146,7 @@ public:
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =
         std::make_unique<lower_phy_baseband_processor>(proc_bb_adaptor_config);
-    srsran_assert(controller, "Failed to create controller.");
+    srsran_assert(controller, "Failed to create the lower PHY controller.");
 
     // Prepare lower PHY configuration.
     lower_phy_impl::configuration lower_phy_config;

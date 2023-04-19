@@ -20,6 +20,7 @@
 
 namespace srsran {
 
+/// Implements a gateway receiver based on UHD receive stream.
 class radio_uhd_rx_stream : public uhd_exception_handler, public baseband_gateway_receiver
 {
 private:
@@ -96,7 +97,7 @@ public:
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
 
-  /// Wait until radio is stopped.
+  /// Wait until radio is notify_stop.
   void wait_stop();
 };
 } // namespace srsran

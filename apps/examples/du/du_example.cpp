@@ -748,11 +748,11 @@ int main(int argc, char** argv)
 
   du_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
-  du_logger.info("Lower PHY stopped successfully");
+  du_logger.info("Lower PHY notify_stop successfully");
 
   du_logger.info("Stopping executors...");
   workers.stop();
-  du_logger.info("Executors stopped successfully");
+  du_logger.info("Executors notify_stop successfully");
 
   srslog::flush();
 

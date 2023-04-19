@@ -30,10 +30,10 @@ public:
   {
   }
 
-  /// Get resource grid handler.
+  /// Gets resource grid handler.
   lower_phy_rg_handler& get_rg_handler() { return rg_handler; }
 
-  /// Get demodulate request handler.
+  /// Gets demodulate request handler.
   lower_phy_request_handler& get_request_handler() { return request_handler; }
 
 private:
@@ -52,6 +52,7 @@ private:
     pdxch_processor_request_handler& pdxch_handler;
   };
 
+  /// Implements the lower physical layer request handler.
   class request_handler_adaptor : public lower_phy_request_handler
   {
   public:
