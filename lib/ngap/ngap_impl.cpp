@@ -428,7 +428,30 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
   }
 }
 
-void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) {}
+void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
+{
+  ngap_ue* ue = ue_manager.find_ngap_ue(msg.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist", msg.ue_index);
+    return;
+  }
+
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST);
+
+  auto& ue_context_release_request = ngap_msg.pdu.init_msg().value.ue_context_release_request();
+
+  ue_context_release_request->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ue_context_release_request->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(ue->get_amf_ue_id());
+
+  ue_context_release_request->cause.value.set_radio_network();
+  ue_context_release_request->cause.value.radio_network() =
+      asn1::ngap::cause_radio_network_opts::options::user_inactivity;
+
+  // Forward message to AMF
+  ngap_notifier.on_new_message(ngap_msg);
+}
 
 size_t ngap_impl::get_nof_ues() const
 {
