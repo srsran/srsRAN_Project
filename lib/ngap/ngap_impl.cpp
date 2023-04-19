@@ -428,6 +428,8 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
   }
 }
 
+void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) {}
+
 size_t ngap_impl::get_nof_ues() const
 {
   return ue_manager.get_nof_ngap_ues();

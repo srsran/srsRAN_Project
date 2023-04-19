@@ -53,8 +53,19 @@ public:
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
+  // ngap control message handler functions
+  void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+
   // ngap_statistic_interface
   size_t get_nof_ues() const override;
+
+  ngap_message_handler&         get_ngap_message_handler() override { return *this; }
+  ngap_event_handler&           get_ngap_event_handler() override { return *this; }
+  ngap_connection_manager&      get_ngap_connection_manager() override { return *this; }
+  ngap_nas_message_handler&     get_ngap_nas_message_handler() override { return *this; }
+  ngap_control_message_handler& get_ngap_control_message_handler() override { return *this; }
+  ngap_ue_control_manager&      get_ngap_ue_control_manager() override { return *this; }
+  ngap_statistic_interface&     get_ngap_statistic_interface() override { return *this; }
 
 private:
   /// \brief Notify about the reception of an initiating message.

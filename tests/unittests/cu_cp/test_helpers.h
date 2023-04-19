@@ -151,6 +151,19 @@ private:
   bool                  bearer_context_modification_outcome = false;
 };
 
+struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
+public:
+  dummy_du_processor_ngap_control_notifier() = default;
+
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    logger.info("Received a UE Context Release Request");
+  }
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
 public:
   dummy_du_processor_f1ap_ue_context_notifier() = default;

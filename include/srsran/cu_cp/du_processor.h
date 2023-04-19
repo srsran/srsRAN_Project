@@ -215,6 +215,17 @@ public:
   virtual void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
+/// Interface to notify the NGAP about control messages.
+class du_processor_ngap_control_notifier
+{
+public:
+  virtual ~du_processor_ngap_control_notifier() = default;
+
+  /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
+  /// \param[in] msg The UE Context Release Request.
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+};
+
 /// Interface to notify the E1AP about control messages.
 class du_processor_e1ap_control_notifier
 {

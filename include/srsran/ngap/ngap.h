@@ -130,6 +130,16 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
+class ngap_control_message_handler
+{
+public:
+  virtual ~ngap_control_message_handler() = default;
+
+  /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
+  /// \param[in] msg The ue context release request to transmit.
+  virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+};
+
 struct ngap_pdu_session_res_item {
   pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer      pdu_session_res;
@@ -219,11 +229,20 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_event_handler,
                        public ngap_connection_manager,
                        public ngap_nas_message_handler,
+                       public ngap_control_message_handler,
                        public ngap_ue_control_manager,
                        public ngap_statistic_interface
 {
 public:
   virtual ~ngap_interface() = default;
+
+  virtual ngap_message_handler&         get_ngap_message_handler()         = 0;
+  virtual ngap_event_handler&           get_ngap_event_handler()           = 0;
+  virtual ngap_connection_manager&      get_ngap_connection_manager()      = 0;
+  virtual ngap_nas_message_handler&     get_ngap_nas_message_handler()     = 0;
+  virtual ngap_control_message_handler& get_ngap_control_message_handler() = 0;
+  virtual ngap_ue_control_manager&      get_ngap_ue_control_manager()      = 0;
+  virtual ngap_statistic_interface&     get_ngap_statistic_interface()     = 0;
 };
 
 } // namespace srs_cu_cp
