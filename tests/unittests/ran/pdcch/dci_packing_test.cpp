@@ -14,6 +14,9 @@
 
 using namespace srsran;
 
+// Pseudo-random generator.
+static std::mt19937 rgen(1234);
+
 namespace {
 
 using uniform_distribution = std::uniform_int_distribution<unsigned>;
@@ -52,15 +55,12 @@ protected:
   // Number of test repetitions for each test case.
   static constexpr unsigned nof_repetitions = 100;
 
-  // Pseudo-random generator.
-  std::mt19937 rgen{1234};
-
   // DCI size configuration parameters.
   dci_size_config dci_config;
   // Aligned DCI payload sizes.
   dci_sizes aligned_sizes;
 
-  // Pseudo random generators to generate content for the DCI format 0_0 and 1_0 payloads.
+  // Pseudo random generators to generate content for the DCI Format 0_0 and 1_0 payloads.
   uniform_distribution N_ul_hop_dist{1, 2};
   uniform_distribution time_resource_dist{0, pow2(4) - 1};
   uniform_distribution frequency_hopping_flag_dist{0, pow2(1) - 1};
@@ -77,19 +77,21 @@ protected:
   uniform_distribution short_messages_dist{0, pow2(8) - 1};
   uniform_distribution system_information_indicator_dist{0, pow2(1) - 1};
 
+  // Pseudo random generator for boolean parameters.
+  uniform_distribution bool_dist{0, 1};
+
   // Even though 2 bits are reserved for the TB scaling field, only the
   // 0b00, 0b01 and 0b10 bit words are mapped to scaling factor values.
   uniform_distribution tb_scaling_dist{0, pow2(1)};
 
   void SetUp() override
   {
-    dci_config = {};
-
     // Set the Bandwidth of the UL and DL, active and initial BWP.
     dci_config.ul_bwp_initial_bw = std::get<0>(GetParam());
     dci_config.ul_bwp_active_bw  = std::get<1>(GetParam());
     dci_config.dl_bwp_initial_bw = std::get<2>(GetParam());
     dci_config.dl_bwp_active_bw  = std::get<3>(GetParam());
+    dci_config.coreset0_bw       = static_cast<bool>(bool_dist(rgen)) ? dci_config.dl_bwp_initial_bw / 2 : 0;
 
     // Generate fallback DCI payloads on Common and UE-specific search spaces.
     dci_config.dci_0_0_and_1_0_ue_ss = true;
@@ -100,12 +102,12 @@ protected:
     // Perform the DCI size alignment procedure.
     aligned_sizes = get_dci_sizes(dci_config);
 
-    // Check that the computed DCI format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
+    // Check that the computed DCI Format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
     ASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
     ASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
   }
 
-  // Generate a DCI format 0_0 scrambled by TC-RNTI configuration.
+  // Generate a DCI Format 0_0 scrambled by TC-RNTI configuration.
   dci_0_0_tc_rnti_configuration build_dci_0_0_tc_rnti_config(const dci_0_0_size& payload_size)
   {
     dci_0_0_tc_rnti_configuration config = {};
@@ -129,7 +131,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 0_0 scrambled by C-RNTI configuration.
+  // Generate a DCI Format 0_0 scrambled by C-RNTI configuration.
   dci_0_0_c_rnti_configuration build_dci_0_0_c_rnti_config(const dci_0_0_size& payload_size)
   {
     dci_0_0_c_rnti_configuration config = {};
@@ -161,7 +163,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_0 scrambled by C-RNTI configuration.
+  // Generate a DCI Format 1_0 scrambled by C-RNTI configuration.
   dci_1_0_c_rnti_configuration build_dci_1_0_c_rnti_config(const dci_1_0_size& payload_size)
   {
     dci_1_0_c_rnti_configuration config = {};
@@ -185,7 +187,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_0 scrambled by P-RNTI configuration.
+  // Generate a DCI Format 1_0 scrambled by P-RNTI configuration.
   dci_1_0_p_rnti_configuration
   build_dci_1_0_p_rnti_config(unsigned N_rb_dl_bwp, dci_1_0_p_rnti_configuration::payload_info short_messages_indicator)
   {
@@ -206,7 +208,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_0 scrambled by SI-RNTI configuration.
+  // Generate a DCI Format 1_0 scrambled by SI-RNTI configuration.
   dci_1_0_si_rnti_configuration build_dci_1_0_si_rnti_config(unsigned N_rb_dl_bwp)
   {
     unsigned             frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
@@ -225,7 +227,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_0 scrambled by RA-RNTI configuration.
+  // Generate a DCI Format 1_0 scrambled by RA-RNTI configuration.
   dci_1_0_ra_rnti_configuration build_dci_1_0_ra_rnti_config(unsigned N_rb_dl_bwp)
   {
     unsigned             frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
@@ -242,7 +244,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_0 scrambled by TC-RNTI configuration.
+  // Generate a DCI Format 1_0 scrambled by TC-RNTI configuration.
   dci_1_0_tc_rnti_configuration build_dci_1_0_tc_rnti_config(unsigned N_rb_dl_bwp)
   {
     dci_1_0_tc_rnti_configuration config = {};
@@ -278,16 +280,13 @@ protected:
   // Maximum number of resource block groups per BWP.
   const unsigned MAX_NOF_RBGS = 18;
 
-  // Pseudo-random generator.
-  std::mt19937 rgen{1234};
-
   // DCI payload size configuration parameters.
   dci_size_config dci_config;
 
   // Pseudo random generator for boolean parameters.
   uniform_distribution bool_dist{0, 1};
 
-  // Pseudo random generators to generate content for the DCI format 0_1 and 1_1 payload fields with fixed bit size.
+  // Pseudo random generators to generate content for the DCI Format 0_1 and 1_1 payload fields with fixed bit size.
   uniform_distribution modulation_coding_scheme_dist{0, pow2(5) - 1};
   uniform_distribution redundancy_version_dist{0, pow2(2) - 1};
   uniform_distribution tpc_command_dist{0, pow2(2) - 1};
@@ -312,8 +311,6 @@ protected:
 
   dci_sizes generate_dci_sizes()
   {
-    dci_config = {};
-
     // Set all the test case parameters influencing DCI payload size and format.
     dci_config.ul_bwp_initial_bw         = std::get<0>(GetParam());
     dci_config.ul_bwp_active_bw          = std::get<1>(GetParam());
@@ -328,6 +325,7 @@ protected:
     dci_config.ptrs_uplink_configured    = std::get<6>(GetParam());
     dci_config.pusch_res_allocation_type = std::get<7>(GetParam());
     dci_config.pdsch_res_allocation_type = std::get<7>(GetParam());
+    dci_config.coreset0_bw               = static_cast<bool>(bool_dist(rgen)) ? dci_config.dl_bwp_initial_bw / 2 : 0;
 
     // Supplementary UL has implications on the size alignment procedure that are not currently handled, therefore, it
     // is not currently supported.
@@ -353,7 +351,17 @@ protected:
     dci_config.multiple_scells              = static_cast<bool>(bool_dist(rgen));
     dci_config.frequency_hopping_configured = static_cast<bool>(bool_dist(rgen));
 
-    // Set all optional size parameters to prevent unmet requirements.
+    // Clear optional fields that are not always set.
+    dci_config.pdsch_dmrs_A_type.reset();
+    dci_config.pdsch_dmrs_B_type.reset();
+    dci_config.pusch_dmrs_A_type.reset();
+    dci_config.pusch_dmrs_B_type.reset();
+    dci_config.pdsch_dmrs_A_max_len.reset();
+    dci_config.pdsch_dmrs_B_max_len.reset();
+    dci_config.pusch_dmrs_A_max_len.reset();
+    dci_config.pusch_dmrs_B_max_len.reset();
+
+    // Set optional size parameters to prevent unmet requirements.
     dci_config.dynamic_dual_harq_ack_cb = static_cast<bool>(bool_dist(rgen));
 
     dci_config.nof_ul_rb_groups  = nof_rb_groups_dist(rgen);
@@ -422,7 +430,7 @@ protected:
     return aligned_sizes;
   }
 
-  // Generate a DCI format 0_1 configuration.
+  // Generate a DCI Format 0_1 configuration.
   dci_0_1_configuration build_dci_0_1_config(const dci_0_1_size& payload_size)
   {
     dci_0_1_configuration config = {};
@@ -541,7 +549,7 @@ protected:
     return config;
   }
 
-  // Generate a DCI format 1_1 configuration.
+  // Generate a DCI Format 1_1 configuration.
   dci_1_1_configuration build_dci_1_1_config(const dci_1_1_size& payload_size)
   {
     dci_1_1_configuration config = {};
@@ -674,9 +682,6 @@ class DciRarPackingFixture : public ::testing::Test
 protected:
   // Number of test repetitions for each test case.
   static constexpr unsigned nof_repetitions = 100;
-
-  // Pseudo-random generator.
-  std::mt19937 rgen{1234};
 
   uniform_distribution frequency_hopping_flag_dist{0, pow2(1) - 1};
   uniform_distribution frequency_resource_dist{0, pow2(14) - 1};
@@ -853,7 +858,7 @@ static dci_payload build_dci_1_0_c_rnti_expected(const dci_1_0_c_rnti_configurat
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   expected_pack(expected, config.pdsch_harq_fb_timing_indicator, 3);
 
-  // Determine the amount of padding, since DCI format 1_0 scrambled by C-RNTI, CS-RNTI or CS-RNTI can be used in a UE
+  // Determine the amount of padding, since DCI Format 1_0 scrambled by C-RNTI, CS-RNTI or CS-RNTI can be used in a UE
   // Specific search space.
   unsigned nof_packed_bits  = expected.size();
   unsigned nof_padding_bits = config.payload_size.total.value() - nof_packed_bits;
@@ -919,7 +924,7 @@ static dci_payload build_dci_1_0_p_rnti_expected(const dci_1_0_p_rnti_configurat
   // Reserved bits: 6 bits.
   std::fill_n(std::back_inserter(expected), 6, 0);
 
-  // No padding, since DCI format 1_0 scrambled by P-RNTI is used in common search space.
+  // No padding, since DCI Format 1_0 scrambled by P-RNTI is used in common search space.
 
   return dci_payload(expected.begin(), expected.end());
 }
@@ -952,7 +957,7 @@ static dci_payload build_dci_1_0_si_rnti_expected(const dci_1_0_si_rnti_configur
   // Reserved bits - 15 bit.
   std::fill_n(std::back_inserter(expected), 15, 0);
 
-  // No padding, since DCI format 1_0 scrambled by SI-RNTI is used in common search space.
+  // No padding, since DCI Format 1_0 scrambled by SI-RNTI is used in common search space.
 
   return dci_payload(expected.begin(), expected.end());
 }
@@ -982,7 +987,7 @@ static dci_payload build_dci_1_0_ra_rnti_expected(const dci_1_0_ra_rnti_configur
   // Reserved bits - 16 bits.
   std::fill_n(std::back_inserter(expected), 16, 0);
 
-  // No padding, since DCI format 1_0 scrambled by RA-RNTI is used in common search space.
+  // No padding, since DCI Format 1_0 scrambled by RA-RNTI is used in common search space.
 
   return dci_payload(expected.begin(), expected.end());
 }
@@ -1030,7 +1035,7 @@ static dci_payload build_dci_1_0_tc_rnti_expected(const dci_1_0_tc_rnti_configur
   // PDSCH to HARQ feedback timing indicator - 3 bit.
   expected_pack(expected, config.pdsch_harq_fb_timing_indicator, 3);
 
-  // No padding, since DCI format 1_0 scrambled by TC-RNTI is used in common search space.
+  // No padding, since DCI Format 1_0 scrambled by TC-RNTI is used in common search space.
 
   return dci_payload(expected.begin(), expected.end());
 }
@@ -1296,17 +1301,17 @@ static dci_payload build_dci_1_1_expected(const dci_1_1_configuration& config)
   return dci_payload(expected.begin(), expected.end());
 }
 
-TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
+TEST_P(DciFallbackPackingFixture, DciFormatZeroZeroPacking)
 {
   for (unsigned i = 0; i != nof_repetitions; ++i) {
-    // Generate DCI format 0_0 scrambled by TC-RNTI configuration.
+    // Generate DCI Format 0_0 scrambled by TC-RNTI configuration.
     dci_0_0_tc_rnti_configuration dci0_0_tc_rnti_cfg =
         build_dci_0_0_tc_rnti_config(aligned_sizes.format0_0_common_size);
 
-    // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate the DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci0_0_tc_rnti_payload = dci_0_0_tc_rnti_pack(dci0_0_tc_rnti_cfg);
 
-    // Generate expected DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate expected DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci0_0_tc_rnti_expected = build_dci_0_0_tc_rnti_expected(dci0_0_tc_rnti_cfg);
 
     // Check DCI payload size.
@@ -1314,21 +1319,21 @@ TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
     // Assert payload.
     ASSERT_EQ(dci0_0_tc_rnti_expected, dci0_0_tc_rnti_payload);
 
-    // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
+    // Generate DCI Format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a common
     // search space.
     dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_common =
         build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_common_size);
 
-    // Generate DCI format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+    // Generate DCI Format 0_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
     // UE-specific search space.
     dci_0_0_c_rnti_configuration dci0_0_c_rnti_cfg_ue =
         build_dci_0_0_c_rnti_config(aligned_sizes.format0_0_ue_size.value());
 
-    // Generate the DCI format 0_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+    // Generate the DCI Format 0_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
     dci_payload dci0_0_c_rnti_payload_common = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_common);
     dci_payload dci0_0_c_rnti_payload_ue     = dci_0_0_c_rnti_pack(dci0_0_c_rnti_cfg_ue);
 
-    // Test DCI format 0_0 scrambled by C-RNTI packing.
+    // Test DCI Format 0_0 scrambled by C-RNTI packing.
     dci_payload dci0_0_c_rnti_expected_common = build_dci_0_0_c_rnti_expected(dci0_0_c_rnti_cfg_common);
     dci_payload dci0_0_c_rnti_expected_ue     = build_dci_0_0_c_rnti_expected(dci0_0_c_rnti_cfg_ue);
 
@@ -1342,17 +1347,21 @@ TEST_P(DciFallbackPackingFixture, DciFormat_0_0_Packing)
   }
 }
 
-TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
+TEST_P(DciFallbackPackingFixture, DciFormatOneZeroPacking)
 {
   for (unsigned i = 0; i != nof_repetitions; ++i) {
-    {
-      // Generate DCI format 1_0 scrambled by TC-RNTI configuration.
-      dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(dci_config.dl_bwp_initial_bw);
+    // BW used to generate the DCI 1_0 configurations. It is set to the CORESET 0 bandwidth if configured, otherwise the
+    // initial DL BWP bandwidth.
+    unsigned dci1_0_css_bw = (dci_config.coreset0_bw != 0) ? dci_config.coreset0_bw : dci_config.dl_bwp_initial_bw;
 
-      // Generate the DCI format 1_0 scrambled by TC-RNTI payload.
+    {
+      // Generate DCI Format 1_0 scrambled by TC-RNTI configuration.
+      dci_1_0_tc_rnti_configuration dci1_0_tc_rnti_cfg = build_dci_1_0_tc_rnti_config(dci1_0_css_bw);
+
+      // Generate the DCI Format 1_0 scrambled by TC-RNTI payload.
       dci_payload dci1_0_tc_rnti_payload = dci_1_0_tc_rnti_pack(dci1_0_tc_rnti_cfg);
 
-      // Test DCI format 1_0 scrambled by TC-RNTI packing.
+      // Test DCI Format 1_0 scrambled by TC-RNTI packing.
       dci_payload dci1_0_tc_rnti_expected = build_dci_1_0_tc_rnti_expected(dci1_0_tc_rnti_cfg);
 
       // Check DCI payload size.
@@ -1363,21 +1372,21 @@ TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
     }
 
     {
-      // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+      // Generate DCI Format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
       // UE-specific search space.
       dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_ue =
           build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_ue_size.value());
 
-      // Generate DCI format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
+      // Generate DCI Format 1_0 scrambled by C-RNTI configuration, where the DCI message is monitored in a
       // common search space.
       dci_1_0_c_rnti_configuration dci1_0_c_rnti_cfg_common =
           build_dci_1_0_c_rnti_config(aligned_sizes.format1_0_common_size);
 
-      // Generate the DCI format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
+      // Generate the DCI Format 1_0 scrambled by C-RNTI payloads for common and UE-specific search space sets.
       dci_payload dci1_0_c_rnti_payload_common = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_common);
       dci_payload dci1_0_c_rnti_payload_ue     = dci_1_0_c_rnti_pack(dci1_0_c_rnti_cfg_ue);
 
-      // Test DCI format 1_0 scrambled by C-RNTI packing.
+      // Test DCI Format 1_0 scrambled by C-RNTI packing.
       dci_payload dci1_0_c_rnti_expected_common = build_dci_1_0_c_rnti_expected(dci1_0_c_rnti_cfg_common);
       dci_payload dci1_0_c_rnti_expected_ue     = build_dci_1_0_c_rnti_expected(dci1_0_c_rnti_cfg_ue);
 
@@ -1395,14 +1404,14 @@ TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
            {dci_1_0_p_rnti_configuration::payload_info::scheduling_information,
             dci_1_0_p_rnti_configuration::payload_info::short_messages,
             dci_1_0_p_rnti_configuration::payload_info::both}) {
-        // Generate the DCI format 1_0 scrambled by P-RNTI configuration.
+        // Generate the DCI Format 1_0 scrambled by P-RNTI configuration.
         dci_1_0_p_rnti_configuration dci1_0_p_rnti_cfg =
-            build_dci_1_0_p_rnti_config(dci_config.dl_bwp_initial_bw, short_messages_indicator);
+            build_dci_1_0_p_rnti_config(dci1_0_css_bw, short_messages_indicator);
 
-        // Generate the DCI format 1_0 scrambled by P-RNTI payload.
+        // Generate the DCI Format 1_0 scrambled by P-RNTI payload.
         dci_payload dci1_0_p_rnti_payload = dci_1_0_p_rnti_pack(dci1_0_p_rnti_cfg);
 
-        // Test DCI format 1_0 scrambled by P-RNTI packing.
+        // Test DCI Format 1_0 scrambled by P-RNTI packing.
         dci_payload dci1_0_p_rnti_expected = build_dci_1_0_p_rnti_expected(dci1_0_p_rnti_cfg);
 
         // Check DCI payload size.
@@ -1414,13 +1423,13 @@ TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
     }
 
     {
-      // Generate the DCI format 1_0 scrambled by SI-RNTI configuration.
-      dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(dci_config.dl_bwp_initial_bw);
+      // Generate the DCI Format 1_0 scrambled by SI-RNTI configuration.
+      dci_1_0_si_rnti_configuration dci1_0_si_rnti_cfg = build_dci_1_0_si_rnti_config(dci1_0_css_bw);
 
-      // Generate the DCI format 1_0 scrambled by SI-RNTI payload.
+      // Generate the DCI Format 1_0 scrambled by SI-RNTI payload.
       dci_payload dci1_0_si_rnti_payload = dci_1_0_si_rnti_pack(dci1_0_si_rnti_cfg);
 
-      // Test DCI format 1_0 scrambled by SI-RNTI packing.
+      // Test DCI Format 1_0 scrambled by SI-RNTI packing.
       dci_payload dci1_0_si_rnti_expected = build_dci_1_0_si_rnti_expected(dci1_0_si_rnti_cfg);
 
       // Check DCI payload size.
@@ -1431,13 +1440,13 @@ TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
     }
 
     {
-      // Generate the DCI format 1_0 scrambled by RA-RNTI configuration.
-      dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(dci_config.dl_bwp_initial_bw);
+      // Generate the DCI Format 1_0 scrambled by RA-RNTI configuration.
+      dci_1_0_ra_rnti_configuration dci1_0_ra_rnti_cfg = build_dci_1_0_ra_rnti_config(dci1_0_css_bw);
 
-      // Generate the DCI format 1_0 scrambled by RA-RNTI payload.
+      // Generate the DCI Format 1_0 scrambled by RA-RNTI payload.
       dci_payload dci1_0_ra_rnti_payload = dci_1_0_ra_rnti_pack(dci1_0_ra_rnti_cfg);
 
-      // Test DCI format 1_0 scrambled by RA-RNTI packing.
+      // Test DCI Format 1_0 scrambled by RA-RNTI packing.
       dci_payload dci1_0_ra_rnti_expected = build_dci_1_0_ra_rnti_expected(dci1_0_ra_rnti_cfg);
 
       // Check DCI payload size.
@@ -1449,28 +1458,28 @@ TEST_P(DciFallbackPackingFixture, DciFormat_1_0_Packing)
   }
 }
 
-TEST_P(DciNonFallbackPackingFixture, DciFormat_0_1_Packing)
+TEST_P(DciNonFallbackPackingFixture, DciFormatZeroOnePacking)
 {
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Randomize DCI size configuration parameters that are not in the test case and generate the aligned DCI sizes.
     dci_sizes aligned_sizes = generate_dci_sizes();
 
-    // Check that the computed DCI format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
+    // Check that the computed DCI Format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
     ASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
     ASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
 
-    // Check that the computed DCI format 0_1 and 1_1 payload sizes do not match with the DCI format 0_0 and 1_0 payload
+    // Check that the computed DCI Format 0_1 and 1_1 payload sizes do not match with the DCI Format 0_0 and 1_0 payload
     // sizes for UE-specific Search Spaces.
     ASSERT_NE(aligned_sizes.format0_1_ue_size.value().total, aligned_sizes.format0_0_ue_size.value().total);
     ASSERT_NE(aligned_sizes.format1_1_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
 
-    // Generate DCI format 0_1 configuration.
+    // Generate DCI Format 0_1 configuration.
     dci_0_1_configuration dci0_1_config = build_dci_0_1_config(aligned_sizes.format0_1_ue_size.value());
 
-    // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate the DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci0_1_payload = dci_0_1_pack(dci0_1_config);
 
-    // Generate expected DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate expected DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci0_1_expected = build_dci_0_1_expected(dci0_1_config);
 
     // Check DCI payload size.
@@ -1480,28 +1489,28 @@ TEST_P(DciNonFallbackPackingFixture, DciFormat_0_1_Packing)
   }
 }
 
-TEST_P(DciNonFallbackPackingFixture, DciFormat_1_1_Packing)
+TEST_P(DciNonFallbackPackingFixture, DciFormatOneOnePacking)
 {
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Randomize DCI size configuration parameters and generate the aligned DCI sizes.
     dci_sizes aligned_sizes = generate_dci_sizes();
 
-    // Check that the computed DCI format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
+    // Check that the computed DCI Format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
     ASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
     ASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
 
-    // Check that the computed DCI format 0_1 and 1_1 payload sizes do not match with the DCI format 0_0 and 1_0 payload
+    // Check that the computed DCI Format 0_1 and 1_1 payload sizes do not match with the DCI Format 0_0 and 1_0 payload
     // sizes for UE-specific Search Spaces.
     ASSERT_NE(aligned_sizes.format0_1_ue_size.value().total, aligned_sizes.format0_0_ue_size.value().total);
     ASSERT_NE(aligned_sizes.format1_1_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);
 
-    // Generate DCI format 0_1 configuration.
+    // Generate DCI Format 0_1 configuration.
     dci_1_1_configuration dci1_1_config = build_dci_1_1_config(aligned_sizes.format1_1_ue_size.value());
 
-    // Generate the DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate the DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci1_1_payload = dci_1_1_pack(dci1_1_config);
 
-    // Generate expected DCI format 0_0 scrambled by TC-RNTI payload.
+    // Generate expected DCI Format 0_0 scrambled by TC-RNTI payload.
     dci_payload dci1_1_expected = build_dci_1_1_expected(dci1_1_config);
 
     // Check DCI payload size.
