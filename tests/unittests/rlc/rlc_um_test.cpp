@@ -70,19 +70,7 @@ protected:
     // init RLC logger
     srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(100);
-  }
 
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  /// \brief Initializes fixture according to size sequence number size
-  /// \param sn_size_ size of the sequence number
-  void init(rlc_um_sn_size sn_size_)
-  {
-    sn_size = sn_size_;
     logger.info("Creating RLC UM ({} bit)", to_number(sn_size));
 
     // Set Rx config
@@ -121,6 +109,12 @@ protected:
     rlc2_rx_lower = rlc2->get_rx_lower_layer_interface();
     rlc2_tx_upper = rlc2->get_tx_upper_layer_data_interface();
     rlc2_tx_lower = rlc2->get_tx_lower_layer_interface();
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
   /// \brief Constructs a SDU with deterministic content.
@@ -229,8 +223,8 @@ protected:
     ue_worker.run_pending_tasks();
   }
 
-  srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
-  rlc_um_sn_size                     sn_size;
+  srslog::basic_logger&              logger  = srslog::fetch_basic_logger("TEST", false);
+  rlc_um_sn_size                     sn_size = GetParam();
   rlc_um_config                      config;
   timer_manager                      timers;
   manual_task_worker                 ue_worker{128};
@@ -247,7 +241,6 @@ protected:
 
 TEST_P(rlc_um_test, create_new_entity)
 {
-  init(GetParam());
   EXPECT_NE(rlc1_rx_lower, nullptr);
   EXPECT_NE(rlc1_tx_upper, nullptr);
   ASSERT_NE(rlc1_tx_lower, nullptr);
@@ -265,8 +258,6 @@ TEST_P(rlc_um_test, create_new_entity)
 
 TEST_P(rlc_um_test, rx_empty_pdu)
 {
-  init(GetParam());
-
   // Create empty PDU
   byte_buffer pdu_buf = {};
 
@@ -280,8 +271,6 @@ TEST_P(rlc_um_test, rx_empty_pdu)
 
 TEST_P(rlc_um_test, rx_pdu_with_short_header)
 {
-  init(GetParam());
-
   // Create a short header of a PDU segment
   byte_buffer pdu_buf = {};
   pdu_buf.append(0b11000000); // SI = 0b11
@@ -296,8 +285,6 @@ TEST_P(rlc_um_test, rx_pdu_with_short_header)
 
 TEST_P(rlc_um_test, rx_pdu_without_payload)
 {
-  init(GetParam());
-
   // Create a complete header of a PDU segment
   byte_buffer pdu_buf = {};
   pdu_buf.append(0b11000000); // SI = 0b11
@@ -316,8 +303,6 @@ TEST_P(rlc_um_test, rx_pdu_without_payload)
 
 TEST_P(rlc_um_test, tx_without_segmentation)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 5;
   const uint32_t num_pdus = 5;
   const uint32_t sdu_size = 1;
@@ -385,8 +370,6 @@ TEST_P(rlc_um_test, tx_without_segmentation)
 
 TEST_P(rlc_um_test, tx_with_segmentation)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 1;
   const uint32_t sdu_size = 100;
 
@@ -465,8 +448,6 @@ TEST_P(rlc_um_test, tx_with_segmentation)
 
 TEST_P(rlc_um_test, sdu_discard)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 6;
   const uint32_t sdu_size = 1;
 
@@ -565,8 +546,6 @@ TEST_P(rlc_um_test, sdu_discard)
 
 TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 6;
   const uint32_t sdu_size = 1;
 
@@ -668,8 +647,6 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
 
 TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 1;
   const uint32_t sdu_size = 100;
 
@@ -748,8 +725,6 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
 
 TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 2;
   const uint32_t sdu_size = 100;
 
@@ -838,38 +813,31 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
 
 TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_0)
 {
-  init(GetParam());
   tx_with_pdu_duplicates(0);
 }
 
 TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_1)
 {
-  init(GetParam());
   tx_with_pdu_duplicates(1);
 }
 
 TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_2)
 {
-  init(GetParam());
   tx_with_pdu_duplicates(2);
 }
 
 TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_3)
 {
-  init(GetParam());
   tx_with_pdu_duplicates(3);
 }
 
 TEST_P(rlc_um_test, tx_with_PDU_duplicates_hold_4)
 {
-  init(GetParam());
   tx_with_pdu_duplicates(4);
 }
 
 TEST_P(rlc_um_test, reassembly_window_wrap_around)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = cardinality(to_number(sn_size)); // 2 * UM_Window_Size
   const uint32_t sdu_size = 10;
 
@@ -931,8 +899,6 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
 
 TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = cardinality(to_number(sn_size)); // 2 * UM_Window_Size
   const uint32_t sdu_size = 10;
 
@@ -1005,8 +971,6 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 
 TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 10;
   const uint32_t sdu_size = 10;
 
@@ -1084,8 +1048,6 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
 
 TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
 {
-  init(GetParam());
-
   const uint32_t num_sdus = 2;
   const uint32_t sdu_size = 20;
 

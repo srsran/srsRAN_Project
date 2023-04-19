@@ -77,21 +77,8 @@ protected:
     // init RLC logger
     srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(100);
-  }
 
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  /// \brief Initializes fixture according to size sequence number size
-  /// \param sn_size_ size of the sequence number
-  void init(rlc_am_sn_size sn_size_)
-  {
     logger.info("Creating RLC Tx AM entity ({} bit)", to_number(sn_size));
-
-    sn_size = sn_size_;
 
     // Set Tx config
     config.sn_field_length = sn_size;
@@ -115,6 +102,12 @@ protected:
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
   /// \brief Creates a new rlc_sdu
@@ -266,7 +259,6 @@ protected:
 
 TEST_P(rlc_tx_am_test, create_new_entity)
 {
-  init(GetParam());
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 0);
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 0);
@@ -276,7 +268,6 @@ TEST_P(rlc_tx_am_test, create_new_entity)
 
 TEST_P(rlc_tx_am_test, tx_without_segmentation)
 {
-  init(GetParam());
   const uint32_t          n_pdus = 5;
   byte_buffer_slice_chain pdus[n_pdus];
 
@@ -286,7 +277,6 @@ TEST_P(rlc_tx_am_test, tx_without_segmentation)
 
 TEST_P(rlc_tx_am_test, tx_small_grant_)
 {
-  init(GetParam());
   const uint32_t n_sdus   = 5;
   const uint32_t sdu_size = 9;
 
@@ -305,7 +295,6 @@ TEST_P(rlc_tx_am_test, tx_small_grant_)
 
 TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
 {
-  init(GetParam());
   const uint32_t sdu_size        = 1;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t short_size      = header_min_size;
@@ -339,7 +328,6 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
 
 TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
 {
-  init(GetParam());
   const uint32_t sdu_size        = 3;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t header_so_size  = 2;
@@ -391,7 +379,6 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
 
 TEST_P(rlc_tx_am_test, sdu_discard)
 {
-  init(GetParam());
   const uint32_t sdu_size = 1;
   const uint32_t n_pdus   = 6;
   uint32_t       n_bsr    = tester->bsr_count;
@@ -496,7 +483,6 @@ TEST_P(rlc_tx_am_test, sdu_discard)
 
 TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
 {
-  init(GetParam());
   const uint32_t sdu_size = 1;
   const uint32_t n_pdus   = 6;
   uint32_t       n_bsr    = tester->bsr_count;
@@ -604,7 +590,6 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
 
 TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -650,7 +635,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          so_size         = 2;
@@ -701,7 +685,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -751,7 +734,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          so_size         = 2;
@@ -804,7 +786,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          so_size         = 2;
@@ -857,7 +838,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -907,7 +887,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -957,7 +936,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
 
 TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 {
-  init(GetParam());
   const uint32_t          sdu_size = 3;
   const uint32_t          n_pdus   = 12;
   byte_buffer_slice_chain pdus[n_pdus];
@@ -1006,7 +984,6 @@ TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 
 TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 {
-  init(GetParam());
   const uint32_t          sdu_size = 3;
   const uint32_t          n_pdus   = 12;
   byte_buffer_slice_chain pdus[n_pdus];
@@ -1075,7 +1052,6 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 
 TEST_P(rlc_tx_am_test, retx_insufficient_space)
 {
-  init(GetParam());
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          short_size      = header_min_size;
@@ -1121,8 +1097,6 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
 
 TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
 {
-  init(GetParam());
-
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -1182,8 +1156,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
 
 TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
 {
-  init(GetParam());
-
   const uint32_t          sdu_size        = 3;
   const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   const uint32_t          n_pdus          = 5;
@@ -1246,7 +1218,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
 
 TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
 {
-  init(GetParam());
   EXPECT_EQ(rlc->get_buffer_state(), 0);
   EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 0);
 
@@ -1279,8 +1250,6 @@ TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
 
 TEST_P(rlc_tx_am_test, status_report_priority)
 {
-  init(GetParam());
-
   // First push one SDU into RLC to also check precedence of status report
   const uint32_t sdu_size        = 1;
   const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
@@ -1331,8 +1300,6 @@ TEST_P(rlc_tx_am_test, status_report_priority)
 
 TEST_P(rlc_tx_am_test, status_report_trim)
 {
-  init(GetParam());
-
   EXPECT_EQ(rlc->get_buffer_state(), 0);
 
   // Set status report required
@@ -1381,7 +1348,6 @@ TEST_P(rlc_tx_am_test, status_report_trim)
 
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 {
-  init(GetParam());
   const uint32_t          n_pdus = 5;
   byte_buffer_slice_chain pdus[n_pdus];
 
@@ -1442,7 +1408,6 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
 
 TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
 {
-  init(GetParam());
   const uint32_t          n_pdus = 5;
   byte_buffer_slice_chain pdus[n_pdus];
 
