@@ -19,7 +19,8 @@ target_compile_options(rrc_nr_asn1 PRIVATE "-Os")
 target_link_libraries(rrc_nr_asn1 asn1_utils)
 
 # F1AP ASN1
-add_library(f1ap_asn1 STATIC f1ap/common.cpp f1ap/f1ap_ies.cpp f1ap/f1ap_pdu_contents.cpp f1ap/f1ap.cpp)
+add_library(f1ap_asn1 STATIC f1ap/common.cpp f1ap/f1ap_ies.cpp f1ap/f1ap_pdu_items.cpp f1ap/f1ap_pdu_contents_ue.cpp
+        f1ap/f1ap_pdu_contents.cpp f1ap/f1ap.cpp)
 target_compile_options(f1ap_asn1 PRIVATE "-Os")
 target_link_libraries(f1ap_asn1 asn1_utils)
 
