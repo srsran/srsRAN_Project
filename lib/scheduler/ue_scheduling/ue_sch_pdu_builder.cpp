@@ -10,7 +10,6 @@
 #include "ue_sch_pdu_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
-#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsran;
 
@@ -44,11 +43,12 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
 
   pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-  pdsch.nof_oh_prb       = nof_oh_prb;
-  pdsch.symbols          = pdsch_td_cfg.symbols;
-  pdsch.mcs_table        = mcs_table;
-  pdsch.tb_scaling_field = tb_scaling_field;
-  pdsch.nof_layers       = nof_layers;
+  pdsch.nof_oh_prb                   = nof_oh_prb;
+  pdsch.symbols                      = pdsch_td_cfg.symbols;
+  pdsch.mcs_table                    = mcs_table;
+  pdsch.tb_scaling_field             = tb_scaling_field;
+  pdsch.nof_layers                   = nof_layers;
+  pdsch.max_nof_cws_scheduled_by_dci = 1;
 
   return pdsch;
 }
@@ -70,10 +70,40 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
                          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
                          : static_cast<unsigned>(x_overhead::not_set);
 
+  pdsch.symbols                      = pdsch_td_cfg.symbols;
+  pdsch.mcs_table                    = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
+  pdsch.tb_scaling_field             = tb_scaling_field;
+  pdsch.nof_layers                   = nof_layers;
+  pdsch.max_nof_cws_scheduled_by_dci = 1;
+
+  return pdsch;
+}
+
+pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg,
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                         const ue_cell_configuration&                 ue_cell_cfg)
+{
+  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  static constexpr unsigned tb_scaling_field = 0;
+  // TODO: Set appropriate nof. layers supported bu gNB and UE.
+  static constexpr unsigned nof_layers = 1;
+
+  pdsch_config_params pdsch;
+
+  // TODO: Consider DMRS configured in PDSCH-Config. Need helpers from Phy.
+  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
+
   pdsch.symbols          = pdsch_td_cfg.symbols;
   pdsch.mcs_table        = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
   pdsch.tb_scaling_field = tb_scaling_field;
   pdsch.nof_layers       = nof_layers;
+  pdsch.max_nof_cws_scheduled_by_dci =
+      ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->is_max_cw_sched_by_dci_is_two ? 2 : 1;
 
   return pdsch;
 }
@@ -228,9 +258,8 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.prbs    = prbs;
-  pdsch.symbols = pdsch_cfg.symbols;
-  // TODO: Use UE-dedicated DMRS info if needed.
+  pdsch.prbs           = prbs;
+  pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   // See TS38.213, 10.1.
@@ -251,6 +280,47 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.mcs_table       = pdsch_cfg.mcs_table;
   cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
+}
+
+void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
+                                     const pdsch_config_params&        pdsch_cfg,
+                                     sch_mcs_tbs                       mcs_tbs_info,
+                                     rnti_t                            rnti,
+                                     const ue_cell_configuration&      ue_cell_cfg,
+                                     bwp_id_t                          active_bwp_id,
+                                     const search_space_configuration& ss_cfg,
+                                     const dci_1_1_configuration&      dci_cfg,
+                                     const prb_interval&               prbs,
+                                     const dl_harq_process&            h_dl)
+{
+  const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
+  const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
+
+  pdsch.rnti        = rnti;
+  pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
+  pdsch.coreset_cfg = &cs_cfg;
+
+  pdsch.prbs           = prbs;
+  pdsch.symbols        = pdsch_cfg.symbols;
+  pdsch.dmrs           = pdsch_cfg.dmrs;
+  pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value();
+  // See TS38.213, 10.1.
+  pdsch.ss_set_type = search_space_set_type::ue_specific;
+  pdsch.dci_fmt     = dci_dl_format::f1_1;
+  pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
+  // See TS 38.211, 7.3.1.1. - Scrambling.
+  const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(active_bwp_id);
+  pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_1, ss_cfg.type);
+
+  // TODO: Add second Codeword when supported.
+  // One Codeword.
+  pdsch_codeword& cw = pdsch.codewords.emplace_back();
+  cw.new_data        = h_dl.tb(0).nof_retxs == 0;
+  cw.rv_index        = dci_cfg.tb1_redundancy_version;
+  cw.mcs_index       = dci_cfg.tb1_modulation_coding_scheme;
+  cw.mcs_table       = pdsch_cfg.mcs_table;
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes   = mcs_tbs_info.tbs;
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

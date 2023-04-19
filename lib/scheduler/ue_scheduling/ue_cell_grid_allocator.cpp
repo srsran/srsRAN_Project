@@ -169,7 +169,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_list[grant.time_res_index], ue_cell_cfg);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      // TODO: Build PDSCH Config for DCI format 1_1.
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cell_cfg, pdsch_list[grant.time_res_index], ue_cell_cfg);
+      break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
@@ -285,7 +286,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      // TODO: Build PDSCH for DCI format 1_1.
+      build_pdsch_f1_1_c_rnti(msg.pdsch_cfg,
+                              pdsch_cfg,
+                              mcs_tbs_info.value(),
+                              u.crnti,
+                              ue_cell_cfg,
+                              ue_cc->active_bwp_id(),
+                              *ss_cfg,
+                              pdcch->dci.c_rnti_f1_1,
+                              prbs,
+                              h_dl);
     default:
       report_fatal_error("Unsupported PDCCH DL DCI format");
   }

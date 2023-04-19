@@ -10,6 +10,8 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
+#include "../support/mcs_tbs_calculator.h"
+#include "harq_process.h"
 #include "ue_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -23,6 +25,7 @@ struct pdsch_config_params {
   unsigned          tb_scaling_field;
   unsigned          nof_layers;
   dmrs_information  dmrs;
+  unsigned          max_nof_cws_scheduled_by_dci;
 };
 
 /// Contains some of the PUSCH parameters needed to compute the MCS, the number of PRBs, the TBS and to build the PUSCH
@@ -40,16 +43,23 @@ struct pusch_config_params {
   unsigned          nof_csi_part2_bits{0};
 };
 
-/// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
+/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
 ///
-/// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_0_tc_rnti(const cell_configuration&                    cell_cfg,
                                                   const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
 
-/// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
+/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_0, scrambled by C-RNTI.
 ///
-/// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg,
+                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                 const ue_cell_configuration&                 ue_cell_cfg);
+
+/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_1, scrambled by C-RNTI.
+///
+/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
+pdsch_config_params get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg,
                                                  const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                                  const ue_cell_configuration&                 ue_cell_cfg);
 
@@ -88,6 +98,18 @@ void build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                              const dci_1_0_c_rnti_configuration& dci_cfg,
                              const prb_interval&                 prbs,
                              bool                                is_new_data);
+
+/// \brief Builds PDSCH PDU for DCI format 1_1, scrambled by C-RNTI.
+void build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
+                             const pdsch_config_params&        pdsch_cfg,
+                             sch_mcs_tbs                       mcs_tbs_info,
+                             rnti_t                            rnti,
+                             const ue_cell_configuration&      ue_cell_cfg,
+                             bwp_id_t                          active_bwp_id,
+                             const search_space_configuration& ss_cfg,
+                             const dci_1_1_configuration&      dci_cfg,
+                             const prb_interval&               prbs,
+                             const dl_harq_process&            h_dl);
 
 /// \brief Builds PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
