@@ -27,7 +27,6 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   srsran_assert(fapi_pdu.maintenance_v3.prach_res_config_index == 0,
                 "Only PRACH resource configuration index 0 supported.");
   srsran_assert(fapi_pdu.index_fd_ra == 0, "Only one FD occasion supported.");
-  srsran_assert(fapi_pdu.num_prach_ocas == 1, "Only one PRACH occasion supported.");
 
   context.slot                 = slot_point(prach_cfg.prach_ul_bwp_pusch_scs, sfn, slot);
   context.sector               = sector_id;
