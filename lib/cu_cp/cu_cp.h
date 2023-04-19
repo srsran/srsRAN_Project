@@ -154,6 +154,9 @@ private:
   // DU Processor to E1AP adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
 
+  // DU Processor to NGAP adapter
+  du_processor_ngap_adapter du_processor_ngap_notifier;
+
   // CU-UP processor to CU-CP adapters
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;

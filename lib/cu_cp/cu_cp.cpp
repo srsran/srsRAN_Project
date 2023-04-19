@@ -48,7 +48,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   // Create layers
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
-  ngap_adapter.connect_ngap(*ngap_entity);
+  ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager());
+  du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
 }
@@ -227,6 +228,7 @@ du_index_t cu_cp::add_du()
                                                                    f1ap_ev_notifier,
                                                                    *cfg.f1ap_notifier,
                                                                    du_processor_e1ap_notifier,
+                                                                   du_processor_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    du_processor_task_sched,
