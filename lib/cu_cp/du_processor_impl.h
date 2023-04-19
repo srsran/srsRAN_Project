@@ -77,6 +77,9 @@ public:
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
+  // du_processor inactivity handler
+  void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
+
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     task_sched.schedule_async_task(ue_index, std::move(task));
@@ -91,6 +94,7 @@ public:
   du_processor_ngap_interface&     get_du_processor_ngap_interface() override { return *this; }
   du_processor_ue_task_handler&    get_du_processor_ue_task_handler() override { return *this; }
   du_processor_paging_handler&     get_du_processor_paging_handler() override { return *this; }
+  du_processor_inactivity_handler& get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler& get_du_processor_statistics_handler() override { return *this; }
 
 private:

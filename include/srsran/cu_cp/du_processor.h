@@ -298,6 +298,16 @@ public:
   virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
+/// DU processor inactivity handler.
+class du_processor_inactivity_handler
+{
+public:
+  virtual ~du_processor_inactivity_handler() = default;
+
+  /// \brief Handles an Inactivity notification message.
+  virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
+};
+
 /// Methods to get statistics of the DU processor.
 class du_processor_statistics_handler
 {
@@ -315,6 +325,7 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_ngap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_paging_handler,
+                               public du_processor_inactivity_handler,
                                public du_processor_statistics_handler
 
 {
@@ -327,6 +338,7 @@ public:
   virtual du_processor_ngap_interface&     get_du_processor_ngap_interface()     = 0;
   virtual du_processor_ue_task_handler&    get_du_processor_ue_task_handler()    = 0;
   virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
+  virtual du_processor_inactivity_handler& get_du_processor_inactivity_handler() = 0;
   virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
 };
 

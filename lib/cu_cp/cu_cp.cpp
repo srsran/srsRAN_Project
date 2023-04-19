@@ -177,6 +177,8 @@ void cu_cp::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
 void cu_cp::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
   // Forward message to DU processor
+  auto& du_it = find_du(get_du_index_from_ue_index(msg.ue_index));
+  du_it.handle_inactivity_notification(msg);
 }
 
 void cu_cp::handle_amf_connection()

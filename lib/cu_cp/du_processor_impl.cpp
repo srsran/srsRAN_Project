@@ -440,3 +440,19 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
   f1ap_paging_notifier.on_paging_message(msg);
 }
+
+void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_notification& msg)
+{
+  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
+  srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  if (msg.ue_inactive) {
+    cu_cp_ue_context_release_request req;
+    req.ue_index = msg.ue_index;
+    req.cause    = cause_t::radio_network;
+
+    ngap_ctrl_notifier.on_ue_context_release_request(req);
+  } else {
+    logger.debug("Inactivity notification level not supported");
+  }
+}
