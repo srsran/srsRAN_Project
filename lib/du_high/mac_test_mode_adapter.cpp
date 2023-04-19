@@ -37,7 +37,8 @@ public:
 
   byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
-    return {byte_buffer_slice(tx_sdu, 0, std::min(nof_bytes, (unsigned)TX_SDU_MAX_SIZE))};
+    // Return empty MAC SDU so that the MAC PDU is padded.
+    return byte_buffer_slice_chain{};
   }
   unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
 
