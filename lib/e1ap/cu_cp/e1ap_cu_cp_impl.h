@@ -32,6 +32,7 @@ public:
   e1ap_cu_cp_impl(timer_factory                  timers_,
                   e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
                   task_executor&                 ctrl_exec_);
   ~e1ap_cu_cp_impl();
 
@@ -82,6 +83,7 @@ private:
   // nofifiers and handles
   e1ap_message_notifier&         pdu_notifier;
   e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
+  e1ap_cu_cp_notifier&           cu_cp_notifier;
   task_executor&                 ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id

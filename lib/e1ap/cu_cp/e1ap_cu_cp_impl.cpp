@@ -21,6 +21,7 @@ using namespace srs_cu_cp;
 e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_factory                  timers_,
                                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                                 e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                  task_executor&                 ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-E1")),
   timers(timers_),
@@ -28,6 +29,7 @@ e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_factory                  timers_,
   ev_mng(timers),
   pdu_notifier(e1ap_pdu_notifier_),
   cu_up_processor_notifier(e1ap_cu_up_processor_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   ctrl_exec(ctrl_exec_)
 {
 }

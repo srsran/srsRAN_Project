@@ -13,6 +13,7 @@
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
+#include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
@@ -159,6 +160,9 @@ private:
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;
+
+  // E1AP to CU-CP adapter
+  e1ap_cu_cp_adapter e1ap_ev_notifier;
 
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;

@@ -48,6 +48,7 @@ protected:
   timer_manager                       timers;
   dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;
   dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
+  dummy_e1ap_cu_cp_notifier           cu_cp_notifier;
   manual_task_worker                  ctrl_worker{128};
   std::unique_ptr<e1ap_interface>     e1ap;
 };
