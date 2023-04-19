@@ -63,6 +63,10 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
 
+  /// \brief Handle a Bearer Context Inactivity notification as per TS 38.463 section 8.3.6.
+  /// \param[in] msg The received Bearer Context Inactivity notification message.
+  void handle_bearer_context_inactivity_notification(const asn1::e1ap::bearer_context_inactivity_notif_s& msg);
+
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome);

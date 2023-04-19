@@ -220,10 +220,64 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
       fill_e1ap_cu_up_e1_setup_request(req, msg.value.gnb_cu_up_e1_setup_request());
       cu_up_processor_notifier.on_cu_up_e1_setup_request_received(req);
     } break;
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_inactivity_notif: {
+      handle_bearer_context_inactivity_notification(msg.value.bearer_context_inactivity_notif());
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
 }
+
+void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
+    const asn1::e1ap::bearer_context_inactivity_notif_s& msg)
+{
+  cu_cp_inactivity_notification inactivity_notification;
+
+  switch (msg->activity_info->type()) {
+    // DRB activity notification level
+    case asn1::e1ap::activity_info_c::types_opts::options::drb_activity_list: {
+      // add inactive drbs to common type message
+      for (const auto& drb : msg->activity_info.value.drb_activity_list()) {
+        if (drb.drb_activity == asn1::e1ap::drb_activity_opts::options::not_active) {
+          inactivity_notification.inactive_drbs.emplace_back(uint_to_drb_id(drb.drb_id));
+        }
+      }
+      // if all drbs are inactive, release ue
+      if (inactivity_notification.inactive_drbs.size() == msg->activity_info.value.drb_activity_list().size()) {
+        inactivity_notification.ue_inactive = true;
+      }
+    } break;
+    // PDU Session activity notification level
+    case asn1::e1ap::activity_info_c::types_opts::options::pdu_session_res_activity_list: {
+      // add inactive pdu sessions to common type message
+      for (const auto& pdu_session : msg->activity_info.value.pdu_session_res_activity_list()) {
+        if (pdu_session.pdu_session_res_activity == asn1::e1ap::pdu_session_res_activity_opts::options::not_active) {
+          inactivity_notification.inactive_pdu_sessions.emplace_back(
+              uint_to_pdu_session_id(pdu_session.pdu_session_id));
+        }
+      }
+      // if all pdu sessions are inactive, release ue
+      if (inactivity_notification.inactive_pdu_sessions.size() ==
+          msg->activity_info.value.pdu_session_res_activity_list().size()) {
+        inactivity_notification.ue_inactive = true;
+      }
+    } break;
+    // UE activity notification level
+    case asn1::e1ap::activity_info_c::types_opts::options::ue_activity: {
+      if (msg->activity_info.value.ue_activity() == asn1::e1ap::ue_activity_opts::options::not_active) {
+        // if ue is inactive, release ue
+        inactivity_notification.ue_inactive = true;
+      }
+    } break;
+    default:
+      logger.error("Received Bearer Context Inactivity Notification with unsupported type {}",
+                   msg->activity_info->type().to_string());
+      return;
+  }
+
+  // forward notification
+  cu_cp_notifier.on_bearer_context_inactivity_notification_received(inactivity_notification);
+};
 
 void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
