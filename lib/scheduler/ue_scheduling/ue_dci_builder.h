@@ -38,7 +38,8 @@ void build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
 /// Builds DCI f1_0 for C-RNTI.
 void build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
                            const bwp_downlink_common&         init_dl_bwp,
-                           const bwp_configuration&           active_dl_bwp,
+                           const bwp_downlink_common&         active_dl_bwp,
+                           const bwp_downlink_dedicated*      active_dl_bwp_ded,
                            search_space_configuration::type_t ss_type,
                            prb_interval                       prbs,
                            unsigned                           time_resource,
@@ -74,7 +75,8 @@ void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
 /// Builds DCI f0_0 for C-RNTI.
 void build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
                            const bwp_downlink_common&         init_dl_bwp,
-                           const bwp_configuration&           active_dl_bwp,
+                           const bwp_downlink_common&         active_dl_bwp,
+                           const bwp_downlink_dedicated*      active_dl_bwp_ded,
                            const bwp_configuration&           init_ul_bwp,
                            const bwp_configuration&           active_ul_bwp,
                            search_space_configuration::type_t ss_type,
@@ -82,5 +84,15 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
                            unsigned                           time_resource,
                            sch_mcs_index                      mcs_index,
                            const ul_harq_process&             h_ul);
+
+/// Builds DCI f0_1 for C-RNTI.
+void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
+                           const ue_cell_configuration& ue_cell_cfg,
+                           bwp_id_t                     active_bwp_id,
+                           search_space_id              ss_id,
+                           const prb_interval&          prbs,
+                           unsigned                     time_resource,
+                           sch_mcs_index                mcs_index,
+                           const ul_harq_process&       h_ul);
 
 } // namespace srsran

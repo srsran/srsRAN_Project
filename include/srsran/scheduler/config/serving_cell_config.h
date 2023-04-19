@@ -74,7 +74,7 @@ struct pdcch_config {
 struct pdsch_config {
   /// \brief Interleaving unit configurable between 2 and 4 PRBs.
   /// \remark See TS 38.211, clause 7.3.1.6.
-  enum class vrb_to_prb_interleaver { n2, n4 };
+  enum class vrb_to_prb_interleaver { n2 = 2, n4 = 4 };
 
   /// \brief Resource allocation type of to DCI format 1_1.
   /// \remark See TS 38.214, clause 5.1.2.2.
@@ -170,7 +170,7 @@ struct bwp_uplink_dedicated {
 struct pusch_serving_cell_config {
   struct pusch_code_block_group_transmission {
     /// Maximum number of code-block-groups (CBGs) per TB. See TS 38.213, clause 9.1.
-    enum class max_code_block_groups_per_transport_block { n2, n4, n6, n8 };
+    enum class max_code_block_groups_per_transport_block { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
 
     max_code_block_groups_per_transport_block max_cgb_per_tb;
   };
@@ -189,7 +189,8 @@ struct uplink_config {
 /// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
 struct pdsch_code_block_group_transmission {
   /// \c maxCodeBlockGroupsPerTransportBlock.
-  enum class max_code_block_groups_per_tb { n2, n4, n6, n8 };
+  /// \remark Maximum number of code-block-groups (CBGs) per TB. In case of multiple CW, the maximum CBG is 4.
+  enum class max_code_block_groups_per_tb { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
 
   max_code_block_groups_per_tb max_cbg_per_tb;
   bool                         code_block_group_flush_indicator;

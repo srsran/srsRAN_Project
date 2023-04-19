@@ -227,7 +227,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
                             init_dl_bwp,
-                            bwp_dl_cmn.generic_params,
+                            bwp_dl_cmn,
+                            ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id()),
                             ss_cfg->type,
                             prbs,
                             grant.time_res_index,
@@ -444,7 +445,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_dci_f0_0_c_rnti(pdcch->dci,
                             cell_cfg.dl_cfg_common.init_dl_bwp,
-                            ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params,
+                            ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()),
+                            ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id()),
                             init_ul_bwp.generic_params,
                             bwp_ul_cmn.generic_params,
                             ss_cfg->type,
@@ -454,7 +456,15 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      // TODO: Build PDCCH DCI Format 0_1.
+      build_dci_f0_1_c_rnti(pdcch->dci,
+                            ue_cell_cfg,
+                            ue_cc->active_bwp_id(),
+                            grant.ss_id,
+                            prbs,
+                            grant.time_res_index,
+                            mcs_tbs_info.value().mcs,
+                            h_ul);
+      break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");
   }
