@@ -66,6 +66,7 @@ public:
   // CU-UP handler
   void handle_new_cu_up_connection() override;
   void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
+  void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
   void handle_amf_connection() override;
@@ -79,6 +80,7 @@ public:
   cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
   cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler() override { return *this; }
   cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface() override { return *this; }
+  cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
   cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
   cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }

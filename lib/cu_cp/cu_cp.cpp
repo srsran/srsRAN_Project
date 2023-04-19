@@ -172,6 +172,11 @@ void cu_cp::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
   remove_cu_up(cu_up_index);
 }
 
+void cu_cp::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
+{
+  // Forward message to DU processor
+}
+
 void cu_cp::handle_amf_connection()
 {
   amf_connected = true;
