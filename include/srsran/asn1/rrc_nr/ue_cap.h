@@ -3430,6 +3430,56 @@ struct ptrs_density_recommendation_ul_s {
   void        to_json(json_writer& j) const;
 };
 
+// SRS-Resources ::= SEQUENCE
+struct srs_res_features_s {
+  struct max_num_aperiodic_srs_per_bwp_opts {
+    enum options { n1, n2, n4, n8, n16, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  typedef enumerated<max_num_aperiodic_srs_per_bwp_opts> max_num_aperiodic_srs_per_bwp_e_;
+  struct max_num_periodic_srs_per_bwp_opts {
+    enum options { n1, n2, n4, n8, n16, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  typedef enumerated<max_num_periodic_srs_per_bwp_opts> max_num_periodic_srs_per_bwp_e_;
+  struct max_num_semi_persistent_srs_per_bwp_opts {
+    enum options { n1, n2, n4, n8, n16, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  typedef enumerated<max_num_semi_persistent_srs_per_bwp_opts> max_num_semi_persistent_srs_per_bwp_e_;
+  struct max_num_srs_ports_per_res_opts {
+    enum options { n1, n2, n4, nulltype } value;
+    typedef uint8_t number_type;
+
+    const char* to_string() const;
+    uint8_t     to_number() const;
+  };
+  typedef enumerated<max_num_srs_ports_per_res_opts> max_num_srs_ports_per_res_e_;
+
+  // member variables
+  max_num_aperiodic_srs_per_bwp_e_       max_num_aperiodic_srs_per_bwp;
+  uint8_t                                max_num_aperiodic_srs_per_bwp_per_slot = 1;
+  max_num_periodic_srs_per_bwp_e_        max_num_periodic_srs_per_bwp;
+  uint8_t                                max_num_periodic_srs_per_bwp_per_slot = 1;
+  max_num_semi_persistent_srs_per_bwp_e_ max_num_semi_persistent_srs_per_bwp;
+  uint8_t                                max_num_semi_persistent_srs_per_bwp_per_slot = 1;
+  max_num_srs_ports_per_res_e_           max_num_srs_ports_per_res;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // SpatialRelations ::= SEQUENCE
 struct spatial_relations_s {
   struct max_num_cfg_spatial_relations_opts {
@@ -4478,7 +4528,7 @@ struct mimo_params_per_band_s {
   uint8_t                               max_num_csi_rs_bfd     = 1;
   uint8_t                               max_num_ssb_bfd        = 1;
   uint16_t                              max_num_csi_rs_ssb_cbd = 1;
-  srs_res_s                             dummy5;
+  srs_res_features_s                    dummy5;
   uint8_t                               dummy3 = 1;
   beam_report_timing_s_                 beam_report_timing;
   ptrs_density_recommendation_set_dl_s_ ptrs_density_recommendation_set_dl;
@@ -7266,8 +7316,8 @@ struct feature_set_dl_v1540_s {
 
 // FeatureSetDownlink-v15a0 ::= SEQUENCE
 struct feature_set_dl_v15a0_s {
-  bool      supported_srs_res_present = false;
-  srs_res_s supported_srs_res;
+  bool               supported_srs_res_features_present = false;
+  srs_res_features_s supported_srs_res_features;
 
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
@@ -7968,7 +8018,7 @@ struct feature_set_ul_s {
   bool                                            intra_band_freq_separation_ul_present                = false;
   bool                                            search_space_sharing_ca_ul_present                   = false;
   bool                                            dummy1_present                                       = false;
-  bool                                            supported_srs_res_present                            = false;
+  bool                                            supported_srs_res_features_present                   = false;
   bool                                            two_pucch_group_present                              = false;
   bool                                            dyn_switch_sul_present                               = false;
   bool                                            simul_tx_sul_non_sul_present                         = false;
@@ -7978,7 +8028,7 @@ struct feature_set_ul_s {
   scaling_factor_e_                               scaling_factor;
   freq_separation_class_e                         intra_band_freq_separation_ul;
   dummy_i_s                                       dummy1;
-  srs_res_s                                       supported_srs_res;
+  srs_res_features_s                              supported_srs_res_features;
   pusch_processing_type1_different_tb_per_slot_s_ pusch_processing_type1_different_tb_per_slot;
   dummy_f_s                                       dummy2;
 

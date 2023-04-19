@@ -9863,6 +9863,88 @@ void ptrs_density_recommendation_ul_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
+// SRS-Resources ::= SEQUENCE
+SRSASN_CODE srs_res_features_s::pack(bit_ref& bref) const
+{
+  HANDLE_CODE(max_num_aperiodic_srs_per_bwp.pack(bref));
+  HANDLE_CODE(pack_integer(bref, max_num_aperiodic_srs_per_bwp_per_slot, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_periodic_srs_per_bwp.pack(bref));
+  HANDLE_CODE(pack_integer(bref, max_num_periodic_srs_per_bwp_per_slot, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_semi_persistent_srs_per_bwp.pack(bref));
+  HANDLE_CODE(pack_integer(bref, max_num_semi_persistent_srs_per_bwp_per_slot, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_srs_ports_per_res.pack(bref));
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE srs_res_features_s::unpack(cbit_ref& bref)
+{
+  HANDLE_CODE(max_num_aperiodic_srs_per_bwp.unpack(bref));
+  HANDLE_CODE(unpack_integer(max_num_aperiodic_srs_per_bwp_per_slot, bref, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_periodic_srs_per_bwp.unpack(bref));
+  HANDLE_CODE(unpack_integer(max_num_periodic_srs_per_bwp_per_slot, bref, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_semi_persistent_srs_per_bwp.unpack(bref));
+  HANDLE_CODE(unpack_integer(max_num_semi_persistent_srs_per_bwp_per_slot, bref, (uint8_t)1u, (uint8_t)6u));
+  HANDLE_CODE(max_num_srs_ports_per_res.unpack(bref));
+
+  return SRSASN_SUCCESS;
+}
+void srs_res_features_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.write_str("maxNumberAperiodicSRS-PerBWP", max_num_aperiodic_srs_per_bwp.to_string());
+  j.write_int("maxNumberAperiodicSRS-PerBWP-PerSlot", max_num_aperiodic_srs_per_bwp_per_slot);
+  j.write_str("maxNumberPeriodicSRS-PerBWP", max_num_periodic_srs_per_bwp.to_string());
+  j.write_int("maxNumberPeriodicSRS-PerBWP-PerSlot", max_num_periodic_srs_per_bwp_per_slot);
+  j.write_str("maxNumberSemiPersistentSRS-PerBWP", max_num_semi_persistent_srs_per_bwp.to_string());
+  j.write_int("maxNumberSemiPersistentSRS-PerBWP-PerSlot", max_num_semi_persistent_srs_per_bwp_per_slot);
+  j.write_str("maxNumberSRS-Ports-PerResource", max_num_srs_ports_per_res.to_string());
+  j.end_obj();
+}
+
+const char* srs_res_features_s::max_num_aperiodic_srs_per_bwp_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n16"};
+  return convert_enum_idx(names, 5, value, "srs_res_features_s::max_num_aperiodic_srs_per_bwp_e_");
+}
+uint8_t srs_res_features_s::max_num_aperiodic_srs_per_bwp_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 16};
+  return map_enum_number(numbers, 5, value, "srs_res_features_s::max_num_aperiodic_srs_per_bwp_e_");
+}
+
+const char* srs_res_features_s::max_num_periodic_srs_per_bwp_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n16"};
+  return convert_enum_idx(names, 5, value, "srs_res_features_s::max_num_periodic_srs_per_bwp_e_");
+}
+uint8_t srs_res_features_s::max_num_periodic_srs_per_bwp_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 16};
+  return map_enum_number(numbers, 5, value, "srs_res_features_s::max_num_periodic_srs_per_bwp_e_");
+}
+
+const char* srs_res_features_s::max_num_semi_persistent_srs_per_bwp_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4", "n8", "n16"};
+  return convert_enum_idx(names, 5, value, "srs_res_features_s::max_num_semi_persistent_srs_per_bwp_e_");
+}
+uint8_t srs_res_features_s::max_num_semi_persistent_srs_per_bwp_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4, 8, 16};
+  return map_enum_number(numbers, 5, value, "srs_res_features_s::max_num_semi_persistent_srs_per_bwp_e_");
+}
+
+const char* srs_res_features_s::max_num_srs_ports_per_res_opts::to_string() const
+{
+  static const char* names[] = {"n1", "n2", "n4"};
+  return convert_enum_idx(names, 3, value, "srs_res_features_s::max_num_srs_ports_per_res_e_");
+}
+uint8_t srs_res_features_s::max_num_srs_ports_per_res_opts::to_number() const
+{
+  static const uint8_t numbers[] = {1, 2, 4};
+  return map_enum_number(numbers, 3, value, "srs_res_features_s::max_num_srs_ports_per_res_e_");
+}
+
 // SpatialRelations ::= SEQUENCE
 SRSASN_CODE spatial_relations_s::pack(bit_ref& bref) const
 {
@@ -20427,20 +20509,20 @@ feature_set_dl_v1540_s::pdsch_processing_type2_limited_s_::different_tb_per_slot
 // FeatureSetDownlink-v15a0 ::= SEQUENCE
 SRSASN_CODE feature_set_dl_v15a0_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(bref.pack(supported_srs_res_present, 1));
+  HANDLE_CODE(bref.pack(supported_srs_res_features_present, 1));
 
-  if (supported_srs_res_present) {
-    HANDLE_CODE(supported_srs_res.pack(bref));
+  if (supported_srs_res_features_present) {
+    HANDLE_CODE(supported_srs_res_features.pack(bref));
   }
 
   return SRSASN_SUCCESS;
 }
 SRSASN_CODE feature_set_dl_v15a0_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(bref.unpack(supported_srs_res_present, 1));
+  HANDLE_CODE(bref.unpack(supported_srs_res_features_present, 1));
 
-  if (supported_srs_res_present) {
-    HANDLE_CODE(supported_srs_res.unpack(bref));
+  if (supported_srs_res_features_present) {
+    HANDLE_CODE(supported_srs_res_features.unpack(bref));
   }
 
   return SRSASN_SUCCESS;
@@ -20448,9 +20530,9 @@ SRSASN_CODE feature_set_dl_v15a0_s::unpack(cbit_ref& bref)
 void feature_set_dl_v15a0_s::to_json(json_writer& j) const
 {
   j.start_obj();
-  if (supported_srs_res_present) {
+  if (supported_srs_res_features_present) {
     j.write_fieldname("supportedSRS-Resources");
-    supported_srs_res.to_json(j);
+    supported_srs_res_features.to_json(j);
   }
   j.end_obj();
 }
@@ -22029,7 +22111,7 @@ SRSASN_CODE feature_set_ul_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(intra_band_freq_separation_ul_present, 1));
   HANDLE_CODE(bref.pack(search_space_sharing_ca_ul_present, 1));
   HANDLE_CODE(bref.pack(dummy1_present, 1));
-  HANDLE_CODE(bref.pack(supported_srs_res_present, 1));
+  HANDLE_CODE(bref.pack(supported_srs_res_features_present, 1));
   HANDLE_CODE(bref.pack(two_pucch_group_present, 1));
   HANDLE_CODE(bref.pack(dyn_switch_sul_present, 1));
   HANDLE_CODE(bref.pack(simul_tx_sul_non_sul_present, 1));
@@ -22046,8 +22128,8 @@ SRSASN_CODE feature_set_ul_s::pack(bit_ref& bref) const
   if (dummy1_present) {
     HANDLE_CODE(dummy1.pack(bref));
   }
-  if (supported_srs_res_present) {
-    HANDLE_CODE(supported_srs_res.pack(bref));
+  if (supported_srs_res_features_present) {
+    HANDLE_CODE(supported_srs_res_features.pack(bref));
   }
   if (pusch_processing_type1_different_tb_per_slot_present) {
     HANDLE_CODE(bref.pack(pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
@@ -22080,7 +22162,7 @@ SRSASN_CODE feature_set_ul_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(intra_band_freq_separation_ul_present, 1));
   HANDLE_CODE(bref.unpack(search_space_sharing_ca_ul_present, 1));
   HANDLE_CODE(bref.unpack(dummy1_present, 1));
-  HANDLE_CODE(bref.unpack(supported_srs_res_present, 1));
+  HANDLE_CODE(bref.unpack(supported_srs_res_features_present, 1));
   HANDLE_CODE(bref.unpack(two_pucch_group_present, 1));
   HANDLE_CODE(bref.unpack(dyn_switch_sul_present, 1));
   HANDLE_CODE(bref.unpack(simul_tx_sul_non_sul_present, 1));
@@ -22097,8 +22179,8 @@ SRSASN_CODE feature_set_ul_s::unpack(cbit_ref& bref)
   if (dummy1_present) {
     HANDLE_CODE(dummy1.unpack(bref));
   }
-  if (supported_srs_res_present) {
-    HANDLE_CODE(supported_srs_res.unpack(bref));
+  if (supported_srs_res_features_present) {
+    HANDLE_CODE(supported_srs_res_features.unpack(bref));
   }
   if (pusch_processing_type1_different_tb_per_slot_present) {
     HANDLE_CODE(bref.unpack(pusch_processing_type1_different_tb_per_slot.scs_15k_hz_present, 1));
@@ -22148,9 +22230,9 @@ void feature_set_ul_s::to_json(json_writer& j) const
     j.write_fieldname("dummy1");
     dummy1.to_json(j);
   }
-  if (supported_srs_res_present) {
+  if (supported_srs_res_features_present) {
     j.write_fieldname("supportedSRS-Resources");
-    supported_srs_res.to_json(j);
+    supported_srs_res_features.to_json(j);
   }
   if (two_pucch_group_present) {
     j.write_str("twoPUCCH-Group", "supported");
