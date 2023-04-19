@@ -25,7 +25,7 @@ e2_impl::e2_impl(timer_factory            timers_,
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   e2_sub_notif(e2_sub_notif_),
-  subscribe_proc(e2_pdu_notifier_, e2_sub_notif, timers_, logger),
+  subscribe_proc(e2_pdu_notifier_, e2_sub_notif, timers, logger),
   du_metrics_interface(du_metrics_interface_),
   events(std::make_unique<e2_event_manager>(timers))
 {

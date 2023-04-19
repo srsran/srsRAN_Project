@@ -212,12 +212,12 @@ public:
 class e2_test_base : public ::testing::Test
 {
 protected:
+  timer_manager                                       timers;
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<e2_subscriber>                      subscriber;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
-  timer_manager                                       timers;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
