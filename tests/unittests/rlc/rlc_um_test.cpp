@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_um_entity.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -81,9 +82,8 @@ protected:
   /// \param sn_size_ size of the sequence number
   void init(rlc_um_sn_size sn_size_)
   {
-    logger.info("Creating RLC UM ({} bit)", to_number(sn_size));
-
     sn_size = sn_size_;
+    logger.info("Creating RLC UM ({} bit)", to_number(sn_size));
 
     // Set Rx config
     config.rx.sn_field_length = sn_size;
