@@ -60,10 +60,7 @@ public:
     rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_sn});
   }
 
-  void on_discard_sdu(uint32_t pdcp_sn) override
-  {
-    // TODO.
-  }
+  void on_discard_sdu(uint32_t pdcp_sn) override { rlc_tx->discard_sdu(pdcp_sn); }
 
 private:
   rlc_tx_upper_layer_data_interface* rlc_tx = nullptr;
