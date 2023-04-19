@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "../mac/mac_impl.h"
+#include "srsran/du/du_test_config.h"
+#include "srsran/mac/mac.h"
 
 namespace srsran {
 

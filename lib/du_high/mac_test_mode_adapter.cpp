@@ -9,6 +9,7 @@
  */
 
 #include "mac_test_mode_adapter.h"
+#include "srsran/scheduler/harq_id.h"
 
 using namespace srsran;
 
