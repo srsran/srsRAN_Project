@@ -59,10 +59,13 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
       prach_configuration_get(frequency_range::FR1,
                               msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
-  VERIFY(is_long_preamble(prach_cfg.format), "Short PRACH preamble formats not supported");
+  VERIFY(prach_cfg.format < prach_format_type::invalid, "Invalid PRACH format");
 
   subcarrier_spacing           pusch_scs           = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
   prach_symbols_slots_duration prach_duration_info = get_prach_duration_info(prach_cfg, pusch_scs);
+  prach_subcarrier_spacing     prach_scs           = is_long_preamble(prach_cfg.format)
+                                                         ? get_prach_preamble_long_info(prach_cfg.format).scs
+                                                         : to_ra_subcarrier_spacing(pusch_scs);
 
   // Check if the PRACH preambles fall into UL slots
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
@@ -81,8 +84,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     }
   }
 
-  const unsigned prach_nof_prbs =
-      prach_frequency_mapping_get(get_prach_preamble_long_info(prach_cfg.format).scs, pusch_scs).nof_rb_ra;
+  const unsigned prach_nof_prbs = prach_frequency_mapping_get(prach_scs, pusch_scs).nof_rb_ra;
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
     prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
