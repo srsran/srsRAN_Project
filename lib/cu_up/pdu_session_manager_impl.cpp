@@ -194,7 +194,16 @@ pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session)
 {
   pdu_session_modification_result pdu_session_result;
-  auto&                           pdu_session = pdu_sessions.at(session.pdu_session_id);
+  pdu_session_result.success        = false;
+  pdu_session_result.pdu_session_id = session.pdu_session_id;
+  pdu_session_result.cause          = cause_t::misc;
+
+  if (pdu_sessions.find(session.pdu_session_id) == pdu_sessions.end()) {
+    logger.error("PDU Session {} doesn't exists", session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  auto& pdu_session = pdu_sessions.at(session.pdu_session_id);
 
   // > DRB To Setup List
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
