@@ -252,9 +252,3 @@ TEST_F(cu_up_test, ul_data_flow)
 
   close(sock_fd);
 }
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
