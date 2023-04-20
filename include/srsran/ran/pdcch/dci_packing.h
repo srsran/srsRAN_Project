@@ -113,7 +113,7 @@ struct dci_size_config {
 
   /// \brief parameter \f$n_{BWP,RRC}\f$ for DCI format 0_1, in TS38.212 Section 7.3.1.1.2.
   ///
-  /// Set to the number of UL BWPs configured by higher layers, excluding the initial UL BWP.
+  /// Set to the number of UL BWPs configured by higher layers, excluding the initial UL BWP. Values: {0, 1, ..., 4}.
   unsigned nof_ul_bwp_rrc;
   /// \brief parameter \f$I\f$ in TS38.212 Section 7.3.1.1.2.
   ///
@@ -179,8 +179,9 @@ struct dci_size_config {
   optional<unsigned> nof_srs_ports;
   /// \brief Parameter \f$N_{SRS}\f$ in TS38.212 Section 7.3.1.1.2, indicating the number of SRS resources.
   ///
-  /// It is required if \ref tx_config_non_codebook is set to \c true, indicating non-codebook transmission. Leave
-  /// unset for codebook transmission, since the number of SRS resources is up to 2 (see TS38.212 Table 7.3.1.1.2-32).
+  /// It is required for DCI format 0_1, i.e., if \ref dci_0_1_and_1_1_ue_ss is set to \c true. Possible values:
+  ///   - {1, 2, 3, 4} for non-codebook transmission, i.e., if \ref tx_config_non_codebook is set to \c true.
+  ///   - {1, 2} otherwise.
   optional<unsigned> nof_srs_resources;
   /// \brief Parameter \f$L_{max}\f$ in TS38.212 Section 7.3.1.1.2.
   ///
@@ -188,24 +189,24 @@ struct dci_size_config {
   /// operation. Set to the value of the higher layer parameter \e maxMIMO-Layers (see TS38.331 Section 6.3.2,
   /// Information Element \e PUSCH-ServingCellConfig) if it is configured in the serving cell and supported by the UE.
   /// Otherwise, set to the maximum number of layers supported by the UE for the serving cell and for non-codebook
-  /// based operation.
+  /// based operation. Values: {1, 2, 3, 4}.
   ///
   /// \remark Required if \ref tx_config_non_codebook is set to \c true, indicating non-codebook transmission.
   optional<unsigned> pusch_max_layers;
   /// \brief Maximum UE transmission rank for codebook based operation.
   ///
   /// Specifies the maximum UE transmission rank, determined by the higher layer parameter \e maxRank (see TS38.331
-  /// Section 6.3.2, Information Element \e PUSCH-Config). Values: {1, ..., 4}.
+  /// Section 6.3.2, Information Element \e PUSCH-Config). Values: {1, ..., 4} and it must be smaller or equal than \ref
+  /// nof_srs_ports.
   ///
-  /// \remark Required if PT-RS signals are configured, i.e., if \ref ptrs_uplink_configured is set to \c true, and for
-  /// codebook based transmission with more than one antenna port, i.e., if \ref cb_subset is set.
+  /// \remark Required for codebook based transmission, i.e., if \ref tx_config_non_codebook is set to \c false.
   optional<unsigned> max_rank;
   /// \brief Subset of PMIs addressed by TPMI.
   ///
   /// Restricts the available PMIs to those supported by the UE, according to its coherence capabilities. Its value is
   /// indicated by the higher layer parameter \e codebookSubset (see TS38.331 Section 6.3.2, Information Element \e
-  /// PUSCH-Config). It is required for codebook based transmission with more than one antenna port, otherwise leave
-  /// unset.
+  /// PUSCH-Config). It is required for codebook based transmission with more than one antenna port, i.e., if \ref
+  /// tx_config_non_codebook is set to \c false and \ref nof_srs_ports is greater than one. Otherwise, leave it unset.
   optional<tx_scheme_codebook_subset> cb_subset;
   /// \brief UL DM-RS type for DM-RS mapping type A.
   ///
@@ -235,7 +236,7 @@ struct dci_size_config {
   ///
   /// Set according to the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock if the higher layer parameter
   /// \e codeBlockGroupTransmission is present (see TS38.331 Section 6.3.2, Information Element \e
-  /// PUSCH-ServingCellConfig). Otherwise, leave it unset.
+  /// PUSCH-ServingCellConfig). Otherwise, leave it unset. Values: {2, 4, 6, 8}.
   optional<unsigned> max_cbg_tb_pusch;
   /// @}
 
@@ -244,7 +245,7 @@ struct dci_size_config {
 
   /// \brief parameter \f$n_{BWP,RRC}\f$ for DCI format 1_1, in TS38.212 Section 7.3.1.2.2.
   ///
-  /// Set to the number of DL BWPs configured by higher layers, excluding the initial DL BWP.
+  /// Set to the number of DL BWPs configured by higher layers, excluding the initial DL BWP. Values: {0, 1, ..., 4}.
   unsigned nof_dl_bwp_rrc;
   /// \brief parameter \f$I\f$ in TS38.212 Section 7.3.1.2.2.
   ///
@@ -266,7 +267,7 @@ struct dci_size_config {
   /// \brief Number of PDSCH to the DL ACK timings.
   ///
   /// Parameter \f$I\f$ in TS38.212 Section 7.3.1.2.2, representing the number of entries of the the higher layer
-  /// parameter \e dl-DataToUl-ACK (see TS38.331 Section 6.3.2, Information Element \e PUCCH-Config). Values: {1, ...,
+  /// parameter \e dl-DataToUL-ACK (see TS38.331 Section 6.3.2, Information Element \e PUCCH-Config). Values: {1, ...,
   /// 8}.
   unsigned nof_pdsch_ack_timings;
   /// \brief Dynamic PRB bundling flag.
@@ -352,6 +353,7 @@ struct dci_size_config {
   /// Set according to the higher layer parameter \e maxCodeBlockGroupsPerTransportBlock (see TS38.331 Section 6.3.2,
   /// Information Element \e PDSCH-ServingCellConfig) if the higher layer parameter \e codeBlockGroupTransmission (see
   /// TS38.331 Section 6.3.2, Information Element \e PDSCH-ServingCellConfig) is present. Otherwise, leave it unset.
+  /// Values: {2, 4, 6, 8}.
   optional<unsigned> max_cbg_tb_pdsch;
   ///@}
 };
@@ -1060,9 +1062,9 @@ struct dci_1_1_configuration {
   ///
   ///
   /// Number of slots between reception of PDSCH and transmission of the HARQ-ACK. It occupies \f$\log_2(I)\f$ bits,
-  /// where \f$I\f$ is the the number of entries of the higher layer parameter \e dl-DataToUl-ACK (see TS38.331 Section
+  /// where \f$I\f$ is the the number of entries of the higher layer parameter \e dl-DataToUL-ACK (see TS38.331 Section
   /// 6.3.2, Information Element \e PUCCH-Config). Set as per TS38.213 Section 9.2.3 if The higher layer parameter \e
-  /// dl-DataToUl-ACK is configured with more than a single value, i.e., if \ref dci_size_config::nof_pdsch_ack_timings
+  /// dl-DataToUL-ACK is configured with more than a single value, i.e., if \ref dci_size_config::nof_pdsch_ack_timings
   /// is greater than 1 when computing the DCI sizes.
   optional<unsigned> pdsch_harq_fb_timing_indicator;
   /// \brief Antenna ports for PDSCH transmission - 4, 5 or 6 bits.
@@ -1127,5 +1129,8 @@ struct dci_rar_configuration {
 
 /// Packs a DCI transmitted in a Random Access Response.
 dci_payload dci_rar_pack(const dci_rar_configuration& config);
+
+/// Validates a DCI configuration for the DCI size alignment procedure.
+bool validate_dci_size_config(const dci_size_config& config);
 
 } // namespace srsran

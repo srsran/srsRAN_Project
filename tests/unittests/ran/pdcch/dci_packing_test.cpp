@@ -364,12 +364,13 @@ protected:
     // Set optional size parameters to prevent unmet requirements.
     dci_config.dynamic_dual_harq_ack_cb = static_cast<bool>(bool_dist(rgen));
 
-    dci_config.nof_ul_rb_groups  = nof_rb_groups_dist(rgen);
-    dci_config.nof_dl_rb_groups  = nof_rb_groups_dist(rgen);
-    dci_config.nof_srs_ports     = 1;
-    dci_config.nof_srs_resources = nof_srs_resources(rgen);
-    dci_config.pusch_max_layers  = 1;
-    dci_config.max_rank          = 1;
+    dci_config.nof_ul_rb_groups       = nof_rb_groups_dist(rgen);
+    dci_config.nof_dl_rb_groups       = nof_rb_groups_dist(rgen);
+    dci_config.nof_srs_resources      = nof_srs_resources(rgen);
+    dci_config.nof_srs_ports          = 1;
+    dci_config.pusch_max_layers       = 1;
+    dci_config.max_rank               = 1;
+    dci_config.ptrs_uplink_configured = false;
 
     dmrs_mapping_type mapping_type = static_cast<dmrs_mapping_type>(dmrs_mapping_type_dist(rgen));
 
@@ -1586,7 +1587,7 @@ INSTANTIATE_TEST_SUITE_P(DciPacking,
                              // Number of UL/DL BWP configured by RRC.
                              ::testing::Values(0, 1, 4),
                              // Number of UL/DL time domain resources.
-                             ::testing::Values(0, 7, 16),
+                             ::testing::Values(1, 7, 16),
                              // Non-codebook based transmission.
                              ::testing::Values(false, true),
                              // UL PT-RS configured.
