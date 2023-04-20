@@ -28,7 +28,7 @@ enum class fftw_plan_optimization : unsigned {
   fftw_estimate = FFTW_ESTIMATE,
   /// Finds an optimized FFT plan by computing several FFTs and measuring their execution time.
   fftw_measure = FFTW_MEASURE,
-  /// Same than \ref fftw_measure but more exhaustive.
+  /// Same as \ref fftw_measure but more exhaustive.
   fftw_exhaustive = FFTW_EXHAUSTIVE
 };
 

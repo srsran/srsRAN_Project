@@ -140,7 +140,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   int      fftw_sign  = (dir == direction::DIRECT) ? FFTW_FORWARD : FFTW_BACKWARD;
 
   // Set FFTW plan creation duration limit.
-  if (std::isnormal(fftw_config.plan_creation_timeout_s) && fftw_config.plan_creation_timeout_s > 0) {
+  if (std::isnormal(fftw_config.plan_creation_timeout_s) && (fftw_config.plan_creation_timeout_s > 0)) {
     fftwf_set_timelimit(fftw_config.plan_creation_timeout_s);
   }
 
