@@ -271,12 +271,12 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.start_rb                                              = 23;
   pdu.num_rbs                                               = 28;
   pdu.type                                                  = csi_rs_type::CSI_RS_NZP;
-  pdu.row                                                   = 4;
-  pdu.freq_domain                                           = {1, 0, 0};
+  pdu.row                                                   = 1;
+  pdu.freq_domain                                           = {1, 0, 0, 0, 0, 0};
   pdu.symb_L0                                               = 8;
   pdu.symb_L1                                               = 7;
   pdu.cdm_type                                              = csi_rs_cdm_type::no_CDM;
-  pdu.freq_density                                          = csi_rs_freq_density_type::one;
+  pdu.freq_density                                          = csi_rs_freq_density_type::three;
   pdu.scramb_id                                             = 123;
   pdu.power_control_offset_profile_nr                       = 0;
   pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;

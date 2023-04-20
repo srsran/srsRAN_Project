@@ -58,3 +58,25 @@ void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::conf
   proc_pdu.pmi   = 0;
   proc_pdu.ports = {0};
 }
+
+void srsran::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&            pattern,
+                                                            const fapi::dl_csi_rs_pdu& fapi_pdu,
+                                                            uint16_t                   cell_bandwidth_prb)
+{
+  // Fill the CSI-RS pattern configuration.
+  csi_rs_pattern_configuration config;
+
+  config.start_rb = fapi_pdu.start_rb;
+  config.nof_rb   = std::min(fapi_pdu.num_rbs, static_cast<uint16_t>(cell_bandwidth_prb - fapi_pdu.start_rb));
+  config.csi_rs_mapping_table_row = fapi_pdu.row;
+  csi_rs::convert_freq_domain(config.freq_allocation_ref_idx, fapi_pdu.freq_domain, fapi_pdu.row);
+
+  config.symbol_l0    = fapi_pdu.symb_L0;
+  config.symbol_l1    = fapi_pdu.symb_L1;
+  config.cdm          = fapi_pdu.cdm_type;
+  config.freq_density = fapi_pdu.freq_density;
+  config.nof_ports    = 1;
+
+  // Get the CSI-RS pattern.
+  pattern = get_csi_rs_pattern(config);
+}
