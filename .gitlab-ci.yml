@@ -48,6 +48,14 @@ include-guards:
       - INPUT_PATH: "."
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
+full-code-format:
+  extends: .full-code-format
+  rules:
+    - if: $ON_MR
+      changes:
+        - .clang-format
+    - if: $CI_DESCRIPTION =~ /Nightly/
+
 .codechecker:
   image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
   stage: static
@@ -166,23 +174,8 @@ coverity:
 ################################################################################
 # Doc generation
 ################################################################################
-.depends on unit test jobs:
-  # Here we handled how jobs in .gitlab-ci.yml depends on jobs inside build.yml
-  # If unit tests related jobs change in build.yml, we'll need to change this one too
-  needs:
-    - job: build cached
-      optional: true
-      artifacts: true
-    - job: build update cache
-      optional: true
-      artifacts: true
-    - job: build clean
-      optional: true
-      artifacts: true
-
 unit coverage:
   stage: documentation
-  extends: .depends on unit test jobs
   image:
     name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
@@ -241,6 +234,16 @@ unit coverage:
     paths:
       - coverage_html
     expire_in: 10 minutes
+  needs:
+    - job: smoke release cached
+      optional: true
+      artifacts: true
+    - job: smoke release clean
+      optional: true
+      artifacts: true
+    - job: smoke release update cache
+      optional: true
+      artifacts: true
 
 pages:
   stage: documentation

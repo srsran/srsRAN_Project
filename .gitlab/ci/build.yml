@@ -19,9 +19,8 @@ variables:
     description: Computer architecture and supported instruction sets
     options:
       - "aws-spot-amd64"
-      - "aws-spot-arm64"
-      - "aws-demand-amd64-avx2"
       - "aws-demand-amd64-avx2-avx512"
+      - "aws-spot-arm64"
     value: "aws-spot-amd64"
   OS:
     description: Operating system
@@ -54,7 +53,10 @@ variables:
     description: must be one version supported in the specified OS
     value: ""
 
-# Code to reuse. No jobs
+###############################
+# Cache related code to reuse #
+###############################
+
 .cache_src_set: &cache_src_set
   - key: srsgnb-src
     paths: [$CI_PROJECT_DIR]
@@ -77,7 +79,9 @@ variables:
     paths: [ccache]
     policy: pull
 
-# Git source downloader job
+#############################
+# Git source downloader job #
+#############################
 
 push_src_cache:
   stage: .pre
@@ -111,7 +115,11 @@ pull_src_cache:
       - INFRASTRUCTURE_TAG: aws-spot-amd64
       - INFRASTRUCTURE_TAG: aws-spot-arm64
 
-# Template job
+#################
+# Template jobs #
+#################
+
+# Base job
 
 .build_and_unit:
   image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
@@ -128,7 +136,7 @@ pull_src_cache:
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
-    AUTO_DETECT_ISA: "False"
+    AUTO_DETECT_ISA: ""
     # CI
     DOCKER_BUILDER_VERSION: "1.7.8"
     UPLOAD_ARTIFACTS: "" # Empty by default
@@ -267,35 +275,73 @@ pull_src_cache:
   cache:
     - *cache_src_get
 
-# Main combinations
+# Basic builds (MR and update cache on Nightly)
 
-.build_and_unit_main:
+.smoke release:
   extends: .build_and_unit
   variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
-  parallel:
-    matrix:
-      - OS: ubuntu-22.04
-        TEST_MODE: coverage
-        COMPILER: gcc
-        BUILD_TYPE: Release
-        ENABLE_GCOV: "True"
-      - OS: archlinux-latest
-        TEST_MODE: default
-        COMPILER: gcc
-        BUILD_TYPE: Release
-      - OS: ubuntu-20.04
-        TEST_MODE: default
-        COMPILER: gcc
-        BUILD_TYPE: Release
-        ENABLE_EXPORT: "True"
-      - OS: rhel-8
-        TEST_MODE: default
-        COMPILER: gcc
-        BUILD_TYPE: Release
+    ENABLE_GCOV: "True"
+    TEST_MODE: coverage
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
 
-build cached:
-  extends: .build_and_unit_main
+.smoke tsan:
+  extends: .build_and_unit
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: clang
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_TSAN: "True"
+    TEST_MODE: tsan
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+
+.smoke rhel:
+  extends: .build_and_unit
+  variables:
+    OS: rhel-8
+    COMPILER: gcc
+    BUILD_TYPE: Release
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+
+.smoke archlinux:
+  extends: .build_and_unit
+  variables:
+    OS: archlinux-latest
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+
+# Combinations to use in schedules matrix
+
+.combinations: &basic_combinations
+  COMPILER: [gcc, clang]
+  BUILD_TYPE: [Release, RelWithDebInfo, Debug]
+  ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
+
+######
+# MR #
+######
+
+# Smoke builds in PR: with or without cache
+
+smoke release cached:
+  extends: .smoke release
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
   rules:
@@ -306,18 +352,68 @@ build cached:
     - *cache_src_get
     - *cache_build_get
 
-build update cache:
-  extends: .build_and_unit_main
+smoke tsan cached:
+  extends: .smoke tsan
+  variables:
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    UPLOAD_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $ON_MR
   cache:
     - *cache_src_get
-    - *cache_build_set
+    - *cache_build_get
 
-build clean:
-  extends: .build_and_unit_main
+smoke rhel cached:
+  extends: .smoke rhel
+  variables:
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR
+  cache:
+    - *cache_src_get
+    - *cache_build_get
+
+smoke archlinux cached:
+  extends: .smoke archlinux
+  variables:
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR
+  cache:
+    - *cache_src_get
+    - *cache_build_get
+
+smoke release clean:
+  extends: .smoke release
+  variables:
+    UPLOAD_ARTIFACTS: "True"
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache:
+    - *cache_src_get
+
+smoke tsan clean:
+  extends: .smoke tsan
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache:
+    - *cache_src_get
+
+smoke rhel clean:
+  extends: .smoke rhel
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache:
+    - *cache_src_get
+
+smoke archlinux clean:
+  extends: .smoke archlinux
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
@@ -335,8 +431,10 @@ intermediate commits:
     COMPILER: gcc
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
-    ENABLE_EXPORT: "False"
     ENABLE_GCOV: "True"
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
     KUBERNETES_MEMORY_REQUEST: 7Gi
   script:
     - git config advice.detachedHead false
@@ -356,270 +454,292 @@ intermediate commits:
     - *cache_src_get
     - *cache_build_get
 
-# Alt combinations
+###########
+# Nightly #
+###########
 
-build without rf:
+# Update cache for MR jobs
+
+smoke release update cache:
+  extends: .smoke release
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    UPLOAD_ARTIFACTS: "True"
+  cache:
+    - *cache_src_get
+    - *cache_build_set
+
+smoke tsan update cache:
+  extends: .smoke tsan
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    UPLOAD_ARTIFACTS: "True"
+  cache:
+    - *cache_src_get
+    - *cache_build_set
+
+smoke rhel update cache:
+  extends: .smoke rhel
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  cache:
+    - *cache_src_get
+    - *cache_build_set
+
+smoke archlinux update cache:
+  extends: .smoke archlinux
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  cache:
+    - *cache_src_get
+    - *cache_build_set
+
+# High priority smoke checks. Some of them save the binary for e2e tests
+
+basic debug:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    BUILD_TYPE: "" # Default one
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: none
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    UPLOAD_ARTIFACTS: "True"
+
+basic asan:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_ASAN: "True"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    UPLOAD_ARTIFACTS: "True"
+
+basic valgrind:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    TEST_MODE: valgrind
+
+# When building without rf and without zmq, we check no binary is generated
+
+not rf and not zmq:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Release
     TEST_MODE: default
     ENABLE_ZEROMQ: "False"
     ENABLE_UHD: "False"
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "False"
+  script:
+    - build_srsgnb
+    - launch_tests
+    - exit $(find build/apps/ -executable -type f | wc -l)
+
+# Validate export on, enabled for test vector generation
+
+export on amd64:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    COMPILER: gcc
+    TEST_MODE: none
+    ENABLE_EXPORT: "True"
   parallel:
     matrix:
       - OS: [ubuntu-22.04, ubuntu-20.04]
-        COMPILER: [gcc, clang]
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
 
-.build_and_unit_alt:
+# Build + unit tests combinations
+
+ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
-  variables:
-    OS: "" # Need to be specified
-    INFRASTRUCTURE_TAG: "" # Need to be specified
-    BUILD_TYPE: "" # Need to be specified
-    TEST_MODE: default
-    ENABLE_GCOV: "False"
-    ENABLE_ASAN: "False"
-    ENABLE_TSAN: "False"
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
   parallel:
     matrix:
-      - COMPILER: [gcc, clang]
-        ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
-        ENABLE_EXPORT: ["True", "False"]
+      - OS: ubuntu-22.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+  needs: # Wait until previous job block to end
+    - job: export on amd64
+      optional: true
+      artifacts: false
 
-build alt [ubuntu-22.04, amd64, Debug]:
-  extends: .build_and_unit_alt
+ubuntu-20.04 amd64 avx2:
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+  needs: # Wait until previous job block to end
+    - job: ubuntu-22.04 amd64 avx2
+      optional: true
+      artifacts: false
+
+rhel-8 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  parallel:
+    matrix:
+      - OS: rhel-8
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+  needs: # Wait until previous job block to end
+    - job: ubuntu-20.04 amd64 avx2
+      optional: true
+      artifacts: false
+
+#############
+# Archlinux #
+#############
+archlinux amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Archlinux/
+  parallel:
+    matrix:
+      - OS: archlinux-latest
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+archlinux amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Archlinux/
+  parallel:
+    matrix:
+      - OS: archlinux-latest
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+  needs: # Wait until previous job block to end
+    - job: archlinux no isa
+      optional: true
+      artifacts: false
+
+archlinux amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Archlinux/
+  parallel:
+    matrix:
+      - OS: archlinux-latest
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+
+##########
+# Weekly #
+##########
+
+# Sanitizers
+
+.weekly sanitizers:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    OS: ubuntu-22.04
-    INFRASTRUCTURE_TAG: aws-spot-amd64
+    ASSERT_LEVEL: PARANOID
     BUILD_TYPE: Debug
+  parallel:
+    matrix:
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        SANITIZER: tsan
+        COMPILER: [gcc, clang]
+        ENABLE_TSAN: "True"
+        TEST_MODE: tsan
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        SANITIZER: asan
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        SANITIZER: valgrind
+        COMPILER: [gcc, clang]
+        TEST_MODE: valgrind
 
-build alt [ubuntu-22.04, amd64, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+sanitizers amd64 no isa:
+  extends: .weekly sanitizers
   variables:
-    OS: ubuntu-22.04
     INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Release
+    AUTO_DETECT_ISA: "False"
 
-build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
+sanitizers amd64 avx512:
+  extends: .weekly sanitizers
   variables:
-    OS: ubuntu-22.04
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: RelWithDebInfo
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+    AUTO_DETECT_ISA: "True"
 
-build alt [ubuntu-22.04, arm64v8, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
+sanitizers arm no isa:
+  extends: .weekly sanitizers
   variables:
-    OS: ubuntu-22.04
     INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Debug
+    AUTO_DETECT_ISA: "False"
 
-build alt [ubuntu-22.04, arm64v8, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
+sanitizers arm neon:
+  extends: .weekly sanitizers
   variables:
-    OS: ubuntu-22.04
     INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Release
+    AUTO_DETECT_ISA: "True"
 
-build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-22.04
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: RelWithDebInfo
-
-build alt [ubuntu-20.04, amd64, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Debug
-  needs:
-    - job: build alt [ubuntu-22.04, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [ubuntu-22.04, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [ubuntu-20.04, amd64, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Release
-  needs:
-    - job: build alt [ubuntu-22.04, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [ubuntu-22.04, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: RelWithDebInfo
-
-build alt [ubuntu-20.04, arm64v8, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Debug
-
-build alt [ubuntu-20.04, arm64v8, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Release
-
-build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-20.04
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: RelWithDebInfo
-
-build alt [archlinux-latest, amd64, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: archlinux-latest
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Debug
-  needs:
-    - job: build alt [ubuntu-20.04, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [ubuntu-20.04, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [archlinux-latest, amd64, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: archlinux-latest
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Release
-  needs:
-    - job: build alt [ubuntu-20.04, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [ubuntu-20.04, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [archlinux-latest, amd64, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: archlinux-latest
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: RelWithDebInfo
-
-build alt [rhel-8, amd64, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Debug
-  needs:
-    - job: build alt [archlinux-latest, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [archlinux-latest, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [rhel-8, amd64, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: Release
-  needs:
-    - job: build alt [archlinux-latest, amd64, Debug]
-      optional: true
-      artifacts: false
-    - job: build alt [archlinux-latest, amd64, Release]
-      optional: true
-      artifacts: false
-
-build alt [rhel-8, amd64, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    BUILD_TYPE: RelWithDebInfo
-
-build alt [rhel-8, arm64, Debug]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Debug
-
-build alt [rhel-8, arm64, Release]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: Release
-
-build alt [rhel-8, arm64, RelWithDebInfo]:
-  extends: .build_and_unit_alt
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: rhel-8
-    INFRASTRUCTURE_TAG: aws-spot-arm64
-    BUILD_TYPE: RelWithDebInfo
-
-# UHD
+# UHD Alternatives
 
 build uhd alt:
   extends: .build_and_unit
@@ -628,6 +748,9 @@ build uhd alt:
   variables:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -637,158 +760,182 @@ build uhd alt:
         COMPILER: [gcc, clang]
         UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
 
-# Sanitizers
-sanitizers [asan]:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: asan
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ENABLE_ASAN: "True"
-    ASSERT_LEVEL: PARANOID
+# Build + unit tests combinations
 
-sanitizers [tsan]:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: tsan
-    COMPILER: clang
-    BUILD_TYPE: Debug
-    ENABLE_TSAN: "True"
-    ASSERT_LEVEL: PARANOID
-
-sanitizers [valgrind]:
+ubuntu-22.04 amd64 no isa:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: valgrind
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ASSERT_LEVEL: PARANOID
-
-# AVX
-
-.avx:
-  extends: .build_and_unit
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: default
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    AUTO_DETECT_ISA: "True"
-    UPLOAD_ARTIFACTS: "True"
-
-avx2 [basic]:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-    ENABLE_AVX2: "True"
-    ENABLE_AVX512: "False"
-
-avx2 [debug]:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: default
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ASSERT_LEVEL: PARANOID
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-    ENABLE_AVX512: "False"
-    ENABLE_AVX2: "True"
-
-avx2 [tsan, cached]:
-  extends: .avx
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
-    - if: $ON_MR
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: tsan
-    COMPILER: clang
-    BUILD_TYPE: Debug
-    ENABLE_TSAN: "True"
-    ASSERT_LEVEL: PARANOID
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-    ENABLE_AVX512: "False"
-    ENABLE_AVX2: "True"
-  cache:
-    - *cache_src_get
-    - *cache_build_get
-
-avx2 [tsan, update cache]:
-  extends: "avx2 [tsan, cached]"
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      when: never
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  cache:
-    - *cache_src_get
-    - *cache_build_set
-
-avx2 [tsan, clean]:
-  extends: "avx2 [tsan, cached]"
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
-
-avx2 [asan]:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: asan
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ENABLE_ASAN: "True"
-    ASSERT_LEVEL: PARANOID
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
-    ENABLE_AVX512: "False"
-    ENABLE_AVX2: "True"
-
-avx512:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
-    ENABLE_AVX2: "True"
-    ENABLE_AVX512: "True"
-
-avx extended:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
-  variables:
-    UPLOAD_ARTIFACTS: ""
   parallel:
     matrix:
-      - INFRASTRUCTURE_TAG:
-          ["aws-demand-amd64-avx2", "aws-demand-amd64-avx2-avx512"]
-        AUTO_DETECT_ISA: ["True", "False"]
-        ENABLE_AVX2: "True"
-        ENABLE_AVX512: ["True", "False"]
-      - INFRASTRUCTURE_TAG:
-          ["aws-demand-amd64-avx2", "aws-demand-amd64-avx2-avx512"]
-        AUTO_DETECT_ISA: ["True", "False"]
-        ENABLE_AVX2: "False"
-        ENABLE_AVX512: "False"
+      - OS: ubuntu-22.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
 
-# Web
+ubuntu-22.04 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-22.04 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-22.04 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-22.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "True"
+  needs:
+    - job: ubuntu-22.04 arm no isa
+      optional: true
+      artifacts: false
+
+ubuntu-20.04 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+  needs:
+    - job: ubuntu-22.04 amd64 no isa
+      optional: true
+      artifacts: false
+
+ubuntu-20.04 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+  needs:
+    - job: ubuntu-22.04 amd64 avx512
+      optional: true
+      artifacts: false
+
+ubuntu-20.04 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "False"
+  needs:
+    - job: ubuntu-22.04 arm no isa
+      optional: true
+      artifacts: false
+
+ubuntu-20.04 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: ubuntu-20.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "True"
+  needs:
+    - job: ubuntu-22.04 arm neon
+      optional: true
+      artifacts: false
+
+rhel-8 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: rhel-8
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+  needs:
+    - job: ubuntu-20.04 amd64 no isa
+      optional: true
+      artifacts: false
+
+rhel-8 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: rhel-8
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+  needs:
+    - job: ubuntu-20.04 amd64 avx512
+      optional: true
+      artifacts: false
+
+rhel-8 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: rhel-8
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "False"
+  needs:
+    - job: ubuntu-20.04 arm no isa
+      optional: true
+      artifacts: false
+
+rhel-8 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  parallel:
+    matrix:
+      - OS: rhel-8
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "True"
+  needs:
+    - job: ubuntu-20.04 arm neon
+      optional: true
+      artifacts: false
+
+#######
+# Web #
+#######
 
 custom-build:
   extends: .build_and_unit

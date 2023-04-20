@@ -105,13 +105,10 @@ smoke-zmq-tsan:
     RETINA_ARGS: "gnb.all.pcap=True"
     E2E_LOG_LEVEL: "debug"
   needs:
-    - job: "avx2 [tsan, cached]"
+    - job: "smoke tsan cached"
       artifacts: true
       optional: true
-    - job: "avx2 [tsan, update cache]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, clean]"
+    - job: "smoke tsan clean"
       artifacts: true
       optional: true
 
@@ -125,7 +122,7 @@ zmq:
     RETINA_ARGS: "gnb.all.pcap=False"
     E2E_LOG_LEVEL: "info"
   needs:
-    - job: "avx2 [basic]"
+    - job: "smoke release update cache"
       artifacts: true
 
 zmq-tsan:
@@ -133,22 +130,15 @@ zmq-tsan:
   variables:
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "avx2 [tsan, cached]"
+    - job: "smoke tsan update cache"
       artifacts: true
-      optional: true
-    - job: "avx2 [tsan, update cache]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, clean]"
-      artifacts: true
-      optional: true
 
 zmq-asan:
   extends: zmq
   variables:
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "avx2 [asan]"
+    - job: "basic asan"
       artifacts: true
 
 zmq-valgrind:
@@ -158,7 +148,7 @@ zmq-valgrind:
     E2E_LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "avx2 [debug]"
+    - job: "basic debug"
       artifacts: true
 
 rf:
@@ -171,7 +161,7 @@ rf:
     E2E_LOG_LEVEL: "warning"
     RETINA_ARGS: gnb.all.pcap=False
   needs:
-    - job: "avx2 [basic]"
+    - job: "smoke release update cache"
       artifacts: true
 
 rf-tsan:
@@ -181,15 +171,8 @@ rf-tsan:
   variables:
     MARKERS: "rf_not_crash"
   needs:
-    - job: "avx2 [tsan, cached]"
+    - job: "smoke tsan update cache"
       artifacts: true
-      optional: true
-    - job: "avx2 [tsan, update cache]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, clean]"
-      artifacts: true
-      optional: true
 
 rf-asan:
   extends: rf
@@ -198,7 +181,7 @@ rf-asan:
   variables:
     MARKERS: "rf_not_crash"
   needs:
-    - job: "avx2 [asan]"
+    - job: "basic asan"
       artifacts: true
 
 rf-b200-config:
