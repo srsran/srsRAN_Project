@@ -72,6 +72,36 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
   }
 }
 
+void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
+    const e1ap_bearer_context_inactivity_notification& msg)
+{
+  if (!ue_ctxt_list.contains(msg.ue_index)) {
+    logger.error("ue={} UE doesn't exist", msg.ue_index);
+    return;
+  }
+
+  // Get UE context
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
+
+  e1ap_message e1ap_msg;
+  e1ap_msg.pdu.set_init_msg();
+  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+  auto& inactivity_notification = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id.value.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id.value.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+
+  if (ue_ctxt.activity_notification_level == activity_notification_level_t::ue) {
+    inactivity_notification->activity_info.value.set_ue_activity();
+    inactivity_notification->activity_info.value.ue_activity() = asn1::e1ap::ue_activity_opts::options::not_active;
+  } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::pdu_session) {
+    logger.warning("ue={} pdu session level activity notifications not supported", msg.ue_index);
+  } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::drb) {
+    logger.warning("ue={} drb level activity notifications not supported", msg.ue_index);
+  } else {
+    logger.error("ue={} unsupported activity notification level", msg.ue_index);
+  }
+}
+
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
