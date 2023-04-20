@@ -133,6 +133,8 @@ struct security_result_t {
   std::string integrity_protection_result;
 };
 
+enum class activity_notification_level_t : uint8_t { ue = 0, pdu_session = 1, drb = 2, invalid = 3 };
+
 } // namespace srsran
 
 // Formatters

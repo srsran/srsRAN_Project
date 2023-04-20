@@ -1248,4 +1248,27 @@ inline void e1ap_drb_failed_item_list_to_asn1(
   }
 }
 
+inline activity_notification_level_t
+asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& asn1_activity_notification)
+{
+  activity_notification_level_t activity_notification_level;
+
+  switch (asn1_activity_notification.value) {
+    case asn1::e1ap::activity_notif_level_opts::options::drb:
+      activity_notification_level = activity_notification_level_t::drb;
+      break;
+    case asn1::e1ap::activity_notif_level_opts::options::pdu_session:
+      activity_notification_level = activity_notification_level_t::pdu_session;
+      break;
+    case asn1::e1ap::activity_notif_level_opts::options::ue:
+      activity_notification_level = activity_notification_level_t::ue;
+      break;
+    default:
+      activity_notification_level = activity_notification_level_t::invalid;
+      break;
+  }
+
+  return activity_notification_level;
+}
+
 } // namespace srsran
