@@ -86,6 +86,13 @@ struct dci_size_config {
   unsigned coreset0_bw;
   /// @}
 
+  /// \brief Supplementary uplink flag.
+  ///
+  /// Set to \c true if supplementary uplink is configured, i.e., if the UE is configured with the higher layer
+  /// parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information Element \e ServingCellConfig) and more
+  /// than a single carrier in the cell is configured for PUSCH transmission.
+  bool sul_configured;
+
   /// \name Common parameters for DCI formats 0_1 and 1_1.
   /// @{
 
@@ -95,12 +102,6 @@ struct dci_size_config {
   /// parameter \e CrossCarrierSchedulingConfig (see TS38.331 Section 6.3.2, Information Element \e ServingCellConfig),
   /// as per TS38.212 Section 7.3.1.1.2.
   bool cross_carrier_configured;
-  /// \brief Supplementary uplink flag.
-  ///
-  /// Set to \c true if supplementary uplink is configured, i.e., if the UE is configured with the higher layer
-  /// parameter \e supplementaryUplink (see TS38.331 Section 6.3.2, Information Element \e ServingCellConfig) and more
-  /// than a single carrier in the cell is configured for PUSCH transmission.
-  bool sul_configured;
   /// \brief PDSCH HARQ-ACK codebook type.
   ///
   /// Set according to the higher layer parameter \e pdsch-HARQ-ACK-Codebook (see TS38.331 Section 6.3.2, Information
@@ -169,7 +170,7 @@ struct dci_size_config {
   /// Used to determine the DCI format 0_1 frequency domain resource assignment field size if the PUSCH resource
   /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2,
   /// Information Element \e PUSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch. Otherwise, leave
-  /// it unset.
+  /// it unset. Values: {1, ..., 18}
   optional<unsigned> nof_ul_rb_groups;
   /// \brief Number of antenna ports used for PUSCH codebook-based transmission.
   ///
@@ -182,7 +183,7 @@ struct dci_size_config {
   /// It is required for DCI format 0_1, i.e., if \ref dci_0_1_and_1_1_ue_ss is set to \c true. Possible values:
   ///   - {1, 2, 3, 4} for non-codebook transmission, i.e., if \ref tx_config_non_codebook is set to \c true.
   ///   - {1, 2} otherwise.
-  optional<unsigned> nof_srs_resources;
+  unsigned nof_srs_resources;
   /// \brief Parameter \f$L_{max}\f$ in TS38.212 Section 7.3.1.1.2.
   ///
   /// Indicates the maximum number of PUSCH layers supported by the UE for the serving cell for non-codebook based
@@ -314,7 +315,8 @@ struct dci_size_config {
   ///
   /// Used to determine the DCI format 1_1 frequency domain resource assignment field size if the PDSCH resource
   /// allocation type, given by the higher layer parameter \e resourceAllocation (see TS38.331 Section 6.3.2,
-  /// Information Element \e PDSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch.
+  /// Information Element \e PDSCH-Config) is either \e resourceAllocationType0  or \e dynamicSwitch. Values: {1, ...,
+  /// 18}.
   ///
   /// \remark Required if \c pdsch_res_allocation_type is either \e resourceAllocationType0 or \e dynamicSwitch.
   optional<unsigned> nof_dl_rb_groups;

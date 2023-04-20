@@ -115,42 +115,41 @@ static unsigned freq_resource_assignment_size(resource_allocation res_allocation
 // Computes the UL antenna ports field size for a specific DM-RS configuration.
 static unsigned ul_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len, bool transform_precoding)
 {
-  unsigned size = 0;
-
   // 2 bits as defined by Tables 7.3.1.1.2-6, if transform precoder is enabled, dmrs-Type=1, and maxLength=1.
   if (transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len1)) {
-    size = 2;
+    return 2;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-7, if transform precoder is enabled, dmrs-Type=1, and maxLength=2.
-  else if (transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
-    size = 4;
+  if (transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
+    return 4;
   }
 
   // 3 bits as defined by Tables 7.3.1.1.2-8/9/10/11, if transform precoder is disabled, dmrs-Type=1, and maxLength=1.
-  else if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len1)) {
-    size = 3;
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len1)) {
+    return 3;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-12/13/14/15, if transform precoder is disabled, dmrs-Type=1, and
   // maxLength=2.
-  else if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
-    size = 4;
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type1) && (dmrs_len == dmrs_max_length::len2)) {
+    return 4;
   }
 
   // 4 bits as defined by Tables 7.3.1.1.2-16/17/18/19, if transform precoder is disabled, dmrs-Type=2, and
   // maxLength=1.
-  else if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len1)) {
-    size = 4;
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len1)) {
+    return 4;
   }
 
   // 5 bits as defined by Tables 7.3.1.1.2-20/21/22/23, if transform precoder is disabled, dmrs-Type=2, and
   // maxLength=2.
-  else if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len2)) {
-    size = 5;
+  if (!transform_precoding && (dmrs_type == dmrs_config_type::type2) && (dmrs_len == dmrs_max_length::len2)) {
+    return 5;
   }
 
-  return size;
+  srsran_assertion_failure("Invalid combination of PUSCH DM-RS and transform precoding parameters.");
+  return 0;
 }
 
 // Computes the DL antenna ports field size for a specific DM-RS configuration.
@@ -216,7 +215,7 @@ static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
   // SRS resource indicator size for non-codebook based transmission.
   if (dci_config.tx_config_non_codebook) {
     // Derived from TS38.212 Table 7.3.1.1.2-28.
-    switch (dci_config.nof_srs_resources.value()) {
+    switch (dci_config.nof_srs_resources) {
       case 1:
         // If only a single SRS resource is configured, the SRS resource indicator does not occupy any bit.
         return 0;
@@ -230,7 +229,7 @@ static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
   }
 
   // SRS resource indicator size for codebook based transmission.
-  return log2_ceil(dci_config.nof_srs_resources.value());
+  return log2_ceil(dci_config.nof_srs_resources);
 }
 
 // Computes the number of information bits before padding for a DCI format 0_1 message.
@@ -465,17 +464,17 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
 static void assert_dci_size_config(const dci_size_config& config)
 { // Asserts for all DCI formats.
   srsran_assert((config.dl_bwp_initial_bw > 0) && (config.dl_bwp_initial_bw <= MAX_RB),
-                "The initial DL BWP bandwidth, i.e., {} must be within the range [1, {}]",
+                "The initial DL BWP bandwidth, i.e., {} must be within the range [1, {}].",
                 config.dl_bwp_initial_bw,
                 MAX_RB);
 
   srsran_assert((config.ul_bwp_initial_bw > 0) && (config.ul_bwp_initial_bw <= MAX_RB),
-                "The initial UL BWP bandwidth, i.e., {} must be within the range [1, {}]",
+                "The initial UL BWP bandwidth, i.e., {} must be within the range [1, {}].",
                 config.ul_bwp_initial_bw,
                 MAX_RB);
 
   srsran_assert(config.coreset0_bw <= MAX_RB,
-                "The CORESET 0 bandwidth, i.e., {} must be within the range [0, {}]",
+                "The CORESET 0 bandwidth, i.e., {} must be within the range [0, {}].",
                 config.coreset0_bw,
                 MAX_RB);
 
@@ -484,22 +483,22 @@ static void assert_dci_size_config(const dci_size_config& config)
   // Asserts for fallback DCI formats on a UE-specific search space.
   if (config.dci_0_0_and_1_0_ue_ss) {
     srsran_assert((config.dl_bwp_active_bw > 0) && (config.dl_bwp_active_bw <= MAX_RB),
-                  "The active DL BWP bandwidth, i.e., {} must be within the range [1, {}]",
+                  "The active DL BWP bandwidth, i.e., {} must be within the range [1, {}].",
                   config.dl_bwp_active_bw,
                   MAX_RB);
 
     srsran_assert((config.ul_bwp_active_bw > 0) && (config.ul_bwp_active_bw <= MAX_RB),
-                  "The active UL BWP bandwidth, i.e., {} must be within the range [1, {}]",
+                  "The active UL BWP bandwidth, i.e., {} must be within the range [1, {}].",
                   config.ul_bwp_active_bw,
                   MAX_RB);
   }
 
   // Asserts for non-fallback DCI formats.
   if (config.dci_0_1_and_1_1_ue_ss) {
-    srsran_assert(config.nof_ul_bwp_rrc <= 4,
+    srsran_assert((config.nof_ul_bwp_rrc <= 4),
                   "The number of UL BWP configured by higher layers, i.e., {}, cannot exceed 4.",
                   config.nof_ul_bwp_rrc);
-    srsran_assert(config.nof_dl_bwp_rrc <= 4,
+    srsran_assert((config.nof_dl_bwp_rrc <= 4),
                   "The number of DL BWP configured by higher layers, i.e., {}, cannot exceed 4.",
                   config.nof_dl_bwp_rrc);
 
@@ -507,17 +506,21 @@ static void assert_dci_size_config(const dci_size_config& config)
                   "The number of UL time domain resource allocations, i.e., {} must be within the range [1, 16].",
                   config.nof_ul_time_domain_res);
 
-    srsran_assert(config.nof_dl_time_domain_res <= 16,
+    srsran_assert((config.nof_dl_time_domain_res > 0) && (config.nof_dl_time_domain_res <= 16),
                   "The number of DL time domain resource allocations, i.e., {} must be within the range [1, 16].",
                   config.nof_dl_time_domain_res);
 
-    srsran_assert(config.nof_aperiodic_zp_csi <= 3,
+    srsran_assert((config.nof_aperiodic_zp_csi <= 3),
                   "The number of aperiodic ZP CSI-RS resource sets, i.e., {}, cannot be larger than 3.",
                   config.nof_aperiodic_zp_csi);
 
-    srsran_assert(config.nof_pdsch_ack_timings <= 8,
-                  "The number of PDSCH HARQ-ACK timings, i.e., {}, cannot be larger than 8.",
+    srsran_assert((config.nof_pdsch_ack_timings > 0) && (config.nof_pdsch_ack_timings <= 8),
+                  "The number of PDSCH HARQ-ACK timings, i.e., {}, must be within the range [1, 8].",
                   config.nof_pdsch_ack_timings);
+
+    srsran_assert((config.report_trigger_size <= 6),
+                  "The report trigger size, i.e., {}, cannot be larger than 6.",
+                  config.report_trigger_size);
 
     srsran_assert(!config.max_cbg_tb_pusch.has_value() ||
                       (std::unordered_set<unsigned>({2, 4, 6, 8}).count(config.max_cbg_tb_pusch.value()) > 0),
@@ -529,23 +532,17 @@ static void assert_dci_size_config(const dci_size_config& config)
                   "Invalid Maximum CBG per PDSCH TB, i.e., {}. Valid options: 2, 4, 6, 8.",
                   config.max_cbg_tb_pdsch.value());
 
-    srsran_assert(!config.ptrs_uplink_configured || config.transform_precoding_enabled ||
-                      (config.max_rank.value() == 1),
-                  "PT-RS with more than one DM-RS is not currently supported.");
-
-    srsran_assert(config.nof_srs_resources.has_value(), "Number of SRS resources is required for DCI Format 0_1.");
-
-    srsran_assert((config.nof_srs_resources.value() > 0) && (config.nof_srs_resources.value() <= 4),
-                  "Number of SRS resources, i.e., {} must be within the range [1, 4].",
-                  config.nof_srs_resources.value());
-
     // Asserts for transform precoding.
     srsran_assert(!config.transform_precoding_enabled || !config.pusch_dmrs_A_type.has_value() ||
                       (config.pusch_dmrs_A_type != dmrs_config_type::type2),
                   "UL DM-RS configuration type 2 cannot be used with transform precoding.");
     srsran_assert(!config.transform_precoding_enabled || !config.pusch_dmrs_B_type.has_value() ||
-                      (config.pusch_dmrs_A_type != dmrs_config_type::type2),
+                      (config.pusch_dmrs_B_type != dmrs_config_type::type2),
                   "UL DM-RS configuration type 2 cannot be used with transform precoding.");
+
+    srsran_assert((config.pdsch_harq_ack_cb != pdsch_harq_ack_codebook::dynamic) ||
+                      config.dynamic_dual_harq_ack_cb.has_value(),
+                  "Dynamic dual HARQ-ACK codebook flag is required for dynamic PDSCH HARQ-ACK codebook.");
 
     if (config.pusch_res_allocation_type != resource_allocation::resource_allocation_type_1) {
       // Asserts for UL resource allocation type 0.
@@ -581,11 +578,15 @@ static void assert_dci_size_config(const dci_size_config& config)
                     "Maximum number of PUSH layers, i.e., {}, must be within the valid range [1, 4].",
                     config.pusch_max_layers.value());
 
+      srsran_assert((config.nof_srs_resources > 0) && (config.nof_srs_resources <= 4),
+                    "Number of SRS resources, i.e., {}, must be within the range [1, 4] for non-codebook transmission.",
+                    config.nof_srs_resources);
+
       // Temporary assertion, until UL MIMO is supported.
       srsran_assert((config.pusch_max_layers.value() == 1), "Multiple layers on PUSCH are not currently supported.");
     } else {
       // Asserts for codebook-based transmission.
-      srsran_assert(config.max_rank.has_value(), "Maximum rank is required for DCI codebook transmission.");
+      srsran_assert(config.max_rank.has_value(), "Maximum rank is required for codebook transmission.");
 
       srsran_assert((config.max_rank.value() > 0) && (config.max_rank.value() <= 4),
                     "Maximum rank, i.e., {}, must be within the valid range [1, 4].",
@@ -598,27 +599,33 @@ static void assert_dci_size_config(const dci_size_config& config)
                     "Invalid number of SRS ports, i.e., {}. Valid options: 1, 2, 4.",
                     config.nof_srs_ports.value());
 
-      if (config.nof_srs_ports.value() > 1) {
-        srsran_assert(config.cb_subset.has_value(),
-                      "Codebook subset is required for codebook transmission multiple antenna ports.");
-      }
-
       srsran_assert((config.max_rank.value() <= config.nof_srs_ports.value()),
-                    "Maximum rank, i.e., {} cannot be larger than the number of SRS antenna ports, i.e., {}.",
+                    "Maximum rank, i.e., {}, cannot be larger than the number of SRS antenna ports, i.e., {}.",
                     config.max_rank.value(),
                     config.nof_srs_ports.value());
+
+      srsran_assert((config.nof_srs_resources > 0) && (config.nof_srs_resources <= 2),
+                    "Number of SRS resources, i.e., {}, must be within the range [1, 2] for codebook transmission.",
+                    config.nof_srs_resources);
+
+      srsran_assert((config.nof_srs_ports.value() == 1) || config.cb_subset.has_value(),
+                    "Codebook subset is required for codebook transmission with multiple antenna ports.");
 
       // Temporary assertion, until UL precoding is supported.
       srsran_assert((config.nof_srs_ports.value() == 1), "UL precoding is not currently supported.");
     }
 
-    srsran_assert((config.pusch_dmrs_A_type.has_value() || config.pusch_dmrs_B_type.has_value()) &&
-                      (config.pusch_dmrs_A_max_len.has_value() || config.pusch_dmrs_B_max_len.has_value()),
+    srsran_assert(!config.ptrs_uplink_configured || config.transform_precoding_enabled ||
+                      (!config.tx_config_non_codebook && (config.max_rank.value() == 1)),
+                  "PT-RS with more than one DM-RS is not currently supported.");
+
+    srsran_assert((config.pusch_dmrs_A_type.has_value() && config.pusch_dmrs_A_max_len.has_value()) ||
+                      (config.pusch_dmrs_B_type.has_value() && config.pusch_dmrs_B_max_len.has_value()),
                   "At least one PUSCH DM-RS mapping (type A or type B) must be configured.");
 
-    srsran_assert((config.pdsch_dmrs_A_type.has_value() || config.pdsch_dmrs_B_type.has_value()) &&
-                      (config.pdsch_dmrs_A_max_len.has_value() || config.pdsch_dmrs_B_max_len.has_value()),
-                  "At least one PDSCH DM-RS mapping (type A or type B)must be configured.");
+    srsran_assert((config.pdsch_dmrs_A_type.has_value() && config.pdsch_dmrs_A_max_len.has_value()) ||
+                      (config.pdsch_dmrs_B_type.has_value() && config.pdsch_dmrs_B_max_len.has_value()),
+                  "At least one PDSCH DM-RS mapping (type A or type B) must be configured.");
   }
 }
 
@@ -1537,11 +1544,6 @@ bool srsran::validate_dci_size_config(const dci_size_config& config)
       return false;
     }
 
-    // Number of SRS resources must be present.
-    if (!config.nof_srs_resources.has_value()) {
-      return false;
-    }
-
     // Requirements if transform precoding is enabled.
     if (config.transform_precoding_enabled) {
       // With transform precoding enabled for the UL, the PUSCH DM-RS configuration can only be type 1.
@@ -1595,7 +1597,7 @@ bool srsran::validate_dci_size_config(const dci_size_config& config)
       }
 
       // For non-codebook based transmission, the number of SRS resources must be within the valid range {1, ..., 4}.
-      if ((config.nof_srs_resources.value() == 0) || (config.nof_srs_resources.value() > 4)) {
+      if ((config.nof_srs_resources == 0) || (config.nof_srs_resources > 4)) {
         return false;
       }
 
@@ -1612,7 +1614,7 @@ bool srsran::validate_dci_size_config(const dci_size_config& config)
       }
 
       // For codebook based transmission, the number of SRS resources must be within the valid range {1, 2}.
-      if ((config.nof_srs_resources.value() == 0) || (config.nof_srs_resources.value() > 2)) {
+      if ((config.nof_srs_resources == 0) || (config.nof_srs_resources > 2)) {
         return false;
       }
 
@@ -1633,44 +1635,39 @@ bool srsran::validate_dci_size_config(const dci_size_config& config)
           }
           // Currently, UL precoding with multiple antenna ports is not supported.
           return false;
-          break;
         default:
           return false;
       }
     }
 
+    // PT-RS to DM-RS association is not currently supported.
+    if (config.ptrs_uplink_configured && !config.transform_precoding_enabled &&
+        (config.tx_config_non_codebook || (config.max_rank.value() > 1))) {
+      return false;
+    }
+
     // At least one PUSCH DM-RS mapping must be configured.
-    if ((!config.pusch_dmrs_A_type.has_value() && !config.pusch_dmrs_B_type.has_value()) ||
-        (!config.pusch_dmrs_A_max_len.has_value() && !config.pusch_dmrs_B_max_len.has_value())) {
+    if ((!config.pusch_dmrs_A_type.has_value() || !config.pusch_dmrs_A_max_len.has_value()) &&
+        (!config.pusch_dmrs_B_type.has_value() || !config.pusch_dmrs_B_max_len.has_value())) {
       return false;
     }
 
     // At least one PDSCH DM-RS mapping must be configured.
-    if ((!config.pdsch_dmrs_A_type.has_value() && !config.pdsch_dmrs_B_type.has_value()) ||
-        (!config.pdsch_dmrs_A_max_len.has_value() && !config.pdsch_dmrs_B_max_len.has_value())) {
+    if ((!config.pdsch_dmrs_A_type.has_value() || !config.pdsch_dmrs_A_max_len.has_value()) &&
+        (!config.pdsch_dmrs_B_type.has_value() || !config.pdsch_dmrs_B_max_len.has_value())) {
       return false;
     }
 
     if (config.max_cbg_tb_pusch.has_value()) {
-      // Valid maximum CBG per TB  values.
-      std::array<unsigned, 4> valid_values{2, 4, 6, 8};
-
       // The Maximum PUSCH CBG per TB must be set to a valid value.
-      if (std::find_if(valid_values.begin(), valid_values.end(), [config](const unsigned& val) {
-            return config.max_cbg_tb_pusch.value() == val;
-          }) == valid_values.end()) {
+      if (std::unordered_set<unsigned>({2, 4, 6, 8}).count(config.max_cbg_tb_pusch.value()) == 0) {
         return false;
       }
     }
 
     if (config.max_cbg_tb_pdsch.has_value()) {
-      // Valid maximum CBG per TB values.
-      std::array<unsigned, 4> valid_values{2, 4, 6, 8};
-
       // The Maximum PDSCH CBG per TB must be set to a valid value.
-      if (std::find_if(valid_values.begin(), valid_values.end(), [config](const unsigned& val) {
-            return config.max_cbg_tb_pdsch.value() == val;
-          }) == valid_values.end()) {
+      if (std::unordered_set<unsigned>({2, 4, 6, 8}).count(config.max_cbg_tb_pdsch.value()) == 0) {
         return false;
       }
     }

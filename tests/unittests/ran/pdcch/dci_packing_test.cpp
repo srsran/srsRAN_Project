@@ -99,7 +99,12 @@ protected:
     // Do not generate non-fallback DCI payloads.
     dci_config.dci_0_1_and_1_1_ue_ss = false;
 
+    // Supplementary UL has implications on the size alignment procedure that are not currently handled, therefore, it
+    // is not currently supported.
+    dci_config.sul_configured = false;
+
     // Perform the DCI size alignment procedure.
+    EXPECT_TRUE(validate_dci_size_config(dci_config));
     aligned_sizes = get_dci_sizes(dci_config);
 
     // Check that the computed DCI Format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
@@ -300,10 +305,10 @@ protected:
   uniform_distribution report_trigger_size_dist{0, 6};
   uniform_distribution nof_aperiodic_zp_csi_dist{0, 3};
   uniform_distribution nof_pdsch_ack_timings_dist{1, 8};
+  uniform_distribution nof_srs_resources_dist{1, 4};
 
   // Pseudo random generators to generate content for the optional DCI size configuration parameters.
   uniform_distribution nof_rb_groups_dist{1, MAX_NOF_RBGS};
-  uniform_distribution nof_srs_resources{2, 4};
   uniform_distribution dmrs_mapping_type_dist{0, 2};
   uniform_distribution dmrs_config_dist{1, 2};
   uniform_distribution dmrs_max_len_dist{1, 2};
@@ -351,6 +356,13 @@ protected:
     dci_config.multiple_scells              = static_cast<bool>(bool_dist(rgen));
     dci_config.frequency_hopping_configured = static_cast<bool>(bool_dist(rgen));
 
+    dci_config.nof_srs_resources = nof_srs_resources_dist(rgen);
+
+    // Number of SRS resources for codebook transmission is up to 2.
+    if (!dci_config.tx_config_non_codebook && (dci_config.nof_srs_resources > 2)) {
+      dci_config.nof_srs_resources = 2;
+    }
+
     // Clear optional fields that are not always set.
     dci_config.pdsch_dmrs_A_type.reset();
     dci_config.pdsch_dmrs_B_type.reset();
@@ -366,7 +378,6 @@ protected:
 
     dci_config.nof_ul_rb_groups       = nof_rb_groups_dist(rgen);
     dci_config.nof_dl_rb_groups       = nof_rb_groups_dist(rgen);
-    dci_config.nof_srs_resources      = nof_srs_resources(rgen);
     dci_config.nof_srs_ports          = 1;
     dci_config.pusch_max_layers       = 1;
     dci_config.max_rank               = 1;
@@ -426,6 +437,7 @@ protected:
     dci_config.interleaved_vrb_prb_mapping = static_cast<bool>(bool_dist(rgen));
 
     // Perform the DCI size alignment procedure.
+    EXPECT_TRUE(validate_dci_size_config(dci_config));
     dci_sizes aligned_sizes = get_dci_sizes(dci_config);
 
     return aligned_sizes;

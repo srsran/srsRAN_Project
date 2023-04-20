@@ -21,6 +21,10 @@ add_executable(dci_packing_test pdcch/dci_packing_test.cpp)
 target_link_libraries(dci_packing_test srsran_support srsran_ran gtest gtest_main)
 add_test(dci_packing_test dci_packing_test)
 
+add_executable(dci_packing_validator_test pdcch/dci_packing_validator_test.cpp)
+target_link_libraries(dci_packing_validator_test srsran_support srsran_ran gtest gtest_main)
+add_test(dci_packing_validator_test dci_packing_validator_test)
+
 add_executable(pdcch_candidates_common pdcch/pdcch_candidates_common_test.cpp)
 target_link_libraries(pdcch_candidates_common srsran_support srsran_ran gtest gtest_main)
 add_test_vector(pdcch_candidates_common none "")

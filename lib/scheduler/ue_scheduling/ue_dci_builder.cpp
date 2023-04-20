@@ -97,7 +97,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
       active_dl_bwp.crbs.length(),
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
-      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
+      false});
   f1_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
                                                                                   : dci_sz.format1_0_common_size;
 
@@ -143,7 +144,8 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
       init_dl_bwp.generic_params.crbs.length(),
       ul_bwp.crbs.length(),
       ul_bwp.crbs.length(),
-      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
+      false});
   f0_0.payload_size = dci_sz.format0_0_common_size;
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), prbs.start(), prbs.length()});
@@ -187,6 +189,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
   dci_config.ul_bwp_active_bw      = active_ul_bwp.crbs.length();
   dci_config.coreset0_bw =
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0;
+  dci_config.sul_configured = false;
 
   dci_sizes dci_sz  = get_dci_sizes(dci_config);
   f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size.value()
