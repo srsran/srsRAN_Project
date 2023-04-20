@@ -10,6 +10,8 @@
 #include "ue_sch_pdu_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
+#include "srsran/adt/optional.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
 
@@ -130,7 +132,6 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
 
   pusch_config_params pusch;
 
-  // TODO: Use UE-dedicated DMRS info if needed.
   pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   pusch.symbols = pusch_td_cfg.symbols;
@@ -195,6 +196,52 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
   return pusch;
 }
 
+pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const cell_configuration&                    cell_cfg,
+                                                         const ue_cell_configuration&                 ue_cell_cfg,
+                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg)
+{
+  const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
+  // TODO: Set appropriate nof. layers supported bu gNB and UE.
+  constexpr unsigned nof_layers = 1;
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+  // Parameter \c tp-pi2BPSK enabled is not supported yet.
+  constexpr bool tp_pi2bpsk_present = false;
+  // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
+  // DL slots in TDD, currently 6.
+  // TODO verify if this is the correct value.
+  constexpr unsigned nof_harq_ack_bits = 6;
+  // We assume only 4 bits for CSI Part 1.
+  constexpr unsigned nof_csi_part1_bits = 4;
+  constexpr unsigned nof_csi_part2_bits = 0;
+
+  pusch_config_params pusch;
+
+  // TODO: Consider DMRS configured in PUSCH-Config. Need helpers from Phy.
+  pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  pusch.symbols = pusch_td_cfg.symbols;
+
+  pusch.mcs_table          = mcs_table;
+  pusch.nof_layers         = nof_layers;
+  pusch.tp_pi2bpsk_present = tp_pi2bpsk_present;
+  pusch.tb_scaling_field   = tb_scaling_field;
+
+  // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  pusch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
+
+  // TODO: verify if this needs to be set depending on some configuration.
+  pusch.nof_harq_ack_bits  = nof_harq_ack_bits;
+  pusch.nof_csi_part1_bits = nof_csi_part1_bits;
+  pusch.nof_csi_part2_bits = nof_csi_part2_bits;
+
+  return pusch;
+}
+
 void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                                       const pdsch_config_params&           pdsch_cfg,
                                       unsigned                             tbs_bytes,
@@ -220,7 +267,6 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.prbs    = prbs;
   pdsch.symbols = pdsch_cfg.symbols;
 
-  // TODO: Use UE-dedicated DMRS info if needed.
   pdsch.dmrs = pdsch_cfg.dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
   pdsch.n_id           = cell_cfg.pci;
@@ -393,10 +439,9 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.symbols = pusch_cfg.symbols;
 
   // MCS.
-  pusch.mcs_table                = pusch_cfg.mcs_table;
-  pusch.mcs_index                = dci_cfg.modulation_coding_scheme;
-  sch_mcs_description mcs_config = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch_cfg.tp_pi2bpsk_present);
-  pusch.mcs_descr                = mcs_config;
+  pusch.mcs_table = pusch_cfg.mcs_table;
+  pusch.mcs_index = dci_cfg.modulation_coding_scheme;
+  pusch.mcs_descr = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch_cfg.tp_pi2bpsk_present);
 
   pusch.transform_precoding = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder;
   pusch.n_id                = cell_cfg.pci;
@@ -412,4 +457,68 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.rv_index = dci_cfg.redundancy_version;
   pusch.harq_id  = dci_cfg.harq_process_number;
   pusch.new_data = is_new_data;
+}
+
+void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
+                                     rnti_t                       rnti,
+                                     const pusch_config_params&   pusch_cfg,
+                                     sch_mcs_tbs                  mcs_tbs_info,
+                                     const ue_cell_configuration& ue_cell_cfg,
+                                     bwp_id_t                     active_bwp_id,
+                                     const dci_0_1_configuration& dci_cfg,
+                                     const prb_interval&          prbs,
+                                     const ul_harq_process&       h_ul)
+{
+  const cell_configuration&           cell_cfg      = ue_cell_cfg.cell_cfg_common;
+  const bwp_uplink_dedicated*         bwp_ul_ded    = ue_cell_cfg.find_ul_bwp_ded(active_bwp_id);
+  const bwp_uplink_common&            bwp_ul_cmn    = ue_cell_cfg.ul_bwp_common(active_bwp_id);
+  const optional<rach_config_common>& opt_rach_cfg  = ue_cell_cfg.ul_bwp_common(active_bwp_id).rach_cfg_common;
+  const optional<pusch_config>        pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
+  const optional<pusch_config_common> pusch_cfg_cmn = bwp_ul_cmn.pusch_cfg_common;
+
+  // TODO: Populate based on config.
+  pusch.intra_slot_freq_hopping    = false;
+  pusch.pusch_second_hop_prb       = 0;
+  pusch.tx_direct_current_location = 0;
+  pusch.ul_freq_shift_7p5khz       = false;
+  pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
+
+  pusch.rnti = rnti;
+
+  // PUSCH resources.
+  pusch.bwp_cfg = &ue_cell_cfg.find_ul_bwp_common(active_bwp_id)->generic_params;
+  pusch.prbs    = prbs;
+  pusch.symbols = pusch_cfg.symbols;
+
+  // MCS.
+  pusch.mcs_table = pusch_cfg.mcs_table;
+  pusch.mcs_index = dci_cfg.modulation_coding_scheme;
+  pusch.mcs_descr = pusch_mcs_get_config(pusch.mcs_table, pusch.mcs_index, pusch_cfg.tp_pi2bpsk_present);
+
+  pusch.n_id = cell_cfg.pci;
+
+  if (opt_rach_cfg.has_value()) {
+    pusch.transform_precoding = opt_rach_cfg.value().msg3_transform_precoder;
+  }
+  // Dedicated config overrides previously set value.
+  if (pusch_cfg_ded.has_value()) {
+    pusch.transform_precoding = pusch_cfg_ded.value().trans_precoder != pusch_config::transform_precoder::not_set;
+    if (pusch_cfg_ded.value().data_scrambling_id_pusch.has_value()) {
+      pusch.n_id = pusch_cfg_ded.value().data_scrambling_id_pusch.value();
+    }
+  }
+
+  pusch.dmrs          = pusch_cfg.dmrs;
+  pusch.pusch_dmrs_id = pusch_cfg.dmrs.dmrs_scrambling_id;
+
+  // TBS.
+  pusch.nof_layers    = pusch_cfg.nof_layers;
+  pusch.tb_size_bytes = mcs_tbs_info.tbs;
+  // TODO: Set based on CobeBook config.
+  pusch.num_cb = 0;
+
+  // HARQ.
+  pusch.rv_index = dci_cfg.redundancy_version;
+  pusch.harq_id  = dci_cfg.harq_process_number;
+  pusch.new_data = h_ul.tb().nof_retxs == 0;
 }

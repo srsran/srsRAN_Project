@@ -101,6 +101,9 @@ public:
     return *ret;
   }
 
+  /// Fetches UL BWP dedicated configuration based on BWP-Id.
+  const bwp_uplink_dedicated* find_ul_bwp_ded(bwp_id_t bwp_id) const { return bwp_table[bwp_id].ul_bwp_ded; }
+
   span<const uint8_t> get_k1_candidates(dci_dl_rnti_config_type dci_type) const
   {
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.

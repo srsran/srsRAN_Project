@@ -469,10 +469,8 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
     if (opt_pusch_cfg.has_value()) {
       dci_sz_cfg.tx_config_non_codebook = opt_pusch_cfg.value().tx_cfg != pusch_config::tx_config::not_set and
                                           opt_pusch_cfg.value().tx_cfg == pusch_config::tx_config::non_codebook;
-      if (opt_pusch_cfg.value().trans_precoder != pusch_config::transform_precoder::not_set) {
-        dci_sz_cfg.transform_precoding_enabled = opt_pusch_cfg.value().tx_cfg != pusch_config::tx_config::not_set and
-                                                 opt_pusch_cfg.value().tx_cfg == pusch_config::tx_config::non_codebook;
-      }
+      dci_sz_cfg.transform_precoding_enabled =
+          opt_pusch_cfg.value().trans_precoder != pusch_config::transform_precoder::not_set;
       if ((opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value() and
            opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().ptrs.has_value()) or
           (opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.has_value() and

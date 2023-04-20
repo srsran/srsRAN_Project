@@ -77,6 +77,13 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const cell_configuration&      
                                                  const bwp_uplink_common&                     ul_bwp,
                                                  const pusch_time_domain_resource_allocation& pusch_td_cfg);
 
+/// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_1, scrambled by C-RNTI.
+///
+/// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+pusch_config_params get_pusch_config_f0_1_c_rnti(const cell_configuration&                    cell_cfg,
+                                                 const ue_cell_configuration&                 ue_cell_cfg,
+                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg);
+
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
 void build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                               const pdsch_config_params&           pdsch_cfg,
@@ -131,5 +138,16 @@ void build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                              const dci_0_0_c_rnti_configuration& dci_cfg,
                              const prb_interval&                 prbs,
                              bool                                is_new_data);
+
+/// \brief Builds PUSCH PDU for DCI format 0_1, scrambled by C-RNTI.
+void build_pusch_f0_1_c_rnti(pusch_information&           pusch,
+                             rnti_t                       rnti,
+                             const pusch_config_params&   pusch_cfg,
+                             sch_mcs_tbs                  mcs_tbs_info,
+                             const ue_cell_configuration& ue_cell_cfg,
+                             bwp_id_t                     active_bwp_id,
+                             const dci_0_1_configuration& dci_cfg,
+                             const prb_interval&          prbs,
+                             const ul_harq_process&       h_ul);
 
 } // namespace srsran
