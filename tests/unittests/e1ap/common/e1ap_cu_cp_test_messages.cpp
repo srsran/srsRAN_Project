@@ -343,3 +343,41 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_release_complete(gnb_cu_
 
   return bearer_ctxt_rel_complete_msg;
 }
+
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_with_ue_level(
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_message inactivity_notification = {};
+
+  inactivity_notification.pdu.set_init_msg();
+  inactivity_notification.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& bearer_context_inactivity_notification =
+      inactivity_notification.pdu.init_msg().value.bearer_context_inactivity_notif();
+  bearer_context_inactivity_notification->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_inactivity_notification->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  bearer_context_inactivity_notification->activity_info.value.set_ue_activity();
+  bearer_context_inactivity_notification->activity_info.value.ue_activity() =
+      asn1::e1ap::ue_activity_opts::options::not_active;
+
+  return inactivity_notification;
+}
+
+e1ap_message
+srsran::srs_cu_cp::generate_invalid_bearer_context_inactivity_notification(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                           gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_message inactivity_notification = {};
+
+  inactivity_notification.pdu.set_init_msg();
+  inactivity_notification.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& bearer_context_inactivity_notification =
+      inactivity_notification.pdu.init_msg().value.bearer_context_inactivity_notif();
+  bearer_context_inactivity_notification->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_inactivity_notification->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  return inactivity_notification;
+}
