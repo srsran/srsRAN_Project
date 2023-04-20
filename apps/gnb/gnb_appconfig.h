@@ -105,6 +105,8 @@ struct pdsch_appconfig {
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
   unsigned fixed_sib1_mcs = 5;
+  /// Number of UE DL HARQ processes.
+  unsigned nof_harqs = 16;
 };
 
 /// PUSCH application configuration.

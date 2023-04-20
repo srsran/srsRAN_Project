@@ -210,6 +210,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--fixed_sib1_mcs", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  app.add_option("--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)

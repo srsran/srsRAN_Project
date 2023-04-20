@@ -103,6 +103,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                        = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0        = true;
     }
+    out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
+        (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
 
     // TDD UL DL config.
     if (not band_helper::is_paired_spectrum(param.band.value()) and
