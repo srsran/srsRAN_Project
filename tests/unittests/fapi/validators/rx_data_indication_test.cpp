@@ -104,7 +104,7 @@ INSTANTIATE_TEST_SUITE_P(PDUTag,
                                                           test_case_data{101, false})));
 
 /// Valid Message should pass.
-TEST(ValidateRxDataIndication, ValidIndicationPasses)
+TEST(validate_rx_data_indication, valid_indication_passes)
 {
   auto msg = build_valid_rx_data_indication();
 
@@ -113,7 +113,7 @@ TEST(ValidateRxDataIndication, ValidIndicationPasses)
   EXPECT_TRUE(result);
 }
 
-TEST(validate_rx_data_indication, valid_indication_passes)
+TEST(validate_rx_data_indication, valid_indication_with_no_data_passes)
 {
   auto msg = build_valid_rx_data_indication();
 
