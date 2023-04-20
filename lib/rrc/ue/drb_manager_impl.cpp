@@ -197,9 +197,10 @@ size_t drb_manager_impl::get_nof_drbs()
 bool drb_manager_impl::valid_5qi(five_qi_t five_qi)
 {
   if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {
-    logger.warning("Could not find valid 5QI {}. QoS config size {}", five_qi, cfg.five_qi_config.size());
+    logger.warning("No config for 5QI={} present", five_qi);
+    logger.warning("Currently configured 5QIs:");
     for (const auto& qos : cfg.five_qi_config) {
-      logger.warning("5QI DRB config. 5QI={} PDCP={}", qos.first, qos.second.pdcp);
+      logger.warning(" - 5QI={}: PDCP={}", qos.first, qos.second.pdcp);
     }
     return false;
   }
