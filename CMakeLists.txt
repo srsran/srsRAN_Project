@@ -262,6 +262,8 @@ if (CCACHE_EXECUTABLE)
 endif ()
 
 include(CTest)
+execute_process(COMMAND sed -i "s|MemoryCheckCommandOptions: |MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes --exit-on-first-error=yes --error-exitcode=22 --suppressions=${CMAKE_SOURCE_DIR}/.memcheck-suppressions|" DartConfiguration.tcl
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include_directories(include)
 include_directories(external/fmt/include)

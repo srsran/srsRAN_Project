@@ -15,6 +15,7 @@
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_test.h"
 #include <random>
+#include <unistd.h>
 
 using namespace srsran;
 
@@ -154,6 +155,19 @@ static void test(const test_description& config, radio_factory& factory, task_ex
   session->stop();
 }
 
+static std::vector<std::string> get_zmq_ports(unsigned nof_ports)
+{
+  std::vector<std::string> result;
+
+  for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+    fmt::memory_buffer buffer;
+    fmt::format_to(buffer, "inproc://{}#{}", getpid(), i_port);
+    result.emplace_back(to_string(buffer));
+  }
+
+  return result;
+}
+
 int main()
 {
   srslog::init();
@@ -176,10 +190,10 @@ int main()
     test_config.nof_channels = 1;
     test_config.tx_freq_hz   = 3.5e9;
     test_config.tx_gain_db   = 60.0;
-    test_config.tx_addresses = {"tcp://*:5554"};
+    test_config.tx_addresses = get_zmq_ports(1);
     test_config.rx_freq_hz   = 3.5e9;
     test_config.rx_gain_db   = 60.0;
-    test_config.rx_addresses = {"tcp://localhost:5554"};
+    test_config.rx_addresses = get_zmq_ports(1);
     test_config.log_level    = log_level;
     test_config.block_size   = 1024;
     test_config.nof_blocks   = 10;
@@ -192,14 +206,13 @@ int main()
     test_config.nof_channels = 2;
     test_config.tx_freq_hz   = 3.5e9;
     test_config.tx_gain_db   = 60.0;
-    test_config.tx_addresses = {"tcp://*:5554", "tcp://*:5555", "tcp://*:5556", "tcp://*:5557"};
+    test_config.tx_addresses = get_zmq_ports(4);
     test_config.rx_freq_hz   = 3.5e9;
     test_config.rx_gain_db   = 60.0;
-    test_config.rx_addresses = {
-        "tcp://localhost:5554", "tcp://localhost:5555", "tcp://localhost:5556", "tcp://localhost:5557"};
-    test_config.log_level  = log_level;
-    test_config.block_size = 128;
-    test_config.nof_blocks = 10;
+    test_config.rx_addresses = get_zmq_ports(4);
+    test_config.log_level    = log_level;
+    test_config.block_size   = 128;
+    test_config.nof_blocks   = 10;
     test(test_config, *factory, *async_task_executor);
   }
 

@@ -37,6 +37,7 @@
 #include <csignal>
 #include <getopt.h>
 #include <string>
+#include <unistd.h>
 #include <unordered_map>
 
 struct configuration_profile {
@@ -157,7 +158,7 @@ static const std::vector<configuration_profile> profiles = {
          // parallel execution.
          for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
            fmt::memory_buffer buffer;
-           fmt::format_to(buffer, "inproc://#{}", channel_id);
+           fmt::format_to(buffer, "inproc://{}#{}", getpid(), channel_id);
            tx_channel_args.emplace_back(to_string(buffer));
            rx_channel_args.emplace_back(to_string(buffer));
          }
@@ -190,7 +191,7 @@ static const std::vector<configuration_profile> profiles = {
          // parallel execution.
          for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
            fmt::memory_buffer buffer;
-           fmt::format_to(buffer, "inproc://#{}", channel_id);
+           fmt::format_to(buffer, "inproc://{}#{}", getpid(), channel_id);
            tx_channel_args.emplace_back(to_string(buffer));
            rx_channel_args.emplace_back(to_string(buffer));
          }
