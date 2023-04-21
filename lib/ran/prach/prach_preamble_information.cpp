@@ -123,6 +123,60 @@ srsran::get_prach_preamble_short_info(prach_format_type format, prach_subcarrier
   return info;
 }
 
+phy_time_unit srsran::get_prach_window_duration(srsran::prach_format_type  format,
+                                                srsran::subcarrier_spacing pusch_scs,
+                                                unsigned                   start_symbol_index,
+                                                unsigned                   nof_td_occasions)
+{
+  // Cyclic prefix extension for short preambles at 0 and 0.5 ms from the start of the subframe.
+  static constexpr phy_time_unit sixteen_kappa = phy_time_unit::from_units_of_kappa(16);
+
+  // PUSCH symbol duration, it assumes that RA SCS and PUSCH SCS are the same for short preambles.
+  phy_time_unit pusch_symbol_duration = phy_time_unit::from_units_of_kappa(144U + 2048U);
+  if (is_short_preamble(format)) {
+    pusch_symbol_duration = pusch_symbol_duration / pow2(to_numerology_value(pusch_scs));
+  }
+
+  // Calculate time-domain occasion start time.
+  phy_time_unit t_start = pusch_symbol_duration * start_symbol_index;
+
+  // Add sixteen kappa units if the symbol doesn't start at the beginning of the slot.
+  if (t_start > phy_time_unit::from_seconds(0.0)) {
+    t_start += sixteen_kappa;
+  }
+
+  // Add sixteen kappa units if the symbol starts more than 0.5 ms after the beginning of the slot.
+  if (t_start > phy_time_unit::from_seconds(0.5e-3)) {
+    t_start += sixteen_kappa;
+  }
+
+  // If the preamble format is short...
+  phy_time_unit t_end;
+  if (is_short_preamble(format)) {
+    unsigned td_occasion_duration = get_preamble_duration(format);
+    t_end                         = t_start + pusch_symbol_duration * td_occasion_duration * nof_td_occasions;
+
+    // Add sixteen kappa to the cyclic prefix length if ...
+    // The window overlaps with time zero.
+    if ((t_start <= phy_time_unit::from_seconds(0.0)) && (t_end >= phy_time_unit::from_seconds(0.0))) {
+      t_end += sixteen_kappa;
+    }
+
+    // The window overlaps with time 0.5ms from the beginning of the slot.
+    if ((t_start <= phy_time_unit::from_seconds(0.5e-3)) && (t_end >= phy_time_unit::from_seconds(0.5e-3))) {
+      t_end += sixteen_kappa;
+    }
+  } else {
+    prach_preamble_information preamble_info = get_prach_preamble_long_info(format);
+    t_end                                    = t_start + preamble_info.cp_length + preamble_info.symbol_length;
+
+    // Round to t_end to the next subframe for long preambles.
+    t_end = phy_time_unit::from_seconds(1e-3 * std::ceil(t_end.to_seconds() * 1e3));
+  }
+
+  return t_end;
+}
+
 prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configuration& prach_cfg,
                                                              subcarrier_spacing         pusch_scs)
 {

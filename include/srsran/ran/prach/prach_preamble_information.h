@@ -56,6 +56,20 @@ prach_preamble_information get_prach_preamble_long_info(prach_format_type format
 prach_preamble_information
 get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs, bool last_occasion);
 
+/// \brief Gets the PRACH window duration.
+/// \param[in] format             PRACH preamble format.
+/// \param[in] pusch_scs          Uplink resource grid subcarrier spacing. Determines the numerology \f$\mu\f$.
+/// \param[in] start_symbol_index OFDM symbol index within the slot that marks the start of the acquisition window for
+///                               the first time-domain PRACH occasion.
+/// \param[in] nof_td_occasions   Number of time-domain occasions within a PRACH window.
+/// \return The PRACH window duration from the beginning of the slot to the end of the last time-domain occasion.
+/// \note The RA subcarrier spacing for short preambles is assumed to be equal to the uplink resource grid subcarrier
+///       spacing.
+phy_time_unit get_prach_window_duration(prach_format_type  format,
+                                        subcarrier_spacing pusch_scs,
+                                        unsigned           start_symbol_index,
+                                        unsigned           nof_td_occasions);
+
 /// \brief Collects PRACH preamble duration information.
 struct prach_symbols_slots_duration {
   /// Duration of the PRACH Preamble in slots, with reference to the PUSCH SCS.

@@ -18,8 +18,7 @@ void prach_processor_worker::run_state_wait(span<const cf_t>                    
                                             const prach_processor_baseband::symbol_context& context)
 {
   // Check if the context slot is in the past even if the sector/port does not match.
-  if (context.slot > prach_context.slot ||
-      (context.slot == prach_context.slot && context.symbol > prach_context.start_symbol)) {
+  if ((context.slot > prach_context.slot) || (context.slot == prach_context.slot && context.symbol > 0)) {
     // Notify a late PRACH request.
     notifier->on_prach_request_late(prach_context);
 
@@ -35,8 +34,8 @@ void prach_processor_worker::run_state_wait(span<const cf_t>                    
     return;
   }
 
-  // The slot and symbol have not reached the beginning of the PRACH window.
-  if (context.slot != prach_context.slot || context.symbol != prach_context.start_symbol) {
+  // The slot has not reached the beginning of the PRACH window.
+  if (context.slot != prach_context.slot) {
     return;
   }
 
@@ -105,20 +104,17 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
   }
 }
 
-void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_buffer_context& context_)
+void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_buffer_context& context)
 {
   srsran_assert(state == states::idle, "Invalid state.");
 
-  prach_context = context_;
+  prach_context = context;
   buffer        = &buffer_;
 
-  srsran_assert(is_long_preamble(prach_context.format), "Only long preamble formats are currently supported.");
-
-  // Get preamble format information.
-  prach_preamble_information preamble_info = get_prach_preamble_long_info(prach_context.format);
-
-  // Calculate the PRACH window size.
-  window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(sampling_rate_Hz);
+  // Calculate the PRACH window size starting at the beginning of the slot.
+  window_length =
+      get_prach_window_duration(context.format, context.pusch_scs, context.start_symbol, context.nof_td_occasions)
+          .to_samples(sampling_rate_Hz);
 
   // Reset number of collected samples.
   nof_samples = 0;

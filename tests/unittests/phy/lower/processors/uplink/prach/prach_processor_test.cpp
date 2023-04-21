@@ -20,47 +20,65 @@
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include <fmt/ostream.h>
 #include <gtest/gtest.h>
 #include <numeric>
+#include <random>
 
 namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, subcarrier_spacing value)
+{
+  fmt::print(os, "{}", to_string(value));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, prach_format_type value)
+{
+  fmt::print(os, "Format {}", to_string(value));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, sampling_rate value)
+{
+  fmt::print(os, "{}", value);
+  return os;
+}
+
 bool operator==(const prach_buffer_context& rhs, const prach_buffer_context& lhs)
 {
   return std::memcmp(&rhs, &lhs, sizeof(prach_buffer_context)) == 0;
 }
+
 } // namespace srsran
 
 using namespace srsran;
 
-// Combined parameters. First the DFT size for 15kHz and second the maximum number of concurrent PRACH requests.
-using prach_processor_param = std::tuple<sampling_rate, unsigned>;
+// Combined parameters. In order, PRACH format, PUSCH subcarrier spacing and sampling rate.
+using PrachProcessorParams = std::tuple<prach_format_type, subcarrier_spacing, sampling_rate>;
 
-static constexpr slot_point TEST_SLOT_BEGIN   = slot_point(0, 0);
-static constexpr slot_point TEST_SLOT_END     = slot_point(0, 10);
-static constexpr unsigned   TEST_SYMBOL_BEGIN = 0;
-static constexpr unsigned   TEST_SYMBOL_END   = MAX_NSYMB_PER_SLOT;
+static constexpr slot_point TEST_SLOT_BEGIN = slot_point(0, 0);
+static constexpr slot_point TEST_SLOT_END   = slot_point(0, 10);
 
-class prach_processor_test : public ::testing::TestWithParam<prach_processor_param>
+class PrachProcessorFixture : public ::testing::TestWithParam<PrachProcessorParams>
 {
 protected:
-  std::shared_ptr<ofdm_prach_demodulator_factory_spy> ofdm_prach_factory_spy;
-  std::unique_ptr<prach_processor>                    processor;
-  manual_task_worker_always_enqueue_tasks             task_executor_spy;
-  prach_processor_notifier_spy                        notifier_spy;
-
-  prach_processor_test() : task_executor_spy(1), notifier_spy("none")
+  PrachProcessorFixture() : task_executor_spy(1), notifier_spy("none")
   {
     // Do nothing.
   }
-
-  ~prach_processor_test() = default;
 
   void SetUp() override
   {
     Test::SetUp();
 
-    sampling_rate srate                       = std::get<0>(GetParam());
-    unsigned      max_nof_concurrent_requests = std::get<1>(GetParam());
+    // Get parameters.
+    format    = std::get<0>(GetParam());
+    pusch_scs = std::get<1>(GetParam());
+    srate     = std::get<2>(GetParam());
+
+    // Select a random number of maximum concurrent requests.
+    max_nof_concurrent_requests = max_nof_concurrent_requests_dist(rgen);
 
     // Create OFDM PRACH demodulator spy.
     ofdm_prach_factory_spy = std::make_shared<ofdm_prach_demodulator_factory_spy>();
@@ -83,20 +101,48 @@ protected:
     // Clear notifications.
     notifier_spy.clear_notifications();
   }
+
+  static constexpr unsigned unused_integer = UINT32_MAX;
+
+  std::shared_ptr<ofdm_prach_demodulator_factory_spy> ofdm_prach_factory_spy;
+  std::unique_ptr<prach_processor>                    processor;
+  manual_task_worker_always_enqueue_tasks             task_executor_spy;
+  prach_processor_notifier_spy                        notifier_spy;
+
+  prach_format_type  format;
+  subcarrier_spacing pusch_scs;
+  sampling_rate      srate;
+  unsigned           max_nof_concurrent_requests;
+
+  static std::mt19937                            rgen;
+  static std::uniform_int_distribution<unsigned> start_symbol_index_dist;
+  static std::uniform_int_distribution<unsigned> nof_td_occasions_dist;
+  static std::uniform_int_distribution<unsigned> nof_fd_occasions_dist;
+  static std::uniform_int_distribution<unsigned> max_nof_concurrent_requests_dist;
+  static std::uniform_int_distribution<unsigned> nof_prb_ul_grid_dist;
+  static std::uniform_int_distribution<unsigned> rb_offset_dist;
 };
+
+std::mt19937                            PrachProcessorFixture::rgen;
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::start_symbol_index_dist(0, 8);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_td_occasions_dist(1, 3);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_fd_occasions_dist(1, 8);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::max_nof_concurrent_requests_dist(1, 16);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::nof_prb_ul_grid_dist(25, 275);
+std::uniform_int_distribution<unsigned> PrachProcessorFixture::rb_offset_dist(0, 270);
 
 // If there is no request, the PRACH processor shall:
 // - not notify any event,
 // - not demodulate any OFDM PRACH window, and
 // - not enqueue any task.
-TEST_P(prach_processor_test, idle)
+TEST_P(PrachProcessorFixture, NoRequest)
 {
   // Run a number of slots and symbols.
   for (slot_point slot = TEST_SLOT_BEGIN; slot != TEST_SLOT_END; ++slot) {
-    for (unsigned symbol = TEST_SYMBOL_BEGIN; symbol != TEST_SYMBOL_END; ++symbol) {
+    for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
       prach_processor_baseband::symbol_context symbol_context;
       symbol_context.slot   = slot;
-      symbol_context.symbol = symbol;
+      symbol_context.symbol = i_symbol;
       symbol_context.sector = 0;
       symbol_context.port   = 0;
 
@@ -110,24 +156,32 @@ TEST_P(prach_processor_test, idle)
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 }
 
-// If the sector does not match, the PRACH processor shall:
+// If the sector does not match with the PRACH request context, the PRACH processor shall:
 // - not use the buffer methods,
 // - not notify any event,
-// - not demodulate any OFDM PRACH window, and
+// - not process any OFDM PRACH window, and
 // - not enqueue any task.
-TEST_P(prach_processor_test, sector_unmatch)
+TEST_P(PrachProcessorFixture, SectorUnmatch)
 {
   unsigned sector       = 0;
   unsigned rogue_sector = 1;
 
   prach_buffer_context context;
-  context.sector       = rogue_sector;
-  context.port         = 0;
-  context.slot         = TEST_SLOT_END;
-  context.start_symbol = 0;
-  context.format       = prach_format_type::zero;
-  context.rb_offset    = 0;
-  context.pusch_scs    = subcarrier_spacing::kHz15;
+  context.sector                = rogue_sector;
+  context.port                  = 0;
+  context.slot                  = TEST_SLOT_END;
+  context.start_symbol          = start_symbol_index_dist(rgen);
+  context.format                = format;
+  context.rb_offset             = rb_offset_dist(rgen);
+  context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+  context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+  context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+  context.pusch_scs             = pusch_scs;
+  context.root_sequence_index   = unused_integer;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.zero_correlation_zone = unused_integer;
+  context.start_preamble_index  = unused_integer;
+  context.nof_preamble_indices  = unused_integer;
 
   prach_buffer_spy buffer;
 
@@ -136,10 +190,10 @@ TEST_P(prach_processor_test, sector_unmatch)
 
   // Run a number of slots and symbols.
   for (slot_point slot = TEST_SLOT_BEGIN; slot != TEST_SLOT_END; ++slot) {
-    for (unsigned symbol = TEST_SYMBOL_BEGIN; symbol != TEST_SYMBOL_END; ++symbol) {
+    for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
       prach_processor_baseband::symbol_context symbol_context;
       symbol_context.slot   = slot;
-      symbol_context.symbol = symbol;
+      symbol_context.symbol = i_symbol;
       symbol_context.sector = sector;
       symbol_context.port   = 0;
 
@@ -159,34 +213,41 @@ TEST_P(prach_processor_test, sector_unmatch)
 // - not use the buffer methods,
 // - not demodulate any OFDM PRACH window, and
 // - not enqueue any task.
-TEST_P(prach_processor_test, detect_late)
+TEST_P(PrachProcessorFixture, DetectLate)
 {
   prach_buffer_context context;
-  context.sector       = 0;
-  context.port         = 0;
-  context.slot         = TEST_SLOT_BEGIN;
-  context.start_symbol = 0;
-  context.format       = prach_format_type::zero;
-  context.rb_offset    = 0;
-  context.pusch_scs    = subcarrier_spacing::kHz15;
-
-  prach_buffer_spy buffer;
+  context.sector                = 0;
+  context.port                  = 0;
+  context.slot                  = TEST_SLOT_BEGIN;
+  context.start_symbol          = start_symbol_index_dist(rgen);
+  context.format                = format;
+  context.rb_offset             = rb_offset_dist(rgen);
+  context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+  context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+  context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+  context.pusch_scs             = pusch_scs;
+  context.root_sequence_index   = unused_integer;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.zero_correlation_zone = unused_integer;
+  context.start_preamble_index  = unused_integer;
+  context.nof_preamble_indices  = unused_integer;
 
   // Do request.
+  prach_buffer_spy buffer;
   processor->get_request_handler().handle_request(buffer, context);
 
   // Run a number of slots and symbols.
   for (slot_point slot = context.slot + 1; slot != TEST_SLOT_END; ++slot) {
-    for (unsigned symbol = TEST_SYMBOL_BEGIN; symbol != TEST_SYMBOL_END; ++symbol) {
+    for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
       prach_processor_baseband::symbol_context symbol_context;
       symbol_context.slot   = slot;
-      symbol_context.symbol = symbol;
+      symbol_context.symbol = i_symbol;
       symbol_context.sector = 0;
       symbol_context.port   = 0;
 
       processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
 
-      if (slot == context.slot + 1 && symbol == 0) {
+      if ((slot == context.slot + 1) && (i_symbol == 0)) {
         ASSERT_EQ(1, notifier_spy.get_nof_notifications());
 
         ASSERT_EQ(1, notifier_spy.get_request_late_entries().size());
@@ -209,19 +270,27 @@ TEST_P(prach_processor_test, detect_late)
 // - not use the buffer methods,
 // - not demodulate any OFDM PRACH window, and
 // - not enqueue any task.
-TEST_P(prach_processor_test, detect_unmatch_sector_late)
+TEST_P(PrachProcessorFixture, DetectSectorUnmatchLate)
 {
   unsigned sector       = 0;
   unsigned rogue_sector = 1;
 
   prach_buffer_context context;
-  context.sector       = rogue_sector;
-  context.port         = 0;
-  context.slot         = TEST_SLOT_BEGIN;
-  context.start_symbol = 0;
-  context.format       = prach_format_type::zero;
-  context.rb_offset    = 0;
-  context.pusch_scs    = subcarrier_spacing::kHz15;
+  context.sector                = rogue_sector;
+  context.port                  = 0;
+  context.slot                  = TEST_SLOT_BEGIN;
+  context.start_symbol          = start_symbol_index_dist(rgen);
+  context.format                = format;
+  context.rb_offset             = rb_offset_dist(rgen);
+  context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+  context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+  context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+  context.pusch_scs             = pusch_scs;
+  context.root_sequence_index   = unused_integer;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.zero_correlation_zone = unused_integer;
+  context.start_preamble_index  = unused_integer;
+  context.nof_preamble_indices  = unused_integer;
 
   prach_buffer_spy buffer;
 
@@ -230,16 +299,16 @@ TEST_P(prach_processor_test, detect_unmatch_sector_late)
 
   // Run a number of slots and symbols.
   for (slot_point slot = TEST_SLOT_BEGIN; slot != TEST_SLOT_END; ++slot) {
-    for (unsigned symbol = TEST_SYMBOL_BEGIN; symbol != TEST_SYMBOL_END; ++symbol) {
+    for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
       prach_processor_baseband::symbol_context symbol_context;
       symbol_context.slot   = slot;
-      symbol_context.symbol = symbol;
+      symbol_context.symbol = i_symbol;
       symbol_context.sector = sector;
       symbol_context.port   = 0;
 
       processor->get_baseband().process_symbol(span<cf_t>(), symbol_context);
 
-      if (slot == context.slot + 1 && symbol == 0) {
+      if (slot == context.slot + 1 && i_symbol == 0) {
         ASSERT_EQ(1, notifier_spy.get_nof_notifications());
 
         ASSERT_EQ(1, notifier_spy.get_request_late_entries().size());
@@ -262,21 +331,27 @@ TEST_P(prach_processor_test, detect_unmatch_sector_late)
 // - not use the buffer methods,
 // - not demodulate any OFDM PRACH window, and
 // - not enqueue any task.
-TEST_P(prach_processor_test, overflow)
+TEST_P(PrachProcessorFixture, RequestOverflow)
 {
-  unsigned max_nof_concurrent_requests = std::get<1>(GetParam());
-
   // For the maximum number of concurrent requests...
   for (unsigned count = 0; count != max_nof_concurrent_requests; ++count) {
     // Prepare context with the count as sector.
     prach_buffer_context context;
-    context.sector       = count;
-    context.port         = 0;
-    context.slot         = TEST_SLOT_BEGIN;
-    context.start_symbol = 0;
-    context.format       = prach_format_type::zero;
-    context.rb_offset    = 0;
-    context.pusch_scs    = subcarrier_spacing::kHz15;
+    context.sector                = count;
+    context.port                  = 0;
+    context.slot                  = TEST_SLOT_BEGIN;
+    context.start_symbol          = start_symbol_index_dist(rgen);
+    context.format                = format;
+    context.rb_offset             = rb_offset_dist(rgen);
+    context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+    context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+    context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+    context.pusch_scs             = pusch_scs;
+    context.root_sequence_index   = unused_integer;
+    context.restricted_set        = restricted_set_config::UNRESTRICTED;
+    context.zero_correlation_zone = unused_integer;
+    context.start_preamble_index  = unused_integer;
+    context.nof_preamble_indices  = unused_integer;
 
     prach_buffer_spy buffer;
 
@@ -291,13 +366,21 @@ TEST_P(prach_processor_test, overflow)
   for (unsigned count = 0; count != max_nof_concurrent_requests; ++count) {
     // Prepare context with the count as sector.
     prach_buffer_context context;
-    context.sector       = count + max_nof_concurrent_requests;
-    context.port         = 0;
-    context.slot         = TEST_SLOT_BEGIN;
-    context.start_symbol = 0;
-    context.format       = prach_format_type::zero;
-    context.rb_offset    = 0;
-    context.pusch_scs    = subcarrier_spacing::kHz15;
+    context.sector                = count + max_nof_concurrent_requests;
+    context.port                  = 0;
+    context.slot                  = TEST_SLOT_BEGIN;
+    context.start_symbol          = start_symbol_index_dist(rgen);
+    context.format                = format;
+    context.rb_offset             = rb_offset_dist(rgen);
+    context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+    context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+    context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+    context.pusch_scs             = pusch_scs;
+    context.root_sequence_index   = unused_integer;
+    context.restricted_set        = restricted_set_config::UNRESTRICTED;
+    context.zero_correlation_zone = unused_integer;
+    context.start_preamble_index  = unused_integer;
+    context.nof_preamble_indices  = unused_integer;
 
     prach_buffer_spy buffer;
 
@@ -317,27 +400,35 @@ TEST_P(prach_processor_test, overflow)
   ASSERT_FALSE(task_executor_spy.has_pending_tasks());
 }
 
-// Case of a PRACH request that full-filled with a single symbol.
-TEST_P(prach_processor_test, single_baseband_symbol)
+// The PRACH processor is requested to process one request. The processor is fed a single buffer of twice the size of
+// the PRACH window.
+TEST_P(PrachProcessorFixture, SingleBasebandSymbols)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector           = 1;
-  context.port             = 3;
-  context.slot             = TEST_SLOT_BEGIN;
-  context.start_symbol     = 1;
-  context.format           = prach_format_type::zero;
-  context.nof_td_occasions = 1;
-  context.rb_offset        = 123;
-  context.nof_prb_ul_grid  = 52;
-  context.pusch_scs        = subcarrier_spacing::kHz30;
+  context.sector                = 1;
+  context.port                  = 3;
+  context.slot                  = TEST_SLOT_BEGIN;
+  context.start_symbol          = start_symbol_index_dist(rgen);
+  context.format                = format;
+  context.rb_offset             = rb_offset_dist(rgen);
+  context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+  context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+  context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+  context.pusch_scs             = pusch_scs;
+  context.root_sequence_index   = unused_integer;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.zero_correlation_zone = unused_integer;
+  context.start_preamble_index  = unused_integer;
+  context.nof_preamble_indices  = unused_integer;
 
-  sampling_rate              srate         = std::get<0>(GetParam());
-  prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);
-  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(srate.to_Hz());
-  prach_buffer_spy buffer;
+  // Calculate PRACH window size.
+  unsigned prach_window_length =
+      get_prach_window_duration(format, pusch_scs, context.start_symbol, context.nof_td_occasions)
+          .to_samples(srate.to_Hz());
 
   // Do request.
+  prach_buffer_spy buffer;
   processor->get_request_handler().handle_request(buffer, context);
 
   // Verify no external entries are registered.
@@ -352,7 +443,7 @@ TEST_P(prach_processor_test, single_baseband_symbol)
   // Prepare symbol context.
   prach_processor_baseband::symbol_context symbol_context;
   symbol_context.slot   = context.slot;
-  symbol_context.symbol = context.start_symbol;
+  symbol_context.symbol = 0;
   symbol_context.sector = context.sector;
   symbol_context.port   = context.port;
 
@@ -398,27 +489,34 @@ TEST_P(prach_processor_test, single_baseband_symbol)
   ASSERT_EQ(0, buffer.get_total_count());
 }
 
-// Case of a PRACH request that full-filled with three symbols.
-TEST_P(prach_processor_test, three_baseband_symbol)
+// The PRACH processor is requested to process one request. The PRACH window is segmented in three different buffers.
+TEST_P(PrachProcessorFixture, ThreeBasebandSymbols)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector           = 1;
-  context.port             = 3;
-  context.slot             = TEST_SLOT_BEGIN;
-  context.start_symbol     = 1;
-  context.format           = prach_format_type::zero;
-  context.nof_td_occasions = 1;
-  context.rb_offset        = 123;
-  context.nof_prb_ul_grid  = 52;
-  context.pusch_scs        = subcarrier_spacing::kHz30;
+  context.sector                = 1;
+  context.port                  = 3;
+  context.slot                  = TEST_SLOT_BEGIN;
+  context.start_symbol          = start_symbol_index_dist(rgen);
+  context.format                = format;
+  context.rb_offset             = rb_offset_dist(rgen);
+  context.nof_td_occasions      = nof_td_occasions_dist(rgen);
+  context.nof_fd_occasions      = nof_fd_occasions_dist(rgen);
+  context.nof_prb_ul_grid       = nof_prb_ul_grid_dist(rgen);
+  context.pusch_scs             = pusch_scs;
+  context.root_sequence_index   = unused_integer;
+  context.restricted_set        = restricted_set_config::UNRESTRICTED;
+  context.zero_correlation_zone = unused_integer;
+  context.start_preamble_index  = unused_integer;
+  context.nof_preamble_indices  = unused_integer;
 
-  sampling_rate              srate         = std::get<0>(GetParam());
-  prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);
-  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(srate.to_Hz());
-  prach_buffer_spy buffer;
+  // Calculate PRACH window size.
+  unsigned prach_window_length =
+      get_prach_window_duration(format, pusch_scs, context.start_symbol, context.nof_td_occasions)
+          .to_samples(srate.to_Hz());
 
   // Do request.
+  prach_buffer_spy buffer;
   processor->get_request_handler().handle_request(buffer, context);
 
   // Verify no external entries are registered.
@@ -431,25 +529,17 @@ TEST_P(prach_processor_test, three_baseband_symbol)
   std::iota(samples.begin(), samples.end(), 0);
 
   // Create three different views of samples.
-  span<const cf_t> samples0 = span<cf_t>(samples).first(prach_window_length / 3);
-  span<const cf_t> samples1 = span<cf_t>(samples).subspan(prach_window_length / 3, prach_window_length / 3);
-  span<const cf_t> samples2 = span<cf_t>(samples).subspan((2 * prach_window_length) / 3, prach_window_length / 3);
+  unsigned         buffer_size = divide_ceil(prach_window_length, 3);
+  span<const cf_t> samples0    = span<cf_t>(samples).first(buffer_size);
+  span<const cf_t> samples1    = span<cf_t>(samples).subspan(buffer_size, buffer_size);
+  span<const cf_t> samples2    = span<cf_t>(samples).subspan(2 * buffer_size, samples.size() - 2 * buffer_size);
 
   // Prepare symbol context.
   prach_processor_baseband::symbol_context symbol_context;
   symbol_context.slot   = context.slot;
-  symbol_context.symbol = context.start_symbol - 1;
+  symbol_context.symbol = 0;
   symbol_context.sector = context.sector;
   symbol_context.port   = context.port;
-
-  // Process samples - One symbol before the window starts.
-  processor->get_baseband().process_symbol(samples, symbol_context);
-  ++symbol_context.symbol;
-
-  // No task, demodulation neither notification entries.
-  ASSERT_FALSE(task_executor_spy.has_pending_tasks());
-  ASSERT_EQ(0, ofdm_prach_factory_spy->get_nof_total_demodulate_entries());
-  ASSERT_EQ(0, notifier_spy.get_nof_notifications());
 
   // Process samples - Start of PRACH window.
   processor->get_baseband().process_symbol(samples0, symbol_context);
@@ -534,10 +624,25 @@ TEST_P(prach_processor_test, three_baseband_symbol)
   ASSERT_EQ(0, buffer.get_total_count());
 }
 
-// Creates test suite that combines all possible parameters.
+// Creates test suite that combines a few parameters.
 INSTANTIATE_TEST_SUITE_P(prach_processor,
-                         prach_processor_test,
-                         ::testing::Combine(::testing::Values(sampling_rate::from_MHz(7.68),
-                                                              sampling_rate::from_MHz(11.52),
-                                                              sampling_rate::from_MHz(23.04)),
-                                            ::testing::Values(1, 4)));
+                         PrachProcessorFixture,
+                         ::testing::Combine(::testing::Values(prach_format_type::zero,
+                                                              prach_format_type::one,
+                                                              prach_format_type::two,
+                                                              prach_format_type::three,
+                                                              prach_format_type::A1,
+                                                              prach_format_type::A2,
+                                                              prach_format_type::A3,
+                                                              prach_format_type::B1,
+                                                              prach_format_type::B4,
+                                                              prach_format_type::C0,
+                                                              prach_format_type::C2,
+                                                              prach_format_type::A1_B1,
+                                                              prach_format_type::A2_B2,
+                                                              prach_format_type::A3_B3),
+                                            ::testing::Values(subcarrier_spacing::kHz15,
+                                                              subcarrier_spacing::kHz30,
+                                                              subcarrier_spacing::kHz60),
+                                            ::testing::Values(sampling_rate::from_MHz(30.72),
+                                                              sampling_rate::from_MHz(61.44))));

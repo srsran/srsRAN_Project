@@ -66,12 +66,12 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
     // Calculate time-domain occasion start time.
     phy_time_unit t_occasion_start = pusch_symbol_duration * t_occasion_start_symbol;
 
-    // Add sixteen kappa units if the symbol is after 0.0 ms from the beginning of the slot.
+    // Add sixteen kappa units if the symbol doesn't start at the beginning of the slot.
     if (t_occasion_start > phy_time_unit::from_seconds(0.0)) {
       t_occasion_start += sixteen_kappa;
     }
 
-    // Add sixteen kappa units if the symbol is after 0.5 ms from the beginning of the slot.
+    // Add sixteen kappa units if the symbol starts more than 0.5 ms after the beginning of the slot.
     if (t_occasion_start > phy_time_unit::from_seconds(0.5e-3)) {
       t_occasion_start += sixteen_kappa;
     }

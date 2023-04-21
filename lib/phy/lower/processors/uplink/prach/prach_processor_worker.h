@@ -90,9 +90,9 @@ public:
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(srate.to_Hz()),
-    temp_baseband(prach_constants::MAX_LENGTH_TIME_DOMAIN.to_samples(sampling_rate_Hz))
+    temp_baseband(prach_constants::MAX_WINDOW_LENGTH.to_samples(sampling_rate_Hz))
   {
-    srsran_assert(sampling_rate_Hz && prach_constants::MAX_LENGTH_TIME_DOMAIN.is_sample_accurate(sampling_rate_Hz),
+    srsran_assert(sampling_rate_Hz && prach_constants::MAX_WINDOW_LENGTH.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",
                   sampling_rate_Hz);
   }
@@ -101,8 +101,8 @@ public:
   void connect(prach_processor_notifier& notifier_) { notifier = &notifier_; }
 
   /// \brief Handles a PRACH occasion request.
-  /// \param[in] PRACH buffer.
-  /// \param[in] PRACH occasion context.
+  /// \param[in] buffer  PRACH buffer.
+  /// \param[in] context PRACH occasion context.
   void handle_request(prach_buffer& buffer, const prach_buffer_context& context);
 
   /// \brief Processes an OFDM symbol.

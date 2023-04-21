@@ -113,7 +113,7 @@ public:
     return ret;
   }
 
-  /// Overload addition operator.
+  /// Overload addition assignment operator.
   constexpr phy_time_unit operator+=(phy_time_unit other)
   {
     value += other.value;
@@ -135,7 +135,7 @@ public:
     return *this;
   }
 
-  /// Overload multiplication operator.
+  /// Overload multiplication assignment operator.
   constexpr phy_time_unit operator*(unsigned multiplier) const
   {
     phy_time_unit ret(*this);
@@ -143,10 +143,25 @@ public:
     return ret;
   }
 
-  /// Overload multiplication operator.
+  /// Overload multiplication assignment operator.
   constexpr phy_time_unit operator*=(unsigned multiplier)
   {
     value *= multiplier;
+    return *this;
+  }
+
+  /// Overload division operator.
+  constexpr phy_time_unit operator/(unsigned divisor) const
+  {
+    phy_time_unit ret(*this);
+    ret /= divisor;
+    return ret;
+  }
+
+  /// Overload division assignment operator.
+  constexpr phy_time_unit operator/=(unsigned divisor)
+  {
+    value /= divisor;
     return *this;
   }
 
