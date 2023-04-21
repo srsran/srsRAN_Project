@@ -269,19 +269,28 @@ private:
   /// \param sn The SN of the PDU to check
   void check_sn_reached_max_retx(uint32_t sn);
 
-  /// Called whenever the buffer state has been changed by upper layers (new SDUs, discard) or internal RLC events
-  /// (timer, retransmission, status report) so that lower layers need to be informed about the new buffer state.
-  /// This function should not be called from \c pull_pdu, since the lower layer accounts for the amount of extracted
-  /// data itself.
+  /// Called whenever the buffer state has been changed by upper layers (i.e new SDU or SDU discard) or the size of the
+  /// own status PDU has changed so that lower layers need to be informed about the new buffer state. This function
+  /// defers the actual notification \c handle_changed_buffer_state to pcell_executor. The notification is discarded if
+  /// another notification is already queued for execution. This function should not be called from \c pull_pdu, since
+  /// the lower layer accounts for the amount of extracted data itself.
   ///
   /// Safe execution from: Any executor
   void handle_changed_buffer_state();
 
-  /// Informs the lower layer of the current buffer state. This function is called from pcell_executor and its execution
-  /// is queued by \c handle_changed_buffer_state.
+  /// Immediately informs the lower layer of the current buffer state. This function must be called from pcell_executor.
+  /// It is used for buffer update notifications by non-excessive internal RLC events (i.e. expired poll retransmit
+  /// timer or handled received status report), and for defered handling of \c handle_changed_buffer_state. This
+  /// function should not be called from \c pull_pdu, since the lower layer accounts for the amount of extracted data
+  /// itself.
   ///
   /// Safe execution from: pcell_executor
-  void update_mac_buffer_state();
+  /// \param is_locked provides info whether the \c mutex is already locked or not.
+  void update_mac_buffer_state(bool is_locked);
+
+  /// Lock-free version of \c get_buffer_state()
+  /// \return Provides the current buffer state
+  uint32_t get_buffer_state_nolock();
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)

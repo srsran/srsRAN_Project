@@ -597,7 +597,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
-  handle_changed_buffer_state();
+  update_mac_buffer_state(/* is_locked = */ true);
 
   // Process retx_count and inform upper layers if needed
   for (uint32_t retx_sn : retx_sn_set) {
@@ -690,8 +690,8 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
 {
   if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
     logger.log_debug("Triggering buffer state update to lower layer");
-    // Defer handling of status to pcell_executor
-    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
+    // Redirect handling of status to pcell_executor
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* is_locked = */ false); })) {
       logger.log_error("Failed to enqueue buffer state update");
     }
   } else {
@@ -699,10 +699,10 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
   }
 }
 
-void rlc_tx_am_entity::update_mac_buffer_state()
+void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked)
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
-  unsigned bs = get_buffer_state();
+  unsigned bs = is_locked ? get_buffer_state_nolock() : get_buffer_state();
   if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
@@ -719,7 +719,11 @@ void rlc_tx_am_entity::update_mac_buffer_state()
 uint32_t rlc_tx_am_entity::get_buffer_state()
 {
   std::lock_guard<std::mutex> lock(mutex);
+  return get_buffer_state_nolock();
+}
 
+uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
+{
   // minimum bytes needed to tx all queued SDUs + each header
   uint32_t queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_min_size;
 
@@ -877,7 +881,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
     // TODO: Increment RETX counter, handle max_retx
     //
 
-    handle_changed_buffer_state();
+    update_mac_buffer_state(/* is_locked = */ true);
   }
   /*
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.

@@ -396,7 +396,9 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
-  tester->bsr_count = 0; // reset
+  // reset
+  tester->bsr_count = 0;
+  n_bsr             = 0;
 
   // Discard valid SDUs
   rlc->discard_sdu(0);
@@ -411,7 +413,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
 
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 0);
 
@@ -420,7 +422,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
 
@@ -429,7 +431,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
@@ -443,7 +445,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
@@ -452,7 +454,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 
@@ -465,7 +467,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 
@@ -476,7 +478,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 }
@@ -503,7 +505,9 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
-  tester->bsr_count = 0; // reset
+  // reset
+  tester->bsr_count = 0;
+  n_bsr             = 0;
 
   // Discard valid SDUs
   rlc->discard_sdu((pdcp_sn_start + 0) % pdcp_sn_mod);
@@ -518,7 +522,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
 
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 0);
 
@@ -527,7 +531,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
 
@@ -536,7 +540,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
@@ -550,7 +554,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
@@ -559,7 +563,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 
@@ -572,7 +576,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 1);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 
@@ -583,7 +587,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 }

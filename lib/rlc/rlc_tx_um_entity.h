@@ -91,16 +91,17 @@ private:
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
 
-  /// Called whenever the buffer state has been changed by upper layers (new SDUs, discard) or internal RLC events
-  /// (timer, retransmission, status report) so that lower layers need to be informed about the new buffer state.
-  /// This function should not be called from \c pull_pdu, since the lower layer accounts for the amount of extracted
-  /// data itself.
+  /// Called whenever the buffer state has been changed by upper layers (new SDUs or SDU discard) so that lower layers
+  /// need to be informed about the new buffer state. This function defers the actual notification \c
+  /// handle_changed_buffer_state to pcell_executor. The notification is discarded if another notification is already
+  /// queued for execution. This function should not be called from \c pull_pdu, since the lower layer accounts for the
+  /// amount of extracted data itself.
   ///
   /// Safe execution from: Any executor
   void handle_changed_buffer_state();
 
-  /// Informs the lower layer of the current buffer state. This function is called from pcell_executor and its execution
-  /// is queued by \c handle_changed_buffer_state.
+  /// Immediately informs the lower layer of the current buffer state. This function is called from pcell_executor and
+  /// its execution is queued by \c handle_changed_buffer_state.
   ///
   /// Safe execution from: pcell_executor
   void update_mac_buffer_state();
