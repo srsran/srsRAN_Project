@@ -135,8 +135,56 @@ constexpr inline drb_id_t uint_to_drb_id(uint16_t id)
   return static_cast<drb_id_t>(id);
 }
 
-/// Radio Bearer type, either SRB or DRB.
-enum class rb_type_t { srb, drb };
+enum class mrb_id_t : uint16_t {
+  mrb1 = 1,
+  mrb2,
+  mrb3,
+  mrb4,
+  mrb5,
+  mrb6,
+  mrb7,
+  mrb8,
+  mrb9,
+  mrb10,
+  mrb11,
+  mrb12,
+  mrb13,
+  mrb14,
+  mrb15,
+  mrb16,
+  mrb17,
+  mrb18,
+  mrb19,
+  mrb20,
+  mrb21,
+  mrb22,
+  mrb23,
+  mrb24,
+  mrb25,
+  mrb26,
+  mrb27,
+  mrb28,
+  mrb29,
+  mrb30,
+  mrb31,
+  mrb32,
+  invalid
+};
+
+constexpr static std::size_t MAX_NOF_MRBS = 32;
+
+constexpr inline uint16_t mrb_id_to_uint(mrb_id_t id)
+{
+  return static_cast<uint16_t>(id);
+}
+
+constexpr inline mrb_id_t uint_to_mrb_id(uint16_t id)
+{
+  return static_cast<mrb_id_t>(id);
+}
+
+/// Radio Bearer type, either SRB, DRB or MRB.
+enum class rb_type_t { srb, drb, mrb };
 
 /// Radio Bearer Identity, e.g. SRB1, DRB1, DRB2,...
 class rb_id_t
@@ -145,18 +193,22 @@ public:
   rb_id_t() = default;
   rb_id_t(srb_id_t srb_id_) : rb_type(rb_type_t::srb), srb_id(srb_id_) {}
   rb_id_t(drb_id_t drb_id_) : rb_type(rb_type_t::drb), drb_id(drb_id_){};
+  rb_id_t(mrb_id_t mrb_id_) : rb_type(rb_type_t::mrb), mrb_id(mrb_id_){};
 
   bool is_srb() { return rb_type == rb_type_t::srb; }
   bool is_drb() { return rb_type == rb_type_t::drb; }
+  bool is_mrb() { return rb_type == rb_type_t::mrb; }
 
   srb_id_t get_srb_id() { return srb_id; }
   drb_id_t get_drb_id() { return drb_id; }
+  mrb_id_t get_mrb_id() { return mrb_id; }
 
 private:
   rb_type_t rb_type;
   union {
     srb_id_t srb_id;
     drb_id_t drb_id;
+    mrb_id_t mrb_id;
   };
 };
 
@@ -176,6 +228,9 @@ struct formatter<srsran::rb_id_t> {
   template <typename FormatContext>
   auto format(srsran::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    if (o.is_mrb()) {
+      return format_to(ctx.out(), "MRB{}", mrb_id_to_uint(o.get_mrb_id()));
+    }
     if (o.is_drb()) {
       return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o.get_drb_id()));
     }
