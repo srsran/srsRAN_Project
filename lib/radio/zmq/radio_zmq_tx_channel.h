@@ -12,7 +12,7 @@
 
 #include "radio_zmq_tx_channel_fsm.h"
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
@@ -50,9 +50,9 @@ private:
   /// Logger.
   srslog::basic_logger& logger;
   /// Stores transmit buffer.
-  blocking_queue<radio_sample_type> circular_buffer;
+  blocking_queue<cf_t> circular_buffer;
   /// Transmission buffer.
-  std::vector<radio_sample_type> buffer;
+  std::vector<cf_t> buffer;
   /// Notification handler.
   radio_notification_handler& notification_handler;
   /// Asynchronous task executor.
@@ -66,7 +66,7 @@ private:
   std::atomic<bool> is_tx_enabled = {false};
 
   /// Transmits a single sample.
-  void transmit_samples(span<radio_sample_type> data);
+  void transmit_samples(span<const cf_t> data);
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx channel.
@@ -98,7 +98,7 @@ public:
 
   ~radio_zmq_tx_channel();
 
-  bool is_successful() const { return state_fsm.is_running(); }
+  bool is_successful() const { return state_fsm.is_initiated(); }
 
   void receive_request();
 
@@ -108,7 +108,9 @@ public:
 
   bool align(uint64_t timestamp, std::chrono::milliseconds timeout);
 
-  void transmit(span<radio_sample_type> buffer);
+  void transmit(span<const cf_t> buffer);
+
+  void start(uint64_t init_time);
 
   void stop();
 

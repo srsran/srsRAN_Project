@@ -10,21 +10,35 @@
 
 #pragma once
 
+#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 #include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
-/// Lower physical layer control interface.
+/// \brief Lower physical layer - control interface.
+///
+/// Provides a start and stop methods.
+///
+/// \remark The methods start() and stop() must be called in order and only once, otherwise it will result in undefined
+/// behaviour.
 class lower_phy_controller
 {
 public:
   /// Default destructor.
   virtual ~lower_phy_controller() = default;
 
-  /// Starts the lower physical layer operation.
-  virtual void start() = 0;
+  /// \brief Starts the lower physical layer operation.
+  ///
+  /// The fist uplink processing block is expected at \c init_time and the first downlink processing block transmission
+  /// will be relative to this time.
+  ///
+  /// \param[in] init_time Initial time in clock ticks.
+  virtual void start(baseband_gateway_timestamp init_time) = 0;
 
-  /// Requests the lower physical layer to stop the operation.
+  /// \brief Stops the lower physical layer operation.
+  ///
+  /// Requests the lower physical layer to stop and it waits that all asynchronous execution is finished before
+  /// returning.
   virtual void stop() = 0;
 };
 

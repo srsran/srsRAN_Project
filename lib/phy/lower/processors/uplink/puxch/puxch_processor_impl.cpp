@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2022 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -9,14 +9,13 @@
  */
 
 #include "puxch_processor_impl.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
 
 using namespace srsran;
 
-void puxch_processor_impl::process_symbol(const baseband_gateway_buffer&     samples,
-                                          const lower_phy_rx_symbol_context& context)
+void puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& samples,
+                                          const lower_phy_rx_symbol_context&    context)
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
 

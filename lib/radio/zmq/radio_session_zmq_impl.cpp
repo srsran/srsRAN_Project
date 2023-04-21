@@ -146,7 +146,17 @@ bool radio_session_zmq_impl::set_rx_gain(unsigned port_id, double gain_dB)
   return false;
 }
 
-void radio_session_zmq_impl::start()
+void radio_session_zmq_impl::start(baseband_gateway_timestamp start_time)
 {
-  // Do nothing.
+  for (auto& stream : rx_streams) {
+    stream->start(start_time);
+  }
+  for (auto& stream : tx_streams) {
+    stream->start(start_time);
+  }
+}
+
+baseband_gateway_timestamp radio_session_zmq_impl::read_current_time()
+{
+  return 0;
 }

@@ -10,7 +10,7 @@
 
 #pragma once
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
@@ -54,7 +54,7 @@ public:
 
 private:
   // See interface for documentation.
-  void process_symbol(baseband_gateway_buffer& samples, const symbol_context& context) override;
+  void process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override;
 
   // See interface for documentation.
   void handle_request(const resource_grid_reader& grid, const resource_grid_context& context) override;

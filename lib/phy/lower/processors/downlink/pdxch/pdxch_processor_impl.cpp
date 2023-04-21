@@ -31,7 +31,7 @@ pdxch_processor_baseband& pdxch_processor_impl::get_baseband()
   return *this;
 }
 
-void pdxch_processor_impl::process_symbol(baseband_gateway_buffer&                        samples,
+void pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&                 samples,
                                           const pdxch_processor_baseband::symbol_context& context)
 {
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");

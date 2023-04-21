@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2022 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -10,7 +10,7 @@
 
 #pragma once
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
@@ -35,8 +35,6 @@ struct downlink_processor_baseband_configuration {
   sampling_rate rate;
   /// Number of transmit ports.
   unsigned nof_tx_ports;
-  /// Initial slot index within the radio frame.
-  unsigned initial_slot_index;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
 };
@@ -57,11 +55,11 @@ public:
   void connect(downlink_processor_notifier& notifier_) { notifier = &notifier_; }
 
   // See interface for documentation.
-  void process(baseband_gateway_buffer& buffer) override;
+  void process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override;
 
 private:
   /// Processes a new symbol.
-  void process_new_symbol();
+  void process_new_symbol(baseband_gateway_timestamp timestamp);
 
   /// Logger for printing amplitude control.
   srslog::basic_logger& amplitude_control_logger;
@@ -73,18 +71,21 @@ private:
   unsigned nof_slot_tti_in_advance;
   /// Sector identifier.
   unsigned sector_id;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
   /// Number of receive ports.
   unsigned nof_rx_ports;
+  /// Number of samples per subframe;
+  unsigned nof_samples_per_subframe;
+  /// Number of slots per subframe;
+  unsigned nof_slots_per_subframe;
   /// Number of symbols per slot.
   unsigned nof_symbols_per_slot;
-  /// Current number of buffered samples.
-  unsigned current_nof_samples;
-  /// Current symbol size in samples.
-  unsigned current_symbol_size;
-  /// Current symbol index within the slot.
-  unsigned current_symbol_index;
-  /// Current slot point.
-  slot_point current_slot;
+  /// \brief Reading index for the \ref temp_buffer holding OFDM symbols.
+  ///
+  /// Sample index within the \c temp_buffer data, it points the reading position within the generated signal. It is
+  /// used to copy the samples aligned with the requested timestamp into the destination buffer.
+  unsigned temp_buffer_read_index;
   /// List of the symbol sizes in number samples for each symbol within the subframe.
   std::vector<unsigned> symbol_sizes;
   /// Temporal storage of baseband samples.

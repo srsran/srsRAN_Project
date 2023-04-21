@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_test.h"
@@ -99,6 +99,14 @@ static void test(const test_description& config, radio_factory& factory, task_ex
   // Get data plane.
   baseband_gateway& data_plane = session->get_baseband_gateway();
 
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = session->read_current_time();
+  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_hz);
+
+  // Start processing.
+  session->start(start_time);
+
   // Prepare transmit buffer
   baseband_gateway_buffer_dynamic tx_buffer(config.nof_channels, config.block_size);
 
@@ -113,8 +121,8 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
       // Generate transmit random data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
-        span<radio_sample_type> buffer = tx_buffer.get_channel_buffer(channel_id);
-        for (radio_sample_type& sample : buffer) {
+        span<cf_t> buffer = tx_buffer[channel_id];
+        for (cf_t& sample : buffer) {
           sample = {dist(tx_rgen), dist(tx_rgen)};
         }
       }
@@ -122,7 +130,7 @@ static void test(const test_description& config, radio_factory& factory, task_ex
       // Transmit stream buffer.
       baseband_gateway_transmitter::metadata tx_md;
       tx_md.ts = block_id * config.block_size;
-      transmitter.transmit(tx_buffer, tx_md);
+      transmitter.transmit(tx_buffer.get_reader(), tx_md);
     }
 
     // Receive for each stream the same buffer.
@@ -131,15 +139,15 @@ static void test(const test_description& config, radio_factory& factory, task_ex
       baseband_gateway_receiver& receiver = data_plane.get_receiver(stream_id);
 
       // Receive.
-      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer);
+      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer.get_writer());
       TESTASSERT_EQ(md.ts, block_id * config.block_size);
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
-        span<const radio_sample_type> buffer = rx_buffer.get_channel_buffer(channel_id);
-        for (const radio_sample_type& sample : buffer) {
-          radio_sample_type expected_sample = {dist(rx_rgen), dist(rx_rgen)};
-          float             error           = std::abs(sample - expected_sample);
+        span<const cf_t> buffer = rx_buffer[channel_id];
+        for (const cf_t& sample : buffer) {
+          cf_t  expected_sample = {dist(rx_rgen), dist(rx_rgen)};
+          float error           = std::abs(sample - expected_sample);
           TESTASSERT(error < ASSERT_MAX_ERROR,
                      "Error ({}) exceeds maximum ({}). Unmatched data {}!={}",
                      error,

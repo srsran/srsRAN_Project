@@ -783,10 +783,18 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
+  // Calculate starting time from the radio current time plus one hundred milliseconds and rounded to the next subframe.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time =
+      current_time + static_cast<uint64_t>(delay_s * gnb_cfg.rf_driver_cfg.srate_MHz * 1e6);
+  start_time = divide_ceil(start_time, static_cast<uint64_t>(gnb_cfg.rf_driver_cfg.srate_MHz * 1e3)) *
+               static_cast<uint64_t>(gnb_cfg.rf_driver_cfg.srate_MHz * 1e3);
+
   // Start processing.
   gnb_logger.info("Starting lower PHY...");
-  radio->start();
-  lower->get_controller().start();
+  radio->start(start_time);
+  lower->get_controller().start(start_time);
   gnb_logger.info("Lower PHY started successfully");
 
   console.set_cells(du_hi_cfg.cells);

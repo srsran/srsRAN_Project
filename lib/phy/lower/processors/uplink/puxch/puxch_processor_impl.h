@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2022 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -10,6 +10,7 @@
 
 #pragma once
 #include "srsran/adt/blocking_queue.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
@@ -52,7 +53,8 @@ public:
 
 private:
   // See interface for documentation.
-  void process_symbol(const baseband_gateway_buffer& samples, const lower_phy_rx_symbol_context& context) override;
+  void process_symbol(const baseband_gateway_buffer_reader& samples,
+                      const lower_phy_rx_symbol_context&    context) override;
 
   // See interface for documentation.
   void handle_request(resource_grid& grid, const resource_grid_context& context) override;
@@ -67,7 +69,7 @@ private:
   unsigned                                 nof_rx_ports;
   puxch_processor_notifier*                notifier = nullptr;
   std::unique_ptr<ofdm_symbol_demodulator> demodulator;
-  slot_point                               current_slot = {};
+  slot_point                               current_slot;
   resource_grid*                           current_grid = nullptr;
   blocking_queue<rg_grid_request>          request_queue;
 };

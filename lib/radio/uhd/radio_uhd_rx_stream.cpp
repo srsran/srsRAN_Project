@@ -12,10 +12,10 @@
 
 using namespace srsran;
 
-bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples,
-                                        baseband_gateway_buffer& data,
-                                        unsigned                 offset,
-                                        uhd::rx_metadata_t&      md)
+bool radio_uhd_rx_stream::receive_block(unsigned&                       nof_rxd_samples,
+                                        baseband_gateway_buffer_writer& data,
+                                        unsigned                        offset,
+                                        uhd::rx_metadata_t&             md)
 {
   // Extract number of samples.
   unsigned num_samples = data.get_nof_samples() - offset;
@@ -30,7 +30,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples
   }
 
   // Make sure the number of channels is equal.
-  report_fatal_error_if_not(data.get_nof_channels() == nof_channels, "Number of channels does not match.");
+  srsran_assert(data.get_nof_channels() == nof_channels, "Number of channels does not match.");
 
   // Flatten buffers.
   static_vector<void*, RADIO_MAX_NOF_CHANNELS> buffs_flat_ptr(nof_channels);
@@ -103,7 +103,7 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
   return true;
 }
 
-baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gateway_buffer& buffs)
+baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gateway_buffer_writer& buffs)
 {
   baseband_gateway_receiver::metadata ret = {};
   uhd::rx_metadata_t                  md;
@@ -119,11 +119,9 @@ baseband_gateway_receiver::metadata radio_uhd_rx_stream::receive(baseband_gatewa
       return {};
     }
 
-    // Save timespec for first block.
+    // Save timespec for first block only if the last timestamp is unknown.
     if (rxd_samples_total == 0) {
-      ret.ts = static_cast<baseband_gateway_timestamp>(md.time_spec.get_full_secs()) *
-                   static_cast<baseband_gateway_timestamp>(srate_Hz) +
-               static_cast<baseband_gateway_timestamp>(srate_Hz * md.time_spec.get_frac_secs());
+      ret.ts = md.time_spec.to_ticks(srate_Hz);
     }
 
     // Increase the total amount of received samples.

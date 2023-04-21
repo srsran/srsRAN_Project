@@ -13,7 +13,7 @@
 
 namespace srsran {
 
-class baseband_gateway_buffer;
+class baseband_gateway_buffer_writer;
 struct lower_phy_rx_symbol_context;
 
 /// \brief Lower physical layer PDxCH processor - Baseband interface.
@@ -39,7 +39,7 @@ public:
   ///
   /// \param[in] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.
-  virtual void process_symbol(baseband_gateway_buffer& samples, const symbol_context& context) = 0;
+  virtual void process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) = 0;
 };
 
 } // namespace srsran

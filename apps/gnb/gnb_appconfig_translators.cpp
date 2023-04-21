@@ -302,8 +302,7 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
     out_cfg.dft_window_offset          = 0.5F;
-    out_cfg.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
-    out_cfg.ul_to_dl_subframe_offset   = 1;
+    out_cfg.max_processing_delay_slots = 2;
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
@@ -316,6 +315,21 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
     } else {
       // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
       out_cfg.time_alignment_calibration = 0;
+    }
+
+    // Select buffer size policy.
+    if (config.rf_driver_cfg.device_driver == "zmq") {
+      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    } else if (config.expert_phy_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
+      // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
+      // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
+      // samples must arrive to the baseband device before the transmission time passes.
+      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+    } else {
+      out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
+      out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
     }
 
     unsigned bandwidth_sc =

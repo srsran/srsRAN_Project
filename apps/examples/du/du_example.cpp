@@ -356,7 +356,6 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.cp                         = cp;
   phy_config.dft_window_offset          = 0.5F;
   phy_config.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(scs);
-  phy_config.ul_to_dl_subframe_offset   = 1;
 
   phy_config.srate = srate;
 
@@ -736,10 +735,15 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * srate.to_Hz<double>());
+
   // Start processing.
   du_logger.info("Starting lower PHY...");
-  radio->start();
-  lower->get_controller().start();
+  radio->start(start_time);
+  lower->get_controller().start(start_time);
   du_logger.info("Lower PHY started successfully");
 
   while (is_running) {

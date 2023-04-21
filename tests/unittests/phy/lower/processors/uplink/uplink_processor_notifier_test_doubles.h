@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2013-2022 Software Radio Systems Limited
+ * Copyright 2021-2023 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "prach/prach_processor_test_doubles.h"
 #include "puxch/puxch_processor_test_doubles.h"
 #include "srsran/phy/lower/lower_phy_timing_context.h"
@@ -45,17 +46,17 @@ private:
 class uplink_processor_baseband_spy : public uplink_processor_baseband
 {
 public:
-  using entry_t = baseband_gateway_buffer_dynamic;
+  struct entry_t {
+    baseband_gateway_buffer_read_only buffer;
+    baseband_gateway_timestamp        timestamp;
+  };
 
-  void process(const baseband_gateway_buffer& buffer) override
+  void process(const baseband_gateway_buffer_reader& buffer, baseband_gateway_timestamp timestamp) override
   {
-    entries.emplace_back(baseband_gateway_buffer_dynamic(buffer.get_nof_channels(), buffer.get_nof_samples()));
-    entry_t& entry = entries.back();
-
-    for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-      span<const cf_t> samples = buffer.get_channel_buffer(i_channel);
-      srsvec::copy(entry.get_channel_buffer(i_channel), samples);
-    }
+    entries.emplace_back();
+    entry_t& entry  = entries.back();
+    entry.timestamp = timestamp;
+    entry.buffer    = buffer;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

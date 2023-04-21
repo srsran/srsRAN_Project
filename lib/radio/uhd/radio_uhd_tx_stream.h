@@ -13,8 +13,8 @@
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_multi_usrp.h"
 #include "radio_uhd_tx_stream_fsm.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "srsran/support/executors/task_executor.h"
@@ -62,10 +62,10 @@ private:
   /// \param[in] offset           Sample offset in the transmit buffers.
   /// \param[in] time_spec        Transmission timestamp.
   /// \return True if no exception is caught in the transmission process, false otherwise.
-  bool transmit_block(unsigned&                nof_txd_samples,
-                      baseband_gateway_buffer& data,
-                      unsigned                 offset,
-                      uhd::time_spec_t&        time_spec);
+  bool transmit_block(unsigned&                             nof_txd_samples,
+                      const baseband_gateway_buffer_reader& data,
+                      unsigned                              offset,
+                      uhd::time_spec_t&                     time_spec);
 
 public:
   /// Describes the necessary parameters to create an UHD transmit stream.
@@ -92,10 +92,11 @@ public:
                       task_executor&               async_executor_,
                       radio_notification_handler&  notifier_);
 
-  unsigned get_buffer_size() const override;
+  /// Gets the optimal transmitter buffer size.
+  unsigned get_buffer_size() const;
 
   // See interface for documentation.
-  void transmit(baseband_gateway_buffer& data, const metadata& metadata) override;
+  void transmit(const baseband_gateway_buffer_reader& data, const metadata& metadata) override;
 
   /// Stop the transmission.
   void stop();
