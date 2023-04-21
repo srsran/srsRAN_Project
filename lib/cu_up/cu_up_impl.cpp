@@ -177,13 +177,23 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   }
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
+    // Traverse list of PDU sessions to be setup/modified
+    for (const auto& pdu_session_item :
+         msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
+      logger.warning("Setup/Modification of PDU session id {} not supported", pdu_session_item.pdu_session_id);
+      // TODO: add handling
+    }
+
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
+      logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
+      // TODO: handle failure case
     }
 
     // Traverse list of PDU sessions to be removed.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
+      logger.info("Removing PDU session id {}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
     }
   }
