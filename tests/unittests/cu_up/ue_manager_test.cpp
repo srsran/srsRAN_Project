@@ -46,10 +46,10 @@ protected:
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                               f1u_bearer;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
+  timer_manager                                        timers;
   std::unique_ptr<ue_manager_ctrl>                     ue_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                                        timers;
   manual_task_worker                                   worker{64};
 };
 

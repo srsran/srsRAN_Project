@@ -31,7 +31,6 @@ public:
              gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
              gtpu_demux_ctrl&                     gtpu_rx_demux_) :
     index(index_),
-    timers(timers_),
     pdu_session_manager(index,
                         net_config_,
                         logger_,
@@ -39,14 +38,15 @@ public:
                         timers_,
                         f1u_gw_,
                         gtpu_tx_notifier_,
-                        gtpu_rx_demux_)
+                        gtpu_rx_demux_),
+    timers(timers_)
   {
     ue_inactivity_timer = timers.create_timer();
     ue_inactivity_timer.set(std::chrono::milliseconds(ue_idle_timeout_ms),
                             [this](timer_id_t /*tid*/) { on_ue_inactivity_timer_expired(); });
     ue_inactivity_timer.run();
   }
-  ~ue_context() = default;
+  ~ue_context() override = default;
 
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
@@ -67,12 +67,12 @@ public:
 
 private:
   ue_index_t               index;
-  timer_factory            timers;
   pdu_session_manager_impl pdu_session_manager;
 
-  uint16_t     ue_idle_timeout_ms = 15000;
-  unique_timer ue_inactivity_timer;
-  void         on_ue_inactivity_timer_expired() {}
+  timer_factory timers;
+  unique_timer  ue_inactivity_timer;
+  uint16_t      ue_idle_timeout_ms = 15000;
+  void          on_ue_inactivity_timer_expired() {}
 };
 
 } // namespace srs_cu_up

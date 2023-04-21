@@ -45,10 +45,10 @@ private:
 
   network_interface_config&            net_config;
   srslog::basic_logger&                logger;
-  timer_manager&                       timers;
   f1u_cu_up_gateway&                   f1u_gw;
   gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier;
   gtpu_demux_ctrl&                     gtpu_rx_demux;
+  timer_manager&                       timers;
   ue_db_t                              ue_db;
   task_executor&                       ue_exec;
 };

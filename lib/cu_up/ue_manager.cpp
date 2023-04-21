@@ -22,10 +22,10 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
                        task_executor&                       ue_exec_) :
   net_config(net_config_),
   logger(logger_),
-  timers(timers_),
   f1u_gw(f1u_gw_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
   gtpu_rx_demux(gtpu_rx_demux_),
+  timers(timers_),
   ue_exec(ue_exec_)
 {
 }

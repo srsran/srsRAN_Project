@@ -34,7 +34,6 @@ public:
     // pass through
     logger.log_debug("RX SDU. sdu_len={}", pdu.length());
     sdu_notifier.on_new_sdu(std::move(pdu));
-    ue_inactivity_timer.stop();
     ue_inactivity_timer.run();
   }
 
