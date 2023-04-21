@@ -10,6 +10,7 @@
 
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
+
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsran/pdcp/pdcp_factory.h"
@@ -73,10 +74,11 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
-  sdap_entity_creation_message sdap_msg = {};
-  sdap_msg.ue_index                     = ue_index;
-  sdap_msg.rx_sdu_notifier              = &new_session->sdap_to_gtpu_adapter;
-  sdap_msg.tx_pdu_notifier              = &new_session->sdap_to_pdcp_adapter;
+  sdap_entity_creation_message sdap_msg = {ue_index,
+                                           session.pdu_session_id,
+                                           ue_inactivity_timer,
+                                           &new_session->sdap_to_gtpu_adapter,
+                                           &new_session->sdap_to_pdcp_adapter};
   new_session->sdap                     = create_sdap(sdap_msg);
 
   // Create GTPU entity
@@ -95,7 +97,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
-  if (gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
+  if (!gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface())) {
     logger.error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
@@ -106,7 +108,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                 session.pdu_session_id);
 
   // Handle DRB setup
-  for (auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
+  for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     // prepare DRB creation result
     drb_setup_result drb_result = {};
     drb_result.success          = false;

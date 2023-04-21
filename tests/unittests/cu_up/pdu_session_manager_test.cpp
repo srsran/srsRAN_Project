@@ -31,8 +31,16 @@ protected:
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
 
     // create DUT object
-    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(
-        MIN_UE_INDEX, net_config, logger, timer_factory{timers, worker}, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+    ue_inactivity_timer = timers_factory.create_timer();
+    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
+                                                                 net_config,
+                                                                 logger,
+                                                                 ue_inactivity_timer,
+                                                                 timers_factory,
+                                                                 *f1u_gw,
+                                                                 *gtpu_tx_notifier,
+                                                                 *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -41,8 +49,10 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                        timers;
+  timer_manager                                        timers_manager;
   manual_task_worker                                   worker{64};
+  timer_factory                                        timers_factory{timers_manager, worker};
+  unique_timer                                         ue_inactivity_timer;
   std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                               f1u_bearer;
