@@ -30,7 +30,16 @@ public:
              f1u_cu_up_gateway&                   f1u_gw_,
              gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
              gtpu_demux_ctrl&                     gtpu_rx_demux_) :
-    index(index_), pdu_session_manager(index, net_config_, logger_, timers_, f1u_gw_, gtpu_tx_notifier_, gtpu_rx_demux_)
+    index(index_),
+    timers(timers_),
+    pdu_session_manager(index,
+                        net_config_,
+                        logger_,
+                        ue_inactivity_timer,
+                        timers_,
+                        f1u_gw_,
+                        gtpu_tx_notifier_,
+                        gtpu_rx_demux_)
   {
     ue_inactivity_timer = timers.create_timer();
     ue_inactivity_timer.set(std::chrono::milliseconds(ue_idle_timeout_ms),

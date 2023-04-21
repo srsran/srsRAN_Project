@@ -29,6 +29,7 @@ public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
                            network_interface_config&            net_config_,
                            srslog::basic_logger&                logger_,
+                           unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
@@ -46,6 +47,7 @@ private:
   ue_index_t                                               ue_index;
   network_interface_config&                                net_config;
   srslog::basic_logger&                                    logger;
+  unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
