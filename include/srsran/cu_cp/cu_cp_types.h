@@ -193,7 +193,7 @@ struct cu_cp_associated_qos_flow {
 
 struct cu_cp_qos_flow_failed_to_setup_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
-  cause_t       cause;
+  cause_t       cause       = cause_t::nulltype;
 };
 
 struct cu_cp_qos_flow_per_tnl_information {
@@ -215,7 +215,7 @@ struct cu_cp_pdu_session_res_setup_response_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  cause_t                      cause;
+  cause_t                      cause = cause_t::nulltype;
   optional<crit_diagnostics_t> crit_diagnostics;
 };
 
@@ -231,7 +231,7 @@ struct cu_cp_pdu_session_resource_setup_response {
 };
 
 struct cu_cp_pdu_session_res_release_cmd_transfer {
-  cause_t cause;
+  cause_t cause = cause_t::nulltype;
 };
 
 struct cu_cp_pdu_session_res_to_release_item_rel_cmd {
@@ -537,13 +537,13 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
 
 struct cu_cp_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
-  cause_t    cause;
+  cause_t    cause    = cause_t::nulltype;
 };
 
 struct cu_cp_ue_context_release_request {
   ue_index_t                    ue_index = ue_index_t::invalid;
   std::vector<pdu_session_id_t> pdu_session_res_list_cxt_rel_req;
-  cause_t                       cause;
+  cause_t                       cause = cause_t::nulltype;
 };
 
 struct cu_cp_recommended_cell_item {
