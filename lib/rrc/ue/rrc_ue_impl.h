@@ -84,7 +84,7 @@ private:
 
   // rrc_ue_setup_proc_notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
-  void on_ue_delete_request() override;
+  void on_ue_delete_request(const cause_t& cause) override;
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;

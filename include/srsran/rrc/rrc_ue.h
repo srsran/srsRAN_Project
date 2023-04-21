@@ -99,7 +99,7 @@ public:
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 struct srb_creation_message {
@@ -121,7 +121,7 @@ public:
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 /// Interface used by the RRC security mode procedure
@@ -137,7 +137,7 @@ public:
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 
   /// \brief Setup security in the UE. This includes storing the K_gNB,
   /// the AS keys, and configuring the PDCP entity security on SRB1
