@@ -101,8 +101,10 @@ struct pdcch_appconfig {
 
 /// PDSCH application configuration.
 struct pdsch_appconfig {
-  /// UE modulation and coding scheme index.
-  optional<uint8_t> fixed_ue_mcs;
+  /// Minimum modulation and coding scheme indexe for C-RNTI allocations.
+  uint8_t min_ue_mcs = 0;
+  /// Maximum modulation and coding scheme indexe for C-RNTI allocations.
+  uint8_t max_ue_mcs = 28;
   /// RAR modulation and coding scheme index.
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
@@ -113,8 +115,10 @@ struct pdsch_appconfig {
 
 /// PUSCH application configuration.
 struct pusch_appconfig {
-  /// UE modulation and coding scheme index.
-  optional<uint8_t> fixed_ue_mcs;
+  /// Minimum UE modulation and coding scheme index.
+  uint8_t min_ue_mcs = 0;
+  /// Maximum UE modulation and coding scheme index.
+  uint8_t max_ue_mcs = 28;
 };
 
 /// Amplitude control application configuration.

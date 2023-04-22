@@ -22,12 +22,24 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
 {
+  if (config.min_ue_mcs > config.max_ue_mcs) {
+    fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
+               config.min_ue_mcs,
+               config.max_ue_mcs);
+    return false;
+  }
   return true;
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 {
+  if (config.min_ue_mcs > config.max_ue_mcs) {
+    fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
+               config.min_ue_mcs,
+               config.max_ue_mcs);
+    return false;
+  }
   return true;
 }
 

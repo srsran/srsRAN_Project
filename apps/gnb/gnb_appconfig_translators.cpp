@@ -43,8 +43,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
-    // Enable CSI-RS if the PDSCH mcs is dynamic (fixed_ue_mcs is empty).
-    param.csi_rs_enabled = not cell.cell.pdsch_cfg.fixed_ue_mcs.has_value();
+    // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
+    param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
 
     unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
@@ -558,13 +558,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
 
   // UE parameters.
   const pdsch_appconfig& pdsch = config.common_cell_cfg.pdsch_cfg;
-  if (pdsch.fixed_ue_mcs.has_value()) {
-    out_cfg.ue.fixed_dl_mcs = sch_mcs_index{*pdsch.fixed_ue_mcs};
-  }
+  out_cfg.ue.dl_mcs            = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
   const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
-  if (pusch.fixed_ue_mcs.has_value()) {
-    out_cfg.ue.fixed_ul_mcs = sch_mcs_index{*pusch.fixed_ue_mcs};
-  }
+  out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
 
   // RA parameters.
   const prach_appconfig& prach       = config.common_cell_cfg.prach_cfg;

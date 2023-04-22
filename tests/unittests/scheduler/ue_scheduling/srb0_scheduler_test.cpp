@@ -134,8 +134,8 @@ protected:
   scheduler_ue_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
   {
     scheduler_ue_expert_config cfg{};
-    cfg.fixed_dl_mcs.emplace(10);
-    cfg.fixed_ul_mcs.emplace(10);
+    cfg.dl_mcs             = {10, 10};
+    cfg.ul_mcs             = {10, 10};
     cfg.max_nof_harq_retxs = 4;
     cfg.max_msg4_mcs       = max_msg4_mcs_index;
     return cfg;

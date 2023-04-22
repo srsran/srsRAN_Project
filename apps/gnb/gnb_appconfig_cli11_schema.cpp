@@ -208,7 +208,10 @@ static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_par
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
 {
-  app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
+  app.add_option("--min_ue_mcs", pdsch_params.min_ue_mcs, "Minimum UE MCS")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 28));
+  app.add_option("--max_ue_mcs", pdsch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
@@ -224,8 +227,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
 {
-  app.add_option("--fixed_ue_mcs", pusch_params.fixed_ue_mcs, "Fixed UE MCS")
-      ->default_str("dynamic")
+  app.add_option("--min_ue_mcs", pusch_params.min_ue_mcs, "Minimum UE MCS")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 28));
+  app.add_option("--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
+      ->capture_default_str()
       ->check(CLI::Range(0, 28));
 }
 

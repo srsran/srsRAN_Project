@@ -48,6 +48,7 @@ class bounded_integer : public detail::bounded_integer_base<Integer>
 
 public:
   using base_class::base_class;
+  using difference_type = std::conditional_t<sizeof(Integer) == sizeof(int64_t), int64_t, int32_t>;
 
   constexpr bounded_integer() = default;
   constexpr bounded_integer(bounded_integer_invalid_tag /**/) : base_class(MAX_VALUE + 1) {}
@@ -138,7 +139,10 @@ public:
     bounded_integer<Integer, MIN_VALUE, MAX_VALUE> ret{*this};
     return ret -= other;
   }
-  bounded_integer operator-(bounded_integer other) const { return *this - other.value(); }
+  difference_type operator-(bounded_integer other) const
+  {
+    return static_cast<difference_type>(this->value()) - static_cast<difference_type>(other.value());
+  }
 
 protected:
   constexpr void assert_bounds(Integer v) const

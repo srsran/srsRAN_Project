@@ -13,6 +13,7 @@
 /// \file
 /// \brief Configuration structs passed to scheduler implementation.
 
+#include "srsran/adt/interval.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -23,9 +24,9 @@ namespace srsran {
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
-  optional<sch_mcs_index> fixed_dl_mcs;
+  interval<sch_mcs_index> dl_mcs;
   unsigned                initial_cqi;
-  optional<sch_mcs_index> fixed_ul_mcs;
+  interval<sch_mcs_index> ul_mcs;
   unsigned                max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;

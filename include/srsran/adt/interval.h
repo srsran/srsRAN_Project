@@ -44,7 +44,7 @@ public:
   bool empty() const { return stop_ == start_; }
 
   /// Interval length
-  length_type length() const { return stop_ - start_; }
+  length_type length() const { return static_cast<length_type>(stop_ - start_); }
 
   void set(T start_point, T stop_point)
   {
