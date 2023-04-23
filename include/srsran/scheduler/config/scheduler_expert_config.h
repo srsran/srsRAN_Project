@@ -33,6 +33,8 @@ struct scheduler_ue_expert_config {
   unsigned max_consecutive_pusch_kos;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
   double initial_ul_sinr;
+  /// Enable multiplexing of CSI-RS and PDSCH.
+  bool enable_csi_rs_pdsch_multiplexing;
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.
