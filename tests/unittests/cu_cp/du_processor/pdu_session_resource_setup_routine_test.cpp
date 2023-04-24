@@ -141,6 +141,25 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
   ASSERT_TRUE(was_pdu_session_resource_setup_successful());
 }
 
+TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_session_arrives_then_setup_fails)
+{
+  // Test Preamble.
+  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+
+  // Start PDU SESSION RESOURCE SETUP routine.
+  bearer_context_setup_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  this->start_procedure(request, bearer_context_setup_outcome, true, true, true);
+
+  // nothing has failed to setup
+  ASSERT_TRUE(was_pdu_session_resource_setup_successful());
+
+  // Inject same PDU session resource setup again.
+  this->start_procedure(request, bearer_context_setup_outcome, true, true, true);
+
+  // 2nd setup attempt failed.
+  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+}
+
 /// Test handling of PDU session setup request without any setup item.
 TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_received_then_setup_fails)
 {
