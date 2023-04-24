@@ -159,6 +159,26 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
 }
 
+/// One PDU session with two QoS flows.
+TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos_flows_received_setup_succeeds)
+{
+  // Test Preamble.
+  cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(1, 2);
+
+  // Start PDU SESSION RESOURCE SETUP routine.
+  bearer_context_setup_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // first session success, second failed
+  this->start_procedure(request, bearer_context_setup_outcome, true, true, true);
+
+  // it should be ready immediately
+  ASSERT_TRUE(t.ready());
+
+  // One PDU session failed to be setup.
+  ASSERT_EQ(num_pdu_session_res_failed_to_setup_size(), 0);
+
+  // One PDU session succeeded to be setup.
+  ASSERT_EQ(num_pdu_session_res_setup_size(), 1);
+}
+
 // Test with multiple PDU sessions.
 TEST_F(pdu_session_resource_setup_test,
        when_setup_for_two_pdu_sessions_is_requested_but_only_first_could_be_setup_at_cuup_setup_succeeds_with_fail_list)

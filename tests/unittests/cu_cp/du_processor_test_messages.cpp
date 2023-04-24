@@ -61,7 +61,7 @@ cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_
 }
 
 cu_cp_pdu_session_resource_setup_request
-srsran::srs_cu_cp::generate_pdu_session_resource_setup(uint32_t num_pdu_sessions)
+srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions, unsigned num_qos_flows)
 {
   cu_cp_pdu_session_resource_setup_request req;
   req.ue_index = uint_to_ue_index(0);
@@ -81,18 +81,20 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(uint32_t num_pdu_sessions
     item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
     item.pdu_session_type                          = "ipv4";
 
-    qos_flow_setup_request_item qos_item;
-    qos_item.qos_flow_id = uint_to_qos_flow_id(1);
+    for (uint32_t k = 0; k < num_qos_flows; ++k) {
+      qos_flow_setup_request_item qos_item;
+      qos_item.qos_flow_id = uint_to_qos_flow_id(k + 1);
 
-    non_dyn_5qi_descriptor_t non_dyn_5qi;
-    non_dyn_5qi.five_qi                                                = uint_to_five_qi(9);
-    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+      non_dyn_5qi_descriptor_t non_dyn_5qi;
+      non_dyn_5qi.five_qi                                                = uint_to_five_qi(9);
+      qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
+      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+      qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
-    item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
+      item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
+    }
 
     req.pdu_session_res_setup_items.emplace(pdu_session_id, std::move(item));
   }
