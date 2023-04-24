@@ -60,39 +60,42 @@ cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_
   return ue_context_release_command;
 }
 
-cu_cp_pdu_session_resource_setup_request srsran::srs_cu_cp::generate_pdu_session_resource_setup()
+cu_cp_pdu_session_resource_setup_request
+srsran::srs_cu_cp::generate_pdu_session_resource_setup(uint32_t num_pdu_sessions)
 {
   cu_cp_pdu_session_resource_setup_request req;
-  pdu_session_id_t                         pdu_session_id = uint_to_pdu_session_id(1);
-
   req.ue_index = uint_to_ue_index(0);
 
-  cu_cp_pdu_session_res_setup_item item;
-  item.pdu_session_id = pdu_session_id;
-  item.pdu_session_nas_pdu.resize(2);
-  item.pdu_session_nas_pdu[0] = 0xaa;
-  item.pdu_session_nas_pdu[1] = 0xbb;
-  item.s_nssai.sst            = 1;
+  for (uint32_t i = 0; i < num_pdu_sessions; ++i) {
+    pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(i + 1);
 
-  item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
-  item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
-  item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
-  item.pdu_session_type                          = "ipv4";
+    cu_cp_pdu_session_res_setup_item item;
+    item.pdu_session_id = pdu_session_id;
+    item.pdu_session_nas_pdu.resize(2);
+    item.pdu_session_nas_pdu[0] = 0xaa;
+    item.pdu_session_nas_pdu[1] = 0xbb;
+    item.s_nssai.sst            = 1;
 
-  qos_flow_setup_request_item qos_item;
-  qos_item.qos_flow_id = uint_to_qos_flow_id(1);
+    item.pdu_session_aggregate_maximum_bit_rate_dl = 100;
+    item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
+    item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
+    item.pdu_session_type                          = "ipv4";
 
-  non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                = uint_to_five_qi(9);
-  qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+    qos_flow_setup_request_item qos_item;
+    qos_item.qos_flow_id = uint_to_qos_flow_id(1);
 
-  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
-  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+    non_dyn_5qi_descriptor_t non_dyn_5qi;
+    non_dyn_5qi.five_qi                                                = uint_to_five_qi(9);
+    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
-  item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
-  req.pdu_session_res_setup_items.emplace(pdu_session_id, std::move(item));
+    item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
+
+    req.pdu_session_res_setup_items.emplace(pdu_session_id, std::move(item));
+  }
 
   return req;
 };

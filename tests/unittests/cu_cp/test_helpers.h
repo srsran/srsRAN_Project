@@ -19,6 +19,7 @@
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/test_utils.h"
+#include <list>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -81,11 +82,21 @@ private:
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
+// Stuct to configure Bearer Context Setup result content.
+struct bearer_context_setup_outcome_t {
+  bool                outcome = false;
+  std::list<unsigned> pdu_sessions_success_list; // List of PDU session IDs that were successful to setup.
+  std::list<unsigned> pdu_sessions_failed_list;
+};
+
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
 
-  void set_bearer_context_setup_outcome(bool outcome) { bearer_context_setup_outcome = outcome; }
+  void set_bearer_context_setup_outcome(bearer_context_setup_outcome_t outcome)
+  {
+    bearer_context_setup_outcome = outcome;
+  }
 
   void set_bearer_context_modification_outcome(bool outcome) { bearer_context_modification_outcome = outcome; }
 
@@ -98,14 +109,31 @@ public:
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (bearer_context_setup_outcome) {
-        // generate random ids to make sure its not only working for hardcoded values
-        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
-        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
+      res.success = bearer_context_setup_outcome.outcome;
+      if (res.success) {
+        for (const auto& id : bearer_context_setup_outcome.pdu_sessions_success_list) {
+          // add only the most relevant items
+          e1ap_pdu_session_resource_setup_modification_item res_setup_item;
+          res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
 
-        res = generate_e1ap_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      } else {
-        res.success = false;
+          // add a single DRB
+          drb_id_t                   drb_id = drb_id_t::drb1;
+          e1ap_drb_setup_item_ng_ran drb_item;
+          drb_item.drb_id = drb_id;
+
+          // add one UP transport item
+          e1ap_up_params_item up_item;
+          drb_item.ul_up_transport_params.push_back(up_item);
+          res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+
+          res.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
+        }
+
+        for (const auto& id : bearer_context_setup_outcome.pdu_sessions_failed_list) {
+          e1ap_pdu_session_resource_failed_item res_failed_item;
+          res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
+          res.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
+        }
       }
 
       CORO_RETURN(res);
@@ -146,9 +174,9 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger                              = srslog::fetch_basic_logger("TEST");
-  bool                  bearer_context_setup_outcome        = false;
-  bool                  bearer_context_modification_outcome = false;
+  srslog::basic_logger&          logger = srslog::fetch_basic_logger("TEST");
+  bearer_context_setup_outcome_t bearer_context_setup_outcome;
+  bool                           bearer_context_modification_outcome = false;
 };
 
 struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {

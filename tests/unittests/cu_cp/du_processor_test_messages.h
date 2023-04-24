@@ -35,7 +35,7 @@ ue_creation_message generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_
 cu_cp_ue_context_release_command generate_ue_context_release_command(ue_index_t ue_index);
 
 /// \brief Generate a dummy PDU Session Resource Setup request.
-cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup();
+cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(uint32_t num_pdu_sessions = 1);
 
 /// \brief Generate a dummy PDU Session Resource Release Command.
 cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release();
