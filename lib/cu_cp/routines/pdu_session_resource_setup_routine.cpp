@@ -39,43 +39,35 @@ void pdu_session_resource_setup_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
-  // initial sanity check, making sure we catch implementation limitations
-  if (setup_msg.pdu_session_res_setup_items.size() != 1) {
-    logger.error("ue={}: \"{}\" supports only one PDU Session ({} requested).",
-                 setup_msg.ue_index,
-                 name(),
-                 setup_msg.pdu_session_res_setup_items.size());
-    CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-  }
-
-  // initial sanity check, making sure we only allow one QoS flow
-  if (setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items.size() != 1) {
-    logger.error("ue={}: \"{}\" supports only one QoS flow setup request ({} requested).",
-                 setup_msg.ue_index,
-                 name(),
-                 setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items.size());
-    CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-  }
-
-  // initial sanity check, making sure we only allow flows with a configured 5QI
-  for (const qos_flow_setup_request_item& flow_item :
-       setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items) {
-    if (not valid_5qi(flow_item)) {
-      five_qi_t five_qi;
-      if (flow_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
-        five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-      } else if (flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-        five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-      } else {
-        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false))
-      }
-
-      logger.error("ue={}: \"{}\" QoS flow 5QI is not configured. id {} 5QI {}",
+  for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
+    // initial sanity check, making sure we only allow one QoS flow
+    if (setup_item.qos_flow_setup_request_items.size() != 1) {
+      logger.error("ue={}: \"{}\" supports only one QoS flow setup request ({} requested).",
                    setup_msg.ue_index,
                    name(),
-                   flow_item.qos_flow_id,
-                   five_qi);
+                   setup_item.qos_flow_setup_request_items.size());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+
+    // initial sanity check, making sure we only allow flows with a configured 5QI
+    for (const qos_flow_setup_request_item& flow_item : setup_item.qos_flow_setup_request_items) {
+      if (not valid_5qi(flow_item)) {
+        five_qi_t five_qi;
+        if (flow_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
+          five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
+        } else if (flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
+          five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
+        } else {
+          CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false))
+        }
+
+        logger.error("ue={}: \"{}\" QoS flow 5QI is not configured. id {} 5QI {}",
+                     setup_msg.ue_index,
+                     name(),
+                     flow_item.qos_flow_id,
+                     five_qi);
+        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+      }
     }
   }
 
@@ -107,13 +99,6 @@ void pdu_session_resource_setup_routine::operator()(
     // Handle BearerContextSetupResponse
     if (not bearer_context_setup_response.success) {
       logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.ue_index, name());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
-
-    // fail unsupported fields
-    if (not bearer_context_setup_response.pdu_session_resource_failed_list.empty()) {
-      logger.error(
-          "ue={}: \"{}\" Non-empty PDU session resource failed list not supported.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -280,16 +265,28 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
       item.pdu_session_id = setup_item.pdu_session_id;
 
       auto& transfer = item.pdu_session_resource_setup_response_transfer;
-      transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
-          bearer_context_setup_response.pdu_session_resource_setup_list[setup_item.pdu_session_id].ng_dl_up_tnl_info;
 
-      for (qos_flow_id_t flow_id : rrc_ue_drb_manager.get_mapped_qos_flows(setup_item.pdu_session_id)) {
-        cu_cp_associated_qos_flow qos_flow;
-        qos_flow.qos_flow_id = flow_id;
-        transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(flow_id, qos_flow);
+      // verify response contains entry for requested PDU session
+      if (bearer_context_setup_response.pdu_session_resource_setup_list.contains(setup_item.pdu_session_id)) {
+        // setup was ok
+        transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
+            bearer_context_setup_response.pdu_session_resource_setup_list[setup_item.pdu_session_id].ng_dl_up_tnl_info;
+
+        for (qos_flow_id_t flow_id : rrc_ue_drb_manager.get_mapped_qos_flows(setup_item.pdu_session_id)) {
+          cu_cp_associated_qos_flow qos_flow;
+          qos_flow.qos_flow_id = flow_id;
+          transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(flow_id, qos_flow);
+        }
+
+        response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
+      } else {
+        // bearer context setup for this PDU session failed
+        logger.error("ue={}: Couldn't setup PDU session ID {}.", setup_msg.ue_index, setup_item.pdu_session_id);
+        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        failed_item.pdu_session_id                                         = setup_item.pdu_session_id;
+        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+        response_msg.pdu_session_res_failed_to_setup_items.emplace(setup_item.pdu_session_id, failed_item);
       }
-
-      response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
     }
 
     logger.debug("ue={}: \"{}\" finalized.", setup_msg.ue_index, name());
