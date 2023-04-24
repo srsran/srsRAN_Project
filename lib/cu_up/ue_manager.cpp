@@ -36,7 +36,7 @@ ue_context* ue_manager::find_ue(ue_index_t ue_index)
   return ue_db.contains(ue_index) ? ue_db[ue_index].get() : nullptr;
 }
 
-ue_context* ue_manager::add_ue()
+ue_context* ue_manager::add_ue(ue_context_cfg ue_cfg)
 {
   if (ue_db.size() >= MAX_NOF_UES) {
     logger.error("Can't add new UE. Max number of UEs reached.");
@@ -51,7 +51,7 @@ ue_context* ue_manager::add_ue()
 
   // Create UE object
   std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(
-      new_idx, net_config, logger, timer_factory{timers, ue_exec}, f1u_gw, gtpu_tx_notifier, gtpu_rx_demux);
+      new_idx, ue_cfg, net_config, logger, timer_factory{timers, ue_exec}, f1u_gw, gtpu_tx_notifier, gtpu_rx_demux);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

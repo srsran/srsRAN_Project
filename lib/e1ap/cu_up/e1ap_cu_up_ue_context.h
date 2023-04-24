@@ -12,6 +12,7 @@
 
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_up/cu_up_types.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 #include <unordered_map>
 
 namespace srsran {

@@ -22,7 +22,7 @@ class ue_manager_ctrl
 public:
   virtual ~ue_manager_ctrl() = default;
 
-  virtual ue_context* add_ue()                       = 0;
+  virtual ue_context* add_ue(ue_context_cfg)         = 0;
   virtual void        remove_ue(ue_index_t ue_index) = 0;
   virtual ue_context* find_ue(ue_index_t ue_index)   = 0;
   virtual size_t      get_nof_ues()                  = 0;

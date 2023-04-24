@@ -98,7 +98,10 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   response.success                            = false;
 
   // 1. Create new UE context
-  ue_context* ue_ctxt = ue_mng->add_ue();
+  ue_context_cfg ue_cfg        = {};
+  ue_cfg.activity_level        = msg.activity_notif_level;
+  ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
+  ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return response;

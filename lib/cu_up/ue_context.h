@@ -19,11 +19,18 @@
 namespace srsran {
 namespace srs_cu_up {
 
+/// \brief UE context setup configuration
+struct ue_context_cfg {
+  activity_notification_level_t  activity_level;
+  optional<std::chrono::seconds> ue_inactivity_timeout;
+};
+
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
   ue_context(ue_index_t                           index_,
+             ue_context_cfg                       cfg_,
              network_interface_config&            net_config_,
              srslog::basic_logger&                logger_,
              timer_factory                        timers_,
@@ -41,10 +48,16 @@ public:
                         gtpu_rx_demux_),
     timers(timers_)
   {
-    ue_inactivity_timer = timers.create_timer();
-    ue_inactivity_timer.set(std::chrono::milliseconds(ue_idle_timeout_ms),
-                            [this](timer_id_t /*tid*/) { on_ue_inactivity_timer_expired(); });
-    ue_inactivity_timer.run();
+    if (cfg.activity_level == activity_notification_level_t::ue) {
+      if (not cfg.ue_inactivity_timeout.has_value()) {
+        report_error(
+            "Failed to create UE context. Activity notification level is UE, but no UE inactivity timer configured");
+      }
+      ue_inactivity_timer = timers.create_timer();
+      ue_inactivity_timer.set(*cfg.ue_inactivity_timeout,
+                              [this](timer_id_t /*tid*/) { on_ue_inactivity_timer_expired(); });
+      ue_inactivity_timer.run();
+    }
   }
   ~ue_context() override = default;
 
@@ -67,11 +80,11 @@ public:
 
 private:
   ue_index_t               index;
+  ue_context_cfg           cfg;
   pdu_session_manager_impl pdu_session_manager;
 
   timer_factory timers;
   unique_timer  ue_inactivity_timer;
-  uint16_t      ue_idle_timeout_ms = 15000;
   void          on_ue_inactivity_timer_expired() {}
 };
 

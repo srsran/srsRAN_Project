@@ -21,9 +21,9 @@ struct e1ap_bearer_context_setup_request {
   e1ap_security_info                                                      security_info;
   uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
   std::string                                                             serving_plmn;
-  std::string                                                             activity_notif_level;
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
   optional<uint64_t>                                                      ue_dl_maximum_integrity_protected_data_rate;
+  activity_notification_level_t                                           activity_notif_level;
   optional<std::chrono::seconds>                                          ue_inactivity_timer;
   optional<std::string>                                                   bearer_context_status_change;
   optional<ran_ue_id_t>                                                   ran_ue_id;

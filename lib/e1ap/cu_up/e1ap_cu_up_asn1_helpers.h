@@ -42,7 +42,10 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   request.serving_plmn = plmn_bcd_to_string(asn1_request->serving_plmn.value.to_number());
 
   // activity notification level
-  request.activity_notif_level = asn1_request->activity_notif_level.value.to_string();
+  request.activity_notif_level = asn1_to_activity_notification_level(asn1_request->activity_notif_level.value);
+  if (request.activity_notif_level == activity_notification_level_t::ue) {
+    request.ue_inactivity_timer = asn1_request->ue_inactivity_timer.value;
+  }
 
   // pdu session resource to setup list
   for (const auto& asn1_pdu_session_res_list_item :
