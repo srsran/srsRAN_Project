@@ -41,7 +41,15 @@ void pdu_session_resource_setup_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
+  // Perform initial sanity checks.
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
+    // Make sure PDU session does not already exist.
+    if (!rrc_ue_drb_manager.get_drbs(setup_item.pdu_session_id).empty()) {
+      logger.error(
+          "ue={}: \"{}\" PDU session ID {} already exists.", setup_msg.ue_index, name(), setup_item.pdu_session_id);
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+
     // initial sanity check, making sure we only allow flows with a configured 5QI
     for (const qos_flow_setup_request_item& flow_item : setup_item.qos_flow_setup_request_items) {
       if (not valid_5qi(flow_item)) {
