@@ -126,10 +126,10 @@ void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_b
 /// Helper function to serialize MAC NR context
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
 {
-  int      offset = 0;
-  uint16_t tmp16;
+  int      offset = {};
+  uint16_t tmp16  = {};
 
-  if (buffer == NULL || length < PCAP_CONTEXT_HEADER_MAX) {
+  if (buffer == nullptr || length < PCAP_CONTEXT_HEADER_MAX) {
     printf("Error: Writing buffer null or length to small \n");
     return -1;
   }
