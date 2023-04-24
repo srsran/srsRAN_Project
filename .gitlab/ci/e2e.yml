@@ -125,17 +125,10 @@ zmq:
     - job: "smoke release update cache"
       artifacts: true
 
-zmq-tsan:
-  extends: zmq
-  variables:
-    RETINA_ARGS: "gnb.all.pcap=True"
-  needs:
-    - job: "smoke tsan update cache"
-      artifacts: true
-
 zmq-asan:
   extends: zmq
   variables:
+    MARKERS: "smoke"
     RETINA_ARGS: "gnb.all.pcap=True"
   needs:
     - job: "basic asan"
