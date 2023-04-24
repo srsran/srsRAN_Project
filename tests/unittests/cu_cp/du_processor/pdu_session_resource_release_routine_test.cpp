@@ -23,7 +23,7 @@ class pdu_session_resource_release_test : public du_processor_routine_manager_te
 protected:
   void start_procedure(const cu_cp_pdu_session_resource_release_command& msg,
                        bool                                              ue_context_modification_outcome,
-                       bool                                              bearer_context_modification_outcome)
+                       bearer_context_modification_outcome_t             bearer_context_modification_outcome)
   {
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_ctrl_notifier.set_bearer_context_modification_outcome(bearer_context_modification_outcome);
@@ -55,7 +55,8 @@ TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_r
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  this->start_procedure(command, true, false);
+  bearer_context_modification_outcome_t bearer_context_modification_outcome{false};
+  this->start_procedure(command, true, bearer_context_modification_outcome);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_release_successful());
@@ -67,7 +68,8 @@ TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failu
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  this->start_procedure(command, true, true);
+  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
+  this->start_procedure(command, true, bearer_context_modification_outcome);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_release_successful());
@@ -81,7 +83,8 @@ TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command
   command.ue_index                                   = uint_to_ue_index(0);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  this->start_procedure(command, true, true);
+  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
+  this->start_procedure(command, true, bearer_context_modification_outcome);
 
   // it should be ready immediately
   ASSERT_TRUE(t.ready());

@@ -89,6 +89,10 @@ struct bearer_context_setup_outcome_t {
   std::list<unsigned> pdu_sessions_failed_list;
 };
 
+struct bearer_context_modification_outcome_t {
+  bool outcome = false;
+};
+
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
@@ -98,7 +102,10 @@ public:
     bearer_context_setup_outcome = outcome;
   }
 
-  void set_bearer_context_modification_outcome(bool outcome) { bearer_context_modification_outcome = outcome; }
+  void set_bearer_context_modification_outcome(bearer_context_modification_outcome_t outcome)
+  {
+    bearer_context_modification_outcome = outcome;
+  }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
@@ -149,7 +156,7 @@ public:
                          this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (bearer_context_modification_outcome) {
+      if (bearer_context_modification_outcome.outcome) {
         // generate random ids to make sure its not only working for hardcoded values
         gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
         gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
@@ -174,9 +181,9 @@ public:
   }
 
 private:
-  srslog::basic_logger&          logger = srslog::fetch_basic_logger("TEST");
-  bearer_context_setup_outcome_t bearer_context_setup_outcome;
-  bool                           bearer_context_modification_outcome = false;
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
+  bearer_context_setup_outcome_t        bearer_context_setup_outcome;
+  bearer_context_modification_outcome_t bearer_context_modification_outcome;
 };
 
 struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
