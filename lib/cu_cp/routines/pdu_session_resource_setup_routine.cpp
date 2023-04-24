@@ -42,15 +42,6 @@ void pdu_session_resource_setup_routine::operator()(
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
-    // initial sanity check, making sure we only allow one QoS flow
-    if (setup_item.qos_flow_setup_request_items.size() != 1) {
-      logger.error("ue={}: \"{}\" supports only one QoS flow setup request ({} requested).",
-                   setup_msg.ue_index,
-                   name(),
-                   setup_item.qos_flow_setup_request_items.size());
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
-
     // initial sanity check, making sure we only allow flows with a configured 5QI
     for (const qos_flow_setup_request_item& flow_item : setup_item.qos_flow_setup_request_items) {
       if (not valid_5qi(flow_item)) {
@@ -372,6 +363,11 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 
           e1ap_qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
         } else {
+          logger.warning("ue={}: pdu_session_id={}, drb_id={}, qos_flow_id={}: dynamic 5QI not fully supported.",
+                         setup_msg.ue_index,
+                         pdu_session_to_setup.pdu_session_id,
+                         drb_to_setup,
+                         qos_item.qos_flow_id);
           // TODO: Add dynamic 5qi
         }
 
