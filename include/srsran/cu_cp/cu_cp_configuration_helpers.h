@@ -25,6 +25,11 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 }
 
 /// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
+/// Dependencies between timers should be considered:
+///   * t-Reordering: How long the PDCP will wait for an out-of-order PDU. When using RLC UM,
+///                   this value should be larger than the RLC's t-Reassembly. When using AM,
+///                   this value should be larger than a few RLC retransmissions, see the RLC
+///                   timers for details.
 inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
 {
   std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
@@ -46,7 +51,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms50;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms100;
 
     cfg.pdcp                     = pdcp_cfg;
     qos_list[uint_to_five_qi(7)] = cfg;
@@ -69,7 +74,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms120;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
 
     cfg.pdcp                     = pdcp_cfg;
     qos_list[uint_to_five_qi(9)] = cfg;

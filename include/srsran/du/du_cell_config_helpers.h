@@ -91,6 +91,19 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 }
 
 /// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
+/// Dependencies between timers should be considered:
+///   * t-Reassembly: How long it takes for the RLC to detect a lost PDU. If larger than the MAC SR, we may drop a
+///                   PDU prematurely in the case UM, or we may send NACKs prematurely for the case of AM.
+///
+///   * t-StatusProhibit: This value dictates how often the RLC is allowed to send status reports. If this value is
+///                       shorter than the MAC's SR, it may take longer than t-StatusProhibit to send a control PDU.
+///
+///   * t-PollRetransmission: This value should be slightly larger than t-StatusProhibit and also account for RTT.
+///                           Moreover this value should be slightly larger than the SR of the MAC
+///                           to avoid spurious RETX'es from late status reports. See t-StatusProhibit for details.
+///
+/// Note: These three timers will have implications in picking the PDCP's t-Reordering. See the generation of
+///       t-Reordering default configuration for details.
 inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
 {
   std::map<five_qi_t, du_qos_config> qos_list = {};
@@ -100,7 +113,7 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     cfg.rlc.mode                  = rlc_mode::um_bidir;
     cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.rlc.um.rx.t_reassembly    = 45;
+    cfg.rlc.um.rx.t_reassembly    = 90;
     qos_list[uint_to_five_qi(7)]  = cfg;
   }
   {
@@ -108,13 +121,13 @@ inline std::map<five_qi_t, du_qos_config> make_default_du_qos_config_list()
     du_qos_config cfg{};
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.rlc.am.tx.t_poll_retx       = 60;
+    cfg.rlc.am.tx.t_poll_retx       = 110;
     cfg.rlc.am.tx.poll_pdu          = 16;
     cfg.rlc.am.tx.poll_byte         = 6500;
     cfg.rlc.am.tx.max_retx_thresh   = 8;
     cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.rlc.am.rx.t_reassembly      = 45;
-    cfg.rlc.am.rx.t_status_prohibit = 45;
+    cfg.rlc.am.rx.t_reassembly      = 90;
+    cfg.rlc.am.rx.t_status_prohibit = 100;
     qos_list[uint_to_five_qi(9)]    = cfg;
   }
   return qos_list;
