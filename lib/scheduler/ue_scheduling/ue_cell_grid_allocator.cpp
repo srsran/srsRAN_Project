@@ -12,6 +12,7 @@
 #include "../support/mcs_tbs_calculator.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
+#include "srsran/ran/pdcch/coreset.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -70,9 +71,14 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
   }
+  const coreset_configuration* cs_cfg = ue_cell_cfg.find_coreset(ss_cfg->cs_id);
+  if (cs_cfg == nullptr) {
+    logger.warning("Failed to allocate PDSCH. Cause: No valid CORESET found.");
+    return false;
+  }
 
   const bwp_configuration bwp_cfg =
-      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg->type);
+      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg, cs_cfg);
   const subcarrier_spacing                                scs = bwp_cfg.scs;
   const span<const pdsch_time_domain_resource_allocation> pdsch_list =
       ue_cell_cfg.get_pdsch_time_domain_list(ss_cfg->id);

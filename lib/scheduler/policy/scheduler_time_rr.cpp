@@ -153,6 +153,10 @@ static bool alloc_dl_ue(const ue&                    u,
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
         }
+        // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
+        if (ss_cfg->cs_id != to_coreset_id(0)) {
+          bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
+        }
       }
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
