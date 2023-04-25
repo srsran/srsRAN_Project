@@ -38,6 +38,7 @@ public:
              gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
              gtpu_demux_ctrl&                     gtpu_rx_demux_) :
     index(index_),
+    cfg(cfg_),
     pdu_session_manager(index,
                         net_config_,
                         logger_,
@@ -51,7 +52,7 @@ public:
     if (cfg.activity_level == activity_notification_level_t::ue) {
       if (not cfg.ue_inactivity_timeout.has_value()) {
         report_error(
-            "Failed to create UE context. Activity notification level is UE, but no UE inactivity timer configured");
+            "Failed to create UE context. Activity notification level is UE, but no UE inactivity timer configured\n");
       }
       ue_inactivity_timer = timers.create_timer();
       ue_inactivity_timer.set(*cfg.ue_inactivity_timeout,
