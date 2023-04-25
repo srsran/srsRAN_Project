@@ -21,15 +21,16 @@ using namespace srs_cu_cp;
 class pdu_session_resource_setup_test : public du_processor_routine_manager_test
 {
 protected:
-  void start_procedure(const cu_cp_pdu_session_resource_setup_request& msg,
-                       bearer_context_setup_outcome_t                  bearer_context_setup_outcome,
-                       bool                                            ue_context_modification_outcome,
-                       bearer_context_modification_outcome_t           bearer_context_modification_outcome,
-                       bool                                            rrc_reconfiguration_outcome)
+  void start_procedure(
+      const cu_cp_pdu_session_resource_setup_request&                                msg,
+      variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> first_e1ap_message_outcome,
+      bool                                                                           ue_context_modification_outcome,
+      bearer_context_modification_outcome_t                                          second_e1ap_message_outcome,
+      bool                                                                           rrc_reconfiguration_outcome)
   {
-    e1ap_ctrl_notifier.set_bearer_context_setup_outcome(bearer_context_setup_outcome);
+    e1ap_ctrl_notifier.set_first_message_outcome(first_e1ap_message_outcome);
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
-    e1ap_ctrl_notifier.set_bearer_context_modification_outcome(bearer_context_modification_outcome);
+    e1ap_ctrl_notifier.set_second_message_outcome(second_e1ap_message_outcome);
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(rrc_reconfiguration_outcome);
 
     t = routine_mng->start_pdu_session_resource_setup_routine(

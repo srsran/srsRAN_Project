@@ -13,6 +13,7 @@
 #include "du_processor_test_messages.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
@@ -97,15 +98,12 @@ struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_contr
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
 
-  void set_bearer_context_setup_outcome(bearer_context_setup_outcome_t outcome)
+  void set_first_message_outcome(variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> outcome)
   {
-    bearer_context_setup_outcome = outcome;
+    first_e1ap_message = outcome;
   }
 
-  void set_bearer_context_modification_outcome(bearer_context_modification_outcome_t outcome)
-  {
-    bearer_context_modification_outcome = outcome;
-  }
+  void set_second_message_outcome(bearer_context_modification_outcome_t outcome) { second_e1ap_message = outcome; }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
@@ -116,9 +114,10 @@ public:
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      res.success = bearer_context_setup_outcome.outcome;
+      const auto& result = variant_get<bearer_context_setup_outcome_t>(first_e1ap_message);
+      res.success        = result.outcome;
       if (res.success) {
-        for (const auto& id : bearer_context_setup_outcome.pdu_sessions_success_list) {
+        for (const auto& id : result.pdu_sessions_success_list) {
           // add only the most relevant items
           e1ap_pdu_session_resource_setup_modification_item res_setup_item;
           res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
@@ -136,7 +135,7 @@ public:
           res.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
         }
 
-        for (const auto& id : bearer_context_setup_outcome.pdu_sessions_failed_list) {
+        for (const auto& id : result.pdu_sessions_failed_list) {
           e1ap_pdu_session_resource_failed_item res_failed_item;
           res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
           res.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
@@ -156,14 +155,21 @@ public:
                          this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (bearer_context_modification_outcome.outcome) {
+      if (variant_holds_alternative<bearer_context_modification_outcome_t>(first_e1ap_message)) {
+        // first E1AP message is already a bearer modification
+        const auto& result = variant_get<bearer_context_modification_outcome_t>(first_e1ap_message);
+        res.success        = result.outcome;
+      } else {
+        // second E1AP message is the bearer modification
+        res.success = second_e1ap_message.outcome;
+      }
+
+      if (res.success) {
         // generate random ids to make sure its not only working for hardcoded values
         gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
         gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
 
         res = generate_e1ap_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      } else {
-        res.success = false;
       }
 
       CORO_RETURN(res);
@@ -181,9 +187,9 @@ public:
   }
 
 private:
-  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST");
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome;
-  bearer_context_modification_outcome_t bearer_context_modification_outcome;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> first_e1ap_message;
+  bearer_context_modification_outcome_t                                          second_e1ap_message;
 };
 
 struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
