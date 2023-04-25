@@ -91,7 +91,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
 
   // PUSCH params.
   dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
-      true,
+      ss_type != srsran::search_space_configuration::type_t::common,
       false,
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
@@ -138,7 +138,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
 
   // PUSCH params.
   dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
-      true,
+      false,
       false,
       init_dl_bwp.generic_params.crbs.length(),
       init_dl_bwp.generic_params.crbs.length(),
@@ -181,7 +181,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
 
   // PUSCH params.
   dci_size_config dci_config;
-  dci_config.dci_0_0_and_1_0_ue_ss = true;
+  dci_config.dci_0_0_and_1_0_ue_ss = ss_type != srsran::search_space_configuration::type_t::common;
   dci_config.dci_0_1_and_1_1_ue_ss = false;
   dci_config.dl_bwp_initial_bw     = init_dl_bwp.generic_params.crbs.length();
   dci_config.dl_bwp_active_bw      = active_dl_bwp.crbs.length();
