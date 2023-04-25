@@ -38,6 +38,7 @@ du_processor_routine_manager::start_pdu_session_resource_setup_routine(
     drb_manager&                                    rrc_ue_drb_manager)
 {
   return launch_async<pdu_session_resource_setup_routine>(setup_msg,
+                                                          ue_manager.get_ue_config(),
                                                           security_cfg,
                                                           e1ap_ctrl_notifier,
                                                           f1ap_ue_ctxt_notifier,

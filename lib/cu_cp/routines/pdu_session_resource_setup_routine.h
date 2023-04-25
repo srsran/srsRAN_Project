@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -23,6 +24,7 @@ class pdu_session_resource_setup_routine
 {
 public:
   pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg_,
+                                     const ue_configuration&                         ue_cfg_,
                                      const srsran::security::sec_as_config&          security_cfg_,
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
@@ -42,6 +44,7 @@ private:
   cu_cp_pdu_session_resource_setup_response handle_pdu_session_resource_setup_result(bool success);
 
   const cu_cp_pdu_session_resource_setup_request setup_msg;
+  const ue_configuration                         ue_cfg;
   const srsran::security::sec_as_config          security_cfg;
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added

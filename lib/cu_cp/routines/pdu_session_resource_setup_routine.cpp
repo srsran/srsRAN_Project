@@ -16,6 +16,7 @@ using namespace asn1::rrc_nr;
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
+    const ue_configuration&                         ue_cfg_,
     const srsran::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
@@ -23,6 +24,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     drb_manager&                                    rrc_ue_drb_manager_,
     srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
+  ue_cfg(ue_cfg_),
   security_cfg(security_cfg_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
@@ -322,6 +324,9 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   e1ap_request.ue_dl_aggregate_maximum_bit_rate = setup_msg.ue_aggregate_maximum_bit_rate_dl;
   e1ap_request.serving_plmn                     = setup_msg.serving_plmn;
   e1ap_request.activity_notif_level             = "ue"; // TODO: Remove hardcoded value
+  if (e1ap_request.activity_notif_level == "ue") {
+    e1ap_request.ue_inactivity_timer = ue_cfg.inactivity_timer;
+  }
 
   for (const auto& pdu_session_to_setup : setup_msg.pdu_session_res_setup_items) {
     e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
@@ -380,7 +385,15 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(qos_item.qos_flow_id, e1ap_qos_item);
       }
 
+      if (e1ap_request.activity_notif_level == "drb") {
+        e1ap_drb_setup_item.drb_inactivity_timer = ue_cfg.inactivity_timer;
+      }
+
       e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup, e1ap_drb_setup_item);
+    }
+
+    if (e1ap_request.activity_notif_level == "pdu-session") {
+      e1ap_pdu_session_item.pdu_session_inactivity_timer = ue_cfg.inactivity_timer;
     }
 
     e1ap_request.pdu_session_res_to_setup_list.emplace(pdu_session_to_setup.pdu_session_id, e1ap_pdu_session_item);
