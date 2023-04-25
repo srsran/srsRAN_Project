@@ -55,6 +55,9 @@ public:
   /// \brief Return number of DRBs.
   virtual size_t get_nof_drbs() = 0;
 
+  /// \brief Returns the number of PDU sessions of the UE.
+  virtual size_t get_nof_pdu_sessions() = 0;
+
   /// \brief Return whether a configuration for a 5QI exists.
   virtual bool valid_5qi(five_qi_t five_qi) = 0;
 };

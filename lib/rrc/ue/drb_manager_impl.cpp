@@ -194,6 +194,11 @@ size_t drb_manager_impl::get_nof_drbs()
   return drbs.size();
 }
 
+size_t drb_manager_impl::get_nof_pdu_sessions()
+{
+  return pdu_sessions.size();
+}
+
 bool drb_manager_impl::valid_5qi(five_qi_t five_qi)
 {
   if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {

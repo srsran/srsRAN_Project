@@ -45,6 +45,7 @@ public:
   pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
   s_nssai_t                  get_s_nssai(const drb_id_t drb_id) override;
   size_t                     get_nof_drbs() override;
+  size_t                     get_nof_pdu_sessions() override;
   bool                       valid_5qi(const five_qi_t five_qi) override;
 
 private:
@@ -57,8 +58,9 @@ private:
   drb_manager_cfg       cfg;
   srslog::basic_logger& logger;
 
-  std::map<drb_id_t, drb_context> drbs;        // Stores existing DRBs
-  std::map<five_qi_t, drb_id_t>   five_qi_map; // Maps QoS flow characteristics to existing DRBs
+  std::map<pdu_session_id_t, bool> pdu_sessions; // Map with active flag for existing PDU sessions
+  std::map<drb_id_t, drb_context>  drbs;         // Stores existing DRBs
+  std::map<five_qi_t, drb_id_t>    five_qi_map;  // Maps QoS flow characteristics to existing DRBs
 };
 
 } // namespace srs_cu_cp
