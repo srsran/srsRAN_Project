@@ -159,7 +159,7 @@ struct e1ap_drb_to_setup_item_ng_ran {
   std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> qos_flow_info_to_be_setup;
   optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
-  optional<uint16_t>                                             drb_inactivity_timer;
+  optional<std::chrono::seconds>                                 drb_inactivity_timer;
   optional<e1ap_pdcp_sn_status_info>                             pdcp_sn_status_info;
 };
 
@@ -173,7 +173,7 @@ struct e1ap_pdu_session_res_to_setup_item {
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;
   optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
-  optional<uint16_t>                          pdu_session_inactivity_timer;
+  optional<std::chrono::seconds>              pdu_session_inactivity_timer;
   optional<up_transport_layer_info>           existing_allocated_ng_dl_up_tnl_info;
   optional<uint16_t>                          network_instance;
 };
