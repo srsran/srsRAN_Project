@@ -44,6 +44,8 @@ uplink_config make_default_ue_uplink_config(const cell_config_builder_params& pa
 
 pusch_config make_default_pusch_config();
 
+srs_config make_default_srs_config(const cell_config_builder_params& params);
+
 pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
 
 nzp_csi_rs_resource_set make_default_nzp_csi_rs_resource_set();

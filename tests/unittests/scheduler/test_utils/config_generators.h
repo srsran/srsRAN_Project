@@ -246,6 +246,9 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config());
 
+  // > SRS config.
+  ul_config.init_ul_bwp.srs_cfg.emplace(config_helpers::make_default_srs_config(params));
+
   return ul_config;
 }
 

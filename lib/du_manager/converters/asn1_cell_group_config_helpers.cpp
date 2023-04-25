@@ -226,7 +226,7 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
 
 void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
 {
-  if (cfg.type.has_value() && cfg.type.value() == dmrs_config_type::type2) {
+  if (cfg.is_dmrs_type2) {
     out.dmrs_type_present = true;
   }
 
@@ -248,9 +248,8 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
     }
   }
 
-  if (cfg.max_length.has_value() && cfg.max_length.value() != dmrs_max_length::len2) {
-    // Note: Strange ASN1 generated code where there is no max length field.
-    srsran_assertion_failure("Invalid DMRS DL max. length={}", cfg.max_length.value());
+  if (cfg.is_max_length_len2) {
+    out.max_len_present = true;
   }
 
   if (cfg.scrambling_id0.has_value()) {

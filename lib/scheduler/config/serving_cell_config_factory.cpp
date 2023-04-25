@@ -316,7 +316,8 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
 pusch_config srsran::config_helpers::make_default_pusch_config()
 {
   pusch_config cfg{};
-  cfg.tx_cfg = pusch_config::tx_config::not_set;
+  // TODO: Verify whether its the correct Transmission Configuration we want to support.
+  cfg.tx_cfg = pusch_config::tx_config::codebook;
   cfg.pusch_mapping_type_a_dmrs.emplace();
   cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos1;
 
@@ -352,6 +353,44 @@ pusch_config srsran::config_helpers::make_default_pusch_config()
   b_offset.beta_offset_csi_p2_idx_1 = 9;
   b_offset.beta_offset_csi_p2_idx_2 = 9;
   uci_cfg.beta_offsets_cfg          = uci_on_pusch::beta_offsets_semi_static{b_offset};
+
+  return cfg;
+}
+
+srs_config srsran::config_helpers::make_default_srs_config(const cell_config_builder_params& params)
+{
+  srs_config cfg{};
+
+  cfg.srs_res.emplace_back();
+  // TODO: Verify correctness of the config based on what we support.
+  srs_config::srs_resource& res = cfg.srs_res.back();
+  res.id                        = static_cast<srs_config::srs_res_id>(0);
+  res.nof_ports                 = srs_config::srs_resource::nof_srs_ports::port1;
+  res.trans_comb_value          = 2;
+  res.trans_comb_offset         = 0;
+  res.trans_comb_cyclic_shift   = 0;
+  res.res_mapping.start_pos     = 0;
+  res.res_mapping.nof_symb      = srs_config::srs_resource::resource_mapping::nof_symbols::n1;
+  res.res_mapping.re_factor     = srs_config::srs_resource::resource_mapping::repetition_factor::n1;
+  res.freq_domain_pos           = 0;
+  res.freq_domain_shift         = 5;
+  res.freq_hop.c_srs            = 11;
+  res.freq_hop.b_srs            = 3;
+  res.freq_hop.b_hop            = 0;
+  res.grp_or_seq_hop            = srs_config::srs_resource::group_or_sequence_hopping::neither;
+  res.res_type                  = srs_config::srs_resource::aperiodic;
+  res.sequence_id               = params.pci;
+
+  cfg.srs_res_set.emplace_back();
+  // TODO: Verify correctness of the config based on what we support.
+  srs_config::srs_resource_set& res_set = cfg.srs_res_set.back();
+  res_set.id                            = static_cast<srs_config::srs_res_set_id>(0);
+  res_set.srs_res_id_list.emplace_back(static_cast<srs_config::srs_res_id>(0));
+  res_set.res_type =
+      srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
+  res_set.srs_res_set_usage = srs_config::srs_resource_set::usage::codebook;
+  res_set.p0                = -84;
+  res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
 
   return cfg;
 }
@@ -497,6 +536,9 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
+
+  // > SRS config.
+  ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
 
   return ul_config;
 }

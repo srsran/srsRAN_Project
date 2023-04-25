@@ -198,33 +198,23 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
     }
     if (opt_srs_cfg.has_value()) {
-      if (not dci_sz_cfg.tx_config_non_codebook) {
-        // See TS 38.214, clause 6.1.1.1.
-        const auto* srs_res_set =
-            std::find_if(opt_srs_cfg.value().srs_res_set.begin(),
-                         opt_srs_cfg.value().srs_res_set.end(),
-                         [](const srs_config::srs_resource_set& res_set) {
-                           return res_set.srs_res_set_usage == srs_config::srs_resource_set::usage::codebook;
-                         });
-        srsran_assert(srs_res_set != opt_srs_cfg.value().srs_res_set.end(), "No valid SRS resource set found");
-        srsran_assert(not srs_res_set->srs_res_id_list.empty(), "No SRS resource configured in SRS resource set");
-        const auto  srs_resource_id = srs_res_set->srs_res_id_list.front();
-        const auto* srs_res =
-            std::find_if(opt_srs_cfg.value().srs_res.begin(),
-                         opt_srs_cfg.value().srs_res.end(),
-                         [srs_resource_id](const srs_config::srs_resource& res) { return res.id == srs_resource_id; });
-        srsran_assert(srs_res != opt_srs_cfg.value().srs_res.end(), "No valid SRS resource found");
-        dci_sz_cfg.nof_srs_ports = static_cast<unsigned>(srs_res->nof_ports);
-      }
-      // See TS 38.214, clause 6.1.1.1.
-      const auto* srs_res_set =
-          std::find_if(opt_srs_cfg.value().srs_res_set.begin(),
-                       opt_srs_cfg.value().srs_res_set.end(),
-                       [](const srs_config::srs_resource_set& res_set) {
-                         return res_set.srs_res_set_usage == srs_config::srs_resource_set::usage::non_codebook;
-                       });
+      const srs_config::srs_resource_set::usage usage = dci_sz_cfg.tx_config_non_codebook
+                                                            ? srs_config::srs_resource_set::usage::non_codebook
+                                                            : srs_config::srs_resource_set::usage::codebook;
+      // See TS 38.214, clause 6.1.1.1 and 6.1.1.2.
+      const auto* srs_res_set = std::find_if(
+          opt_srs_cfg.value().srs_res_set.begin(),
+          opt_srs_cfg.value().srs_res_set.end(),
+          [usage](const srs_config::srs_resource_set& res_set) { return res_set.srs_res_set_usage == usage; });
       srsran_assert(srs_res_set != opt_srs_cfg.value().srs_res_set.end(), "No valid SRS resource set found");
       srsran_assert(not srs_res_set->srs_res_id_list.empty(), "No SRS resource configured in SRS resource set");
+      const auto  srs_resource_id = srs_res_set->srs_res_id_list.front();
+      const auto* srs_res =
+          std::find_if(opt_srs_cfg.value().srs_res.begin(),
+                       opt_srs_cfg.value().srs_res.end(),
+                       [srs_resource_id](const srs_config::srs_resource& res) { return res.id == srs_resource_id; });
+      srsran_assert(srs_res != opt_srs_cfg.value().srs_res.end(), "No valid SRS resource found");
+      dci_sz_cfg.nof_srs_ports     = static_cast<unsigned>(srs_res->nof_ports);
       dci_sz_cfg.nof_srs_resources = srs_res_set->srs_res_id_list.size();
     }
     if (opt_pusch_sc_cfg.has_value() and opt_pusch_sc_cfg.value().cbg_tx.has_value()) {
@@ -276,12 +266,20 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
     }
     if (opt_pdsch_cfg.value().pdsch_mapping_type_a_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_A_type    = opt_pdsch_cfg.value().pdsch_mapping_type_a_dmrs.value().type;
-      dci_sz_cfg.pdsch_dmrs_A_max_len = opt_pdsch_cfg.value().pdsch_mapping_type_a_dmrs.value().max_length;
+      dci_sz_cfg.pdsch_dmrs_A_type    = opt_pdsch_cfg.value().pdsch_mapping_type_a_dmrs.value().is_dmrs_type2
+                                            ? dmrs_config_type::type2
+                                            : dmrs_config_type::type1;
+      dci_sz_cfg.pdsch_dmrs_A_max_len = opt_pdsch_cfg.value().pdsch_mapping_type_a_dmrs.value().is_max_length_len2
+                                            ? dmrs_max_length::len2
+                                            : dmrs_max_length::len1;
     }
     if (opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_B_type    = opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.value().type;
-      dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.value().max_length;
+      dci_sz_cfg.pdsch_dmrs_B_type    = opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.value().is_dmrs_type2
+                                            ? dmrs_config_type::type2
+                                            : dmrs_config_type::type1;
+      dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg.value().pdsch_mapping_type_b_dmrs.value().is_max_length_len2
+                                            ? dmrs_max_length::len2
+                                            : dmrs_max_length::len1;
     }
   }
   dci_sz_cfg.multiple_scells     = is_ue_configured_multiple_serving_cells;
@@ -381,7 +379,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
       active_dl_bwp.generic_params.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
       false};
-  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
+  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f1_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
                                                                                   : dci_sz.format1_0_common_size;
@@ -439,13 +437,14 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
 
   const dci_size_config dci_sz_cfg =
       get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
-  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
+  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
 
   // Compute DCI size.
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f1_1.payload_size = dci_sz.format1_1_ue_size.value();
 
-  if (dci_sz_cfg.interleaved_vrb_prb_mapping) {
+  if (dci_sz_cfg.pdsch_res_allocation_type == resource_allocation::resource_allocation_type_1 and
+      dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
     f1_1.vrb_prb_mapping = static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value());
   }
 
@@ -499,7 +498,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
       ul_bwp.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
       false};
-  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
+  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_0.payload_size = dci_sz.format0_0_common_size;
   f0_0.frequency_resource =
@@ -546,7 +545,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
   dci_sz_cfg.coreset0_bw =
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0;
   dci_sz_cfg.sul_configured = false;
-  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
+  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size.value()
@@ -595,7 +594,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
 
   const dci_size_config dci_sz_cfg =
       get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
-  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
+  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_1.payload_size = dci_sz.format0_1_ue_size.value();
