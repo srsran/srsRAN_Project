@@ -111,6 +111,17 @@ public:
     return dmrs_pattern;
   }
 
+  const char* to_string() const
+  {
+    switch (value) {
+      case TYPE1:
+        return "Type1";
+      case TYPE2:
+      default:
+        return "Type2";
+    }
+  }
+
 private:
   /// Indicates the DM-RS type.
   options value = TYPE1;

@@ -16,7 +16,7 @@ target_link_libraries(pdcch_processor_unittest srsran_channel_processors srslog)
 add_test(pdcch_processor_unittest pdcch_processor_unittest)
 
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
-target_link_libraries(pdsch_processor_unittest srsran_channel_processors srslog)
+target_link_libraries(pdsch_processor_unittest srsran_channel_processors srslog gtest gtest_main)
 add_test(pdsch_processor_unittest pdsch_processor_unittest)
 
 add_executable(pdsch_processor_validator_test pdsch_processor_validator_test.cpp)
