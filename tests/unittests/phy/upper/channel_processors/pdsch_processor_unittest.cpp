@@ -110,10 +110,10 @@ TEST_P(PdschProcessorFixture, UnitTest)
       create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>(encoder_factory_spy),
                                         std::shared_ptr<pdsch_modulator_factory>(modulator_factory_spy),
                                         std::shared_ptr<dmrs_pdsch_processor_factory>(dmrs_factory_spy));
-  TESTASSERT(pdsch_proc_factory);
+  ASSERT_NE(pdsch_proc_factory, nullptr);
 
   std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
-  TESTASSERT(pdsch);
+  ASSERT_NE(pdsch, nullptr);
 
   pdsch_encoder_spy*        encoder_spy   = encoder_factory_spy->get_entries().front();
   pdsch_modulator_spy*      modulator_spy = modulator_factory_spy->get_entries().front();
@@ -158,7 +158,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   pdu.ratio_pdsch_dmrs_to_sss_dB  = get_power();
   pdu.ratio_pdsch_data_to_sss_dB  = get_power();
 
-  // Generate reserved element pattern for DMRS.
+  // Generate reserved element pattern for DM-RS.
   re_pattern dmrs_reserved_pattern = pdu.dmrs.get_dmrs_pattern(
       pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask);
 
@@ -216,7 +216,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.Nref, pdu.tbs_lbrm_bytes * 8);
       ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
       ASSERT_EQ(entry.config.nof_ch_symbols, Nre);
-      TESTASSERT(srsvec::equal(entry.transport_block, data[codeword]));
+      ASSERT_EQ(span<const uint8_t>(entry.transport_block), span<const uint8_t>(data[codeword]));
     }
   }
 
@@ -249,7 +249,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     }
   }
 
-  // Validate DMRS processor.
+  // Validate DM-RS processor.
   {
     ASSERT_EQ(dmrs_spy->get_nof_entries(), 1);
     const auto& entries = dmrs_spy->get_entries();
