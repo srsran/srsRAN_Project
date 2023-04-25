@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -61,8 +62,19 @@ public:
   virtual void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) = 0;
 };
 
+/// Common UE manager interface.
+class common_ue_manager
+{
+public:
+  virtual ~common_ue_manager() = default;
+
+  /// \brief Get the CU-CP UE configuration stored in the UE manager.
+  /// \return The CU-CP UE configuration.
+  virtual ue_configuration get_ue_config() = 0;
+};
+
 /// DU Processor UE manager interface.
-class du_processor_ue_manager
+class du_processor_ue_manager : public common_ue_manager
 {
 public:
   virtual ~du_processor_ue_manager() = default;
@@ -127,7 +139,7 @@ public:
 };
 
 /// NGAP UE manager interface.
-class ngap_ue_manager
+class ngap_ue_manager : public common_ue_manager
 {
 public:
   virtual ~ngap_ue_manager() = default;

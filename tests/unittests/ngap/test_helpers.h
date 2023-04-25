@@ -104,6 +104,9 @@ private:
 
 struct dummy_ngap_ue_manager : public ngap_ue_manager {
 public:
+  void             set_ue_config(ue_configuration ue_config_) { ue_config = ue_config_; }
+  ue_configuration get_ue_config() override { return ue_config; }
+
   ngap_ue* add_ue(ue_index_t                          ue_index,
                   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
                   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
@@ -200,6 +203,8 @@ private:
     logger.error("No RAN UE ID available");
     return ran_ue_id_t::invalid;
   }
+
+  ue_configuration ue_config;
 
   std::unordered_map<ue_index_t, dummy_ngap_ue> ues;                   // ues indexed by ue_index
   std::unordered_map<ran_ue_id_t, ue_index_t>   ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
