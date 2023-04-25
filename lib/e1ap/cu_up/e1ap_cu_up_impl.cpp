@@ -100,6 +100,10 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   } else {
     logger.error("ue={} unsupported activity notification level", msg.ue_index);
   }
+
+  // Send inactivity notification.
+  pdu_notifier.on_new_message(e1ap_msg);
+  logger.debug("ue={} bearer context inactivity notification sent", msg.ue_index);
 }
 
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)

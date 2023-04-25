@@ -90,7 +90,12 @@ private:
 
   timer_factory timers;
   unique_timer  ue_inactivity_timer;
-  void          on_ue_inactivity_timer_expired() { e1ap.handle_bearer_context_inactivity_notification({}); }
+  void          on_ue_inactivity_timer_expired()
+  {
+    e1ap_bearer_context_inactivity_notification msg = {};
+    msg.ue_index                                    = index;
+    e1ap.handle_bearer_context_inactivity_notification(msg);
+  }
 };
 
 } // namespace srs_cu_up
