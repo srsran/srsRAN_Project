@@ -414,6 +414,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       pusch_cfg = get_pusch_config_f0_1_c_rnti(cell_cfg, ue_cell_cfg, pusch_td_cfg);
+      break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
@@ -452,7 +453,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Fill UL PDCCH DCI.
-  switch (pdcch->dci.type) {
+  switch (dci_type) {
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_dci_f0_0_c_rnti(pdcch->dci,
                             cell_cfg.dl_cfg_common.init_dl_bwp,
@@ -517,6 +518,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               pdcch->dci.c_rnti_f0_1,
                               prbs,
                               h_ul);
+      break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");
   }
