@@ -34,7 +34,7 @@ enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0
 
 inline const char* dci_dl_rnti_config_rnti_type(dci_dl_rnti_config_type type)
 {
-  std::array<const char*, 5> rnti_types = {"si-rnti", "ra-rnti", "c-rnti", "tc-rnti", "p-rnti"};
+  std::array<const char*, 6> rnti_types = {"si-rnti", "ra-rnti", "c-rnti", "tc-rnti", "p-rnti", "c-rnti"};
   return (unsigned)type < rnti_types.size() ? rnti_types[(unsigned)type] : "invalid";
 }
 
@@ -67,7 +67,7 @@ enum class dci_ul_rnti_config_type { tc_rnti_f0_0, c_rnti_f0_0, c_rnti_f0_1 };
 
 inline const char* dci_ul_rnti_config_rnti_type(dci_ul_rnti_config_type type)
 {
-  std::array<const char*, 5> rnti_types = {"tc-rnti", "c-rnti"};
+  std::array<const char*, 3> rnti_types = {"tc-rnti", "c-rnti", "c-rnti"};
   return (unsigned)type < rnti_types.size() ? rnti_types[(unsigned)type] : "invalid";
 }
 
