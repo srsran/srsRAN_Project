@@ -163,7 +163,7 @@ phy_time_unit srsran::get_prach_window_duration(srsran::prach_format_type  forma
     }
 
     // The window overlaps with time 0.5ms from the beginning of the slot.
-    if ((t_start <= phy_time_unit::from_seconds(0.5e-3)) && (t_end >= phy_time_unit::from_seconds(0.5e-3))) {
+    if ((t_start <= phy_time_unit::from_seconds(0.5e-3)) && (t_end > phy_time_unit::from_seconds(0.5e-3))) {
       t_end += sixteen_kappa;
     }
   } else {

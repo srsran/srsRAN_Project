@@ -81,6 +81,8 @@ public:
     bool enable_random_data;
     /// Enable uplink processing.
     bool enable_ul_processing;
+    /// Enable PRACH processing.
+    bool enable_prach_processing;
     /// Modulation scheme used for the pseudo-random data.
     modulation_scheme data_modulation;
   };

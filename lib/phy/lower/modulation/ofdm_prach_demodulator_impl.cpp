@@ -29,11 +29,15 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
 
   // Validate configuration.
   if (is_short_preamble(config.format)) {
+    unsigned prach_window_length =
+        get_prach_window_duration(config.format, config.pusch_scs, config.start_symbol, config.nof_td_occasions)
+            .to_samples(srate.to_Hz());
+    srsran_assert(
+        input.size() >= prach_window_length,
+        "The number of input samples (i.e., {}) must be equal to or greater than the PRACH window (i.e., {}).",
+        input.size(),
+        prach_window_length);
     srsran_assert(config.nof_td_occasions > 0, "The number of time-domain occasions must be greater than 0.");
-    srsran_assert(input.size() == srate.get_dft_size(1000U << to_numerology_value(config.pusch_scs)),
-                  "The number of input samples (i.e., {}) must be equal to the slot size (i.e., {}).",
-                  input.size(),
-                  srate.get_dft_size(1000U << to_numerology_value(config.pusch_scs)));
   } else {
     srsran_assert(config.nof_td_occasions == 1, "Long preambles only support one occasion.");
   }

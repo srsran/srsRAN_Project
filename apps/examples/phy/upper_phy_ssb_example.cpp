@@ -9,6 +9,8 @@
  */
 
 #include "upper_phy_ssb_example.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
@@ -31,6 +33,7 @@ private:
   bool                                  quit         = false;
   std::unique_ptr<resource_grid_pool>   dl_rg_pool;
   std::unique_ptr<resource_grid_pool>   ul_rg_pool;
+  std::unique_ptr<prach_buffer>         prach_buf;
   std::unique_ptr<ssb_processor>        ssb;
   std::unique_ptr<modulation_mapper>    data_modulator;
   upper_phy_rg_gateway*                 gateway;
@@ -38,6 +41,7 @@ private:
   ssb_configuration                     ssb_config;
   bool                                  enable_random_data;
   bool                                  enable_ul_processing;
+  bool                                  enable_prach_processing;
   modulation_scheme                     data_modulation;
   unsigned                              nof_subcs;
   std::mt19937                          rgen;
@@ -58,11 +62,13 @@ public:
                        const ssb_configuration&              ssb_config_,
                        bool                                  enable_random_data_,
                        bool                                  enable_ul_processing_,
+                       bool                                  enable_prach_processing_,
                        modulation_scheme                     data_modulation_,
                        unsigned                              nof_subcs_) :
     logger(logger_),
     dl_rg_pool(std::move(dl_rg_pool_)),
     ul_rg_pool(std::move(ul_rg_pool_)),
+    prach_buf(create_prach_buffer_short(1, 1)),
     ssb(std::move(ssb_)),
     data_modulator(std::move(data_modulator_)),
     gateway(gateway_),
@@ -70,6 +76,7 @@ public:
     ssb_config(ssb_config_),
     enable_random_data(enable_random_data_),
     enable_ul_processing(enable_ul_processing_),
+    enable_prach_processing(enable_prach_processing_),
     data_modulation(data_modulation_),
     nof_subcs(nof_subcs_),
     rgen(0)
@@ -104,6 +111,27 @@ public:
       rx_symb_context.slot   = context.slot;
       resource_grid& rg      = ul_rg_pool->get_resource_grid(rx_symb_context);
       rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
+    }
+
+    // Request RX symbol if UL processing is enabled.
+    if (enable_prach_processing && (context.slot.subframe_index() == 0)) {
+      prach_buffer_context prach_context;
+      prach_context.sector                = 0;
+      prach_context.slot                  = context.slot;
+      prach_context.port                  = 0;
+      prach_context.start_symbol          = 0;
+      prach_context.format                = prach_format_type::A1;
+      prach_context.rb_offset             = 0;
+      prach_context.nof_td_occasions      = 1;
+      prach_context.nof_fd_occasions      = 1;
+      prach_context.nof_prb_ul_grid       = nof_subcs / NRE;
+      prach_context.pusch_scs             = to_subcarrier_spacing(context.slot.numerology());
+      prach_context.root_sequence_index   = 0;
+      prach_context.restricted_set        = restricted_set_config::UNRESTRICTED;
+      prach_context.zero_correlation_zone = 0;
+      prach_context.start_preamble_index  = 0;
+      prach_context.nof_preamble_indices  = 64;
+      rx_symb_req_notifier->on_prach_capture_request(prach_context, *prach_buf);
     }
 
     // Prepare resource grid context.
@@ -315,6 +343,7 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
                                                 config.ssb_config,
                                                 config.enable_random_data,
                                                 config.enable_ul_processing,
+                                                config.enable_prach_processing,
                                                 config.data_modulation,
                                                 nof_subcs);
 }

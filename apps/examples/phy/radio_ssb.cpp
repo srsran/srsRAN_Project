@@ -82,8 +82,9 @@ static bool                                      zmq_loopback         = true;
 static ssb_pattern_case                          ssb_pattern          = ssb_pattern_case::A;
 static bool                                      enable_random_data   = false;
 static bool                                      enable_ul_processing = false;
-static modulation_scheme                         data_mod_scheme      = modulation_scheme::QPSK;
-static std::string                               thread_profile_name  = "single";
+static bool                                      enable_prach_processing = false;
+static modulation_scheme                         data_mod_scheme         = modulation_scheme::QPSK;
+static std::string                               thread_profile_name     = "single";
 
 // Amplitude control args.
 static float baseband_backoff_dB    = 12.0F;
@@ -263,6 +264,7 @@ static void usage(std::string prog)
   fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print("\t-u Enable uplink processing [Default {}]\n", enable_ul_processing);
+  fmt::print("\t-u Enable PRACH processing [Default {}]\n", enable_prach_processing);
   fmt::print(
       "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
@@ -273,7 +275,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:cduh")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:cduph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -303,6 +305,9 @@ static void parse_args(int argc, char** argv)
         break;
       case 'u':
         enable_ul_processing = true;
+        break;
+      case 'p':
+        enable_prach_processing = true;
         break;
       case 'm':
         if (optarg != nullptr) {
@@ -381,6 +386,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        task_executor*                tx_task_executor,
                                                        task_executor*                ul_task_executor,
                                                        task_executor*                dl_task_executor,
+                                                       task_executor*                prach_task_executor,
                                                        lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                        lower_phy_timing_notifier*    timing_notifier)
@@ -403,6 +409,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.tx_task_executor           = tx_task_executor;
   phy_config.ul_task_executor           = ul_task_executor;
   phy_config.dl_task_executor           = dl_task_executor;
+  phy_config.prach_async_executor       = prach_task_executor;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
@@ -449,6 +456,7 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor>                                tx_task_executor;
   std::unique_ptr<task_executor>                                ul_task_executor;
   std::unique_ptr<task_executor>                                dl_task_executor;
+  std::unique_ptr<task_executor>                                prach_task_executor;
   if (thread_profile_name == "single") {
     workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
     workers.emplace(std::make_pair("low_phy", std::make_unique<task_worker>("low_phy", 4)));
@@ -508,6 +516,8 @@ int main(int argc, char** argv)
   } else {
     report_error("Invalid thread profile '{}'.\n", thread_profile_name);
   }
+  workers.emplace(std::make_pair("low_phy_prach", std::make_unique<task_worker>("low_phy_prach", 4)));
+  prach_task_executor = make_task_executor(*workers["low_phy_prach"]);
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
@@ -540,6 +550,7 @@ int main(int argc, char** argv)
                                                                         tx_task_executor.get(),
                                                                         ul_task_executor.get(),
                                                                         dl_task_executor.get(),
+                                                                        prach_task_executor.get(),
                                                                         &error_adapter,
                                                                         &rx_symbol_adapter,
                                                                         &timing_adapter);
@@ -592,6 +603,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.pattern_case      = ssb_pattern;
   upper_phy_sample_config.enable_random_data           = enable_random_data;
   upper_phy_sample_config.enable_ul_processing         = enable_ul_processing;
+  upper_phy_sample_config.enable_prach_processing      = enable_prach_processing;
   upper_phy_sample_config.data_modulation              = data_mod_scheme;
   upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
   srsran_assert(upper_phy, "Failed to create upper physical layer.");
