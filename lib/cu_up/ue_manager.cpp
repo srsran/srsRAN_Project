@@ -14,19 +14,21 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 ue_manager::ue_manager(network_interface_config&            net_config_,
-                       srslog::basic_logger&                logger_,
+                       e1ap_control_message_handler&        e1ap_,
                        timer_manager&                       timers_,
                        f1u_cu_up_gateway&                   f1u_gw_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_,
-                       task_executor&                       ue_exec_) :
+                       task_executor&                       ue_exec_,
+                       srslog::basic_logger&                logger_) :
   net_config(net_config_),
-  logger(logger_),
+  e1ap(e1ap_),
   f1u_gw(f1u_gw_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
   gtpu_rx_demux(gtpu_rx_demux_),
   timers(timers_),
-  ue_exec(ue_exec_)
+  ue_exec(ue_exec_),
+  logger(logger_)
 {
 }
 
@@ -50,8 +52,15 @@ ue_context* ue_manager::add_ue(ue_context_cfg ue_cfg)
   }
 
   // Create UE object
-  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(
-      new_idx, ue_cfg, net_config, logger, timer_factory{timers, ue_exec}, f1u_gw, gtpu_tx_notifier, gtpu_rx_demux);
+  std::unique_ptr<ue_context> new_ctx = std::make_unique<ue_context>(new_idx,
+                                                                     ue_cfg,
+                                                                     e1ap,
+                                                                     net_config,
+                                                                     logger,
+                                                                     timer_factory{timers, ue_exec},
+                                                                     f1u_gw,
+                                                                     gtpu_tx_notifier,
+                                                                     gtpu_rx_demux);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

@@ -13,6 +13,7 @@
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include <map>
 
@@ -31,6 +32,7 @@ class ue_context : public pdu_session_manager_ctrl
 public:
   ue_context(ue_index_t                           index_,
              ue_context_cfg                       cfg_,
+             e1ap_control_message_handler&        e1ap_,
              network_interface_config&            net_config_,
              srslog::basic_logger&                logger_,
              timer_factory                        timers_,
@@ -39,6 +41,7 @@ public:
              gtpu_demux_ctrl&                     gtpu_rx_demux_) :
     index(index_),
     cfg(cfg_),
+    e1ap(e1ap_),
     pdu_session_manager(index,
                         net_config_,
                         logger_,
@@ -80,13 +83,14 @@ public:
   ue_index_t get_index() const { return index; };
 
 private:
-  ue_index_t               index;
-  ue_context_cfg           cfg;
-  pdu_session_manager_impl pdu_session_manager;
+  ue_index_t                    index;
+  ue_context_cfg                cfg;
+  e1ap_control_message_handler& e1ap;
+  pdu_session_manager_impl      pdu_session_manager;
 
   timer_factory timers;
   unique_timer  ue_inactivity_timer;
-  void          on_ue_inactivity_timer_expired() {}
+  void          on_ue_inactivity_timer_expired() { e1ap.handle_bearer_context_inactivity_notification({}); }
 };
 
 } // namespace srs_cu_up

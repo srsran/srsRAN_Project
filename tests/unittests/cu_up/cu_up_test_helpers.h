@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
@@ -175,6 +176,17 @@ public:
   std::list<uint32_t> created_ul_teid_list  = {};
   std::list<uint32_t> attached_ul_teid_list = {};
   std::list<uint32_t> removed_ul_teid_list  = {};
+};
+
+class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler
+{
+public:
+  explicit dummy_e1ap() {}
+  ~dummy_e1ap() override = default;
+  void handle_bearer_context_inactivity_notification(
+      const srs_cu_up::e1ap_bearer_context_inactivity_notification& msg) override
+  {
+  }
 };
 
 e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)

@@ -56,13 +56,13 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
-  /// > Create UE manager
-  ue_mng = std::make_unique<ue_manager>(
-      cfg.net_cfg, logger, *cfg.timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor);
-
-  // create e1ap
+  /// > Create e1ap
   e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
+
+  /// > Create UE manager
+  ue_mng = std::make_unique<ue_manager>(
+      cfg.net_cfg, *e1ap, *cfg.timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor, logger);
 }
 
 cu_up::~cu_up()
