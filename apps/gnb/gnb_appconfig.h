@@ -248,6 +248,10 @@ struct amf_appconfig {
   int         sctp_max_init_timeo    = 500;
 };
 
+struct cu_cp_appconfig {
+  int inactivity_timer;
+};
+
 struct log_appconfig {
   std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
   std::string all_level   = "warning";      // Default log level for all layers.
@@ -325,6 +329,8 @@ struct gnb_appconfig {
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.
   amf_appconfig amf_cfg;
+  /// CU-CP configuration.
+  cu_cp_appconfig cu_cp_cfg;
   /// RF driver configuration.
   rf_driver_appconfig rf_driver_cfg;
   /// \brief Base cell application configuration.
