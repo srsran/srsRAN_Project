@@ -468,6 +468,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     case dci_ul_rnti_config_type::c_rnti_f0_1:
       build_dci_f0_1_c_rnti(pdcch->dci,
                             ue_cell_cfg,
+                            u.nof_cells() > 1,
                             ue_cc->active_bwp_id(),
                             grant.ss_id,
                             prbs,

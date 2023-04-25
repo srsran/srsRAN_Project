@@ -88,6 +88,7 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
 /// Builds DCI f0_1 for C-RNTI.
 void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                            const ue_cell_configuration& ue_cell_cfg,
+                           bool                         is_ue_configured_multiple_serving_cells,
                            bwp_id_t                     active_bwp_id,
                            search_space_id              ss_id,
                            const prb_interval&          prbs,
