@@ -45,9 +45,28 @@ std::ostream& operator<<(std::ostream& os, sampling_rate value)
   return os;
 }
 
+auto to_tuple(const prach_buffer_context& context)
+{
+  return std::tie(context.sector,
+                  context.port,
+                  context.slot,
+                  context.start_symbol,
+                  context.format,
+                  context.rb_offset,
+                  context.nof_td_occasions,
+                  context.nof_fd_occasions,
+                  context.nof_prb_ul_grid,
+                  context.pusch_scs,
+                  context.root_sequence_index,
+                  context.restricted_set,
+                  context.zero_correlation_zone,
+                  context.start_preamble_index,
+                  context.nof_preamble_indices);
+}
+
 bool operator==(const prach_buffer_context& rhs, const prach_buffer_context& lhs)
 {
-  return std::memcmp(&rhs, &lhs, sizeof(prach_buffer_context)) == 0;
+  return to_tuple(rhs) == to_tuple(lhs);
 }
 
 } // namespace srsran
