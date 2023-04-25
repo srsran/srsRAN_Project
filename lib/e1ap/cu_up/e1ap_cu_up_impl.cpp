@@ -192,12 +192,8 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
       msg->gnb_cu_cp_ue_e1ap_id;
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value.set_protocol();
 
-  // We only support NG-RAN Bearer
-  if (msg->sys_bearer_context_setup_request.value.type() !=
-      asn1::e1ap::sys_bearer_context_setup_request_c::types::ng_ran_bearer_context_setup_request) {
-    logger.error("Not handling E-UTRAN Bearers");
-
-    // send response
+  // Do basic syntax/semantic checks on the validity of the received message.
+  if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
     logger.debug("Sending BearerContextSetupFailure message");
     pdu_notifier.on_new_message(e1ap_msg);
     return;
