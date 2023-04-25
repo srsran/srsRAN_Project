@@ -379,7 +379,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
       active_dl_bwp.generic_params.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
       false};
-  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
+  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f1_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
                                                                                   : dci_sz.format1_0_common_size;
@@ -437,7 +437,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
 
   const dci_size_config dci_sz_cfg =
       get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
-  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
+  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
 
   // Compute DCI size.
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
@@ -498,7 +498,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
       ul_bwp.crbs.length(),
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
       false};
-  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
+  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_0.payload_size = dci_sz.format0_0_common_size;
   f0_0.frequency_resource =
@@ -545,7 +545,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
   dci_sz_cfg.coreset0_bw =
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0;
   dci_sz_cfg.sul_configured = false;
-  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
+  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size.value()
@@ -594,11 +594,12 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
 
   const dci_size_config dci_sz_cfg =
       get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
-  // srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
+  srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f0_1.payload_size = dci_sz.format0_1_ue_size.value();
 
+  f0_1.ul_sul_indicator        = {};
   f0_1.tpc_command             = 1;
   f0_1.srs_request             = 0;
   f0_1.dmrs_seq_initialization = 0;
