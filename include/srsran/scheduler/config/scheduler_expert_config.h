@@ -24,10 +24,10 @@ namespace srsran {
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
-  interval<sch_mcs_index> dl_mcs;
-  unsigned                initial_cqi;
-  interval<sch_mcs_index> ul_mcs;
-  unsigned                max_nof_harq_retxs;
+  interval<sch_mcs_index, true> dl_mcs;
+  unsigned                      initial_cqi;
+  interval<sch_mcs_index, true> ul_mcs;
+  unsigned                      max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
   /// Maximum consecutive PUSCH KOs, before scheduler de-prioritizes UE.

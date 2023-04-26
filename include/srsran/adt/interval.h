@@ -19,13 +19,17 @@
 namespace srsran {
 
 /// Representation of an interval between two numeric-types with the math representation [start, stop).
-template <typename T>
+template <typename T, bool RightClosed = false>
 class interval
 {
   static_assert(std::is_trivially_copyable<T>::value, "Expected to be trivially copyable");
 
 public:
-  using length_type = std::conditional_t<(sizeof(T) > sizeof(uint32_t)), uint64_t, uint32_t>;
+  /// Whether the interval is of real numbers.
+  using is_real = std::is_floating_point<T>;
+  /// Type used to represent the interval length.
+  using length_type =
+      std::conditional_t<is_real::value, T, std::conditional_t<(sizeof(T) > sizeof(uint32_t)), uint64_t, uint32_t>>;
 
   interval() : start_(T{}), stop_(T{}) {}
 
@@ -41,10 +45,13 @@ public:
 
   T stop() const { return stop_; }
 
-  bool empty() const { return stop_ == start_; }
+  bool empty() const { return not RightClosed and stop_ == start_; }
 
-  /// Interval length
-  length_type length() const { return static_cast<length_type>(stop_ - start_); }
+  /// Interval length. e.g. [0, 1), [0, 1], [0 .. 1) have length 1. [0 .. 1] has length 2.
+  length_type length() const
+  {
+    return static_cast<length_type>(stop_ - start_ + ((RightClosed and not is_real::value) ? 1 : 0));
+  }
 
   void set(T start_point, T stop_point)
   {
@@ -68,7 +75,7 @@ public:
   void resize(T new_length)
   {
     srsran_assert(std::is_unsigned<T>::value or new_length >= 0, "Interval width must be positive");
-    stop_ = start_ + new_length;
+    stop_ = start_ + new_length + (RightClosed + not is_real::value) ? 1 : 0;
   }
 
   /// Move interval by an offset.
@@ -94,11 +101,12 @@ public:
   bool overlaps(interval other) const
   {
     // Note: if one or both intervals are empty, this will always return false
-    return start_ < other.stop_ and other.start_ < stop_;
+    return RightClosed ? start_ <= other.stop_ and other.start_ <= stop_
+                       : start_ < other.stop_ and other.start_ < stop_;
   }
 
   /// If interval contains provided point.
-  bool contains(T point) const { return start_ <= point and point < stop_; }
+  bool contains(T point) const { return start_ <= point and (point < stop_ or (RightClosed and point == stop_)); }
 
   /// If interval contains provided interval.
   bool contains(interval other) const { return start_ <= other.start_ and other.stop_ <= stop_; }
@@ -165,12 +173,18 @@ interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
 namespace fmt {
 
 /// Format intervals with the notation [start, stop)
-template <typename T>
-struct formatter<srsran::interval<T>> : public formatter<T> {
+template <typename T, bool RightClosed>
+struct formatter<srsran::interval<T, RightClosed>> : public formatter<T> {
   template <typename FormatContext>
-  auto format(const srsran::interval<T>& interv, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::interval<T, RightClosed>& interv, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "[{}, {})", interv.start(), interv.stop());
+    return format_to(ctx.out(),
+                     "[{}{}{}{}",
+                     interv.start(),
+                     srsran::interval<T, RightClosed>::is_real::value ? ", " : "..",
+                     interv.stop(),
+                     RightClosed ? ']' : ')');
   }
 };
 

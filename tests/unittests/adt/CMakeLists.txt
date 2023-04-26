@@ -12,6 +12,10 @@ add_executable(bounded_bitset_test bounded_bitset_test.cpp)
 target_link_libraries(bounded_bitset_test srslog gtest gtest_main)
 add_test(bounded_bitset_test bounded_bitset_test)
 
+add_executable(interval_test interval_test.cpp)
+target_link_libraries(interval_test srslog gtest gtest_main)
+add_test(interval_test interval_test)
+
 add_executable(byte_buffer_test
         byte_buffer_segment_test.cpp
         byte_buffer_test.cpp
