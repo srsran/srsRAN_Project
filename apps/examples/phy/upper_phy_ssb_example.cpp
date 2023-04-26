@@ -114,7 +114,7 @@ public:
       rx_symb_req_notifier->on_uplink_slot_request(rx_symb_context, rg);
     }
 
-    // Request RX symbol if UL processing is enabled.
+    // Request PRACH capture if PRACH processing is enabled.
     if (enable_prach_processing && (context.slot.subframe_index() == 0)) {
       prach_buffer_context prach_context;
       prach_context.sector                = 0;

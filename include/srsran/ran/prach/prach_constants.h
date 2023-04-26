@@ -40,7 +40,8 @@ static constexpr unsigned MAX_NUM_PREAMBLES = 64;
 /// Maximum number of PRACH time-domain occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4].
 static constexpr unsigned MAX_NOF_PRACH_TD_OCCASIONS = 7;
 
-/// Maximum number of PRACH frequency-domain occasions within a slot as per TS38.331 maximum \e msg1-FDM of 8 according.
+/// Maximum number of PRACH frequency-domain occasions within a slot. It is given by the maximum value of \e msg1-FDM in
+/// TS38.331 Section 6.3.2 Information Element \e RACH-ConfigGeneric.
 static constexpr unsigned MAX_NOF_PRACH_FD_OCCASIONS = 8;
 
 /// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4] and maximum msg1-FDM of 8
