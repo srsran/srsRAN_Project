@@ -78,7 +78,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   const bwp_configuration bwp_cfg =
-      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg, cs_cfg);
+      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, *ss_cfg, *cs_cfg);
   const subcarrier_spacing                                scs = bwp_cfg.scs;
   const span<const pdsch_time_domain_resource_allocation> pdsch_list =
       ue_cell_cfg.get_pdsch_time_domain_list(ss_cfg->id);

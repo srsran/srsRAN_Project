@@ -86,21 +86,21 @@ inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval cr
 inline bwp_configuration get_resource_alloc_type_1_dl_bwp_size(dci_dl_rnti_config_type           dci_type,
                                                                const bwp_downlink_common&        init_dl_bwp,
                                                                const bwp_downlink_common&        active_dl_bwp,
-                                                               const search_space_configuration* ss_cfg,
-                                                               const coreset_configuration*      cs_cfg)
+                                                               const search_space_configuration& ss_cfg,
+                                                               const coreset_configuration&      cs_cfg)
 {
   // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
   if (dci_type == dci_dl_rnti_config_type::si_f1_0 || dci_type == dci_dl_rnti_config_type::ra_f1_0 ||
       dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 || dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 ||
       dci_type == dci_dl_rnti_config_type::p_rnti_f1_0) {
     bwp_configuration bwp_cfg = init_dl_bwp.generic_params;
-    if (ss_cfg->type == search_space_configuration::type_t::common) {
+    if (ss_cfg.type == search_space_configuration::type_t::common) {
       if (init_dl_bwp.pdcch_common.coreset0.has_value()) {
         bwp_cfg.crbs = get_coreset0_crbs(init_dl_bwp.pdcch_common);
       }
       // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
-      if (ss_cfg->cs_id != to_coreset_id(0)) {
-        bwp_cfg.crbs = {get_coreset_crbs(*cs_cfg).start(), bwp_cfg.crbs.stop()};
+      if (ss_cfg.cs_id != to_coreset_id(0)) {
+        bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
       }
       return bwp_cfg;
     }
