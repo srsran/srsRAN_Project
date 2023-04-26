@@ -97,7 +97,7 @@ TEST(test_arfcn_freq_conversion, freq_to_arfcn)
 TEST(get_ul_arfcn_from_dl_arfcn, mixed_frequencies)
 {
   // n5
-  ASSERT_EQ(167300, band_helper::get_ul_arfcn_from_dl_arfcn(176300));
+  ASSERT_EQ(167300, band_helper::get_ul_arfcn_from_dl_arfcn(176300, {}));
 }
 
 TEST(test_get_abs_freq_point_a_arfcn, mixed_frequencies)

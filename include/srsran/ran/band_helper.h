@@ -15,6 +15,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/ssb_properties.h"
 #include <stdint.h>
@@ -24,7 +25,6 @@ namespace srsran {
 enum class duplex_mode;
 enum class subcarrier_spacing;
 enum class ssb_pattern_case;
-enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
 enum class min_channel_bandwidth;
 
@@ -145,7 +145,10 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
 /// for bands n41, n77, n78, n79.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, subcarrier_spacing scs);
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  band,
+                                                     uint32_t                 arfcn,
+                                                     subcarrier_spacing       scs,
+                                                     bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::MHz10);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
@@ -153,8 +156,9 @@ error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfc
 /// For unparied spectrum (TDD) the function returns the same ARFCN.
 ///
 /// \param[in] dl_arfcn The DL ARFCN.
+/// \param[in] band     NR Band. If not given, the band is derived from the dl_arfcn.
 /// \return uint32_t the UL ARFCN.
-uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn);
+uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, optional<nr_band> band);
 
 /// \brief Return frequency of given NR-ARFCN in Hz as per TS38.104 5.4.2.1.
 /// \param[in] nr_arfcn Given NR-ARFCN.

@@ -11,6 +11,7 @@
 #include "srsran/ran/band_helper.h"
 #include "ssb_freq_position_generator.h"
 #include "srsran/adt/interval.h"
+#include "srsran/adt/span.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -45,53 +46,11 @@ struct nr_band_raster {
 
 // From Table 5.4.2.3-1 in TS 38.104, this is the number of NR FR1 bands that has a DL allocated band (FDD, TDD or SDL).
 // NOTE: Band 41 has two different Freq raster, we only consider raster 15kHz.
-const uint32_t nof_nr_DL_bands_fr1_2nd = 36;
-const uint32_t nof_nr_DL_bands_fr1     = 69;
+const uint32_t nof_nr_DL_bands_fr1 = 69;
 
 // Table with NR operating FR1 band and related ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 // NOTE: It only includes FDD, TDD, and SDL bands.
 // NOTE: Band 2 is a subset of band 25
-static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1_2nd> nr_band_table_fr1_2nd = {{
-    // clang-format off
-    {nr_band::n1,  delta_freq_raster::kHz100, 384000, 20, 396000, 422000, 20, 434000},
-    {nr_band::n2,  delta_freq_raster::kHz100, 370000, 20, 382000, 386000, 20, 398000},
-    {nr_band::n3,  delta_freq_raster::kHz100, 342000, 20, 357000, 361000, 20, 376000},
-    {nr_band::n5,  delta_freq_raster::kHz100, 164800, 20, 169800, 173800, 20, 178800},
-    {nr_band::n7,  delta_freq_raster::kHz100, 500000, 20, 514000, 524000, 20, 538000},
-    {nr_band::n8,  delta_freq_raster::kHz100, 176000, 20, 183000, 185000, 20, 192000},
-    {nr_band::n12, delta_freq_raster::kHz100, 139800, 20, 143200, 145800, 20, 149200},
-    {nr_band::n20, delta_freq_raster::kHz100, 166400, 20, 172400, 158200, 20, 164200},
-    {nr_band::n25, delta_freq_raster::kHz100, 370000, 20, 383000, 386000, 20, 399000},
-    {nr_band::n28, delta_freq_raster::kHz100, 140600, 20, 149600, 151600, 20, 160600},
-    {nr_band::n34, delta_freq_raster::kHz100, 402000, 20, 405000, 402000, 20, 405000},
-    {nr_band::n38, delta_freq_raster::kHz100, 514000, 20, 524000, 514000, 20, 524000},
-    {nr_band::n39, delta_freq_raster::kHz100, 376000, 20, 384000, 376000, 20, 384000},
-    {nr_band::n40, delta_freq_raster::kHz100, 460000, 20, 480000, 460000, 20, 480000},
-    {nr_band::n41, delta_freq_raster::kHz15,  499200,  3, 537999, 499200,  3, 537999},
-    {nr_band::n41, delta_freq_raster::kHz30,  499200,  6, 537996, 499200,  6, 537996},
-    {nr_band::n50, delta_freq_raster::kHz100, 286400, 20, 303400, 286400, 20, 303400},
-    {nr_band::n51, delta_freq_raster::kHz100, 285400, 20, 286400, 285400, 20, 286400},
-    {nr_band::n66, delta_freq_raster::kHz100, 342000, 20, 356000, 422000, 20, 440000},
-    {nr_band::n70, delta_freq_raster::kHz100, 339000, 20, 342000, 399000, 20, 404000},
-    {nr_band::n71, delta_freq_raster::kHz100, 132600, 20, 139600, 123400, 20, 130400},
-    {nr_band::n74, delta_freq_raster::kHz100, 285400, 20, 294000, 295000, 20, 303600},
-    {nr_band::n75, delta_freq_raster::kHz100,      0,  0,      0, 286400, 20, 303400},
-    {nr_band::n76, delta_freq_raster::kHz100,      0,  0,      0, 285400, 20, 286400},
-    {nr_band::n77, delta_freq_raster::kHz15,  620000,  1, 680000, 620000,  1, 680000},
-    {nr_band::n77, delta_freq_raster::kHz30,  620000,  2, 680000, 620000,  2, 680000},
-    {nr_band::n78, delta_freq_raster::kHz15,  620000,  1, 653333, 620000,  1, 653333},
-    {nr_band::n78, delta_freq_raster::kHz30,  620000,  2, 653332, 620000,  2, 653332},
-    {nr_band::n79, delta_freq_raster::kHz15,  693334,  2, 733333, 693334,  2, 733333},
-    {nr_band::n79, delta_freq_raster::kHz30,  693334,  2, 733332, 693334,  2, 733332},
-    {nr_band::n80, delta_freq_raster::kHz100, 342000,  20, 357000,     0,  0,      0},
-    {nr_band::n81, delta_freq_raster::kHz100, 176000,  20, 183000,     0,  0,      0},
-    {nr_band::n82, delta_freq_raster::kHz100, 166400,  20, 172400,     0,  0,      0},
-    {nr_band::n83, delta_freq_raster::kHz100, 140600,  20, 149600,     0,  0,      0},
-    {nr_band::n84, delta_freq_raster::kHz100, 384000,  20, 396000,     0,  0,      0},
-    {nr_band::n86, delta_freq_raster::kHz100, 342000,  20, 356000,     0,  0,      0}
-    // clang-format on
-}};
-
 static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1> nr_band_table_fr1 = {{
     // clang-format off
     {nr_band::n1,    delta_freq_raster::kHz100, 384000, 20, 396000, 422000, 20, 434000},
@@ -383,6 +342,24 @@ static const std::array<n_rb_per_scs, 15> tx_bw_config_fr1 = {{
     // clang-format on
 }};
 
+static const nr_band_raster fetch_band_raster(nr_band band, optional<delta_freq_raster> delta_freq_raster)
+{
+  srsran_assert(
+      (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
+       band == nr_band::n79 or band == nr_band::n90 or band == nr_band::n104) and
+          delta_freq_raster.has_value(),
+      "For band n41, n48, n77, n78, n79, n90 and n104, the band freq. raster require Delta Freq. Raster as an input");
+
+  const auto it = std::find_if(
+      nr_band_table_fr1.begin(), nr_band_table_fr1.end(), [band, delta_freq_raster](const nr_band_raster& raster_band) {
+        return delta_freq_raster.has_value()
+                   ? raster_band.band == band and raster_band.delta_f_rast == delta_freq_raster
+                   : raster_band.band == band;
+      });
+
+  return it != nr_band_table_fr1.end() ? *it : nr_band_raster{.band = nr_band ::invalid};
+}
+
 /// Helper to calculate F_REF according to Table 5.4.2.1-1.
 static nr_raster_params get_raster_params(uint32_t nr_arfcn)
 {
@@ -416,6 +393,237 @@ static bool is_valid_raster_param(const nr_raster_params& raster)
   return false;
 }
 
+// Validates band n28, which has an additional ARFCN value to the given interval, as per Table 5.4.2.3-1, TS 38.104,
+// version 17.8.0.
+static bool validate_band_n28(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+{
+  const nr_band_raster band_raster = fetch_band_raster(nr_band::n28, {});
+  if (band_raster.band == srsran::nr_band::invalid) {
+    return false;
+  }
+
+  // Try first if the ARFCN matches any value of the interval for 100kHz channel raster.
+  if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
+      ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
+    return true;
+  }
+
+  // Extra ARFCN value as per Table 5.4.2.3-1, TS 38.104, version 17.8.0 (see NOTE 4 in the table).
+  const uint32_t dl_arfnc_40MHz = 155608U;
+  if (bw == srsran::bs_channel_bandwidth_fr1::MHz40 and arfcn == dl_arfnc_40MHz) {
+    return true;
+  }
+
+  return false;
+}
+
+static bool validate_band_n46(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+{
+  const std::array<unsigned, 2>  n46_b_10_dlarfnc = {782000, 788668};
+  const std::array<unsigned, 32> n46_b_20_dlarfnc = {
+      // clang-format off
+      744000, 745332, 746668, 748000, 749332, 750668, 752000, 753332, 754668, 756000, 765332, 766668, 768000, 769332,
+      770668, 772000, 773332, 774668, 776000, 777332, 778668, 780000, 781332, 783000, 784332, 785668, 787000, 788332,
+      789668, 791000, 792332, 793668
+      // clang-format on
+  };
+  const std::array<unsigned, 18> n46_b_40_dlarfnc = {
+      // clang-format off
+      744668, 746000, 748668, 751332, 754000, 755332, 766000, 767332, 770000, 772668, 775332, 778000, 780668, 783668,
+      786332, 787668, 790332, 793000
+      // clang-format on
+  };
+  const std::array<unsigned, 17> n46_b_60_dlarfnc = {
+      // clang-format off
+      745332, 746668, 748000,  752000, 753332, 754668, 766668, 768000, 769332, 773332, 774668, 778668, 780000, 784332,
+      785668, 791000, 792332
+      // clang-format on
+  };
+  const std::array<unsigned, 10> n46_b_80_dlarfnc = {
+      746000, 747332, 752668, 754000, 767332, 768668, 774000, 779332, 785000, 791668};
+  const std::array<unsigned, 4> n46_b_100_dlarfnc = {746668, 753332, 768000, 791000};
+
+  const nr_band_raster band_raster = fetch_band_raster(nr_band::n46, {});
+  if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
+      arfcn > band_raster.dl_nref_last) {
+    return false;
+  }
+
+  auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
+    return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
+  };
+  switch (bw) {
+    case bs_channel_bandwidth_fr1::MHz10: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_10_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz20: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_20_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz40: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_40_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz60: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_60_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz80: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_80_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz100: {
+      return dl_arfcn_exist(span<const unsigned>(n46_b_100_dlarfnc), arfcn);
+    }
+    default:
+      return false;
+  }
+}
+
+static bool validate_band_n96(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+{
+  const std::array<unsigned, 59> b_20_dlarfnc = {
+      // clang-format off
+      797000, 798332, 799668, 801000, 802332, 803668, 805000, 806332, 807668, 809000, 810332, 811668, 813000, 814332,
+      815668, 817000, 818332, 819668, 821000, 822332, 823668, 825000, 826332, 827668, 829000, 830332, 831668, 833000,
+      834332, 835668, 837000, 838332, 839668, 841000, 842332, 843668, 845000, 846332, 847668, 849000, 850332, 851668,
+      853000, 854332, 855668, 857000, 858332, 859668, 861000, 862332, 863668, 865000, 866332, 867668, 869000, 870332,
+      871668, 873000, 874332
+      // clang-format on
+  };
+  const std::array<unsigned, 29> b_40_dlarfnc = {
+      // clang-format off
+      797668, 800332, 803000, 805668, 808332, 811000, 813668, 816332, 819000, 821668, 824332, 827000, 829668, 832332,
+      835000, 837668, 840332, 843000, 845668, 848332, 851000, 853668, 856332, 859000, 861668, 864332, 867000, 869668,
+      872332
+      // clang-format on
+  };
+  const std::array<unsigned, 29> b_60_dlarfnc = {
+      // clang-format off
+      798332, 799668, 803668, 805000, 809000, 810332, 814332, 815668, 819668, 821000, 825000, 826332, 830332, 831668,
+      835668, 837000, 841000, 842332, 846332, 847668, 851668, 853000, 857000, 858332, 862332, 863668, 867668, 869000,
+      873000
+      // clang-format on
+  };
+  const std::array<unsigned, 14> b_80_dlarfnc = {
+      // clang-format off
+      799000, 804332, 809668, 815000, 820332, 825668, 831000, 836332, 841668, 847000, 852332, 857668, 863000, 868332
+      // clang-format on
+  };
+  const std::array<unsigned, 17> b_100_dlarfnc = {
+      // clang-format off
+      799668, 803668, 810332, 814332, 821000, 825000, 831668, 835668, 842332, 846332, 853000, 857000, 863668, 867668,
+      869000, 870332, 871668
+      // clang-format on
+  };
+
+  const nr_band_raster band_raster = fetch_band_raster(nr_band::n96, {});
+  if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
+      arfcn > band_raster.dl_nref_last) {
+    return false;
+  }
+
+  auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
+    return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
+  };
+
+  switch (bw) {
+    case bs_channel_bandwidth_fr1::MHz20: {
+      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz40: {
+      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz60: {
+      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz80: {
+      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz100: {
+      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn);
+    }
+    default:
+      return false;
+  }
+}
+
+static bool validate_band_n102(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+{
+  const std::array<unsigned, 24> b_20_dlarfnc = {
+      // clang-format off
+      797000, 798332, 799668, 801000, 802332, 803668, 805000, 806332, 807668, 809000, 810332, 811668, 813000, 814332,
+      815668, 817000, 818332, 819668, 821000, 822332, 823668, 825000, 826332, 827668
+      // clang-format on
+  };
+  const std::array<unsigned, 12> b_40_dlarfnc = {
+      // clang-format off
+      797668, 800332, 803000, 805668, 808332, 811000, 813668, 816332, 819000, 821668, 824332, 827000
+      // clang-format on
+  };
+  const std::array<unsigned, 12> b_60_dlarfnc = {
+      // clang-format off
+      798332, 799668, 803668, 805000, 809000, 810332, 814332, 815668, 819668, 821000, 825000, 826332
+      // clang-format on
+  };
+  const std::array<unsigned, 6> b_80_dlarfnc  = {799000, 804332, 809668, 815000, 820332, 825668};
+  const std::array<unsigned, 6> b_100_dlarfnc = {799668, 803668, 810332, 814332, 821000, 825000};
+
+  const nr_band_raster band_raster = fetch_band_raster(nr_band::n102, {});
+  if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
+      arfcn > band_raster.dl_nref_last) {
+    return false;
+  }
+
+  auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
+    return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
+  };
+
+  switch (bw) {
+    case bs_channel_bandwidth_fr1::MHz20: {
+      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz40: {
+      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz60: {
+      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz80: {
+      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn);
+    }
+    case bs_channel_bandwidth_fr1::MHz100: {
+      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn);
+    }
+    default:
+      return false;
+  }
+}
+
+static bool validate_band_n90(uint32_t arfcn, subcarrier_spacing scs)
+{
+  // Band n90 needs to be handled separately. Since it can take a Delta freq raster value among three possible ones
+  // {15kHz, 30kHz, 100kHz}, we need to first check if the DL ARFCN is compatible with 100kHz; if not, we assume Delta
+  // freq raster equal to the SCS common and check whether the DL ARFCN is compatible with this value.
+  // Try first 100kHz channel raster.
+  nr_band_raster band_raster = fetch_band_raster(nr_band::n90, delta_freq_raster::kHz100);
+  if (band_raster.band == srsran::nr_band::invalid) {
+    return false;
+  }
+
+  if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
+      ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
+    return true;
+  }
+
+  // The previous check failed, try now with freq raster equal to the SCS common.
+  band_raster = fetch_band_raster(
+      nr_band::n90, scs == subcarrier_spacing::kHz15 ? delta_freq_raster::kHz15 : delta_freq_raster::kHz30);
+  if (band_raster.band != srsran::nr_band::invalid) {
+    if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
+        ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
@@ -430,17 +638,47 @@ nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
   return nr_band::invalid;
 }
 
-error_type<std::string>
-srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, subcarrier_spacing scs)
+error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band                  band,
+                                                                          uint32_t                 arfcn,
+                                                                          subcarrier_spacing       scs,
+                                                                          bs_channel_bandwidth_fr1 bw)
 {
+  // Validates first the bands with peculiar ARFCN values.
+  if (band == nr_band::n28) {
+    return validate_band_n28(arfcn, bw) ? error_type<std::string>{}
+                                        : error_type<std::string>{fmt::format("Band is not valid")};
+  }
+
+  if (band == nr_band::n46) {
+    return validate_band_n46(band, arfcn, bw) ? error_type<std::string>{}
+                                              : error_type<std::string>{fmt::format("Band is not valid")};
+  }
+
+  if (band == nr_band::n90) {
+    return validate_band_n90(arfcn, scs) ? error_type<std::string>{}
+                                         : error_type<std::string>{fmt::format("Band is not valid")};
+  }
+
+  if (band == nr_band::n96) {
+    return validate_band_n96(band, arfcn, bw) ? error_type<std::string>{}
+                                              : error_type<std::string>{fmt::format("Band is not valid")};
+  }
+
+  if (band == nr_band::n102) {
+    return validate_band_n102(band, arfcn, bw) ? error_type<std::string>{}
+                                               : error_type<std::string>{fmt::format("Band is not valid")};
+  }
+
   // NOTE: This function restricts the choice of ARFCN for bands n41, n77, n78, and n79. As per Section 5.4.2.3,
-  // TS 38.104, Delta freq raster of 30kHz cannot be used for SSB SCS and SCS common of 15kHz. In this function we make
-  // a stronger requirement, i.e., we set Delta freq raster equal to the SSB SCS and SCS common.
+  // TS 38.104, Delta freq raster of 30kHz cannot be used for SSB SCS and SCS common of 15kHz. In this function we
+  // make a stronger requirement, i.e., we set Delta freq raster equal to the SSB SCS and SCS common.
 
   // Assume standard Delta freq raster of 100kHz.
   delta_freq_raster band_delta_freq_raster = delta_freq_raster::kHz100;
-  // Update Delta freq raster based on SCS for bands n41, n77, n78, and n79.
-  if (band == nr_band::n41 or band == nr_band::n77 or band == nr_band::n78 or band == nr_band::n79) {
+
+  // Update Delta freq raster based on SCS for bands n41, n41, n77, n78, and n79.
+  if (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
+      band == nr_band::n79 or band == nr_band::n104) {
     band_delta_freq_raster = scs == subcarrier_spacing::kHz15 ? delta_freq_raster::kHz15 : delta_freq_raster::kHz30;
   }
 
@@ -459,20 +697,29 @@ srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, 
   return {fmt::format("Band is not valid")};
 }
 
-uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
+uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, optional<nr_band> band)
 {
   // NOTE: The procedure implemented in this function is implementation-defined.
+  nr_band operating_band = band.has_value() ? band.value() : get_band_from_dl_arfcn(dl_arfcn);
+  ;
 
   // Return same ARFCN for TDD bands.
-  if (get_duplex_mode(get_band_from_dl_arfcn(dl_arfcn)) == duplex_mode::TDD) {
+  if (get_duplex_mode(operating_band) == duplex_mode::TDD) {
     return dl_arfcn;
   }
 
+  // Extra ARFCN value as per Table 5.4.2.3-1, TS 38.104, version 17.8.0 (see NOTE 4 in the table).
+  const uint32_t n28_b40_dl_arfcn = 155608U;
+  const uint32_t n28_b40_ul_arfcn = 144608U;
+  if (band == nr_band::n28 and dl_arfcn == n28_b40_dl_arfcn) {
+    return n28_b40_ul_arfcn;
+  }
+
   // Derive UL ARFCN for FDD bands.
-  for (const nr_band_raster& band : nr_band_table_fr1) {
-    if (band.band == get_band_from_dl_arfcn(dl_arfcn)) {
-      const uint32_t offset = (dl_arfcn - band.dl_nref_first) / band.dl_nref_step;
-      return (band.ul_nref_first + offset * band.ul_nref_step);
+  for (const nr_band_raster& b_it : nr_band_table_fr1) {
+    if (b_it.band == get_band_from_dl_arfcn(dl_arfcn)) {
+      const uint32_t offset = (dl_arfcn - b_it.dl_nref_first) / b_it.dl_nref_step;
+      return (b_it.ul_nref_first + offset * b_it.ul_nref_step);
     }
   }
 

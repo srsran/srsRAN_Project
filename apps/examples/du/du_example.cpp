@@ -383,7 +383,7 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   lower_phy_sector_description sector_config;
   sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs, frequency_range::FR1);
   sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn));
+  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, {}));
   sector_config.nof_rx_ports = 1;
   sector_config.nof_tx_ports = 1;
   phy_config.sectors.push_back(sector_config);
@@ -537,7 +537,7 @@ static std::unique_ptr<radio_session> build_radio(task_executor& executor, radio
   params.dl_frequency_hz = band_helper::nr_arfcn_to_freq(dl_arfcn);
   params.tx_gain         = tx_gain;
   params.tx_channel_args = tx_channel_args;
-  params.ul_frequency_hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn));
+  params.ul_frequency_hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, {}));
   params.rx_gain         = rx_gain;
   params.rx_channel_args = rx_channel_args;
 
@@ -570,7 +570,7 @@ int main(int argc, char** argv)
 
   // Calculate derived frequency parameters.
   double dl_center_freq = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  double ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn);
+  double ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, {});
   double ul_center_freq = band_helper::nr_arfcn_to_freq(ul_arfcn);
   du_logger.info("Starting du_example with DL_ARFCN={}, UL_ARFCN={}, DL center frequency {} Hz, UL center frequency {} "
                  "Hz, tx_gain={} dB, rx_gain={} dB",

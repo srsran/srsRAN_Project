@@ -221,7 +221,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
-  uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
+  uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
   // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
 
   const frequency_range freq_range =

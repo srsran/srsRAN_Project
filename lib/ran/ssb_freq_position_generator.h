@@ -67,7 +67,7 @@ private:
   /// Finds the \f$M\f$ parameter of the sync raster so that the SSB subcarriers are aligned to those of the CRBs.
   unsigned find_M_raster();
   /// Get the SSB central frequency, or SS_ref, given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
-  double get_ss_ref_hz(unsigned N, unsigned M);
+  double get_ss_ref_hz(unsigned N, unsigned M) const;
 
   /// Parameters that are passed to the constructor.
   const unsigned dl_arfcn;

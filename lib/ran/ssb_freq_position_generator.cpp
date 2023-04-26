@@ -14,7 +14,7 @@ static double get_f_ssb_0_hz(double ss_ref, subcarrier_spacing scs_ssb)
 // NOF_SSB_SUBCARRIERS - 1.
 static double get_f_ssb_ub_hz(double ss_ref, subcarrier_spacing scs_ssb)
 {
-  return ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
+  return ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2 - 1);
 }
 
 // Compute the offsetToPointA, depending on the SCScommon.
@@ -38,7 +38,7 @@ compute_offset_to_pointA(double f_ssb_0_hz, double point_A_hz, subcarrier_spacin
 static ssb_subcarrier_offset compute_k_ssb(double f_ssb_0_hz, double point_A_hz, ssb_offset_to_pointA offset_to_pA)
 {
   ssb_subcarrier_offset k_ssb;
-  unsigned              f_crb_ssb_khz =
+  const double          f_crb_ssb_khz =
       point_A_hz * HZ_TO_KHZ +
       static_cast<double>(NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15) * offset_to_pA.to_uint());
   k_ssb = static_cast<unsigned>(f_ssb_0_hz * HZ_TO_KHZ - f_crb_ssb_khz) / scs_to_khz(subcarrier_spacing::kHz15);
@@ -66,10 +66,10 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   // NOTE: The difference between bw_ub_hz and point_A_hz is 1 SCS smaller than n_rbs * NOF_SUBCARRIERS_PER_RB *
   // SCS_common. This is because the distance between the first and last subcarrier (in numbers of subcarriers)  is
   // NOF_SUBCARRIERS_PER_RB - 1.
-  bw_ub_hz = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
+  bw_ub_hz = point_A_hz + static_cast<double>(n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1);
 
   // Lower-bound for the SSB central frequency, or SS_ref, as a function of pointA.
-  double ss_ref_l_bound_hz =
+  const double ss_ref_l_bound_hz =
       point_A_hz + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
 
   // Get the starting point of parameter N for the sync-raster. This allows us to avoid the generation of all possible
@@ -92,10 +92,10 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   ssb_first_symbol = ssb_case == ssb_pattern_case::B ? 4 : 2;
 }
 
-double ssb_freq_position_generator::get_ss_ref_hz(unsigned N, unsigned M)
+double ssb_freq_position_generator::get_ss_ref_hz(unsigned N, unsigned M) const
 {
   // Get SS_ref given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
-  double ss_ref =
+  const double ss_ref =
       dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ
           ? static_cast<double>(N) * N_SIZE_SYNC_RASTER_1_HZ + static_cast<double>(M) * M_SIZE_SYNC_RASTER_1_HZ
           : N_REF_OFFSET_3_GHZ_24_5_GHZ + static_cast<double>(N) * N_SIZE_SYNC_RASTER_2_HZ;
@@ -109,12 +109,12 @@ unsigned ssb_freq_position_generator::find_M_raster()
     return M_raster;
   }
 
-  for (unsigned M : {1, 3, 5}) {
-    double f_ssb_N_M_hz = get_ss_ref_hz(N_raster, M);
-    double f_ssb_0_hz   = get_f_ssb_0_hz(f_ssb_N_M_hz, scs_ssb);
-    double f_ssb_ub_hz  = get_f_ssb_ub_hz(f_ssb_N_M_hz, scs_ssb);
+  for (const unsigned M : {1, 3, 5}) {
+    const double f_ssb_N_M_hz = get_ss_ref_hz(N_raster, M);
+    const double f_ssb_0_hz   = get_f_ssb_0_hz(f_ssb_N_M_hz, scs_ssb);
+    const double f_ssb_ub_hz  = get_f_ssb_ub_hz(f_ssb_N_M_hz, scs_ssb);
 
-    bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
+    const bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
 
     // An SSB centre frequency SS_ref is satisfactory if (i) if the SSB falls within the band and (ii) SS_ref falls into
     // the subcarrier grid of CRBs; or, equivalently, if the distance of the first SSB's subcarrier from pointA can be
@@ -127,11 +127,12 @@ unsigned ssb_freq_position_generator::find_M_raster()
     // 2) Condition "SS_ref falls into the subcarrier grid of CRBs" is implementation defined and comes from PHY
     // constraints.
     if (is_ssb_inside_band) {
-      bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
-      bool is_multiple_of_scs   = is_scs_30khz_spacing ? fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
-                                                            scs_to_khz(subcarrier_spacing::kHz30) * KHZ_TO_HZ) == 0.0
-                                                       : fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
-                                                            scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ) == 0.0;
+      const bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
+      const bool is_multiple_of_scs   = is_scs_30khz_spacing
+                                            ? fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
+                                                 scs_to_khz(subcarrier_spacing::kHz30) * KHZ_TO_HZ) == 0.0
+                                            : fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
+                                                 scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ) == 0.0;
 
       if (is_multiple_of_scs) {
         M_raster = M;
@@ -159,9 +160,9 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
       M_raster = find_M_raster();
     }
 
-    double f_ssb_N_M_hz = get_ss_ref_hz(N_raster, M_raster);
-    double f_ssb_0_hz   = get_f_ssb_0_hz(f_ssb_N_M_hz, scs_ssb);
-    double f_ssb_ub_hz  = get_f_ssb_ub_hz(f_ssb_N_M_hz, scs_ssb);
+    const double f_ssb_N_M_hz = get_ss_ref_hz(N_raster, M_raster);
+    const double f_ssb_0_hz   = get_f_ssb_0_hz(f_ssb_N_M_hz, scs_ssb);
+    const double f_ssb_ub_hz  = get_f_ssb_ub_hz(f_ssb_N_M_hz, scs_ssb);
 
     // An SSB centre frequency SS_ref is satisfactory if (i) if the SSB falls within the band and (ii) SS_ref falls into
     // the subcarrier grid of CRBs; or, equivalently, if the distance of the first SSB's subcarrier from pointA can be
@@ -173,11 +174,11 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
     // upper bound.
     // 2) Condition "SS_ref falls into the subcarrier grid of CRBs" is implementation defined and comes from PHY
     // constraints.
-    bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
+    const bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
 
     if (is_ssb_inside_band) {
-      bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
-      bool is_multiple_of_scs =
+      const bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
+      const bool is_multiple_of_scs =
           is_scs_30khz_spacing
               ? fmod(f_ssb_0_hz - point_A_hz, static_cast<double>(scs_to_khz(subcarrier_spacing::kHz30) * KHZ_TO_HZ)) ==
                     0.0
