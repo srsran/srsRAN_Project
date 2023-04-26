@@ -36,19 +36,21 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ra.msg3_mcs_index          = 0;
   cfg.ra.rar_mcs_index           = 0;
 
-  /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for SIB1.
+  // As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for SIB1.
   cfg.si.sib1_mcs_index    = 5;
   cfg.si.sib1_retx_period  = sib1_rtx_periodicity::ms160;
   cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 
-  /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for Paging.
+  // As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for Paging.
   cfg.pg.paging_mcs_index    = 5;
   cfg.pg.paging_dci_aggr_lev = aggregation_level::n4;
   cfg.pg.max_paging_retries  = 2;
 
-  cfg.ue.max_nof_harq_retxs = 4;
+  cfg.ue.dl_mcs             = {0, 28};
   cfg.ue.initial_cqi        = 3;
-  /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
+  cfg.ue.ul_mcs             = {0, 28};
+  cfg.ue.max_nof_harq_retxs = 4;
+  // Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
   cfg.ue.max_msg4_mcs                     = 7;
   cfg.ue.max_consecutive_pusch_kos        = 128;
   cfg.ue.initial_ul_sinr                  = 5;
