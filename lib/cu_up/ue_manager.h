@@ -34,7 +34,7 @@ public:
   using ue_db_t = slotted_array<std::unique_ptr<ue_context>, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
 
-  ue_context* add_ue(ue_context_cfg cfg) override;
+  ue_context* add_ue(const ue_context_cfg& cfg) override;
   void        remove_ue(ue_index_t ue_index) override;
   ue_context* find_ue(ue_index_t ue_index) override;
   size_t      get_nof_ues() override;

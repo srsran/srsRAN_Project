@@ -250,7 +250,7 @@ struct amf_appconfig {
 };
 
 struct cu_cp_appconfig {
-  int inactivity_timer = 30; // in seconds
+  int inactivity_timer = 120; // in seconds
 };
 
 struct log_appconfig {

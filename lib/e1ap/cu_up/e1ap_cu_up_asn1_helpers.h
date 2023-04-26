@@ -30,8 +30,7 @@ check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_s
 
   // Check activity level
   if (asn1_request->activity_notif_level.value != asn1::e1ap::activity_notif_level_e::ue) {
-    logger.warning("Unsupported activity notification level. level={}",
-                   asn1_request->activity_notif_level.value.to_string());
+    logger.warning("Unsupported activity notification level: {}", asn1_request->activity_notif_level.value.to_string());
     return false;
   }
   if (!asn1_request->ue_inactivity_timer_present) {
