@@ -497,12 +497,15 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
 
   pusch.n_id = cell_cfg.pci;
 
-  if (opt_rach_cfg.has_value()) {
-    pusch.transform_precoding = opt_rach_cfg.value().msg3_transform_precoder;
-  }
   // Dedicated config overrides previously set value.
   if (pusch_cfg_ded.has_value()) {
-    pusch.transform_precoding = pusch_cfg_ded.value().trans_precoder != pusch_config::transform_precoder::not_set;
+    pusch.transform_precoding = false;
+    if (pusch_cfg_ded.value().trans_precoder != pusch_config::transform_precoder::not_set) {
+      pusch.transform_precoding = pusch_cfg_ded.value().trans_precoder == pusch_config::transform_precoder::enabled;
+    } else if (opt_rach_cfg.has_value()) {
+      pusch.transform_precoding = opt_rach_cfg.value().msg3_transform_precoder;
+    }
+
     if (pusch_cfg_ded.value().data_scrambling_id_pusch.has_value()) {
       pusch.n_id = pusch_cfg_ded.value().data_scrambling_id_pusch.value();
     }

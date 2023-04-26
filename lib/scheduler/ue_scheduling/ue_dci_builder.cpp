@@ -121,10 +121,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.tx_config_non_codebook       = false;
   dci_sz_cfg.ptrs_uplink_configured       = false;
   dci_sz_cfg.dynamic_beta_offsets         = false;
-  if (opt_rach_cfg.has_value()) {
-    dci_sz_cfg.transform_precoding_enabled = opt_rach_cfg.value().msg3_transform_precoder;
-  }
-  dci_sz_cfg.pusch_res_allocation_type = resource_allocation::resource_allocation_type_1;
+  dci_sz_cfg.transform_precoding_enabled  = false;
+  dci_sz_cfg.pusch_res_allocation_type    = resource_allocation::resource_allocation_type_1;
   if (opt_ul_cfg.has_value()) {
     const optional<pusch_config>&              opt_pusch_cfg    = opt_ul_cfg.value().init_ul_bwp.pusch_cfg;
     const optional<srs_config>&                opt_srs_cfg      = opt_ul_cfg.value().init_ul_bwp.srs_cfg;
@@ -132,8 +130,12 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
     if (opt_pusch_cfg.has_value()) {
       dci_sz_cfg.tx_config_non_codebook = opt_pusch_cfg.value().tx_cfg != pusch_config::tx_config::not_set and
                                           opt_pusch_cfg.value().tx_cfg == pusch_config::tx_config::non_codebook;
-      dci_sz_cfg.transform_precoding_enabled =
-          opt_pusch_cfg.value().trans_precoder != pusch_config::transform_precoder::not_set;
+      if (opt_pusch_cfg.value().trans_precoder != pusch_config::transform_precoder::not_set) {
+        dci_sz_cfg.transform_precoding_enabled =
+            opt_pusch_cfg.value().trans_precoder == pusch_config::transform_precoder::enabled;
+      } else if (opt_rach_cfg.has_value()) {
+        dci_sz_cfg.transform_precoding_enabled = opt_rach_cfg.value().msg3_transform_precoder;
+      }
       if ((opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value() and
            opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().ptrs.has_value()) or
           (opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.has_value() and
@@ -619,12 +621,13 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   f0_1.redundancy_version  = get_redundancy_version(h_ul.tb().nof_retxs);
 
   // TODO: Set values for -
-  //  1. first_dl_assignment_index - not optional
-  //  2. srs_resource_indicator
-  //  3. precoding_info_nof_layers
-  //  4. beta_offset_indicator
-  //  5. ptrs_dmrs_association
-  //  6. cbg_transmission_info
+  //  - srs_resource_indicator
+  //  - precoding_info_nof_layers
+  //  - beta_offset_indicator
+  //  - ptrs_dmrs_association
+  //  - cbg_transmission_info
 
-  f0_1.ul_sch_indicator = 1;
+  // TODO: Set correct value based on TS 38.213, clause 9.1.3.2.
+  f0_1.first_dl_assignment_index = 0;
+  f0_1.ul_sch_indicator          = 1;
 }
