@@ -68,7 +68,8 @@ public:
     logger(logger_),
     dl_rg_pool(std::move(dl_rg_pool_)),
     ul_rg_pool(std::move(ul_rg_pool_)),
-    prach_buf(create_prach_buffer_short(1, 1)),
+    prach_buf(create_prach_buffer_short(prach_constants::MAX_NOF_PRACH_TD_OCCASIONS,
+                                        prach_constants::MAX_NOF_PRACH_FD_OCCASIONS)),
     ssb(std::move(ssb_)),
     data_modulator(std::move(data_modulator_)),
     gateway(gateway_),
@@ -122,7 +123,7 @@ public:
       prach_context.start_symbol          = 0;
       prach_context.format                = prach_format_type::A1;
       prach_context.rb_offset             = 0;
-      prach_context.nof_td_occasions      = 1;
+      prach_context.nof_td_occasions      = 6;
       prach_context.nof_fd_occasions      = 1;
       prach_context.nof_prb_ul_grid       = nof_subcs / NRE;
       prach_context.pusch_scs             = to_subcarrier_spacing(context.slot.numerology());

@@ -264,7 +264,7 @@ static void usage(std::string prog)
   fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print("\t-u Enable uplink processing [Default {}]\n", enable_ul_processing);
-  fmt::print("\t-u Enable PRACH processing [Default {}]\n", enable_prach_processing);
+  fmt::print("\t-p Enable PRACH processing [Default {}]\n", enable_prach_processing);
   fmt::print(
       "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
