@@ -112,13 +112,16 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.ldpc_decoder_iterations = 6;
   upper_config.ldpc_decoder_early_stop = true;
 
-  unsigned nof_slots_per_subframe        = get_nof_slots_per_subframe(params.scs);
-  upper_config.nof_slots_dl_rg           = dl_pipeline_depth * nof_slots_per_subframe;
-  upper_config.nof_dl_processors         = upper_config.nof_slots_dl_rg;
-  upper_config.nof_slots_ul_rg           = ul_pipeline_depth * nof_slots_per_subframe;
-  upper_config.nof_ul_processors         = upper_config.nof_slots_ul_rg;
-  upper_config.max_ul_thread_concurrency = 4;
-  upper_config.nof_prach_buffer          = prach_pipeline_depth * nof_slots_per_subframe;
+  unsigned nof_slots_per_subframe         = get_nof_slots_per_subframe(params.scs);
+  upper_config.nof_slots_dl_rg            = dl_pipeline_depth * nof_slots_per_subframe;
+  upper_config.nof_dl_processors          = upper_config.nof_slots_dl_rg;
+  upper_config.nof_slots_ul_rg            = ul_pipeline_depth * nof_slots_per_subframe;
+  upper_config.nof_ul_processors          = upper_config.nof_slots_ul_rg;
+  upper_config.max_ul_thread_concurrency  = 4;
+  upper_config.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
+  upper_config.max_nof_td_prach_occasions = 1;
+  upper_config.max_nof_fd_prach_occasions = 1;
+  upper_config.is_prach_long_format       = true;
 
   upper_config.active_scs                                  = {};
   upper_config.active_scs[to_numerology_value(params.scs)] = true;

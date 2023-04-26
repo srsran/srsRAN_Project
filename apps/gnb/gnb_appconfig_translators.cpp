@@ -1,5 +1,6 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include <map>
 
@@ -501,6 +502,15 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     static constexpr unsigned ul_pipeline_depth    = 8;
     static constexpr unsigned prach_pipeline_depth = 1;
 
+    nr_band band = band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn);
+    if (cell.band.has_value()) {
+      band = config.common_cell_cfg.band.value();
+    }
+    duplex_mode duplex = band_helper::get_duplex_mode(band);
+
+    const prach_configuration prach_cfg =
+        prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index);
+
     cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
@@ -511,12 +521,15 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 
-    cfg.nof_slots_dl_rg           = dl_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_dl_processors         = cfg.nof_slots_dl_rg;
-    cfg.nof_slots_ul_rg           = ul_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_ul_processors         = cfg.nof_slots_ul_rg;
-    cfg.max_ul_thread_concurrency = config.expert_phy_cfg.nof_ul_threads + 1;
-    cfg.nof_prach_buffer          = prach_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_slots_dl_rg            = dl_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_dl_processors          = cfg.nof_slots_dl_rg;
+    cfg.nof_slots_ul_rg            = ul_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_ul_processors          = cfg.nof_slots_ul_rg;
+    cfg.max_ul_thread_concurrency  = config.expert_phy_cfg.nof_ul_threads + 1;
+    cfg.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
+    cfg.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;
+    cfg.max_nof_fd_prach_occasions = 1;
+    cfg.is_prach_long_format       = is_long_preamble(prach_cfg.format);
 
     cfg.active_scs                                                                = {};
     cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;
