@@ -139,7 +139,7 @@ pull_src_cache:
     AUTO_DETECT_ISA: ""
     # CI
     DOCKER_BUILDER_VERSION: "1.7.8"
-    UPLOAD_ARTIFACTS: "" # Empty by default
+    SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
   needs:
@@ -257,7 +257,7 @@ pull_src_cache:
   after_script:
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - |
-      if [ -z "${UPLOAD_ARTIFACTS}" ]; then
+      if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
       fi
   timeout: 4h
@@ -356,7 +356,7 @@ smoke tsan cached:
   extends: .smoke tsan
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -392,7 +392,7 @@ smoke archlinux cached:
 smoke release clean:
   extends: .smoke release
   variables:
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
@@ -467,7 +467,7 @@ smoke release update cache:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -479,7 +479,7 @@ smoke tsan update cache:
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -519,7 +519,7 @@ basic debug:
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
 
 basic asan:
   extends: .build_and_unit
@@ -535,7 +535,7 @@ basic asan:
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
 
 basic valgrind:
   extends: .build_and_unit
@@ -918,7 +918,7 @@ custom-build:
   variables:
     ENABLE_ZEROMQ: ""
     AUTO_DETECT_ISA: ""
-    UPLOAD_ARTIFACTS: "True"
+    SAVE_ARTIFACTS: "True"
   cache:
     - *cache_src_get
     - *cache_build_get

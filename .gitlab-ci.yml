@@ -22,6 +22,7 @@ include:
     ref: "5"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
+  - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
 
 stages:
