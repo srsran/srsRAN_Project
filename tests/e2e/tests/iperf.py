@@ -28,7 +28,7 @@ from .steps.stub import iperf, start_and_attach
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
-HIGH_BITRATE = int(20e6)
+HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
