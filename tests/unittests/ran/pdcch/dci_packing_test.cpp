@@ -1477,6 +1477,11 @@ TEST_P(DciNonFallbackPackingFixture, DciFormatZeroOnePacking)
     // Randomize DCI size configuration parameters that are not in the test case and generate the aligned DCI sizes.
     dci_sizes aligned_sizes = generate_dci_sizes();
 
+    // Assert that unsupported payload fields are not included in the DCI payload format.
+    ASSERT_TRUE(aligned_sizes.format0_1_ue_size.value().precoding_info_nof_layers == units::bits(0));
+    ASSERT_TRUE(aligned_sizes.format0_1_ue_size.value().ptrs_dmrs_association == units::bits(0));
+    ASSERT_TRUE(aligned_sizes.format0_1_ue_size.value().ul_sul_indicator == units::bits(0));
+
     // Check that the computed DCI Format 0_0 and 1_0 payload sizes match for Common and UE-specific Search Spaces.
     ASSERT_EQ(aligned_sizes.format0_0_common_size.total, aligned_sizes.format1_0_common_size.total);
     ASSERT_EQ(aligned_sizes.format0_0_ue_size.value().total, aligned_sizes.format1_0_ue_size.value().total);

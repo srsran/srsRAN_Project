@@ -326,8 +326,7 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   }
 
   // PT-RS/DM-RS association - 0 or 2 bits.
-  sizes.ptrs_dmrs_association = units::bits(2);
-  sizes.total += sizes.ptrs_dmrs_association;
+  // ... Not implemented.
 
   // Beta offset indicator - 0 or 2 bits.
   sizes.beta_offset_indicator = dci_config.dynamic_beta_offsets ? units::bits(2) : units::bits(0);
@@ -1166,6 +1165,12 @@ dci_payload srsran::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
 dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
 {
   srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
+  // Assertions for unsupported fields.
+  srsran_assert(!config.ul_sul_indicator.has_value(), "UL/SUL indicator field is not currently supported.");
+  srsran_assert(!config.precoding_info_nof_layers.has_value(),
+                "Precoding information and number of layers field is not currently supported.");
+  srsran_assert(!config.ptrs_dmrs_association.has_value(), "PT-RS/DM-RS association field is not currently supported.");
 
   dci_payload payload;
 
