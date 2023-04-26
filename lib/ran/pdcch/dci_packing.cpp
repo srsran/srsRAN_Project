@@ -10,6 +10,7 @@
 
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/adt/span.h"
+#include "srsran/ran/pdcch/dci_packing_formatters.h"
 #include "srsran/support/math_utils.h"
 #include <unordered_set>
 
@@ -873,9 +874,9 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
 
   // Assert total payload size.
   srsran_assert(units::bits(payload.size()) == config.payload_size.total,
-                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                "Constructed payload size (i.e., {}) does not match expected payload size. Expected sizes:\n{}",
                 units::bits(payload.size()),
-                config.payload_size.total);
+                config.payload_size);
 
   return payload;
 }
@@ -948,11 +949,11 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
     payload.push_back(0x00U, config.payload_size.padding_incl_ul_sul.value());
   }
 
-  // Assert total payload size.`
+  // Assert total payload size.
   srsran_assert(units::bits(payload.size()) == config.payload_size.total,
-                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                "Constructed payload size (i.e., {}) does not match expected payload size. Expected sizes:\n{}",
                 units::bits(payload.size()),
-                config.payload_size.total);
+                config.payload_size);
 
   return payload;
 }
@@ -1004,9 +1005,9 @@ dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
 
   // Assert total payload size.
   srsran_assert(units::bits(payload.size()) == config.payload_size.total,
-                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                "Constructed payload size (i.e., {}) does not match expected payload size. Expected sizes:\n{}",
                 units::bits(payload.size()),
-                config.payload_size.total);
+                config.payload_size);
 
   return payload;
 }
@@ -1308,9 +1309,9 @@ dci_payload srsran::dci_0_1_pack(const dci_0_1_configuration& config)
 
   // Assert total payload size.
   srsran_assert(units::bits(payload.size()) == config.payload_size.total,
-                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                "Constructed payload size (i.e., {}) does not match expected payload size. Expected sizes:\n{}",
                 units::bits(payload.size()),
-                config.payload_size.total);
+                config.payload_size);
 
   return payload;
 }
@@ -1454,9 +1455,9 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
 
   // Assert total payload size.
   srsran_assert(units::bits(payload.size()) == config.payload_size.total,
-                "Constructed payload size (i.e., {}) does not match expected size (i.e., {}).",
+                "Constructed payload size (i.e., {}) does not match expected payload size. Expected sizes:\n{}",
                 units::bits(payload.size()),
-                config.payload_size.total);
+                config.payload_size);
 
   return payload;
 }
