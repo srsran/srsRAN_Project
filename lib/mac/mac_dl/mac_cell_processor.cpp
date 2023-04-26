@@ -96,7 +96,7 @@ static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4
   static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> ret(
       payload.size(), crc_pass ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
   if (crc_pass) {
-    for (unsigned i = 0; i != ret.size(); ++i) {
+    for (unsigned i = 0, e = ret.size(); i != e; ++i) {
       if (payload.test(i)) {
         ret[i] = srsran::mac_harq_ack_report_status::ack;
       }
@@ -129,7 +129,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       if (pucch.harq_info.has_value()) {
         // NOTES:
         // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
-        // UCIc with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
+        // UCIs with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
         // retransmit the packet.
         // - This is to handle the case of simultaneous SR + HARQ UCI, for which we receive 2 UCI PDUs from the PHY,
         // 1 for SR + HARQ, 1 for HARQ only; note that only the SR + HARQ UCI is filled by the UE, meaning that we

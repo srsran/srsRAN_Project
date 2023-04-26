@@ -284,6 +284,9 @@ public:
   /// Current size of the bounded_bitset.
   size_t size() const noexcept { return cur_size; }
 
+  /// Returns true if the bounded_bitset size is 0.
+  bool empty() const noexcept { return size() == 0; }
+
   /// Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered.
   void resize(size_t new_size)
   {
