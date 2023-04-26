@@ -12,6 +12,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/prach/prach_configuration.h"
 
 using namespace srsran;
 using namespace srsran::config_helpers;
@@ -223,10 +224,12 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
   // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
 
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-      params.channel_bw_mhz,
-      params.scs_common,
-      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+  const frequency_range freq_range =
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1;
+  const duplex_mode duplex = band_helper::get_duplex_mode(
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
+
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
 
   double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), nof_crbs, params.scs_common);
@@ -242,13 +245,17 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
       params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = 1;
   // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
-  cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
-  cfg.init_ul_bwp.rach_cfg_common->restricted_set                                = restricted_set_config::UNRESTRICTED;
+  cfg.init_ul_bwp.rach_cfg_common->msg1_scs       = params.scs_common;
+  cfg.init_ul_bwp.rach_cfg_common->restricted_set = restricted_set_config::UNRESTRICTED;
+  // Set l839 for long preamble formats, l139 for short preamble formats, as per Tables 6.3.3.1-1 and 6.3.3.1-2,
+  // TS 38.211
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_or_l139 = is_long_preamble(
+      prach_configuration_get(freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
+          .format);
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index                          = 1;
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder                       = false;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 3;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
