@@ -321,17 +321,16 @@ protected:
     const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                   bench->sched_res->dl.dl_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    if (it == bench->sched_res->dl.dl_pdcchs.end()) {
+      return {};
+    }
 
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
     if (it->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
-      return it == bench->sched_res->dl.dl_pdcchs.end()
-                 ? optional<slot_point>{nullopt}
-                 : current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+      return current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
     }
-    return it == bench->sched_res->dl.dl_pdcchs.end()
-               ? optional<slot_point>{nullopt}
-               : current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+    return current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
@@ -666,6 +665,11 @@ TEST_P(multiple_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch)
   }
 }
 
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+// See https://github.com/google/googletest/issues/3805.
+void PrintTo(const multiple_ue_test_params&, ::std::ostream*) {}
+
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
                          testing::Values(multiple_ue_test_params{.nof_ues                  = 3,
@@ -679,7 +683,15 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                          multiple_ue_test_params{.nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::TDD}));
+                                                                 .duplx_mode               = duplex_mode::TDD}),
+                         [](const testing::TestParamInfo<multiple_ue_sched_tester::ParamType>& params) -> std::string {
+                           const auto& p = params.param;
+                           return fmt::format("nof_ues_{}_buffer_size_{}_{}_mode_{}",
+                                              p.nof_ues,
+                                              p.min_buffer_size_in_bytes,
+                                              p.max_buffer_size_in_bytes,
+                                              to_string(p.duplx_mode));
+                         });
 
 int main(int argc, char** argv)
 {
