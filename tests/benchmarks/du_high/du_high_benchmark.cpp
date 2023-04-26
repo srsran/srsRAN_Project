@@ -329,7 +329,7 @@ public:
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};
-  unsigned                           slot_count;
+  unsigned                           slot_count = 0;
   test_helpers::dummy_mac_pcap       pcap;
 
   byte_buffer pdcp_pdu;
