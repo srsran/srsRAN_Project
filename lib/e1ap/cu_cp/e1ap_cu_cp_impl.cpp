@@ -233,6 +233,15 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
 {
   cu_cp_inactivity_notification inactivity_notification;
 
+  if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value))) {
+    logger.error("Can't find UE - dropping InactivityNotification");
+    return;
+  }
+
+  // Get UE context
+  e1ap_ue_context& ue_ctxt         = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value)];
+  inactivity_notification.ue_index = ue_ctxt.ue_index;
+
   switch (msg->activity_info->type()) {
     // DRB activity notification level
     case asn1::e1ap::activity_info_c::types_opts::options::drb_activity_list: {

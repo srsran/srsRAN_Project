@@ -12,6 +12,7 @@
 #include "e1ap_cu_cp_test_helpers.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -74,12 +75,12 @@ TEST_F(e1ap_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_mess
 
 TEST_F(e1ap_cu_cp_test, when_valid_inactivity_message_received_then_message_is_forwarded_to_cu_cp)
 {
-  // Generate Bearer Context Inactivity Notification with UE activity level
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
-  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+  // Test Preamble.
+  auto& ue = create_ue();
 
-  e1ap_message inactivity_notification =
-      generate_bearer_context_inactivity_notification_with_ue_level(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+  // Generate Bearer Context Inactivity Notification with UE activity level
+  e1ap_message inactivity_notification = generate_bearer_context_inactivity_notification_with_ue_level(
+      ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
 
   e1ap->handle_message(inactivity_notification);
 
@@ -89,12 +90,12 @@ TEST_F(e1ap_cu_cp_test, when_valid_inactivity_message_received_then_message_is_f
 
 TEST_F(e1ap_cu_cp_test, when_invalid_inactivity_message_received_then_message_is_not_forwarded_to_cu_cp)
 {
-  // Generate Invalid Bearer Context Inactivity Notification
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(0);
-  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(0);
+  // Test Preamble.
+  auto& ue = create_ue();
 
+  // Generate Invalid Bearer Context Inactivity Notification
   e1ap_message inactivity_notification =
-      generate_invalid_bearer_context_inactivity_notification(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      generate_invalid_bearer_context_inactivity_notification(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
 
   e1ap->handle_message(inactivity_notification);
 
