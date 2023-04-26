@@ -8,6 +8,9 @@
  *
  */
 
+#include <srsran/gateways/baseband/baseband_gateway_buffer.h>
+#include <srsran/gateways/baseband/baseband_gateway_receiver.h>
+#include <srsran/gateways/baseband/baseband_gateway_transmitter.h>
 #include <srsran/radio/radio_factory.h>
 #include <srsran/support/executors/task_worker.h>
 #include <srsran/support/srsran_assert.h>
@@ -199,7 +202,7 @@ static void trx_srsran_write2(TRXState*         s1,
   // Extract context and transmitter interface.
   trx_srsran_session_context& context = *static_cast<trx_srsran_session_context*>(s1->opaque);
   srsran_assert(context.session, "Invalid session.");
-  baseband_gateway_transmitter& transmitter = context.session->get_baseband_gateway().get_transmitter();
+  baseband_gateway_transmitter& transmitter = context.session->get_baseband_gateway().get_transmitter(tx_port_index);
 
   bool padding_request  = md->flags & TRX_WRITE_MD_FLAG_PADDING;
   bool end_of_burst     = md->flags & TRX_WRITE_MD_FLAG_END_OF_BURST;
@@ -237,7 +240,7 @@ static void trx_srsran_write2(TRXState*         s1,
     baseband_gateway_buffer_zeros buffer(context.tx_port_channel_count[tx_port_index], count);
 
     // Transmit zeros.
-    transmitter.transmit(tx_port_index, metadata, buffer);
+    transmitter.transmit(buffer, metadata);
 
     return;
   }
@@ -246,7 +249,7 @@ static void trx_srsran_write2(TRXState*         s1,
   baseband_gateway_buffer_trx buffer(psamples, count, context.tx_port_channel_count[tx_port_index]);
 
   // Transmit baseband.
-  transmitter.transmit(tx_port_index, metadata, buffer);
+  transmitter.transmit(buffer, metadata);
 }
 
 static int trx_srsran_read2(TRXState*        s1,
@@ -285,7 +288,7 @@ static int trx_srsran_read2(TRXState*        s1,
   // Extract context and receiver interface.
   trx_srsran_session_context& context = *static_cast<trx_srsran_session_context*>(s1->opaque);
   srsran_assert(context.session, "Invalid session.");
-  baseband_gateway_receiver& receiver = context.session->get_baseband_gateway().get_receiver();
+  baseband_gateway_receiver& receiver = context.session->get_baseband_gateway().get_receiver(rf_port_index);
 
   // if (md != nullptr && md->flags) {
   //   fmt::print("Read2 flags {} not implemented.", md->flags);
@@ -295,7 +298,7 @@ static int trx_srsran_read2(TRXState*        s1,
   baseband_gateway_buffer_trx buffer(psamples, count, context.rx_port_channel_count[rf_port_index]);
 
   // Receive baseband.
-  baseband_gateway_receiver::metadata metadata = receiver.receive(buffer, rf_port_index);
+  baseband_gateway_receiver::metadata metadata = receiver.receive(buffer);
 
   // Fill reception metadata.
   if (ptimestamp != nullptr) {
@@ -419,7 +422,7 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
 
   // Create radio session.
   context.session = context.factory->create(configuration, *context.async_task_executor, context.notification_handler);
-  srsran_assert(context.session, "Invalid session.");
+  report_fatal_error_if_not(context.session, "Invalid session.");
 
   // Half millisecond packets.
   context.tx_samples_per_packet = p->sample_rate[0].num / 500;
