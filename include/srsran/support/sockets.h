@@ -11,11 +11,8 @@
 #pragma once
 
 #include "srsran/gateways/sctp_network_gateway.h"
-#include "srsran/srslog/srslog.h"
 #include <arpa/inet.h>
-#include <linux/sctp.h>
 #include <netdb.h>
-#include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
