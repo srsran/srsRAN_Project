@@ -94,8 +94,15 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
 
     // PRACH config.
-    rach_config_common& rach_cfg                           = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-    rach_cfg.rach_cfg_generic.prach_config_index           = base_cell.prach_cfg.prach_config_index;
+    rach_config_common& rach_cfg                 = *out_cell.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+    rach_cfg.rach_cfg_generic.prach_config_index = base_cell.prach_cfg.prach_config_index;
+    rach_cfg.prach_root_seq_index_l839_or_l139   = is_long_preamble(
+        prach_configuration_get(
+            param.band.has_value() ? band_helper::get_freq_range(param.band.value()) : frequency_range::FR1,
+            band_helper::get_duplex_mode(param.band.has_value() ? param.band.value()
+                                                                : band_helper::get_band_from_dl_arfcn(param.dl_arfcn)),
+            base_cell.prach_cfg.prach_config_index)
+            .format);
     rach_cfg.prach_root_seq_index                          = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
     rach_cfg.total_nof_ra_preambles                        = base_cell.prach_cfg.total_nof_ra_preambles;
@@ -563,7 +570,8 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ue.ul_mcs            = {pusch.min_ue_mcs, pusch.max_ue_mcs};
 
   // RA parameters.
-  const prach_appconfig& prach       = config.common_cell_cfg.prach_cfg;
+  const prach_appconfig& prach = config.common_cell_cfg.prach_cfg;
+
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
