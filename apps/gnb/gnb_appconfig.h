@@ -101,9 +101,11 @@ struct pdcch_appconfig {
 
 /// PDSCH application configuration.
 struct pdsch_appconfig {
-  /// Minimum modulation and coding scheme indexe for C-RNTI allocations.
+  /// Minimum modulation and coding scheme index for C-RNTI PDSCH allocations. Note that setting a high minimum MCS
+  /// may lead to a high BLER if the SINR is low.
   uint8_t min_ue_mcs = 0;
-  /// Maximum modulation and coding scheme indexe for C-RNTI allocations.
+  /// Maximum modulation and coding scheme index for C-RNTI PDSCH allocations. To set a fixed MCS, set \c min_ue_mcs
+  /// equal to the \c max_ue_mcs.
   uint8_t max_ue_mcs = 28;
   /// RAR modulation and coding scheme index.
   unsigned fixed_rar_mcs = 0;
@@ -115,9 +117,11 @@ struct pdsch_appconfig {
 
 /// PUSCH application configuration.
 struct pusch_appconfig {
-  /// Minimum UE modulation and coding scheme index.
+  /// Minimum modulation and coding scheme index for C-RNTI PUSCH allocations. Note that setting a high minimum MCS
+  /// may lead to a high BLER if the SINR is low.
   uint8_t min_ue_mcs = 0;
-  /// Maximum UE modulation and coding scheme index.
+  /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
+  /// equal to the \c max_ue_mcs.
   uint8_t max_ue_mcs = 28;
 };
 

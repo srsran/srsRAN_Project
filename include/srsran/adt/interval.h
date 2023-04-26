@@ -72,11 +72,7 @@ public:
   }
 
   /// Set the interval length, maintaining the same starting point.
-  void resize(T new_length)
-  {
-    srsran_assert(std::is_unsigned<T>::value or new_length >= 0, "Interval width must be positive");
-    stop_ = start_ + new_length + (RightClosed + not is_real::value) ? 1 : 0;
-  }
+  void resize(length_type new_length) { stop_ = start_ + new_length; }
 
   /// Move interval by an offset.
   void displace_by(int offset)

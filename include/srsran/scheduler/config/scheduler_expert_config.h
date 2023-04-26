@@ -24,8 +24,10 @@ namespace srsran {
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
+  /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> dl_mcs;
   unsigned                      initial_cqi;
+  /// Range of allowed MCS indices for UL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> ul_mcs;
   unsigned                      max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.

@@ -9,7 +9,6 @@
  */
 
 #include "lib/pcap/dlt_pcap_impl.h"
-#include "srsran/asn1/ngap/ngap.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
