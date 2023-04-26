@@ -745,16 +745,6 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
   auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
 
-  // Modify default request message as per test case.
-  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
-  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
-      test_helpers::make_test_ue_uplink_config(cell_cfg_params));
-
-  if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-        config_helpers::make_default_csi_meas_config(cell_cfg_params));
-  }
-
   auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
                          ue_creation_req.cfg.lc_config_list.end(),
                          [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
@@ -890,16 +880,6 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
   // Pre-populate common UE creation request parameters.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
   auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
-
-  // Modify default request message as per test case.
-  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
-  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
-      test_helpers::make_test_ue_uplink_config(cell_cfg_params));
-
-  if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-        config_helpers::make_default_csi_meas_config(cell_cfg_params));
-  }
 
   auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
                          ue_creation_req.cfg.lc_config_list.end(),
