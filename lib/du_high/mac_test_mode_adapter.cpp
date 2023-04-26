@@ -98,14 +98,14 @@ public:
         }
       } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(uci.pdu)) {
         auto& pusch = variant_get<mac_uci_pdu::pusch_type>(uci.pdu);
-        if (pusch.harq_info.has_value() and
-            pusch.harq_info->harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        if (pusch.harq_info.has_value()) {
+          pusch.harq_info->harq_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
           pusch.harq_info->payload.fill(0, pusch.harq_info->payload.size(), true);
         }
       } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu)) {
         auto& f2 = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu);
-        if (f2.harq_info.has_value() and
-            f2.harq_info->harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        if (f2.harq_info.has_value()) {
+          f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
           f2.harq_info->payload.fill(0, f2.harq_info->payload.size(), true);
         }
       }
