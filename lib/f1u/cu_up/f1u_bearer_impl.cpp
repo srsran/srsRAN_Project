@@ -114,10 +114,6 @@ void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
       logger.log_debug("Queued next SDU discard block with pdcp_sn={}", pdcp_sn);
     }
   }
-
-  nru_dl_message msg = {};
-  fill_discard_blocks(msg);
-  tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
 void f1u_bearer_impl::fill_discard_blocks(nru_dl_message& msg)

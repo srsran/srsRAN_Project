@@ -91,6 +91,12 @@ protected:
     srslog::flush();
   }
 
+  void tick()
+  {
+    timers.tick();
+    ue_worker.run_pending_tasks();
+  }
+
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                         timers;
   manual_task_worker                    ue_worker{128};
@@ -116,23 +122,56 @@ TEST_F(f1u_cu_up_test, create_and_delete)
 
 TEST_F(f1u_cu_up_test, tx_discard)
 {
+  constexpr uint32_t pdu_size = 10;
   constexpr uint32_t pdcp_sn = 123;
 
   f1u->discard_sdu(pdcp_sn);
-  f1u->discard_sdu(pdcp_sn + 7);
+  // advance time just before the timer-based DL notification is triggered
+  for (uint32_t t = 0; t < f1u_dl_notif_time_ms - 1; t++) {
+    EXPECT_TRUE(tester->tx_msg_list.empty());
+    tick();
+  }
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  f1u->discard_sdu(pdcp_sn + 1); // this should be merged into previous block
+  f1u->discard_sdu(pdcp_sn + 3); // this should trigger the next block
+
+  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, 0xcc);
+  pdcp_tx_pdu sdu1;
+  sdu1.buf     = tx_pdcp_pdu1.deep_copy();
+  sdu1.pdcp_sn = pdcp_sn + 22;
+
+  // transmit a PDU to piggy-back previous discard
+  f1u->handle_sdu(std::move(sdu1));
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
-  EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
+  EXPECT_FALSE(tester->tx_msg_list.front().t_pdu.empty());
+  EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
   ASSERT_TRUE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
-  ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value().size(), 1);
+  ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value().size(), 2);
   EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_sn);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].block_size, 1);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].block_size, 2);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[1].pdcp_sn_start, pdcp_sn + 3);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[1].block_size, 1);
 
   tester->tx_msg_list.pop_front();
+  ASSERT_TRUE(tester->tx_msg_list.empty());
+
+  f1u->discard_sdu(pdcp_sn + 7);
+  // advance time just before the timer-based DL notification is triggered
+  for (uint32_t t = 0; t < f1u_dl_notif_time_ms - 1; t++) {
+    EXPECT_TRUE(tester->tx_msg_list.empty());
+    tick();
+  }
+  EXPECT_TRUE(tester->tx_msg_list.empty());
+
+  // final tick to expire timer
+  tick();
+  EXPECT_FALSE(tester->tx_msg_list.empty());
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
