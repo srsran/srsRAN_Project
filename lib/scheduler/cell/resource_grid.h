@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../support/bwp_helpers.h"
-#include "../support/rb_find_algorithm.h"
+#include "../support/rb_helper.h"
 #include "cell_configuration.h"
 #include "resource_grid_util.h"
 #include "srsran/adt/circular_array.h"

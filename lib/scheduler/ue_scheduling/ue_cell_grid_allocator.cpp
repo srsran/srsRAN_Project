@@ -10,6 +10,7 @@
 #include "ue_cell_grid_allocator.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
+#include "../support/rb_helper.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
@@ -113,11 +114,11 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
-  if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().prbs.prbs().length()) {
+  if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.vrbs().length()) {
     logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retxs (Harq-id={}, "
                    "nof_prbs={}!={})",
                    h_dl.id,
-                   h_dl.last_alloc_params().prbs.prbs().length(),
+                   h_dl.last_alloc_params().rbs.vrbs().length(),
                    grant.crbs.length());
     return false;
   }
@@ -203,9 +204,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  prb_interval prbs = crb_to_prb(bwp_cfg, grant.crbs);
-
-  // Allocate UE UL HARQ.
   if (h_dl.empty()) {
     // It is a new tx.
     // TODO: Compute total DAI when using DCI Format 1_1 if UE is configured with multiple serving cells.
@@ -220,7 +218,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(pdcch->dci,
                              init_dl_bwp,
-                             prbs,
+                             grant.crbs,
                              grant.time_res_index,
                              k1,
                              uci.pucch_grant.pucch_res_indicator,
@@ -233,7 +231,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             u.nof_cells() > 1,
                             ue_cc->active_bwp_id(),
                             grant.ss_id,
-                            prbs,
+                            grant.crbs,
                             grant.time_res_index,
                             k1,
                             uci.pucch_grant.pucch_res_indicator,
@@ -247,7 +245,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             u.nof_cells() > 1,
                             ue_cc->active_bwp_id(),
                             grant.ss_id,
-                            prbs,
+                            crb_to_prb(bwp_cfg, grant.crbs),
                             grant.time_res_index,
                             k1,
                             uci.pucch_grant.pucch_res_indicator,
@@ -272,7 +270,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f1_0,
-                               prbs,
+                               grant.crbs,
                                h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
@@ -284,7 +282,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               ue_cc->active_bwp_id(),
                               *ss_cfg,
                               pdcch->dci.c_rnti_f1_0,
-                              prbs,
+                              grant.crbs,
                               h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
@@ -296,7 +294,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               ue_cc->active_bwp_id(),
                               *ss_cfg,
                               pdcch->dci.c_rnti_f1_1,
-                              prbs,
+                              grant.crbs,
                               h_dl);
       break;
     default:
@@ -380,11 +378,11 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
-  if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().prbs.prbs().length()) {
+  if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().rbs.vrbs().length()) {
     logger.warning("Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
                    "nof_prbs={}!={})",
                    h_ul.id,
-                   h_ul.last_tx_params().prbs.prbs().length(),
+                   h_ul.last_tx_params().rbs.vrbs().length(),
                    grant.crbs.length());
     return false;
   }
@@ -441,9 +439,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Mark resources as occupied in the ResourceGrid.
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, grant.crbs});
 
-  // Compute the available PRBs in the grid for this transmission.
-  prb_interval prbs = crb_to_prb(bwp_lims, grant.crbs);
-
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {
     // It is a new tx.
@@ -484,7 +479,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             u.nof_cells() > 1,
                             ue_cc->active_bwp_id(),
                             grant.ss_id,
-                            prbs,
+                            grant.crbs,
                             grant.time_res_index,
                             mcs_tbs_info.value().mcs,
                             h_ul);
@@ -495,7 +490,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             u.nof_cells() > 1,
                             ue_cc->active_bwp_id(),
                             grant.ss_id,
-                            prbs,
+                            crb_to_prb(bwp_lims, grant.crbs),
                             grant.time_res_index,
                             mcs_tbs_info.value().mcs,
                             h_ul,
@@ -518,7 +513,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f0_0,
-                               prbs,
+                               grant.crbs,
                                h_ul.tb().nof_retxs == 0);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
@@ -529,7 +524,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               cell_cfg,
                               bwp_ul_cmn,
                               pdcch->dci.c_rnti_f0_0,
-                              prbs,
+                              grant.crbs,
                               h_ul.tb().nof_retxs == 0);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
@@ -540,7 +535,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               ue_cell_cfg,
                               ue_cc->active_bwp_id(),
                               pdcch->dci.c_rnti_f0_1,
-                              prbs,
+                              grant.crbs,
                               h_ul);
       break;
     default:

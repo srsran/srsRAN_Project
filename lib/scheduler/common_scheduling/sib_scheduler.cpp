@@ -21,6 +21,15 @@
 
 using namespace srsran;
 
+/// \brief Convert a SIB allocation CRBs to VRBs.
+static vrb_interval sib_crbs_to_vrbs(const cell_configuration& cell_cfg, crb_interval grant_crbs)
+{
+  const coreset_configuration& cs_cfg      = *cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+  unsigned                     cs_rb_start = cs_cfg.get_coreset_start_crb();
+  srsran_sanity_check(grant_crbs.start() >= cs_rb_start, "Invalid CRB start");
+  return {grant_crbs.start() - cs_rb_start, grant_crbs.stop() - cs_rb_start};
+}
+
 //  ------   Public methods   ------ .
 
 sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
@@ -115,8 +124,10 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   {
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
-        coreset0_bwp_cfg, cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
-    sib1_crbs = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
+        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+        cell_cfg.get_grant_crb_limits(to_search_space_id(0)),
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
+    sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
       logger.error("Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);
@@ -159,7 +170,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
   auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
-  prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
+  vrb_interval sib1_vrbs  = sib_crbs_to_vrbs(cell_cfg, sib1_crbs_grant);
 
   // Fill SIB1 DCI.
   sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
@@ -167,7 +178,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
   dci.N_rb_dl_bwp                    = coreset0_bwp_cfg.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_prbs.start(), sib1_prbs.length()});
+      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_vrbs.start(), sib1_vrbs.length()});
   dci.time_resource = time_resource;
   // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
   // TODO: Verify if interleaved is suitable for SIB1.
@@ -188,7 +199,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
   pdsch.coreset_cfg        = sib1_pdcch.ctx.coreset_cfg;
   pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
-  pdsch.prbs    = sib1_prbs;
+  pdsch.rbs     = sib1_vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
   pdsch.n_id = cell_cfg.pci;
 

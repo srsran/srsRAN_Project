@@ -53,6 +53,37 @@ uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigne
   return ra_rnti;
 }
 
+/// \brief Derive N^{DL,BWP}_RB from a DCI format 1_0 scrambled by RA-RNTI as per TS38.212 clause 7.3.1.2.1.
+static unsigned get_N_dl_bwp_rb(const cell_configuration& cell_cfg)
+{
+  const bwp_downlink_common& bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
+  if (bwp_dl.pdcch_common.coreset0.has_value()) {
+    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 if CORESET 0 is configured for the cell
+    // and N^{DL,BWP}_RB is the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
+    return get_coreset0_crbs(bwp_dl.pdcch_common).length();
+  }
+  return bwp_dl.generic_params.crbs.length();
+}
+
+static vrb_interval rar_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
+{
+  unsigned cs_rb_start = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb();
+  srsran_sanity_check(grant_crbs.start() >= cs_rb_start, "Invalid CRB start");
+  return {grant_crbs.start() - cs_rb_start, grant_crbs.stop() - cs_rb_start};
+}
+
+static vrb_interval msg3_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
+{
+  const prb_interval prbs = crb_to_prb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, grant_crbs);
+  return vrb_interval{prbs.start(), prbs.stop()};
+}
+
+static crb_interval msg3_vrb_to_crb(const cell_configuration& cell_cfg, vrb_interval grant_vrbs)
+{
+  return prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                    prb_interval{grant_vrbs.start(), grant_vrbs.stop()});
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
@@ -64,7 +95,8 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   pdcch_sch(pdcch_sch_),
   ev_logger(ev_logger_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
-  initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
+  ra_crb_lims(cell_cfg.get_grant_crb_limits(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
+  Nrb_dl_bwp(get_N_dl_bwp_rb(cell_cfg)),
   prach_format_is_long(is_long_preamble(
       prach_configuration_get(band_helper::get_freq_range(cell_cfg.band),
                               band_helper::get_duplex_mode(cell_cfg.band),
@@ -72,12 +104,6 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
           .format)),
   pending_msg3s(MAX_NOF_MSG3)
 {
-  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 if CORESET 0 is configured for the cell
-    // and N^{DL,BWP}_RB is the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
-    initial_active_dl_bwp.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  }
-
   // Precompute RAR PDSCH and DCI PDUs.
   precompute_rar_fields();
 
@@ -151,7 +177,7 @@ void ra_scheduler::precompute_msg3_pdus()
     build_dci_f0_0_tc_rnti(msg3_data[i].dci,
                            cell_cfg.dl_cfg_common.init_dl_bwp,
                            cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                           prb_interval{0, prbs_tbs.nof_prbs},
+                           crb_interval{0, prbs_tbs.nof_prbs},
                            i,
                            sched_cfg.msg3_mcs_index,
                            dummy_h_ul);
@@ -163,7 +189,7 @@ void ra_scheduler::precompute_msg3_pdus()
                              to_rnti(0x4601),
                              cell_cfg,
                              msg3_data[i].dci.tc_rnti_f0_0,
-                             prb_interval{0, prbs_tbs.nof_prbs},
+                             crb_interval{0, prbs_tbs.nof_prbs},
                              true);
   }
 }
@@ -428,8 +454,8 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(pdsch_time_res_index, max_nof_allocs).nof_prbs;
     const ofdm_symbol_range symbols =
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].symbols;
-    const crb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, symbols);
-    rar_crbs                   = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
+    const crb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
+    rar_crbs                   = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
     max_nof_allocs             = rar_crbs.length() / get_nof_pdsch_prbs_required(pdsch_time_res_index, 1).nof_prbs;
     if (max_nof_allocs == 0) {
       // early exit
@@ -461,11 +487,11 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     }
 
     // >> Check CRBs available in PUSCH for Msg3.
-    const unsigned nof_prbs_per_msg3 = msg3_data[puschidx].pusch.prbs.prbs().length();
-    unsigned       nof_msg3_prbs     = nof_prbs_per_msg3 * pusch_res_max_allocs;
-    prb_bitmap     used_ul_crbs      = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
-    crb_interval   msg3_crbs         = find_empty_interval_of_length(used_ul_crbs, nof_msg3_prbs, 0);
-    pusch_res_max_allocs             = msg3_crbs.length() / nof_prbs_per_msg3;
+    const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.vrbs().length();
+    unsigned       nof_msg3_rbs     = nof_rbs_per_msg3 * pusch_res_max_allocs;
+    prb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
+    crb_interval   msg3_crbs        = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs, 0);
+    pusch_res_max_allocs            = msg3_crbs.length() / nof_rbs_per_msg3;
     if (pusch_res_max_allocs == 0) {
       continue;
     }
@@ -474,9 +500,9 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     unsigned last_crb = msg3_crbs.start();
     for (unsigned i = 0; i < pusch_res_max_allocs; ++i) {
       msg3_alloc_candidate& candidate = msg3_candidates.emplace_back();
-      candidate.crbs                  = {last_crb, last_crb + nof_prbs_per_msg3};
+      candidate.crbs                  = {last_crb, last_crb + nof_rbs_per_msg3};
       candidate.pusch_td_res_index    = puschidx;
-      last_crb += nof_prbs_per_msg3;
+      last_crb += nof_rbs_per_msg3;
     }
   }
   max_nof_allocs = msg3_candidates.size();
@@ -507,18 +533,18 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   cell_slot_resource_allocator& rar_alloc   = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
-  const prb_interval            rar_prbs    = crb_to_prb(initial_active_dl_bwp, rar_crbs);
+  const vrb_interval            rar_vrbs    = rar_crb_to_vrb(cell_cfg, rar_crbs);
 
   // Fill RAR DCI.
   pdcch_dl_information& pdcch        = pdcch_alloc.result.dl.dl_pdcchs.back();
   pdcch.dci.type                     = dci_dl_rnti_config_type::ra_f1_0;
   pdcch.dci.ra_f1_0                  = {};
   dci_1_0_ra_rnti_configuration& dci = pdcch.dci.ra_f1_0;
-  dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
+  dci.N_rb_dl_bwp                    = Nrb_dl_bwp;
   dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_prbs.start(), rar_prbs.length()});
+      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_vrbs.start(), rar_vrbs.length()});
   dci.time_resource            = pdsch_time_res_index;
-  dci.vrb_to_prb_mapping       = 0; // TODO.
+  dci.vrb_to_prb_mapping       = 0;
   dci.modulation_coding_scheme = sched_cfg.rar_mcs_index.to_uint();
   dci.tb_scaling               = 0; // TODO.
 
@@ -531,7 +557,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar.pdsch_cfg.rnti        = pdcch.ctx.rnti;
   rar.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
   rar.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
-  rar.pdsch_cfg.prbs        = rar_prbs;
+  rar.pdsch_cfg.rbs         = rar_vrbs;
   rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
 
   pdsch_codeword& cw = rar.pdsch_cfg.codewords.emplace_back();
@@ -552,7 +578,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     const auto&                   pusch_res  = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
     const unsigned                msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
     cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
-    const prb_interval            prbs       = crb_to_prb(get_ul_bwp_cfg(), msg3_candidate.crbs);
+    const vrb_interval            vrbs       = msg3_crb_to_vrb(cell_cfg, msg3_candidate.crbs);
 
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
     srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
@@ -567,7 +593,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.temp_crnti               = pending_msg3.preamble.tc_rnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
     msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
-        cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
+        cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), vrbs.start(), vrbs.length()});
     msg3_info.mcs                      = sched_cfg.msg3_mcs_index;
     msg3_info.tpc                      = 1;
     msg3_info.csi_req                  = false;
@@ -582,7 +608,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     pusch.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
-    pusch.pusch_cfg.prbs     = prbs;
+    pusch.pusch_cfg.rbs      = vrbs;
     pusch.pusch_cfg.rv_index = 0;
     pusch.pusch_cfg.new_data = true;
 
@@ -627,11 +653,11 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     }
 
     // Try to reuse previous HARQ PRBs.
-    const prb_interval prbs = msg3_ctx.harq.last_tx_params().prbs.prbs();
+    const vrb_interval msg3_vrbs = msg3_ctx.harq.last_tx_params().rbs.vrbs();
     grant_info         grant;
     grant.scs     = bwp_ul_cmn.scs;
     grant.symbols = pusch_tds[pusch_td_res_index].symbols;
-    grant.crbs    = prb_to_crb(bwp_ul_cmn, prbs);
+    grant.crbs    = msg3_vrb_to_crb(cell_cfg, msg3_vrbs);
     if (pusch_alloc.ul_res_grid.collides(grant)) {
       // Find available symbol x RB resources.
       // TODO
@@ -669,7 +695,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     build_dci_f0_0_tc_rnti(pdcch->dci,
                            cell_cfg.dl_cfg_common.init_dl_bwp,
                            cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                           prbs,
+                           grant.crbs,
                            pusch_td_res_index,
                            msg3_ctx.harq.last_tx_params().mcs,
                            msg3_ctx.harq);
@@ -680,7 +706,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     ul_info.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
     ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
     ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
-    ul_info.pusch_cfg.prbs     = prbs;
+    ul_info.pusch_cfg.rbs      = msg3_vrbs;
     ul_info.pusch_cfg.rv_index = pdcch->dci.tc_rnti_f0_0.redundancy_version;
     ul_info.pusch_cfg.new_data = false;
 

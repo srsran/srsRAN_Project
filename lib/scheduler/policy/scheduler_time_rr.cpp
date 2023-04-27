@@ -9,6 +9,7 @@
 
 #include "scheduler_time_rr.h"
 #include "../support/config_helpers.h"
+#include "../support/rb_helper.h"
 
 using namespace srsran;
 
@@ -181,7 +182,7 @@ static bool alloc_dl_ue(const ue&                    u,
 
         // TODO verify the there is at least 1 TB.
         const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                                                 h->last_alloc_params().prbs.prbs().length()}
+                                                                 h->last_alloc_params().rbs.vrbs().length()}
                                                 : ue_cc.required_dl_prbs(pdsch, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
@@ -189,11 +190,11 @@ static bool alloc_dl_ue(const ue&                    u,
           return false;
         }
 
-        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+        const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
         bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
         if (is_retx) {
           // In case of Retx, the #CRBs need to stay the same.
-          are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().prbs.prbs().length();
+          are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().rbs.vrbs().length();
         }
         if (are_crbs_valid) {
           const bool res_allocated =
@@ -302,14 +303,14 @@ static bool alloc_ul_ue(const ue&                    u,
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       const grant_prbs_mcs mcs_prbs =
-          is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().prbs.prbs().length()}
+          is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.vrbs().length()}
                   : ue_cc.required_ul_prbs(pusch_list[time_res], pending_newtx_bytes, dci_type);
 
-      const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+      const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
       if (is_retx) {
         // In case of Retx, the #CRBs need to stay the same.
-        are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().prbs.prbs().length();
+        are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().rbs.vrbs().length();
       }
       if (are_crbs_valid) {
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{

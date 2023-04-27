@@ -370,8 +370,8 @@ protected:
           const pusch_information& pusch           = it->pusch_cfg;
           uint8_t                  freq_assignment = ra_frequency_type1_get_riv(
               ra_frequency_type1_configuration{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                               pusch.prbs.prbs().start(),
-                                               pusch.prbs.prbs().length()});
+                                               pusch.rbs.vrbs().start(),
+                                               pusch.rbs.vrbs().length()});
           bool grant_matches = pusch.symbols == get_pusch_td_resource(grant.time_resource_assignment).symbols and
                                freq_assignment == grant.freq_resource_assignment and
                                *pusch.bwp_cfg == cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;

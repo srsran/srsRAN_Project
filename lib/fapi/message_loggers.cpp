@@ -90,7 +90,7 @@ static void log_pdsch_pdu(const dl_pdsch_pdu& pdu, fmt::memory_buffer& buffer)
 static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- CSI-RS prbs={}:{} row={} symbL0={} symbL1={} scramb_id={}",
+                 "\n\t- CSI-RS crbs={}:{} row={} symbL0={} symbL1={} scramb_id={}",
                  pdu.start_rb,
                  pdu.num_rbs,
                  pdu.row,

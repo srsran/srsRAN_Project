@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "prb_grant.h"
+#include "rb_grant.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/rnti.h"

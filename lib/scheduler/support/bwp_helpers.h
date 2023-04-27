@@ -41,24 +41,6 @@ inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
   return {prb_to_crb(bwp_cfg, prbs.start()), prb_to_crb(bwp_cfg, prbs.stop())};
 }
 
-/// \brief Convert CRB into PRB given the CRB assignment limits.
-/// The CRB and PRB are assumed to use the same numerology as reference.
-/// \param crb_lims CRB limits set based on the active BWP configuration and SearchSpace configuration.
-/// \param crb CRB to be converted to PRB.
-/// \return Calculated PRB.
-inline unsigned crb_to_prb(crb_interval crb_lims, unsigned crb)
-{
-  srsran_sanity_check(
-      crb_lims.contains(crb) or crb == crb_lims.stop(), "CRB={} falls outside BWP limits={}", crb, crb_lims);
-  return crb - crb_lims.start();
-}
-
-/// \brief Convert an interval CRBs to an interval PRBs, given the CRB assignment limits.
-inline prb_interval crb_to_prb(crb_interval crb_lims, crb_interval crbs)
-{
-  return prb_interval{crb_to_prb(crb_lims, crbs.start()), crb_to_prb(crb_lims, crbs.stop())};
-}
-
 /// \brief Convert CRB within a BWP into a PRB.
 /// The CRB and PRB are assumed to use the same numerology as reference.
 /// \param bwp_cfg BWP configuration of the respective CRB.

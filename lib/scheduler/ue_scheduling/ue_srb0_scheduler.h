@@ -56,7 +56,7 @@ private:
                        unsigned                   pdsch_time_res,
                        unsigned                   k1,
                        sch_mcs_index              mcs_idx,
-                       const prb_interval&        ue_grant_prbs,
+                       const crb_interval&        ue_grant_crbs,
                        const pdsch_config_params& pdsch_params,
                        unsigned                   tbs_bytes);
 

@@ -123,7 +123,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   TESTASSERT(symbols == pdsch.symbols, "Mismatch of time-domain resource assignment and PDSCH symbols");
 
   uint8_t pdsch_freq_resource = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{N_rb_dl_bwp, pdsch.prbs.prbs().start(), pdsch.prbs.prbs().length()});
+      ra_frequency_type1_configuration{N_rb_dl_bwp, pdsch.rbs.vrbs().start(), pdsch.rbs.vrbs().length()});
   TESTASSERT_EQ(pdsch_freq_resource, freq_assignment, "DCI frequency resource does not match PDSCH PRBs");
 }
 
@@ -191,13 +191,13 @@ void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   for (const sib_information& sib : sibs) {
     ASSERT_EQ(sib.pdsch_cfg.rnti, SI_RNTI);
     ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
-    ASSERT_TRUE(sib.pdsch_cfg.prbs.is_alloc_type1());
+    ASSERT_TRUE(sib.pdsch_cfg.rbs.is_alloc_type1());
     ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));
     ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
     ASSERT_EQ(sib.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(sib.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
-    prb_interval prbs = sib.pdsch_cfg.prbs.prbs();
-    ASSERT_LE(prbs.stop(), effective_init_bwp_cfg.crbs.length())
+    vrb_interval vrbs = sib.pdsch_cfg.rbs.vrbs();
+    ASSERT_LE(vrbs.stop(), effective_init_bwp_cfg.crbs.length())
         << fmt::format("PRB grant falls outside CORESET#0 RB boundaries");
   }
 }
@@ -216,13 +216,16 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
     ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
     ASSERT_EQ(rar.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
-    ASSERT_TRUE(rar.pdsch_cfg.prbs.is_alloc_type1()) << "Invalid allocation type for RAR";
+    ASSERT_TRUE(rar.pdsch_cfg.rbs.is_alloc_type1()) << "Invalid allocation type for RAR";
     ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->id, ss_cfg.cs_id);
     ASSERT_EQ(rar.pdsch_cfg.ss_set_type, search_space_set_type::type1);
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(rar.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
 
-    crb_interval rar_crbs = prb_to_crb(effective_init_bwp_cfg, rar.pdsch_cfg.prbs.prbs());
+    const prb_interval rar_prbs = {
+        rar.pdsch_cfg.rbs.vrbs().start() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb(),
+        rar.pdsch_cfg.rbs.vrbs().stop() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb()};
+    crb_interval rar_crbs = prb_to_crb(effective_init_bwp_cfg, rar_prbs);
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
     TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-RNTI={:#x} detected", ra_rnti);
@@ -235,13 +238,13 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration& cell_cfg,
                                              const pusch_information&  msg3_pusch)
 {
   TESTASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
-  TESTASSERT(msg3_pusch.prbs.is_alloc_type1());
-  TESTASSERT(not msg3_pusch.prbs.prbs().empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3_pusch.rnti);
+  TESTASSERT(msg3_pusch.rbs.is_alloc_type1());
+  TESTASSERT(not msg3_pusch.rbs.any(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3_pusch.rnti);
 
   unsigned     N_rb_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-  prb_interval prbs        = msg3_pusch.prbs.prbs();
+  vrb_interval vrbs        = msg3_pusch.rbs.vrbs();
   uint8_t      pusch_freq_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_ul_bwp, prbs.start(), prbs.length()});
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_ul_bwp, vrbs.start(), vrbs.length()});
   TESTASSERT_EQ(rar_grant.freq_resource_assignment,
                 pusch_freq_resource,
                 "Mismatch between RAR grant frequency assignment and corresponding Msg3 PUSCH PRBs");

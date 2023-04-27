@@ -211,20 +211,20 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
     srsran_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
     srsran_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
-                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, PRBs={}. New MCS={}, PRBs={}",
+                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
                   prev_tx_params.tb[tb_idx]->tbs_bytes,
                   cw.tb_size_bytes,
                   prev_tx_params.tb[tb_idx]->mcs,
-                  prev_tx_params.prbs.prbs(),
+                  prev_tx_params.rbs,
                   cw.mcs_index,
-                  pdsch.prbs.prbs());
+                  pdsch.rbs);
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
     ++tb_idx;
   }
   prev_tx_params.dci_cfg_type = dci_cfg_type;
-  prev_tx_params.prbs         = pdsch.prbs;
+  prev_tx_params.rbs          = pdsch.rbs;
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
@@ -271,7 +271,7 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.mcs          = pusch.mcs_index;
   prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
   prev_tx_params.dci_cfg_type = dci_cfg_type;
-  prev_tx_params.prbs         = pusch.prbs;
+  prev_tx_params.rbs          = pusch.rbs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -84,20 +84,20 @@ static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_informatio
 }
 
 static void fill_frequency_allocation(fapi::dl_pdsch_pdu_builder&   builder,
-                                      const prb_grant&              prbs,
+                                      const rb_grant&               rbs,
                                       fapi::vrb_to_prb_mapping_type mapping)
 {
-  if (prbs.is_alloc_type0()) {
+  if (rbs.is_alloc_type0()) {
     static_vector<uint8_t, fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP> rb_map;
     rb_map.resize(fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP, 0U);
-    const rbg_bitmap& mac_rbg_map = prbs.rbgs();
+    const rbg_bitmap& mac_rbg_map = rbs.rbgs();
     for (unsigned i = 0, e = mac_rbg_map.size(); i != e; ++i) {
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
     builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, mapping);
   } else {
-    const prb_interval& prb_int = prbs.prbs();
-    builder.set_pdsch_allocation_in_frequency_type_1(prb_int.start(), prb_int.length(), mapping);
+    const vrb_interval& vrb_int = rbs.vrbs();
+    builder.set_pdsch_allocation_in_frequency_type_1(vrb_int.start(), vrb_int.length(), mapping);
   }
 }
 
@@ -215,7 +215,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
-                            mac_pdu.pdsch_cfg.prbs,
+                            mac_pdu.pdsch_cfg.rbs,
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
@@ -270,7 +270,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
-                            mac_pdu.pdsch_cfg.prbs,
+                            mac_pdu.pdsch_cfg.rbs,
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
@@ -325,7 +325,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
-                            mac_pdu.pdsch_cfg.prbs,
+                            mac_pdu.pdsch_cfg.rbs,
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
@@ -374,7 +374,7 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Frequency allocation.
   // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
   fill_frequency_allocation(builder,
-                            mac_pdu.pdsch_cfg.prbs,
+                            mac_pdu.pdsch_cfg.rbs,
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 

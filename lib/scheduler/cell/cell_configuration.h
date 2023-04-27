@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../support/rb_helper.h"
 #include "srsran/adt/expected.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
@@ -142,6 +143,14 @@ public:
                    dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == cs_id
                ? dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value()
                : dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value();
+  }
+
+  /// \brief Get CRB boundaries in which an allocation is allowed for a given common search space.
+  crb_interval get_grant_crb_limits(search_space_id ss_id) const
+  {
+    const bwp_downlink_common&        bwp_dl = dl_cfg_common.init_dl_bwp;
+    const search_space_configuration& ss_cfg = bwp_dl.pdcch_common.search_spaces[ss_id];
+    return rb_helper::get_dl_alloc_crb_limits(bwp_dl, bwp_dl.generic_params, get_common_coreset(ss_cfg.cs_id), ss_cfg);
   }
 
 private:

@@ -31,10 +31,6 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
-  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
-    initial_active_dl_bwp.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  }
 }
 
 void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -136,9 +132,10 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
 
   pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
 
-  prb_bitmap     used_crbs        = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_cfg.symbols);
+  prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
+      initial_active_dl_bwp.scs, cell_cfg.get_grant_crb_limits(ss_cfg.id), pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
-  crb_interval   unused_crbs      = find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
+  crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
   // Try to find least MCS to fit SRB0 message.
   // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
   sch_mcs_index mcs_idx = 0;
@@ -176,12 +173,11 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     return false;
   }
 
-  crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
-  prb_interval ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
-  if (ue_grant_prbs.length() < prbs_tbs.nof_prbs) {
+  crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
+  if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
     logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: Not enough PRBs ({} < {})",
                  u.crnti,
-                 ue_grant_prbs.length(),
+                 ue_grant_crbs.length(),
                  prbs_tbs.nof_prbs);
     return false;
   }
@@ -221,7 +217,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                   pdsch_time_res,
                   k1,
                   mcs_idx,
-                  ue_grant_prbs,
+                  ue_grant_crbs,
                   pdsch_cfg,
                   prbs_tbs.tbs_bytes);
 
@@ -237,7 +233,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                                         unsigned                   pdsch_time_res,
                                         unsigned                   k1,
                                         sch_mcs_index              mcs_idx,
-                                        const prb_interval&        ue_grant_prbs,
+                                        const crb_interval&        ue_grant_crbs,
                                         const pdsch_config_params& pdsch_params,
                                         unsigned                   tbs_bytes)
 {
@@ -248,7 +244,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,
                          cell_cfg.dl_cfg_common.init_dl_bwp,
-                         ue_grant_prbs,
+                         ue_grant_crbs,
                          pdsch_time_res,
                          k1,
                          pucch.pucch_res_indicator,
@@ -260,7 +256,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   msg.context.k1       = k1;
   msg.context.ss_id    = pdcch.ctx.context.ss_id;
   build_pdsch_f1_0_tc_rnti(
-      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_prbs, true);
+      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_crbs, true);
 
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_srb0_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);

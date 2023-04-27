@@ -303,7 +303,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
 
 void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
                                     const bwp_downlink_common& init_dl_bwp,
-                                    prb_interval               prbs,
+                                    crb_interval               crbs,
                                     unsigned                   time_resource,
                                     unsigned                   k1,
                                     unsigned                   pucch_res_indicator,
@@ -321,9 +321,12 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
 
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
-  f1_0.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  const crb_interval cs0_crbs = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
+  f1_0.N_rb_dl_bwp            = cs0_crbs.length();
+  // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
+  const vrb_interval vrbs = {crbs.start() - cs0_crbs.start(), crbs.stop() - cs0_crbs.start()};
   f1_0.frequency_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, prbs.start(), prbs.length()});
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
 
   // UCI resources.
@@ -343,7 +346,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                                    bool                         is_ue_configured_multiple_serving_cells,
                                    bwp_id_t                     active_bwp_id,
                                    search_space_id              ss_id,
-                                   prb_interval                 prbs,
+                                   crb_interval                 crbs,
                                    unsigned                     time_resource,
                                    unsigned                     k1,
                                    unsigned                     pucch_res_indicator,
@@ -351,12 +354,11 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                                    sch_mcs_index                mcs_index,
                                    const dl_harq_process&       h_dl)
 {
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(ss_id);
-  srsran_assert(ss_cfg != nullptr, "No valid SearchSpace found");
-
-  const bwp_downlink_common& active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
-  const bwp_downlink_common& init_dl_bwp       = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+  const search_space_configuration& ss_cfg            = ue_cell_cfg.search_space(ss_id);
+  const coreset_configuration&      cs_cfg            = ue_cell_cfg.coreset(ss_cfg.cs_id);
+  const bwp_downlink_common&        active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
+  const bwp_downlink_common&        init_dl_bwp       = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
+  const bwp_configuration&          active_dl_bwp     = active_dl_bwp_cmn.generic_params;
 
   dci.type                           = srsran::dci_dl_rnti_config_type::c_rnti_f1_0;
   dci.c_rnti_f1_0                    = {};
@@ -367,16 +369,20 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
 
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
-  unsigned N_rb_dl_bwp = 0;
-  if (ss_cfg->type == srsran::search_space_configuration::type_t::common) {
-    N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
-                      ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
-                      : init_dl_bwp.generic_params.crbs.length();
+  unsigned N_rb_dl_bwp = active_dl_bwp.crbs.length();
+  if (ss_cfg.type == search_space_configuration::type_t::common and init_dl_bwp.pdcch_common.coreset0.has_value()) {
+    N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  }
+  // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
+  vrb_interval vrbs;
+  if (ss_cfg.type == search_space_configuration::type_t::common) {
+    vrbs = vrb_interval{crbs.start() - cs_cfg.get_coreset_start_crb(), crbs.stop() - cs_cfg.get_coreset_start_crb()};
   } else {
-    N_rb_dl_bwp = active_dl_bwp.crbs.length();
+    const prb_interval prbs = crb_to_prb(init_dl_bwp.generic_params.crbs, crbs);
+    vrbs                    = {prbs.start(), prbs.stop()};
   }
   f1_0.frequency_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, prbs.start(), prbs.length()});
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
 
   const dci_size_config dci_sz_cfg =
@@ -385,9 +391,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
 
   // Compute DCI size.
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
-  f1_0.payload_size = ss_cfg->type == search_space_configuration::type_t::ue_dedicated
-                          ? dci_sz.format1_0_ue_size.value()
-                          : dci_sz.format1_0_common_size;
+  f1_0.payload_size = ss_cfg.type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
+                                                                                      : dci_sz.format1_0_common_size;
 
   // UCI resources.
   f1_0.pucch_resource_indicator       = pucch_res_indicator;
@@ -478,7 +483,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
 void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                                     const bwp_downlink_common& init_dl_bwp,
                                     const bwp_configuration&   ul_bwp,
-                                    const prb_interval&        prbs,
+                                    const crb_interval&        crbs,
                                     unsigned                   time_resource,
                                     sch_mcs_index              mcs_index,
                                     const ul_harq_process&     h_ul)
@@ -507,8 +512,9 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
       init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
       false};
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
-  dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
-  f0_0.payload_size = dci_sz.format0_0_common_size;
+  dci_sizes dci_sz        = get_dci_sizes(dci_sz_cfg);
+  f0_0.payload_size       = dci_sz.format0_0_common_size;
+  const prb_interval prbs = crb_to_prb(ul_bwp.crbs, crbs);
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), prbs.start(), prbs.length()});
   f0_0.time_resource = time_resource;
@@ -524,7 +530,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
                                    bool                         is_ue_configured_multiple_serving_cells,
                                    bwp_id_t                     active_bwp_id,
                                    search_space_id              ss_id,
-                                   const prb_interval&          prbs,
+                                   const crb_interval&          crbs,
                                    unsigned                     time_resource,
                                    sch_mcs_index                mcs_index,
                                    const ul_harq_process&       h_ul)
@@ -558,6 +564,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
+  const prb_interval prbs = crb_to_prb(active_ul_bwp.crbs, crbs);
   if (ss_cfg->type == srsran::search_space_configuration::type_t::common) {
     f0_0.frequency_resource = ra_frequency_type1_get_riv(
         ra_frequency_type1_configuration{init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});

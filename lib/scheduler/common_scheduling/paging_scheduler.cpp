@@ -357,7 +357,7 @@ bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocat
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
       return false;
     }
@@ -404,7 +404,7 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
       logger.warning("Not enough PDSCH space for Paging");
       return false;
@@ -443,17 +443,18 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
                                          const dmrs_information&               dmrs_info,
                                          unsigned                              tbs)
 {
-  const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
+  const crb_interval cs0_crbs    = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  const vrb_interval paging_vrbs = {crbs_grant.start() - cs0_crbs.start(), crbs_grant.stop() - cs0_crbs.start()};
 
   auto& dci = pdcch.dci;
   // Fill Paging DCI.
   dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
   dci.p_rnti_f1_0 = {};
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
-  dci.p_rnti_f1_0.N_rb_dl_bwp = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common).length();
+  dci.p_rnti_f1_0.N_rb_dl_bwp              = cs0_crbs.length();
   dci.p_rnti_f1_0.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
   dci.p_rnti_f1_0.frequency_resource       = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.p_rnti_f1_0.N_rb_dl_bwp, paging_prbs.start(), paging_prbs.length()});
+      ra_frequency_type1_configuration{dci.p_rnti_f1_0.N_rb_dl_bwp, paging_vrbs.start(), paging_vrbs.length()});
   dci.p_rnti_f1_0.time_resource = time_resource;
   // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
   // TODO: Verify if interleaved is suitable for Paging.
@@ -476,7 +477,7 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
   pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
   pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
   pdsch.symbols            = pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
-  pdsch.prbs               = paging_prbs;
+  pdsch.rbs                = paging_vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
   pdsch.n_id = cell_cfg.pci;
 

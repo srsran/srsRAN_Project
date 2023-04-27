@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "../support/rb_find_algorithm.h"
+#include "../support/rb_helper.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/interval.h"
-#include "srsran/scheduler/prb_grant.h"
+#include "srsran/scheduler/rb_grant.h"
 
 namespace srsran {
 
@@ -49,20 +49,20 @@ public:
     rbgs_ |= grant;
     add_rbgs_to_prbs(grant);
   }
-  void add(const prb_grant& grant)
+  void add(const rb_grant& grant)
   {
     if (grant.is_alloc_type0()) {
       add(grant.rbgs());
     } else {
-      add(grant.prbs());
+      add(grant.vrbs());
     }
   }
-  bool collides(const prb_grant& grant) const
+  bool collides(const rb_grant& grant) const
   {
     if (grant.is_alloc_type0()) {
       return (rbgs() & grant.rbgs()).any();
     }
-    return prbs().any(grant.prbs().start(), grant.prbs().stop());
+    return prbs().any(grant.vrbs().start(), grant.vrbs().stop());
   }
   bool test(uint32_t prb_idx) { return prbs().test(prb_idx); }
   void set(uint32_t prb_idx)
@@ -115,19 +115,3 @@ bwp_rb_bitmap operator|(const bwp_rb_bitmap& lhs, const Other& rhs)
 }
 
 } // namespace srsran
-
-namespace fmt {
-
-template <>
-struct formatter<srsran::prb_grant> : public formatter<srsran::rbg_bitmap> {
-  template <typename FormatContext>
-  auto format(const srsran::prb_grant& grant, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    if (grant.is_alloc_type1()) {
-      return formatter<srsran::interval<uint32_t>>{}.format(grant.prbs(), ctx);
-    }
-    return formatter<srsran::rbg_bitmap>::format(grant.rbgs(), ctx);
-  }
-};
-
-} // namespace fmt

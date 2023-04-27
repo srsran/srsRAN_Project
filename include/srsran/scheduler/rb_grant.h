@@ -21,23 +21,21 @@ namespace srsran {
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
-/// PRB grant that can be of allocation type 0 (RBGs) or 1 (PRB interval).
-struct prb_grant {
+/// RB grant that can be of allocation type 0 (RBGs) or 1 (VRB range).
+struct rb_grant {
   /// Creates an empty interval.
-  prb_grant() = default;
+  rb_grant() = default;
 
   /// \brief Creates a RB grant of allocation type1, i.e. a contiguous range of RBs.
-  prb_grant(const prb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
+  rb_grant(const vrb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
 
   /// \brief Creates a RB grant of allocation type0, i.e. a set of potentially non-contiguous RBGs.
-  prb_grant(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
+  rb_grant(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
 
   /// \brief Creates a copy of the RB grant.
-  prb_grant(const prb_grant& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc)
-  {
-  }
+  rb_grant(const rb_grant& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc) {}
 
-  prb_grant& operator=(const prb_grant& other) noexcept
+  rb_grant& operator=(const rb_grant& other) noexcept
   {
     if (this == &other) {
       return *this;
@@ -45,38 +43,38 @@ struct prb_grant {
     if (other.alloc_type_0) {
       *this = other.rbgs();
     } else {
-      *this = other.prbs();
+      *this = other.vrbs();
     }
     return *this;
   }
-  prb_grant& operator=(const prb_interval& prbs)
+  rb_grant& operator=(const vrb_interval& vrbs)
   {
     if (alloc_type_0) {
       alloc_type_0 = false;
       alloc.rbgs.~rbg_bitmap();
-      new (&alloc.interv) prb_interval(prbs);
+      new (&alloc.interv) vrb_interval(vrbs);
     } else {
-      alloc.interv = prbs;
+      alloc.interv = vrbs;
     }
     return *this;
   }
-  prb_grant& operator=(const rbg_bitmap& rbgs)
+  rb_grant& operator=(const rbg_bitmap& rbgs)
   {
     if (alloc_type_0) {
       alloc.rbgs = rbgs;
     } else {
       alloc_type_0 = true;
-      alloc.interv.~prb_interval();
+      alloc.interv.~vrb_interval();
       new (&alloc.rbgs) rbg_bitmap(rbgs);
     }
     return *this;
   }
-  ~prb_grant()
+  ~rb_grant()
   {
     if (is_alloc_type0()) {
       alloc.rbgs.~rbg_bitmap();
     } else {
-      alloc.interv.~prb_interval();
+      alloc.interv.~vrb_interval();
     }
   }
 
@@ -98,20 +96,23 @@ struct prb_grant {
     return alloc.rbgs;
   }
 
-  /// Extracts the PRB interval of the grant, in case it is of type1. This function fails if allocation is of type0.
-  const prb_interval& prbs() const
+  /// Extracts the VRB interval of the grant, in case it is of type1. This function fails if allocation is of type0.
+  const vrb_interval& vrbs() const
   {
-    srsran_assert(is_alloc_type1(), "Access to prbs() for prb_grant with allocation type 0 is invalid");
+    srsran_assert(is_alloc_type1(), "Access to vrbs() for prb_grant with allocation type 0 is invalid");
     return alloc.interv;
   }
-  prb_interval& prbs()
+  vrb_interval& vrbs()
   {
-    srsran_assert(is_alloc_type1(), "Access to prbs() of prb_grant with allocation type 0 is invalid");
+    srsran_assert(is_alloc_type1(), "Access to vrbs() of prb_grant with allocation type 0 is invalid");
     return alloc.interv;
   }
 
+  /// \brief Verifies if grant is not empty in terms of RBs.
+  bool any() const { return is_alloc_type0() ? rbgs().count() : vrbs().empty(); }
+
   /// Applies to "this" the intersection of "this" with the provided interval.
-  prb_grant& operator&=(const prb_interval interv)
+  rb_grant& operator&=(const vrb_interval interv)
   {
     if (is_alloc_type0()) {
       alloc.rbgs &= rbg_bitmap(alloc.rbgs.size()).fill(interv.start(), interv.stop());
@@ -125,17 +126,17 @@ private:
   bool alloc_type_0 = false;
   union alloc_t {
     rbg_bitmap   rbgs;
-    prb_interval interv;
+    vrb_interval interv;
 
     alloc_t() : interv(0, 0) {}
-    explicit alloc_t(const prb_interval& prbs) : interv(prbs) {}
+    explicit alloc_t(const vrb_interval& prbs) : interv(prbs) {}
     explicit alloc_t(const rbg_bitmap& rbgs_) : rbgs(rbgs_) {}
     alloc_t(bool type0, const alloc_t& other)
     {
       if (type0) {
         new (&rbgs) rbg_bitmap(other.rbgs);
       } else {
-        new (&interv) prb_interval(other.interv);
+        new (&interv) vrb_interval(other.interv);
       }
     }
   } alloc;
@@ -152,3 +153,19 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
 
 } // namespace srsran
+
+namespace fmt {
+
+template <>
+struct formatter<srsran::rb_grant> : public formatter<srsran::vrb_interval> {
+  template <typename FormatContext>
+  auto format(const srsran::rb_grant& grant, FormatContext& ctx)
+  {
+    if (grant.is_alloc_type0()) {
+      return format_to(ctx.out(), "{}", grant.rbgs());
+    }
+    return format_to(ctx.out(), "{}", grant.vrbs());
+  }
+};
+
+} // namespace fmt

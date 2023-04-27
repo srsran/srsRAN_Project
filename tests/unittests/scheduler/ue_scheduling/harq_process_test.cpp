@@ -51,7 +51,7 @@ TEST_F(dl_harq_process_tester, reset_of_empty_harq_is_no_op)
 TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
 {
   slot_point    sl_tx{0, 0};
-  prb_interval  prbs{5, 10};
+  vrb_interval  vrbs{5, 10};
   unsigned      k1 = 4, max_harq_retxs = 5, tbs_bytes = 1000;
   sch_mcs_index mcs = 10;
 
@@ -69,10 +69,10 @@ TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
   pdsch.codewords[0].mcs_table     = srsran::pdsch_mcs_table::qam64;
   pdsch.codewords[0].mcs_index     = mcs;
   pdsch.codewords[0].tb_size_bytes = tbs_bytes;
-  pdsch.prbs                       = prbs;
+  pdsch.rbs                        = vrbs;
   h_dl.save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
   ASSERT_EQ(h_dl.last_alloc_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);
-  ASSERT_EQ(h_dl.last_alloc_params().prbs.prbs(), prbs);
+  ASSERT_EQ(h_dl.last_alloc_params().rbs.vrbs(), vrbs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->mcs, mcs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->tbs_bytes, tbs_bytes);
 }

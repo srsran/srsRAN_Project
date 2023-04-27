@@ -9,6 +9,7 @@
  */
 
 #include "lib/scheduler/cell/scheduler_prb.h"
+#include "lib/scheduler/support/rb_helper.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -17,9 +18,9 @@ using namespace srsran;
 TEST(prb_grant_test, test_all)
 {
   // TEST: default ctor
-  prb_grant grant;
+  rb_grant grant;
   TESTASSERT(grant.is_alloc_type1());
-  TESTASSERT(grant.prbs().length() == 0);
+  TESTASSERT(grant.vrbs().length() == 0);
 
   // TEST: assignment of RBGs
   rbg_bitmap rbgs(18);
@@ -28,25 +29,25 @@ TEST(prb_grant_test, test_all)
   TESTASSERT(grant.is_alloc_type0() and grant.rbgs().count() == 1);
 
   // TEST: assignment of PRBs
-  prb_interval prb_interv(2, 5);
-  grant = prb_interv;
-  TESTASSERT(grant.is_alloc_type1() and grant.prbs().length() == 3);
+  vrb_interval vrb_interv(2, 5);
+  grant = vrb_interv;
+  TESTASSERT(grant.is_alloc_type1() and grant.vrbs().length() == 3);
 
   // TEST: non-default ctor
-  prb_grant grant2(prb_interv), grant3(rbgs);
-  TESTASSERT(grant2.is_alloc_type1() and grant2.prbs().length() == 3);
+  rb_grant grant2(vrb_interv), grant3(rbgs);
+  TESTASSERT(grant2.is_alloc_type1() and grant2.vrbs().length() == 3);
   TESTASSERT(grant3.is_alloc_type0() and grant3.rbgs().count() == 1);
 
   // TEST: copy ctor
-  prb_grant grant4(grant2), grant5(grant3);
-  TESTASSERT(grant4.is_alloc_type1() and grant4.prbs().length() == 3);
+  rb_grant grant4(grant2), grant5(grant3);
+  TESTASSERT(grant4.is_alloc_type1() and grant4.vrbs().length() == 3);
   TESTASSERT(grant5.is_alloc_type0() and grant5.rbgs().count() == 1);
 
   // TEST: copy assignment
   grant = grant3;
   TESTASSERT(grant.is_alloc_type0() and grant.rbgs().count() == 1);
   grant = grant2;
-  TESTASSERT(grant.is_alloc_type1() and grant.prbs().length() == 3);
+  TESTASSERT(grant.is_alloc_type1() and grant.vrbs().length() == 3);
 
   // TEST: formatting
   TESTASSERT_EQ("[2..5)", fmt::format("{}", grant2));
@@ -95,31 +96,31 @@ TEST(bwp_rb_bitmap, test_all)
 
   // TEST: collides operator
   TESTASSERT(rb_bitmap.collides(rbgs));
-  TESTASSERT(rb_bitmap.collides(prb_interval{0, 2}));
+  TESTASSERT(rb_bitmap.collides(vrb_interval{0, 2}));
 }
 
 TEST(bwp_rb_bitmap, search)
 {
   bwp_rb_bitmap rb_bitmap(275, 0, true);
 
-  crb_interval prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 5);
+  crb_interval prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), 5);
   TESTASSERT(prbs == prb_interval(0, 5));
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(0, rb_bitmap.prbs().size()));
 
   rb_bitmap |= prb_interval{1, 5};
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(5, rb_bitmap.prbs().size()));
 
   rb_bitmap |= prb_interval{16, 32};
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(32, rb_bitmap.prbs().size()));
 
   rb_bitmap |= prb_interval{270, 275};
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(32, 270));
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 1);
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), 1);
   TESTASSERT(prbs == prb_interval(0, 1));
-  prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 5);
+  prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), 5);
   TESTASSERT(prbs == prb_interval(5, 10));
 }

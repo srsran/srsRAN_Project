@@ -248,24 +248,27 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_1_0_tc_rnti_configuration& dci_cfg,
-                                      const prb_interval&                  prbs,
+                                      const crb_interval&                  crbs,
                                       bool                                 is_new_data)
 {
+  const bwp_downlink_common& bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
+
   pdsch.rnti = rnti;
 
   // PDSCH resources.
-  pdsch.bwp_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  pdsch.bwp_cfg = &bwp_dl.generic_params;
   // See 3GPP TS 38.213, clause 10.1 - CSS set configured by ra-SearchSpace is used for CRC scrambled by TC-RNTI.
-  const search_space_configuration& ss =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
-          .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
+  const search_space_configuration& ss = bwp_dl.pdcch_common.search_spaces[bwp_dl.pdcch_common.ra_search_space_id];
   if (ss.cs_id == to_coreset_id(0)) {
-    pdsch.coreset_cfg = &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+    pdsch.coreset_cfg = &*bwp_dl.pdcch_common.coreset0;
   } else {
-    pdsch.coreset_cfg = &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
+    pdsch.coreset_cfg = &*bwp_dl.pdcch_common.common_coreset;
   }
-  pdsch.prbs    = prbs;
-  pdsch.symbols = pdsch_cfg.symbols;
+  // See 3GPP TS 38.211, clause 7.3.1.6 - VRBs are shifted from PRBs by an offset equal to the coreset start.
+  const vrb_interval vrbs = {crbs.start() - pdsch.coreset_cfg->get_coreset_start_crb(),
+                             crbs.stop() - pdsch.coreset_cfg->get_coreset_start_crb()};
+  pdsch.rbs               = vrbs;
+  pdsch.symbols           = pdsch_cfg.symbols;
 
   pdsch.dmrs = pdsch_cfg.dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
@@ -294,17 +297,25 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      bwp_id_t                            active_bwp_id,
                                      const search_space_configuration&   ss_cfg,
                                      const dci_1_0_c_rnti_configuration& dci_cfg,
-                                     const prb_interval&                 prbs,
+                                     const crb_interval&                 crbs,
                                      bool                                is_new_data)
 {
   const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
   const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
+  const bwp_downlink_common&   bwp_dl   = *ue_cell_cfg.find_dl_bwp_common(active_bwp_id);
 
   pdsch.rnti        = rnti;
-  pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
+  pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.prbs           = prbs;
+  // See 3GPP TS 38.211, clause 7.3.1.6 - VRBs are shifted from PRBs by an offset equal to the coreset start.
+  if (ss_cfg.type == search_space_configuration::type_t::common) {
+    pdsch.rbs =
+        vrb_interval{crbs.start() - cs_cfg.get_coreset_start_crb(), crbs.stop() - cs_cfg.get_coreset_start_crb()};
+  } else {
+    const prb_interval prbs = crb_to_prb(bwp_dl.generic_params.crbs, crbs);
+    pdsch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
+  }
   pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
@@ -336,17 +347,19 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
                                      bwp_id_t                          active_bwp_id,
                                      const search_space_configuration& ss_cfg,
                                      const dci_1_1_configuration&      dci_cfg,
-                                     const prb_interval&               prbs,
+                                     const crb_interval&               crbs,
                                      const dl_harq_process&            h_dl)
 {
-  const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
-  const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
+  const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
+  const coreset_configuration& cs_cfg         = ue_cell_cfg.coreset(ss_cfg.cs_id);
+  const bwp_configuration&     active_bwp_cfg = ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
+  const prb_interval           prbs           = crb_to_prb(active_bwp_cfg.crbs, crbs);
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.prbs           = prbs;
+  pdsch.rbs            = vrb_interval{prbs.start(), prbs.stop()};
   pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value();
@@ -375,7 +388,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_0_0_tc_rnti_configuration& dci_cfg,
-                                      const prb_interval&                  prbs,
+                                      const crb_interval&                  crbs,
                                       bool                                 is_new_data)
 { // TODO.
   pusch.intra_slot_freq_hopping    = false;
@@ -387,9 +400,10 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pusch.prbs    = prbs;
-  pusch.symbols = pusch_cfg.symbols;
+  pusch.bwp_cfg           = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  const prb_interval prbs = crb_to_prb(pusch.bwp_cfg->crbs, crbs);
+  pusch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
+  pusch.symbols           = pusch_cfg.symbols;
 
   // MCS.
   pusch.mcs_table = pusch_cfg.mcs_table;
@@ -421,7 +435,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      const cell_configuration&           cell_cfg,
                                      const bwp_uplink_common&            ul_bwp,
                                      const dci_0_0_c_rnti_configuration& dci_cfg,
-                                     const prb_interval&                 prbs,
+                                     const crb_interval&                 crbs,
                                      bool                                is_new_data)
 {
   // TODO.
@@ -434,9 +448,10 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg = &ul_bwp.generic_params;
-  pusch.prbs    = prbs;
-  pusch.symbols = pusch_cfg.symbols;
+  pusch.bwp_cfg           = &ul_bwp.generic_params;
+  const prb_interval prbs = crb_to_prb(ul_bwp.generic_params.crbs, crbs);
+  pusch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
+  pusch.symbols           = pusch_cfg.symbols;
 
   // MCS.
   pusch.mcs_table = pusch_cfg.mcs_table;
@@ -466,7 +481,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                                      const ue_cell_configuration& ue_cell_cfg,
                                      bwp_id_t                     active_bwp_id,
                                      const dci_0_1_configuration& dci_cfg,
-                                     const prb_interval&          prbs,
+                                     const crb_interval&          crbs,
                                      const ul_harq_process&       h_ul)
 {
   const cell_configuration&           cell_cfg      = ue_cell_cfg.cell_cfg_common;
@@ -475,6 +490,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const optional<rach_config_common>& opt_rach_cfg  = ue_cell_cfg.ul_bwp_common(active_bwp_id).rach_cfg_common;
   const optional<pusch_config>        pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const optional<pusch_config_common> pusch_cfg_cmn = bwp_ul_cmn.pusch_cfg_common;
+  const prb_interval                  prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
 
   // TODO: Populate based on config.
   pusch.intra_slot_freq_hopping    = false;
@@ -487,7 +503,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
 
   // PUSCH resources.
   pusch.bwp_cfg = &ue_cell_cfg.find_ul_bwp_common(active_bwp_id)->generic_params;
-  pusch.prbs    = prbs;
+  pusch.rbs     = vrb_interval{prbs.start(), prbs.stop()};
   pusch.symbols = pusch_cfg.symbols;
 
   // MCS.
