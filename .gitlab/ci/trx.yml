@@ -57,6 +57,10 @@ build trx driver:
         cd build
         cmake -G Ninja -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True ..
         ninja trx_srsran_test
+      }
+    - |
+      test_srsran_trx() {
+        cd ${CI_PROJECT_DIR}/build
         ctest -R trx_srsran_test
       }
     - |
@@ -71,6 +75,7 @@ build trx driver:
     - download_amarisoft
     - unpack_amarisoft
     - build_srsran_trx
+    - test_srsran_trx
     - |
       if [[ $PUBLISH == "true" ]]; then
         upload_lib
