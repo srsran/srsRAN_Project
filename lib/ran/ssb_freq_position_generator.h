@@ -34,6 +34,10 @@ const double N_SIZE_SYNC_RASTER_2_HZ = 1440e3;
 const unsigned N_UB_SYNC_RASTER_1 = 2500;
 /// Upper-bound for \f$N\f$ within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned N_UB_SYNC_RASTER_2 = 14757;
+/// Lower-bound for GSCN within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned GSCN_LB_SYNC_RASTER_2 = 7499U;
+/// Lower-bound for GSCN for band n79 and bandwidth equal to or greater than 40MHz, as per Table 5.4.3.3-1, TS 38.104.
+const unsigned GSCN_LB_N_90_BW_40_MHZ = 8480U;
 
 /// Contains the parameters defining the SSB position within the band; returned by the DU config generator.
 struct ssb_freq_location {
@@ -52,7 +56,7 @@ class ssb_freq_position_generator
 {
 public:
   explicit ssb_freq_position_generator(unsigned           dl_arfcn,
-                                       nr_band            nr_band,
+                                       nr_band            nr_band_,
                                        unsigned           n_rbs_,
                                        subcarrier_spacing scs_common,
                                        subcarrier_spacing scs_ssb);
@@ -68,9 +72,12 @@ private:
   unsigned find_M_raster();
   /// Get the SSB central frequency, or SS_ref, given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
   double get_ss_ref_hz(unsigned N, unsigned M) const;
+  /// Increase N_raster according to the raster step given by the band
+  void increase_N_raster();
 
   /// Parameters that are passed to the constructor.
   const unsigned dl_arfcn;
+  const nr_band  band;
   /// Transmission bandwidth configuration \f$N_{RB}\f$, as per Table 5.3.2-1, TS 38.104.
   const unsigned           n_rbs;
   const subcarrier_spacing scs_common;

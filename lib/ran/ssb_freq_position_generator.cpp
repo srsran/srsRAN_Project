@@ -52,6 +52,7 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
                                                          subcarrier_spacing scs_common_,
                                                          subcarrier_spacing scs_ssb_) :
   dl_arfcn{dl_arfcn_},
+  band(nr_band_),
   n_rbs(n_rbs_),
   scs_common{scs_common_},
   scs_ssb{scs_ssb_},
@@ -75,7 +76,15 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   // Get the starting point of parameter N for the sync-raster. This allows us to avoid the generation of all possible
   // SSB positions in the raster.
   if (dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ) {
-    N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
+    // Band n79 has a different sync raster step size and need to be handled separately.
+    if (band == nr_band::n79) {
+      N_raster = GSCN_LB_N_90_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) >= ss_ref_l_bound_hz) {
+        increase_N_raster();
+      }
+    } else {
+      N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
+    }
   } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
     N_raster =
         static_cast<unsigned>(std::floor((ss_ref_l_bound_hz - N_REF_OFFSET_3_GHZ_24_5_GHZ) / N_SIZE_SYNC_RASTER_2_HZ));
@@ -145,6 +154,22 @@ unsigned ssb_freq_position_generator::find_M_raster()
   return 0;
 }
 
+void ssb_freq_position_generator::increase_N_raster()
+{
+  const bool is_band_40mhz_or_above = (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 216U) or
+                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 106U) or
+                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 51U);
+
+  // N_raster increase as per Table 5.4.3.3-1, TS 38.104, ver.17.8.0.
+if (band == nr_band::n79 and is_band_40mhz_or_above) {
+    N_raster += 16U;
+  } else if (band == nr_band::n104) {
+    N_raster += 7U;
+  } else {
+    ++N_raster;
+  }
+}
+
 ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 {
   ssb_freq_location ssb{.is_valid = false};
@@ -189,13 +214,14 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
         ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A);
         ssb.is_valid          = true;
         ssb.ss_ref            = f_ssb_N_M_hz;
-        N_raster++;
+        // Increment N_raster according to the band.
+        increase_N_raster();
         return ssb;
       }
     }
 
     // Increment N_raster.
-    N_raster++;
+    increase_N_raster();
   }
 
   return ssb;
