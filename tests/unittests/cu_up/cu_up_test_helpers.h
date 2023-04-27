@@ -164,7 +164,8 @@ public:
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
                                                           uint32_t                             ul_teid,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
-                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
+                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
+                                                          timer_factory                        timers) override
   {
     created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);

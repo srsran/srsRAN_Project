@@ -16,6 +16,7 @@
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -28,6 +29,7 @@ public:
                   f1u_tx_pdu_notifier&      tx_pdu_notifier_,
                   f1u_rx_delivery_notifier& rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&      rx_sdu_notifier_,
+                  timer_factory             timers,
                   f1u_bearer_disconnector&  diconnector_,
                   uint32_t                  ul_teid_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
@@ -44,6 +46,8 @@ public:
 
   uint32_t get_ul_teid() { return ul_teid; }
 
+  void on_expired_dl_notif_timer();
+
 private:
   f1u_bearer_logger         logger;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
@@ -51,6 +55,18 @@ private:
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
   f1u_bearer_disconnector&  disconnector;
   uint32_t                  ul_teid;
+
+  /// Downlink notification timer that triggers periodic transmission of discard blocks towards lower layers. The
+  /// purpose of this timer is to avoid excessive downlink notifications for every PDCP SN that is discarded by upper
+  /// layers.
+  unique_timer dl_notif_timer;
+
+  /// Mutex for exclusive access to discard_blocks_list
+  std::mutex discard_blocks_mutex;
+  /// Collection of pending \c nru_pdcp_sn_discard_block objects
+  nru_pdcp_sn_discard_blocks discard_blocks;
+
+  void fill_discard_blocks(nru_dl_message& msg);
 };
 
 } // namespace srs_cu_up

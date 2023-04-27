@@ -55,7 +55,8 @@ public:
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
                                                           uint32_t                             ul_teid,
                                                           srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                                          srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier) override;
+                                                          srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
+                                                          timer_factory                        timers) override;
   void                                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
   void                                   disconnect_cu_bearer(uint32_t ul_teid) override;
 

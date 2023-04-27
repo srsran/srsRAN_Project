@@ -21,15 +21,16 @@ std::unique_ptr<srs_cu_up::f1u_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                             ue_index,
                                       uint32_t                             ul_teid,
                                       srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                      srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier)
+                                      srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
+                                      timer_factory                        timers)
 {
   logger.info("Creating CU F1-U bearer. UL-TEID={}", ul_teid);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(
       cu_map.find(ul_teid) == cu_map.end(), "Cannot create CU F1-U bearer with already existing UL-TEID={}", ul_teid);
   std::unique_ptr<f1u_dl_local_adapter>  cu_tx = std::make_unique<f1u_dl_local_adapter>();
-  std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer =
-      srs_cu_up::create_f1u_bearer(ue_index, drb_id_t{}, *cu_tx, rx_delivery_notifier, rx_sdu_notifier, *this, ul_teid);
+  std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = srs_cu_up::create_f1u_bearer(
+      ue_index, drb_id_t{}, *cu_tx, rx_delivery_notifier, rx_sdu_notifier, timers, *this, ul_teid);
   f1u_cu_bearer cu_bearer(std::move(cu_tx), f1u_bearer.get());
   cu_map.insert({ul_teid, std::move(cu_bearer)});
   return f1u_bearer;
