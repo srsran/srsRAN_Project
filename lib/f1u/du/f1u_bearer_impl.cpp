@@ -121,7 +121,6 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
   }
 
   // restart UL notification timer
-  ul_notif_timer.stop();
   ul_notif_timer.run();
 }
 
