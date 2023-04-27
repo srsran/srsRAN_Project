@@ -66,7 +66,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
   cu_cp_pdu_session_resource_setup_request req;
   req.ue_index = uint_to_ue_index(0);
 
-  for (uint32_t i = 0; i < num_pdu_sessions; ++i) {
+  for (unsigned i = 0; i < num_pdu_sessions; ++i) {
     pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(i + 1);
 
     cu_cp_pdu_session_res_setup_item item;
@@ -81,7 +81,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
     item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
     item.pdu_session_type                          = "ipv4";
 
-    for (uint32_t k = 0; k < num_qos_flows; ++k) {
+    for (unsigned k = 0; k < num_qos_flows; ++k) {
       qos_flow_setup_request_item qos_item;
       qos_item.qos_flow_id = uint_to_qos_flow_id(k + 1);
 
