@@ -50,6 +50,7 @@ public:
   // Derived Parameters.
   ssb_pattern_case ssb_case;
   bool             paired_spectrum;
+  nr_band          band;
   uint8_t          L_max;
 
   bool is_tdd() const { return tdd_cfg_common.has_value(); }

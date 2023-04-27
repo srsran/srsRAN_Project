@@ -31,7 +31,7 @@ unsigned get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_re
 
 /// Get RA-RNTI based on PRACH parameters.
 /// \remark See 38.321, 5.1.3 - Random Access Preamble transmission
-uint16_t get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul = false);
+uint16_t get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigned frequency_index, bool is_sul = false);
 
 /// Scheduler for PRACH occasions, RAR PDSCHs and Msg3 PUSCH grants.
 class ra_scheduler
@@ -124,6 +124,7 @@ private:
   /// RA window size in number of slots.
   const unsigned    ra_win_nof_slots;
   bwp_configuration initial_active_dl_bwp;
+  const bool        prach_format_is_long;
 
   /// Pre-cached information related to RAR for a given PDSCH time resource.
   struct rar_param_cached_data {

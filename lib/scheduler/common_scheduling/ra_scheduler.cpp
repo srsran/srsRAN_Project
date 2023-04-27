@@ -37,16 +37,19 @@ unsigned srsran::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
   return static_cast<int>(pusch_td_res_alloc.k2 + DELTAS[to_numerology_value(pusch_scs)]);
 }
 
-uint16_t srsran::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul)
+uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigned frequency_index, bool is_sul)
 {
-  // See 38.321, 5.1.3 - Random Access Preamble transmission
-  // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id
-  // s_id = index of the first OFDM symbol (0 <= s_id < 14)
-  // t_id = index of first slot of the PRACH (0 <= t_id < 80)
-  // f_id = index of the PRACH in the freq domain (0 <= f_id < 8) (for FDD, f_id=0)
-  // ul_carrier_id = 0 for NUL and 1 for SUL carrier
-  const uint16_t ra_rnti = 1U + symbol_index + 14U * sl_rx.subframe_index() + 14U * 80U * frequency_index +
-                           (14U * 80U * 8U * (is_sul ? 1U : 0U));
+  // See 38.321, 5.1.3 - Random Access Preamble transmission.
+  // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id.
+  // s_id = index of the first OFDM symbol of the PRACH occasion (0 <= s_id < 14).
+  // t_id = index of the first slot of the PRACH occasion in a system frame (0 <= t_id < 80); the numerology of
+  // reference for t_id is 15kHz for long PRACH Formats, regardless of the SCS common; whereas, for short PRACH formats,
+  // it coincides with SCS common (this can be inferred from Section 5.1.3, TS 38.321, and from Section 5.3.2,
+  // TS 38.211).
+  // f_id = index of the PRACH occation in the freq domain (0 <= f_id < 8).
+  // ul_carrier_id = 0 for NUL and 1 for SUL carrier.
+  const uint16_t ra_rnti =
+      1U + symbol_index + 14U * slot_index + 14U * 80U * frequency_index + (14U * 80U * 8U * (is_sul ? 1U : 0U));
   return ra_rnti;
 }
 
@@ -62,6 +65,11 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   ev_logger(ev_logger_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
+  prach_format_is_long(is_long_preamble(
+      prach_configuration_get(band_helper::get_freq_range(cell_cfg.band),
+                              band_helper::get_duplex_mode(cell_cfg.band),
+                              cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
+          .format)),
   pending_msg3s(MAX_NOF_MSG3)
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
@@ -170,7 +178,11 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
   const static unsigned prach_duration = 1; // TODO: Take from config
 
   for (const auto& prach_occ : msg.occasions) {
-    const uint16_t ra_rnti = get_ra_rnti(msg.slot_rx, prach_occ.start_symbol, prach_occ.frequency_index);
+    // As per Section 5.1.3, TS 38.321, and from Section 5.3.2, TS 38.211, slot_idx uses as the numerology of reference
+    // 15kHz for long PRACH Formats (i.e, slot_idx = subframe index); whereas, for short PRACH formats, it uses the same
+    // numerology as the SCS common (i.e, slot_idx = actual slot index within the frame).
+    const unsigned slot_idx = prach_format_is_long ? msg.slot_rx.subframe_index() : msg.slot_rx.slot_index();
+    const uint16_t ra_rnti  = get_ra_rnti(slot_idx, prach_occ.start_symbol, prach_occ.frequency_index);
 
     pending_rar_t* rar_req = nullptr;
     for (pending_rar_t& rar : pending_rars) {

@@ -264,8 +264,8 @@ protected:
   {
     nof_detected = 0;
     for (const rach_indication_message::occasion& occ : rach_ind.occasions) {
-      rnti_t                 ra_rnti = to_rnti(get_ra_rnti(rach_ind.slot_rx, occ.start_symbol, occ.frequency_index));
-      const rar_information* rar     = find_rar(rars, ra_rnti);
+      rnti_t ra_rnti = to_rnti(get_ra_rnti(rach_ind.slot_rx.to_uint(), occ.start_symbol, occ.frequency_index));
+      const rar_information* rar = find_rar(rars, ra_rnti);
       if (rar == nullptr) {
         continue;
       }

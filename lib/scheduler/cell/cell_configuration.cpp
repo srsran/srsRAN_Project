@@ -35,6 +35,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),
+  band(msg.dl_carrier.band),
   L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn))
 {
   if (tdd_cfg_common.has_value()) {

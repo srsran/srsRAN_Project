@@ -246,8 +246,15 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = 1;
-  // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
-  cfg.init_ul_bwp.rach_cfg_common->msg1_scs       = params.scs_common;
+  // Although this is not specified in the TS, from our tests, the UE espects Msg1-SCS to be given when using short
+  // PRACH Preambles formats. With long formats, we can set Msg1-SCS as \c invalid, in which case the UE derives the
+  // PRACH SCS from \c prach-ConfigurationIndex in RACH-ConfigGeneric.
+  cfg.init_ul_bwp.rach_cfg_common->msg1_scs =
+      is_long_preamble(prach_configuration_get(
+                           freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
+                           .format)
+          ? subcarrier_spacing::invalid
+          : params.scs_common;
   cfg.init_ul_bwp.rach_cfg_common->restricted_set = restricted_set_config::UNRESTRICTED;
   // Set l839 for long preamble formats, l139 for short preamble formats, as per Tables 6.3.3.1-1 and 6.3.3.1-2,
   // TS 38.211
