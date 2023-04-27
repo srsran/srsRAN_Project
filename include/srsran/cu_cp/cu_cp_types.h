@@ -645,5 +645,22 @@ struct cu_cp_inactivity_notification {
   std::vector<pdu_session_id_t> inactive_pdu_sessions;
 };
 
+// This struct contains all fields required to update the UP config based on an incoming
+// PDU sessions resource setup request over NGAP. This config is then used to:
+// * Initiate or modifiy the CU-UPs bearer context over E1AP
+// * Modify the DU's UE context over F1AP
+// * Modify the CU-UPs bearer context over E1AP (update TEIDs, etc)
+// * Modify the UE's configuration over RRC signaling
+struct up_config_update {
+  bool                          initial_context_creation = true;
+  std::vector<pdu_session_id_t> pdu_sessions_to_setup_list;  // List of PDU sessions to be added.
+  std::vector<pdu_session_id_t> pdu_sessions_to_mod_list;    // List of PDU sessions to be modified.
+  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
+
+  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added.
+
+  std::vector<qos_flow_id_t> qos_flow_to_setup_list;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
