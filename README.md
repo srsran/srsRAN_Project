@@ -80,7 +80,7 @@ any RF device.
 
 In order to enable the TRX driver compilation, the TRX driver header path must be provided:
 ```bash
-cmake .. -DENABLE_ZEROMQ=On -DENABLE_TRX_DRIVER=On -DTRX_DRIVER_DIR=<path to trx_uhd-linux-...>
+cmake .. -DENABLE_EXPORT=TRUE -DENABLE_ZEROMQ=TRUE -DENABLE_TRX_DRIVER=TRUE -DTRX_DRIVER_DIR=<path to trx_uhd-linux-...>
 make trx_srsran_test
 ctest -R trx_srsran_test
 ```

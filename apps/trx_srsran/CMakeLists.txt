@@ -6,13 +6,15 @@
 # the distribution.
 #
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 # Find TRX header
 find_package(TRX_DRIVER MODULE REQUIRED)
 
 if (NOT (ZEROMQ_FOUND AND ENABLE_ZEROMQ))
     message(SEND_ERROR "ZeroMQ is required to build TRX driver.")
+endif ()
+
+if (NOT ENABLE_EXPORT)
+    message(SEND_ERROR "Enable export is required. Append -DENABLE_EXPORT=TRUE to the cmake arguments.")
 endif ()
 
 
@@ -33,6 +35,7 @@ add_executable(trx_srsran_test trx_srsran_test.cpp)
 target_link_libraries(trx_srsran_test dl)
 target_include_directories(trx_srsran_test PRIVATE ${TRX_DRIVER_DIR})
 add_test(trx_srsran_test trx_srsran_test ./libtrx_srsran.so)
+target_link_options(trx_srsran_test PRIVATE "SHELL:-Wl,--no-as-needed -lpthread -Wl,--as-needed")
 
 # Make sure libtrx_srsran is compiled when trx_srsran_test is the only target.
 add_dependencies(trx_srsran_test trx_srsran)
