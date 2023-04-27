@@ -22,7 +22,7 @@ static std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
              "Format={}; RootSequenceIndex={}; PreambleIndex={}; RestrictedSet={}; ZeroCorrelationZone={};",
-             static_cast<unsigned>(test_case.config.format),
+             to_string(test_case.config.format),
              test_case.config.root_sequence_index,
              test_case.config.preamble_index,
              static_cast<unsigned>(test_case.config.restricted_set),
@@ -65,11 +65,6 @@ protected:
 TEST_P(prach_generator_test, vector)
 {
   const test_case_t& test_case = GetParam();
-
-  // Short premables are not implemented.
-  if (is_short_preamble(test_case.config.format)) {
-    GTEST_SKIP();
-  }
 
   // Restricted sets are not implemented. Skip.
   if (test_case.config.restricted_set != restricted_set_config::UNRESTRICTED) {
