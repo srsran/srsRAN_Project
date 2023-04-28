@@ -123,7 +123,7 @@ TEST_F(f1u_cu_up_test, create_and_delete)
 TEST_F(f1u_cu_up_test, tx_discard)
 {
   constexpr uint32_t pdu_size = 10;
-  constexpr uint32_t pdcp_sn = 123;
+  constexpr uint32_t pdcp_sn  = 123;
 
   f1u->discard_sdu(pdcp_sn);
   // advance time just before the timer-based DL notification is triggered
