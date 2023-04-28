@@ -97,12 +97,16 @@ TEST_F(f1u_du_test, rx_discard)
 {
   constexpr uint32_t pdcp_sn = 123;
 
-  nru_dl_message msg1              = {};
-  msg1.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{};
-  nru_pdcp_sn_discard_block block1 = {};
-  block1.pdcp_sn_start             = pdcp_sn;
-  block1.block_size                = 1;
-  msg1.dl_user_data.discard_blocks.value().push_back(std::move(block1));
+  nru_dl_message msg1               = {};
+  msg1.dl_user_data.discard_blocks  = nru_pdcp_sn_discard_blocks{};
+  nru_pdcp_sn_discard_block block1a = {};
+  block1a.pdcp_sn_start             = pdcp_sn;
+  block1a.block_size                = 1;
+  msg1.dl_user_data.discard_blocks.value().push_back(std::move(block1a));
+  nru_pdcp_sn_discard_block block1b = {};
+  block1b.pdcp_sn_start             = pdcp_sn + 3;
+  block1b.block_size                = 2;
+  msg1.dl_user_data.discard_blocks.value().push_back(std::move(block1b));
   f1u->handle_pdu(std::move(msg1));
 
   nru_dl_message msg2              = {};
@@ -116,11 +120,20 @@ TEST_F(f1u_du_test, rx_discard)
   EXPECT_TRUE(tester->rx_sdu_list.empty());
   EXPECT_TRUE(tester->tx_msg_list.empty());
 
+  // from block1a
   ASSERT_FALSE(tester->rx_discard_sdu_list.empty());
   ASSERT_EQ(tester->rx_discard_sdu_list.front(), pdcp_sn);
-
   tester->rx_discard_sdu_list.pop_front();
 
+  // from block1b
+  ASSERT_FALSE(tester->rx_discard_sdu_list.empty());
+  ASSERT_EQ(tester->rx_discard_sdu_list.front(), pdcp_sn + 3);
+  tester->rx_discard_sdu_list.pop_front();
+  ASSERT_FALSE(tester->rx_discard_sdu_list.empty());
+  ASSERT_EQ(tester->rx_discard_sdu_list.front(), pdcp_sn + 4);
+  tester->rx_discard_sdu_list.pop_front();
+
+  // from block2
   ASSERT_FALSE(tester->rx_discard_sdu_list.empty());
   ASSERT_EQ(tester->rx_discard_sdu_list.front(), pdcp_sn + 9);
 
