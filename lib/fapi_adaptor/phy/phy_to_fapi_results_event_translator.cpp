@@ -77,7 +77,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
     builder_pdu.add_preamble(preamble.preamble_index,
                              {},
-                             preamble.time_advance.to_seconds() * 1e9,
+                             static_cast<uint32_t>(std::max(0.0, preamble.time_advance.to_seconds() * 1e9)),
                              clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
                              clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
