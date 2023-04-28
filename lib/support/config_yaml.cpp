@@ -91,7 +91,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config(std::istream& input
   try {
     config = YAML::Load(input);
   } catch (const YAML::ParserException& ex) {
-    throw CLI::FileError(ex.what());
+    throw CLI::FileError(std::string("Error parsing YAML configuration file: ") + ex.what());
   }
 
   return from_config_impl(config);

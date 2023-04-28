@@ -83,7 +83,7 @@ const std::string                          srsgnb_version = "0.1";
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
-  app.set_version_flag("-v,--version", srsgnb_version);
+  app.set_version_flag("-v,--version", "srsGNB version " + srsgnb_version);
   app.set_config("-c,", config_file, "Read config from file", false);
 }
 
@@ -430,11 +430,7 @@ int main(int argc, char** argv)
   configure_cli11_with_gnb_appconfig_schema(app, gnb_cfg);
 
   // Parse arguments.
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError& e) {
-    report_error("Error parsing config file: {}\n", e.what());
-  }
+  CLI11_PARSE(app, argc, argv);
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
