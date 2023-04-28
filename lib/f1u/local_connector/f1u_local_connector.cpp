@@ -91,6 +91,8 @@ void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
 }
 
 srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t                     ue_index,
+                                                          drb_id_t                     drb_id,
+                                                          srs_du::f1u_config           config,
                                                           uint32_t                     dl_teid,
                                                           uint32_t                     ul_teid,
                                                           srs_du::f1u_rx_sdu_notifier& du_rx,
@@ -105,10 +107,18 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
 
   logger.debug("Creating DU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
   std::unique_ptr<f1u_ul_local_adapter> du_tx = std::make_unique<f1u_ul_local_adapter>();
-  std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer =
-      srs_du::create_f1u_bearer(ue_index, drb_id_t{}, du_rx, *du_tx, timers);
-  srs_du::f1u_bearer* ptr    = f1u_bearer.get();
-  auto&               cu_tun = cu_map.at(ul_teid);
+
+  srs_du::f1u_bearer_creation_message f1u_msg = {};
+  f1u_msg.ue_index                            = ue_index;
+  f1u_msg.drb_id                              = drb_id;
+  f1u_msg.config                              = config;
+  f1u_msg.rx_sdu_notifier                     = &du_rx;
+  f1u_msg.tx_pdu_notifier                     = du_tx.get();
+  f1u_msg.timers                              = timers;
+
+  std::unique_ptr<srs_du::f1u_bearer> f1u_bearer = srs_du::create_f1u_bearer(f1u_msg);
+  srs_du::f1u_bearer*                 ptr        = f1u_bearer.get();
+  auto&                               cu_tun     = cu_map.at(ul_teid);
   cu_tun.cu_tx->attach_du_handler(f1u_bearer->get_rx_pdu_handler());
 
   du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());

@@ -73,6 +73,9 @@ protected:
     f1u_conn = std::make_unique<f1u_local_connector>();
 
     timers = timer_factory{timer_mng, ue_worker};
+
+    // set F1-U bearer config
+    config.t_notify = 10;
   }
 
   void TearDown() override
@@ -85,6 +88,7 @@ protected:
   manual_task_worker ue_worker{128};
   timer_factory      timers;
 
+  srs_du::f1u_config                   config;
   std::unique_ptr<f1u_local_connector> f1u_conn;
   srslog::basic_logger&                logger     = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger&                f1u_logger = srslog::fetch_basic_logger("F1-U", false);
@@ -114,7 +118,7 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(0, dl_teid, ul_teid, du_rx, timers);
+  srs_du::f1u_bearer* du_bearer = du_gw->create_du_bearer(0, drb_id_t::drb1, config, dl_teid, ul_teid, du_rx, timers);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_teid, dl_teid);

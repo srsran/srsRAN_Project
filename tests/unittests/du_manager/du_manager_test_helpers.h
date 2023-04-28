@@ -176,6 +176,8 @@ public:
   bool next_bearer_is_created = true;
 
   srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
+                                       drb_id_t                     drb_id,
+                                       srs_du::f1u_config           config,
                                        uint32_t                     dl_teid,
                                        uint32_t                     ul_teid,
                                        srs_du::f1u_rx_sdu_notifier& du_rx,

@@ -106,12 +106,19 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_id  = drb_id;
   drb->lcid    = lcid;
   drb->rlc_cfg = rlc_cfg;
+
+  // TODO - obtain from DU config
+  drb->f1u_cfg          = {};
+  drb->f1u_cfg.t_notify = 10;
+
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
   f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
+      drb->drb_id,
+      drb->f1u_cfg,
       drb->dluptnl_info_list[0].gtp_teid.value(),
       drb->uluptnl_info_list[0].gtp_teid.value(),
       drb->connector.f1u_rx_sdu_notif,

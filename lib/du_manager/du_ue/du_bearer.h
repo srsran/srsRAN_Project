@@ -13,6 +13,7 @@
 #include "du_ue_adapters.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/f1u/du/f1u_config.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
@@ -84,6 +85,7 @@ struct du_ue_drb {
   std::vector<up_transport_layer_info>                          dluptnl_info_list;
   rlc_config                                                    rlc_cfg;
   std::unique_ptr<rlc_entity>                                   rlc_bearer;
+  f1u_config                                                    f1u_cfg;
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
 
