@@ -258,7 +258,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->restricted_set = restricted_set_config::UNRESTRICTED;
   // Set l839 for long preamble formats, l139 for short preamble formats, as per Tables 6.3.3.1-1 and 6.3.3.1-2,
   // TS 38.211
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_or_l139 = is_long_preamble(
+  cfg.init_ul_bwp.rach_cfg_common->is_prach_root_seq_index_l839 = is_long_preamble(
       prach_configuration_get(freq_range, duplex, cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
           .format);
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index                          = 1;

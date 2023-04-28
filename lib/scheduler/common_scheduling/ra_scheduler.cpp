@@ -41,7 +41,7 @@ uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigne
 {
   // See 38.321, 5.1.3 - Random Access Preamble transmission.
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id.
-  // s_id = index of the first OFDM symbol of the PRACH occasion (0 <= s_id < 14).
+  // s_id = index of the first OFDM symbol of the (first, for short formats) PRACH occasion (0 <= s_id < 14).
   // t_id = index of the first slot of the PRACH occasion in a system frame (0 <= t_id < 80); the numerology of
   // reference for t_id is 15kHz for long PRACH Formats, regardless of the SCS common; whereas, for short PRACH formats,
   // it coincides with SCS common (this can be inferred from Section 5.1.3, TS 38.321, and from Section 5.3.2,

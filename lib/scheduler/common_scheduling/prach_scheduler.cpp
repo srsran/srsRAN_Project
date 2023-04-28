@@ -77,9 +77,10 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       const ofdm_symbol_range prach_symbols{prach_duration_info.start_symbol_pusch_scs,
                                             prach_duration_info.start_symbol_pusch_scs +
                                                 prach_duration_info.nof_symbols};
-      // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
+      // If the burst of PRACH opportunities extends over 1 slot, then allocate a grant for each slot that include these
+      // opportunities (1 or 2 slots).
       for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
-        // For the short PRACH formats, both grants (if more than 1) occupy the same symbols.
+        // For the short PRACH formats, both grants (if more than 1) occupy the same symbols within the slot.
         cached_prach.grant_list.emplace_back(
             grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
       }
@@ -168,8 +169,8 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
       res_grid[sl].result.ul.prachs.push_back(cached_prach.occasion);
     } else {
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over 1 or 2 slots) of the
-      // preamble and add PRACH occasions to scheduler slot output (1 or 2 PRACH PDU per preamble, depending on whether
-      // the preamble repeats over 2 slots).
+      // preamble and add the PRACH occasions to scheduler slot output (1 or 2 PRACH PDU per burst of PRACH
+      // opportunities, depending on whether this burst repeats over 1 or 2 slots).
       for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
         res_grid[sl + sl_idx].ul_res_grid.fill(cached_prach.grant_list[sl_idx]);
         res_grid[sl + sl_idx].result.ul.prachs.push_back(cached_prach.occasion);

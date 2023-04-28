@@ -29,8 +29,12 @@ class scheduler_event_logger;
 /// \return Msg3 delay in number of slots.
 unsigned get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_res_alloc, subcarrier_spacing pusch_scs);
 
-/// Get RA-RNTI based on PRACH parameters.
-/// \remark See 38.321, 5.1.3 - Random Access Preamble transmission
+/// \brief Computes the RA-RNTI based on PRACH parameters, as per TS 38.321, Section 5.1.3.
+/// \param[in] slot_index Index of the first slot of the PRACH occasion in a system frame. Values {0,...,79}.
+/// \param[in] symbol_index Index of the first OFDM symbol of the first PRACH occasion. Values {0,...,13}.
+/// \param[in] frequency_index Index of the PRACH occation in the frequency domain. Values {0,...,7}.
+/// \param[in] is_sul true is this is SUL carrier, false otherwise.
+/// \return the RA-RNRI, as per , as per TS 38.321, Section 5.1.3.
 uint16_t get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigned frequency_index, bool is_sul = false);
 
 /// Scheduler for PRACH occasions, RAR PDSCHs and Msg3 PUSCH grants.

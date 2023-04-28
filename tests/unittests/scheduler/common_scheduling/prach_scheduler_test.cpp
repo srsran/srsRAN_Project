@@ -125,11 +125,11 @@ protected:
         return false;
       }
     } else {
-      // With short Format PRACH, with 15kHz SCS, there is only 1 slot per subframe. This slot is an PRACH occasion.
-      // With 30kHz SCS, there are 2 slots per subframe; depending on the whether "number of PRACH slots within a
-      // subframe" 1 or 2 (as per Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211), the transmission is in the second slot of
-      // the subframe (if number of PRACH slots within a subframe = 1) or in both slots (number of PRACH slots within a
-      // subframe = 2).
+      // With short Format PRACH, with 15kHz SCS, there is only 1 slot per subframe. This slot contrains a burst PRACH
+      // occasions. With 30kHz SCS, there are 2 slots per subframe; depending on the whether "number of PRACH slots
+      // within a subframe" 1 or 2 (as per Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211), the occasions (and the
+      // transmission in one of the occasions) are expected in the second slot of the subframe (if number of PRACH
+      // slots within a subframe = 1) or in both slots (number of PRACH slots within a subframe = 2).
       if (to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) ==
               prach_subcarrier_spacing::kHz30 and
           prach_cfg.nof_prach_slots_within_subframe == 1 and sl.subframe_slot_index() == 0U) {
@@ -219,11 +219,11 @@ TEST_P(prach_tester, prach_sched_allocates_in_sched_grid)
       for (const auto& prach_pdu : res_grid[0].result.ul.prachs) {
         // For long PRACHs, we have 1 PRACH PDU and up to 8 grid grants allocated per PRACH occasion; these are
         // allocated by the scheduler at the slot where the PRACH pramble starts.
-        // For short PRACHs, we have 1 or 2 PRACH PDU and grid grant allocated per PRACH occasion; the occasion extents
-        // over 1 or 2 slots, each slot containing 1 PRACH PDU and 1 grid grant.
+        // For short PRACHs, we have 1 or 2 PRACH PDU and grid grant allocated per burst of PRACH occasions; the
+        // occasion extents over 1 or 2 slots, each slot containing 1 PRACH PDU and 1 grid grant.
         for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
-          // Note that prach_slot_idx is only used for long PRACH. For short PRACHs, the function below return the same
-          // grant regardless of the prach_slot_idx; this means the operation gets repeated twice.
+          // Note that prach_slot_idx is only used for long PRACH. For short PRACHs, the function below return t  he
+          // same grant regardless of the prach_slot_idx; this means the operation gets repeated twice.
           const grant_info grant = get_prach_grant(prach_pdu, prach_slot_idx);
           test_res_grid_has_re_set(res_grid, grant, 0);
         }

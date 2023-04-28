@@ -208,11 +208,13 @@ prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configu
   } else {
     const prach_subcarrier_spacing prach_scs = to_ra_subcarrier_spacing(pusch_scs);
     output.nof_symbols = static_cast<unsigned>(prach_cfg.nof_occasions_within_slot * prach_cfg.duration);
-    // Start slot within the subframe.
+    // Starting slot within the subframe; this can be derived from Section 5.3.2, TS 38.211.
     const bool prach_starts_in_even_slot =
         prach_scs == prach_subcarrier_spacing::kHz15 or
         (prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1);
     output.start_slot_pusch_scs = prach_starts_in_even_slot ? 0U : 1U;
+    // The burst of PRACH opportunities for short PRACH formats can be over 1 or 2 slots, as per Section 5.3.2,  and
+    // Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211.
     output.prach_length_slots =
         prach_scs == prach_subcarrier_spacing::kHz30 and prach_cfg.nof_prach_slots_within_subframe != 1 ? 2U : 1U;
   }

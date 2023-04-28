@@ -128,7 +128,7 @@ struct rach_config_common {
   optional<unsigned> total_nof_ra_preambles;
   /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.
   /// We use \c true for l839, while \c false for l139.
-  bool prach_root_seq_index_l839_or_l139;
+  bool is_prach_root_seq_index_l839;
   /// PRACH root sequence index. Values: (1..839).
   /// \remark See TS 38.211, clause 6.3.3.1.
   unsigned prach_root_seq_index;
