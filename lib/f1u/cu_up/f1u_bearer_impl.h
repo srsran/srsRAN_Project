@@ -65,6 +65,7 @@ private:
   nru_pdcp_sn_discard_blocks discard_blocks;
 
   void fill_discard_blocks(nru_dl_message& msg);
+  void flush_discard_blocks();
 };
 
 } // namespace srs_cu_up

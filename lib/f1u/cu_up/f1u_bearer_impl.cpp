@@ -111,6 +111,10 @@ void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
       block.pdcp_sn_start              = pdcp_sn;
       block.block_size                 = 1;
       logger.log_debug("Queued next SDU discard block with pdcp_sn={}", pdcp_sn);
+      if (discard_blocks.full()) {
+        logger.log_debug("Flushing SDU discard block notification. nof_blocks={}", discard_blocks.capacity());
+        flush_discard_blocks();
+      }
     }
   }
 }
@@ -128,6 +132,11 @@ void f1u_bearer_impl::fill_discard_blocks(nru_dl_message& msg)
 void f1u_bearer_impl::on_expired_dl_notif_timer()
 {
   logger.log_debug("DL notification timer expired");
+  flush_discard_blocks();
+}
+
+void f1u_bearer_impl::flush_discard_blocks()
+{
   nru_dl_message msg = {};
   fill_discard_blocks(msg);
   if (msg.dl_user_data.discard_blocks.has_value()) {
