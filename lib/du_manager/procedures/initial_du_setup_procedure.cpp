@@ -67,7 +67,6 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
   du_setup_params setup_params;
   setup_params.gnb_du_id               = params.ran.gnb_du_id;
   setup_params.rrc_version             = params.ran.rrc_version;
-  setup_params.gnb_du_id               = params.ran.gnb_du_id;
   f1_setup_request_message request_msg = {};
   std::vector<std::string> sib1_jsons;
   fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells_to_add, &sib1_jsons);
