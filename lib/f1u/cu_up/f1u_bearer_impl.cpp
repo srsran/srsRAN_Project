@@ -91,7 +91,6 @@ void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 
 void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
 {
-  std::lock_guard<std::mutex> lock(discard_blocks_mutex);
   if (discard_blocks.empty()) {
     discard_blocks.push_back(nru_pdcp_sn_discard_block{});
     nru_pdcp_sn_discard_block& block = discard_blocks.back();
@@ -118,7 +117,6 @@ void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
 
 void f1u_bearer_impl::fill_discard_blocks(nru_dl_message& msg)
 {
-  std::lock_guard<std::mutex> lock(discard_blocks_mutex);
   if (!discard_blocks.empty()) {
     msg.dl_user_data.discard_blocks = std::move(discard_blocks);
     discard_blocks                  = {};

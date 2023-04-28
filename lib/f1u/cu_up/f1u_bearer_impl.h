@@ -61,8 +61,6 @@ private:
   /// layers.
   unique_timer dl_notif_timer;
 
-  /// Mutex for exclusive access to discard_blocks_list
-  std::mutex discard_blocks_mutex;
   /// Collection of pending \c nru_pdcp_sn_discard_block objects
   nru_pdcp_sn_discard_blocks discard_blocks;
 
