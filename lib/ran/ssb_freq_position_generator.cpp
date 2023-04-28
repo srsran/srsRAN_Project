@@ -76,6 +76,8 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   // Get the starting point of parameter N for the sync-raster. This allows us to avoid the generation of all possible
   // SSB positions in the raster.
   if (dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ) {
+    N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
+  } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
     // Band n79 has a different sync raster step size and need to be handled separately.
     if (band == nr_band::n79) {
       N_raster = GSCN_LB_N_90_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
@@ -83,11 +85,9 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
         increase_N_raster();
       }
     } else {
-      N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
+      N_raster = static_cast<unsigned>(
+          std::floor((ss_ref_l_bound_hz - N_REF_OFFSET_3_GHZ_24_5_GHZ) / N_SIZE_SYNC_RASTER_2_HZ));
     }
-  } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
-    N_raster =
-        static_cast<unsigned>(std::floor((ss_ref_l_bound_hz - N_REF_OFFSET_3_GHZ_24_5_GHZ) / N_SIZE_SYNC_RASTER_2_HZ));
   } else {
     srsran_assert(dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ, "FR2 frequencies not supported");
   }
