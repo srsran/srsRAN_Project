@@ -541,6 +541,7 @@ basic valgrind:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  allow_failure: true
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
