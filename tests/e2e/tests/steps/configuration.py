@@ -25,7 +25,6 @@ def configure_test_parameters(
     band: int,
     common_scs: int,
     bandwidth: int,
-    ue_count: int,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
     mcs: int = 10,
@@ -42,7 +41,6 @@ def configure_test_parameters(
                 "common_scs": common_scs,
                 "ssb_scs": common_scs,
                 "bandwidth": bandwidth,
-                "ue_count": ue_count,
                 "global_timing_advance": global_timing_advance,
             },
         },
@@ -83,7 +81,7 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
     """
     Get SSB arfcn
     """
-    return {
+    return {  # type: ignore
         3: defaultdict(
             lambda: 368410,
             {

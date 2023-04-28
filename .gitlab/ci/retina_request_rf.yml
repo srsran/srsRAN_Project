@@ -8,7 +8,8 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_9cbbc85_c231804b2_0.3.9
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.4.0
+  count: 4
   ephemeral-storage: "3G"
   resources:
     - type: sdr
@@ -18,7 +19,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.3.9
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.4.0
   ephemeral-storage: "3G"
   resources:
     - type: sdr
@@ -27,5 +28,5 @@
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.3.9
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.4.0
   ephemeral-storage: "3G"

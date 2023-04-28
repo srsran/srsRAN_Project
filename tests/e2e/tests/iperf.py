@@ -11,7 +11,7 @@ Test Iperf
 """
 
 import logging
-from typing import Iterable, Union
+from typing import Sequence, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -19,7 +19,7 @@ from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, UEAttachedInfo
+from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
@@ -69,7 +69,10 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -87,7 +90,7 @@ def test_zmq(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue=ue,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
         epc=epc,
         band=band,
@@ -123,7 +126,10 @@ def test_zmq(
 def test_rf_udp(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -138,7 +144,7 @@ def test_rf_udp(
     _iperf(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue=ue,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
         epc=epc,
         band=band,
@@ -159,7 +165,7 @@ def test_rf_udp(
 def _iperf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_array: Sequence[UEStub],
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -173,7 +179,6 @@ def _iperf(
     time_alignment_calibration: Union[int, str],
     log_search: bool,
     always_download_artifacts: bool,
-    ue_count: int = 4,
 ):
     logging.info("Iperf Test")
 
@@ -185,7 +190,6 @@ def _iperf(
         bandwidth=bandwidth,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        ue_count=ue_count,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -193,12 +197,11 @@ def _iperf(
         log_search=log_search,
     )
 
-    ue_attached_info_list: Iterable[UEAttachedInfo] = start_and_attach(ue, gnb, epc)
+    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
 
     iperf(
-        ue,
+        ue_attach_info_dict,
         epc,
-        ue_attached_info_list,
         protocol,
         direction,
         iperf_duration,

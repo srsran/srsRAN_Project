@@ -1,11 +1,23 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+"""
+Validate Configuration Examples
+"""
 import logging
 from pathlib import Path
 from pprint import pformat
+
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import EPCDefinition, Empty, GNBDefinition, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import Empty, EPCDefinition, GNBDefinition, StartInfo, UEDefinition
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub

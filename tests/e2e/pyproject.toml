@@ -57,6 +57,50 @@ warn_return_any = true
 warn_unused_configs = true
 
 [tool.pylint]
-disable = ["fixme", "no-name-in-module"]
+disable = ["fixme", "no-name-in-module", "duplicate-code", "import-error"]
 ignore-signatures = true
 max-line-length = 120
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 4.4.0
+envlist = 
+  format
+  lint
+  type
+  unittest
+  build
+
+[testenv:format]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black --check --diff --color tests
+  isort --check tests
+
+[testenv:format_apply]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black tests
+  isort tests
+
+[testenv:lint]
+skip_install = true
+deps =
+  pylint
+commands =
+  pylint tests
+
+[testenv:type]
+skip_install = true
+deps = 
+  mypy
+commands = 
+  mypy tests
+"""

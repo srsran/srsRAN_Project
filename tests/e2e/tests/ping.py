@@ -9,18 +9,17 @@
 """
 Test ping
 """
-from contextlib import suppress
 import logging
-from typing import Iterable, Union
-import grpc
+from contextlib import suppress
+from typing import Sequence, Union
 
+import grpc
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
-from retina.protocol.ue_pb2 import UEAttachedInfo
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
@@ -43,7 +42,10 @@ from .steps.stub import ping, start_and_attach
 def test_zmq(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -57,7 +59,7 @@ def test_zmq(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue=ue,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
         epc=epc,
         band=band,
@@ -77,7 +79,10 @@ def test_zmq(
 def test_zmq_valgrind(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -94,7 +99,7 @@ def test_zmq_valgrind(
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
-            ue=ue,
+            ue_array=(ue_1, ue_2, ue_3, ue_4),
             gnb=gnb,
             epc=epc,
             band=band,
@@ -119,7 +124,10 @@ def test_zmq_valgrind(
 def test_rf(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -133,7 +141,7 @@ def test_rf(
     _ping(
         retina_manager=retina_manager,
         retina_data=retina_data,
-        ue=ue,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
         gnb=gnb,
         epc=epc,
         band=band,
@@ -154,7 +162,10 @@ def test_rf(
 def test_rf_does_not_crash(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -171,7 +182,7 @@ def test_rf_does_not_crash(
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
-            ue=ue,
+            ue_array=(ue_1, ue_2, ue_3, ue_4),
             gnb=gnb,
             epc=epc,
             band=band,
@@ -188,7 +199,7 @@ def test_rf_does_not_crash(
 def _ping(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
-    ue: UEStub,  # pylint: disable=invalid-name
+    ue_array: Sequence[UEStub],
     epc: EPCStub,
     gnb: GNBStub,
     band: int,
@@ -198,7 +209,6 @@ def _ping(
     time_alignment_calibration: Union[int, str],
     log_search: bool,
     always_download_artifacts: bool = False,
-    ue_count: int = 4,
     ping_count: int = 10,
     pre_command: str = "",
     post_command: str = "",
@@ -213,7 +223,6 @@ def _ping(
         bandwidth=bandwidth,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
-        ue_count=ue_count,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -221,7 +230,5 @@ def _ping(
         log_search=log_search,
     )
 
-    ue_attached_info_list: Iterable[UEAttachedInfo] = start_and_attach(
-        ue, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command
-    )
-    ping(ue, epc, ue_attached_info_list, ping_count)
+    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+    ping(ue_attach_info_dict, epc, ping_count)
