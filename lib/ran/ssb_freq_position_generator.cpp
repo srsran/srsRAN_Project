@@ -161,7 +161,7 @@ void ssb_freq_position_generator::increase_N_raster()
                                       (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 51U);
 
   // N_raster increase as per Table 5.4.3.3-1, TS 38.104, ver.17.8.0.
-if (band == nr_band::n79 and is_band_40mhz_or_above) {
+  if (band == nr_band::n79 and is_band_40mhz_or_above) {
     N_raster += 16U;
   } else if (band == nr_band::n104) {
     N_raster += 7U;

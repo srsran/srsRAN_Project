@@ -52,7 +52,7 @@ const uint32_t nof_nr_DL_bands_fr1 = 69;
 // NOTE: It only includes FDD, TDD, and SDL bands.
 // NOTE: Band 2 is a subset of band 25
 static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1> nr_band_table_fr1 = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,    delta_freq_raster::kHz100, 384000, 20, 396000, 422000, 20, 434000},
     {nr_band::n2,    delta_freq_raster::kHz100, 370000, 20, 382000, 386000, 20, 398000},
     {nr_band::n3,    delta_freq_raster::kHz100, 342000, 20, 357000, 361000, 20, 376000},
@@ -122,7 +122,7 @@ static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1> nr_band_table_f
     {nr_band::n102,  delta_freq_raster::kHz15,  796334, 1 , 828333, 796334,  1, 828333},
     {nr_band::n104,  delta_freq_raster::kHz15,  828334, 1 , 875000, 828334,  1, 875000},
     {nr_band::n104,  delta_freq_raster::kHz30,  828334, 2 , 875000, 828334,  2, 875000}
-       // clang-format on
+    // clang-format on
 }};
 
 // NR operating band in FR1 with related Duplex Mode. See TS 38.101-1 Table 5.2-1.
@@ -193,7 +193,7 @@ static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_ope
     {nr_band::n101, duplex_mode::TDD},
     {nr_band::n102, duplex_mode::TDD},
     {nr_band::n104, duplex_mode::TDD}
-       // clang-format on
+    // clang-format on
 }};
 
 // NR operating band in FR1 with SSB Subcarrier Spacing and SSB pattern case, as per Table 5.4.3.3-1,
@@ -207,7 +207,7 @@ struct nr_band_ssb_scs_case {
 // TS 38.104, Rel. 17, version 17.8.0.
 static const uint32_t                                                   nof_nr_ssb_bands_fr1           = 58;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_band_scs_case_table_fr1 = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
     {nr_band::n2,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
     {nr_band::n3,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -266,7 +266,7 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_b
     {nr_band::n101, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n102, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     {nr_band::n104, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-       // clang-format on
+    // clang-format on
 }};
 
 struct nr_raster_params {
@@ -289,14 +289,14 @@ struct nr_raster_params {
 // NR-ARFCN parameters for the global frequency raster, as per Table 5.4.2.1-1, TS 38.104, Rel. 17, version 17.8.0.
 static const uint32_t                            max_nr_arfcn = 3279165;
 static constexpr std::array<nr_raster_params, 3> nr_fr_params = {{
-       // clang-format off
+    // clang-format off
     // Frequency range 0 - 3000 MHz
     {0, 3000, 5, 0.0, 0, 0, 599999},
     // Frequency range 3000 - 24250 MHz
     {3000, 24250, 15, 3000.0, 600000, 600000, 2016666},
     // Frequency range 24250 - 100000 MHz
     {24250, 100000, 60, 24250.08, 2016667, 2016667, max_nr_arfcn}
-       // clang-format on
+    // clang-format on
 }};
 
 struct n_rb_per_scs {
@@ -308,7 +308,7 @@ struct n_rb_per_scs {
 
 // This implements Table 5.3.2-1 in TS 38.104. Value N_RB = 0 represent N/A.
 static const std::array<n_rb_per_scs, 15> tx_bw_config_fr1 = {{
-       // clang-format off
+    // clang-format off
     // BW = 5MHz.
     {bs_channel_bandwidth_fr1::MHz5, 25, 11, 0},
     // BW = 10MHz.
@@ -339,7 +339,7 @@ static const std::array<n_rb_per_scs, 15> tx_bw_config_fr1 = {{
     {bs_channel_bandwidth_fr1::MHz90, 0, 245, 121},
     // BW = 100MHz.
     {bs_channel_bandwidth_fr1::MHz100, 0, 273, 135}
-       // clang-format on
+    // clang-format on
 }};
 
 static const nr_band_raster fetch_band_raster(nr_band band, optional<delta_freq_raster> delta_freq_raster)
