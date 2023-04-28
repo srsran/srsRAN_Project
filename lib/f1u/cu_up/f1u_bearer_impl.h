@@ -44,8 +44,12 @@ public:
   void handle_sdu(pdcp_tx_pdu sdu) override;
   void discard_sdu(uint32_t pdcp_sn) override;
 
-  uint32_t get_ul_teid() { return ul_teid; }
+  /// \brief Returns the UL TEID that was assigned upon construction.
+  /// \return The UL TEID associated with this bearer.
+  uint32_t get_ul_teid() const { return ul_teid; }
 
+  /// \brief This function handles the periodic transmission of downlink notification towards lower layers with all
+  /// discard blocks that have aggregated since the previous DL PDU.
   void on_expired_dl_notif_timer();
 
 private:
@@ -61,10 +65,15 @@ private:
   /// layers.
   unique_timer dl_notif_timer;
 
-  /// Collection of pending \c nru_pdcp_sn_discard_block objects
+  /// Collection of pending \c nru_pdcp_sn_discard_block objects.
   nru_pdcp_sn_discard_blocks discard_blocks;
 
+  /// \brief Fills the provided \c nru_dl_message with all SDU discard blocks that have been aggregated since the last
+  /// call of this function (or since creation of this object).
+  /// \param msg The message to be filled with SDU discard blocks.
   void fill_discard_blocks(nru_dl_message& msg);
+
+  /// \brief Immediately transmits a \c nru_dl_message with all currently aggregated SDU discard blocks, if any.
   void flush_discard_blocks();
 };
 
