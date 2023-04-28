@@ -264,8 +264,19 @@ protected:
   {
     nof_detected = 0;
     for (const rach_indication_message::occasion& occ : rach_ind.occasions) {
-      rnti_t ra_rnti = to_rnti(get_ra_rnti(rach_ind.slot_rx.to_uint(), occ.start_symbol, occ.frequency_index));
-      const rar_information* rar = find_rar(rars, ra_rnti);
+      // As per Section 5.1.3, TS 38.321, and from Section 5.3.2, TS 38.211, slot_idx uses as the numerology of
+      // reference 15kHz for long PRACH Formats (i.e, slot_idx = subframe index); whereas, for short PRACH formats, it
+      // uses the same numerology as the SCS common (i.e, slot_idx = actual slot index within the frame).
+      const unsigned slot_idx =
+          is_long_preamble(prach_configuration_get(
+                               band_helper::get_freq_range(cell_cfg.band),
+                               band_helper::get_duplex_mode(cell_cfg.band),
+                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
+                               .format)
+              ? rach_ind.slot_rx.subframe_index()
+              : rach_ind.slot_rx.slot_index();
+      rnti_t                 ra_rnti = to_rnti(get_ra_rnti(slot_idx, occ.start_symbol, occ.frequency_index));
+      const rar_information* rar     = find_rar(rars, ra_rnti);
       if (rar == nullptr) {
         continue;
       }
