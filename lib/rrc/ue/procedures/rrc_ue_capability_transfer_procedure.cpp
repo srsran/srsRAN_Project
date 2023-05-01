@@ -45,38 +45,31 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
 
   auto coro_res = transaction.result();
   if (coro_res.has_value()) {
-    if (logger.debug.enabled()) {
-      if (coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list_present) {
-        logger.debug("UE Capabilities :");
-        for (const auto& ue_cap_rat_container :
-             coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list) {
-          if (ue_cap_rat_container.rat_type.value == asn1::rrc_nr::rat_type_e::nr) {
-            asn1::cbit_ref            bref{ue_cap_rat_container.ue_cap_rat_container.copy()};
-            asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
-            if (ue_nr_cap.unpack(bref) != asn1::SRSASN_SUCCESS) {
-              logger.error("Error unpacking UE Capabilities");
-              continue;
-            }
+    if (coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list_present) {
+      for (const auto& ue_cap_rat_container :
+           coro_res.value().msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list) {
+        if (ue_cap_rat_container.rat_type.value == asn1::rrc_nr::rat_type_e::nr) {
+          asn1::cbit_ref            bref{ue_cap_rat_container.ue_cap_rat_container.copy()};
+          asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
+          if (ue_nr_cap.unpack(bref) != asn1::SRSASN_SUCCESS) {
+            logger.error("Error unpacking UE Capabilities");
+            continue;
+          }
+
+          if (logger.debug.enabled()) {
             asn1::json_writer json_writer;
             ue_nr_cap.to_json(json_writer);
-            logger.debug("{}", json_writer.to_string().c_str());
-
-            // Store capabilities for future use.
-            context.capabilities = ue_nr_cap;
-          } else {
-            logger.debug("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
+            logger.debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
           }
+
+          // Store capabilities for future use.
+          context.capabilities = ue_nr_cap;
+        } else {
+          logger.warning("Unsupported RAT type {}", ue_cap_rat_container.rat_type);
         }
       }
     }
-
-    if (context.capabilities.has_value()) {
-      logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
-    } else {
-      logger.debug("ue={} \"{}\" finished but no NR capabilities present", context.ue_index, name());
-    }
-    // TODO: fail procedure after updating ASN1 lib
-    procedure_result = true;
+    procedure_result = context.capabilities.has_value();
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
   }
