@@ -353,34 +353,49 @@ TEST(ssb_freq_position_generation_test, band_66)
 }
 
 // Test all possible SSB position within a given band returned by the config generator.
-TEST(ssb_freq_position_generation_test, band_79)
+TEST(ssb_freq_position_generation_test, band_46)
 {
-  unsigned           dl_arfcn   = 713332;
-  nr_band            nr_band    = nr_band::n79;
+  unsigned           dl_arfcn   = 769332;
+  nr_band            nr_band    = nr_band::n46;
   unsigned           n_rbs      = 51;
   subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
   subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
+  ssb_freq_location expected{true, 8, 0};
   ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
-  ASSERT_TRUE(test.ss_ref > 0);
+  // Verify there are no possible SSB positions within the band.
+  ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
+}
 
-  //  ssb_freq_location expected{true, 0, 22};
-  //  ssb_freq_location test = cfg_generator.get_next_ssb_location();
-  //  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
-  //  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
-  //
-  //  // Get next SSB position(s) and verify its position in terms of offsetToPointA and k_SSB.
-  //  expected.offset_to_point_A = 8;
-  //  expected.k_ssb             = 6;
-  //  test                       = cfg_generator.get_next_ssb_location();
-  //  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
-  //  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
-  //
-  //  // Verify there are no possible SSB positions within the band.
-  //  ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
+// Test all possible SSB position within a given band returned by the config generator.
+TEST(ssb_freq_position_generation_test, band_46_bw_40mhz)
+{
+  unsigned           dl_arfcn   = 780668;
+  nr_band            nr_band    = nr_band::n46;
+  unsigned           n_rbs      = 106;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
+
+  ssb_freq_location expected{true, 6, 4};
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
+
+  expected.offset_to_point_A = 118;
+  expected.k_ssb             = 4;
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
+
+  // Verify there are no possible SSB positions within the band.
+  ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
 }
 
 // ============= Test Generation of CORESET#0 index based on SSB and SearchSpace#0 Index. ==============

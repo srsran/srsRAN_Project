@@ -72,8 +72,11 @@ private:
   unsigned find_M_raster();
   /// Get the SSB central frequency, or SS_ref, given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
   double get_ss_ref_hz(unsigned N, unsigned M) const;
-  /// Increase N_raster according to the raster step given by the band
+  /// Increase N_raster according to the raster step given by the band, as per Table 5.4.3.3-1, TS 38.104, ver 17.8.0.
   void increase_N_raster();
+  /// Implements \ref get_next_ssb_location() for the specific case of bands n46, n96 and n102, which don't have a
+  /// standard raster.
+  ssb_freq_location get_next_ssb_location_special_raster();
 
   /// Parameters that are passed to the constructor.
   const unsigned dl_arfcn;
@@ -101,6 +104,9 @@ private:
   unsigned N_raster;
   /// This is the \f$M\f$ parameter in the synchronization raster, as per Table 5.4.3.1-1, TS 38.104.
   unsigned M_raster;
+  /// Some bands have a non-regular set of GSCN values for the synchronization raster. This index keeps track of what
+  /// GSCN value has been used to generate the latest SSB frequency location.
+  size_t gscn_raster_idx;
 };
 
 } // namespace srsran

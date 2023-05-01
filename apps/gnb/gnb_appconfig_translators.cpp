@@ -514,7 +514,9 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     static constexpr unsigned ul_pipeline_depth    = 8;
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    nr_band band = band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn);
+    nr_band band = config.common_cell_cfg.band.has_value()
+                       ? config.common_cell_cfg.band.value()
+                       : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn);
     if (cell.band.has_value()) {
       band = config.common_cell_cfg.band.value();
     }

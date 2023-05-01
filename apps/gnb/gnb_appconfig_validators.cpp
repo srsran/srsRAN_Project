@@ -212,12 +212,19 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
 {
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
 
+  // Exclude a priori the bands that are not yet supported.
+  if (band == srsran::nr_band::n28 or band == srsran::nr_band::n79 or band == srsran::nr_band::n90 or
+      band == srsran::nr_band::n96 or band == srsran::nr_band::n102 or band == srsran::nr_band::n104) {
+    fmt::print("Band {} not currently supported: {}.\n", band);
+    return false;
+  }
+
   // Check whether the DL-ARFCN is within the band and follows the Raster step.
   if (config.band.has_value()) {
-    error_type<std::string> ret =
-        band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn, config.common_scs);
+    error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
+        *config.band, config.dl_arfcn, config.common_scs, config.channel_bw_mhz);
     if (ret.is_error()) {
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, *config.band, ret.error());
+      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, band, ret.error());
       return false;
     }
   } else {
@@ -228,10 +235,6 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
   }
 
   // Check if the band is supported.
-  if (band == srsran::nr_band::n79) {
-    fmt::print("Band n79 not currently supported.\n");
-    return false;
-  }
   if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
       (band == srsran::nr_band::n34 or band == srsran::nr_band::n38 or band == srsran::nr_band::n39)) {
     fmt::print("Bands n34, 38 and 39 not currently supported with SCS 15kHz.\n");

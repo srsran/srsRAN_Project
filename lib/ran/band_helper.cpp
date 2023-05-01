@@ -17,6 +17,7 @@
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 
@@ -344,13 +345,14 @@ static const std::array<n_rb_per_scs, 15> tx_bw_config_fr1 = {{
 
 static const nr_band_raster fetch_band_raster(nr_band band, optional<delta_freq_raster> delta_freq_raster)
 {
-  srsran_assert(
-      (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
-       band == nr_band::n79 or band == nr_band::n90 or band == nr_band::n104) and
-          delta_freq_raster.has_value(),
-      "For band n41, n48, n77, n78, n79, n90 and n104, the band freq. raster require Delta Freq. Raster as an input");
+  if (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
+      band == nr_band::n79 or band == nr_band::n90 or band == nr_band::n104) {
+    srsran_assert(
+        delta_freq_raster.has_value(),
+        "For band n41, n48, n77, n78, n79, n90 and n104, the band freq. raster require Delta Freq. Raster as an input");
+  }
 
-  const auto it = std::find_if(
+  const auto* it = std::find_if(
       nr_band_table_fr1.begin(), nr_band_table_fr1.end(), [band, delta_freq_raster](const nr_band_raster& raster_band) {
         return delta_freq_raster.has_value()
                    ? raster_band.band == band and raster_band.delta_f_rast == delta_freq_raster
@@ -417,7 +419,9 @@ static bool validate_band_n28(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
   return false;
 }
 
-static bool validate_band_n46(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+// Validates band n46, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
+// version 17.8.0.
+static bool validate_band_n46(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 2>  n46_b_10_dlarfnc = {782000, 788668};
   const std::array<unsigned, 32> n46_b_20_dlarfnc = {
@@ -476,7 +480,9 @@ static bool validate_band_n46(nr_band band, uint32_t arfcn, bs_channel_bandwidth
   }
 }
 
-static bool validate_band_n96(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+// Validates band n66, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
+// version 17.8.0.
+static bool validate_band_n96(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 59> b_20_dlarfnc = {
       // clang-format off
@@ -544,7 +550,9 @@ static bool validate_band_n96(nr_band band, uint32_t arfcn, bs_channel_bandwidth
   }
 }
 
-static bool validate_band_n102(nr_band band, uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+// Validates band n102, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
+// version 17.8.0.
+static bool validate_band_n102(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 24> b_20_dlarfnc = {
       // clang-format off
@@ -643,15 +651,15 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
                                                                           subcarrier_spacing       scs,
                                                                           bs_channel_bandwidth_fr1 bw)
 {
-  // Validates first the bands with peculiar ARFCN values.
+  // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
     return validate_band_n28(arfcn, bw) ? error_type<std::string>{}
                                         : error_type<std::string>{fmt::format("Band is not valid")};
   }
 
   if (band == nr_band::n46) {
-    return validate_band_n46(band, arfcn, bw) ? error_type<std::string>{}
-                                              : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n46(arfcn, bw) ? error_type<std::string>{}
+                                        : error_type<std::string>{fmt::format("Band is not valid")};
   }
 
   if (band == nr_band::n90) {
@@ -660,13 +668,13 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   }
 
   if (band == nr_band::n96) {
-    return validate_band_n96(band, arfcn, bw) ? error_type<std::string>{}
-                                              : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n96(arfcn, bw) ? error_type<std::string>{}
+                                        : error_type<std::string>{fmt::format("Band is not valid")};
   }
 
   if (band == nr_band::n102) {
-    return validate_band_n102(band, arfcn, bw) ? error_type<std::string>{}
-                                               : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n102(arfcn, bw) ? error_type<std::string>{}
+                                         : error_type<std::string>{fmt::format("Band is not valid")};
   }
 
   // NOTE: This function restricts the choice of ARFCN for bands n41, n77, n78, and n79. As per Section 5.4.2.3,
@@ -676,7 +684,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   // Assume standard Delta freq raster of 100kHz.
   delta_freq_raster band_delta_freq_raster = delta_freq_raster::kHz100;
 
-  // Update Delta freq raster based on SCS for bands n41, n41, n77, n78, and n79.
+  // Update Delta freq raster based on SCS for bands n41, n48, n77, n78, n79 and n104.
   if (band == nr_band::n41 or band == nr_band::n48 or band == nr_band::n77 or band == nr_band::n78 or
       band == nr_band::n79 or band == nr_band::n104) {
     band_delta_freq_raster = scs == subcarrier_spacing::kHz15 ? delta_freq_raster::kHz15 : delta_freq_raster::kHz30;
@@ -700,8 +708,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
 uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, optional<nr_band> band)
 {
   // NOTE: The procedure implemented in this function is implementation-defined.
-  nr_band operating_band = band.has_value() ? band.value() : get_band_from_dl_arfcn(dl_arfcn);
-  ;
+  const nr_band operating_band = band.has_value() ? band.value() : get_band_from_dl_arfcn(dl_arfcn);
 
   // Return same ARFCN for TDD bands.
   if (get_duplex_mode(operating_band) == duplex_mode::TDD) {
@@ -821,7 +828,7 @@ bool srsran::band_helper::is_paired_spectrum(nr_band band)
 frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
   srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
-  return band <= nr_band::n86 ? frequency_range::FR1 : frequency_range::FR2;
+  return band <= nr_band::n104 ? frequency_range::FR1 : frequency_range::FR2;
 }
 
 double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
@@ -1014,6 +1021,48 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
   return min_channel_bandwidth::invalid;
 }
 
+double band_helper::get_ss_ref_from_gscn(unsigned gscn)
+{
+  srsran_assert(gscn > MIN_GSCN_FREQ_0_3GHZ and gscn <= MIN_ARFCN_24_5_GHZ_100_GHZ,
+                "GSCN must be within the [{},{}] interval",
+                MIN_GSCN_FREQ_0_3GHZ,
+                MAX_GSCN_FREQ_24_5GHZ_100GHZ);
+
+  double ss_ref = 0;
+
+  if (gscn >= MIN_GSCN_FREQ_0_3GHZ and gscn < MIN_GSCN_FREQ_3GHZ_24_5GHZ) {
+    const int gscn_int = static_cast<int>(gscn);
+    int       M        = 1;
+    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, the maximum value for M is 5.
+    const int max_M = 5;
+    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, get parameters N and M from GSCN. Starting from the
+    // equation that gives GSCN as a function of N and M, first, we need to find the M value such that
+    // GSCN - (M-3)/2 is divisible by 3; then, we use this value for M to compute N = ( GSCN - (M-3)/2 ) / 3.
+    while ((gscn_int - (M - 3) / 2) % 3 != 0) {
+      if (M > max_M) {
+        srsran_terminate("The parameter M to compute GSCN must be one following vales {1, 3, 5}");
+        return 0.0;
+      }
+      M += 2;
+    }
+    const int N = (gscn_int - (M - 3) / 2) / 3;
+    // As per Table 5.4.3.1-1, TS 38.104, case 0MHz – 3000MHz, \f$SS_{ref}\f$ is given as a function of N and M.
+    ss_ref = static_cast<double>(N) * 1200000.0 + static_cast<double>(M) * 50000.0;
+  } else if (gscn < MIN_GSCN_FREQ_24_5GHZ_100GHZ) {
+    // As per Table 5.4.3.1-1, TS 38.104, case 3000MHz – 24250MHz, get parameter N from GSCN and use N to compute
+    // \f$SS_{ref}\f$.
+    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_3GHZ_24_5GHZ);
+    ss_ref         = (3000 + N * 1.44) * 1e6;
+  } else if (gscn < MAX_GSCN_FREQ_24_5GHZ_100GHZ) {
+    // As per Table 5.4.3.1-1, TS 38.104, case 24250MHz – 100000MHz, get parameter N from GSCN and use N to compute
+    // \f$SS_{ref}\f$.
+    const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5GHZ_100GHZ);
+    ss_ref         = (24250.08 + N * 17.28) * 1e6;
+  }
+
+  return ss_ref;
+}
+
 // Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
 static unsigned
 get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb, min_channel_bandwidth min_channel_bw)
@@ -1067,7 +1116,6 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
                                                                                          subcarrier_spacing scs_ssb,
                                                                                          uint8_t            ss0_idx)
 {
-  srsran_assert(band != nr_band::n79, "Band n79 not currently supported");
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
   if (scs_ssb == subcarrier_spacing::kHz15) {

@@ -18,7 +18,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/ssb_properties.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace srsran {
 
@@ -32,6 +32,14 @@ struct ssb_freq_location;
 
 const unsigned KHZ_TO_HZ = 1000U;
 const double   HZ_TO_KHZ = 1e-3;
+/// Minimum GSCN value for the freq range 0GHz - 3GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_0_3GHZ = 2;
+/// Minimum GSCN value for the freq range 3GHz - 24.5GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_3GHZ_24_5GHZ = 7499;
+/// Minimum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_24_5GHZ_100GHZ = 22256;
+/// Maximum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MAX_GSCN_FREQ_24_5GHZ_100GHZ = 26639;
 
 /// \brief NR operating bands in FR1 and FR2.
 ///
@@ -144,6 +152,7 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \param[in] arfcn Given Downlink ARFCN.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
 /// for bands n41, n77, n78, n79.
+/// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
 error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  band,
                                                      uint32_t                 arfcn,
@@ -263,6 +272,11 @@ unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, 
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
 min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs);
+
+/// \brief Returns the \f$SS_{ref}\f$ from the SSB's GSCN, as per Section 5.4.3.1, TS 38.104.
+/// \param[in] gscn GSCN value, as defined in TS 38.104, Section 5.4.3.1.
+/// \return The the \f$SS_{ref}\f$ corresponding to the GSCN
+double get_ss_ref_from_gscn(unsigned gscn);
 
 /// Contains the parameters that are returned by the DU config generator.
 struct ssb_coreset0_freq_location {
