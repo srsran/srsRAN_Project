@@ -12,7 +12,7 @@
 
 #include "srsran/adt/complex.h"
 
-// Enables intel intrinsics, including AVX, AVX2, FMA, AVX512 are in this group.
+// Enables intel intrinsics, it includes AVX, AVX2, FMA, AVX512.
 #ifdef HAVE_SSE
 
 // Enables optimizations in this file.
