@@ -70,12 +70,13 @@ build trx driver:
         trx_version=$(cd ${CI_PROJECT_DIR} && git rev-parse --short HEAD)
 
         cd ${CI_PROJECT_DIR}
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/libtrx_srsran.so "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${AMARISOFT_VERSION}/${trx_version}/libtrx_srsran.so"
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/utils/trx_srsran/libtrx_srsran.so "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${AMARISOFT_VERSION}/${trx_version}/libtrx_srsran.so"
       }
     - download_amarisoft
     - unpack_amarisoft
     - build_srsran_trx
     - test_srsran_trx
+    - ls -lah ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so
     - |
       if [[ $PUBLISH == "true" ]]; then
         upload_lib
@@ -83,5 +84,5 @@ build trx driver:
   after_script: []
   artifacts:
     paths:
-      - build/apps/trx_srsran/libtrx_srsran.so
+      - build/utils/trx_srsran/libtrx_srsran.so
     expire_in: 10 minutes
