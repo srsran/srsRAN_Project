@@ -30,7 +30,6 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                  ue_index,
   ul_teid(ul_teid_),
   dl_notif_timer(timers.create_timer())
 {
-  (void)rx_delivery_notifier;
   dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),
                      [this](timer_id_t tid) { on_expired_dl_notif_timer(); });
   dl_notif_timer.run();
