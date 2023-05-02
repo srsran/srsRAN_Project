@@ -397,31 +397,34 @@ static bool is_valid_raster_param(const nr_raster_params& raster)
 
 // Validates band n28, which has an additional ARFCN value to the given interval, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static bool validate_band_n28(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+static error_type<std::string> validate_band_n28(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n28, {});
   if (band_raster.band == srsran::nr_band::invalid) {
-    return false;
+    return error_type<std::string>{fmt::format("Band n28 channel raster not found")};
   }
 
   // Try first if the ARFCN matches any value of the interval for 100kHz channel raster.
   if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
       ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
-    return true;
+    return error_type<std::string>{};
   }
 
   // Extra ARFCN value as per Table 5.4.2.3-1, TS 38.104, version 17.8.0 (see NOTE 4 in the table).
   const uint32_t dl_arfnc_40MHz = 155608U;
   if (bw == srsran::bs_channel_bandwidth_fr1::MHz40 and arfcn == dl_arfnc_40MHz) {
-    return true;
+    return error_type<std::string>{};
   }
 
-  return false;
+  return {fmt::format("DL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
+                      band_raster.dl_nref_first,
+                      band_raster.dl_nref_last,
+                      band_raster.dl_nref_step)};
 }
 
 // Validates band n46, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static bool validate_band_n46(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+static error_type<std::string> validate_band_n46(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 2>  n46_b_10_dlarfnc = {782000, 788668};
   const std::array<unsigned, 32> n46_b_20_dlarfnc = {
@@ -450,39 +453,53 @@ static bool validate_band_n46(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n46, {});
   if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
       arfcn > band_raster.dl_nref_last) {
-    return false;
+    return error_type<std::string>{fmt::format("Band n46 channel raster not found")};
   }
 
   auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
     return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
   };
+
+  const char* error_msg = {"Only a restricted set of DL-ARFCN values are allowed in band n46"};
   switch (bw) {
     case bs_channel_bandwidth_fr1::MHz10: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_10_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_10_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz20: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_20_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_20_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz40: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_40_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_40_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz60: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_60_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_60_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz80: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_80_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_80_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz100: {
-      return dl_arfcn_exist(span<const unsigned>(n46_b_100_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(n46_b_100_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     default:
-      return false;
+      return error_type<std::string>{fmt::format("DL-ARFCN not valid for band n46.")};
   }
 }
 
 // Validates band n66, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static bool validate_band_n96(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+static error_type<std::string> validate_band_n96(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 59> b_20_dlarfnc = {
       // clang-format off
@@ -522,37 +539,48 @@ static bool validate_band_n96(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n96, {});
   if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
       arfcn > band_raster.dl_nref_last) {
-    return false;
+    return error_type<std::string>{fmt::format("Band n96 channel raster not found")};
   }
 
   auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
     return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
   };
 
+  const char* error_msg = {"Only a restricted set of DL-ARFCN values are allowed in band n96"};
   switch (bw) {
     case bs_channel_bandwidth_fr1::MHz20: {
-      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz40: {
-      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz60: {
-      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz80: {
-      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz100: {
-      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     default:
-      return false;
+      return error_type<std::string>{fmt::format("DL-ARFCN not valid for band n96.")};
   }
 }
 
 // Validates band n102, whose valid ARFCN values depend on the channel BW, as per Table 5.4.2.3-1, TS 38.104,
 // version 17.8.0.
-static bool validate_band_n102(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
+static error_type<std::string> validate_band_n102(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
 {
   const std::array<unsigned, 24> b_20_dlarfnc = {
       // clang-format off
@@ -576,35 +604,46 @@ static bool validate_band_n102(uint32_t arfcn, bs_channel_bandwidth_fr1 bw)
   const nr_band_raster band_raster = fetch_band_raster(nr_band::n102, {});
   if (band_raster.band == srsran::nr_band::invalid or arfcn < band_raster.dl_nref_first or
       arfcn > band_raster.dl_nref_last) {
-    return false;
+    return error_type<std::string>{fmt::format("Band n102 channel raster not found")};
   }
 
   auto dl_arfcn_exist = [](span<const unsigned> band_list, unsigned dl_arfcn) {
     return std::find(band_list.begin(), band_list.end(), dl_arfcn) != band_list.end();
   };
 
+  const char* error_msg = {"Only a restricted set of DL-ARFCN values are allowed in band n102"};
   switch (bw) {
     case bs_channel_bandwidth_fr1::MHz20: {
-      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_20_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz40: {
-      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_40_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz60: {
-      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_60_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz80: {
-      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_80_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     case bs_channel_bandwidth_fr1::MHz100: {
-      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn);
+      return dl_arfcn_exist(span<const unsigned>(b_100_dlarfnc), arfcn)
+                 ? error_type<std::string>{}
+                 : error_type<std::string>{fmt::format(error_msg)};
     }
     default:
-      return false;
+      return error_type<std::string>{fmt::format("DL-ARFCN not valid for band n102.")};
   }
 }
 
-static bool validate_band_n90(uint32_t arfcn, subcarrier_spacing scs)
+static error_type<std::string> validate_band_n90(uint32_t arfcn, subcarrier_spacing scs)
 {
   // Band n90 needs to be handled separately. Since it can take a Delta freq raster value among three possible ones
   // {15kHz, 30kHz, 100kHz}, we need to first check if the DL ARFCN is compatible with 100kHz; if not, we assume Delta
@@ -612,12 +651,12 @@ static bool validate_band_n90(uint32_t arfcn, subcarrier_spacing scs)
   // Try first 100kHz channel raster.
   nr_band_raster band_raster = fetch_band_raster(nr_band::n90, delta_freq_raster::kHz100);
   if (band_raster.band == srsran::nr_band::invalid) {
-    return false;
+    return error_type<std::string>{fmt::format("Band n90 channel raster for SCS {} not found", to_string(scs))};
   }
 
   if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
       ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
-    return true;
+    return error_type<std::string>{};
   }
 
   // The previous check failed, try now with freq raster equal to the SCS common.
@@ -626,10 +665,11 @@ static bool validate_band_n90(uint32_t arfcn, subcarrier_spacing scs)
   if (band_raster.band != srsran::nr_band::invalid) {
     if (arfcn >= band_raster.dl_nref_first and arfcn <= band_raster.dl_nref_last and
         ((arfcn - band_raster.dl_nref_first) % band_raster.dl_nref_step) == 0) {
-      return true;
+      return error_type<std::string>{};
     }
   }
-  return false;
+  return {
+      fmt::format("DL ARFCN for band n90 is either outside the allowed interval or not compatible with the step size")};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -653,13 +693,11 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
 {
   // Validates first the bands with non-standard ARFCN values.
   if (band == nr_band::n28) {
-    return validate_band_n28(arfcn, bw) ? error_type<std::string>{}
-                                        : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n28(arfcn, bw);
   }
 
   if (band == nr_band::n46) {
-    return validate_band_n46(arfcn, bw) ? error_type<std::string>{}
-                                        : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n46(arfcn, bw);
   }
 
   if (band == nr_band::n90) {
@@ -668,13 +706,11 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   }
 
   if (band == nr_band::n96) {
-    return validate_band_n96(arfcn, bw) ? error_type<std::string>{}
-                                        : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n96(arfcn, bw);
   }
 
   if (band == nr_band::n102) {
-    return validate_band_n102(arfcn, bw) ? error_type<std::string>{}
-                                         : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n102(arfcn, bw);
   }
 
   // NOTE: This function restricts the choice of ARFCN for bands n41, n77, n78, and n79. As per Section 5.4.2.3,
