@@ -19,7 +19,7 @@ Make sure CMake finds the file `trx_driver.h` in the specified folder. CMake mus
 A symbolic link must be done for the UE application to load the driver:
 ```
 cd <path to lteue-linux-...>
-ln -s <path to srsran build directory>/apps/trx_srsran/libtrx_srsran.so trx_srsran.so
+ln -s <path to srsran build directory>/utils/trx_srsran/libtrx_srsran.so trx_srsran.so
 ```
 
 And finally, the UE's RF configuration shall be:
