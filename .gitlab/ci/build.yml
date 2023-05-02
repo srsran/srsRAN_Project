@@ -706,12 +706,12 @@ archlinux amd64 avx512:
         TEST_MODE: tsan
       - OS: [ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
-        COMPILER: [gcc, clang]
+        COMPILER: gcc
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: ubuntu-22.04
         SANITIZER: valgrind
-        COMPILER: [gcc, clang]
+        COMPILER: gcc
         TEST_MODE: valgrind
 
 sanitizers amd64 no isa:
@@ -725,6 +725,19 @@ sanitizers amd64 avx512:
   variables:
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
     AUTO_DETECT_ISA: "True"
+  parallel:
+    matrix:
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        SANITIZER: tsan
+        COMPILER: [gcc, clang]
+        ENABLE_TSAN: "True"
+        TEST_MODE: tsan
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        SANITIZER: asan
+        COMPILER: gcc
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      # Valgrind doesn't support AVX512 instruction set
 
 sanitizers arm no isa:
   extends: .weekly sanitizers
