@@ -297,6 +297,7 @@ add_subdirectory(configs)
 add_subdirectory(docs)
 add_subdirectory(external)
 add_subdirectory(lib)
+add_subdirectory(utils)
 
 if (BUILD_TESTS)
     add_subdirectory(tests/unittests)

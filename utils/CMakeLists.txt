@@ -6,5 +6,6 @@
 # the distribution.
 #
 
-add_subdirectory(examples)
-add_subdirectory(gnb)
+if (ENABLE_TRX_DRIVER)
+    add_subdirectory(trx_srsran)
+endif (ENABLE_TRX_DRIVER)

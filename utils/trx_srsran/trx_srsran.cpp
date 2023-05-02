@@ -8,12 +8,12 @@
  *
  */
 
-#include <srsran/gateways/baseband/baseband_gateway_buffer.h>
-#include <srsran/gateways/baseband/baseband_gateway_receiver.h>
-#include <srsran/gateways/baseband/baseband_gateway_transmitter.h>
-#include <srsran/radio/radio_factory.h>
-#include <srsran/support/executors/task_worker.h>
-#include <srsran/support/srsran_assert.h>
+#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/baseband_gateway_receiver.h"
+#include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/radio/radio_factory.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/srsran_assert.h"
 #include <vector>
 
 extern "C" {
