@@ -39,6 +39,8 @@ const char* to_string(alloc_type a)
 
 using cell_bw = bs_channel_bandwidth_fr1;
 
+namespace pdcch_test {
+
 class base_pdcch_resource_allocator_tester
 {
 protected:
@@ -232,6 +234,22 @@ protected:
 class common_pdcch_allocator_tester : public base_pdcch_resource_allocator_tester, public ::testing::Test
 {};
 
+struct test_scrambling_params {
+  search_space_id                    ss_id;
+  search_space_configuration::type_t ss2_type;
+  optional<unsigned>                 cs1_pdcch_dmrs_scrambling_id;
+};
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const test_scrambling_params& value, ::std::ostream* os)
+{
+  return;
+}
+} // namespace pdcch_test
+
+using namespace pdcch_test;
+
 TEST_F(common_pdcch_allocator_tester, no_pdcch_allocation)
 {
   ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
@@ -291,12 +309,6 @@ TEST_F(common_pdcch_allocator_tester, when_no_pdcch_space_for_rar_then_allocatio
   ASSERT_EQ(pdcch1->ctx.rnti, ra_rnti1);
   ASSERT_EQ(pdcch2, nullptr);
 }
-
-struct test_scrambling_params {
-  search_space_id                    ss_id;
-  search_space_configuration::type_t ss2_type;
-  optional<unsigned>                 cs1_pdcch_dmrs_scrambling_id;
-};
 
 class ue_pdcch_resource_allocator_scrambling_tester : public base_pdcch_resource_allocator_tester,
                                                       public ::testing::TestWithParam<test_scrambling_params>
@@ -441,6 +453,13 @@ struct fmt::formatter<multi_alloc_test_params> {
     return format_to(ctx.out(), "]");
   }
 };
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const multi_alloc_test_params& value, ::std::ostream* os)
+{
+  return;
+}
 
 class multi_alloc_pdcch_resource_allocator_tester : public base_pdcch_resource_allocator_tester,
                                                     public ::testing::TestWithParam<multi_alloc_test_params>
