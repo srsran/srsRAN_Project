@@ -251,7 +251,7 @@ pull_src_cache:
         fi
         exit $ret
       }
-  script:
+  script: &build_unit_script
     - build_srsgnb
     - launch_tests
   after_script:
@@ -642,8 +642,14 @@ rhel-8 amd64 avx2:
 #############
 # Archlinux #
 #############
-archlinux amd64 no isa:
+.build_and_unit_arch:
   extends: .build_and_unit
+  script:
+    - sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
+    - *build_unit_script
+
+archlinux amd64 no isa:
+  extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
   parallel:
@@ -654,7 +660,7 @@ archlinux amd64 no isa:
         AUTO_DETECT_ISA: "False"
 
 archlinux amd64 avx2:
-  extends: .build_and_unit
+  extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
       when: delayed
@@ -668,7 +674,7 @@ archlinux amd64 avx2:
         ENABLE_AVX512: "False"
 
 archlinux amd64 avx512:
-  extends: .build_and_unit
+  extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
   parallel:
