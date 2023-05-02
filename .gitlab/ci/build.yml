@@ -270,7 +270,7 @@ pull_src_cache:
     paths:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
-      - build//Testing/Temporary/MemoryChecker.*.log
+      - build/Testing/Temporary/MemoryChecker.*.log
     expire_in: 10 minutes
   cache:
     - *cache_src_get
