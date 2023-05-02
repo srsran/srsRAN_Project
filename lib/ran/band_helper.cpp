@@ -1013,7 +1013,6 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
     case nr_band::n46:
     case nr_band::n77:
     case nr_band::n78: {
-      // N
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz10;
       } else {
