@@ -9,6 +9,7 @@
  */
 
 #include "ngap_initial_context_setup_procedure.h"
+#include "../ngap_asn1_converters.h"
 #include "ngap_procedure_helpers.h"
 
 using namespace srsran;
@@ -56,6 +57,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     logger.debug("Initial Context Setup Procedure finished");
     CORO_EARLY_RETURN();
   }
+
+  // Handle GUAMI
+  ue->get_rrc_ue_control_notifier().on_new_guami(asn1_guami_to_guami(request->guami.value));
 
   // Handle optional IEs
   if (request->nas_pdu_present) {

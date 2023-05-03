@@ -273,8 +273,6 @@ public:
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
-  void on_new_guami(const guami_t& msg) override { logger.info("Received a new GUAMI"); }
-
   async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
   {
     logger.info("Received a new UE capability transfer request");

@@ -219,5 +219,19 @@ inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
   return cause_str;
 }
 
+/// \brief Convert ASN.1 GUAMI to a common type.
+/// \param asn1_guami The ASN.1 GUAMI.
+/// \return The common type GUAMI.
+inline guami_t asn1_guami_to_guami(const asn1::ngap::guami_s& asn1_guami)
+{
+  guami_t guami;
+  guami.plmn          = asn1_guami.plmn_id.to_string();
+  guami.amf_region_id = asn1_guami.amf_region_id.to_number();
+  guami.amf_set_id    = asn1_guami.amf_set_id.to_number();
+  guami.amf_pointer   = asn1_guami.amf_pointer.to_number();
+
+  return guami;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

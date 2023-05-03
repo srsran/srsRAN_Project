@@ -183,10 +183,6 @@ class du_processor_rrc_ue_control_message_notifier
 public:
   virtual ~du_processor_rrc_ue_control_message_notifier() = default;
 
-  /// \brief Notify the RRC UE about an update of the GUAMI.
-  /// \param[in] msg The new GUAMI.
-  virtual void on_new_guami(const guami_t& msg) = 0;
-
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.
   virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
