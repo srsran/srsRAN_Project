@@ -52,7 +52,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
   if (std::all_of(
           result.result.preambles.begin(),
           result.result.preambles.end(),
-          [](const prach_detection_result::preamble_indication& ind) { return ind.time_advance.to_seconds() < 0; })) {
+          [](const prach_detection_result::preamble_indication& ind) { return ind.time_advance.to_seconds() < 0.0; })) {
     logger.warning(
         "All detected PRACH preambles have a negative TA value in slot={}, no PRACH.ind message will be generated",
         slot);
@@ -89,7 +89,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
     double TA_ns = preamble.time_advance.to_seconds() * 1e9;
     // Ignore preambles with a negative TA value.
-    if (TA_ns < 0) {
+    if (TA_ns < 0.0) {
       logger.warning("Detected PRACH preamble in slot={} has a negative TA value of {}ns, skipping it", slot, TA_ns);
       continue;
     }
