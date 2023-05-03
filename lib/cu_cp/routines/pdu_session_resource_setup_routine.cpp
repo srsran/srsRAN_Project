@@ -242,7 +242,9 @@ void pdu_session_resource_setup_routine::operator()(
 
       // append NAS PDUs as received by AMF
       for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
-        rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
+        if (!pdu_session.pdu_session_nas_pdu.empty()) {
+          rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
+        }
       }
       rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
     }
