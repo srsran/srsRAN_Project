@@ -114,7 +114,7 @@ private:
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
-  void send_f1_setup_response(const du_processor_context& du_ctxt);
+  void send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id);
 
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.

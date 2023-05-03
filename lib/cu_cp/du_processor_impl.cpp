@@ -129,7 +129,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
   }
 
   // send setup response
-  send_f1_setup_response(context);
+  send_f1_setup_response(context, msg.request->transaction_id.value);
 
   // connect paging f1ap paging adapter
   f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
@@ -152,11 +152,11 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 }
 
 /// Sender for F1AP messages
-void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
+void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id)
 {
   f1_setup_response_message response;
   response.success = true;
-  fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, cell_db);
+  fill_asn1_f1_setup_response(response.response, transaction_id, cfg.name, cfg.rrc_version, cell_db);
   f1ap->handle_f1_setup_response(response);
 }
 
