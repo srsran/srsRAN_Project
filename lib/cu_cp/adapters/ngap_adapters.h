@@ -171,11 +171,12 @@ public:
     return du_processor_ngap_handler->handle_new_pdu_session_resource_release_command(command);
   }
 
-  void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
+  cu_cp_ue_context_release_complete
+  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
 
-    du_processor_ngap_handler->handle_new_ue_context_release_command(command);
+    return du_processor_ngap_handler->handle_new_ue_context_release_command(command);
   }
 
 private:

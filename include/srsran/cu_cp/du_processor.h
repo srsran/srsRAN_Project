@@ -212,7 +212,8 @@ public:
 
   /// \brief Handle a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  virtual cu_cp_ue_context_release_complete
+  handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.

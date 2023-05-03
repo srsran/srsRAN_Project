@@ -350,15 +350,22 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
                                                                  rrc->find_ue(msg.ue_index)->get_rrc_ue_drb_manager());
 }
 
-void du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
+cu_cp_ue_context_release_complete
+du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  cu_cp_ue_context_release_complete release_complete;
+  release_complete.pdu_session_res_list_cxt_rel_cpl =
+      rrc->find_ue(cmd.ue_index)->get_rrc_ue_drb_manager().get_pdu_sessions();
 
   // Call RRC UE notifier to release the UE
   ue->get_rrc_ue_notifier().on_rrc_ue_release();
 
   handle_ue_context_release_command(cmd);
+
+  return release_complete;
 }
 
 void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)

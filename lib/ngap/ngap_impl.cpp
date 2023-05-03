@@ -350,7 +350,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   fill_cu_cp_ue_context_release_command(msg, cmd);
 
   // Notify DU processor about UE Context Release Command
-  ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
+  cu_cp_ue_context_release_complete release_complete =
+      ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
 
   // Send UE Context Release Complete
   ngap_message ngap_msg = {};
@@ -365,6 +366,15 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   auto& ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
   ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
   ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+
+  if (!release_complete.pdu_session_res_list_cxt_rel_cpl.empty()) {
+    ue_context_release_complete->pdu_session_res_list_cxt_rel_cpl_present = true;
+    for (const auto& session_id : release_complete.pdu_session_res_list_cxt_rel_cpl) {
+      asn1::ngap::pdu_session_res_item_cxt_rel_cpl_s session_item;
+      session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
+      ue_context_release_complete->pdu_session_res_list_cxt_rel_cpl.value.push_back(session_item);
+    }
+  }
 
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
