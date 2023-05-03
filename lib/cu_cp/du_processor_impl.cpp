@@ -451,6 +451,10 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
     req.ue_index = msg.ue_index;
     req.cause    = cause_t::radio_network;
 
+    // Add PDU Session IDs
+    auto& drb_manager                    = rrc->find_ue(msg.ue_index)->get_rrc_ue_drb_manager();
+    req.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
+
     ngap_ctrl_notifier.on_ue_context_release_request(req);
   } else {
     logger.debug("Inactivity notification level not supported");

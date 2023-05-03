@@ -445,6 +445,16 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   ue_context_release_request->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
   ue_context_release_request->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(ue->get_amf_ue_id());
 
+  // Add PDU Session IDs
+  if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
+    ue_context_release_request->pdu_session_res_list_cxt_rel_req_present = true;
+    for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
+      asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
+      pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
+      ue_context_release_request->pdu_session_res_list_cxt_rel_req.value.push_back(pdu_session_item);
+    }
+  }
+
   ue_context_release_request->cause.value.set_radio_network();
   ue_context_release_request->cause.value.radio_network() =
       asn1::ngap::cause_radio_network_opts::options::user_inactivity;
