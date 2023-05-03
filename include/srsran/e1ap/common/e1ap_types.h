@@ -184,6 +184,12 @@ struct e1ap_security_algorithm {
 };
 
 struct e1ap_up_security_key {
+  e1ap_up_security_key& operator=(const e1ap_up_security_key& other)
+  {
+    encryption_key           = other.encryption_key.copy();
+    integrity_protection_key = other.integrity_protection_key.copy();
+    return *this;
+  }
   byte_buffer encryption_key;
   byte_buffer integrity_protection_key;
 };
