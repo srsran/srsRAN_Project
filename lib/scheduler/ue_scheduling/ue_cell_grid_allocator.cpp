@@ -452,6 +452,23 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     h_ul.new_retx(pusch_alloc.slot);
   }
 
+  // Compute total DAI. See TS 38.213, 9.1.3.2.
+  // If a UE is not provided PDSCH-CodeBlockGroupTransmission and the UE is scheduled for a PUSCH transmission by
+  // DCI format 0_1 with DAI field value V_T_DAI_UL = 4 and the UE has not received any PDCCH within the monitoring
+  // occasions for PDCCH with DCI format 1_0 or DCI format 1_1 for scheduling PDSCH receptions or SPS PDSCH
+  // release on any serving cell c and the UE does not have HARQ-ACK information in response to a SPS PDSCH
+  // reception to multiplex in the PUSCH, the UE does not multiplex HARQ-ACK information in the PUSCH transmission.
+  unsigned dai                   = 3;
+  unsigned total_harq_ack_in_uci = 0;
+  for (unsigned cell_idx = 0; cell_idx < u.nof_cells(); cell_idx++) {
+    const ue_cell& ue_cell_info = u.get_cell(static_cast<ue_cell_index_t>(cell_idx));
+    srsran_assert(has_cell(ue_cell_info.cell_index), "Invalid UE candidate cell_index={}", ue_cell_info.cell_index);
+    total_harq_ack_in_uci += get_uci_alloc(ue_cell_info.cell_index).get_ue_uci_harq_counter(pusch_alloc, u.crnti);
+  }
+  if (total_harq_ack_in_uci != 0) {
+    dai = ((total_harq_ack_in_uci - 1) % 4);
+  }
+
   // Fill UL PDCCH DCI.
   switch (dci_type) {
     case dci_ul_rnti_config_type::c_rnti_f0_0:
@@ -476,7 +493,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             prbs,
                             grant.time_res_index,
                             mcs_tbs_info.value().mcs,
-                            h_ul);
+                            h_ul,
+                            dai);
       break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");

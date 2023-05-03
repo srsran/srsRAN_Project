@@ -45,6 +45,8 @@ public:
                                     rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) override;
 
+  uint8_t get_ue_uci_harq_counter(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
+
 private:
   // \brief Information cached by the UCI scheduler relative to the UCIs scheduled in the cell resource grid. Store
   // here any information that does not need to be stored in the PUCCH and PUSCH PDUs and does not need to be sent to

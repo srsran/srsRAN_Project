@@ -94,6 +94,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                            const prb_interval&          prbs,
                            unsigned                     time_resource,
                            sch_mcs_index                mcs_index,
-                           const ul_harq_process&       h_ul);
+                           const ul_harq_process&       h_ul,
+                           unsigned                     total_dai);
 
 } // namespace srsran

@@ -235,3 +235,12 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   // Else, allocate the CSI on the PUCCH.
   pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, CSI_PART1_NOF_BITS);
 }
+
+uint8_t uci_allocator_impl::get_ue_uci_harq_counter(cell_slot_resource_allocator& slot_alloc, rnti_t crnti)
+{
+  auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
+  if (uci == nullptr) {
+    return 0;
+  }
+  return uci->harq_ack_counter;
+}

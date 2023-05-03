@@ -126,6 +126,8 @@ public:
                                     const ue_cell_configuration&  ue_cell_cfg) override
   {
   }
+
+  uint8_t get_ue_uci_harq_counter(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override { return 0; }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier

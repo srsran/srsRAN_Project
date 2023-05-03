@@ -581,7 +581,8 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                                    const prb_interval&          prbs,
                                    unsigned                     time_resource,
                                    sch_mcs_index                mcs_index,
-                                   const ul_harq_process&       h_ul)
+                                   const ul_harq_process&       h_ul,
+                                   unsigned                     dai)
 {
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(ss_id);
   srsran_assert(ss_cfg != nullptr, "No valid SearchSpace found");
@@ -627,7 +628,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   //  - ptrs_dmrs_association
   //  - cbg_transmission_info
 
-  // TODO: Set correct value based on TS 38.213, clause 9.1.3.2.
-  f0_1.first_dl_assignment_index = 0;
+  // DAI is set based on TS 38.213, clause 9.1.3.2.
+  f0_1.first_dl_assignment_index = dai;
   f0_1.ul_sch_indicator          = 1;
 }
