@@ -100,6 +100,18 @@ public:
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
+struct ngap_initial_context_failure_message {
+  asn1::ngap::cause_c                                                          cause;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
+  optional<asn1::ngap::crit_diagnostics_s>                                     crit_diagnostics;
+};
+
+struct ngap_initial_context_response_message {
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
+  optional<asn1::ngap::crit_diagnostics_s>                                       crit_diagnostics;
+};
+
 struct ngap_initial_ue_message {
   ue_index_t                               ue_index = ue_index_t::invalid;
   byte_buffer                              nas_pdu;
@@ -139,12 +151,6 @@ public:
   /// \param[in] msg The ue context release request to transmit.
   virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 };
-
-struct ngap_pdu_session_res_item {
-  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
-  byte_buffer      pdu_session_res;
-};
-using ngap_pdu_session_res_list = std::vector<ngap_pdu_session_res_item>;
 
 /// Interface to notify about NAS PDUs and messages.
 class ngap_rrc_ue_pdu_notifier

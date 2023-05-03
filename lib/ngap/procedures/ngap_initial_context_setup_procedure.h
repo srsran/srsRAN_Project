@@ -18,18 +18,6 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-struct initial_context_failure_message {
-  asn1::ngap::cause_c                      cause;
-  ngap_pdu_session_res_list                failed_to_setup;
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-};
-
-struct initial_context_response_message {
-  ngap_pdu_session_res_list                succeed_to_setup;
-  ngap_pdu_session_res_list                failed_to_setup;
-  optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
-};
-
 class ngap_initial_context_setup_procedure
 {
 public:
@@ -43,15 +31,17 @@ public:
 
 private:
   // results senders
-  void send_initial_context_setup_response(const initial_context_response_message& msg,
-                                           const amf_ue_id_t&                      amf_ue_id,
-                                           const ran_ue_id_t&                      ran_ue_id);
-  void send_initial_context_setup_failure(const initial_context_failure_message& msg,
-                                          const amf_ue_id_t&                     amf_ue_id,
-                                          const ran_ue_id_t&                     ran_ue_id);
+  void send_initial_context_setup_response(const ngap_initial_context_response_message& msg,
+                                           const amf_ue_id_t&                           amf_ue_id,
+                                           const ran_ue_id_t&                           ran_ue_id);
+  void send_initial_context_setup_failure(const ngap_initial_context_failure_message& msg,
+                                          const amf_ue_id_t&                          amf_ue_id,
+                                          const ran_ue_id_t&                          ran_ue_id);
 
   const ue_index_t                               ue_index;
   const asn1::ngap::init_context_setup_request_s request;
+  cu_cp_pdu_session_resource_setup_request       pdu_session_setup_request;
+  cu_cp_pdu_session_resource_setup_response      pdu_session_response;
   ngap_ue_manager&                               ue_manager;
   ngap_message_notifier&                         amf_notifier;
   srslog::basic_logger&                          logger;

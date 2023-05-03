@@ -71,6 +71,74 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
   request->default_paging_drx.value.value = asn1::ngap::paging_drx_opts::v256;
 }
 
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
+/// message.
+/// \param[out] asn1_resp The ASN1 NGAP Initial Context Setup Response message.
+/// \param[in] resp The CU-CP Initial Context Setup Response message.
+inline void fill_asn1_initial_context_setup_response(asn1::ngap::init_context_setup_resp_s&       asn1_resp,
+                                                     const ngap_initial_context_response_message& resp)
+{
+  // Fill PDU Session Resource Setup Response List
+  if (!resp.pdu_session_res_setup_response_items.empty()) {
+    asn1_resp->pdu_session_res_setup_list_cxt_res_present = true;
+
+    for (const auto& resp_item : resp.pdu_session_res_setup_response_items) {
+      asn1::ngap::pdu_session_res_setup_item_cxt_res_s asn1_resp_item;
+
+      pdu_session_res_setup_response_item_to_asn1(asn1_resp_item, resp_item);
+
+      asn1_resp->pdu_session_res_setup_list_cxt_res->push_back(asn1_resp_item);
+    }
+  }
+
+  // Fill PDU Session Resource Failed to Setup List
+  if (!resp.pdu_session_res_failed_to_setup_items.empty()) {
+    asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
+    for (const auto& setup_failed_item : resp.pdu_session_res_failed_to_setup_items) {
+      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s asn1_setup_failed_item;
+
+      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
+
+      asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res->push_back(asn1_setup_failed_item);
+    }
+  }
+
+  // Fill Criticality Diagnostics
+  if (resp.crit_diagnostics.has_value()) {
+    asn1_resp->crit_diagnostics_present = true;
+    asn1_resp->crit_diagnostics.value   = resp.crit_diagnostics.value();
+  }
+}
+
+/// \brief Convert common type Initial Context Setup Failure message to NGAP Initial Context Setup Failure
+/// message.
+/// \param[out] asn1_fail The ASN1 NGAP Initial Context Setup Failure message.
+/// \param[in] fail The CU-CP Initial Context Setup Failure message.
+inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_setup_fail_s&      asn1_fail,
+                                                    const ngap_initial_context_failure_message& fail)
+{
+  // Fill cause
+  asn1_fail->cause.value = fail.cause;
+
+  // Fill PDU Session Resource Failed to Setup List
+  if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
+    asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail_present = true;
+    for (const auto& setup_failed_item : fail.pdu_session_res_failed_to_setup_items) {
+      asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_fail_s asn1_setup_failed_item;
+
+      pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
+
+      asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail->push_back(asn1_setup_failed_item);
+    }
+  }
+
+  // Fill Criticality Diagnostics
+  if (fail.crit_diagnostics.has_value()) {
+    asn1_fail->crit_diagnostics_present = true;
+    asn1_fail->crit_diagnostics.value   = fail.crit_diagnostics.value();
+  }
+}
+
 /// Helper function to fill the CU-CP PDU Session Resource Setup Item for both, PDUSessionResourceSetupItemSUReq and
 /// PDUSessionResourceSetupItemCxtReq. Note that the NAS-PDU is added in separate functions
 /// \param[out] setup_item The cu_cp_pdu_session_res_setup_item struct to fill.
