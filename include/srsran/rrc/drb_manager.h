@@ -58,6 +58,9 @@ public:
   /// \brief Returns the number of PDU sessions of the UE.
   virtual size_t get_nof_pdu_sessions() = 0;
 
+  /// \brief Return all PDU sessions.
+  virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
+
   /// \brief Return whether a configuration for a 5QI exists.
   virtual bool valid_5qi(five_qi_t five_qi) = 0;
 };

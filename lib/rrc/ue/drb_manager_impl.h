@@ -36,17 +36,18 @@ public:
   drb_manager_impl(const drb_manager_cfg& cfg);
   ~drb_manager_impl() = default;
 
-  std::vector<drb_id_t>      calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu) override;
-  pdcp_config                get_pdcp_config(const drb_id_t drb_id) override;
-  sdap_config_t              get_sdap_config(const drb_id_t drb_id) override;
-  std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) override;
-  std::vector<qos_flow_id_t> get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
-  std::vector<drb_id_t>      get_drbs(const pdu_session_id_t pdu_session_id) override;
-  pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
-  s_nssai_t                  get_s_nssai(const drb_id_t drb_id) override;
-  size_t                     get_nof_drbs() override;
-  size_t                     get_nof_pdu_sessions() override;
-  bool                       valid_5qi(const five_qi_t five_qi) override;
+  std::vector<drb_id_t>         calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  pdcp_config                   get_pdcp_config(const drb_id_t drb_id) override;
+  sdap_config_t                 get_sdap_config(const drb_id_t drb_id) override;
+  std::vector<qos_flow_id_t>    get_mapped_qos_flows(const drb_id_t drb_id) override;
+  std::vector<qos_flow_id_t>    get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
+  std::vector<drb_id_t>         get_drbs(const pdu_session_id_t pdu_session_id) override;
+  pdu_session_id_t              get_pdu_session_id(const drb_id_t drb_id) override;
+  s_nssai_t                     get_s_nssai(const drb_id_t drb_id) override;
+  size_t                        get_nof_drbs() override;
+  size_t                        get_nof_pdu_sessions() override;
+  std::vector<pdu_session_id_t> get_pdu_sessions() override;
+  bool                          valid_5qi(const five_qi_t five_qi) override;
 
 private:
   drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it

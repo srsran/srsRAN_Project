@@ -67,6 +67,8 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         drb_to_add_list.push_back(id);
       }
     }
+
+    pdu_sessions.emplace(pdu_session.pdu_session_id, true);
   }
 
   return drb_to_add_list;
@@ -197,6 +199,16 @@ size_t drb_manager_impl::get_nof_drbs()
 size_t drb_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
+}
+
+std::vector<pdu_session_id_t> drb_manager_impl::get_pdu_sessions()
+{
+  std::vector<pdu_session_id_t> pdu_session_ids;
+  for (const auto& session : pdu_sessions) {
+    pdu_session_ids.push_back(session.first);
+  }
+
+  return pdu_session_ids;
 }
 
 bool drb_manager_impl::valid_5qi(five_qi_t five_qi)
