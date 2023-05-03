@@ -46,6 +46,14 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
     return;
   }
 
+  // Avoid generating a PRACH indication when all detected preambles have a negative TA value as they must be discarded.
+  if (std::all_of(
+          result.result.preambles.begin(),
+          result.result.preambles.end(),
+          [](const prach_detection_result::preamble_indication& ind) { return ind.time_advance.to_seconds() < 0; })) {
+    return;
+  }
+
   fapi::rach_indication_message         msg;
   fapi::rach_indication_message_builder builder(msg);
 
@@ -75,9 +83,15 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
     static constexpr float MIN_PREAMBLE_SNR_VALUE   = -64.F;
     static constexpr float MAX_PREAMBLE_SNR_VALUE   = 63.F;
 
+    double TA_ns = preamble.time_advance.to_seconds() * 1e9;
+    // Ignore preambles with a negative TA value.
+    if (TA_ns < 0) {
+      continue;
+    }
+
     builder_pdu.add_preamble(preamble.preamble_index,
                              {},
-                             static_cast<uint32_t>(std::max(0.0, preamble.time_advance.to_seconds() * 1e9)),
+                             TA_ns,
                              clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
                              clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
