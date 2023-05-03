@@ -222,6 +222,11 @@ struct rlc_appconfig {
   rlc_am_appconfig am;
 };
 
+/// F1-U configuration
+struct f1u_appconfig {
+  int32_t t_notify; ///< Maximum backoff time for transmit/delivery notifications towards CU_UP (ms)
+};
+
 struct pdcp_rx_appconfig {
   uint16_t sn_field_length;       ///< Number of bits used for sequence number
   int32_t  t_reordering;          ///< Timer used to detect PDUs losses (ms)
@@ -243,6 +248,7 @@ struct pdcp_appconfig {
 struct qos_appconfig {
   five_qi_t      five_qi = uint_to_five_qi(9);
   rlc_appconfig  rlc;
+  f1u_appconfig  f1u;
   pdcp_appconfig pdcp;
 };
 

@@ -272,6 +272,10 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
       out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
       out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
     }
+    // Convert F1-U config
+    auto& out_f1u = out_cfg[qos.five_qi].f1u;
+    //< t-Notify
+    out_f1u.t_notify = qos.f1u.t_notify;
   }
   return out_cfg;
 }

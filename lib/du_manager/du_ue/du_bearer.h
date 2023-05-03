@@ -99,6 +99,7 @@ std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                       ue_ind
                                       drb_id_t                            drb_id,
                                       lcid_t                              lcid,
                                       const rlc_config&                   rlc_cfg,
+                                      const f1u_config&                   f1u_cfg,
                                       span<const up_transport_layer_info> uluptnl_info_list,
                                       const du_manager_params&            du_params);
 

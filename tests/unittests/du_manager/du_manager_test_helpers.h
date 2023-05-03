@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/du_manager/du_ue/du_ue_manager_repository.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -311,6 +312,8 @@ public:
     logger.set_level(srslog::basic_levels::debug);
 
     srslog::init();
+
+    params.ran.qos = config_helpers::make_default_du_qos_config_list();
   }
 
   std::vector<du_cell_config>            du_cells;

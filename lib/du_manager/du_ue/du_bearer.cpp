@@ -87,6 +87,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                       drb_id_t                            drb_id,
                                                       lcid_t                              lcid,
                                                       const rlc_config&                   rlc_cfg,
+                                                      const f1u_config&                   f1u_cfg,
                                                       span<const up_transport_layer_info> uluptnl_info_list,
                                                       const du_manager_params&            du_params)
 {
@@ -106,10 +107,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_id  = drb_id;
   drb->lcid    = lcid;
   drb->rlc_cfg = rlc_cfg;
-
-  // TODO - obtain from DU config
-  drb->f1u_cfg          = {};
-  drb->f1u_cfg.t_notify = 10;
+  drb->f1u_cfg = f1u_cfg;
 
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());

@@ -119,9 +119,19 @@ void ue_configuration_procedure::update_ue_context()
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
 
+    // Find the F1-U configuration for this DRB.
+    auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
+    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for 5QI={}", drbtoadd.five_qi);
+
     // Create DU DRB instance.
-    std::unique_ptr<du_ue_drb> drb = create_drb(
-        ue->ue_index, ue->pcell_index, drbtoadd.drb_id, it->lcid, it->rlc_cfg, drbtoadd.uluptnl_info_list, du_params);
+    std::unique_ptr<du_ue_drb> drb = create_drb(ue->ue_index,
+                                                ue->pcell_index,
+                                                drbtoadd.drb_id,
+                                                it->lcid,
+                                                it->rlc_cfg,
+                                                f1u_cfg_it->second.f1u,
+                                                drbtoadd.uluptnl_info_list,
+                                                du_params);
     if (drb == nullptr) {
       logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
       continue;
