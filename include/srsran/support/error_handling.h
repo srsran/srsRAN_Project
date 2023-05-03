@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/srslog.h"
+#include <signal.h>
 
 namespace srsran {
 
@@ -32,7 +33,10 @@ template <typename... Args>
 {
   srslog::flush();
   fmt::print(stderr, "srsGNB ERROR: {}", fmt::format(reason_fmt, std::forward<Args>(args)...));
-  std::exit(1);
+
+  // Disable backtrace for SIGABRT.
+  signal(SIGABRT, SIG_DFL);
+  std::abort();
 }
 
 /// \brief Reports a fatal error and handles the application shutdown. This function is intended to be used for
