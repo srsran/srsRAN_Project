@@ -226,14 +226,6 @@ public:
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
-// Globally unique AMF identifier.
-struct guami {
-  optional<std::string> plmn;
-  uint16_t              amf_set_id;
-  uint8_t               amf_pointer;
-  uint8_t               amf_region_id;
-};
-
 /// Handle control messages.
 class rrc_ue_control_message_handler
 {
@@ -242,7 +234,7 @@ public:
 
   /// \brief Handle an update of the GUAMI.
   /// \param[in] msg The new GUAMI.
-  virtual void handle_new_guami(const guami& msg) = 0;
+  virtual void handle_new_guami(const guami_t& msg) = 0;
 
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.

@@ -166,7 +166,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   }
 }
 
-void rrc_ue_impl::handle_new_guami(const guami& msg)
+void rrc_ue_impl::handle_new_guami(const guami_t& msg)
 {
   context.current_guami = msg;
 }

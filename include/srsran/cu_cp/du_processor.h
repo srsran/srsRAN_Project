@@ -185,7 +185,7 @@ public:
 
   /// \brief Notify the RRC UE about an update of the GUAMI.
   /// \param[in] msg The new GUAMI.
-  virtual void on_new_guami(const guami& msg) = 0;
+  virtual void on_new_guami(const guami_t& msg) = 0;
 
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.

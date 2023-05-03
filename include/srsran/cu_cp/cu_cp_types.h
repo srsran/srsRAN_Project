@@ -120,6 +120,14 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
   return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
 }
 
+// Globally unique AMF identifier.
+struct guami_t {
+  optional<std::string> plmn;
+  uint16_t              amf_set_id;
+  uint8_t               amf_pointer;
+  uint8_t               amf_region_id;
+};
+
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {

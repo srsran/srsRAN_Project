@@ -192,7 +192,7 @@ public:
 
   void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
-  virtual void on_new_guami(const guami& msg) override
+  virtual void on_new_guami(const guami_t& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_new_guami(msg);

@@ -48,7 +48,7 @@ public:
   const rrc_ue_cfg_t&                    cfg;
   rrc_state                              state = rrc_state::idle;
   std::unique_ptr<drb_manager>           drb_mng;
-  guami                                  current_guami; // current GUAMI
+  guami_t                                current_guami; // current GUAMI
   uint64_t                               setup_ue_id = -1;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
   security::sec_as_config                sec_cfg;
