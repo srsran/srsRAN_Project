@@ -20,6 +20,9 @@ include:
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
     ref: "5"
+    file: .gitlab/ci-shared/tools/python.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "5"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
@@ -165,6 +168,18 @@ coverity:
         --form version=$ver \
         --form description="srsGNB dev build" \
         https://scan.coverity.com/builds?project=srsRAN_5G
+
+e2e tests tox:
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - tests/e2e/**/*
+  variables:
+    PY_DIR: tests/e2e
+  before_script:
+    - apk add build-base
+  extends: .tox
 
 ################################################################################
 ## Build + Unit Tests + Integration tests
