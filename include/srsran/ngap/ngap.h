@@ -118,6 +118,7 @@ struct ngap_initial_ue_message {
   asn1::ngap::rrc_establishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                     nr_cgi;
   uint32_t                                 tac;
+  optional<cu_cp_five_g_s_tmsi>            five_g_s_tmsi;
 };
 
 struct ngap_ul_nas_transport_message {

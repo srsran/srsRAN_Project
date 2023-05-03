@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ngap_context.h"
 #include "procedures/ngap_transaction_manager.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/cu_cp/ue_manager.h"
@@ -108,8 +109,9 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
 
+  ngap_context_t context;
+
   srslog::basic_logger&       logger;
-  ngap_configuration&         ngap_cfg;
   ngap_cu_cp_paging_notifier& cu_cp_paging_notifier;
   ngap_ue_task_scheduler&     task_sched;
   ngap_ue_manager&            ue_manager;

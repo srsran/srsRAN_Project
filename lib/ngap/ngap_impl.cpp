@@ -28,7 +28,6 @@ ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
                      ngap_message_notifier&      ngap_notifier_,
                      task_executor&              ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
-  ngap_cfg(ngap_cfg_),
   cu_cp_paging_notifier(cu_cp_paging_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
@@ -36,6 +35,10 @@ ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
+  context.gnb_id        = ngap_cfg_.gnb_id;
+  context.ran_node_name = ngap_cfg_.ran_node_name;
+  context.plmn          = ngap_cfg_.plmn;
+  context.tac           = ngap_cfg_.tac;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -61,7 +64,7 @@ async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_
 {
   logger.info("Sending NgSetupRequest");
   return launch_async<ng_setup_procedure>(
-      request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+      context, request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
@@ -91,6 +94,13 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
   init_ue_msg->ue_context_request_present = true;
   init_ue_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
+
+  if (msg.five_g_s_tmsi.has_value()) {
+    init_ue_msg->five_g_s_tmsi_present = true;
+    init_ue_msg->five_g_s_tmsi.value.amf_set_id.from_number(context.current_guami.amf_set_id);
+    init_ue_msg->five_g_s_tmsi.value.amf_pointer.from_number(context.current_guami.amf_pointer);
+    init_ue_msg->five_g_s_tmsi.value.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
+  }
 
   // TODO: Add missing optional values
 
@@ -265,7 +275,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_index;
-  msg.serving_plmn = ngap_cfg.plmn;
+  msg.serving_plmn = context.plmn;
   fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 

@@ -168,6 +168,8 @@ public:
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_init_ue_msg.tac = msg.cell.tac;
 
+    ngap_init_ue_msg.five_g_s_tmsi = msg.five_g_s_tmsi;
+
     ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
   }
 

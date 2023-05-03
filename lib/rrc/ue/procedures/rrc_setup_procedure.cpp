@@ -94,5 +94,12 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
   init_ue_msg.establishment_cause = request.rrc_setup_request.establishment_cause;
   init_ue_msg.cell                = context.cell;
 
+  cu_cp_five_g_s_tmsi five_g_s_tmsi;
+  if (context.five_g_tmsi.has_value()) {
+    five_g_s_tmsi.five_g_tmsi = context.five_g_tmsi.value();
+    // amf_pointer and amf_set_id will be set by NGAP
+    init_ue_msg.five_g_s_tmsi = five_g_s_tmsi;
+  }
+
   nas_notifier.on_initial_ue_message(init_ue_msg);
 }

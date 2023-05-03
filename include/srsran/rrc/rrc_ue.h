@@ -174,6 +174,7 @@ struct initial_ue_message {
   byte_buffer                            nas_pdu;
   rrc_cell_context                       cell;
   asn1::rrc_nr::establishment_cause_opts establishment_cause;
+  optional<cu_cp_five_g_s_tmsi>          five_g_s_tmsi;
 };
 
 struct ul_nas_transport_message {

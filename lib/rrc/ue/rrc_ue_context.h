@@ -49,7 +49,8 @@ public:
   rrc_state                              state = rrc_state::idle;
   std::unique_ptr<drb_manager>           drb_mng;
   guami_t                                current_guami; // current GUAMI
-  uint64_t                               setup_ue_id = -1;
+  optional<uint32_t>                     five_g_tmsi;
+  uint64_t                               setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
   security::sec_as_config                sec_cfg;
   optional<asn1::rrc_nr::ue_nr_cap_s>    capabilities;

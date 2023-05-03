@@ -64,9 +64,16 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   // Extract the setup ID and cause
   const rrc_setup_request_ies_s& request_ies = request_msg.rrc_setup_request;
   switch (request_ies.ue_id.type().value) {
-    case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1:
+    case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1: {
       context.setup_ue_id = request_ies.ue_id.ng_5_g_s_tmsi_part1().to_number();
+
+      // As per TS 23.003 section 2.10.1 the last 32Bits of the 5G-S-TMSI are the 5G-TMSI
+      unsigned shift_bits =
+          request_ies.ue_id.ng_5_g_s_tmsi_part1().length() - 32; // calculate the number of bits to shift
+      context.five_g_tmsi = ((request_ies.ue_id.ng_5_g_s_tmsi_part1().to_number() << shift_bits) >> shift_bits);
+
       break;
+    }
     case asn1::rrc_nr::init_ue_id_c::types_opts::random_value:
       context.setup_ue_id = request_ies.ue_id.random_value().to_number();
       // TODO: communicate with NGAP
