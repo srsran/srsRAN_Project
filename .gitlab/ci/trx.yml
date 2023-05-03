@@ -55,7 +55,7 @@ build trx driver:
         rm -Rf build 
         mkdir build
         cd build
-        cmake -G Ninja -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True ..
+        cmake -G Ninja -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
         ninja trx_srsran_test
       }
     - |
