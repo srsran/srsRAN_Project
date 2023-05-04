@@ -439,9 +439,14 @@ static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
   configure_cli11_rlc_am_args(*rlc_am_subcmd, rlc_params.am);
 }
 
-static void configure_cli11_f1u_args(CLI::App& app, f1u_appconfig& f1u_params)
+static void configure_cli11_f1u_du_args(CLI::App& app, f1u_du_appconfig& f1u_du_params)
 {
-  app.add_option("--backoff_timer", f1u_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
+  app.add_option("--backoff_timer", f1u_du_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
+}
+
+static void configure_cli11_f1u_cu_up_args(CLI::App& app, f1u_cu_up_appconfig& f1u_cu_up_params)
+{
+  app.add_option("--backoff_timer", f1u_cu_up_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
 }
 
 static void configure_cli11_pdcp_tx_args(CLI::App& app, pdcp_tx_appconfig& pdcp_tx_params)
@@ -476,19 +481,25 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
   CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
   configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
-  CLI::App* f1u_subcmd = app.add_subcommand("f1u", "F1-U parameters");
-  configure_cli11_f1u_args(*f1u_subcmd, qos_params.f1u);
+  CLI::App* f1u_du_subcmd = app.add_subcommand("f1u_du", "F1-U parameters at DU side");
+  configure_cli11_f1u_du_args(*f1u_du_subcmd, qos_params.f1u_du);
+  CLI::App* f1u_cu_up_subcmd = app.add_subcommand("f1u_cu_up", "F1-U parameters at CU_UP side");
+  configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
   CLI::App* pdcp_subcmd = app.add_subcommand("pdcp", "PDCP parameters");
   configure_cli11_pdcp_args(*pdcp_subcmd, qos_params.pdcp);
   auto verify_callback = [&]() {
-    CLI::App* rlc  = app.get_subcommand("rlc");
-    CLI::App* f1u  = app.get_subcommand("f1u");
-    CLI::App* pdcp = app.get_subcommand("pdcp");
+    CLI::App* rlc       = app.get_subcommand("rlc");
+    CLI::App* f1u_du    = app.get_subcommand("f1u_du");
+    CLI::App* f1u_cu_up = app.get_subcommand("f1u_cu_up");
+    CLI::App* pdcp      = app.get_subcommand("pdcp");
     if (rlc->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. RLC configuration not present.\n", qos_params.five_qi);
     }
-    if (f1u->count_all() == 0) {
-      report_error("Error parsing QoS config for 5QI {}. F1-U configuration not present.\n", qos_params.five_qi);
+    if (f1u_du->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. F1-U DU configuration not present.\n", qos_params.five_qi);
+    }
+    if (f1u_cu_up->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. F1-U CU_UP configuration not present.\n", qos_params.five_qi);
     }
     if (pdcp->count_all() == 0) {
       report_error("Error parsing QoS config for 5QI {}. PDCP configuration not present.\n", qos_params.five_qi);

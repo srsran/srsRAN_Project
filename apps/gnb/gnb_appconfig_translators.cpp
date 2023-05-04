@@ -275,7 +275,7 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
     //< t-Notify
-    out_f1u.t_notify = qos.f1u.t_notify;
+    out_f1u.t_notify = qos.f1u_du.t_notify;
   }
   return out_cfg;
 }

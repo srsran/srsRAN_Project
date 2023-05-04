@@ -222,9 +222,14 @@ struct rlc_appconfig {
   rlc_am_appconfig am;
 };
 
-/// F1-U configuration
-struct f1u_appconfig {
-  int32_t t_notify; ///< Maximum backoff time for transmit/delivery notifications towards CU_UP (ms)
+/// F1-U configuration at DU side
+struct f1u_du_appconfig {
+  int32_t t_notify; ///< Maximum backoff time for transmit/delivery notifications from DU to CU_UP (ms)
+};
+
+/// F1-U configuration at CU_UP side
+struct f1u_cu_up_appconfig {
+  int32_t t_notify; ///< Maximum backoff time for discard notifications from CU_UP to DU (ms)
 };
 
 struct pdcp_rx_appconfig {
@@ -246,10 +251,11 @@ struct pdcp_appconfig {
 };
 /// QoS configuration
 struct qos_appconfig {
-  five_qi_t      five_qi = uint_to_five_qi(9);
-  rlc_appconfig  rlc;
-  f1u_appconfig  f1u;
-  pdcp_appconfig pdcp;
+  five_qi_t           five_qi = uint_to_five_qi(9);
+  rlc_appconfig       rlc;
+  f1u_du_appconfig    f1u_du;
+  f1u_cu_up_appconfig f1u_cu_up;
+  pdcp_appconfig      pdcp;
 };
 
 struct amf_appconfig {
