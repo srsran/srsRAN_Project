@@ -75,7 +75,7 @@ private:
   std::mutex              transmit_alignment_mutex;
   std::condition_variable transmit_alignment_cvar;
 
-  bool is_tx_enabled = false;
+  std::atomic<bool> is_tx_enabled = {false};
 
   /// Transmits a single sample.
   void transmit_samples(span<radio_sample_type> data);

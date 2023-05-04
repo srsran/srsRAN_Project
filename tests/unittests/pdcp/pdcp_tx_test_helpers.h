@@ -134,13 +134,13 @@ protected:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
-  pdcp_sn_size                sn_size = {};
-  uint32_t                    pdu_hdr_len;
-  uint32_t                    mac_hdr_len = 4;
-  pdcp_config::pdcp_tx_config config      = {};
-  timer_manager               timers;
-  manual_task_worker          worker{64};
-  pdcp_tx_test_frame          test_frame = {};
+  pdcp_sn_size       sn_size = {};
+  uint32_t           pdu_hdr_len;
+  uint32_t           mac_hdr_len = 4;
+  pdcp_tx_config     config      = {};
+  timer_manager      timers;
+  manual_task_worker worker{64};
+  pdcp_tx_test_frame test_frame = {};
 
   // 12 bit test PDUs
   byte_buffer buf_count0_snlen12{pdu1_count0_snlen12};       // [HFN | SN] 0000 0000 0000 0000 0000 | 0000 0000 0000

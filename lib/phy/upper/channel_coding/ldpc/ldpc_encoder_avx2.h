@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "avx2_support.h"
 #include "ldpc_encoder_impl.h"
 
 namespace srsran {
@@ -35,15 +34,6 @@ namespace srsran {
 class ldpc_encoder_avx2 : public ldpc_encoder_impl
 {
 private:
-  /// Maximum number of AVX2 vectors needed to represent a BG node.
-  static constexpr unsigned MAX_NODE_SIZE_AVX2 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX2_SIZE_BYTE);
-
-  /// Maximum number of AVX2 vectors needed to represent a codeblock.
-  static constexpr unsigned MAX_BLK_SIZE_AVX2 = MAX_NODE_SIZE_AVX2 * ldpc::MAX_BG_N_FULL;
-
-  /// Maximum number of AVX2 vectors needed to for the auxiliary buffer.
-  static constexpr unsigned MAX_AUX_SIZE_AVX2 = MAX_NODE_SIZE_AVX2 * ldpc::MAX_BG_M;
-
   void select_strategy() override;
   void load_input(span<const uint8_t> in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
@@ -103,18 +93,19 @@ private:
   void ext_region_inner();
 
   /// Buffer containing the codeblock.
-  mm256::avx2_array<MAX_BLK_SIZE_AVX2> codeblock;
-
-  /// Used portion of the codeblock buffer.
+  std::array<uint8_t, ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE> codeblock_buffer = {};
+  /// Length of the portion of the codeblock buffer actually used for the current configuration (as a number of AVX2
+  /// registers).
   size_t codeblock_used_size = 0;
 
   /// Auxiliary buffer for storing chunks of codeblocks.
-  mm256::avx2_array<MAX_AUX_SIZE_AVX2> auxiliary;
-  /// Used portion of the auxiliary buffer.
+  std::array<uint8_t, ldpc::MAX_BG_M* ldpc::MAX_LIFTING_SIZE> auxiliary_buffer = {};
+  /// Length of the portion of the auxiliary buffer actually used for the current configuration (as a number of AVX2
+  /// registers).
   size_t auxiliary_used_size = 0;
 
   /// Auxiliary buffer for storing a single node during rotations.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> rotated_node;
+  std::array<uint8_t, ldpc::MAX_LIFTING_SIZE> rotated_node_buffer = {};
 
   /// Node size as a number of AVX2 vectors.
   unsigned node_size_avx2 = 0;

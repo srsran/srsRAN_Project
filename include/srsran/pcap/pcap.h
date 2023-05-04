@@ -71,23 +71,27 @@ class mac_pcap
 public:
   virtual ~mac_pcap() = default;
 
-  virtual void open(const char* filename_)                                    = 0;
+  virtual void open(const std::string& filename_)                             = 0;
   virtual void close()                                                        = 0;
   virtual bool is_write_enabled()                                             = 0;
   virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
   virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
 };
 
-/// @brief Interface class for writing a NGAP PCAP to a file.
-class ngap_pcap
+// DLT PCAP values for different layers
+constexpr uint16_t PCAP_NGAP_DLT = 152;
+constexpr uint16_t PCAP_E1AP_DLT = 153;
+
+/// @brief Interface class for writing a DLT PCAP to a file.
+class dlt_pcap
 {
 public:
-  virtual ~ngap_pcap() = default;
+  virtual ~dlt_pcap() = default;
 
-  virtual void open(const char* filename_)       = 0;
-  virtual void close()                           = 0;
-  virtual bool is_write_enabled()                = 0;
-  virtual void push_pdu(const_span<uint8_t> pdu) = 0;
-  virtual void push_pdu(byte_buffer pdu)         = 0;
+  virtual void open(const std::string& filename_) = 0;
+  virtual void close()                            = 0;
+  virtual bool is_write_enabled()                 = 0;
+  virtual void push_pdu(const_span<uint8_t> pdu)  = 0;
+  virtual void push_pdu(byte_buffer pdu)          = 0;
 };
 } // namespace srsran

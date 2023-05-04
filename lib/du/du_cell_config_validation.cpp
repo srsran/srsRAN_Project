@@ -281,6 +281,37 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
+{
+  if (not cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
+    return {};
+  }
+
+  const auto& tdd_cfg                  = cell_cfg.tdd_ul_dl_cfg_common.value();
+  const auto  pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
+  auto        pattern1_additional_slot = tdd_cfg.pattern1.nof_ul_symbols + tdd_cfg.pattern1.nof_dl_symbols > 0 ? 1 : 0;
+  pattern1_additional_slot += tdd_cfg.pattern1.nof_ul_symbols + tdd_cfg.pattern1.nof_dl_symbols > 14 ? 1 : 0;
+  CHECK_EQ_OR_BELOW(tdd_cfg.pattern1.nof_dl_slots + tdd_cfg.pattern1.nof_ul_slots + pattern1_additional_slot,
+                    pattern1_period_slots,
+                    "TDD UL DL pattern 1 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
+                    "exceeds TDD pattern period.");
+
+  if (tdd_cfg.pattern2.has_value()) {
+    const auto pattern2_period_slots = tdd_cfg.pattern2.value().dl_ul_tx_period_nof_slots;
+    auto       pattern2_additional_slot =
+        tdd_cfg.pattern2.value().nof_ul_symbols + tdd_cfg.pattern2.value().nof_dl_symbols > 0 ? 1 : 0;
+    pattern2_additional_slot +=
+        tdd_cfg.pattern2.value().nof_ul_symbols + tdd_cfg.pattern2.value().nof_dl_symbols > 14 ? 1 : 0;
+    CHECK_EQ_OR_BELOW(tdd_cfg.pattern2.value().nof_dl_slots + tdd_cfg.pattern2.value().nof_ul_slots +
+                          pattern2_additional_slot,
+                      pattern2_period_slots,
+                      "TDD UL DL pattern 2 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
+                      "exceeds TDD pattern period.");
+  }
+
+  return {};
+}
+
 check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
@@ -288,6 +319,7 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_RETURN(is_coreset0_ss0_idx_valid(cell_cfg));
   HANDLE_RETURN(check_dl_config_common(cell_cfg));
   HANDLE_RETURN(check_ssb_configuration(cell_cfg));
+  HANDLE_RETURN(check_tdd_ul_dl_config(cell_cfg));
   // TODO: Remaining.
   return {};
 }

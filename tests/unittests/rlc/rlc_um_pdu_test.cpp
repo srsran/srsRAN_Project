@@ -311,6 +311,54 @@ void test_rlc_um_12bit_malformed_pdu()
   TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) == false);
 }
 
+// This should fail unpacking because the PDU header is too short (upper SO is missing)
+void test_rlc_um_6bit_missing_upper_so()
+{
+  test_delimit_logger    delimiter{"Short UM PDU with 6 Bit SN (upper SO is missing)"};
+  std::array<uint8_t, 1> tv  = {0b11000000};
+  byte_buffer            buf = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_um_pdu_header hdr = {};
+  TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size6bits, &hdr) == false);
+}
+
+// This should fail unpacking because the PDU header is too short (lower SO is missing)
+void test_rlc_um_6bit_missing_lower_so()
+{
+  test_delimit_logger    delimiter{"Short UM PDU with 6 Bit SN (lower SO is missing)"};
+  std::array<uint8_t, 2> tv  = {0b11000000, 0xaa};
+  byte_buffer            buf = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_um_pdu_header hdr = {};
+  TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size6bits, &hdr) == false);
+}
+
+// This should fail unpacking because the PDU header is too short (upper SO is missing)
+void test_rlc_um_12bit_missing_upper_so()
+{
+  test_delimit_logger    delimiter{"Short UM PDU with 12 Bit SN (upper SO is missing)"};
+  std::array<uint8_t, 2> tv  = {0b11000000, 0x00};
+  byte_buffer            buf = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_um_pdu_header hdr = {};
+  TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) == false);
+}
+
+// This should fail unpacking because the PDU header is too short (lower SO is missing)
+void test_rlc_um_12bit_missing_lower_so()
+{
+  test_delimit_logger    delimiter{"Short UM PDU with 12 Bit SN (lower SO is missing)"};
+  std::array<uint8_t, 3> tv  = {0b11000000, 0x00, 0xaa};
+  byte_buffer            buf = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_um_pdu_header hdr = {};
+  TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) == false);
+}
+
 } // namespace srsran
 
 int main()
@@ -332,5 +380,10 @@ int main()
   srsran::test_rlc_um_12bit_last_segment();
 
   srsran::test_rlc_um_6bit_malformed_pdu();
+  srsran::test_rlc_um_6bit_missing_upper_so();
+  srsran::test_rlc_um_6bit_missing_lower_so();
+
   srsran::test_rlc_um_12bit_malformed_pdu();
+  srsran::test_rlc_um_12bit_missing_upper_so();
+  srsran::test_rlc_um_12bit_missing_lower_so();
 }

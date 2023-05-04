@@ -56,11 +56,13 @@ protected:
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
   timer_manager                                         timers;
-  ue_manager                                            ue_mng;
+  ue_configuration                                      ue_config;
+  ue_manager                                            ue_mng{ue_config};
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
   dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
+  dummy_du_processor_ngap_control_notifier              ngap_ctrl_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   manual_task_worker                                    ctrl_worker{128};

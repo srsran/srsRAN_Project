@@ -1137,8 +1137,8 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
       case csi_report_config::cqi_table_t::table3:
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table3;
         break;
-      case csi_report_config::cqi_table_t::spare1:
-        out.cqi_table = csi_report_cfg_s::cqi_table_opts::spare1;
+      case csi_report_config::cqi_table_t::table4:
+        out.cqi_table = csi_report_cfg_s::cqi_table_opts::table4_r17;
         break;
       default:
         srsran_assertion_failure("Invalid CQI table={}", cfg.cqi_table.value());

@@ -21,6 +21,7 @@
  */
 
 #include "csi_rs_scheduler.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 
 using namespace srsran;
 
@@ -34,20 +35,12 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.type    = srsran::csi_rs_type::CSI_RS_NZP;
 
   csi_rs.freq_domain = nzp_csi_rs_res.res_mapping.fd_alloc;
-  switch (csi_rs.freq_domain.size()) {
-    case 4:
-      csi_rs.row = 1;
-      break;
-    case 12:
-      csi_rs.row = 2;
-      break;
-    case 3:
-      csi_rs.row = 4;
-      break;
-    case 6:
-    default:
-      report_fatal_error("Not supported");
-  }
+  csi_rs.row         = csi_rs::get_csi_rs_resource_mapping_row_number(nzp_csi_rs_res.res_mapping.nof_ports,
+                                                              nzp_csi_rs_res.res_mapping.freq_density,
+                                                              nzp_csi_rs_res.res_mapping.cdm,
+                                                              nzp_csi_rs_res.res_mapping.fd_alloc);
+  srsran_assert(csi_rs.row > 0, "The CSI-RS configuration resulted in an invalid row of Table 7.4.1.5.3-1, TS 38.211");
+
   csi_rs.symbol0                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td;
   csi_rs.symbol1                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2.has_value()
                                             ? *nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2
@@ -76,7 +69,7 @@ void csi_rs_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   if (cached_csi_rs.empty()) {
     return;
   }
-  if (not cell_cfg.is_dl_enabled(res_grid.slot)) {
+  if (not cell_cfg.is_fully_dl_enabled(res_grid.slot)) {
     return;
   }
 

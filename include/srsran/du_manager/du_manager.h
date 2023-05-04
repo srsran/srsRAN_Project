@@ -60,7 +60,9 @@ class du_manager_controller
 public:
   virtual ~du_manager_controller() = default;
   virtual void start()             = 0;
-  virtual void stop()              = 0;
+
+  /// \brief Stop the DU manager. This call is blocking and only returns once all tasks in the DU manager are completed.
+  virtual void stop() = 0;
 };
 
 class du_manager_interface : public du_manager_interface_query,

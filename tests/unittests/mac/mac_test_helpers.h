@@ -30,7 +30,7 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -139,7 +139,7 @@ public:
 struct mac_test_ue_bearer {
   mac_sdu_rx_test_notifier         ul_notifier;
   mac_sdu_tx_builder_test_notifier dl_notifier;
-  mac_logical_channel_to_setup     bearer;
+  mac_logical_channel_config       bearer;
 };
 
 struct mac_test_ue {
@@ -156,7 +156,7 @@ class dummy_mac_pcap : public mac_pcap
 public:
   ~dummy_mac_pcap() override = default;
 
-  void open(const char* filename_) override {}
+  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}

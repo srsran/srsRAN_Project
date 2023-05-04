@@ -32,7 +32,7 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {
@@ -57,7 +57,7 @@ class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
                  rb_id_t                         rb_id_,
-                 pdcp_config::pdcp_tx_config     cfg_,
+                 pdcp_tx_config                  cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers_) :
@@ -69,9 +69,10 @@ public:
     timers(timers_)
   {
     // Validate configuration
-    srsran_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),
-                  "RLC UM with discard timer is not supported. {}",
-                  cfg);
+    if (is_um() && (cfg.discard_timer != pdcp_discard_timer::not_configured &&
+                    cfg.discard_timer != pdcp_discard_timer::infinity)) {
+      report_error("RLC UM with discard timer is not supported. {}", cfg);
+    }
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);
@@ -162,8 +163,8 @@ public:
   void data_recovery() final;
 
 private:
-  pdcp_bearer_logger          logger;
-  pdcp_config::pdcp_tx_config cfg;
+  pdcp_bearer_logger   logger;
+  const pdcp_tx_config cfg;
 
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;
@@ -186,7 +187,7 @@ private:
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
   /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
-  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be stopped.
+  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be notify_stop.
   void stop_discard_timer(uint32_t highest_sn);
 
   /// Discard timer information. We keep both the discard timer

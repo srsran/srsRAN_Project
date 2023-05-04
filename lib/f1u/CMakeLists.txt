@@ -20,3 +20,5 @@
 
 add_library(srsran_f1u_cu_up cu_up/f1u_bearer_impl.cpp cu_up/f1u_bearer_factory.cpp)
 add_library(srsran_f1u_du du/f1u_bearer_impl.cpp du/f1u_bearer_factory.cpp)
+add_library(srsgnb_app_f1u_connector local_connector/f1u_local_connector.cpp)
+target_link_libraries(srsgnb_app_f1u_connector srsran_f1u_cu_up)

@@ -76,7 +76,8 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.empty()) {
-    srslog::fetch_basic_logger("RLC").warning("Cannot read header of empty PDU.");
+    srslog::fetch_basic_logger("RLC").warning(
+        "UMD PDU too small. pdu_len={} hdr_len={}", pdu.length(), rlc_um_pdu_header_size_no_so(sn_size));
     return false;
   }
 
@@ -112,6 +113,10 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
     if (header->si != rlc_si_field::full_sdu) {
       // continue unpacking remaining SN
       ++pdu_reader;
+      if (pdu_reader.empty()) {
+        srslog::fetch_basic_logger("RLC").error("Malformed PDU, missing lower byte of SN.");
+        return false;
+      }
       header->sn |= (*pdu_reader & 0xffU); // 8 bits SN
     }
 
@@ -124,8 +129,16 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
   // Read optional part
   if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::middle_segment) {
     // read SO
+    if (pdu_reader.empty()) {
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, missing upper byte of SO.");
+      return false;
+    }
     header->so = (*pdu_reader & 0xffU) << 8U;
     ++pdu_reader;
+    if (pdu_reader.empty()) {
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, missing lower byte of SO.");
+      return false;
+    }
     header->so |= (*pdu_reader & 0xffU);
     ++pdu_reader;
   }

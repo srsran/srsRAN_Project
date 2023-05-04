@@ -241,7 +241,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
     return pucch_harq_ack_output;
   }
 
-  if (not cell_cfg.is_ul_enabled(pucch_slot_alloc.slot)) {
+  if (not cell_cfg.is_fully_ul_enabled(pucch_slot_alloc.slot)) {
     return pucch_harq_ack_output;
   }
 

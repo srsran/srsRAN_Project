@@ -21,12 +21,23 @@
  */
 
 #include "lib/du_manager/du_ue/du_bearer.h"
+#include "tests/unittests/du_manager/du_manager_test_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <numeric>
 
 using namespace srsran;
 using namespace srs_du;
+
+std::unique_ptr<du_ue_drb> create_dummy_drb(drb_id_t drb_id, lcid_t lcid)
+{
+  static auto du_mng = std::make_unique<du_manager_test_bench>(
+      std::vector<du_cell_config>{config_helpers::make_default_du_cell_config()});
+  std::array<up_transport_layer_info, 1> ul_tnls = {
+      up_transport_layer_info{transport_layer_address{"127.0.0.1"}, gtp_teid_t{0}}};
+  return create_drb(to_du_ue_index(0), to_du_cell_index(0), drb_id, lcid, {}, ul_tnls, du_mng->params);
+}
 
 TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)
 {
@@ -43,7 +54,7 @@ TEST(du_ue_bearer_manager_test, when_all_drbs_are_allocated_then_no_lcid_is_avai
   du_ue_bearer_manager bearers;
   for (unsigned i = 0; i != MAX_NOF_DRBS; ++i) {
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
-    bearers.add_drb(drb_id, uint_to_lcid(lcids[i]), {});
+    bearers.add_drb(create_dummy_drb(drb_id, uint_to_lcid(lcids[i])));
   }
   ASSERT_FALSE(bearers.allocate_lcid().has_value());
 }
@@ -60,7 +71,7 @@ TEST(du_ue_bearer_manager_test, when_there_is_a_hole_in_allocated_lcids_then_all
   du_ue_bearer_manager bearers;
   for (unsigned i = 0; i != lcids.size(); ++i) {
     drb_id_t drb_id = (drb_id_t)((unsigned)drb_id_t::drb1 + i);
-    bearers.add_drb(drb_id, uint_to_lcid(lcids[i]), {});
+    bearers.add_drb(create_dummy_drb(drb_id, uint_to_lcid(lcids[i])));
   }
   optional<lcid_t> found_lcid = bearers.allocate_lcid();
   ASSERT_TRUE(found_lcid.has_value());

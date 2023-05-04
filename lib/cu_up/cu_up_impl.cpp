@@ -68,13 +68,13 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
 
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
-  /// > Create UE manager
-  ue_mng = std::make_unique<ue_manager>(
-      cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor);
-
-  // create e1ap
+  /// > Create e1ap
   e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
+
+  /// > Create UE manager
+  ue_mng = std::make_unique<ue_manager>(
+      cfg.net_cfg, *e1ap, *cfg.timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor, logger);
 }
 
 cu_up::~cu_up()
@@ -110,7 +110,10 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   response.success                            = false;
 
   // 1. Create new UE context
-  ue_context* ue_ctxt = ue_mng->add_ue();
+  ue_context_cfg ue_cfg        = {};
+  ue_cfg.activity_level        = msg.activity_notif_level;
+  ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
+  ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return response;
@@ -188,11 +191,25 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return response;
   }
 
-  // pdu session resource to modify list
-  if (msg.ng_ran_bearer_context_mod_request.has_value() &&
-      !msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
+  if (msg.ng_ran_bearer_context_mod_request.has_value()) {
+    // Traverse list of PDU sessions to be setup/modified
+    for (const auto& pdu_session_item :
+         msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
+      logger.warning("Setup/Modification of PDU session id {} not supported", pdu_session_item.pdu_session_id);
+      // TODO: add handling
+    }
+
+    // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
+      logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
       pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
+      // TODO: handle failure case
+    }
+
+    // Traverse list of PDU sessions to be removed.
+    for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_rem_list) {
+      logger.info("Removing PDU session id {}", pdu_session_item);
+      ue_ctxt->remove_pdu_session(pdu_session_item);
     }
   }
 
@@ -206,6 +223,11 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
 
 void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
 {
+  ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
+  if (ue_ctxt == nullptr) {
+    logger.error("ue={} not found. Discarding E1 Bearer Context Release Command.", msg.ue_index);
+    return;
+  }
   ue_mng->remove_ue(msg.ue_index);
 }
 

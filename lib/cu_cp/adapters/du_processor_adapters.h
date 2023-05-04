@@ -210,6 +210,12 @@ public:
     return rrc_ue_handler->handle_new_guami(msg);
   }
 
+  virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_rrc_ue_capability_transfer_request(msg);
+  }
+
   virtual async_task<bool>
   on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
@@ -225,6 +231,24 @@ public:
 
 private:
   rrc_ue_control_message_handler* rrc_ue_handler = nullptr;
+};
+
+// Adapter between DU processor and NGAP
+class du_processor_ngap_adapter : public du_processor_ngap_control_notifier
+{
+public:
+  du_processor_ngap_adapter() = default;
+
+  void connect_ngap(ngap_control_message_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
+
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    srsran_assert(ngap_handler != nullptr, "NGAP handler must not be nullptr");
+    return ngap_handler->handle_ue_context_release_request(msg);
+  }
+
+private:
+  ngap_control_message_handler* ngap_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

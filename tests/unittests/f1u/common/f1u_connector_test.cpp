@@ -20,8 +20,9 @@
  *
  */
 
-#include "apps/gnb/adapters/f1u_connector/f1u_local_connector.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -82,6 +83,8 @@ protected:
 
     // create f1-u connector
     f1u_conn = std::make_unique<f1u_local_connector>();
+
+    timers = timer_factory{timer_mng, ue_worker};
   }
 
   void TearDown() override
@@ -89,6 +92,10 @@ protected:
     // flush logger after each test
     srslog::flush();
   }
+
+  timer_manager      timer_mng;
+  manual_task_worker ue_worker{128};
+  timer_factory      timers;
 
   std::unique_ptr<f1u_local_connector> f1u_conn;
   srslog::basic_logger&                logger     = srslog::fetch_basic_logger("TEST", false);
@@ -115,11 +122,11 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
-  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx);
+  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx, timers);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(0, dl_teid, ul_teid, du_rx);
+  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(0, dl_teid, ul_teid, du_rx, timers);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_teid, dl_teid);

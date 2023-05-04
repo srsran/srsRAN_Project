@@ -23,9 +23,21 @@
 #include "../../support/resource_grid_test_doubles.h"
 #include "nzp_csi_rs_generator_test_data.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
+#include <fmt/ostream.h>
 #include <gtest/gtest.h>
 
 using namespace srsran;
+
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, test_case_t tcase)
+{
+  fmt::print(os, "{}", tcase.config);
+  return os;
+}
+
+} // namespace srsran
 
 namespace {
 class NzpCsiRsGeneratorFixture : public ::testing::TestWithParam<test_case_t>

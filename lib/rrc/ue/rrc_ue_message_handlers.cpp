@@ -22,6 +22,7 @@
 
 #include "../../ran/gnb_format.h"
 #include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 
@@ -68,7 +69,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   if (reject_users) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
-    on_ue_delete_request();
+    on_ue_delete_request(cause_t::radio_network);
     return;
   }
 
@@ -85,7 +86,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     default:
       logger.error("Unsupported RRCSetupRequest");
       send_rrc_reject(rrc_reject_max_wait_time_s);
-      on_ue_delete_request();
+      on_ue_delete_request(cause_t::protocol);
       return;
   }
   context.connection_cause.value = request_ies.establishment_cause.value;
@@ -128,6 +129,9 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::security_mode_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().security_mode_complete().rrc_transaction_id);
+      break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::ue_cap_info:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().ue_cap_info().rrc_transaction_id);
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
@@ -182,6 +186,12 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
+}
+
+async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg)
+{
+  //  Launch RRC UE capability transfer procedure
+  return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
 void rrc_ue_impl::handle_rrc_ue_release()

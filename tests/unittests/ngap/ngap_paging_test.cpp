@@ -129,8 +129,8 @@ protected:
       test_logger.error("NR CGI PLMN mismatch {} != 00f110", cell_item.ngran_cgi.plmn_hex);
       return false;
     }
-    if (cell_item.ngran_cgi.nci.packed != 12345678) {
-      test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci.packed, 12345678);
+    if (cell_item.ngran_cgi.nci != 12345678) {
+      test_logger.error("NR CGI NCI mismatch {} != {}", cell_item.ngran_cgi.nci, 12345678);
       return false;
     }
     if (cell_item.time_stayed_in_cell.value() != 5) {

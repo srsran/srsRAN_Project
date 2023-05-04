@@ -43,8 +43,16 @@ protected:
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
 
     // create DUT object
-    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(
-        MIN_UE_INDEX, net_config, logger, timer_factory{timers, worker}, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+    ue_inactivity_timer = timers_factory.create_timer();
+    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
+                                                                 net_config,
+                                                                 logger,
+                                                                 ue_inactivity_timer,
+                                                                 timers_factory,
+                                                                 *f1u_gw,
+                                                                 *gtpu_tx_notifier,
+                                                                 *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -53,8 +61,10 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                        timers;
+  timer_manager                                        timers_manager;
   manual_task_worker                                   worker{64};
+  timer_factory                                        timers_factory{timers_manager, worker};
+  unique_timer                                         ue_inactivity_timer;
   std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                               f1u_bearer;
@@ -90,7 +100,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
-  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsran::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
 
@@ -100,8 +110,8 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
 
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
-  e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                                 = 8;
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                                 = uint_to_five_qi(8);
   qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
@@ -158,6 +168,21 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
 
+TEST_F(pdu_session_manager_test, when_unexisting_pdu_session_is_modified_operation_failed)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // attempt to modify unexisting PDU session
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
+  pdu_session_modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+
+  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+
+  // check successful outcome
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+}
+
 /// PDU session handling tests (creation/deletion)
 TEST_F(pdu_session_manager_test, drb_create_modify_remove)
 {
@@ -172,13 +197,15 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
-  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::um;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.emplace();
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = uint_to_five_qi(9);
 
   drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
   pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);
@@ -243,13 +270,15 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
-  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::um;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.emplace();
+  qos_to_setup.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi = uint_to_five_qi(9);
 
   drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
   pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);

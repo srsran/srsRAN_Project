@@ -27,16 +27,16 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/ssb_properties.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace srsran {
 
 enum class duplex_mode;
 enum class subcarrier_spacing;
 enum class ssb_pattern_case;
-enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
 enum class min_channel_bandwidth;
 
@@ -44,52 +44,102 @@ struct ssb_freq_location;
 
 const unsigned KHZ_TO_HZ = 1000U;
 const double   HZ_TO_KHZ = 1e-3;
+/// Minimum GSCN value for the freq range 0GHz - 3GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_0_3GHZ = 2;
+/// Minimum GSCN value for the freq range 3GHz - 24.5GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_3GHZ_24_5GHZ = 7499;
+/// Minimum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MIN_GSCN_FREQ_24_5GHZ_100GHZ = 22256;
+/// Maximum GSCN value for the freq range 24.5GHz - 100GHz, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned MAX_GSCN_FREQ_24_5GHZ_100GHZ = 26639;
 
 /// \brief NR operating bands in FR1 and FR2.
 ///
 /// This enumeration abstracts the NR operating bands for FR1 and FR2 described in TS 38.104, Table 5.2-1 and
 /// Table 5.2-2, respectively.
+/// \remark: This is based on Rel. 17, version 17.8.0.
 enum class nr_band {
   invalid = 0,
   // FR1 bands.
-  n1  = 1,
-  n2  = 2,
-  n3  = 3,
-  n5  = 5,
-  n7  = 7,
-  n8  = 8,
-  n12 = 12,
-  n20 = 20,
-  n25 = 25,
-  n28 = 28,
-  n34 = 34,
-  n38 = 38,
-  n39 = 39,
-  n40 = 40,
-  n41 = 41,
-  n50 = 50,
-  n51 = 51,
-  n66 = 66,
-  n70 = 70,
-  n71 = 71,
-  n74 = 74,
-  n75 = 75,
-  n76 = 76,
-  n77 = 77,
-  n78 = 78,
-  n79 = 79,
-  n80 = 80,
-  n81 = 81,
-  n82 = 82,
-  n83 = 83,
-  n84 = 84,
-  n86 = 86,
+  n1   = 1,
+  n2   = 2,
+  n3   = 3,
+  n5   = 5,
+  n7   = 7,
+  n8   = 8,
+  n12  = 12,
+  n13  = 13,
+  n14  = 14,
+  n18  = 18,
+  n20  = 20,
+  n24  = 24,
+  n25  = 25,
+  n26  = 26,
+  n28  = 28,
+  n29  = 29,
+  n30  = 30,
+  n34  = 34,
+  n38  = 38,
+  n39  = 39,
+  n40  = 40,
+  n41  = 41,
+  n46  = 46,
+  n48  = 48,
+  n50  = 50,
+  n51  = 51,
+  n53  = 53,
+  n65  = 65,
+  n66  = 66,
+  n67  = 67,
+  n70  = 70,
+  n71  = 71,
+  n74  = 74,
+  n75  = 75,
+  n76  = 76,
+  n77  = 77,
+  n78  = 78,
+  n79  = 79,
+  n80  = 80,
+  n81  = 81,
+  n82  = 82,
+  n83  = 83,
+  n84  = 84,
+  n85  = 85,
+  n86  = 86,
+  n89  = 89,
+  n90  = 90,
+  n91  = 91,
+  n92  = 92,
+  n93  = 93,
+  n94  = 94,
+  n95  = 95,
+  n96  = 96,
+  n97  = 97,
+  n98  = 98,
+  n99  = 99,
+  n100 = 100,
+  n101 = 101,
+  n102 = 102,
+  n104 = 104,
   // FR2 bands.
   n257 = 257,
   n258 = 258,
+  n259 = 259,
   n260 = 260,
-  n261 = 261
+  n261 = 261,
+  n262 = 262,
+  n263 = 263
 };
+
+const std::array<nr_band, 60> all_nr_bands_fr1 = std::array<nr_band, 60>{
+    {nr_band::n1,   nr_band::n2,   nr_band::n3,   nr_band::n5,  nr_band::n7,  nr_band::n8,  nr_band::n12, nr_band::n13,
+     nr_band::n14,  nr_band::n18,  nr_band::n20,  nr_band::n24, nr_band::n25, nr_band::n26, nr_band::n28, nr_band::n29,
+     nr_band::n30,  nr_band::n34,  nr_band::n38,  nr_band::n39, nr_band::n40, nr_band::n41, nr_band::n46, nr_band::n48,
+     nr_band::n50,  nr_band::n51,  nr_band::n53,  nr_band::n65, nr_band::n66, nr_band::n67, nr_band::n70, nr_band::n71,
+     nr_band::n74,  nr_band::n75,  nr_band::n76,  nr_band::n77, nr_band::n78, nr_band::n79, nr_band::n80, nr_band::n81,
+     nr_band::n82,  nr_band::n83,  nr_band::n84,  nr_band::n85, nr_band::n86, nr_band::n89, nr_band::n90, nr_band::n91,
+     nr_band::n92,  nr_band::n93,  nr_band::n94,  nr_band::n95, nr_band::n96, nr_band::n97, nr_band::n98, nr_band::n99,
+     nr_band::n100, nr_band::n101, nr_band::n102, nr_band::n104}};
 
 constexpr inline uint16_t nr_band_to_uint(nr_band band)
 {
@@ -114,8 +164,12 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \param[in] arfcn Given Downlink ARFCN.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
 /// for bands n41, n77, n78, n79.
+/// \param[in] bw Channel Bandwidth in MHz, which is required to validate some bands' ARFCN values.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, subcarrier_spacing scs);
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band                  band,
+                                                     uint32_t                 arfcn,
+                                                     subcarrier_spacing       scs,
+                                                     bs_channel_bandwidth_fr1 bw = bs_channel_bandwidth_fr1::MHz10);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
@@ -123,8 +177,9 @@ error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfc
 /// For unparied spectrum (TDD) the function returns the same ARFCN.
 ///
 /// \param[in] dl_arfcn The DL ARFCN.
+/// \param[in] band     NR Band. If not given, the band is derived from the dl_arfcn.
 /// \return uint32_t the UL ARFCN.
-uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn);
+uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn, optional<nr_band> band);
 
 /// \brief Return frequency of given NR-ARFCN in Hz as per TS38.104 5.4.2.1.
 /// \param[in] nr_arfcn Given NR-ARFCN.
@@ -140,7 +195,8 @@ uint32_t freq_to_nr_arfcn(double freq);
 /// \remark    Described by TS 38.101-1 Table 5.4.3.3-1: Applicable SS raster entries per operating band.
 /// \param[in] band NR Band number.
 /// \param[in] scs SSB Subcarrier spacing.
-/// \return    The SSB pattern case if band and subcarrier spacing match, invalid otherwise.
+/// \return    The SSB pattern case if band and subcarrier spacing match, \c invalid otherwise.
+/// \remark    The functionr returns \c invalid if the band has SUL duplexing.
 ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
 
 /// \brief Selects the most suitable SSB subcarrier spacing valid for this band.
@@ -228,6 +284,11 @@ unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, 
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
 min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs);
+
+/// \brief Returns the \f$SS_{ref}\f$ from the SSB's GSCN, as per Section 5.4.3.1, TS 38.104.
+/// \param[in] gscn GSCN value, as defined in TS 38.104, Section 5.4.3.1.
+/// \return The the \f$SS_{ref}\f$ corresponding to the GSCN
+double get_ss_ref_from_gscn(unsigned gscn);
 
 /// Contains the parameters that are returned by the DU config generator.
 struct ssb_coreset0_freq_location {

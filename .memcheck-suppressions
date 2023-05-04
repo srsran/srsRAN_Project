@@ -1,0 +1,6 @@
+ {
+   <librte>
+   Memcheck:Leak
+   ...
+   obj:/usr/*lib*/librte*
+}

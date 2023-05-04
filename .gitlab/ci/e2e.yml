@@ -19,8 +19,34 @@
 #
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "5"
     file: .gitlab/ci-shared/setup/all.yml
+
+variables:
+  TESTBED:
+    description: Retina Testbed Description
+    options:
+      - "zmq"
+      - "rf"
+      - "none"
+    value: "zmq"
+  MARKERS:
+    description: Selected pytest marker (label / tag). Tests with that mark will run.
+    value: ""
+  PYTEST_ARGS:
+    description: Extra pytest args for the e2e suite to run
+    value: ""
+  RETINA_ARGS:
+    description: Extra retina args for the e2e suite to run
+    value: ""
+  E2E_LOG_LEVEL:
+    description: Log level to set for software under test in the e2e tests
+    options:
+      - debug
+      - info
+      - warning
+      - error
+    value: "info"
 
 .prepare_test:
   before_script:
@@ -35,14 +61,11 @@ include:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.0.27
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.0
     entrypoint: ["/bin/sh", "-c"]
   variables:
-    REQUEST: "" # Retina YAML request
-    MARKERS: ""
-    PYTEST_ARGS: ""
-    RETINA_ARGS: ""
-    LOG_LEVEL: "info"
+    ARTIFACT_COMPRESSION_LEVEL: "slowest"
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
   tags:
     - on-prem-amd64
   extends:
@@ -60,7 +83,7 @@ include:
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
-    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}"
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL "${RETINA_ARGS}"
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -70,6 +93,16 @@ include:
     - mv tests/e2e/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
+custom-e2e:
+  extends: .e2e-run
+  interruptible: false # Web jobs are standalone
+  rules:
+    - if: $TESTBED == "none"
+      when: never
+    - if: $ON_WEB
+  needs:
+    - custom-build
+
 smoke-zmq-tsan:
   extends: .e2e-run
   rules:
@@ -78,19 +111,16 @@ smoke-zmq-tsan:
       when: manual
       allow_failure: false
   variables:
-    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "smoke and not tcp and multiue"
+    TESTBED: zmq
+    MARKERS: "smoke and not tcp"
     PYTEST_ARGS: "-x"
     RETINA_ARGS: "gnb.all.pcap=True"
-    LOG_LEVEL: "debug"
+    E2E_LOG_LEVEL: "debug"
   needs:
-    - job: "avx2 [tsan, cached]"
+    - job: "smoke tsan cached"
       artifacts: true
       optional: true
-    - job: "avx2 [tsan, update cache]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, clean]"
+    - job: "smoke tsan clean"
       artifacts: true
       optional: true
 
@@ -99,48 +129,69 @@ zmq:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "zmq and multiue and not smoke"
-    # PYTEST_ARGS: "-n 2"
-    LOG_LEVEL: "info"
+    TESTBED: "zmq"
+    MARKERS: "zmq and not smoke"
+    RETINA_ARGS: "gnb.all.pcap=False"
+    E2E_LOG_LEVEL: "info"
   needs:
-    - job: "avx2 [basic]"
+    - job: "smoke release update cache"
       artifacts: true
-
-zmq-tsan:
-  extends: zmq
-  # variables:
-  #   PYTEST_ARGS: "-n 2"
-  needs:
-    - job: "avx2 [tsan, cached]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, update cache]"
-      artifacts: true
-      optional: true
-    - job: "avx2 [tsan, clean]"
-      artifacts: true
-      optional: true
 
 zmq-asan:
   extends: zmq
-  # variables:
-  #   PYTEST_ARGS: "-n 2"
+  variables:
+    MARKERS: "smoke"
+    RETINA_ARGS: "gnb.all.pcap=True"
   needs:
-    - job: "avx2 [asan]"
+    - job: "basic asan"
+      artifacts: true
+
+zmq-valgrind:
+  extends: zmq
+  variables:
+    MARKERS: "zmq_valgrind"
+    E2E_LOG_LEVEL: "warning"
+    RETINA_ARGS: "gnb.all.pcap=True"
+  needs:
+    - job: "basic debug"
       artifacts: true
 
 rf:
   extends: .e2e-run
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
-    MARKERS: "rf and not tcp and multiue"
-    LOG_LEVEL: "info"
+    TESTBED: "rf"
+    MARKERS: "rf"
+    E2E_LOG_LEVEL: "warning"
+    RETINA_ARGS: gnb.all.pcap=False
   needs:
-    - job: "avx2 [basic]"
+    - job: "smoke release update cache"
       artifacts: true
+
+rf-tsan:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_not_crash"
+  needs:
+    - job: "smoke tsan update cache"
+      artifacts: true
+
+rf-asan:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_not_crash"
+  needs:
+    - job: "basic asan"
+      artifacts: true
+
+rf-b200-config:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_b200"

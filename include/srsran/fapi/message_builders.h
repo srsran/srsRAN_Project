@@ -625,6 +625,15 @@ public:
     return *this;
   }
 
+  /// Sets the maintenance v3 CSI-RS rate matching references parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder& set_maintenance_v3_csi_rm_references(span<const uint16_t> csi_rs_for_rm)
+  {
+    pdu.pdsch_maintenance_v3.csi_for_rm.assign(csi_rs_for_rm.begin(), csi_rs_for_rm.end());
+
+    return *this;
+  }
+
   /// Sets the maintenance v3 rate matching references parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
   dl_pdsch_pdu_builder&
@@ -635,8 +644,7 @@ public:
                                               uint16_t             pdcch_pdu_index,
                                               uint16_t             dci_index,
                                               uint8_t              lte_crs_rm_pattern_bitmap_size,
-                                              span<const uint8_t>  lte_crs_rm_pattern,
-                                              span<const uint16_t> csi_rs_for_rm)
+                                              span<const uint8_t>  lte_crs_rm_pattern)
   {
     srsran_assert(ssb_pdus_for_rm.size() <= dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM,
                   "[PDSCH Builder] - Incoming SSB PDUs for RM matching size ({}) doesn't fit the field ({})",
@@ -659,7 +667,6 @@ public:
 
     pdu.pdsch_maintenance_v3.lte_crs_rm_pattern_bitmap_size = lte_crs_rm_pattern_bitmap_size;
     pdu.pdsch_maintenance_v3.lte_crs_rm_pattern.assign(lte_crs_rm_pattern.begin(), lte_crs_rm_pattern.end());
-    pdu.pdsch_maintenance_v3.csi_for_rm.assign(csi_rs_for_rm.begin(), csi_rs_for_rm.end());
 
     return *this;
   }

@@ -27,7 +27,7 @@
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

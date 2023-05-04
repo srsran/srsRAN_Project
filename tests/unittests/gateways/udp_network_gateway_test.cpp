@@ -34,7 +34,7 @@ protected:
     srslog::init();
 
     // init GW logger
-    srslog::fetch_basic_logger("UDP-GW", false).set_level(srslog::basic_levels::info);
+    srslog::fetch_basic_logger("UDP-GW", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("UDP-GW", false).set_hex_dump_max_size(100);
   }
 

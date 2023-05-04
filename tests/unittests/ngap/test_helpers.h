@@ -116,6 +116,9 @@ private:
 
 struct dummy_ngap_ue_manager : public ngap_ue_manager {
 public:
+  void             set_ue_config(ue_configuration ue_config_) { ue_config = ue_config_; }
+  ue_configuration get_ue_config() override { return ue_config; }
+
   ngap_ue* add_ue(ue_index_t                          ue_index,
                   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
                   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
@@ -212,6 +215,8 @@ private:
     logger.error("No RAN UE ID available");
     return ran_ue_id_t::invalid;
   }
+
+  ue_configuration ue_config;
 
   std::unordered_map<ue_index_t, dummy_ngap_ue> ues;                   // ues indexed by ue_index
   std::unordered_map<ran_ue_id_t, ue_index_t>   ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
@@ -333,6 +338,23 @@ public:
     });
   }
 
+  async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
+  {
+    logger.info("Received a new pdu session resource release command");
+
+    last_release_command = std::move(command);
+
+    return launch_async([res = cu_cp_pdu_session_resource_release_response{}](
+                            coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      res = generate_cu_cp_pdu_session_resource_release_response(uint_to_pdu_session_id(1));
+
+      CORO_RETURN(res);
+    });
+  }
+
   void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
@@ -340,8 +362,9 @@ public:
     last_command = command;
   }
 
-  cu_cp_ue_context_release_command         last_command;
-  cu_cp_pdu_session_resource_setup_request last_request;
+  cu_cp_ue_context_release_command           last_command;
+  cu_cp_pdu_session_resource_setup_request   last_request;
+  cu_cp_pdu_session_resource_release_command last_release_command;
 
 private:
   srslog::basic_logger& logger;
@@ -364,10 +387,10 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_ngap_pcap : public ngap_pcap
+class dummy_ngap_pcap : public dlt_pcap
 {
 public:
-  void open(const char* filename_) override {}
+  void open(const std::string& filename_) override {}
   void close() override {}
   bool is_write_enabled() override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}

@@ -108,12 +108,12 @@ int main(int argc, char** argv)
   manual_task_worker worker{64};
 
   // Set TX config
-  pdcp_config::pdcp_tx_config config = {};
-  config.rb_type                     = pdcp_rb_type::drb;
-  config.rlc_mode                    = pdcp_rlc_mode::am;
-  config.sn_size                     = sn_size;
-  config.discard_timer               = pdcp_discard_timer::ms10;
-  config.status_report_required      = false;
+  pdcp_tx_config config         = {};
+  config.rb_type                = pdcp_rb_type::drb;
+  config.rlc_mode               = pdcp_rlc_mode::am;
+  config.sn_size                = sn_size;
+  config.discard_timer          = pdcp_discard_timer::ms10;
+  config.status_report_required = false;
 
   // Set security keys
   security::sec_128_as_config sec_cfg = {};

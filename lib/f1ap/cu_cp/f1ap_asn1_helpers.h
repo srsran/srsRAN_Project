@@ -35,72 +35,333 @@ namespace srs_cu_cp {
 inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod_request_s&        asn1_request,
                                                       const cu_cp_ue_context_modification_request& msg)
 {
-  // drb to be setup mod list
-  asn1_request->drbs_to_be_setup_mod_list_present = msg.cu_cp_drb_setup_msgs.size() > 0;
-  for (const auto& drb_to_be_setup : msg.cu_cp_drb_setup_msgs) {
-    asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> asn1_setup_item;
-    auto& asn1_drb_to_setup_item = asn1_setup_item->drbs_to_be_setup_mod_item();
-
-    asn1_drb_to_setup_item.drb_id = drb_id_to_uint(drb_to_be_setup.drb_id);
-    switch (drb_to_be_setup.rlc) {
-      case rlc_mode::am:
-        asn1_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
-        break;
-      case rlc_mode::um_bidir:
-        asn1_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
-        break;
-      case rlc_mode::um_unidir_dl:
-        asn1_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_dl;
-        break;
-      case rlc_mode::um_unidir_ul:
-        asn1_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_ul;
-        break;
-      case rlc_mode::tm:
-        // TM not supported for DRBs
-        report_fatal_error("Invalid RLC mode {}", drb_to_be_setup.rlc);
-        break;
-    }
-
-    // Add uLUPTNLInformation_ToBeSetup
-    for (const auto& gtp_tunnel_item : drb_to_be_setup.gtp_tunnels) {
-      asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
-      up_transport_layer_info_to_asn1(item.ul_up_tnl_info, gtp_tunnel_item);
-      asn1_drb_to_setup_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
-    }
-
-    // Add qos information
-    asn1_drb_to_setup_item.qos_info.set_choice_ext();
-    auto& choice_ext = asn1_drb_to_setup_item.qos_info.choice_ext();
-    choice_ext.load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-
-    auto& drb_info = choice_ext.value().drb_info();
-    drb_info.drb_qos.qos_characteristics.set_non_dyn_5qi();
-    drb_info.drb_qos.qos_characteristics.non_dyn_5qi().five_qi = drb_to_be_setup.qos_info.five_qi;
-    drb_info.drb_qos.ngra_nalloc_retention_prio.prio_level     = drb_to_be_setup.qos_info.prio_level_arp;
-    drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap =
-        asn1::f1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
-    drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability.value =
-        asn1::f1ap::pre_emption_vulnerability_opts::not_pre_emptable;
-    drb_info.snssai.sst.from_number(drb_to_be_setup.s_nssai.sst);
-    if (drb_to_be_setup.s_nssai.sd.has_value()) {
-      drb_info.snssai.sd.from_number(drb_to_be_setup.s_nssai.sd.value());
-    }
-
-    for (const auto& qos_flow : drb_to_be_setup.qos_flows_mapped_to_drb) {
-      asn1::f1ap::flows_mapped_to_drb_item_s asn1_flow;
-      asn1_flow.qos_flow_id               = qos_flow_id_to_uint(qos_flow.qos_flow_id);
-      asn1_flow.qos_flow_level_qos_params = drb_info.drb_qos;
-
-      drb_info.flows_mapped_to_drb_list.push_back(asn1_flow);
-    }
-
-    asn1_request->drbs_to_be_setup_mod_list.value.push_back(asn1_setup_item);
+  // sp cell id
+  if (msg.sp_cell_id.has_value()) {
+    asn1_request->sp_cell_id_present = true;
+    asn1_request->sp_cell_id.value.nr_cell_id.from_number(msg.sp_cell_id.value().nci);
+    asn1_request->sp_cell_id.value.plmn_id.from_string(msg.sp_cell_id.value().plmn_hex);
   }
 
-  // Add ue aggregate maximum bit rate
-  if (msg.ue_aggregate_maximum_bit_rate_ul.has_value()) {
+  // serv cell idx
+  if (msg.serv_cell_idx.has_value()) {
+    asn1_request->serv_cell_idx_present = true;
+    asn1_request->serv_cell_idx.value   = msg.serv_cell_idx.value();
+  }
+
+  // sp cell ul cfg
+  if (msg.sp_cell_ul_cfg.has_value()) {
+    asn1_request->sp_cell_ul_cfg_present = true;
+    asn1::string_to_enum(asn1_request->sp_cell_ul_cfg.value, msg.sp_cell_ul_cfg.value());
+  }
+
+  // drx cycle
+  if (msg.drx_cycle.has_value()) {
+    asn1_request->drx_cycle_present = true;
+    asn1::number_to_enum(asn1_request->drx_cycle.value.long_drx_cycle_len, msg.drx_cycle.value().long_drx_cycle_len);
+
+    if (msg.drx_cycle.value().short_drx_cycle_len.has_value()) {
+      asn1_request->drx_cycle.value.short_drx_cycle_len_present = true;
+      asn1::number_to_enum(asn1_request->drx_cycle.value.short_drx_cycle_len,
+                           msg.drx_cycle.value().short_drx_cycle_len.value());
+    }
+
+    if (msg.drx_cycle.value().short_drx_cycle_timer.has_value()) {
+      asn1_request->drx_cycle.value.short_drx_cycle_timer_present = true;
+      asn1_request->drx_cycle.value.short_drx_cycle_timer         = msg.drx_cycle.value().short_drx_cycle_timer.value();
+    }
+  }
+
+  // cu to du rrc info
+  if (msg.cu_to_du_rrc_info.has_value()) {
+    asn1_request->cu_to_du_rrc_info_present           = true;
+    asn1_request->cu_to_du_rrc_info.value.cg_cfg_info = msg.cu_to_du_rrc_info.value().cg_cfg_info.copy();
+    asn1_request->cu_to_du_rrc_info.value.ue_cap_rat_container_list =
+        msg.cu_to_du_rrc_info.value().ue_cap_rat_container_list.copy();
+    asn1_request->cu_to_du_rrc_info.value.meas_cfg = msg.cu_to_du_rrc_info.value().meas_cfg.copy();
+  }
+
+  // tx action ind
+  if (msg.tx_action_ind.has_value()) {
+    asn1_request->tx_action_ind_present = true;
+    asn1::string_to_enum(asn1_request->tx_action_ind.value, msg.tx_action_ind.value());
+  }
+
+  // res coordination transfer container
+  if (!msg.res_coordination_transfer_container.empty()) {
+    asn1_request->res_coordination_transfer_container_present = true;
+    asn1_request->res_coordination_transfer_container.value   = msg.res_coordination_transfer_container.copy();
+  }
+
+  // rrc recfg complete ind
+  if (msg.rrc_recfg_complete_ind.has_value()) {
+    asn1_request->rrc_recfg_complete_ind_present = true;
+    asn1::string_to_enum(asn1_request->rrc_recfg_complete_ind.value, msg.rrc_recfg_complete_ind.value());
+  }
+
+  // rrc container
+  if (!msg.rrc_container.empty()) {
+    asn1_request->rrc_container_present = true;
+    asn1_request->rrc_container.value   = msg.rrc_container.copy();
+  }
+
+  // scell to be setup mod list
+  if (!msg.scell_to_be_setup_mod_list.empty()) {
+    asn1_request->scell_to_be_setup_mod_list_present = true;
+    for (const auto& scell_to_be_setup_mod_item : msg.scell_to_be_setup_mod_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::scell_to_be_setup_mod_item_ies_o>
+          asn1_scell_to_be_setup_mod_item_container;
+      asn1_scell_to_be_setup_mod_item_container.load_info_obj(ASN1_F1AP_ID_SCELL_TO_BE_SETUP_MOD_ITEM);
+
+      auto& asn1_scell_to_be_setup_mod_item =
+          asn1_scell_to_be_setup_mod_item_container.value().scell_to_be_setup_mod_item();
+      // scell id
+      asn1_scell_to_be_setup_mod_item.scell_id.nr_cell_id.from_number(scell_to_be_setup_mod_item.scell_id.nci);
+      asn1_scell_to_be_setup_mod_item.scell_id.plmn_id.from_string(scell_to_be_setup_mod_item.scell_id.plmn_hex);
+
+      // scell idx
+      asn1_scell_to_be_setup_mod_item.scell_idx = scell_to_be_setup_mod_item.scell_idx;
+
+      // scell ul cfg
+      if (scell_to_be_setup_mod_item.scell_ul_cfg.has_value()) {
+        asn1_scell_to_be_setup_mod_item.scell_ul_cfg_present = true;
+        asn1::string_to_enum(asn1_scell_to_be_setup_mod_item.scell_ul_cfg,
+                             scell_to_be_setup_mod_item.scell_ul_cfg.value());
+      }
+
+      asn1_request->scell_to_be_setup_mod_list.value.push_back(asn1_scell_to_be_setup_mod_item_container);
+    }
+  }
+
+  // scell to be remd list
+  if (!msg.scell_to_be_remd_list.empty()) {
+    asn1_request->scell_to_be_remd_list_present = true;
+    for (const auto& scell_to_be_remd_item : msg.scell_to_be_remd_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::scell_to_be_remd_item_ies_o>
+          asn1_scell_to_be_remd_item_container;
+      asn1_scell_to_be_remd_item_container.load_info_obj(ASN1_F1AP_ID_SCELL_TO_BE_REMD_ITEM);
+
+      auto& asn1_scell_to_be_remd_item = asn1_scell_to_be_remd_item_container.value().scell_to_be_remd_item();
+      asn1_scell_to_be_remd_item.scell_id.nr_cell_id.from_number(scell_to_be_remd_item.scell_id.nci);
+      asn1_scell_to_be_remd_item.scell_id.plmn_id.from_string(scell_to_be_remd_item.scell_id.plmn_hex);
+
+      asn1_request->scell_to_be_remd_list.value.push_back(asn1_scell_to_be_remd_item_container);
+    }
+  }
+
+  // srbs to be setup mod list
+  if (!msg.srbs_to_be_setup_mod_list.empty()) {
+    asn1_request->srbs_to_be_setup_mod_list_present = true;
+    for (const auto& srb_to_be_setup_mod_item : msg.srbs_to_be_setup_mod_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::srbs_to_be_setup_mod_item_ies_o>
+          asn1_srb_to_be_setup_mod_item_container;
+      asn1_srb_to_be_setup_mod_item_container.load_info_obj(ASN1_F1AP_ID_SRBS_TO_BE_SETUP_MOD_ITEM);
+
+      auto& asn1_srb_to_be_setup_mod_item = asn1_srb_to_be_setup_mod_item_container.value().srbs_to_be_setup_mod_item();
+      asn1_srb_to_be_setup_mod_item.srb_id = srb_id_to_uint(srb_to_be_setup_mod_item.srb_id);
+      if (srb_to_be_setup_mod_item.dupl_ind.has_value()) {
+        asn1_srb_to_be_setup_mod_item.dupl_ind_present = true;
+        asn1::string_to_enum(asn1_srb_to_be_setup_mod_item.dupl_ind, srb_to_be_setup_mod_item.dupl_ind.value());
+      }
+
+      asn1_request->srbs_to_be_setup_mod_list.value.push_back(asn1_srb_to_be_setup_mod_item_container);
+    }
+  }
+
+  // drbs to be setup mod list
+  if (!msg.drbs_to_be_setup_mod_list.empty()) {
+    asn1_request->drbs_to_be_setup_mod_list_present = true;
+    for (const auto& drb_to_be_setup_mod_item : msg.drbs_to_be_setup_mod_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o>
+          asn1_drb_to_be_setup_mod_item_container;
+      asn1_drb_to_be_setup_mod_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_ITEM);
+
+      auto& asn1_drb_to_be_setup_mod_item = asn1_drb_to_be_setup_mod_item_container.value().drbs_to_be_setup_mod_item();
+      asn1_drb_to_be_setup_mod_item.drb_id = drb_id_to_uint(drb_to_be_setup_mod_item.drb_id);
+
+      // qos info
+      asn1_drb_to_be_setup_mod_item.qos_info = qos_info_to_f1ap_asn1(drb_to_be_setup_mod_item.qos_info);
+
+      // ul up tnl info to be setup list
+      for (const auto& ul_up_tnl_info_item : drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list) {
+        asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
+        up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
+        asn1_drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
+      }
+
+      // rlc mode
+      asn1_drb_to_be_setup_mod_item.rlc_mode = rlc_mode_to_f1ap_asn1(drb_to_be_setup_mod_item.rlc_mod);
+
+      // ul cfg
+      if (drb_to_be_setup_mod_item.ul_cfg.has_value()) {
+        asn1_drb_to_be_setup_mod_item.ul_cfg_present = true;
+        asn1::string_to_enum(asn1_drb_to_be_setup_mod_item.ul_cfg.ul_ue_cfg,
+                             drb_to_be_setup_mod_item.ul_cfg.value().ul_ue_cfg);
+      }
+
+      // dupl activation
+      if (drb_to_be_setup_mod_item.dupl_activation.has_value()) {
+        asn1_drb_to_be_setup_mod_item.dupl_activation_present = true;
+        asn1::string_to_enum(asn1_drb_to_be_setup_mod_item.dupl_activation,
+                             drb_to_be_setup_mod_item.dupl_activation.value());
+      }
+
+      asn1_request->drbs_to_be_setup_mod_list.value.push_back(asn1_drb_to_be_setup_mod_item_container);
+    }
+  }
+
+  // drbs to be modified list
+  if (!msg.drbs_to_be_modified_list.empty()) {
+    asn1_request->drbs_to_be_modified_list_present = true;
+
+    for (const auto& drb_to_be_modified_item : msg.drbs_to_be_modified_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_modified_item_ies_o>
+          asn1_drb_to_be_modified_item_container;
+      asn1_drb_to_be_modified_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_MODIFIED_ITEM);
+
+      auto& asn1_drb_to_be_modified_item  = asn1_drb_to_be_modified_item_container.value().drbs_to_be_modified_item();
+      asn1_drb_to_be_modified_item.drb_id = drb_id_to_uint(drb_to_be_modified_item.drb_id);
+
+      // qos info
+      if (drb_to_be_modified_item.qos_info.has_value()) {
+        asn1_drb_to_be_modified_item.qos_info_present = true;
+        asn1_drb_to_be_modified_item.qos_info         = qos_info_to_f1ap_asn1(drb_to_be_modified_item.qos_info.value());
+      }
+
+      // ul up tnl info to be setup list
+      for (const auto& ul_up_tnl_info_item : drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list) {
+        asn1::f1ap::ul_up_tnl_info_to_be_setup_item_s item;
+        up_transport_layer_info_to_asn1(item.ul_up_tnl_info, ul_up_tnl_info_item);
+        asn1_drb_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(item);
+      }
+
+      // ul cfg
+      if (drb_to_be_modified_item.ul_cfg.has_value()) {
+        asn1_drb_to_be_modified_item.ul_cfg_present = true;
+        asn1::string_to_enum(asn1_drb_to_be_modified_item.ul_cfg.ul_ue_cfg,
+                             drb_to_be_modified_item.ul_cfg.value().ul_ue_cfg);
+      }
+
+      asn1_request->drbs_to_be_modified_list.value.push_back(asn1_drb_to_be_modified_item_container);
+    }
+  }
+
+  // srbs to be released list
+  if (!msg.srbs_to_be_released_list.empty()) {
+    asn1_request->srbs_to_be_released_list_present = true;
+    for (const auto& srb_id : msg.srbs_to_be_released_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::srbs_to_be_released_item_ies_o>
+          asn1_srb_to_be_released_item_container;
+      asn1_srb_to_be_released_item_container.load_info_obj(ASN1_F1AP_ID_SRBS_TO_BE_RELEASED_ITEM);
+
+      auto& asn1_srb_to_be_released_item  = asn1_srb_to_be_released_item_container.value().srbs_to_be_released_item();
+      asn1_srb_to_be_released_item.srb_id = srb_id_to_uint(srb_id);
+
+      asn1_request->srbs_to_be_released_list.value.push_back(asn1_srb_to_be_released_item_container);
+    }
+  }
+
+  // drbs to be released list
+  if (!msg.drbs_to_be_released_list.empty()) {
+    asn1_request->drbs_to_be_released_list_present = true;
+    for (const auto& drb_id : msg.drbs_to_be_released_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_released_item_ies_o>
+          asn1_drb_to_be_released_item_container;
+      asn1_drb_to_be_released_item_container.load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_RELEASED_ITEM);
+
+      auto& asn1_drb_to_be_released_item  = asn1_drb_to_be_released_item_container.value().drbs_to_be_released_item();
+      asn1_drb_to_be_released_item.drb_id = drb_id_to_uint(drb_id);
+
+      asn1_request->drbs_to_be_released_list.value.push_back(asn1_drb_to_be_released_item_container);
+    }
+  }
+
+  // inactivity monitoring request
+  if (msg.inactivity_monitoring_request.has_value()) {
+    asn1_request->inactivity_monitoring_request_present = true;
+    asn1::string_to_enum(asn1_request->inactivity_monitoring_request.value, msg.inactivity_monitoring_request.value());
+  }
+
+  // rat freq prio info
+  if (msg.rat_freq_prio_info.has_value()) {
+    asn1_request->rat_freq_prio_info_present = true;
+
+    if (msg.rat_freq_prio_info.value().type == "nGRAN") {
+      asn1_request->rat_freq_prio_info.value.set_ngran();
+      asn1_request->rat_freq_prio_info.value.ngran() = msg.rat_freq_prio_info.value().rat_freq_prio_info;
+    } else if (msg.rat_freq_prio_info.value().type == "eNDC") {
+      asn1_request->rat_freq_prio_info.value.set_endc();
+      asn1_request->rat_freq_prio_info.value.endc() = msg.rat_freq_prio_info.value().rat_freq_prio_info;
+    } else {
+      asn1_request->rat_freq_prio_info_present = false;
+    }
+  }
+
+  // drx cfg ind
+  if (msg.drx_cfg_ind.has_value()) {
+    asn1_request->drx_cfg_ind_present = true;
+    asn1::string_to_enum(asn1_request->drx_cfg_ind.value, msg.drx_cfg_ind.value());
+  }
+
+  // rlc fail ind
+  if (msg.rlc_fail_ind.has_value()) {
+    asn1_request->rlc_fail_ind_present              = true;
+    asn1_request->rlc_fail_ind.value.assocated_lcid = msg.rlc_fail_ind.value().assocated_lcid;
+  }
+
+  // ul tx direct current list info
+  if (!msg.ul_tx_direct_current_list_info.empty()) {
+    asn1_request->ul_tx_direct_current_list_info_present = true;
+    asn1_request->ul_tx_direct_current_list_info.value   = msg.ul_tx_direct_current_list_info.copy();
+  }
+
+  // gnb du cfg query
+  if (msg.gnb_du_cfg_query.has_value()) {
+    asn1_request->gnb_du_cfg_query_present = true;
+    asn1::string_to_enum(asn1_request->gnb_du_cfg_query.value, msg.gnb_du_cfg_query.value());
+  }
+
+  // gnb du ue ambr ul
+  if (msg.gnb_du_ue_ambr_ul.has_value()) {
     asn1_request->gnb_du_ue_ambr_ul_present = true;
-    asn1_request->gnb_du_ue_ambr_ul.value   = msg.ue_aggregate_maximum_bit_rate_ul.value();
+    asn1_request->gnb_du_ue_ambr_ul.value   = msg.gnb_du_ue_ambr_ul.value();
+  }
+
+  // execute dupl
+  if (msg.execute_dupl.has_value()) {
+    asn1_request->execute_dupl_present = true;
+    asn1::string_to_enum(asn1_request->execute_dupl.value, msg.execute_dupl.value());
+  }
+
+  // rrc delivery status request
+  if (msg.rrc_delivery_status_request.has_value()) {
+    asn1_request->rrc_delivery_status_request_present = true;
+    asn1::string_to_enum(asn1_request->rrc_delivery_status_request.value, msg.rrc_delivery_status_request.value());
+  }
+
+  // res coordination transfer info
+  if (msg.res_coordination_transfer_info.has_value()) {
+    asn1_request->res_coordination_transfer_info_present                                        = true;
+    asn1_request->res_coordination_transfer_info.value.res_coordination_eutra_cell_info_present = false;
+    asn1_request->res_coordination_transfer_info.value.m_enb_cell_id.from_number(
+        msg.res_coordination_transfer_info.value().m_enb_cell_id);
+  }
+
+  // serving cell mo
+  if (msg.serving_cell_mo.has_value()) {
+    asn1_request->serving_cell_mo_present = true;
+    asn1_request->serving_cell_mo.value   = msg.serving_cell_mo.value();
+  }
+
+  // need for gap
+  if (msg.need_for_gap.has_value()) {
+    asn1_request->needfor_gap_present = true;
+    asn1::string_to_enum(asn1_request->needfor_gap.value, msg.need_for_gap.value());
+  }
+
+  // full cfg
+  if (msg.full_cfg.has_value()) {
+    asn1_request->full_cfg_present = true;
+    asn1::string_to_enum(asn1_request->full_cfg.value, msg.full_cfg.value());
   }
 }
 
@@ -321,7 +582,7 @@ inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu
     asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o> asn1_paging_cell_item_container;
     auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
 
-    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci.packed);
+    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci);
     asn1_paging_cell_item.nr_cgi.plmn_id.from_string(cell_item.ngran_cgi.plmn_hex);
 
     asn1_paging->paging_cell_list.value.push_back(asn1_paging_cell_item_container);

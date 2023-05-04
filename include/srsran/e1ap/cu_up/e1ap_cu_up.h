@@ -42,6 +42,18 @@ public:
   virtual void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) = 0;
 };
 
+/// Handle E1AP control messages
+class e1ap_control_message_handler
+{
+public:
+  virtual ~e1ap_control_message_handler() = default;
+
+  /// \brief Initiates the Bearer Context Inactivity Notification procedure as defined in TS 38.463 section 8.6.3.
+  /// \param[in] msg The common type bearer context inactivity notification message to convert and forward to the CU-CP.
+  virtual void
+  handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) = 0;
+};
+
 /// Methods used by E1AP to notify the CU-UP.
 class e1ap_cu_up_notifier
 {
@@ -71,7 +83,10 @@ public:
 };
 
 /// Combined entry point for E1AP handling.
-class e1ap_interface : public e1ap_message_handler, public e1ap_event_handler, public e1ap_connection_manager
+class e1ap_interface : public e1ap_message_handler,
+                       public e1ap_control_message_handler,
+                       public e1ap_event_handler,
+                       public e1ap_connection_manager
 {
 public:
   virtual ~e1ap_interface() = default;

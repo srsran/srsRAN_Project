@@ -22,6 +22,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
+#include "pusch_processor_result_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -199,7 +200,7 @@ protected:
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
     ASSERT_NE(short_block_det_factory, nullptr);
 
-    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
       dft_factory = create_dft_processor_factory_generic();
     }
@@ -292,7 +293,8 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
 
   // Process PUSCH PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pusch_proc->process(data, softbuffer_spy, grid, param.get_pdu()); }, param.expr);
+  pusch_processor_result_notifier_spy result_notifier_spy;
+  ASSERT_DEATH({ pusch_proc->process(data, softbuffer_spy, result_notifier_spy, grid, param.get_pdu()); }, param.expr);
 #endif // ASSERTS_ENABLED
 }
 

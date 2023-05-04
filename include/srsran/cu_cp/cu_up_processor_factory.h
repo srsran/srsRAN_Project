@@ -36,6 +36,7 @@ std::unique_ptr<cu_up_processor_interface>
 create_cu_up_processor(const cu_up_processor_config_t             cu_up_processor_config_,
                        cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                        e1ap_message_notifier&                     e1ap_notifier_,
+                       e1ap_cu_cp_notifier&                       e1ap_cu_cp_notif_,
                        cu_up_processor_task_scheduler&            task_sched_,
                        task_executor&                             ctrl_exec_);
 

@@ -25,7 +25,9 @@
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/lower/modulation/modulation_factories.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/processors/uplink/uplink_processor_factories.h"
 #include <memory>
 
 namespace srsran {
@@ -42,10 +44,8 @@ public:
 };
 
 /// Creates a software based lower physical layer factory.
-std::unique_ptr<lower_phy_factory>
-create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modulator_factory,
-                            std::shared_ptr<ofdm_demodulator_factory>     demodulator_factory,
-                            std::shared_ptr<prach_processor_factory>      prach_processor_factory,
-                            std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
+std::shared_ptr<lower_phy_factory>
+create_lower_phy_factory_sw(std::shared_ptr<lower_phy_downlink_processor_factory> downlink_proc_factory,
+                            std::shared_ptr<lower_phy_uplink_processor_factory>   uplink_proc_factory);
 
 } // namespace srsran

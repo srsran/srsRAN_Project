@@ -26,6 +26,7 @@
 #include "adapters/sdap_adapters.h"
 #include "drb_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_factory.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
@@ -36,16 +37,23 @@ namespace srs_cu_up {
 
 /// \brief Context for PDU session with session-wide parameters and all contained DRBs.
 struct pdu_session {
-  pdu_session(const e1ap_pdu_session_res_to_setup_item& session) :
+  pdu_session(const e1ap_pdu_session_res_to_setup_item& session, gtpu_demux_ctrl& gtpu_rx_demux_) :
     pdu_session_id(session.pdu_session_id),
     session_type(session.pdu_session_type),
     snssai(session.snssai),
     security_ind(session.security_ind),
-    ul_tunnel_info(session.ng_ul_up_tnl_info)
+    ul_tunnel_info(session.ng_ul_up_tnl_info),
+    gtpu_rx_demux(gtpu_rx_demux_)
   {
-    if (session.pdu_session_res_dl_ambr.has_value())
+    if (session.pdu_session_res_dl_ambr.has_value()) {
       pdu_session_res_ambr = session.pdu_session_res_dl_ambr.value();
+    }
   };
+  ~pdu_session()
+  {
+    // Remove GTP-U tunnel from GTP-U demux.
+    gtpu_rx_demux.remove_tunnel(local_teid);
+  }
 
   std::unique_ptr<sdap_entity> sdap;
   std::unique_ptr<gtpu_tunnel> gtpu;
@@ -67,6 +75,7 @@ struct pdu_session {
   // Tunneling info used by all DRBs/QoS flows in this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
   uint32_t                local_teid;     // the local teid used by the gNB for this PDU session
+  gtpu_demux_ctrl&        gtpu_rx_demux;  // The demux entity to register/remove the tunnel.
 
   drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any
 

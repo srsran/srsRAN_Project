@@ -30,8 +30,8 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   args(args_),
   ue_name("UE-Worker-" + std::to_string(id)),
   pcell_name("PCell-Worker-" + std::to_string(id)),
-  ue_worker{ue_name, task_worker_queue_size, true},
-  pcell_worker{pcell_name, task_worker_queue_size, true},
+  ue_worker{ue_name, task_worker_queue_size},
+  pcell_worker{pcell_name, task_worker_queue_size},
   logger("STACK", {id, rb_id, "DL/UL"})
 {
   ue_executor    = make_task_executor(ue_worker);
@@ -100,10 +100,6 @@ void stress_stack::start()
   for (uint32_t i = 0; i < 20; i++) {
     traffic_source->send_pdu();
   }
-
-  logger.log_debug("Starting stack workers");
-  pcell_worker.start();
-  ue_worker.start();
 
   // Schedule the TTI when the thread are started.
   pcell_executor->defer([this]() { run_lower_tti(0); });

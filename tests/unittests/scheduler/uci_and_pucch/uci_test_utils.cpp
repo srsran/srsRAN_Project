@@ -173,9 +173,8 @@ const ue& test_bench::get_main_ue() const
 
 const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 {
-  auto user = ues.find(ue_idx);
-  srsran_assert(user != ues.end(), "User not found");
-  return *user;
+  srsran_assert(ues.contains(ue_idx), "User not found");
+  return ues[ue_idx];
 }
 
 void test_bench::add_ue()

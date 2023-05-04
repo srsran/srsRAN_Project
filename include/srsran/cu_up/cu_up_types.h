@@ -47,5 +47,12 @@ constexpr inline bool is_ue_index_valid(ue_index_t ue_idx)
   return ue_idx < MAX_NOF_UES;
 }
 
+struct e1ap_bearer_context_inactivity_notification {
+  ue_index_t                    ue_index    = ue_index_t::INVALID_UE_INDEX;
+  bool                          ue_inactive = false;
+  std::vector<drb_id_t>         inactive_drbs;
+  std::vector<pdu_session_id_t> inactive_pdu_sessions;
+};
+
 } // namespace srs_cu_up
 } // namespace srsran

@@ -20,6 +20,8 @@
 
 add_library(srsran_ran
         csi_rs/csi_rs_pattern.cpp
+        csi_rs/csi_rs_config_helpers.cpp
+        csi_rs/frequency_allocation_type.cpp
         pdcch/cce_to_prb_mapping.cpp
         pdcch/dci_packing.cpp
         pdcch/pdcch_candidates.cpp

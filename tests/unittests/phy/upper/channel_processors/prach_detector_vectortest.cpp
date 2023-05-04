@@ -20,10 +20,11 @@
  *
  */
 
-#include "prach_generator_test_data.h"
+#include "prach_detector_test_data.h"
 #include "srsran/phy/lower/modulation/modulation_factories.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/srsvec/copy.h"
 #include "fmt/ostream.h"
@@ -33,13 +34,7 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
-  fmt::print(os,
-             "Format={}; RootSequenceIndex={}; PreambleIndex={}; RestrictedSet={}; ZeroCorrelationZone={};",
-             static_cast<unsigned>(test_case.config.format),
-             test_case.config.root_sequence_index,
-             test_case.config.preamble_index,
-             static_cast<unsigned>(test_case.config.restricted_set),
-             test_case.config.zero_correlation_zone);
+  fmt::print(os, "{} {}", test_case.context.config, test_case.context.result);
   return os;
 }
 
@@ -58,7 +53,7 @@ protected:
   {
     unsigned dft_size_detector = std::get<0>(GetParam());
 
-    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
       dft_factory = create_dft_processor_factory_generic();
     }
@@ -78,27 +73,25 @@ protected:
 
 TEST_P(PrachDetectorFixture, FromVector)
 {
-  const PrachDetectorParams&            params            = GetParam();
-  const prach_generator::configuration& config            = std::get<2>(params).config;
-  const file_vector<cf_t>&              sequence          = std::get<2>(params).sequence;
-  int                                   delay_samples     = std::get<1>(params);
-  unsigned                              dft_size_detector = std::get<0>(params);
+  const PrachDetectorParams&           params            = GetParam();
+  const prach_detector::configuration& config            = std::get<2>(params).context.config;
+  const prach_detection_result&        expected_result   = std::get<2>(params).context.result;
+  const file_vector<cf_t>&             sequence          = std::get<2>(params).symbols;
+  int                                  delay_samples     = std::get<1>(params);
+  unsigned                             dft_size_detector = std::get<0>(params);
+
+  // Short preambles are not implemented.
+  if (is_short_preamble(config.format)) {
+    GTEST_SKIP();
+  }
 
   // Restricted sets are not implemented. Skip.
   if (config.restricted_set != restricted_set_config::UNRESTRICTED) {
     GTEST_SKIP();
   }
 
-  prach_detector::configuration detector_config;
-  detector_config.root_sequence_index   = config.root_sequence_index;
-  detector_config.format                = config.format;
-  detector_config.restricted_set        = config.restricted_set;
-  detector_config.zero_correlation_zone = config.zero_correlation_zone;
-  detector_config.start_preamble_index  = 0;
-  detector_config.nof_preamble_indices  = 64;
-
   // Create buffer.
-  std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long();
+  std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long(1);
   ASSERT_TRUE(buffer);
 
   prach_preamble_information preamble_info = get_prach_preamble_long_info(config.format);
@@ -111,21 +104,21 @@ TEST_P(PrachDetectorFixture, FromVector)
   });
 
   // Fill buffer with time frequency-domain data.
-  srsvec::copy(buffer->get_symbol(0), span<cf_t>(frequency_data).first(839));
+  srsvec::copy(buffer->get_symbol(0, 0, 0, 0), span<cf_t>(frequency_data).first(839));
 
   // Run generator.
-  prach_detection_result result = detector->detect(*buffer, detector_config);
+  prach_detection_result result = detector->detect(*buffer, config);
 
   // Calculate expected delay.
   phy_time_unit expected_delay = phy_time_unit::from_seconds(
-      static_cast<double>(delay_samples) / static_cast<double>(dft_size_detector * preamble_info.scs.to_Hz()));
+      static_cast<double>(delay_samples) / static_cast<double>(dft_size_detector * ra_scs_to_Hz(preamble_info.scs)));
 
   // Assert a one preamble is found.
   ASSERT_EQ(1, result.preambles.size());
 
   // Verify the preamble index.
   prach_detection_result::preamble_indication& preamble_indication = result.preambles.back();
-  ASSERT_EQ(config.preamble_index, preamble_indication.preamble_index);
+  ASSERT_EQ(expected_result.preambles.front().preamble_index, preamble_indication.preamble_index);
   ASSERT_EQ(expected_delay, preamble_indication.time_advance);
 }
 
@@ -134,4 +127,4 @@ INSTANTIATE_TEST_SUITE_P(PrachDetectorSimple,
                          PrachDetectorFixture,
                          ::testing::Combine(::testing::Values(1536),
                                             ::testing::Values(-8, 0, 1, 3),
-                                            ::testing::ValuesIn(prach_generator_test_data)));
+                                            ::testing::ValuesIn(prach_detector_test_data)));

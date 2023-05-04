@@ -118,12 +118,11 @@ ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time
 
 ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
 {
-  ngap_initial_ue_message msg;
-  msg.ue_index = ue_index;
+  ngap_initial_ue_message msg = {};
+  msg.ue_index                = ue_index;
   msg.nas_pdu.resize(nas_pdu_len);
   msg.establishment_cause.value = rrc_establishment_cause_opts::mo_sig;
-  // msg.nr_cgi = {};
-  msg.tac = 7;
+  msg.tac                       = 7;
   return msg;
 }
 
@@ -144,10 +143,9 @@ ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
 
 ngap_ul_nas_transport_message srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
-  ngap_ul_nas_transport_message ul_nas_transport;
-  ul_nas_transport.ue_index = ue_index;
+  ngap_ul_nas_transport_message ul_nas_transport = {};
+  ul_nas_transport.ue_index                      = ue_index;
   ul_nas_transport.nas_pdu.resize(nas_pdu_len);
-  // ul_nas_transport.nr_cgi = {};
 
   return ul_nas_transport;
 }
@@ -194,9 +192,7 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   init_context_setup_req->nas_pdu.value.from_string(
       "7e02c4f6c22f017e0042010177000bf202f8998000410000001054070002f8990000011500210201005e01b6");
 
-  init_context_setup_req->allowed_nssai->resize(1);
-
-  allowed_nssai_item_s allowed_nssai;
+  allowed_nssai_item_s allowed_nssai = {};
   allowed_nssai.s_nssai.sst.from_number(1);
   allowed_nssai.s_nssai.sd_present = true;
   allowed_nssai.s_nssai.sd.from_string("db2700");
@@ -317,6 +313,66 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_sessio
   return pdu_session_res_setup_resp;
 }
 
+ngap_message srsran::srs_cu_cp::generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id,
+                                                                                   ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE);
+
+  auto& pdu_session_res_release_cmd                 = ngap_msg.pdu.init_msg().value.pdu_session_res_release_cmd();
+  pdu_session_res_release_cmd->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  pdu_session_res_release_cmd->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
+                                                                                    ran_ue_id_t      ran_ue_id,
+                                                                                    pdu_session_id_t pdu_session_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_release_command_base(amf_ue_id, ran_ue_id);
+
+  auto& pdu_session_res_release_cmd = ngap_msg.pdu.init_msg().value.pdu_session_res_release_cmd();
+
+  // Add PDU Session NAS PDU
+  pdu_session_res_release_cmd->nas_pdu_present = true;
+  pdu_session_res_release_cmd->nas_pdu.value   = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201");
+
+  // Add  PDU session resource to release list
+  asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = pdu_session_id_to_uint(pdu_session_id);
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10");
+  pdu_session_res_release_cmd->pdu_session_res_to_release_list_rel_cmd.value.push_back(
+      pdu_session_res_to_release_item_rel_cmd);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id,
+                                                                                      ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_release_command_base(amf_ue_id, ran_ue_id);
+
+  return ngap_msg;
+}
+
+cu_cp_pdu_session_resource_release_response
+srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id)
+{
+  cu_cp_pdu_session_resource_release_response pdu_session_res_release_resp;
+
+  cu_cp_pdu_session_res_released_item_rel_res pdu_session_res_released_item_rel_res;
+
+  pdu_session_res_released_item_rel_res.pdu_session_id = pdu_session_id;
+
+  pdu_session_res_release_resp.pdu_session_res_released_list_rel_res.emplace(pdu_session_id,
+                                                                             pdu_session_res_released_item_rel_res);
+
+  return pdu_session_res_release_resp;
+}
+
 ngap_message srsran::srs_cu_cp::generate_valid_minimal_paging_message()
 {
   ngap_message ngap_msg;
@@ -402,10 +458,38 @@ ngap_message srsran::srs_cu_cp::generate_valid_paging_message()
 
 ngap_message srsran::srs_cu_cp::generate_invalid_paging_message()
 {
-  ngap_message ngap_msg;
+  ngap_message ngap_msg = {};
 
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PAGING);
+
+  // add ue paging id
+  auto& paging        = ngap_msg.pdu.init_msg().value.paging();
+  auto& five_g_s_tmsi = paging->ue_paging_id.value.set_five_g_s_tmsi();
+  five_g_s_tmsi.amf_set_id.from_number(0);
+  five_g_s_tmsi.amf_pointer.from_number(0);
+  five_g_s_tmsi.five_g_tmsi.from_number(0);
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_ERROR_IND);
+
+  auto& error_indication = ngap_msg.pdu.init_msg().value.error_ind();
+
+  error_indication->amf_ue_ngap_id_present = true;
+  error_indication->amf_ue_ngap_id.value   = amf_ue_id_to_uint(amf_ue_id);
+
+  error_indication->ran_ue_ngap_id_present = true;
+  error_indication->ran_ue_ngap_id.value   = ran_ue_id_to_uint(ran_ue_id);
+
+  error_indication->cause_present = true;
+  auto& cause                     = error_indication->cause.value.set_radio_network();
+  cause                           = asn1::ngap::cause_radio_network_opts::options::unknown_pdu_session_id;
 
   return ngap_msg;
 }

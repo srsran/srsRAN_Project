@@ -22,156 +22,37 @@
 
 /// \file
 /// \brief NEON support for LDPC.
+///
+/// Builds upon \ref simd_support.h and specializes functions and templates for NEON registers.
 
 #pragma once
 
-#include "srsran/support/srsran_assert.h"
-#include <arm_neon.h>
-#include <array>
+#include "simd_support.h"
 
 namespace srsran {
-/// Number of bytes in a NEON register.
-constexpr unsigned NEON_SIZE_BYTE = 16;
+
+namespace detail {
+
+template <typename simdWrapper, typename storageType>
+simd128_type simd_span<simdWrapper, storageType>::get_at(help_type<simd128_wrapper> /**/, unsigned pos) const
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  return vld1q_s8(array_ptr + pos * NEON_SIZE_BYTE);
+}
+
+template <typename simdWrapper, typename storageType>
+void simd_span<simdWrapper, storageType>::set_at(unsigned pos, simd128_type val)
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  vst1q_s8(array_ptr + pos * NEON_SIZE_BYTE, val);
+}
+
+} // namespace detail
 
 namespace neon {
 
-/// \brief Mimics an array of NEON registers.
-/// \tparam nof_elements The number of NEON registers in the array.
-template <size_t nof_elements>
-class neon_array
-{
-public:
-  /// Default constructor.
-  neon_array() = default;
-
-  /// Returns a pointer to the \c pos NEON register inside the array.
-  int8x16_t* data_at(unsigned pos)
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8x16_t* data_at(unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-  /// Returns a pointer to the byte at position <tt>pos * NEON_SIZE_BYTE + byte</tt> inside the array.
-  int8_t* data_at(unsigned pos, unsigned byte)
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  /// Sets the \c pos NEON register to \c val.
-  void set_at(unsigned pos, int8x16_t val)
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    vst1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE, val);
-  }
-
-  /// Gets the value stored in the \c pos NEON register.
-  int8x16_t get_at(unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return vld1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-private:
-  /// Actual array where the NEON registers are stored.
-  alignas(NEON_SIZE_BYTE) std::array<int8_t, nof_elements * NEON_SIZE_BYTE> inner_array;
-};
-
-/// \brief Mimics a span of NEON registers.
-class neon_span
-{
-public:
-  /// \brief Constructs a span from an \ref neon_array.
-  ///
-  /// \tparam N     Array length.
-  /// \param arr    Array the span is a view of.
-  /// \param offset First element of the array (a NEON register) viewed by the span.
-  /// \param length Length of the span.
-  template <size_t N>
-  neon_span(neon_array<N>& arr, unsigned offset, unsigned length) :
-    array_ptr(arr.data_at(offset, 0)), view_length(length)
-  {
-    srsran_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
-  }
-
-  /// \brief Implicitly constructs a span that is a view over an entire \ref neon_array.
-  template <size_t N>
-  neon_span(neon_array<N>& arr) : neon_span(arr, 0, N)
-  {
-  }
-
-  /// Returns a pointer to the \c pos NEON register inside the array.
-  int8x16_t* data_at(unsigned pos)
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return reinterpret_cast<int8x16_t*>(array_ptr) + pos;
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8x16_t* data_at(unsigned pos) const
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return reinterpret_cast<const int8x16_t*>(array_ptr) + pos;
-  }
-
-  /// Returns a pointer to the byte at position <tt>pos * NEON_SIZE_BYTE + byte</tt> inside the array.
-  int8_t* data_at(unsigned pos, unsigned byte)
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (array_ptr + index);
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (array_ptr + index);
-  }
-
-  // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
-  // avxType object by reference.
-
-  /// Sets the \c pos NEON register to \c val.
-  void set_at(unsigned pos, int8x16_t val)
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    vst1q_s8(array_ptr + pos * NEON_SIZE_BYTE, val);
-  }
-
-  /// Gets the value stored in the \c pos NEON register.
-  int8x16_t get_at(unsigned pos) const
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return vld1q_s8(array_ptr + pos * NEON_SIZE_BYTE);
-  }
-
-  /// Returns the number of NEON registers viewed by the span.
-  size_t size() const { return view_length; }
-
-private:
-  /// Pointer to the first element viewed by the span.
-  int8_t* array_ptr;
-  /// Number of elements viewed by the span.
-  size_t view_length;
-};
+using neon_span       = detail::simd_span<detail::simd128_wrapper, int8_t>;
+using neon_const_span = detail::simd_span<detail::simd128_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///
@@ -218,33 +99,4 @@ inline int8x16_t scale_s8(int8x16_t a, float sf, uint8_t max)
 }
 
 } // namespace neon
-
-/// \brief Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant
-/// bits become the most significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first NEON block of the output rotated node.
-/// \param[in]  in        Pointer to the first NEON block of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-/// \remark Cannot be used to override memory.
-inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
-  std::memcpy(out, in + ls - steps, steps);
-  std::memcpy(out + steps, in, ls - steps);
-}
-
-/// \brief Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant
-/// bits become the least significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first NEON block of the output rotated node.
-/// \param[in]  in        Pointer to the first NEON block of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-/// \remark Cannot be used to override memory.
-inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
-  std::memcpy(out, in + steps, ls - steps);
-  std::memcpy(out + ls - steps, in, steps);
-}
-
 } // namespace srsran

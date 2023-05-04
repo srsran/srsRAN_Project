@@ -27,12 +27,6 @@
 
 using namespace srsran;
 
-static prb_interval get_prb_interval(unsigned N_rb_bwp, unsigned frequency_resource)
-{
-  ra_frequency_type1_configuration ra_freq_cfg = ra_frequency_type1_from_riv(N_rb_bwp, frequency_resource);
-  return prb_interval{ra_freq_cfg.start_vrb, ra_freq_cfg.start_vrb + ra_freq_cfg.length_vrb};
-}
-
 // See TS 38.211, 7.3.1.1. - Scrambling.
 static unsigned get_pdsch_n_id(pci_t                              pci,
                                const bwp_downlink_dedicated*      bwp_dl_ded,
@@ -192,6 +186,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_1_0_tc_rnti_configuration& dci_cfg,
+                                      const prb_interval&                  prbs,
                                       bool                                 is_new_data)
 {
   pdsch.rnti = rnti;
@@ -207,7 +202,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   } else {
     pdsch.coreset_cfg = &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
   }
-  pdsch.prbs    = get_prb_interval(dci_cfg.N_rb_dl_bwp, dci_cfg.frequency_resource);
+  pdsch.prbs    = prbs;
   pdsch.symbols = pdsch_cfg.symbols;
 
   // TODO: Use UE-dedicated DMRS info if needed.
@@ -238,6 +233,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      bwp_id_t                            active_bwp_id,
                                      const search_space_configuration&   ss_cfg,
                                      const dci_1_0_c_rnti_configuration& dci_cfg,
+                                     const prb_interval&                 prbs,
                                      bool                                is_new_data)
 {
   const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
@@ -247,7 +243,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.prbs    = get_prb_interval(dci_cfg.N_rb_dl_bwp, dci_cfg.frequency_resource);
+  pdsch.prbs    = prbs;
   pdsch.symbols = pdsch_cfg.symbols;
   // TODO: Use UE-dedicated DMRS info if needed.
   pdsch.dmrs           = pdsch_cfg.dmrs;
@@ -278,6 +274,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_0_0_tc_rnti_configuration& dci_cfg,
+                                      const prb_interval&                  prbs,
                                       bool                                 is_new_data)
 { // TODO.
   pusch.intra_slot_freq_hopping    = false;
@@ -290,7 +287,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
 
   // PUSCH resources.
   pusch.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pusch.prbs    = get_prb_interval(dci_cfg.N_rb_ul_bwp, dci_cfg.frequency_resource);
+  pusch.prbs    = prbs;
   pusch.symbols =
       cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
 
@@ -324,6 +321,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      const cell_configuration&           cell_cfg,
                                      const bwp_uplink_common&            ul_bwp,
                                      const dci_0_0_c_rnti_configuration& dci_cfg,
+                                     const prb_interval&                 prbs,
                                      bool                                is_new_data)
 {
   // TODO.
@@ -337,7 +335,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
 
   // PUSCH resources.
   pusch.bwp_cfg = &ul_bwp.generic_params;
-  pusch.prbs    = get_prb_interval(dci_cfg.N_rb_ul_bwp, dci_cfg.frequency_resource);
+  pusch.prbs    = prbs;
   pusch.symbols = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
 
   // MCS.

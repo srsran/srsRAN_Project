@@ -38,9 +38,9 @@ class scheduler_event_logger;
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
 /// of the UEs and logging in a thread-safe manner.
-class ue_event_manager : public scheduler_ue_configurator,
-                         public scheduler_feedback_handler,
-                         public scheduler_dl_buffer_state_indication_handler
+class ue_event_manager final : public scheduler_ue_configurator,
+                               public scheduler_feedback_handler,
+                               public scheduler_dl_buffer_state_indication_handler
 {
 public:
   ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,

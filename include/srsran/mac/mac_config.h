@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/pcap/pcap.h"
@@ -30,6 +31,7 @@
 
 namespace srsran {
 
+/// \brief Configuration passed to MAC during its instantiation.
 struct mac_config {
   mac_pcap&                      pcap;
   mac_ul_ccch_notifier&          ul_ccch_notifier;

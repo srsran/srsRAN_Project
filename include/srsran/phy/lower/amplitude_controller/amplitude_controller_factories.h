@@ -50,7 +50,7 @@ public:
 
   /// \brief Creates an amplitude controller.
   /// \return A unique pointer to an amplitude controller instance.
-  virtual std::unique_ptr<amplitude_controller> create_amplitude_controller() = 0;
+  virtual std::unique_ptr<amplitude_controller> create() = 0;
 };
 
 /// Creates a clipping amplitude controller factory.

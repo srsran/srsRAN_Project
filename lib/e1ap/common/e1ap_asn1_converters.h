@@ -218,24 +218,15 @@ inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_c
 /// \brief Converts \c rlc_mode type to an E1AP ASN.1 type.
 /// \param rlc_mod rlc_mode type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
+inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::pdcp_rlc_mode rlc_mod)
 {
   asn1::e1ap::rlc_mode_e asn1_rlc_mode = {};
 
   switch (rlc_mod) {
-    case srsran::rlc_mode::tm:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_tm;
-      break;
-    case srsran::rlc_mode::um_bidir:
+    case srsran::pdcp_rlc_mode::um:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional;
       break;
-    case srsran::rlc_mode::um_unidir_ul:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul;
-      break;
-    case srsran::rlc_mode::um_unidir_dl:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl;
-      break;
-    case srsran::rlc_mode::am:
+    case srsran::pdcp_rlc_mode::am:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
@@ -248,25 +239,18 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
 /// \brief Converts E1AP ASN.1 type to an \c rlc_mode type.
 /// \param asn1_rlc_mod E1AP ASN.1 type.
 /// \return The rlc_mode object where the result of the conversion is stored.
-inline srsran::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
+inline srsran::pdcp_rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 {
-  srsran::rlc_mode rlc_mode = {};
+  srsran::pdcp_rlc_mode rlc_mode = {};
 
   switch (asn1_rlc_mod) {
-    case asn1::e1ap::rlc_mode_opts::rlc_tm:
-      rlc_mode = srsran::rlc_mode::tm;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional:
-      rlc_mode = srsran::rlc_mode::um_bidir;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
-      rlc_mode = srsran::rlc_mode::um_unidir_ul;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
-      rlc_mode = srsran::rlc_mode::um_unidir_dl;
+      rlc_mode = srsran::pdcp_rlc_mode::um;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_am:
-      rlc_mode = srsran::rlc_mode::am;
+      rlc_mode = srsran::pdcp_rlc_mode::am;
       break;
     default:
       srsran_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
@@ -954,6 +938,10 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
     case cause_t::transport:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
       break;
+    case cause_t::nas:
+      // NAS doesn't exist as E1AP cause - use radio-network instead.
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
+      break;
     case cause_t::protocol:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
       break;
@@ -961,8 +949,7 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
       break;
     default:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::nulltype);
-      break;
+      report_fatal_error("Cannot convert cause {} to E1AP type", cause);
   }
 
   return e1ap_cause;
@@ -1004,10 +991,7 @@ inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi
   // Set PLMN hex string
   cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
 
-  cgi.nci.packed = asn1_cgi.nr_cell_id.to_number();
-
-  cgi.nci.cell_idenity = (asn1_cgi.nr_cell_id.to_number() & 0xfffc0000); // bits 4 to 14
-  cgi.nci.gnb_identity = (asn1_cgi.nr_cell_id.to_number() & 0X3ff0);     // bits 22 to 32
+  cgi.nci = asn1_cgi.nr_cell_id.to_number();
 
   return cgi;
 }
@@ -1065,14 +1049,14 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
         asn1::e1ap::qos_characteristics_c::types_opts::dyn_5qi) {
       auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
-      e1ap_dynamic_5qi_descriptor dyn_5qi;
+      dyn_5qi_descriptor_t dyn_5qi;
       dyn_5qi.qos_prio_level                 = asn1_dyn_5qi.qos_prio_level;
       dyn_5qi.packet_delay_budget            = asn1_dyn_5qi.packet_delay_budget;
       dyn_5qi.packet_error_rate.per_exponent = asn1_dyn_5qi.packet_error_rate.per_exponent;
       dyn_5qi.packet_error_rate.per_scalar   = asn1_dyn_5qi.packet_error_rate.per_scalar;
 
       if (asn1_dyn_5qi.five_qi_present) {
-        dyn_5qi.five_qi = asn1_dyn_5qi.five_qi;
+        dyn_5qi.five_qi = uint_to_five_qi(asn1_dyn_5qi.five_qi);
       }
       if (asn1_dyn_5qi.delay_crit_present) {
         dyn_5qi.delay_crit = asn1_dyn_5qi.delay_crit.to_string();
@@ -1088,8 +1072,8 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     } else {
       auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
 
-      e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
-      non_dyn_5qi.five_qi = asn1_non_dyn_5qi.five_qi;
+      non_dyn_5qi_descriptor_t non_dyn_5qi;
+      non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
       if (asn1_non_dyn_5qi.qos_prio_level_present) {
         non_dyn_5qi.qos_prio_level = asn1_non_dyn_5qi.qos_prio_level;
       }
@@ -1274,6 +1258,29 @@ inline void e1ap_drb_failed_item_list_to_asn1(
     asn1_drb_failed_item.cause = cause_to_asn1_cause(drb_failed_item.cause);
     asn1_drb_item_list.push_back(asn1_drb_failed_item);
   }
+}
+
+inline activity_notification_level_t
+asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& asn1_activity_notification)
+{
+  activity_notification_level_t activity_notification_level;
+
+  switch (asn1_activity_notification.value) {
+    case asn1::e1ap::activity_notif_level_opts::options::drb:
+      activity_notification_level = activity_notification_level_t::drb;
+      break;
+    case asn1::e1ap::activity_notif_level_opts::options::pdu_session:
+      activity_notification_level = activity_notification_level_t::pdu_session;
+      break;
+    case asn1::e1ap::activity_notif_level_opts::options::ue:
+      activity_notification_level = activity_notification_level_t::ue;
+      break;
+    default:
+      activity_notification_level = activity_notification_level_t::invalid;
+      break;
+  }
+
+  return activity_notification_level;
 }
 
 } // namespace srsran

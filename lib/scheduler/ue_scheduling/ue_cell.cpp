@@ -44,7 +44,7 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell)
 {
-  if (not expert_cfg.fixed_ul_mcs.has_value()) {
+  if (expert_cfg.ul_mcs.start() != expert_cfg.ul_mcs.stop()) {
     update_pusch_snr(expert_cfg.initial_ul_sinr);
   }
   ue_metrics.latest_wb_cqi = expert_cfg.initial_cqi;
@@ -77,14 +77,14 @@ grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pendin
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
   sch_mcs_index mcs{0};
-  if (expert_cfg.fixed_dl_mcs.has_value()) {
-    mcs = expert_cfg.fixed_dl_mcs.value();
+  if (expert_cfg.dl_mcs.start() == expert_cfg.dl_mcs.stop()) {
+    mcs = expert_cfg.dl_mcs.start();
   } else {
     optional<sch_mcs_index> estimated_mcs = map_cqi_to_mcs(get_latest_wb_cqi(), pdsch_cfg.mcs_table);
     if (estimated_mcs.has_value()) {
-      mcs = estimated_mcs.value();
+      mcs = std::min(std::max(estimated_mcs.value(), expert_cfg.dl_mcs.start()), expert_cfg.dl_mcs.stop());
     } else {
-      // Return a grant no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
+      // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
       return grant_prbs_mcs{.n_prbs = 0};
     }
   }
@@ -125,7 +125,15 @@ ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul
   }
 
   double        ul_snr{ue_metrics.pusch_snr_db};
-  sch_mcs_index mcs = expert_cfg.fixed_ul_mcs.has_value() ? expert_cfg.fixed_ul_mcs.value() : map_snr_to_mcs_ul(ul_snr);
+  sch_mcs_index mcs{0};
+  if (expert_cfg.ul_mcs.start() == expert_cfg.ul_mcs.stop()) {
+    // Fixed MCS.
+    mcs = expert_cfg.ul_mcs.start();
+  } else {
+    // MCS is estimated from SNR.
+    mcs = map_snr_to_mcs_ul(ul_snr);
+    mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
+  }
 
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 

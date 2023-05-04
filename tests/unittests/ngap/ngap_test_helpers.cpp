@@ -86,6 +86,15 @@ void ngap_test::run_inital_context_setup(ue_index_t ue_index)
   ngap->handle_message(init_context_setup_request);
 }
 
+void ngap_test::run_pdu_session_resource_setup(ue_index_t ue_index, pdu_session_id_t pdu_session_id)
+{
+  auto& ue = test_ues.at(ue_index);
+
+  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+      ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
+  ngap->handle_message(pdu_session_resource_setup_request);
+}
+
 void ngap_test::tick()
 {
   timers.tick();

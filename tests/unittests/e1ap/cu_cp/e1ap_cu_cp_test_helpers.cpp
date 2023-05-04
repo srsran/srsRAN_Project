@@ -22,6 +22,7 @@
 
 #include "e1ap_cu_cp_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -32,7 +33,8 @@ e1ap_cu_cp_test::e1ap_cu_cp_test()
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1ap(timer_factory{timers, ctrl_worker}, e1ap_pdu_notifier, cu_up_processor_notifier, ctrl_worker);
+  e1ap = create_e1ap(
+      timer_factory{timers, ctrl_worker}, e1ap_pdu_notifier, cu_up_processor_notifier, cu_cp_notifier, ctrl_worker);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()
@@ -66,6 +68,19 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
   e1ap->handle_message(bearer_context_setup_response);
 
   srsran_assert(t.ready(), "The procedure should have completed by now");
+}
+
+e1ap_cu_cp_test::test_ue& e1ap_cu_cp_test::create_ue()
+{
+  auto request = generate_bearer_context_setup_request(uint_to_ue_index(
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
+
+  run_bearer_context_setup(request.ue_index,
+                           int_to_gnb_cu_up_ue_e1ap_id(test_rgen::uniform_int<uint64_t>(
+                               gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
+                               gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
+
+  return test_ues[request.ue_index];
 }
 
 void e1ap_cu_cp_test::tick()

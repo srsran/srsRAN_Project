@@ -218,6 +218,12 @@ struct upper_phy_config {
   unsigned nof_slots_ul_rg;
   /// Number of PRACH buffer.
   unsigned nof_prach_buffer;
+  /// Maximum number of time-domain occasions.
+  unsigned max_nof_td_prach_occasions;
+  /// Maximum number of frequency-domain occasions.
+  unsigned max_nof_fd_prach_occasions;
+  /// Set to true if the PRACH preamble is long.
+  bool is_prach_long_format;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
   /// Maximum number of concurrent uplink processes.

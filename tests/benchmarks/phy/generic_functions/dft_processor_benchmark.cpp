@@ -31,16 +31,19 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static std::string dft_factory_str       = "generic";
-static std::string fftw_optimization_str = "estimate";
-static unsigned    nof_repetitions       = 1000;
-static bool        silent                = false;
+static std::string dft_factory_str            = "generic";
+static std::string fftw_optimization_str      = "estimate";
+static double      fftw_plan_creation_timeout = 1.0;
+static unsigned    nof_repetitions            = 1000;
+static bool        silent                     = false;
 
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
   fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
-  fmt::print("\t-O Select FFTW optimization flag (estimate, measure) [Default {}]\n", dft_factory_str);
+  fmt::print("\t-O Select FFTW optimization flag (estimate, measure, exhaustive) [Default {}]\n", dft_factory_str);
+  fmt::print("\t-T Select FFTW plan creation maximum time in seconds, set to zero or lower for infinite [Default {}]\n",
+             dft_factory_str);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
@@ -49,7 +52,7 @@ static void usage(const char* prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "F:R:O:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "F:R:O:T:sh")) != -1) {
     switch (opt) {
       case 'F':
         dft_factory_str = std::string(optarg);
@@ -59,6 +62,9 @@ static void parse_args(int argc, char** argv)
         break;
       case 'O':
         fftw_optimization_str = std::string(optarg);
+        break;
+      case 'T':
+        fftw_plan_creation_timeout = std::strtod(optarg, nullptr);
         break;
       case 's':
         silent = (!silent);
@@ -81,7 +87,7 @@ int main(int argc, char** argv)
   if (dft_factory_str == "generic") {
     dft_factory = create_dft_processor_factory_generic();
   } else if (dft_factory_str == "fftw") {
-    dft_factory = create_dft_processor_factory_fftw(fftw_optimization_str);
+    dft_factory = create_dft_processor_factory_fftw(fftw_optimization_str, fftw_plan_creation_timeout);
   } else {
     fmt::print("Invalid DFT factory.");
     return -1;

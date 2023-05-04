@@ -26,6 +26,7 @@ add_executable(e1ap_asn1_packer_test e1ap_asn1_packer_test.cpp)
 target_link_libraries(e1ap_asn1_packer_test
                       e1ap_test_helpers
                       srsran_e1ap
+                      srsran_pcap
                       srsran_support
                       srslog
                       e1ap_asn1

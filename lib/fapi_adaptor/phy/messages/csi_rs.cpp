@@ -21,55 +21,11 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/csi_rs.h"
+#include "srsran/ran/csi_rs/frequency_allocation_type.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
-
-/// Returns the scaling value applied to the bit position in the frequency allocation bitmap as per TS38.211
-/// Section 7.4.1.5.3.
-static unsigned get_bitpos_scale(unsigned row)
-{
-  if (row == 1) {
-    return 1;
-  }
-  if (row == 2) {
-    return 1;
-  }
-  if (row == 4) {
-    return 4;
-  }
-  return 2;
-}
-
-/// Returns the number of bits in the frequency domain bitmap as per TS38.331 IE CSI-RS-ResourceMapping.
-static unsigned get_bitmap_size(unsigned row)
-{
-  if (row == 1) {
-    return 4;
-  }
-  if (row == 2) {
-    return 12;
-  }
-  if (row == 4) {
-    return 3;
-  }
-  return 6;
-}
-
-/// Converts a frequency domain bitmap to the corresponding k_n values.
-static void convert_freq_domain(const bounded_bitset<12, true>&                    src,
-                                static_vector<unsigned, CSI_RS_MAX_NOF_K_INDEXES>& dst,
-                                unsigned                                           row)
-{
-  unsigned scale = get_bitpos_scale(row);
-  unsigned size  = get_bitmap_size(row);
-  for (unsigned i = size; i != 0; --i) {
-    if (src.test(i - 1)) {
-      dst.push_back(scale * (size - i));
-    }
-  }
-}
 
 /// Translates the \c nzp_csi_rs_epre_to_ssb enum to a linear amplitude value.
 static float translate_amplitude(fapi::nzp_csi_rs_epre_to_ssb power)
@@ -101,7 +57,7 @@ void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::conf
   proc_pdu.start_rb = fapi_pdu.start_rb;
   proc_pdu.nof_rb   = std::min(fapi_pdu.num_rbs, static_cast<uint16_t>(cell_bandwidth_prb - fapi_pdu.start_rb));
   proc_pdu.csi_rs_mapping_table_row = fapi_pdu.row;
-  convert_freq_domain(fapi_pdu.freq_domain, proc_pdu.freq_allocation_ref_idx, fapi_pdu.row);
+  csi_rs::convert_freq_domain(proc_pdu.freq_allocation_ref_idx, fapi_pdu.freq_domain, fapi_pdu.row);
 
   proc_pdu.symbol_l0     = fapi_pdu.symb_L0;
   proc_pdu.symbol_l1     = fapi_pdu.symb_L1;
@@ -113,4 +69,26 @@ void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::conf
   // Disable precoding.
   proc_pdu.pmi   = 0;
   proc_pdu.ports = {0};
+}
+
+void srsran::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&            pattern,
+                                                            const fapi::dl_csi_rs_pdu& fapi_pdu,
+                                                            uint16_t                   cell_bandwidth_prb)
+{
+  // Fill the CSI-RS pattern configuration.
+  csi_rs_pattern_configuration config;
+
+  config.start_rb = fapi_pdu.start_rb;
+  config.nof_rb   = std::min(fapi_pdu.num_rbs, static_cast<uint16_t>(cell_bandwidth_prb - fapi_pdu.start_rb));
+  config.csi_rs_mapping_table_row = fapi_pdu.row;
+  csi_rs::convert_freq_domain(config.freq_allocation_ref_idx, fapi_pdu.freq_domain, fapi_pdu.row);
+
+  config.symbol_l0    = fapi_pdu.symb_L0;
+  config.symbol_l1    = fapi_pdu.symb_L1;
+  config.cdm          = fapi_pdu.cdm_type;
+  config.freq_density = fapi_pdu.freq_density;
+  config.nof_ports    = 1;
+
+  // Get the CSI-RS pattern.
+  pattern = get_csi_rs_pattern(config);
 }

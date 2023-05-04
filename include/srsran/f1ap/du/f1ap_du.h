@@ -30,11 +30,14 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
@@ -82,6 +85,8 @@ struct du_setup_params {
 struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s msg;
   unsigned                       max_setup_retries = 5;
+  /// Vector element index corresponds to DU Cell Index.
+  std::vector<nr_cell_global_id_t> du_cell_index_to_nr_cgi_lookup;
 };
 
 struct f1_setup_response_message {
@@ -141,6 +146,9 @@ public:
   /// \brief Updates the configuration of an existing UE context in the F1AP.
   virtual f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) = 0;
 
+  /// \brief Removes UE Context from F1AP.
+  virtual void handle_ue_deletion_request(du_ue_index_t ue_index) = 0;
+
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
   /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in
@@ -198,6 +206,16 @@ public:
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
+};
+
+/// \brief The F1AP uses this interface to notify the DU of paging.
+class f1ap_du_paging_notifier
+{
+public:
+  virtual ~f1ap_du_paging_notifier() = default;
+
+  /// \brief Forward the F1AP Paging to DU.
+  virtual void on_paging_received(const paging_information& msg) = 0;
 };
 
 /// Combined entry point for F1AP handling.

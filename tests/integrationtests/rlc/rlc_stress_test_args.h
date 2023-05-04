@@ -280,8 +280,7 @@ inline security::sec_128_as_config get_security_config_from_args(const stress_te
 inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args& args)
 {
   pdcp_config cnfg = {};
-  cnfg.tx.rb_type  = pdcp_rb_type::drb;
-  cnfg.rx.rb_type  = pdcp_rb_type::drb;
+  cnfg.rb_type     = pdcp_rb_type::drb;
   if (args.pdcp_sn_size == 12) {
     cnfg.tx.sn_size = srsran::pdcp_sn_size::size12bits;
     cnfg.rx.sn_size = srsran::pdcp_sn_size::size12bits;

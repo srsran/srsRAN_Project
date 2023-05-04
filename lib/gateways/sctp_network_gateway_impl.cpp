@@ -22,12 +22,8 @@
 
 #include "sctp_network_gateway_impl.h"
 #include "srsran/gateways/addr_info.h"
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <netinet/sctp.h>
 #include <srsran/support/sockets.h>
-#include <unistd.h>
-
 #include <utility>
 
 using namespace srsran;

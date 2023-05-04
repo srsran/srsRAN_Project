@@ -89,7 +89,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
     builder_pdu.add_preamble(preamble.preamble_index,
                              {},
-                             preamble.time_advance.to_seconds() * 1e9,
+                             static_cast<uint32_t>(std::max(0.0, preamble.time_advance.to_seconds() * 1e9)),
                              clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
                              clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
@@ -103,16 +103,15 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
   data_notifier.get().on_rach_indication(msg);
 }
 
-void phy_to_fapi_results_event_translator::on_new_pusch_results(const ul_pusch_results& result)
+void phy_to_fapi_results_event_translator::on_new_pusch_results_control(const ul_pusch_results_control& result)
 {
-  if (result.data.has_value()) {
-    notify_crc_indication(result);
-    notify_rx_data_indication(result);
-  }
+  notify_pusch_uci_indication(result);
+}
 
-  if (result.uci.has_value()) {
-    notify_pusch_uci_indication(result);
-  }
+void phy_to_fapi_results_event_translator::on_new_pusch_results_data(const ul_pusch_results_data& result)
+{
+  notify_crc_indication(result);
+  notify_rx_data_indication(result);
 }
 
 /// Converts and returns the given UCI status to FAPI UCI STATUS.
@@ -129,7 +128,7 @@ static uci_pusch_or_pucch_f2_3_4_detection_status to_fapi_uci_detection_status(u
   }
 }
 
-void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_pusch_results& result)
+void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_pusch_results_control& result)
 {
   fapi::uci_indication_message         msg;
   fapi::uci_indication_message_builder builder(msg);
@@ -149,8 +148,8 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   builder_pdu.set_metrics_parameters(clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE), {}, {}, {}, {});
 
   // Add the HARQ section.
-  if (result.uci->harq_ack.has_value()) {
-    const pusch_uci_field&                     harq   = result.uci->harq_ack.value();
+  if (result.harq_ack.has_value()) {
+    const pusch_uci_field&                     harq   = result.harq_ack.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(harq.status);
     builder_pdu.set_harq_parameters(
         status,
@@ -162,8 +161,8 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   }
 
   // Add the CSI1 section.
-  if (result.uci->csi1.has_value()) {
-    const pusch_uci_field&                     csi1   = result.uci->csi1.value();
+  if (result.csi1.has_value()) {
+    const pusch_uci_field&                     csi1   = result.csi1.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(csi1.status);
     builder_pdu.set_csi_part1_parameters(
         status,
@@ -175,8 +174,8 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   }
 
   // Add the CSI2 section.
-  if (result.uci->csi2.has_value()) {
-    const pusch_uci_field&                     csi2   = result.uci->csi2.value();
+  if (result.csi2.has_value()) {
+    const pusch_uci_field&                     csi2   = result.csi2.value();
     uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(csi2.status);
     builder_pdu.set_csi_part2_parameters(
         status,
@@ -196,7 +195,7 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   data_notifier.get().on_uci_indication(msg);
 }
 
-void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_results& result)
+void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_results_data& result)
 {
   fapi::crc_indication_message         msg;
   fapi::crc_indication_message_builder builder(msg);
@@ -206,8 +205,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // Handle is not supported for now.
   unsigned handle = 0;
   // CB CRC status is not supported for now.
-  unsigned                            num_cb = 0;
-  const ul_pusch_results::pusch_data& data   = result.data.value();
+  unsigned num_cb = 0;
 
   // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.8 Table CRC.indication message body.
   static constexpr float MIN_UL_SINR_VALUE = -65.534;
@@ -216,8 +214,8 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   builder.add_pdu(handle,
                   result.rnti,
                   optional<uint8_t>(),
-                  data.harq_id,
-                  data.decoder_result.tb_crc_ok,
+                  result.harq_id,
+                  result.decoder_result.tb_crc_ok,
                   num_cb,
                   {},
                   clamp(result.csi.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
@@ -235,7 +233,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   data_notifier.get().on_crc_indication(msg);
 }
 
-void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pusch_results& result)
+void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pusch_results_data& result)
 {
   fapi::rx_data_indication_message         msg;
   fapi::rx_data_indication_message_builder builder(msg);
@@ -245,9 +243,8 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
   builder.set_basic_parameters(result.slot.sfn(), result.slot.slot_index(), control_length);
 
   // Handle is not supported for now.
-  unsigned                            handle = 0;
-  const ul_pusch_results::pusch_data& data   = result.data.value();
-  builder.add_custom_pdu(handle, result.rnti, optional<unsigned>(), data.harq_id, data.payload);
+  unsigned handle = 0;
+  builder.add_custom_pdu(handle, result.rnti, optional<unsigned>(), result.harq_id, result.payload);
 
   error_type<fapi::validator_report> validation_result = validate_rx_data_indication(msg);
   if (!validation_result) {

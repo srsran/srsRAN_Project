@@ -24,7 +24,6 @@
 
 #include "../../common/f1ap_asn1_utils.h"
 #include "f1ap_du_event_manager.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/support/async/async_task.h"
 

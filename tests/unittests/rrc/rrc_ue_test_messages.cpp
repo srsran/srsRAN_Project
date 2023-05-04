@@ -56,17 +56,17 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   cn_assoc.eps_bearer_id = 5;
   drb_item.cn_assoc      = cn_assoc;
 
-  pdcp_config_t pdcp_config;
-  pdcp_config.ciphering_disabled_present = true;
+  pdcp_config pdcp_config = {};
 
-  drb_t drb;
-  drb.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
-  drb.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
-  drb.discard_timer   = pdcp_discard_timer::ms100;
-  pdcp_config.drb     = drb;
+  pdcp_config.rb_type  = pdcp_rb_type::drb;
+  pdcp_config.rlc_mode = pdcp_rlc_mode::am;
 
-  pdcp_config.t_reordering = pdcp_t_reordering::ms0;
-  drb_item.pdcp_cfg        = pdcp_config;
+  pdcp_config.tx.sn_size       = pdcp_sn_size::size18bits;
+  pdcp_config.rx.sn_size       = pdcp_sn_size::size18bits;
+  pdcp_config.tx.discard_timer = pdcp_discard_timer::ms100;
+
+  pdcp_config.rx.t_reordering = pdcp_t_reordering::ms0;
+  drb_item.pdcp_cfg           = pdcp_config;
 
   cu_cp_security_config security_config;
 

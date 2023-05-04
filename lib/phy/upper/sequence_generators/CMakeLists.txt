@@ -18,6 +18,13 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+# There is a compilation defect for CLang version 15 which makes the pseudo-random generator to create invalid
+# sequences.
+if ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND (CMAKE_CXX_COMPILER_VERSION MATCHES "15"))
+    message(WARNING "The selected compiler version is not supported with -O2 flag.")
+    string(REPLACE "-O2" "-O3" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+endif ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND (CMAKE_CXX_COMPILER_VERSION MATCHES "15"))
+
 set(SOURCES
         low_papr_sequence_collection_impl.cpp
         low_papr_sequence_generator_impl.cpp

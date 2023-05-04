@@ -26,7 +26,7 @@
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/support/async/event_signal.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_cu_cp {

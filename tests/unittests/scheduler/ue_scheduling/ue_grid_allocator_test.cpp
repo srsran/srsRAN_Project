@@ -25,6 +25,8 @@
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/pdcch/search_space.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -68,6 +70,12 @@ protected:
     return ues[ue_index];
   }
 
+  ue& add_ue(const sched_ue_creation_request_message& ue_creation_req)
+  {
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req));
+    return ues[ue_creation_req.ue_index];
+  }
+
   void set_allocator_responses(const ue_pdsch_grant& grant)
   {
     const ue_cell& ue_cc = *grant.user->find_cell(grant.cell_index);
@@ -105,6 +113,37 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
                        .crbs           = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
                        .dci_fmt        = dci_dl_format::f1_0,
                        .aggr_lvl       = aggregation_level::n4};
+  set_allocator_responses(grant);
+
+  ASSERT_TRUE(alloc.allocate_dl_grant(grant));
+}
+
+TEST_F(ue_grid_allocator_tester,
+       when_grant_inside_coreset_start_and_coreset0_end_rb_lims_for_css_then_allocation_is_successful)
+{
+  sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+  // Change SS type to common.
+  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().type =
+      srsran::search_space_configuration::type_t::common;
+  ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().common.f0_0_and_f1_0 =
+      true;
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+
+  ue& u = add_ue(ue_creation_req);
+
+  ue_pdsch_grant grant{
+      .user           = &u,
+      .cell_index     = to_du_cell_index(0),
+      .h_id           = to_harq_id(0),
+      .ss_id          = to_search_space_id(2),
+      .time_res_index = 0,
+      .crbs           = {get_coreset_crbs(
+                   ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back())
+                             .start(),
+                         cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().stop()},
+      .dci_fmt        = dci_dl_format::f1_0,
+      .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
   ASSERT_TRUE(alloc.allocate_dl_grant(grant));

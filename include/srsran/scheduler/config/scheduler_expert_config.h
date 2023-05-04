@@ -25,6 +25,7 @@
 /// \file
 /// \brief Configuration structs passed to scheduler implementation.
 
+#include "srsran/adt/interval.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -35,16 +36,20 @@ namespace srsran {
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
-  optional<sch_mcs_index> fixed_dl_mcs;
-  unsigned                initial_cqi;
-  optional<sch_mcs_index> fixed_ul_mcs;
-  unsigned                max_nof_harq_retxs;
+  /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
+  interval<sch_mcs_index, true> dl_mcs;
+  unsigned                      initial_cqi;
+  /// Range of allowed MCS indices for UL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
+  interval<sch_mcs_index, true> ul_mcs;
+  unsigned                      max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
   /// Maximum consecutive PUSCH KOs, before scheduler de-prioritizes UE.
   unsigned max_consecutive_pusch_kos;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
   double initial_ul_sinr;
+  /// Enable multiplexing of CSI-RS and PDSCH.
+  bool enable_csi_rs_pdsch_multiplexing;
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.

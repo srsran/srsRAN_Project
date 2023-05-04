@@ -644,9 +644,9 @@ struct formatter<srsran::pusch_decoder_result> {
   }
 };
 
-/// \brief Custom formatter for \c pusch_processor_result.
+/// \brief Custom formatter for \c channel_state_information.
 template <>
-struct formatter<srsran::pusch_processor_result> {
+struct formatter<srsran::channel_state_information> {
   /// Helper used to parse formatting options and format fields.
   srsran::delimited_formatter helper;
 
@@ -660,20 +660,64 @@ struct formatter<srsran::pusch_processor_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_processor_result& result, FormatContext& ctx)
+  auto format(const srsran::channel_state_information& csi, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    helper.format_always(ctx, "snr={:.1f}dB", csi.sinr_dB);
+    helper.format_if_verbose(ctx, "epre={:+.1f}dB", csi.epre_dB);
+    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", csi.rsrp_dB);
+    helper.format_if_verbose(ctx, "t_align={:.1f}us", csi.time_alignment.to_seconds() * 1e6);
+    return ctx.out();
+  }
+};
+
+/// \brief Custom formatter for \c pusch_processor_result_data.
+template <>
+struct formatter<srsran::pusch_processor_result_data> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return helper.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pusch_processor_result_data& result, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    helper.format_always(ctx, result.data);
+    return ctx.out();
+  }
+};
+
+/// \brief Custom formatter for \c pusch_processor_result_control.
+template <>
+struct formatter<srsran::pusch_processor_result_control> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return helper.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pusch_processor_result_control& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     // Generate bad payload, to use in case of invalid or unknown UCI status.
     std::array<uint8_t, srsran::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
     std::fill(bad_payload.begin(), bad_payload.end(), 2U);
 
-    // PUSCH decoder result.
-    if (result.data.has_value()) {
-      helper.format_always(ctx, result.data.value());
-    }
-    if (result.evm.has_value()) {
-      helper.format_if_verbose(ctx, "evm={:.1f}%", result.evm.value() * 100.0F);
-    }
     if ((!result.harq_ack.payload.empty())) {
       if (result.harq_ack.status == srsran::uci_status::valid) {
         helper.format_always(ctx, "ack={:#}", srsran::span<const uint8_t>(result.harq_ack.payload));
@@ -698,13 +742,6 @@ struct formatter<srsran::pusch_processor_result> {
             ctx, "csi2={:#}", srsran::span<const uint8_t>(bad_payload).first(result.csi_part2.payload.size()));
       }
     }
-
-    // Channel State Information.
-    helper.format_always(ctx, "snr={:.1f}dB", result.csi.sinr_dB);
-    helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
-    helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.rsrp_dB);
-    helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.time_alignment.to_seconds() * 1e6);
-
     return ctx.out();
   }
 };

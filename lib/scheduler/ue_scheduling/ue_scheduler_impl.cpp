@@ -62,8 +62,8 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   unsigned dl_idx = slot_tx.to_uint() % 2 == 0;
   for (unsigned rr_idx = 0; rr_idx != 2; ++rr_idx) {
     if (rr_idx == dl_idx) {
-      // TODO: We are not able to multiplex CSI and PDSCH. Avoid PDSCH allocations when CSI is set.
-      if (not(*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
+      if (not expert_cfg.enable_csi_rs_pdsch_multiplexing and
+          not(*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
         continue;
       }
       sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);

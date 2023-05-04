@@ -318,6 +318,10 @@ public:
     }
   }
 
+  /// Get iterator with index equal or higher than the provided index.
+  iterator       lower_bound(size_t idx) { return iterator{vec, idx}; }
+  const_iterator lower_bound(size_t idx) const { return const_iterator{vec, idx}; }
+
   /// Find first position that is empty
   size_t find_first_empty(size_t start_guess = 0) const
   {
@@ -570,6 +574,9 @@ public:
   {
     return IdToIntConversion::get_id(find_first_empty(to_index(start_guess)));
   }
+
+  iterator       lower_bound(key_type id) { return sl_ar.lower_bound(to_index(id)); }
+  const_iterator lower_bound(key_type id) const { return sl_ar.lower_bound(to_index(id)); }
 
 private:
   constexpr size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }

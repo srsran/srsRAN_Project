@@ -27,6 +27,7 @@
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/support/executors/sync_task_executor.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 

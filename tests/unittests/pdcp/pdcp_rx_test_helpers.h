@@ -27,7 +27,7 @@
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -129,7 +129,7 @@ protected:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
   pdcp_sn_size                        sn_size = {};
-  pdcp_config::pdcp_rx_config         config  = {};
+  pdcp_rx_config                      config  = {};
   timer_manager                       timers;
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};

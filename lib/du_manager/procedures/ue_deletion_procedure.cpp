@@ -1,0 +1,83 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "ue_deletion_procedure.h"
+#include "srsran/support/async/execute_on.h"
+
+using namespace srsran;
+using namespace srs_du;
+
+ue_deletion_procedure::ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
+                                             du_ue_manager_repository&     ue_mng_,
+                                             const du_manager_params&      du_params_) :
+  msg(msg_),
+  ue_mng(ue_mng_),
+  du_params(du_params_),
+  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), msg_.ue_index)
+{
+}
+
+void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
+{
+  CORO_BEGIN(ctx);
+
+  proc_logger.log_proc_started();
+
+  ue = ue_mng.find_ue(msg.ue_index);
+  if (ue == nullptr) {
+    proc_logger.log_proc_failure("ueId does not exist.");
+    CORO_EARLY_RETURN();
+  }
+
+  // > Disconnect DRBs from F1-U to stop handling DL traffic in flight and delivery notifications.
+  CORO_AWAIT(disconnect_drbs());
+
+  // > Remove UE from MAC.
+  CORO_AWAIT_VALUE(const mac_ue_delete_response_message mac_resp, launch_mac_ue_delete());
+  if (not mac_resp.result) {
+    proc_logger.log_proc_failure("Failed to remove UE from MAC.");
+  }
+
+  // > Remove UE from F1AP.
+  du_params.f1ap.ue_mng.handle_ue_deletion_request(msg.ue_index);
+
+  // > Remove UE object from DU UE manager.
+  ue_mng.remove_ue(msg.ue_index);
+
+  proc_logger.log_proc_completed();
+
+  CORO_RETURN();
+}
+
+async_task<mac_ue_delete_response_message> ue_deletion_procedure::launch_mac_ue_delete()
+{
+  mac_ue_delete_request_message mac_msg{};
+  mac_msg.ue_index   = ue->ue_index;
+  mac_msg.rnti       = ue->rnti;
+  mac_msg.cell_index = ue->pcell_index;
+  return du_params.mac.ue_cfg.handle_ue_delete_request(mac_msg);
+}
+
+async_task<void> ue_deletion_procedure::disconnect_drbs()
+{
+  // Note: If the DRB was not deleted on demand by the CU-CP via F1AP UE Context Modification Procedure, there is a
+  // chance that the CU-UP will keep pushing new F1-U PDUs to the DU. To avoid dangling references during UE removal,
+  // we start by first disconnecting the DRBs from the F1-U interface.
+
+  return dispatch_and_resume_on(
+      du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
+        for (auto& drb_pair : ue->bearers.drbs()) {
+          du_ue_drb& drb = *drb_pair.second;
+
+          // > Disconnect DRBs from F1-U and remove F1-U bearer.
+          drb.disconnect_rx();
+        }
+      });
+}

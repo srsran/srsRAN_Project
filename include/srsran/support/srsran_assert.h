@@ -23,14 +23,8 @@
 #pragma once
 
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/compiler.h"
 #include <cstdio>
-
-/// Provides a hint to the compiler that a condition is likely false.
-#define srsran_unlikely(expr) __builtin_expect(!!(expr), 0)
-
-/// Verifies if compile-time symbol is defined.
-#define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
-#define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
 
 namespace srsran {
 
@@ -99,4 +93,4 @@ namespace detail {
 #define srsran_sanity_check(condition, fmtstr, ...)                                                                    \
   SRSRAN_ALWAYS_ASSERT_IFDEF__(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
 
-#define srsran_assume(condition) static_cast<void>((condition) ? void(0) : __builtin_unreachable())
+#define srsran_assume(condition) static_cast<void>((condition) ? void(0) : SRSRAN_UNREACHABLE)

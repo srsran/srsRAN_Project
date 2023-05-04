@@ -142,6 +142,14 @@ public:
   /// Get the number of internal resource element pattern.
   unsigned get_nof_entries() const { return list.size(); }
 
+  /// \brief Merges a given resource element pattern list into the list.
+  void merge(const re_pattern_list& other)
+  {
+    for (const auto& pattern : other.get_re_patterns()) {
+      merge(pattern);
+    }
+  }
+
   /// \brief Merges a given resource element pattern into the list.
   ///
   /// This method tries to combine a new pattern with the existing ones in the list according to if
@@ -196,6 +204,10 @@ public:
   /// \param[in]     symbol Indicates the symbol index for the mask to be excluded.
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
   void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
+
+private:
+  /// Get the internal resource element patterns.
+  span<const re_pattern> get_re_patterns() const { return list; }
 };
 
 } // namespace srsran

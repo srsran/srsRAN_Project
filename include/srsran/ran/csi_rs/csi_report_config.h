@@ -179,7 +179,7 @@ struct csi_report_config {
 
   /// \brief Which CQI table to use for CQI calculation.
   /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
-  enum class cqi_table_t { table1, table2, table3, spare1 };
+  enum class cqi_table_t { table1, table2, table3, table4 };
 
   /// Indicates one out of two possible BWP-dependent values for the subband size as indicated in TS 38.214,
   /// table 5.2.1.4-2.

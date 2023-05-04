@@ -60,17 +60,17 @@ void ue_repository::slot_indication(slot_point sl_tx)
       // Already removed.
       continue;
     }
-    auto it = ues.find(ue_index);
-    if (it == ues.end()) {
+    if (not ues.contains(ue_index)) {
       logger.warning("Unexpected removal of ue={} already took place", ue_index);
       ue_index = INVALID_DU_UE_INDEX;
       // Notify MAC of the successful UE removal.
       mac_notif.on_ue_delete_response(ue_index);
       continue;
     }
+    ue& u = *ues[ue_index];
 
     // Check if UEs can be safely removed.
-    if (is_ue_ready_for_removal(*it)) {
+    if (is_ue_ready_for_removal(u)) {
       logger.debug("ue={} has been successfully removed.", ue_index);
 
       // Notify MAC of the successful UE removal.
@@ -91,7 +91,7 @@ void ue_repository::slot_indication(slot_point sl_tx)
 
   // Update state of existing UEs.
   for (auto& u : ues) {
-    u.slot_indication(sl_tx);
+    u->slot_indication(sl_tx);
   }
 }
 
@@ -105,7 +105,7 @@ void ue_repository::schedule_ue_rem(du_ue_index_t ue_index)
 {
   if (contains(ue_index)) {
     // Start deactivation of UE bearers.
-    ues[ue_index].deactivate();
+    ues[ue_index]->deactivate();
 
     // Register UE for later removal.
     ues_to_rem.push(ue_index);

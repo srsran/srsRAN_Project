@@ -43,6 +43,9 @@ private:
   // duration currently supported by the GNB, which is 0.5ms for SCS 30KHz.
   static const unsigned MAX_SLOTS_PER_PRACH = 7;
 
+  // The maximum number of PRACH preamble indexes that the UE can choose from.
+  static const unsigned MAX_NOF_PRACH_PREAMBLES = 64;
+
   struct cached_prach_occasion {
     /// RB x symbol resources used for the PRACH.
     static_vector<grant_info, MAX_SLOTS_PER_PRACH> grant_list;
@@ -58,9 +61,13 @@ private:
   srslog::basic_logger&     logger;
 
   bool first_slot_ind = true;
-  /// Duration of the PRACH preamble in slots. For Long Format, it can be more than 1; for short format, it must be 1.
-  unsigned prach_length_slots   = 1;
+  /// This is the first symbol within a slot (with reference to the PUSCH SCS) where the preamble (for long formats) or
+  /// the first preamble of a burst of PRACH opportunities (for short formats) starts.
   unsigned start_slot_pusch_scs = 0;
+  /// For long PRACH preamble formats, this is the duration of the PRACH preamble in slots, which can be more than 1.
+  /// For short PRACH preamble formats, this is the duration of the burst of PRACH opportunities, which can be 1 or 2
+  /// slots, as per Section 5.3.2, and Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211.
+  unsigned prach_length_slots = 1;
 
   /// PRACH Configuration parameters derived from the cell configuration.
   prach_configuration prach_cfg;

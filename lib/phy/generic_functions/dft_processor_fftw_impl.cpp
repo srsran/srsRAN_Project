@@ -151,6 +151,11 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   unsigned fftw_flags = static_cast<std::underlying_type_t<fftw_plan_optimization>>(fftw_config.optimization_flag);
   int      fftw_sign  = (dir == direction::DIRECT) ? FFTW_FORWARD : FFTW_BACKWARD;
 
+  // Set FFTW plan creation duration limit.
+  if (std::isnormal(fftw_config.plan_creation_timeout_s) && (fftw_config.plan_creation_timeout_s > 0)) {
+    fftwf_set_timelimit(fftw_config.plan_creation_timeout_s);
+  }
+
   // Create plan.
   plan = fftwf_plan_dft_1d(fftw_size, fftw_input, fftw_output, fftw_sign, fftw_flags);
 

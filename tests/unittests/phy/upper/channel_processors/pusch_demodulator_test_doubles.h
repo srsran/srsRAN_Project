@@ -54,6 +54,8 @@ public:
 
   const std::vector<entry_t>& get_entries() const { return entries; }
 
+  void clear() { entries.clear(); }
+
 private:
   std::vector<entry_t> entries;
 };

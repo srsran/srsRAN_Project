@@ -22,7 +22,37 @@
 
 #include "pdcch_candidates_ue_test_data.h"
 #include "srsran/adt/span.h"
-#include "gtest/gtest.h"
+#include <fmt/ostream.h>
+#include <gtest/gtest.h>
+
+namespace srsran {
+
+std::ostream& operator<<(std::ostream& os, const pdcch_candidates_ue_ss_configuration& config)
+{
+  fmt::print(os,
+             "L={} nof_candidates={} nof_coreset_cce={} cs_id={} rnti={} slot={}",
+             to_aggregation_level_index(config.al),
+             config.nof_candidates,
+             config.nof_cce_coreset,
+             static_cast<unsigned>(config.cs_id),
+             config.rnti,
+             config.slot_index);
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const pdcch_candidate_list& list)
+{
+  fmt::print(os, "candidates=[{}]", span<const uint8_t>(list));
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
+{
+  os << test_case.config << " " << test_case.candidates;
+  return os;
+}
+
+} // namespace srsran
 
 using namespace srsran;
 

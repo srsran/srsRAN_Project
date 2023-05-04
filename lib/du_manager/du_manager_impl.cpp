@@ -21,8 +21,8 @@
  */
 
 #include "du_manager_impl.h"
+#include "procedures/du_stop_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <condition_variable>
 #include <future>
 
@@ -31,6 +31,7 @@ using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.ran.qos),
   ue_mng(params, cell_res_alloc),
@@ -38,42 +39,94 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
 {
 }
 
+du_manager_impl::~du_manager_impl()
+{
+  stop();
+}
+
 void du_manager_impl::start()
 {
+  std::unique_lock<std::mutex> lock(mutex);
+  if (std::exchange(running, true)) {
+    logger.warning("DU Manager already started. Ignoring start request.");
+    return;
+  }
+
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  params.services.du_mng_exec.execute([this, &p]() {
-    // start F1 setup procedure.
-    main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
+  if (not params.services.du_mng_exec.execute([this, &p]() {
+        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
 
-      // Send F1 Setup Request and await for F1 setup response.
-      CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
+          // Send F1 Setup Request and await for F1 setup response.
+          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
 
-      // Signal start() caller thread that the operation is complete.
-      p.set_value();
+          // Signal start() caller thread that the operation is complete.
+          p.set_value();
 
-      CORO_RETURN();
-    });
-  });
+          CORO_RETURN();
+        });
+      })) {
+    report_fatal_error("Unable to initiate DU setup procedure");
+  }
 
   // Block waiting for DU setup to complete.
   fut.wait();
+
+  logger.debug("DU manager started successfully");
 }
 
 void du_manager_impl::stop()
 {
-  // TODO.
+  std::unique_lock<std::mutex> lock(mutex);
+  if (not std::exchange(running, false)) {
+    return;
+  }
+
+  eager_async_task<void> main_loop;
+  std::atomic<bool>      main_loop_stopped{false};
+
+  auto stop_du_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
+    if (main_loop.empty()) {
+      // First call. Initiate shutdown operations.
+
+      // Start DU disconnect procedure.
+      schedule_async_task(launch_async<du_stop_procedure>(ue_mng));
+
+      // Once the disconnection procedure is complete, stop main control loop and communicate back with the caller
+      // thread.
+      main_loop = main_ctrl_loop.request_stop();
+    }
+
+    if (main_loop.ready()) {
+      // if the main loop finished, return back to the caller.
+      main_loop_stopped = true;
+    }
+  };
+
+  // Wait until the all tasks of the main loop are completed and main loop has stopped.
+  while (not main_loop_stopped) {
+    if (not params.services.du_mng_exec.execute(stop_du_main_loop)) {
+      logger.error("Unable to stop DU Manager.");
+      return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
-    // Start UE create procedure
-    ue_mng.handle_ue_create_request(msg);
-  });
+  if (not params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
+        // Start UE create procedure
+        ue_mng.handle_ue_create_request(msg);
+      })) {
+    logger.warning("Discarding UL-CCCH message cell={} c-rnti={:#x} slot_rx={}. Cause: DU manager task queue is full",
+                   msg.cell_index,
+                   msg.crnti,
+                   msg.slot_rx);
+  }
 }
 
 async_task<f1ap_ue_context_update_response>
@@ -90,19 +143,11 @@ async_task<void> du_manager_impl::handle_ue_delete_request(const f1ap_ue_delete_
 size_t du_manager_impl::nof_ues()
 {
   // TODO: This is temporary code.
-  static std::mutex              mutex;
-  static std::condition_variable cvar;
-  size_t                         result = MAX_NOF_DU_UES;
-  params.services.du_mng_exec.execute([this, &result]() {
-    std::unique_lock<std::mutex> lock(mutex);
-    result = ue_mng.get_ues().size();
-    cvar.notify_one();
-  });
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    while (result == MAX_NOF_DU_UES) {
-      cvar.wait(lock);
-    }
+  std::promise<size_t> p;
+  std::future<size_t>  fut = p.get_future();
+  if (not params.services.du_mng_exec.execute([this, &p]() { p.set_value(ue_mng.get_ues().size()); })) {
+    logger.warning("Unable to compute the number of UEs active in the DU");
+    return std::numeric_limits<size_t>::max();
   }
-  return result;
+  return fut.get();
 }

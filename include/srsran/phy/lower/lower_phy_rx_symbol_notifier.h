@@ -22,22 +22,12 @@
 
 #pragma once
 
-#include "srsran/phy/support/prach_buffer.h"
-#include "srsran/phy/support/prach_buffer_context.h"
-#include "srsran/phy/support/resource_grid.h"
-#include "srsran/ran/slot_point.h"
-
 namespace srsran {
 
-/// Describes the context of the new received symbol.
-struct lower_phy_rx_symbol_context {
-  /// Slot context.
-  slot_point slot;
-  /// Radio sector identifier.
-  unsigned sector;
-  /// The last processed symbol index within the slot.
-  unsigned nof_symbols;
-};
+class resource_grid_reader;
+class prach_buffer;
+struct lower_phy_rx_symbol_context;
+struct prach_buffer_context;
 
 /// \brief Lower physical layer notifier for events related to received symbols.
 ///

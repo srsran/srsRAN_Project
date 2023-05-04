@@ -28,7 +28,7 @@
 namespace srsran {
 namespace srs_du {
 
-class ue_manager_dummy : public ue_manager_ctrl_configurator
+class ue_manager_dummy : public du_ue_manager_repository
 {
 public:
   slotted_array<std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ues;

@@ -44,12 +44,12 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
     // Check if the slot is UL enabled.
-    if (not cell_cfg.is_ul_enabled(sl_tx)) {
+    if (not cell_cfg.is_fully_ul_enabled(sl_tx)) {
       return;
     }
 
     // At this point, we assume the config validator ensures there is pCell.
-    auto& ue_cell = user.get_pcell();
+    auto& ue_cell = user->get_pcell();
 
     // > Schedule SR grants.
     // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
@@ -65,7 +65,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         auto&          slot_alloc    = cell_alloc[SR_SLOT_DELAY];
 
         // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH grant.
-        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
+        uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
       }
     }
 
@@ -90,7 +90,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         const unsigned CSI_SLOT_DELAY = 0;
         auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
 
-        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
+        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user->crnti, ue_cell.cfg());
       }
     }
   }

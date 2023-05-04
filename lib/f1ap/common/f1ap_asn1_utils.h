@@ -25,6 +25,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/ran/paging_information.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -190,6 +191,94 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1a
       return get_gnb_du_ue_f1ap_id(pdu.successful_outcome());
     case f1ap_pdu_c::types_opts::unsuccessful_outcome:
       return get_gnb_du_ue_f1ap_id(pdu.unsuccessful_outcome());
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::paging_s& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu->ue_id_idx_value->type()) {
+    case ue_id_idx_value_c::types_opts::idx_len10:
+      return pdu->ue_id_idx_value->idx_len10().to_number();
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu->paging_id->type()) {
+    case paging_id_c::types_opts::ran_ue_paging_id: {
+      return pdu->paging_id->ran_ue_paging_id().irnti.to_number();
+    }
+    case paging_id_c::types_opts::cn_ue_paging_id: {
+      return pdu->paging_id->cn_ue_paging_id().five_g_s_tmsi().to_number();
+    }
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<paging_identity_type> get_paging_identity_type(const asn1::f1ap::paging_s& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu->paging_id->type()) {
+    case paging_id_c::types_opts::ran_ue_paging_id: {
+      return paging_identity_type::ran_ue_paging_identity;
+    }
+    case paging_id_c::types_opts::cn_ue_paging_id: {
+      return paging_identity_type::cn_ue_paging_identity;
+    }
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<unsigned> get_paging_drx_in_nof_rf(const asn1::f1ap::paging_s& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu->paging_drx.value) {
+    case paging_drx_opts::v32:
+      return 32;
+    case paging_drx_opts::v64:
+      return 64;
+    case paging_drx_opts::v128:
+      return 128;
+    case paging_drx_opts::v256:
+      return 256;
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<unsigned> get_paging_priority(const asn1::f1ap::paging_s& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu->paging_prio.value) {
+    case paging_prio_opts::priolevel1:
+      return 1;
+    case paging_prio_opts::priolevel2:
+      return 2;
+    case paging_prio_opts::priolevel3:
+      return 3;
+    case paging_prio_opts::priolevel4:
+      return 4;
+    case paging_prio_opts::priolevel5:
+      return 5;
+    case paging_prio_opts::priolevel6:
+      return 6;
+    case paging_prio_opts::priolevel7:
+      return 7;
+    case paging_prio_opts::priolevel8:
+      return 8;
     default:
       break;
   }

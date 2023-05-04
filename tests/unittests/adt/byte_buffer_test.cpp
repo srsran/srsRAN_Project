@@ -684,7 +684,7 @@ TEST(byte_buffer_view, length)
   ASSERT_FALSE(view.empty());
   ASSERT_EQ(len, view.length());
   ASSERT_EQ(len, view.end() - view.begin());
-  unsigned offset = test_rgen::uniform_int<unsigned>(0, len);
+  unsigned offset = test_rgen::uniform_int<unsigned>(0, len - 1);
   unsigned len2   = test_rgen::uniform_int<unsigned>(1, len - offset);
   ASSERT_EQ(len2, view.view(offset, len2).length());
 }
@@ -814,6 +814,18 @@ TEST(byte_buffer, reserve_prepend)
 
   std::copy(big_vec.begin(), big_vec.end(), view2.begin());
   TESTASSERT(view2 == big_vec);
+}
+
+TEST(byte_buffer_test, resize_and_copy)
+{
+  std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(4096);
+  byte_buffer          pdu;
+
+  pdu.resize(bytes.size());
+  std::copy(bytes.begin(), bytes.end(), pdu.begin());
+
+  ASSERT_EQ(pdu.length(), bytes.size());
+  ASSERT_EQ(pdu, bytes);
 }
 
 TEST(byte_buffer_chain, all)

@@ -28,9 +28,6 @@
 namespace srsran {
 namespace config_helpers {
 
-/// Generates a map of 5QI to default QoS configurations.
-std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list();
-
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {
@@ -40,46 +37,59 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 }
 
 /// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
-inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
+/// Dependencies between timers should be considered:
+///   * t-Reordering: How long the PDCP will wait for an out-of-order PDU. When using RLC UM,
+///                   this value should be larger than the RLC's t-Reassembly. When using AM,
+///                   this value should be larger than a few RLC retransmissions, see the RLC
+///                   timers for details.
+inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
 {
-  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
+  std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
   {
     // 5QI=7
     srs_cu_cp::cu_cp_qos_config cfg{};
-    pdcp_config_t               pdcp_cfg{};
-    pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
+    pdcp_config                 pdcp_cfg{};
 
-    drb_t drb_cfg                          = {};
-    drb_cfg.pdcp_sn_size_ul                = pdcp_sn_size::size18bits;
-    drb_cfg.pdcp_sn_size_dl                = pdcp_sn_size::size18bits;
-    drb_cfg.integrity_protection_present   = false;
-    drb_cfg.discard_timer                  = pdcp_discard_timer::infinity;
-    drb_cfg.status_report_required_present = false;
-    drb_cfg.out_of_order_delivery_present  = false;
-    drb_cfg.rlc_mode                       = pdcp_rlc_mode::um;
-    pdcp_cfg.drb                           = drb_cfg;
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
 
-    cfg.pdcp    = pdcp_cfg;
-    qos_list[7] = cfg;
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size12bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::infinity;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms100;
+
+    cfg.pdcp                     = pdcp_cfg;
+    qos_list[uint_to_five_qi(7)] = cfg;
   }
   {
-    // 5QI=9 (temporary default to UM)
+    // 5QI=9
     srs_cu_cp::cu_cp_qos_config cfg{};
-    pdcp_config_t               pdcp_cfg{};
-    pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
+    pdcp_config                 pdcp_cfg{};
 
-    drb_t drb_cfg                          = {};
-    drb_cfg.pdcp_sn_size_ul                = pdcp_sn_size::size18bits;
-    drb_cfg.pdcp_sn_size_dl                = pdcp_sn_size::size18bits;
-    drb_cfg.integrity_protection_present   = false;
-    drb_cfg.discard_timer                  = pdcp_discard_timer::infinity;
-    drb_cfg.status_report_required_present = false;
-    drb_cfg.out_of_order_delivery_present  = false;
-    drb_cfg.rlc_mode                       = pdcp_rlc_mode::um;
-    pdcp_cfg.drb                           = drb_cfg;
+    pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.ciphering_required            = true;
+    pdcp_cfg.integrity_protection_required = false;
 
-    cfg.pdcp    = pdcp_cfg;
-    qos_list[9] = cfg;
+    // > Tx
+    pdcp_cfg.tx.sn_size                = pdcp_sn_size::size12bits;
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::infinity;
+    pdcp_cfg.tx.status_report_required = false;
+
+    // > Rx
+    pdcp_cfg.rx.sn_size               = pdcp_sn_size::size12bits;
+    pdcp_cfg.rx.out_of_order_delivery = false;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
+
+    cfg.pdcp                     = pdcp_cfg;
+    qos_list[uint_to_five_qi(9)] = cfg;
   }
   return qos_list;
 }

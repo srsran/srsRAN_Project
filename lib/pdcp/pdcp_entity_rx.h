@@ -31,7 +31,7 @@
 #include "srsran/adt/byte_buffer_slice_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 
@@ -61,7 +61,7 @@ class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
                  rb_id_t                         rb_id_,
-                 pdcp_config::pdcp_rx_config     cfg_,
+                 pdcp_rx_config                  cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers);
@@ -115,8 +115,8 @@ public:
   void set_state(pdcp_rx_state st_) { st = st_; }
 
 private:
-  pdcp_bearer_logger                logger;
-  const pdcp_config::pdcp_rx_config cfg;
+  pdcp_bearer_logger   logger;
+  const pdcp_rx_config cfg;
 
   security::sec_128_as_config  sec_cfg           = {};
   security::security_direction direction         = security::security_direction::uplink;

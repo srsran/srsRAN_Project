@@ -1,0 +1,88 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "5"
+    file: .gitlab/ci-shared/setup/all.yml
+  - local: .gitlab/ci/build.yml
+
+stages:
+  - build and unit tests
+
+build trx driver:
+  extends: .build_and_unit
+  variables:
+    AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/40350474/packages/generic/amarisoft
+    AMARISOFT_VERSION: "2023-02-06"
+    PUBLISH: "false"
+    KUBERNETES_MEMORY_REQUEST: 2.5Gi
+  rules:
+    - if: $ON_MR
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      variables:
+        PUBLISH: "true"
+  script:
+    - |
+      download_amarisoft() {
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${AMARISOFT_PACKAGE_REGISTRY}/${AMARISOFT_VERSION}/amarisoft.${AMARISOFT_VERSION}.tar.gz" -o amarisoft.tar.gz)
+        if [[ $http_code != "200" ]]; then
+          exit 1
+        fi
+      }
+    - |
+      unpack_amarisoft() {
+        cd ${CI_PROJECT_DIR}
+        mkdir amarisoft
+        tar -zxf amarisoft*.tar.gz -C amarisoft
+        for file in amarisoft/*/trx_uhd*.tar.gz; do tar -zxf "$file" -C amarisoft/; done
+        mv amarisoft/trx_uhd-linux* amarisoft/trx_uhd-linux
+      }
+    - |
+      build_srsran_trx() {
+        export CC=/usr/bin/gcc
+        export CXX=/usr/bin/g++
+
+        cd ${CI_PROJECT_DIR}
+        rm -Rf build 
+        mkdir build
+        cd build
+        cmake -G Ninja -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
+        ninja trx_srsran_test
+      }
+    - |
+      test_srsran_trx() {
+        cd ${CI_PROJECT_DIR}/build
+        ctest -R trx_srsran_test
+      }
+    - |
+      upload_lib() {
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates git
+
+        trx_version=$(cd ${CI_PROJECT_DIR} && git rev-parse --short HEAD)
+
+        cd ${CI_PROJECT_DIR}
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/utils/trx_srsran/libtrx_srsran.so "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${AMARISOFT_VERSION}/${trx_version}/libtrx_srsran.so"
+      }
+    - download_amarisoft
+    - unpack_amarisoft
+    - build_srsran_trx
+    - test_srsran_trx
+    - ls -lah ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so
+    - |
+      if [[ $PUBLISH == "true" ]]; then
+        upload_lib
+      fi
+  after_script: []
+  artifacts:
+    paths:
+      - build/utils/trx_srsran/libtrx_srsran.so
+    expire_in: 10 minutes

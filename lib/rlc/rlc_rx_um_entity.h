@@ -25,7 +25,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 
@@ -103,7 +103,8 @@ private:
 
   void log_state(srslog::basic_levels level)
   {
-    logger.log(level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "stopped");
+    logger.log(
+        level, "RX entity state. {} t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "notify_stop");
   }
 
 public:

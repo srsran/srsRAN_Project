@@ -88,7 +88,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
     if (sl_point.to_uint() % sib1_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
-      if (not cell_cfg.is_dl_enabled(sl_point)) {
+      if (not cell_cfg.is_fully_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
       }

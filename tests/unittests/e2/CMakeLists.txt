@@ -35,3 +35,7 @@ target_link_libraries(e2_setup_procedure_test srsran_e2 srsran_support srslog e2
 target_include_directories(e2_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e2_setup_procedure_test)
 
+add_executable(e2_subscription_setup_test e2_subscription_setup_test.cpp)
+target_link_libraries(e2_subscription_setup_test srsran_e2 srsran_support srslog e2ap_asn1 srsran_ran gtest gtest_main)
+target_include_directories(e2_subscription_setup_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(e2_subscription_setup_test)

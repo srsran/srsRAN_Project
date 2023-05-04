@@ -102,6 +102,8 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 {
   app.add_option("--ngap_filename", pcap_params.ngap.filename, "NGAP PCAP file output path")->capture_default_str();
   app.add_option("--ngap_enable", pcap_params.ngap.enabled, "Enable NGAP packet capture")->always_capture_default();
+  app.add_option("--e1ap_filename", pcap_params.e1ap.filename, "E1AP PCAP file output path")->capture_default_str();
+  app.add_option("--e1ap_enable", pcap_params.e1ap.enabled, "Enable E1AP packet capture")->always_capture_default();
   app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
 }
@@ -119,6 +121,13 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
 }
 
+static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
+{
+  app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 7200));
+}
+
 static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& rf_driver_params)
 {
   app.add_option("--srate", rf_driver_params.srate_MHz, "Sample rate in MHz")->capture_default_str();
@@ -127,6 +136,10 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
       ->capture_default_str();
   app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels")->capture_default_str();
   app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels")->capture_default_str();
+  app.add_option("--freq_offset", rf_driver_params.center_freq_offset_Hz, "Center frequency offset in hertz")
+      ->capture_default_str();
+  app.add_option("--clock_ppm", rf_driver_params.calibrate_clock_ppm, "Clock calibration in PPM.")
+      ->capture_default_str();
   app.add_option("--lo_offset", rf_driver_params.lo_offset_MHz, "LO frequency offset in MHz")->capture_default_str();
   app.add_option("--clock", rf_driver_params.clock_source, "Clock source")->capture_default_str();
   app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source")->capture_default_str();
@@ -159,6 +172,25 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
 {
+  app.add_option_function<std::string>(
+         "--low_phy_thread_profile",
+         [&expert_phy_params](const std::string& value) {
+           if (value == "single") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::single;
+           } else if (value == "dual") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::dual;
+           } else if (value == "quad") {
+             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::quad;
+           }
+         },
+         "Lower physical layer executor profile [single, dual, quad].")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "single") || (value == "dual") || (value == "quad")) {
+          return "";
+        }
+
+        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+      });
   app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
       ->capture_default_str()
       ->check(CLI::Number);
@@ -188,7 +220,10 @@ static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_par
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
 {
-  app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
+  app.add_option("--min_ue_mcs", pdsch_params.min_ue_mcs, "Minimum UE MCS")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 28));
+  app.add_option("--max_ue_mcs", pdsch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
@@ -197,12 +232,18 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--fixed_sib1_mcs", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  app.add_option("--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
+      ->capture_default_str()
+      ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
 {
-  app.add_option("--fixed_ue_mcs", pusch_params.fixed_ue_mcs, "Fixed UE MCS")
-      ->default_str("dynamic")
+  app.add_option("--min_ue_mcs", pusch_params.min_ue_mcs, "Minimum UE MCS")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 28));
+  app.add_option("--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
+      ->capture_default_str()
       ->check(CLI::Range(0, 28));
 }
 
@@ -224,6 +265,8 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
          "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
+  app.add_option("--total_nof_ra_preambles", prach_params.total_nof_ra_preambles, "Number of different PRACH preambles")
+      ->check(CLI::Range(1, 64));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -235,6 +278,45 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
   app.add_option("--enable_clipping", amplitude_params.enable_clipping, "Signal clipping")->capture_default_str();
   app.add_option("--ceiling", amplitude_params.power_ceiling_dBFS, "Clipping ceiling referenced to full scale")
       ->capture_default_str();
+}
+
+static void configure_cli11_tdd_pattern_args(CLI::App& app, tdd_ul_dl_pattern_config& tdd_pattern_params)
+{
+  app.add_option("--dl_ul_tx_period", tdd_pattern_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 10.0));
+  app.add_option("--nof_dl_slots", tdd_pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--nof_dl_symbols",
+                 tdd_pattern_params.nof_dl_symbols,
+                 "TDD pattern nof. DL symbols at the beginning of the slot following full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+  app.add_option("--nof_ul_slots", tdd_pattern_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--nof_ul_symbols",
+                 tdd_pattern_params.nof_ul_symbols,
+                 "TDD pattern nof. UL symbols at the end of the slot preceding the first full UL slot")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+}
+
+static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_config& tdd_ul_dl_params)
+{
+  CLI::App* pattern1_subcmd = app.add_subcommand("pattern1", "TDD pattern 1 configuration parameters")->configurable();
+  configure_cli11_tdd_pattern_args(*pattern1_subcmd, tdd_ul_dl_params.pattern1);
+
+  CLI::App* pattern2_subcmd = app.add_subcommand("pattern2", "TDD pattern 2 configuration parameters")->configurable();
+  configure_cli11_tdd_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
+  auto tdd_pattern2_verify_callback = [&]() {
+    CLI::App* tdd_pattern_cfg = app.get_subcommand("pattern2");
+    if (tdd_pattern_cfg->count_all() == 0) {
+      tdd_ul_dl_params.pattern2.reset();
+    }
+  };
+  app.callback(tdd_pattern2_verify_callback);
 }
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
@@ -313,6 +395,18 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // Amplitude control configuration.
   CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
   configure_cli11_amplitude_control_args(*amplitude_control_subcmd, cell_params.amplitude_cfg);
+
+  // TDD UL DL configuration.
+  CLI::App* tdd_ul_dl_subcmd =
+      app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
+  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_params.tdd_pattern_cfg.emplace());
+  auto tdd_ul_dl_verify_callback = [&]() {
+    CLI::App* tdd_cfg = app.get_subcommand("tdd_ul_dl_cfg");
+    if (tdd_cfg->count_all() == 0) {
+      cell_params.tdd_pattern_cfg.reset();
+    }
+  };
+  app.callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)
@@ -404,9 +498,27 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   app.callback(verify_callback);
 }
 
+static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appconfig& test_params)
+{
+  app.add_option("--rnti", test_params.rnti, "C-RNTI (0x0 if not configured)")
+      ->capture_default_str()
+      ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
+  app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
+  app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
+}
+
+static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)
+{
+  CLI::App* test_ue = app.add_subcommand("test_ue", "automatically created UE for testing purposes");
+  configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
+  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
+      ->capture_default_str()
+      ->check(CLI::Range(22, 32));
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
   // Logging section.
@@ -420,6 +532,10 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();
   configure_cli11_amf_args(*amf_subcmd, gnb_cfg.amf_cfg);
+
+  // CU-CP section
+  CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
+  configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
   // RF section.
   CLI::App* rf_driver_subcmd = app.add_subcommand("rf_driver", "RF driver parameters")->configurable();
@@ -479,4 +595,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Expert PHY section.
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();
   configure_cli11_expert_phy_args(*expert_phy_subcmd, gnb_cfg.expert_phy_cfg);
+
+  // Test mode section.
+  CLI::App* test_mode_subcmd = app.add_subcommand("test_mode", "Test mode configuration")->configurable();
+  configure_cli11_test_mode_args(*test_mode_subcmd, gnb_cfg.test_mode_cfg);
 }

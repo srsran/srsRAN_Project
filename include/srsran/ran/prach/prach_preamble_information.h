@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 
 namespace srsran {
@@ -48,17 +48,46 @@ struct prach_preamble_information {
 
 /// \brief Get long PRACH preamble information as per TS38.211 Table 6.3.3.1-1.
 ///
-/// An assertion is triggered if the PRACH preamble format is not long.
+/// An assertion is triggered if the PRACH preamble format is short.
 ///
 /// \param[in] format PRACH preamble format.
 /// \return PRACH preamble information.
-prach_preamble_information get_prach_preamble_long_info(preamble_format format);
+prach_preamble_information get_prach_preamble_long_info(prach_format_type format);
+
+/// \brief Get short PRACH preamble information as per TS38.211 Table 6.3.3.1-2.
+///
+/// An assertion is triggered if:
+/// - the PRACH preamble format is long, or
+/// - the random access subcarrier spacing does not satisfy \f$\Delta f ^\textup{RA} = 15 \cdot 2^\mu\f$ where \f$\mu
+/// \in \{0, 1, 2, 3\}\f$.
+///
+/// \param[in] format        PRACH preamble format.
+/// \param[in] ra_scs        Random access subcarrier spacing \f$\Delta f ^\textup{RA}\f$.
+/// \param[in] last_occasion Set to true if \f$n_\textup{t}^\textup{RA}=N_\textup{t}^\textup{RA,slot}-1\f$
+/// \return PRACH preamble information.
+prach_preamble_information
+get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs, bool last_occasion);
+
+/// \brief Gets the PRACH window duration.
+/// \param[in] format             PRACH preamble format.
+/// \param[in] pusch_scs          Uplink resource grid subcarrier spacing. Determines the numerology \f$\mu\f$.
+/// \param[in] start_symbol_index OFDM symbol index within the slot that marks the start of the acquisition window for
+///                               the first time-domain PRACH occasion.
+/// \param[in] nof_td_occasions   Number of time-domain occasions within a PRACH window.
+/// \return The PRACH window duration from the beginning of the slot to the end of the last time-domain occasion.
+/// \note The RA subcarrier spacing for short preambles is assumed to be equal to the uplink resource grid subcarrier
+///       spacing.
+phy_time_unit get_prach_window_duration(prach_format_type  format,
+                                        subcarrier_spacing pusch_scs,
+                                        unsigned           start_symbol_index,
+                                        unsigned           nof_td_occasions);
 
 /// \brief Collects PRACH preamble duration information.
 struct prach_symbols_slots_duration {
   /// Duration of the PRACH Preamble in slots, with reference to the PUSCH SCS.
   unsigned prach_length_slots;
-  /// PRACH starting slot within the subframe, with reference to the PUSCH SCS.
+  /// PRACH starting slot within the subframe, with reference to the PUSCH SCS. For 15kHz PUSCH SCS, values: {0}; for
+  /// 30kHz PUSCH SCS, values: {0, 1}
   unsigned start_slot_pusch_scs;
   /// PRACH duration in symbols, with reference to the PUSCH SCS.
   unsigned nof_symbols;

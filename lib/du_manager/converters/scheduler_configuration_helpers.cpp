@@ -36,6 +36,7 @@ sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_
 {
   sched_cell_configuration_request_message sched_req{};
   sched_req.cell_index           = cell_index;
+  sched_req.cell_group_index     = (du_cell_group_index_t)0;
   sched_req.pci                  = du_cfg.pci;
   sched_req.dl_carrier           = du_cfg.dl_carrier;
   sched_req.ul_carrier           = du_cfg.ul_carrier;
@@ -75,8 +76,8 @@ sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const
     auto& sched_lc_ch = sched_cfg.lc_config_list.back();
     sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
   }
-  for (const du_ue_drb& bearer : ue_ctx.bearers.drbs()) {
-    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.lcid));
+  for (const auto& bearer : ue_ctx.bearers.drbs()) {
+    sched_cfg.lc_config_list.emplace_back(config_helpers::create_default_logical_channel_config(bearer.second->lcid));
     auto& sched_lc_ch = sched_cfg.lc_config_list.back();
     sched_lc_ch.sr_id.emplace(sched_cfg.sched_request_config_list.back().sr_id);
   }

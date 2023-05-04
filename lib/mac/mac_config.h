@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/mac/mac.h"

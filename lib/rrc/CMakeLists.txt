@@ -29,6 +29,7 @@ set(SOURCES
   ue/procedures/rrc_setup_procedure.cpp
   ue/procedures/rrc_security_mode_command_procedure.cpp
   ue/procedures/rrc_reconfiguration_procedure.cpp
+  ue/procedures/rrc_ue_capability_transfer_procedure.cpp
 )
 
 add_library(srsran_rrc STATIC ${SOURCES})

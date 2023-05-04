@@ -34,6 +34,8 @@ struct f1ap_du_context {
   uint64_t                                            gnb_du_id;
   std::string                                         gnb_du_name;
   std::vector<asn1::f1ap::gnb_du_served_cells_item_s> served_cells;
+  /// Vector element index corresponds to DU Cell Index.
+  std::vector<nr_cell_global_id_t> du_cell_index_to_nr_cgi_lookup;
 };
 
 } // namespace srs_du

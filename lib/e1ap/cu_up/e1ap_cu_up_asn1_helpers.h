@@ -29,6 +29,29 @@
 namespace srsran {
 namespace srs_cu_up {
 
+inline bool
+check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_setup_request_s& asn1_request,
+                                              srslog::basic_logger&                             logger)
+{
+  // We only support NG-RAN Bearer
+  if (asn1_request->sys_bearer_context_setup_request.value.type() !=
+      asn1::e1ap::sys_bearer_context_setup_request_c::types::ng_ran_bearer_context_setup_request) {
+    logger.error("Not handling E-UTRAN Bearers");
+    return false;
+  }
+
+  // Check activity level
+  if (asn1_request->activity_notif_level.value != asn1::e1ap::activity_notif_level_e::ue) {
+    logger.warning("Unsupported activity notification level: {}", asn1_request->activity_notif_level.value.to_string());
+    return false;
+  }
+  if (!asn1_request->ue_inactivity_timer_present) {
+    logger.warning("Activity notification level is UE, but no UE inactivity timer present.");
+    return false;
+  }
+  return true;
+}
+
 inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
                                                    const asn1::e1ap::bearer_context_setup_request_s& asn1_request)
 {
@@ -54,7 +77,10 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   request.serving_plmn = plmn_bcd_to_string(asn1_request->serving_plmn.value.to_number());
 
   // activity notification level
-  request.activity_notif_level = asn1_request->activity_notif_level.value.to_string();
+  request.activity_notif_level = asn1_to_activity_notification_level(asn1_request->activity_notif_level.value);
+  if (request.activity_notif_level == activity_notification_level_t::ue) {
+    request.ue_inactivity_timer = asn1_request->ue_inactivity_timer.value;
+  }
 
   // pdu session resource to setup list
   for (const auto& asn1_pdu_session_res_list_item :

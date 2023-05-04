@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <mutex>
 
 #pragma GCC diagnostic push
@@ -54,8 +55,10 @@ private:
     END_OF_BURST,
     /// Indicates wait for end-of-burst acknowledgement.
     WAIT_END_OF_BURST,
-    /// Indicates the stream must stop.
-    STOP
+    /// Signals a stop to the asynchronous thread.
+    WAIT_STOP,
+    /// Indicates the asynchronous thread is notify_stop.
+    STOPPED
   };
 
   /// Indicates the current state.
@@ -63,6 +66,8 @@ private:
 
   /// Protects the class concurrent access.
   mutable std::mutex mutex;
+  /// Condition variable to wait for certain states.
+  std::condition_variable cvar;
 
   uhd::time_spec_t wait_eob_timeout = uhd::time_spec_t();
 
@@ -137,7 +142,8 @@ public:
           break;
         }
       case states::UNINITIALIZED:
-      case states::STOP:
+      case states::WAIT_STOP:
+      case states::STOPPED:
         // Ignore transmission.
         return false;
     }
@@ -152,13 +158,29 @@ public:
     if (state == states::IN_BURST) {
       metadata.end_of_burst = true;
     }
-    state = states::STOP;
+    state = states::WAIT_STOP;
   }
 
-  bool is_stopped() const
+  bool is_stopping() const
   {
     std::unique_lock<std::mutex> lock(mutex);
-    return state == states::STOP;
+    return state == states::WAIT_STOP;
+  }
+
+  void wait_stop()
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    while (state != states::STOPPED) {
+      cvar.wait(lock);
+    }
+  }
+
+  /// Notifies the asynchronous task has notify_stop.
+  void async_task_stopped()
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    state = states::STOPPED;
+    cvar.notify_all();
   }
 };
 

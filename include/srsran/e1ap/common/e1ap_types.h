@@ -82,33 +82,6 @@ struct e1ap_cell_group_info_item {
   optional<std::string> rat_type;
 };
 
-struct e1ap_packet_error_rate {
-  uint8_t per_scalar;
-  uint8_t per_exponent;
-};
-
-struct e1ap_dynamic_5qi_descriptor {
-  uint8_t                qos_prio_level;
-  uint16_t               packet_delay_budget;
-  e1ap_packet_error_rate packet_error_rate;
-  optional<uint16_t>     five_qi;
-  optional<std::string>  delay_crit;
-  optional<uint16_t>     averaging_win;
-  optional<uint16_t>     max_data_burst_volume;
-};
-
-struct e1ap_non_dynamic_5qi_descriptor {
-  uint16_t           five_qi;
-  optional<uint8_t>  qos_prio_level;
-  optional<uint16_t> averaging_win;
-  optional<uint16_t> max_data_burst_volume;
-};
-
-struct e1ap_qos_characteristics {
-  optional<e1ap_dynamic_5qi_descriptor>     dyn_5qi;
-  optional<e1ap_non_dynamic_5qi_descriptor> non_dyn_5qi;
-};
-
 struct e1ap_ng_ran_alloc_and_retention_prio {
   uint8_t     prio_level;
   std::string pre_emption_cap;
@@ -125,7 +98,7 @@ struct e1ap_gbr_qos_flow_info {
 };
 
 struct e1ap_qos_flow_level_qos_params {
-  e1ap_qos_characteristics             qos_characteristics;
+  qos_characteristics_t                qos_characteristics;
   e1ap_ng_ran_alloc_and_retention_prio ng_ran_alloc_retention_prio;
   optional<e1ap_gbr_qos_flow_info>     gbr_qos_flow_info;
   optional<std::string>                reflective_qos_attribute;
@@ -179,7 +152,7 @@ struct e1ap_rohc_params {
 struct e1ap_pdcp_config {
   pdcp_sn_size                 pdcp_sn_size_ul;
   pdcp_sn_size                 pdcp_sn_size_dl;
-  srsran::rlc_mode             rlc_mod;
+  srsran::pdcp_rlc_mode        rlc_mod;
   optional<e1ap_rohc_params>   rohc_params;
   optional<pdcp_t_reordering>  t_reordering_timer;
   optional<pdcp_discard_timer> discard_timer;
@@ -198,7 +171,7 @@ struct e1ap_drb_to_setup_item_ng_ran {
   std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> qos_flow_info_to_be_setup;
   optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
-  optional<uint16_t>                                             drb_inactivity_timer;
+  optional<std::chrono::seconds>                                 drb_inactivity_timer;
   optional<e1ap_pdcp_sn_status_info>                             pdcp_sn_status_info;
 };
 
@@ -212,7 +185,7 @@ struct e1ap_pdu_session_res_to_setup_item {
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;
   optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
-  optional<uint16_t>                          pdu_session_inactivity_timer;
+  optional<std::chrono::seconds>              pdu_session_inactivity_timer;
   optional<up_transport_layer_info>           existing_allocated_ng_dl_up_tnl_info;
   optional<uint16_t>                          network_instance;
 };

@@ -33,7 +33,12 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Configuration passed to CU CP.
+/// UE configuration passed to CU-CP
+struct ue_configuration {
+  std::chrono::seconds inactivity_timer;
+};
+
+/// Configuration passed to CU-CP.
 struct cu_cp_configuration {
   task_executor*         cu_cp_executor = nullptr;
   f1ap_message_notifier* f1ap_notifier  = nullptr; ///> Callback for incoming F1AP messages.
@@ -41,6 +46,7 @@ struct cu_cp_configuration {
   ngap_message_notifier* ngap_notifier  = nullptr; ///> Callack for outgoing NGAP messages.
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
+  ue_configuration       ue_config;
 };
 
 } // namespace srs_cu_cp

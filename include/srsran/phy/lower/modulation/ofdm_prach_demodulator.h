@@ -23,23 +23,29 @@
 #pragma once
 
 #include "srsran/phy/support/prach_buffer.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 
 /// \brief OFDM PRACH demodulator.
 ///
-/// Performs OFDM demodulation for all the symbols contained in a PRACH frequency- and time-domain occasion as per
+/// Performs OFDM demodulation for all the PRACH frequency- and time-domain occasions within a PRACH slot as per
 /// TS38.211 Section 5.3.2.
 ///
 class ofdm_prach_demodulator
 {
 public:
-  /// Collects the necessary parameters to demodulate a PRACH frequency- and time-domain occasion.
+  /// Collects the necessary parameters to demodulate PRACH frequency- and time-domain occasions within a slot.
   struct configuration {
     /// PRACH preamble format.
-    preamble_format format;
+    prach_format_type format;
+    /// Number of time-domain occasions.
+    unsigned nof_td_occasions;
+    /// Number of frequency-domain occasions.
+    unsigned nof_fd_occasions;
+    /// Starting symbol index for the first PRACH TD occasion within the slot {0, ..., 13} at \c pusch_scs.
+    unsigned start_symbol;
     /// PRACH frequency location (see \ref prach_buffer_context::rb_offset).
     unsigned rb_offset;
     /// Uplink resource grid size (see \ref prach_buffer_context::nof_prb_ul_grid).
@@ -53,12 +59,18 @@ public:
 
   /// \brief Demodulates a PRACH occasion as described in TS38.211 Section 5.3.2.
   ///
-  /// An assertion is triggered if the input size is less than the PRACH window size. The PRACH window includes a
-  /// cyclic prefix of length \f$N_{CP,l}^{RA}\f$) and a time-domain sequence of length \f$N_u\f$.
+  /// For long preambles, the input shall contain the cyclic prefix of length \f$N_{CP,l}^{RA}\f$) and a time-domain
+  /// sequence of length \f$N_u\f$. Also, the number of time-domain occasions must be one.
+  ///
+  /// For short preamble formats, the input shall correspond to one slot at \ref configuration::pusch_scs.
+  ///
+  /// An assertion is triggered if:
+  /// - the input samples are not sufficient, or
+  /// - the buffer dimensions cannot contain the demodulated sequences.
   ///
   /// \param[out] buffer    Frequency-domain signal corresponding to one PRACH receive occasion.
   /// \param[in] input      PRACH receive window baseband samples.
-  /// \param[in] slot_index Slot index within the subframe to demodulate.
+  /// \param[in] config     PRACH demodulator configuration parameters.
   virtual void demodulate(prach_buffer& buffer, span<const cf_t> input, const configuration& config) = 0;
 };
 } // namespace srsran

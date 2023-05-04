@@ -22,6 +22,7 @@
 
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
+
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsran/pdcp/pdcp_factory.h"
@@ -33,6 +34,7 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
                                                    network_interface_config&            net_config_,
                                                    srslog::basic_logger&                logger_,
+                                                   unique_timer&                        ue_inactivity_timer_,
                                                    timer_factory                        timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
@@ -40,19 +42,12 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_index(ue_index_),
   net_config(net_config_),
   logger(logger_),
+  ue_inactivity_timer(ue_inactivity_timer_),
   timers(timers_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_gw(f1u_gw_)
 {
-}
-
-pdu_session_manager_impl::~pdu_session_manager_impl()
-{
-  for (auto& session_it : pdu_sessions) {
-    // Remove GTP-U tunnel from GTP-U demux
-    gtpu_rx_demux.remove_tunnel(session_it.second->local_teid);
-  }
 }
 
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
@@ -72,7 +67,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session));
+  pdu_sessions.emplace(session.pdu_session_id, std::make_unique<pdu_session>(session, gtpu_rx_demux));
   std::unique_ptr<pdu_session>& new_session    = pdu_sessions.at(session.pdu_session_id);
   const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
 
@@ -91,10 +86,11 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
-  sdap_entity_creation_message sdap_msg = {};
-  sdap_msg.ue_index                     = ue_index;
-  sdap_msg.rx_sdu_notifier              = &new_session->sdap_to_gtpu_adapter;
-  sdap_msg.tx_pdu_notifier              = &new_session->sdap_to_pdcp_adapter;
+  sdap_entity_creation_message sdap_msg = {ue_index,
+                                           session.pdu_session_id,
+                                           ue_inactivity_timer,
+                                           &new_session->sdap_to_gtpu_adapter,
+                                           &new_session->sdap_to_pdcp_adapter};
   new_session->sdap                     = create_sdap(sdap_msg);
 
   // Create GTPU entity
@@ -113,7 +109,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
 
   // Register tunnel at demux
-  if (gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface()) == false) {
+  if (!gtpu_rx_demux.add_tunnel(new_session->local_teid, new_session->gtpu->get_rx_upper_layer_interface())) {
     logger.error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
@@ -124,7 +120,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                 session.pdu_session_id);
 
   // Handle DRB setup
-  for (auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
+  for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     // prepare DRB creation result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
@@ -153,8 +149,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
     // Create  F1-U bearer
     uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb_to_setup.drb_id);
-    new_drb->f1u =
-        f1u_gw.create_cu_bearer(ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+    new_drb->f1u         = f1u_gw.create_cu_bearer(
+        ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
     new_drb->f1u_ul_teid = int_to_gtp_teid(f1u_ul_teid);
 
     up_transport_layer_info f1u_ul_tunnel_addr;
@@ -214,7 +210,16 @@ pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session)
 {
   pdu_session_modification_result pdu_session_result;
-  auto&                           pdu_session = pdu_sessions.at(session.pdu_session_id);
+  pdu_session_result.success        = false;
+  pdu_session_result.pdu_session_id = session.pdu_session_id;
+  pdu_session_result.cause          = cause_t::misc;
+
+  if (pdu_sessions.find(session.pdu_session_id) == pdu_sessions.end()) {
+    logger.error("PDU Session {} doesn't exists", session.pdu_session_id);
+    return pdu_session_result;
+  }
+
+  auto& pdu_session = pdu_sessions.at(session.pdu_session_id);
 
   // > DRB To Setup List
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
@@ -296,6 +301,13 @@ void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_i
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {
     logger.error("PDU session {} not found", pdu_session_id);
     return;
+  }
+
+  // Disconnect all UL tunnels for this PDU session.
+  auto& pdu_session = pdu_sessions.at(pdu_session_id);
+  for (const auto& drb : pdu_session->drbs) {
+    logger.debug("Disconnecting CU bearer with UL-TEID={}", drb.second->f1u_ul_teid.value());
+    f1u_gw.disconnect_cu_bearer(drb.second->f1u_ul_teid.value());
   }
 
   pdu_sessions.erase(pdu_session_id);

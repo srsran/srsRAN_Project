@@ -46,13 +46,14 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
+  ue_configuration                ue_config{std::chrono::seconds{10}};
   srsran::security::sec_as_config security_cfg;
   drb_manager_cfg                 drb_cfg;
 
   dummy_du_processor_e1ap_control_notifier           e1ap_ctrl_notifier;
   dummy_du_processor_f1ap_ue_context_notifier        f1ap_ue_ctxt_notifier;
   dummy_du_processor_rrc_du_ue_notifier              rrc_du_notifier;
-  ue_manager                                         ue_mng;
+  ue_manager                                         ue_mng{ue_config};
   dummy_du_processor_rrc_ue_control_message_notifier rrc_ue_ctrl_notifier;
   std::unique_ptr<drb_manager_impl>                  rrc_ue_drb_manager;
   std::unique_ptr<du_processor_routine_manager>      routine_mng;

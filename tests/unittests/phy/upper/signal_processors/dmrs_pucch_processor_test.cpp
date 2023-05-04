@@ -45,7 +45,7 @@ int main()
       create_low_papr_sequence_collection_sw_factory(lpg_factory);
   TESTASSERT(lpc_factory);
 
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
   if (!dft_factory) {
     dft_factory = create_dft_processor_factory_generic();
   }

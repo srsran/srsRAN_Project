@@ -24,14 +24,13 @@
 
 #include "ue.h"
 #include "srsran/adt/ring_buffer.h"
-#include "srsran/adt/stable_id_map.h"
 
 namespace srsran {
 
 /// Container that stores all scheduler UEs.
 class ue_repository
 {
-  using ue_list = stable_id_map<du_ue_index_t, ue, MAX_NOF_DU_UES>;
+  using ue_list = slotted_id_table<du_ue_index_t, std::unique_ptr<ue>, MAX_NOF_DU_UES>;
 
 public:
   using value_type     = ue_list::value_type;
@@ -46,8 +45,8 @@ public:
   /// \brief Contains ue index.
   bool contains(du_ue_index_t ue_index) const { return ues.contains(ue_index); }
 
-  ue&       operator[](du_ue_index_t ue_index) { return ues[ue_index]; }
-  const ue& operator[](du_ue_index_t ue_index) const { return ues[ue_index]; }
+  ue&       operator[](du_ue_index_t ue_index) { return *ues[ue_index]; }
+  const ue& operator[](du_ue_index_t ue_index) const { return *ues[ue_index]; }
 
   /// \brief Add new UE in the UE repository.
   void add_ue(std::unique_ptr<ue> u);
@@ -55,8 +54,8 @@ public:
   /// \brief Initiate removal of existing UE from the repository.
   void schedule_ue_rem(du_ue_index_t ue_index);
 
-  iterator       find(du_ue_index_t ue_index) { return ues.find(ue_index); }
-  const_iterator find(du_ue_index_t ue_index) const { return ues.find(ue_index); }
+  ue*       find(du_ue_index_t ue_index) { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
+  const ue* find(du_ue_index_t ue_index) const { return ues.contains(ue_index) ? ues[ue_index].get() : nullptr; }
 
   size_t size() const { return ues.size(); }
 

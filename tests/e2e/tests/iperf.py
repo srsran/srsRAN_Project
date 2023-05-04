@@ -7,174 +7,204 @@
 #
 
 """
-Test ping
+Test Iperf
 """
+
 import logging
-from contextlib import suppress
+from typing import Sequence, Union
 
-import grpc
 from pytest import mark
-from retina.launcher.test_base import BaseTest
-from retina.launcher.utils import param
-from retina.protocol.base_pb2 import Empty, String, UInteger
-from retina.protocol.epc_pb2 import EPCStartInfo
-from retina.protocol.gnb_pb2 import GNBStartInfo
-from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEStartInfo
+from retina.client.manager import RetinaTestManager
+from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.epc_pb2_grpc import EPCStub
+from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
+from retina.protocol.ue_pb2_grpc import UEStub
 
-from .utils import ATTACH_TIMEOUT, DEFAULT_MCS, STARTUP_TIMEOUT, get_ue_gnb_epc
+from .steps.configuration import configure_test_parameters
+from .steps.stub import iperf, start_and_attach
 
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
-HIGH_BITRATE = int(20e6)
+HIGH_BITRATE = int(15e6)
+BITRATE_THRESHOLD: float = 0.1
+
+ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 
 
-class TestIPerf(BaseTest):
-    ID = "band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s-timing_advance:%s-calibration:%s"
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    (
+        # Smoke
+        param(3, 15, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
+        param(41, 30, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
+        # ZMQ
+        param(3, 15, 5, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
+        param(41, 30, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
+        param(41, 30, 20, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
+        param(41, 30, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_zmq(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    always_download_artifacts: bool,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
 
-    @mark.parametrize(
-        "ue_count",
-        (
-            param(1, id="singleue"),
-            param(4, id="multiue", marks=mark.multiue),
-        ),
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        iperf_duration=SHORT_DURATION,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        log_search=True,
+        always_download_artifacts=always_download_artifacts,
     )
-    @mark.parametrize(
-        "direction",
-        (
-            param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
-            param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
-            param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
-        ),
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+        param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_rf_udp(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    direction: IPerfDir,
+):
+    """
+    RF IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        iperf_duration=LONG_DURATION,
+        protocol=IPerfProto.UDP,
+        bitrate=HIGH_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        log_search=False,
+        always_download_artifacts=True,
     )
-    @mark.parametrize(
-        "protocol",
-        (
-            param(IPerfProto.UDP, id="udp", marks=mark.udp),
-            param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
-        ),
+
+
+# pylint: disable=too-many-arguments, too-many-locals
+def _iperf(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_array: Sequence[UEStub],
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    iperf_duration: int,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+    global_timing_advance: int,
+    time_alignment_calibration: Union[int, str],
+    log_search: bool,
+    always_download_artifacts: bool,
+):
+    logging.info("Iperf Test")
+
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
     )
-    @mark.parametrize(
-        "band, common_scs, bandwidth, bitrate, iperf_duration, log_search, global_timing_advance, time_alignment_calibration",
-        (
-            # Smoke
-            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
-            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
-            # ZMQ
-            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
-            # RF
-            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
-            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
-        ),
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+        log_search=log_search,
     )
-    def test(
-        self,
-        extra,
-        band,
-        common_scs,
-        bandwidth,
+
+    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
+
+    iperf(
+        ue_attach_info_dict,
+        epc,
         protocol,
         direction,
         iperf_duration,
         bitrate,
-        ue_count,
-        log_search,
-        global_timing_advance,
-        time_alignment_calibration,
-        mcs=DEFAULT_MCS,
-        startup_timeout=ATTACH_TIMEOUT,
-        attach_timeout=STARTUP_TIMEOUT,
-    ):
-        logging.info("Iperf Test")
-
-        with get_ue_gnb_epc(
-            self,
-            extra,
-            band=band,
-            common_scs=common_scs,
-            bandwidth=bandwidth,
-            mcs=mcs,
-            ue_count=ue_count,
-            log_search=log_search,
-            global_timing_advance=global_timing_advance,
-            time_alignment_calibration=time_alignment_calibration,
-        ) as items:
-            ue, gnb, epc = items
-
-            ue_def = ue.GetDefinition(Empty())
-            gnb_def = gnb.GetDefinition(Empty())
-            epc_def = epc.GetDefinition(Empty())
-
-            for subscriber in ue_def.subscriber_list:
-                epc.AddUESubscriber(subscriber)
-
-            epc.Start(EPCStartInfo())
-            logging.info("EPC started")
-
-            gnb.Start(
-                GNBStartInfo(
-                    ue_definition=ue_def,
-                    epc_definition=epc_def,
-                    timeout=startup_timeout,
-                )
-            )
-            logging.info("GNB started")
-
-            ue.Start(
-                UEStartInfo(
-                    gnb_definition=gnb_def,
-                    epc_definition=epc_def,
-                    timeout=startup_timeout,
-                )
-            )
-            logging.info("UE started")
-
-            ue_attached_info_list = ue.WainUntilAttached(UInteger(value=attach_timeout))
-            logging.info("UEs attached %s", ue_attached_info_list)
-
-            for ue_attached_info in ue_attached_info_list.value:
-                server = epc.StartIPerfService(String(value=ue_attached_info.ipv4_gateway))
-                logging.info(
-                    "\nIPerf %s [%s %s] in progress",
-                    ue_attached_info.ipv4_gateway,
-                    iperf_proto_to_str(protocol),
-                    iperf_dir_to_str(direction),
-                )
-
-                with suppress(grpc.RpcError):
-                    ue.IPerf(
-                        IPerfRequest(
-                            server=server,
-                            duration=iperf_duration,
-                            direction=direction,
-                            proto=protocol,
-                            bitrate=int(bitrate),
-                        )
-                    )
-
-                iperf_data = epc.StopIPerfService(server)
-                logging.info(
-                    "Iperf %s [%s %s] result %s",
-                    ue_attached_info.ipv4_gateway,
-                    iperf_proto_to_str(protocol),
-                    iperf_dir_to_str(direction),
-                    iperf_data,
-                )
-
-
-def iperf_proto_to_str(proto):
-    return {IPerfProto.TCP: "tcp", IPerfProto.UDP: "udp"}[proto]
-
-
-def iperf_dir_to_str(direction):
-    return {
-        IPerfDir.DOWNLINK: "downlink",
-        IPerfDir.UPLINK: "uplink",
-        IPerfDir.BIDIRECTIONAL: "bidirectional",
-    }[direction]
+        BITRATE_THRESHOLD,
+    )

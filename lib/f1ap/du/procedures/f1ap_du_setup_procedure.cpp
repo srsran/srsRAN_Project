@@ -22,6 +22,7 @@
 
 #include "f1ap_du_setup_procedure.h"
 #include "../f1ap_du_context.h"
+#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
@@ -135,6 +136,9 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     du_ctxt.served_cells.resize(request.msg->gnb_du_served_cells_list.value.size());
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
       du_ctxt.served_cells[i] = request.msg->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
+    }
+    for (const auto& cgi : request.du_cell_index_to_nr_cgi_lookup) {
+      du_ctxt.du_cell_index_to_nr_cgi_lookup.push_back(cgi);
     }
 
   } else if (cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value !=

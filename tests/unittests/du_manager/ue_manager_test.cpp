@@ -133,7 +133,7 @@ TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_reque
 
   // TEST: DU UE manager registers UE being created.
   ASSERT_TRUE(ue_mng.get_ues().contains(ue_index));
-  ASSERT_EQ(ue_mng.get_ues()[ue_index].rnti, 0x4601);
+  ASSERT_EQ(ue_mng.get_ues()[ue_index]->rnti, 0x4601);
 }
 
 TEST_F(du_ue_manager_tester,

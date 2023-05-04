@@ -22,15 +22,9 @@
 
 #pragma once
 
-#include "srsran/ran/slot_point.h"
+#include "srsran/phy/lower/lower_phy_timing_context.h"
 
 namespace srsran {
-
-/// Describes the context of the current timing boundary.
-struct lower_phy_timing_context {
-  /// Slot context.
-  slot_point slot;
-};
 
 /// Lower physical layer interface to notify timing related events.
 class lower_phy_timing_notifier

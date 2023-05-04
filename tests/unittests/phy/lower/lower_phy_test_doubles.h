@@ -23,8 +23,10 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
+#include "srsran/phy/support/resource_grid_context.h"
 
 namespace srsran {
 
@@ -34,56 +36,76 @@ namespace srsran {
 class lower_phy_error_notifier_spy : public lower_phy_error_notifier
 {
 private:
-  srslog::basic_logger&                   logger;
-  std::vector<late_resource_grid_context> late_rg_errors;
-  std::vector<prach_buffer_context>       prach_request_late_errors;
-  std::vector<prach_buffer_context>       prach_request_overflow_errors;
+  std::vector<resource_grid_context> late_rg_errors;
+  std::vector<resource_grid_context> overflow_rg_errors;
+  std::vector<prach_buffer_context>  prach_request_late_errors;
+  std::vector<prach_buffer_context>  prach_request_overflow_errors;
+  std::vector<resource_grid_context> puxch_request_late_errors;
+  std::vector<resource_grid_context> puxch_request_overflow_errors;
 
 public:
-  /// Constructor: creates the logger and sets the log level (default log level is "warning").
-  explicit lower_phy_error_notifier_spy(const std::string& log_level = "warning") :
-    logger(srslog::fetch_basic_logger("Error Notifier"))
-  {
-    logger.set_level(srslog::str_to_basic_level(log_level));
-  }
+  // See interface for documentation.
+  void on_late_resource_grid(const resource_grid_context& context) override { late_rg_errors.push_back(context); }
 
   // See interface for documentation.
-  void on_late_resource_grid(const late_resource_grid_context& context) override
+  void on_overflow_resource_grid(const resource_grid_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug(
-        "Sector {} - Detected late resource grid for symbol {}.", context.sector, context.symbol, context.symbol);
-
-    late_rg_errors.push_back(context);
+    overflow_rg_errors.push_back(context);
   }
 
   // See interface for documentation.
   void on_prach_request_late(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Sector {} - Detected PRACH request late for sector {}, slot {} and start symbol {}.",
-                 context.sector,
-                 context.slot,
-                 context.start_symbol);
-
     prach_request_late_errors.push_back(context);
   }
 
   // See interface for documentation.
   void on_prach_request_overflow(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Sector {} - Detected PRACH request overflow for sector {}, slot {} and start symbol {}.",
-                 context.sector,
-                 context.slot,
-                 context.start_symbol);
-
     prach_request_overflow_errors.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_puxch_request_late(const resource_grid_context& context) override
+  {
+    puxch_request_late_errors.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_puxch_request_overflow(const resource_grid_context& context) override
+  {
+    puxch_request_overflow_errors.push_back(context);
   }
 
   /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_late_resource_grid() interface.
   /// \return A constant reference to the event list.
-  const std::vector<late_resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
+  const std::vector<resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
+
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_overflow_resource_grid() interface.
+  /// \return A constant reference to the event list.
+  const std::vector<resource_grid_context>& get_overflow_rg_errors() const { return overflow_rg_errors; }
+
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_prach_request_late() interface.
+  /// \return A constant reference to the event list.
+  const std::vector<prach_buffer_context>& get_prach_request_late_errors() const { return prach_request_late_errors; }
+
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_prach_request_overflow() interface.
+  /// \return A constant reference to the event list.
+  const std::vector<prach_buffer_context>& get_prach_request_overflow_errors() const
+  {
+    return prach_request_overflow_errors;
+  }
+
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_puxch_request_late() interface.
+  /// \return A constant reference to the event list.
+  const std::vector<resource_grid_context>& get_puxch_request_late_errors() const { return puxch_request_late_errors; }
+
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_puxch_request_overflow() interface.
+  /// \return A constant reference to the event list.
+  const std::vector<resource_grid_context>& get_puxch_request_overflow_errors() const
+  {
+    return puxch_request_overflow_errors;
+  }
 
   /// \brief Gets the total number of errors of any kind.
   ///
@@ -95,15 +117,20 @@ public:
   /// \return The total number of events that have been registered.
   unsigned get_nof_errors() const
   {
-    return late_rg_errors.size() + prach_request_late_errors.size() + prach_request_overflow_errors.size();
+    return late_rg_errors.size() + overflow_rg_errors.size() + prach_request_late_errors.size() +
+           prach_request_overflow_errors.size() + puxch_request_late_errors.size() +
+           puxch_request_overflow_errors.size();
   }
 
   /// Clears all the recorded errors.
   void clear_all_errors()
   {
     late_rg_errors.clear();
+    overflow_rg_errors.clear();
     prach_request_late_errors.clear();
     prach_request_overflow_errors.clear();
+    puxch_request_late_errors.clear();
+    puxch_request_overflow_errors.clear();
   }
 };
 
@@ -118,13 +145,13 @@ private:
 
   struct rx_symbol_event {
     lower_phy_rx_symbol_context context;
-    resource_grid_reader*       grid;
+    const resource_grid_reader* grid;
   };
   std::vector<rx_symbol_event> rx_symbol_events;
 
   struct rx_prach_event {
     prach_buffer_context context;
-    prach_buffer*        grid;
+    const prach_buffer*  buffer;
   };
   std::vector<rx_prach_event> rx_prach_events;
 
@@ -141,6 +168,10 @@ public:
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - On Rx Symbol {}.", context.sector, context.nof_symbols);
+    rx_symbol_events.emplace_back();
+    rx_symbol_event& event = rx_symbol_events.back();
+    event.context          = context;
+    event.grid             = &grid;
   }
 
   // See interface for documentation.
@@ -148,6 +179,10 @@ public:
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - On Rx PRACH Window.", context.sector);
+    rx_prach_events.emplace_back();
+    rx_prach_event& event = rx_prach_events.back();
+    event.context         = context;
+    event.buffer          = &buffer;
   }
 
   // See interface for documentation.
@@ -196,40 +231,23 @@ public:
 class lower_phy_timing_notifier_spy : public lower_phy_timing_notifier
 {
 private:
-  srslog::basic_logger&                 logger;
   std::vector<lower_phy_timing_context> tti_boundaries_events;
   std::vector<lower_phy_timing_context> ul_half_slot_events;
   std::vector<lower_phy_timing_context> ul_full_slot_events;
 
 public:
-  /// Constructor: creates the logger and sets the log level (default log level is "warning").
-  explicit lower_phy_timing_notifier_spy(const std::string& log_level) :
-    logger(srslog::fetch_basic_logger("Timing Notifier"))
-  {
-    logger.set_level(srslog::str_to_basic_level(log_level));
-  }
-
   // See interface for documentation.
-  void on_tti_boundary(const lower_phy_timing_context& context) override
-  {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("New TTI boundary.");
-    tti_boundaries_events.push_back(context);
-  }
+  void on_tti_boundary(const lower_phy_timing_context& context) override { tti_boundaries_events.push_back(context); }
 
   // See interface for documentation.
   void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Half uplink slot boundary.");
     ul_half_slot_events.push_back(context);
   }
 
   // See interface for documentation.
   void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override
   {
-    logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.debug("Full uplink slot boundary.");
     ul_full_slot_events.push_back(context);
   }
 

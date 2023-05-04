@@ -30,6 +30,7 @@ using namespace srsran;
 
 const unsigned NOF_RBS = 52;
 
+namespace pucch_test {
 // Expected results parameters.
 struct expected_output_params_f1 {
   pucch_format      format;
@@ -69,6 +70,13 @@ struct pucch_test_parameters {
   pucch_params              pucch_input_params;
 };
 
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const pucch_test_parameters& value, ::std::ostream* os)
+{
+  return;
+}
+
 static expected_output_params_f1 make_expected_output_params_sr_only()
 {
   return expected_output_params_f1{.format               = pucch_format::FORMAT_1,
@@ -89,8 +97,11 @@ expected_output_params_f1 make_expected_output_params_sr_harq()
   out.harq_ack_nof_bits         = 1;
   return out;
 }
+} // namespace pucch_test
 
 ///////   Test allocation of PUCCH common resources    ///////
+
+using namespace pucch_test;
 
 class test_pucch_harq_common_output : public ::testing::TestWithParam<pucch_test_parameters>
 {
@@ -141,15 +152,15 @@ INSTANTIATE_TEST_SUITE_P(
     test_pucch_harq_common_output,
     testing::Values(
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_0,
-                                                                         prb_interval{0, 1},
-                                                                         prb_interval{NOF_RBS - 1, NOF_RBS},
-                                                                         ofdm_symbol_range{12, 14},
-                                                                         true,
-                                                                         0,
-                                                                         sr_nof_bits::no_sr,
-                                                                         1,
-                                                                         0},
+                              .output_params           = pucch_test::expected_output_params_f1{pucch_format::FORMAT_0,
+                                                                                     prb_interval{0, 1},
+                                                                                     prb_interval{NOF_RBS - 1, NOF_RBS},
+                                                                                     ofdm_symbol_range{12, 14},
+                                                                                     true,
+                                                                                     0,
+                                                                                     sr_nof_bits::no_sr,
+                                                                                     1,
+                                                                                     0},
                               .pucch_input_params      = pucch_params{0, 1}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
                               .output_params           = expected_output_params_f1{pucch_format::FORMAT_0,
@@ -238,7 +249,12 @@ INSTANTIATE_TEST_SUITE_P(
                                                                          sr_nof_bits::no_sr,
                                                                          1,
                                                                          0},
-                              .pucch_input_params      = pucch_params{15, 6}}));
+                              .pucch_input_params      = pucch_params{15, 6}}),
+    [](const ::testing::TestParamInfo<test_pucch_harq_common_output::ParamType>& info_) {
+      return fmt::format("pucch_res_common_{}_n_cces_{}",
+                         info_.param.pucch_input_params.pucch_res_common,
+                         info_.param.pucch_input_params.n_cces);
+    });
 
 ///////   Test allocation of PUCCH SR resources    ///////
 

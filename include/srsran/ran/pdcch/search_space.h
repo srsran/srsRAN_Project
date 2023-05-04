@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "pdcch_type0_css_occasions.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include <bitset>
@@ -105,6 +106,29 @@ struct search_space_configuration {
            nof_candidates == rhs.nof_candidates and type == rhs.type and
            ((type == type_t::common and common == rhs.common) or
             (type == type_t::ue_dedicated and ue_specific == rhs.ue_specific));
+  }
+
+  /// \brief Returns the first monitoring symbol for the current SearchSpace.
+  /// \remark Do not use this function for SearchSpace0, which derives the monitoring symbols differently from other
+  /// SearchSpaces.
+  unsigned get_first_symbol_index() const
+  {
+    if (id == search_space_id(0)) {
+      srsran_assertion_failure("This function does is not compatible with SearchSpace 0");
+      return 0;
+    }
+    if (not monitoring_symbols_within_slot.has_value()) {
+      // Assume the first SearchSpace monitoring symbol is 0 when no specified.
+      srsran_assertion_failure("Monitoring symbols within slot for SSid {} not found", id);
+      return 0;
+    }
+    for (unsigned n = 0; n < monitoring_symbols_within_slot.value().size(); ++n) {
+      if (monitoring_symbols_within_slot.value().test(monitoring_symbols_within_slot.value().size() - n - 1)) {
+        return n;
+      }
+    }
+    srsran_assertion_failure("Monitoring symbols within slot for SSid {} doesn't have any symbols set to 1", id);
+    return monitoring_symbols_within_slot.value().size();
   }
 };
 

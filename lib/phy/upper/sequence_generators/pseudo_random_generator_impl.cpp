@@ -243,8 +243,14 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
 
     uint8_t input_word = in.extract(i_bit, word_size);
 
+    // Mask the LSB of the sequence.
+    uint32_t mask = mask_lsb_ones<uint32_t>(BITS_PER_BYTE);
+
+    // Shift to align the reversed sequence LSB with the remainder bits.
+    unsigned right_shift = BITS_PER_BYTE - word_size;
+
     // Calculate the output byte.
-    uint8_t output_word = input_word ^ reverse_byte(static_cast<uint8_t>(c & mask_lsb_ones<uint32_t>(BITS_PER_BYTE)));
+    uint8_t output_word = input_word ^ (reverse_byte(static_cast<uint8_t>(c & mask)) >> right_shift);
 
     // Insert the output byte.
     out.insert(output_word, i_bit, word_size);

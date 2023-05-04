@@ -24,6 +24,7 @@
 
 #include "sdap_session_logger.h"
 #include "srsran/sdap/sdap.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -32,8 +33,11 @@ namespace srs_cu_up {
 class sdap_entity_tx_impl : public sdap_tx_sdu_handler
 {
 public:
-  sdap_entity_tx_impl(uint32_t ue_index, pdu_session_id_t sid, sdap_tx_pdu_notifier& pdu_notifier_) :
-    logger("SDAP", {ue_index, sid, "DL"}), pdu_notifier(pdu_notifier_)
+  sdap_entity_tx_impl(uint32_t              ue_index,
+                      pdu_session_id_t      sid,
+                      unique_timer&         ue_inactivity_timer_,
+                      sdap_tx_pdu_notifier& pdu_notifier_) :
+    logger("SDAP", {ue_index, sid, "DL"}), ue_inactivity_timer(ue_inactivity_timer_), pdu_notifier(pdu_notifier_)
   {
   }
 
@@ -42,10 +46,12 @@ public:
     // pass through
     logger.log_debug("TX PDU. pdu_len={}", sdu.length());
     pdu_notifier.on_new_pdu(std::move(sdu));
+    ue_inactivity_timer.run();
   }
 
 private:
   sdap_session_logger   logger;
+  unique_timer&         ue_inactivity_timer;
   sdap_tx_pdu_notifier& pdu_notifier;
 };
 

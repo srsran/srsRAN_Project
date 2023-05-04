@@ -32,8 +32,9 @@ using namespace srs_du;
 std::unique_ptr<f1ap_interface> srsran::srs_du::create_f1ap(f1ap_message_notifier&      message_notifier,
                                                             f1ap_du_configurator&       du_mng,
                                                             task_executor&              ctrl_exec,
-                                                            du_high_ue_executor_mapper& ue_exec_mapper)
+                                                            du_high_ue_executor_mapper& ue_exec_mapper,
+                                                            f1ap_du_paging_notifier&    paging_notifier)
 {
-  auto f1ap_du = std::make_unique<f1ap_du_impl>(message_notifier, du_mng, ctrl_exec, ue_exec_mapper);
+  auto f1ap_du = std::make_unique<f1ap_du_impl>(message_notifier, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier);
   return f1ap_du;
 }

@@ -39,13 +39,17 @@ enum class fftw_plan_optimization : unsigned {
   /// Picks a sub-optimal plan quickly, using heuristics.
   fftw_estimate = FFTW_ESTIMATE,
   /// Finds an optimized FFT plan by computing several FFTs and measuring their execution time.
-  fftw_measure = FFTW_MEASURE
+  fftw_measure = FFTW_MEASURE,
+  /// Same as \ref fftw_measure but more exhaustive.
+  fftw_exhaustive = FFTW_EXHAUSTIVE
 };
 
 /// Describes the specific FFTW DFT parameters.
 struct dft_processor_fftw_configuration {
   /// FFTW plan optimization flag, used for DFT plan creation.
   fftw_plan_optimization optimization_flag;
+  /// FFTW plan creation maximum duration in seconds. Set to zero or lower for infinite.
+  double plan_creation_timeout_s;
   /// Set to true to avoid loading the FFTW wisdom from a file.
   bool avoid_wisdom;
   /// FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.

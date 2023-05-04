@@ -34,7 +34,7 @@ static std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
              "Format={}; RootSequenceIndex={}; PreambleIndex={}; RestrictedSet={}; ZeroCorrelationZone={};",
-             static_cast<unsigned>(test_case.config.format),
+             to_string(test_case.config.format),
              test_case.config.root_sequence_index,
              test_case.config.preamble_index,
              static_cast<unsigned>(test_case.config.restricted_set),

@@ -25,6 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <cmath>
@@ -101,7 +102,7 @@ void assert_choice_type(uint32_t val, uint32_t choice_id);
 template <typename Enumerated>
 void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
 {
-  if (srsran_unlikely(current_type.value != access_type)) {
+  if (SRSRAN_UNLIKELY(current_type.value != access_type)) {
     log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
               choice_type,
               Enumerated(access_type).to_string(),
@@ -1003,32 +1004,32 @@ using fixed_bitstring = bitstring<N, N, Ext, Al>;
 *********************/
 
 // packers/unpackers for fixed_length sequence-of
-template <class T, class ItemPacker>
-SRSASN_CODE pack_fixed_seq_of(bit_ref& bref, const T* item_array, uint32_t nof_items, ItemPacker packer)
+template <class ArrayType, class ItemPacker>
+SRSASN_CODE pack_fixed_seq_of(bit_ref& bref, const ArrayType& item_array, uint32_t nof_items, ItemPacker packer)
 {
   for (uint32_t i = 0; i < nof_items; ++i) {
     HANDLE_CODE(packer.pack(bref, item_array[i]));
   }
   return SRSASN_SUCCESS;
 }
-template <class T>
-SRSASN_CODE pack_fixed_seq_of(bit_ref& bref, const T* item_array, uint32_t nof_items)
+template <class ArrayType>
+SRSASN_CODE pack_fixed_seq_of(bit_ref& bref, const ArrayType& item_array, uint32_t nof_items)
 {
   for (uint32_t i = 0; i < nof_items; ++i) {
     HANDLE_CODE(item_array[i].pack(bref));
   }
   return SRSASN_SUCCESS;
 }
-template <class T, class ItemUnpacker>
-SRSASN_CODE unpack_fixed_seq_of(T* item_array, cbit_ref& bref, uint32_t nof_items, ItemUnpacker unpacker)
+template <class ArrayType, class ItemUnpacker>
+SRSASN_CODE unpack_fixed_seq_of(ArrayType& item_array, cbit_ref& bref, uint32_t nof_items, ItemUnpacker unpacker)
 {
   for (uint32_t i = 0; i < nof_items; ++i) {
     HANDLE_CODE(unpacker.unpack(item_array[i], bref));
   }
   return SRSASN_SUCCESS;
 }
-template <class T>
-SRSASN_CODE unpack_fixed_seq_of(T* item_array, cbit_ref& bref, uint32_t nof_items)
+template <class ArrayType>
+SRSASN_CODE unpack_fixed_seq_of(ArrayType& item_array, cbit_ref& bref, uint32_t nof_items)
 {
   for (uint32_t i = 0; i < nof_items; ++i) {
     HANDLE_CODE(item_array[i].unpack(bref));
@@ -1041,12 +1042,12 @@ struct FixedSeqOfPacker {
   FixedSeqOfPacker(uint32_t nof_items_, ItemPacker packer_) : nof_items(nof_items_), packer(packer_) {}
   explicit FixedSeqOfPacker(uint32_t nof_items_) : nof_items(nof_items_), packer(Packer()) {}
   template <typename T>
-  SRSASN_CODE pack(bit_ref& bref, const T* topack)
+  SRSASN_CODE pack(bit_ref& bref, const T& topack)
   {
     return pack_fixed_seq_of(bref, topack, nof_items, packer);
   }
   template <typename T>
-  SRSASN_CODE unpack(T* tounpack, bit_ref& bref)
+  SRSASN_CODE unpack(T& tounpack, cbit_ref& bref)
   {
     return unpack_fixed_seq_of(tounpack, bref, nof_items, packer);
   }
@@ -1151,10 +1152,12 @@ SRSASN_CODE
 unpack(std::string& s, cbit_ref& bref, size_t lb, size_t ub, size_t alb, size_t aub, bool ext, bool aligned);
 } // namespace asn_string_utils
 
+constexpr uint32_t MAX_ASN_STRING_LENGTH = std::numeric_limits<uint32_t>::max();
+
 template <uint32_t LB,
           uint32_t UB,
           uint32_t ALB     = 0,
-          uint32_t AUB     = std::numeric_limits<uint32_t>::max(),
+          uint32_t AUB     = MAX_ASN_STRING_LENGTH,
           bool     ext     = false,
           bool     aligned = false>
 class asn_string
@@ -1173,8 +1176,15 @@ private:
   std::string str;
 };
 
-template <uint32_t ALB = 0, uint32_t AUB = std::numeric_limits<uint32_t>::max(), bool ext = false, bool aligned = false>
+template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
 using printable_string = asn_string<32, 122, ALB, AUB, ext, aligned>;
+
+// TODO: Support UTF8String.
+template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
+using utf8_string = asn_string<0, 255, ALB, AUB, ext, aligned>;
+
+template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
+using visible_string = asn_string<32, 126, ALB, AUB, ext, aligned>;
 
 /*********************
       copy_ptr
@@ -1247,6 +1257,19 @@ copy_ptr<typename std::decay<T>::type> make_copy_ptr(T&& t)
 {
   using T2 = typename std::decay<T>::type;
   return copy_ptr<T2>(new T2(std::forward<T>(t)));
+}
+
+/// Unpack a boolean value indicating whether an optional field is present.
+template <class T>
+SRSASN_CODE unpack_presence_flag(copy_ptr<T>& optional_field, cbit_ref& bref)
+{
+  bool        present_flag;
+  SRSASN_CODE ret = bref.unpack(present_flag, 1);
+  if (ret != SRSASN_SUCCESS) {
+    return ret;
+  }
+  optional_field.set_present(present_flag);
+  return ret;
 }
 
 /*********************
@@ -1425,6 +1448,16 @@ inline void to_json(json_writer& j, const asn1::dyn_array<T>& lst)
   j.end_array();
 }
 
+template <typename T, size_t N>
+inline void to_json(json_writer& j, const std::array<T, N>& lst)
+{
+  j.start_array();
+  for (const auto& o : lst) {
+    to_json(j, o);
+  }
+  j.end_array();
+}
+
 inline void to_json(json_writer& j, int64_t number)
 {
   j.write_int(number);
@@ -1568,6 +1601,85 @@ struct setup_release_c {
 private:
   types type_;
   T     c;
+};
+
+template <typename T, size_t N>
+struct setup_release_c<std::array<T, N>> {
+  using types_opts = setup_release_opts;
+  using types      = setup_release_e;
+
+  // choice methods
+  setup_release_c() = default;
+  void        set(typename types::options e = types::nulltype) { type_ = e; }
+  types       type() const { return type_; }
+  SRSASN_CODE pack(bit_ref& bref) const
+  {
+    type_.pack(bref);
+    switch (type_) {
+      case types::release:
+        break;
+      case types::setup:
+        HANDLE_CODE(pack_fixed_seq_of(bref, c, N));
+        break;
+      default:
+        log_invalid_choice_id(type_, "setup_release_c");
+        return SRSASN_ERROR_ENCODE_FAIL;
+    }
+    return SRSASN_SUCCESS;
+  }
+  SRSASN_CODE unpack(cbit_ref& bref)
+  {
+    types e;
+    e.unpack(bref);
+    set(e);
+    switch (type_) {
+      case types::release:
+        break;
+      case types::setup:
+        HANDLE_CODE(unpack_fixed_seq_of(c, bref, N));
+        break;
+      default:
+        log_invalid_choice_id(type_, "setup_release_c");
+        return SRSASN_ERROR_DECODE_FAIL;
+    }
+    return SRSASN_SUCCESS;
+  }
+  void to_json(json_writer& j) const
+  {
+    j.start_obj();
+    switch (type_) {
+      case types::release:
+        break;
+      case types::setup:
+        asn1::to_json(j, setup());
+        break;
+      default:
+        log_invalid_choice_id(type_, "setup_release_c");
+    }
+    j.end_obj();
+  }
+  // getters
+  bool              is_setup() const { return type_.value == setup_release_opts::setup; }
+  std::array<T, N>& setup()
+  {
+    assert_choice_type(types::setup, type_, "SetupRelease");
+    return c;
+  }
+  const std::array<T, N>& setup() const
+  {
+    assert_choice_type(types::setup, type_, "SetupRelease");
+    return c;
+  }
+  void              set_release() { set(types::release); }
+  std::array<T, N>& set_setup()
+  {
+    set(types::setup);
+    return c;
+  }
+
+private:
+  types            type_;
+  std::array<T, N> c;
 };
 
 // Criticality ::= ENUMERATED

@@ -72,7 +72,7 @@ io_broker_epoll::~io_broker_epoll()
   close(epoll_fd);
 }
 
-/// Function is executed in a loop until the thread is stopped.
+/// Function is executed in a loop until the thread is notify_stop.
 void io_broker_epoll::thread_loop()
 {
   // wait for event

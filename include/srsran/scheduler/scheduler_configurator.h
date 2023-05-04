@@ -60,11 +60,12 @@ struct sched_grid_resource {
 /// Cell Configuration Request.
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
-  du_cell_index_t cell_index;
-  uint8_t         nof_beams;     // (0..64)
-  uint8_t         nof_layers;    // (0..8)
-  uint8_t         nof_ant_ports; // (0..64)
-  pci_t           pci;
+  du_cell_index_t       cell_index;
+  du_cell_group_index_t cell_group_index;
+  uint8_t               nof_beams;     // (0..64)
+  uint8_t               nof_layers;    // (0..8)
+  uint8_t               nof_ant_ports; // (0..64)
+  pci_t                 pci;
 
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;

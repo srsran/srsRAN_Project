@@ -23,7 +23,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/frequency_range.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/slot_point.h"
 #include <cstdint>
 
@@ -39,7 +39,7 @@ namespace srsran {
 /// The PRACH transmission occasions are in the system frames \f$n_{SFN}\f$ that satisfy \f$n_{SFN} \bmod x = y\f$.
 struct prach_configuration {
   /// Preamble format (see [here](\ref preamble_format) for more information).
-  preamble_format format;
+  prach_format_type format;
   /// SFN period, \f$x\f$.
   unsigned x;
   /// SFN offset \f$y\f$.
@@ -58,7 +58,7 @@ struct prach_configuration {
 
 /// Reserved PRACH configuration. Indicates the configuration parameters are invalid.
 static const prach_configuration PRACH_CONFIG_RESERVED =
-    {preamble_format::OTHER, UINT32_MAX, UINT32_MAX, {}, 0, 0, 0, 0};
+    {prach_format_type::invalid, UINT32_MAX, UINT32_MAX, {}, 0, 0, 0, 0};
 
 /// \brief Gets a PRACH configuration.
 ///

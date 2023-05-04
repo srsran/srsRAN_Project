@@ -352,6 +352,11 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
                                                                            const search_space_configuration& ss_cfg,
                                                                            aggregation_level                 aggr_lvl)
 {
+  if (not is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
+    // PDCCH monitoring is not active in this slot.
+    return nullptr;
+  }
+
   // Verify RNTI is unique.
   for (const pdcch_ul_information& pdcch : slot_alloc.result.dl.ul_pdcchs) {
     if (pdcch.ctx.rnti == rnti) {

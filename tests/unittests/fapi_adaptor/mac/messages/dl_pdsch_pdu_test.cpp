@@ -31,10 +31,11 @@ using namespace unittests;
 
 static void test_conversion_ok()
 {
-  sib_information pdu = build_valid_sib1_information_pdu();
+  sib_information pdu          = build_valid_sib1_information_pdu();
+  unsigned        nof_csi_pdus = 2;
 
   fapi::dl_pdsch_pdu fapi_pdu;
-  convert_pdsch_mac_to_fapi(fapi_pdu, pdu);
+  convert_pdsch_mac_to_fapi(fapi_pdu, pdu, nof_csi_pdus);
 
   // BWP params
   const bwp_configuration& bwp_cfg = *pdu.pdsch_cfg.bwp_cfg;
@@ -74,6 +75,13 @@ static void test_conversion_ok()
   TESTASSERT(fapi_pdu.vrb_to_prb_mapping == fapi::vrb_to_prb_mapping_type::non_interleaved);
   TESTASSERT_EQ(prb_cfg.prbs().start(), fapi_pdu.rb_start);
   TESTASSERT_EQ(prb_cfg.prbs().length(), fapi_pdu.rb_size);
+
+  // CSI-RS rm.
+  const static_vector<uint16_t, 16>& csi_rm = fapi_pdu.pdsch_maintenance_v3.csi_for_rm;
+  TESTASSERT_EQ(nof_csi_pdus, csi_rm.size());
+  for (unsigned i = 0; i != nof_csi_pdus; ++i) {
+    TESTASSERT_EQ(i, csi_rm[i]);
+  }
 }
 
 int main()

@@ -37,13 +37,10 @@ asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_
 
   asn1::f1ap::served_plmns_item_s served_plmn;
   served_plmn.plmn_id.from_string("00f110");
-  asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o> plmn_ext_container = {};
-  plmn_ext_container.set_item(ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST);
-  auto&                            tai_slice_support_list = plmn_ext_container.value().tai_slice_support_list();
   asn1::f1ap::slice_support_item_s slice_support_item;
   slice_support_item.snssai.sst.from_number(1);
-  tai_slice_support_list.push_back(slice_support_item);
-  served_plmn.ie_exts.push_back(plmn_ext_container);
+  served_plmn.ie_exts.tai_slice_support_list_present = true;
+  served_plmn.ie_exts.tai_slice_support_list->push_back(slice_support_item);
   served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();
@@ -210,34 +207,247 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap
   return ue_context_setup_failure;
 }
 
-cu_cp_ue_context_modification_request
-srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t                             ue_index,
-                                                            const std::initializer_list<drb_id_t>& drbs_to_add)
+cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t ue_index)
 {
   cu_cp_ue_context_modification_request msg;
 
-  msg.ue_index                         = ue_index;
-  msg.ue_aggregate_maximum_bit_rate_ul = 200000000;
+  msg.ue_index = ue_index;
 
-  for (drb_id_t drb_id : drbs_to_add) {
-    cu_cp_drb_setup_message drb_setup_msg{};
-    drb_setup_msg.drb_id                  = drb_id;
-    drb_setup_msg.rlc                     = srsran::rlc_mode::am;
-    drb_setup_msg.qos_info.is_dynamic_5qi = true;
-    drb_setup_msg.qos_info.five_qi        = 8;
-    drb_setup_msg.qos_info.prio_level_arp = 1;
+  // sp cell id
+  nr_cell_global_id_t sp_cell_id;
+  sp_cell_id.nci      = 12345678;
+  sp_cell_id.plmn_hex = "00f110";
+  msg.sp_cell_id      = sp_cell_id;
 
-    msg.cu_cp_drb_setup_msgs.emplace(drb_id, drb_setup_msg);
-  }
+  // serv cell idx
+  msg.serv_cell_idx = 1;
+
+  // sp cell ul cfg
+  msg.sp_cell_ul_cfg = "ul";
+
+  // drx cycle
+  cu_cp_drx_cycle drx_cycle;
+  drx_cycle.long_drx_cycle_len    = 5;
+  drx_cycle.short_drx_cycle_len   = 1;
+  drx_cycle.short_drx_cycle_timer = 10;
+  msg.drx_cycle                   = drx_cycle;
+
+  // cu to du to rrc info
+  cu_cp_cu_to_du_rrc_info cu_to_du_rrc_info;
+  cu_to_du_rrc_info.cg_cfg_info               = make_byte_buffer("deadbeef");
+  cu_to_du_rrc_info.ue_cap_rat_container_list = make_byte_buffer("deadbeef");
+  cu_to_du_rrc_info.meas_cfg                  = make_byte_buffer("deadbeef");
+  msg.cu_to_du_rrc_info                       = cu_to_du_rrc_info;
+
+  // tx action ind
+  msg.tx_action_ind = "stop";
+
+  // res coordination transfer container
+  msg.res_coordination_transfer_container = make_byte_buffer("deadbeef");
+
+  // rrc recfg complete ind
+  msg.rrc_recfg_complete_ind = "true";
+
+  // rrc container
+  msg.rrc_container = make_byte_buffer("deadbeef");
+
+  // scell to be setup mod list
+  cu_cp_scell_to_be_setup_mod_item scell_to_be_setup_mod_item;
+  scell_to_be_setup_mod_item.scell_id.nci      = 12345678;
+  scell_to_be_setup_mod_item.scell_id.plmn_hex = "00f110";
+  scell_to_be_setup_mod_item.scell_idx         = 1;
+  scell_to_be_setup_mod_item.scell_ul_cfg      = "ul";
+  msg.scell_to_be_setup_mod_list.push_back(scell_to_be_setup_mod_item);
+
+  // scell to be remd list
+  cu_cp_scell_to_be_remd_item scell_to_be_remd_item;
+  scell_to_be_remd_item.scell_id.nci      = 12345678;
+  scell_to_be_remd_item.scell_id.plmn_hex = "00f110";
+  msg.scell_to_be_remd_list.push_back(scell_to_be_remd_item);
+
+  // srbs to be setup mod list
+  cu_cp_srbs_to_be_setup_mod_item srbs_to_be_setup_mod_item;
+  srbs_to_be_setup_mod_item.srb_id   = int_to_srb_id(1);
+  srbs_to_be_setup_mod_item.dupl_ind = "true";
+  msg.srbs_to_be_setup_mod_list.emplace(int_to_srb_id(1), srbs_to_be_setup_mod_item);
+
+  // drbs to be setup mod list
+  cu_cp_drbs_to_be_setup_mod_item drbs_to_be_setup_mod_item;
+  drbs_to_be_setup_mod_item.drb_id = uint_to_drb_id(1);
+  // qos info
+
+  // drb qos
+  // qos flow level qos params
+  // qos characteristics
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                        = uint_to_five_qi(8);
+  non_dyn_5qi.qos_prio_level                                                 = 1;
+  non_dyn_5qi.averaging_win                                                  = 3;
+  non_dyn_5qi.max_data_burst_volume                                          = 1000;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+  // ng ran alloc retention prio
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp  = 1;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+
+  // gbr qos flow info
+  cu_cp_gbr_qos_info gbr_qos_info;
+  gbr_qos_info.max_flow_bit_rate_dl                       = 100000;
+  gbr_qos_info.max_flow_bit_rate_ul                       = 100000;
+  gbr_qos_info.guaranteed_flow_bit_rate_dl                = 100000;
+  gbr_qos_info.guaranteed_flow_bit_rate_ul                = 100000;
+  gbr_qos_info.max_packet_loss_rate_dl                    = 30;
+  gbr_qos_info.max_packet_loss_rate_ul                    = 30;
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
+
+  // reflective qos attribute
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute = "subject-to";
+
+  // s nssai
+  drbs_to_be_setup_mod_item.qos_info.s_nssai.sst = 1;
+  drbs_to_be_setup_mod_item.qos_info.s_nssai.sd  = 128;
+
+  // notif ctrl
+  drbs_to_be_setup_mod_item.qos_info.notif_ctrl = "active";
+
+  // flows mapped to drb list
+  cu_cp_flows_mapped_to_drb_item flows_mapped_to_drb_item;
+  flows_mapped_to_drb_item.qos_flow_id = uint_to_qos_flow_id(1);
+  // qos characteristics
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+  // ng ran alloc retention prio
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp = 1;
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
+      "shall-not-trigger-pre-emption";
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
+      "not-pre-emptable";
+  // gbr qos flow info
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.gbr_qos_info = gbr_qos_info;
+  // reflective qos attribute
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = "subject-to";
+
+  drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
+
+  // ul up tnl info to be setup list
+  up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
+  drbs_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+
+  // rlc mode
+  drbs_to_be_setup_mod_item.rlc_mod = rlc_mode::am;
+
+  // ul cfg
+  cu_cp_ul_cfg ul_cfg;
+  ul_cfg.ul_ue_cfg                 = "no-data";
+  drbs_to_be_setup_mod_item.ul_cfg = ul_cfg;
+
+  // dupl activation
+  drbs_to_be_setup_mod_item.dupl_activation = "active";
+
+  msg.drbs_to_be_setup_mod_list.emplace(uint_to_drb_id(1), drbs_to_be_setup_mod_item);
+
+  // drbs to be modified list
+  cu_cp_drbs_to_be_modified_item drbs_to_be_modified_item;
+
+  drbs_to_be_modified_item.drb_id = uint_to_drb_id(1);
+
+  // qos info
+  cu_cp_drb_info qos_info;
+  // drb qos
+  // qos flow level qos params
+  // qos characteristics
+  qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+  // ng ran alloc retention prio
+  qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp            = 1;
+  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_cap           = "shall-not-trigger-pre-emption";
+  qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+
+  // gbr qos flow info
+  qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
+
+  // reflective qos attribute
+  qos_info.drb_qos.reflective_qos_attribute = "subject-to";
+
+  // s nssai
+  qos_info.s_nssai.sst = 1;
+  qos_info.s_nssai.sd  = 128;
+
+  // notif ctrl
+  qos_info.notif_ctrl = "active";
+
+  // flows mapped to drb list
+  qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
+
+  // qos info
+  drbs_to_be_modified_item.qos_info = qos_info;
+
+  // ul up tnl info to be setup list
+  drbs_to_be_modified_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+
+  // ul cfg
+  drbs_to_be_modified_item.ul_cfg = ul_cfg;
+
+  msg.drbs_to_be_modified_list.emplace(uint_to_drb_id(1), drbs_to_be_modified_item);
+
+  // srbs to be released list
+  msg.srbs_to_be_released_list.push_back(int_to_srb_id(1));
+
+  // drbs to be released list
+  msg.drbs_to_be_released_list.push_back(uint_to_drb_id(1));
+
+  // inactivity monitoring request
+  msg.inactivity_monitoring_request = "true";
+
+  // rat freq prio info
+  cu_cp_rat_freq_prio_info rat_freq_prio_info;
+  rat_freq_prio_info.type               = "nGRAN";
+  rat_freq_prio_info.rat_freq_prio_info = 1;
+  msg.rat_freq_prio_info                = rat_freq_prio_info;
+
+  // drx cfg ind
+  msg.drx_cfg_ind = "release";
+
+  // rlc fail ind
+  cu_cp_rlc_fail_ind rlc_fail_ind;
+  rlc_fail_ind.assocated_lcid = lcid_t::LCID_SRB1;
+  msg.rlc_fail_ind            = rlc_fail_ind;
+
+  // ul tx direct current list info
+  msg.ul_tx_direct_current_list_info = make_byte_buffer("deadbeef");
+
+  // gnb du cfg query
+  msg.gnb_du_cfg_query = "true";
+
+  // gnb du ue ambr ul
+  msg.gnb_du_ue_ambr_ul = 200000000;
+
+  // execute dupl
+  msg.execute_dupl = "true";
+
+  // rrc delivery status request
+  msg.rrc_delivery_status_request = "true";
+
+  // res coordination transfer info
+  cu_cp_res_coordination_transfer_info res_coordination_transfer_info;
+  res_coordination_transfer_info.m_enb_cell_id = 12345678;
+  msg.res_coordination_transfer_info           = res_coordination_transfer_info;
+
+  // serving cell mo
+  msg.serving_cell_mo = 1;
+
+  // need for gap
+  msg.need_for_gap = "true";
+
+  // full cfg
+  msg.full_cfg = "full";
 
   return msg;
 }
 
-f1ap_message
-srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
-                                                             gnb_du_ue_f1ap_id_t                    du_ue_id,
-                                                             rnti_t                                 crnti,
-                                                             const std::initializer_list<drb_id_t>& drbs_added)
+f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                          gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                          rnti_t              crnti)
 {
   f1ap_message ue_context_modification_response = {};
 
@@ -249,12 +459,11 @@ srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t
   ue_context_mod_resp->gnb_du_ue_f1ap_id.value     = (unsigned)du_ue_id;
   ue_context_mod_resp->c_rnti_present              = true;
   ue_context_mod_resp->c_rnti.value                = (unsigned)crnti;
-  ue_context_mod_resp->drbs_setup_mod_list_present = drbs_added.size() > 0;
-  for (drb_id_t drb_id : drbs_added) {
-    ue_context_mod_resp->drbs_setup_mod_list.value.push_back({});
-    ue_context_mod_resp->drbs_setup_mod_list.value.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-    ue_context_mod_resp->drbs_setup_mod_list.value.back().value().drbs_setup_mod_item().drb_id = drb_id_to_uint(drb_id);
-  }
+  ue_context_mod_resp->drbs_setup_mod_list_present = true;
+
+  ue_context_mod_resp->drbs_setup_mod_list.value.push_back({});
+  ue_context_mod_resp->drbs_setup_mod_list.value.back().load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+  ue_context_mod_resp->drbs_setup_mod_list.value.back().value().drbs_setup_mod_item().drb_id = 1;
 
   return ue_context_modification_response;
 }
@@ -315,8 +524,8 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   cu_cp_recommended_cell_item recommended_cell_item;
 
   // add ngran cgi
-  recommended_cell_item.ngran_cgi.nci.packed = 12345678;
-  recommended_cell_item.ngran_cgi.plmn_hex   = "00f110";
+  recommended_cell_item.ngran_cgi.nci      = 12345678;
+  recommended_cell_item.ngran_cgi.plmn_hex = "00f110";
 
   // add time stayed in cell
   recommended_cell_item.time_stayed_in_cell = 5;

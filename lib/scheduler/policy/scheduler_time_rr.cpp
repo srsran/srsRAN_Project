@@ -48,9 +48,10 @@ du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
       // wrap-around
       it = ue_db.begin();
     }
-    if (alloc_ue(*it)) {
+    const ue& u = **it;
+    if (alloc_ue(u)) {
       if (first_alloc) {
-        next_ue_index = to_du_ue_index((unsigned)it->ue_index + 1U);
+        next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
         first_alloc   = false;
       }
       if (stop_cond()) {
@@ -76,7 +77,7 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
               if (lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] ==
                   rhs->nof_candidates[to_aggregation_level_index(agg_lvl)]) {
                 // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
-                // less as possible).
+                // little as possible).
                 return lhs->cs_id > rhs->cs_id;
               }
               return lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] >
@@ -107,11 +108,12 @@ static bool alloc_dl_ue(const ue&                    u,
   }
   // TODO: Set aggregation level based on link quality.
   const aggregation_level agg_lvl    = srsran::aggregation_level::n4;
-  slot_point              pdcch_slot = res_grid.get_pdcch_slot();
+  const slot_point        pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+
     if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
       // DL needs to be active for PDCCH in this slot.
       continue;
@@ -141,6 +143,19 @@ static bool alloc_dl_ue(const ue&                    u,
     }
 
     for (const search_space_configuration* ss_cfg : search_spaces) {
+      if (ss_cfg->id == 0) {
+        continue;
+      }
+
+      // The existence of the Coreset has been verified by the validator.
+      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
+
+      // Ensure there are enough symbols where to allocate the PDCCH.
+      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
+          res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot)) {
+        continue;
+      }
+
       const span<const pdsch_time_domain_resource_allocation> pdsch_list =
           ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
@@ -151,6 +166,10 @@ static bool alloc_dl_ue(const ue&                    u,
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
         }
+        // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
+        if (ss_cfg->cs_id != to_coreset_id(0)) {
+          bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
+        }
       }
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
@@ -159,6 +178,17 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
+        if (pdsch.symbols.stop() >
+            res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot + pdsch.k0)) {
+          // DL needs to be active for PDSCH in this slot.
+          continue;
+        }
+        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+        // the first transmission.
+        if (is_retx and pdsch.symbols.length() != h->last_alloc_params().nof_symbols) {
+          continue;
+        }
+
         const cell_slot_resource_grid& grid      = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
         const prb_bitmap               used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
 
@@ -214,7 +244,7 @@ static bool alloc_ul_ue(const ue&                    u,
   }
   // TODO: Set aggregation level based on link quality.
   const aggregation_level agg_lvl    = srsran::aggregation_level::n4;
-  slot_point              pdcch_slot = res_grid.get_pdcch_slot();
+  const slot_point        pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
@@ -237,14 +267,34 @@ static bool alloc_ul_ue(const ue&                    u,
     }
 
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
+      if (ss_cfg->id == to_search_space_id(0)) {
+        continue;
+      }
+
+      // The existence of the Coreset has been verified by the validator.
+      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
+      // Ensure the symbols where the PDCCH gets allocated are all DL.
+      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
+          cell_cfg_common.get_nof_dl_symbol_per_slot(res_grid.get_pdcch_slot())) {
+        continue;
+      }
+
       const span<const pusch_time_domain_resource_allocation> pusch_list =
           ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
-      bwp_configuration bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
+      const bwp_configuration bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
 
       // Search minimum k2 that corresponds to a UL slot.
       unsigned time_res = 0;
       for (; time_res != pusch_list.size(); ++time_res) {
-        if (cell_cfg_common.is_ul_enabled(pdcch_slot + pusch_list[time_res].k2)) {
+        const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;
+        const unsigned   start_ul_symbols =
+            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
+        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+        // the first transmission.
+        const bool sym_length_match_prev_grant_for_rext =
+            is_retx ? pusch_list[time_res].symbols.length() != h->last_tx_params().nof_symbols : true;
+        if (cell_cfg_common.is_ul_enabled(pusch_slot) and pusch_list[time_res].symbols.start() >= start_ul_symbols and
+            sym_length_match_prev_grant_for_rext) {
           // UL needs to be active for PUSCH in this slot.
           break;
         }
@@ -307,8 +357,8 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   };
   auto stop_iter = [&res_grid]() {
     // TODO: Account for different BWPs and cells.
-    du_cell_index_t cell_idx    = to_du_cell_index(0);
-    auto&           init_dl_bwp = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
+    const du_cell_index_t cell_idx    = to_du_cell_index(0);
+    const auto&           init_dl_bwp = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
     // If all RBs are occupied, stop iteration.
     return res_grid.get_pdsch_grid(cell_idx, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0)
         .used_crbs(init_dl_bwp.generic_params, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
@@ -327,8 +377,8 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
   };
   auto stop_iter = [&res_grid]() {
     // TODO: Account for different BWPs and cells.
-    du_cell_index_t cell_idx    = to_du_cell_index(0);
-    auto&           init_ul_bwp = res_grid.get_cell_cfg_common(cell_idx).ul_cfg_common.init_ul_bwp;
+    const du_cell_index_t cell_idx    = to_du_cell_index(0);
+    auto&                 init_ul_bwp = res_grid.get_cell_cfg_common(cell_idx).ul_cfg_common.init_ul_bwp;
     // If all RBs are occupied, stop iteration.
     return res_grid.get_pusch_grid(cell_idx, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2)
         .used_crbs(init_ul_bwp.generic_params, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)

@@ -99,7 +99,13 @@ std::string yaml_config_parser::to_config(const CLI::App* app, bool default_also
 
 std::vector<CLI::ConfigItem> yaml_config_parser::from_config(std::istream& input) const
 {
-  YAML::Node config = YAML::Load(input);
+  YAML::Node config;
+  try {
+    config = YAML::Load(input);
+  } catch (const YAML::ParserException& ex) {
+    throw CLI::FileError(std::string("Error parsing YAML configuration file: ") + ex.what());
+  }
+
   return from_config_impl(config);
 }
 

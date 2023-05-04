@@ -146,8 +146,8 @@ protected:
   scheduler_ue_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
   {
     scheduler_ue_expert_config cfg{};
-    cfg.fixed_dl_mcs.emplace(10);
-    cfg.fixed_ul_mcs.emplace(10);
+    cfg.dl_mcs             = {10, 10};
+    cfg.ul_mcs             = {10, 10};
     cfg.max_nof_harq_retxs = 4;
     cfg.max_msg4_mcs       = max_msg4_mcs_index;
     return cfg;
@@ -415,15 +415,15 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
 
   for (unsigned idx = 0; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
-    if (bench->cell_cfg.is_ul_enabled(current_slot)) {
-      // Check whether PUCCH/PDSCH is not scheduled in UL slots for any of the UEs.
+    if (not bench->cell_cfg.is_dl_enabled(current_slot)) {
+      // Check whether PDCCH/PDSCH is not scheduled in UL slots for any of the UEs.
       for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
         const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
         ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
         ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
       }
     }
-    if (bench->cell_cfg.is_dl_enabled(current_slot)) {
+    if (not bench->cell_cfg.is_ul_enabled(current_slot)) {
       // Check whether PUCCH HARQ is not scheduled in DL slots for any of the UEs.
       for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
         const auto& test_ue = get_ue(to_du_ue_index(ue_idx));

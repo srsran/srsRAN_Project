@@ -264,7 +264,6 @@ TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_rm_parameters_passes)
   std::vector<uint16_t> ssb_pdus(3, 1);
   std::vector<uint8_t>  prb_pdus(3, 1);
   std::vector<uint8_t>  lte_pdus(3, 1);
-  std::vector<uint16_t> csi(3, 1);
 
   uint16_t ssb_config = 10;
   uint16_t pdcch      = 12;
@@ -273,13 +272,25 @@ TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_rm_parameters_passes)
   unsigned lte_size   = 3;
 
   builder.set_maintenance_v3_rm_references_parameters(
-      {ssb_pdus}, ssb_config, prb_size, {prb_pdus}, pdcch, dci, lte_size, {lte_pdus}, {csi});
+      {ssb_pdus}, ssb_config, prb_size, {prb_pdus}, pdcch, dci, lte_size, {lte_pdus});
 
   ASSERT_EQ(ssb_config, pdu.pdsch_maintenance_v3.ssb_config_for_rate_matching);
   ASSERT_EQ(pdcch, pdu.pdsch_maintenance_v3.pdcch_pdu_index);
   ASSERT_EQ(dci, pdu.pdsch_maintenance_v3.dci_index);
   ASSERT_EQ(prb_size, pdu.pdsch_maintenance_v3.prb_sym_rm_pattern_bitmap_size_byref);
   ASSERT_EQ(lte_size, pdu.pdsch_maintenance_v3.lte_crs_rm_pattern_bitmap_size);
+}
+
+TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_csi_rm_parameters_passes)
+{
+  dl_pdsch_pdu         pdu;
+  dl_pdsch_pdu_builder builder(pdu);
+
+  static_vector<uint16_t, 16> csi = {0, 1, 2};
+
+  builder.set_maintenance_v3_csi_rm_references({csi});
+
+  ASSERT_EQ(csi, pdu.pdsch_maintenance_v3.csi_for_rm);
 }
 
 TEST(dl_pdsch_pdu_builder, valid_maintenance_v3_tx_power_info_parameters_passes)

@@ -130,7 +130,7 @@ public:
   void assert_entries(span<const expected_entry_t> expected_entries) const
   {
     // Make sure the number of elements match.
-    TESTASSERT_EQ(entries.size(), expected_entries.size());
+    TESTASSERT_EQ(expected_entries.size(), entries.size());
 
     // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {
@@ -158,7 +158,7 @@ public:
   void assert_entries(span<const expected_entry_t> expected_entries, float max_error) const
   {
     // Make sure the number of elements match.
-    TESTASSERT_EQ(entries.size(), expected_entries.size());
+    TESTASSERT_EQ(expected_entries.size(), entries.size());
 
     // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {

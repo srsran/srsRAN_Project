@@ -25,6 +25,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
 
@@ -189,11 +190,17 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_setup_request:
       handle_pdu_session_resource_setup_request(msg.value.pdu_session_res_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_release_cmd:
+      handle_pdu_session_resource_release_command(msg.value.pdu_session_res_release_cmd());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
     case ngap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging(msg.value.paging());
+      break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::error_ind:
+      handle_error_indication(msg.value.error_ind());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -277,12 +284,43 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // start routine
   task_sched.schedule_async_task(ue_index,
                                  launch_async<ngap_pdu_session_resource_setup_procedure>(
-                                     *ue, msg, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
+                                     msg, *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 
   // Handle optional parameters
   if (request->nas_pdu_present) {
     handle_nas_pdu(logger, request->nas_pdu.value, *ue);
   }
+}
+
+void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)
+{
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id.value));
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand", ue_index);
+    return;
+  }
+
+  logger.info("ue={} Received PduSessionResourceReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
+
+  // Handle optional NAS PDU
+  if (command->nas_pdu_present) {
+    byte_buffer nas_pdu;
+    nas_pdu.resize(command->nas_pdu.value.size());
+    std::copy(command->nas_pdu.value.begin(), command->nas_pdu.value.end(), nas_pdu.begin());
+    logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
+
+    ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
+  }
+
+  cu_cp_pdu_session_resource_release_command msg;
+  msg.ue_index = ue_index;
+  fill_cu_cp_pdu_session_resource_release_command(msg, command);
+
+  // start routine
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_pdu_session_resource_release_procedure>(
+                                     *ue, msg, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 }
 
 void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)
@@ -333,9 +371,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
-  // Remove NGAP UE
-  ue_manager.remove_ngap_ue(ue_index);
-
   logger.info("Sending UeContextReleaseComplete");
   ngap_notifier.on_new_message(ngap_msg);
 }
@@ -354,6 +389,33 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
   cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
+}
+
+void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
+{
+  ue_index_t ue_index = ue_index_t::invalid;
+  ngap_ue*   ue       = nullptr;
+  if (msg->amf_ue_ngap_id_present) {
+    ue_index = ue_manager.get_ue_index(uint_to_amf_ue_id(msg->amf_ue_ngap_id.value));
+    ue       = ue_manager.find_ngap_ue(ue_index);
+  } else if (msg->ran_ue_ngap_id_present) {
+    ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value));
+    ue       = ue_manager.find_ngap_ue(ue_index);
+  }
+
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping ErrorIndication", ue_index);
+    return;
+  } else {
+    std::string cause = "";
+    if (msg->cause_present) {
+      cause = asn1_cause_to_string(msg->cause.value);
+    }
+
+    logger.info("ue={} Received ErrorIndication (ran_ue_id={}) - cause {}", ue_index, ue->get_ran_ue_id(), cause);
+  }
+
+  // TODO: handle error indication
 }
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
@@ -376,6 +438,31 @@ void ngap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
   }
+}
+
+void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg)
+{
+  ngap_ue* ue = ue_manager.find_ngap_ue(msg.ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist", msg.ue_index);
+    return;
+  }
+
+  ngap_message ngap_msg;
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST);
+
+  auto& ue_context_release_request = ngap_msg.pdu.init_msg().value.ue_context_release_request();
+
+  ue_context_release_request->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ue_context_release_request->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(ue->get_amf_ue_id());
+
+  ue_context_release_request->cause.value.set_radio_network();
+  ue_context_release_request->cause.value.radio_network() =
+      asn1::ngap::cause_radio_network_opts::options::user_inactivity;
+
+  // Forward message to AMF
+  ngap_notifier.on_new_message(ngap_msg);
 }
 
 size_t ngap_impl::get_nof_ues() const

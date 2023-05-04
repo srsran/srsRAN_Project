@@ -22,5 +22,5 @@ add_subdirectory(modulation)
 add_subdirectory(processors)
 
 add_executable(lower_phy_test lower_phy_test.cpp)
-target_link_libraries(lower_phy_test srsran_lower_phy srslog)
+target_link_libraries(lower_phy_test srsran_lower_phy srslog gtest gtest_main)
 add_test(lower_phy_test lower_phy_test)

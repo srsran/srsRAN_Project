@@ -27,11 +27,12 @@ set(SOURCES
         unique_thread.cpp
         task_worker.cpp
         task_worker_pool.cpp
-        timers2.cpp
+        timers.cpp
         bit_encoding.cpp
         config_json.cpp
         config_yaml.cpp
-        signal_handler.cpp)
+        signal_handler.cpp
+        event_tracing.cpp)
 
 add_library(srsran_support STATIC ${SOURCES})
 target_link_libraries(srsran_support srsran_io_broker ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)

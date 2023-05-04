@@ -39,7 +39,7 @@ private:
     WAIT_DATA,
     /// Signals a stop to the asynchronous thread.
     WAIT_STOP,
-    /// Indicates it is stopped.
+    /// Indicates it is notify_stop.
     STOPPED
   };
 
@@ -96,7 +96,7 @@ public:
     }
   }
 
-  /// Waits for the asynchronous tasks notifies that has stopped.
+  /// Waits for the asynchronous tasks notifies that has notify_stop.
   void wait_stop()
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -105,7 +105,7 @@ public:
     }
   }
 
-  /// Notifies the asynchronous task has stopped.
+  /// Notifies the asynchronous task has notify_stop.
   void async_task_stopped()
   {
     std::unique_lock<std::mutex> lock(mutex);

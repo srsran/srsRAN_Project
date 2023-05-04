@@ -28,7 +28,10 @@ set(SOURCES
         ngap_nas_message_test.cpp
         ngap_ue_context_management_procedure_test.cpp
         ngap_pdu_session_resource_setup_procedure_test.cpp
-        ngap_paging_test.cpp)
+        ngap_pdu_session_resource_release_procedure_test.cpp
+        ngap_paging_test.cpp
+        ngap_error_indication_test.cpp
+        )
 
 add_executable(ngap_test ${SOURCES})
 target_include_directories(ngap_test PRIVATE ${CMAKE_SOURCE_DIR})

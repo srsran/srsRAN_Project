@@ -74,11 +74,13 @@ private:
   static void
   get_ch_data_re(channel_equalizer::re_list& data_re, const resource_grid_reader& grid, const configuration& config)
   {
-    srsran_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
-                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
+    // Prepare PRB active RE mask.
+    re_prb_mask active_re_per_prb      = ~re_prb_mask();
+    re_prb_mask active_re_per_prb_dmrs = ~config.dmrs_config_type.get_dmrs_prb_mask(config.nof_cdm_groups_without_data);
 
     // Prepare RE mask.
-    bounded_bitset<MAX_RB* NRE> re_mask = config.rb_mask.kronecker_product<NRE>(~re_prb_mask());
+    bounded_bitset<MAX_RB* NRE> re_mask      = config.rb_mask.kronecker_product<NRE>(active_re_per_prb);
+    bounded_bitset<MAX_RB* NRE> re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
 
     // Extract RE for each port and symbol.
     for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
@@ -88,6 +90,7 @@ private:
       for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
         // Skip data carrying DM-RS.
         if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
+          re_port_buffer = grid.get(re_port_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask_dmrs);
           continue;
         }
 
@@ -113,8 +116,11 @@ private:
                                     const channel_estimate&         channel_estimate,
                                     const configuration&            config)
   {
-    srsran_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
-                  "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
+    // Prepare PRB active RE mask.
+    re_prb_mask active_re_per_prb_dmrs = ~config.dmrs_config_type.get_dmrs_prb_mask(config.nof_cdm_groups_without_data);
+
+    // Prepare RE mask.
+    bounded_bitset<MAX_RB* NRE> re_mask_dmrs = config.rb_mask.kronecker_product<NRE>(active_re_per_prb_dmrs);
 
     // Number of subcarriers.
     unsigned nof_subcs = config.rb_mask.size() * NRE;
@@ -129,13 +135,21 @@ private:
                       i_symbol_end = config.start_symbol_index + config.nof_symbols;
              i_symbol != i_symbol_end;
              ++i_symbol) {
-          // Skip DM-RS estimates.
-          if (config.dmrs_symb_pos[i_symbol]) {
-            continue;
-          }
-
           // View of the channel estimation for an OFDM symbol.
           span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+
+          // Skip DM-RS estimates.
+          if (config.dmrs_symb_pos[i_symbol]) {
+            re_mask_dmrs.for_each(0, re_mask_dmrs.size(), [&symbol_estimates, &ch_port_buffer](unsigned i_re) {
+              // Copy RE.
+              ch_port_buffer.front() = symbol_estimates[i_re];
+
+              // Advance buffer.
+              ch_port_buffer = ch_port_buffer.last(ch_port_buffer.size() - 1);
+            });
+
+            continue;
+          }
 
           srsran_assert(symbol_estimates.size() == nof_subcs,
                         "Channel estimate symbol size (i.e. {}) does not match expected symbol size (i.e. {})",

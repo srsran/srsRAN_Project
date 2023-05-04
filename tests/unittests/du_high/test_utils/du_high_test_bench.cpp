@@ -34,6 +34,10 @@ static f1ap_message create_f1_setup_response()
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
   f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
+  auto& cell = f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value[0];
+  cell.load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+  cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_string("00f101");
+  cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_string("000000000000101111000110000101001110");
   return f1ap_msg;
 }
 
@@ -43,6 +47,30 @@ mac_rx_data_indication srsran::srs_du::create_ccch_message(slot_point sl_rx, rnt
       sl_rx,
       to_du_cell_index(0),
       {mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
+}
+
+bool srsran::srs_du::is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti)
+{
+  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+          msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER)) {
+    return false;
+  }
+  const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+  return rrcmsg->c_rnti->value == rnti;
+}
+
+bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& msg,
+                                                          gnb_du_ue_f1ap_id_t du_ue_id,
+                                                          gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  if (not(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
+          msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE)) {
+    return false;
+  }
+  const asn1::f1ap::ue_context_release_complete_s& resp =
+      msg.pdu.successful_outcome().value.ue_context_release_complete();
+  return (gnb_cu_ue_f1ap_id_t)resp->gnb_cu_ue_f1ap_id->value == cu_ue_id and
+         (gnb_du_ue_f1ap_id_t) resp->gnb_du_ue_f1ap_id->value == du_ue_id;
 }
 
 phy_cell_test_dummy::phy_cell_test_dummy(task_executor& exec_) : test_exec(exec_) {}
@@ -64,24 +92,26 @@ void phy_cell_test_dummy::on_new_uplink_scheduler_results(const mac_ul_sched_res
 
 void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
 {
-  test_exec.execute([this,
-                     dl_sched_res = cached_dl_res.has_value() ? *cached_dl_res->dl_res : dl_sched_result{},
-                     ul_sched_res = cached_ul_res.has_value() ? *cached_ul_res->ul_res : ul_sched_result{},
-                     dl_res_copy  = cached_dl_res,
-                     dl_data_copy = cached_dl_data,
-                     ul_res_copy  = cached_ul_res]() mutable {
-    last_dl_res  = dl_res_copy;
-    last_dl_data = dl_data_copy;
-    last_ul_res  = ul_res_copy;
-    if (last_dl_res.has_value()) {
-      last_dl_sched_res   = dl_sched_res;
-      last_dl_res->dl_res = &last_dl_sched_res;
-    }
-    if (last_ul_res.has_value()) {
-      last_ul_sched_res   = ul_sched_res;
-      last_ul_res->ul_res = &last_ul_sched_res;
-    }
-  });
+  bool result =
+      test_exec.execute([this,
+                         dl_sched_res = cached_dl_res.has_value() ? *cached_dl_res->dl_res : dl_sched_result{},
+                         ul_sched_res = cached_ul_res.has_value() ? *cached_ul_res->ul_res : ul_sched_result{},
+                         dl_res_copy  = cached_dl_res,
+                         dl_data_copy = cached_dl_data,
+                         ul_res_copy  = cached_ul_res]() mutable {
+        last_dl_res  = dl_res_copy;
+        last_dl_data = dl_data_copy;
+        last_ul_res  = ul_res_copy;
+        if (last_dl_res.has_value()) {
+          last_dl_sched_res   = dl_sched_res;
+          last_dl_res->dl_res = &last_dl_sched_res;
+        }
+        if (last_ul_res.has_value()) {
+          last_ul_sched_res   = ul_sched_res;
+          last_ul_res->ul_res = &last_ul_sched_res;
+        }
+      });
+  EXPECT_TRUE(result);
   cached_dl_res  = {};
   cached_dl_data = {};
   cached_ul_res  = {};
@@ -106,10 +136,11 @@ void dummy_f1ap_tx_pdu_notifier::on_new_message(const f1ap_message& msg)
   }
 
   // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-  test_exec.execute([this, msg]() {
+  bool result = test_exec.execute([this, msg]() {
     logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-    last_f1ap_msg = msg;
+    last_f1ap_msgs.push_back(msg);
   });
+  EXPECT_TRUE(result);
 }
 
 static void init_loggers()
@@ -127,7 +158,7 @@ static void init_loggers()
 du_high_test_bench::du_high_test_bench() :
   cu_notifier(workers.test_worker),
   phy(workers.test_worker),
-  du_obj([this]() {
+  du_high_cfg([this]() {
     init_loggers();
 
     du_high_configuration cfg{};
@@ -143,6 +174,7 @@ du_high_test_bench::du_high_test_bench() :
 
     return cfg;
   }()),
+  du_obj(du_high_cfg),
   next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
 {
   // Short-circuit the CU notifier to the F1AP-DU for automatic CU-CP responses.
@@ -152,8 +184,7 @@ du_high_test_bench::du_high_test_bench() :
   du_obj.start();
 
   // Ensure the result is saved in the notifier.
-  run_until(
-      [this]() { return cu_notifier.last_f1ap_msg.pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg; });
+  run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
 }
 
 du_high_test_bench::~du_high_test_bench()
@@ -176,16 +207,14 @@ bool du_high_test_bench::run_until(unique_function<bool()> condition)
 
 bool du_high_test_bench::add_ue(rnti_t rnti)
 {
-  cu_notifier.last_f1ap_msg.pdu = {};
+  cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
   du_obj.get_pdu_handler(to_du_cell_index(0)).handle_rx_data_indication(create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
-  run_until([this]() { return cu_notifier.last_f1ap_msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg; });
-  const asn1::f1ap::init_ul_rrc_msg_transfer_s& msg =
-      cu_notifier.last_f1ap_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return msg->c_rnti->value == rnti;
+  run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
+  return is_init_ul_rrc_msg_transfer_valid(cu_notifier.last_f1ap_msgs.back(), rnti);
 }
 
 void du_high_test_bench::run_slot()

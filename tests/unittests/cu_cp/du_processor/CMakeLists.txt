@@ -24,7 +24,9 @@ target_link_libraries(du_processor_test_helpers cu_cp_test_helpers srsran_cu_cp 
 
 set(SOURCES
         du_processor_test.cpp
-        pdu_session_resource_setup_routine_test.cpp)
+        pdu_session_resource_setup_routine_test.cpp
+        pdu_session_resource_release_routine_test.cpp
+        )
 
 add_executable(du_processor_test ${SOURCES})
 target_include_directories(du_processor_test PRIVATE ${CMAKE_SOURCE_DIR})

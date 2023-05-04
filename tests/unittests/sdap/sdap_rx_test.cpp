@@ -22,6 +22,7 @@
 
 #include "lib/sdap/sdap_entity_rx_impl.h"
 #include "srsran/sdap/sdap.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -58,7 +59,9 @@ protected:
     tester = std::make_unique<sdap_rx_test_frame>();
 
     // Create SDAP RX entity
-    sdap = std::make_unique<sdap_entity_rx_impl>(7, pdu_session_id_t::min, *tester);
+    ue_inactivity_timer = timers.create_timer();
+    ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
+    sdap = std::make_unique<sdap_entity_rx_impl>(7, pdu_session_id_t::min, ue_inactivity_timer, *tester);
   }
 
   void TearDown() override
@@ -68,6 +71,10 @@ protected:
   }
 
   srslog::basic_logger&                logger = srslog::fetch_basic_logger("TEST", false);
+  manual_task_worker                   worker{64};
+  timer_manager                        timers_manager;
+  timer_factory                        timers{timers_manager, worker};
+  unique_timer                         ue_inactivity_timer;
   std::unique_ptr<sdap_rx_test_frame>  tester;
   std::unique_ptr<sdap_entity_rx_impl> sdap;
 };

@@ -48,6 +48,7 @@ protected:
   timer_manager                                         timers;
   dummy_cu_up_processor_cu_up_management_notifier       cu_cp_notifier;
   dummy_e1ap_message_notifier                           e1ap_notifier;
+  dummy_e1ap_cu_cp_notifier                             e1ap_cu_cp_notif;
   std::unique_ptr<dummy_cu_up_processor_task_scheduler> task_sched;
   manual_task_worker                                    ctrl_worker{128};
   std::unique_ptr<cu_up_processor_interface>            cu_up_processor_obj;

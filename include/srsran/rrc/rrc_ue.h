@@ -31,7 +31,7 @@
 #include "srsran/rrc/rrc.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -111,7 +111,7 @@ public:
   virtual void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 struct srb_creation_message {
@@ -133,7 +133,7 @@ public:
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 /// Interface used by the RRC security mode procedure
@@ -149,7 +149,7 @@ public:
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
-  virtual void on_ue_delete_request() = 0;
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 
   /// \brief Setup security in the UE. This includes storing the K_gNB,
   /// the AS keys, and configuring the PDCP entity security on SRB1
@@ -262,6 +262,10 @@ public:
   virtual async_task<bool>
   handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 
+  /// \brief Initiate the UE capability transfer procedure.
+  virtual async_task<bool>
+  handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
+
   /// \brief Handle an RRC UE Release.
   virtual void handle_rrc_ue_release() = 0;
 };
@@ -283,17 +287,6 @@ public:
   virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
 };
 
-/// Handler to initialize a RRC Reconfiguration procedure.
-class rrc_ue_reconfiguration_handler
-{
-public:
-  virtual ~rrc_ue_reconfiguration_handler() = default;
-
-  /// \brief Start a RRC reconfiguration procedure.
-  /// \param[in] msg The procedure parameters.
-  virtual async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
-};
-
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
@@ -301,7 +294,6 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
-                         public rrc_ue_reconfiguration_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier
@@ -315,7 +307,6 @@ public:
   virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler()       = 0;
   virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
   virtual security::sec_as_config&              get_rrc_ue_secutity_config()               = 0;
 

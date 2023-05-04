@@ -34,7 +34,7 @@
 #include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
@@ -394,7 +394,7 @@ struct prach_occasion_info {
   /// Number of time-domain PRACH occasions (\f$N^{RAslot}_t\f$), as per TS38.211 Tables 6.3.3.2-[2-4].
   uint8_t nof_prach_occasions;
   /// RACH format information for the PRACH occasions.
-  preamble_format format;
+  prach_format_type format;
   /// Frequency domain occasion index \f$n \in \{0,...,M-1\}\f$, where \f$M\f$ is the higher-layer parameter msg1-FDM,
   /// which can take the values \f$\{1,2,4,8\}\f$. See TS38.211, sec 6.3.3.2. Possible values {0,...,7}.
   uint8_t index_fd_ra;

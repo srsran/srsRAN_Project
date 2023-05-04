@@ -30,7 +30,7 @@ namespace srsran {
 ///
 /// \param timer unique_timer object that is used to set the duration and timeout callback.
 /// \param duration_msec duration in msec until the timer gets triggered.
-/// \return awaitable object which returns true on resume if timer was stopped, and false if it expired.
+/// \return awaitable object which returns true on resume if timer was notify_stop, and false if it expired.
 template <typename UniqueTimer>
 auto async_wait_for(UniqueTimer&& timer, std::chrono::milliseconds duration_msec)
 {

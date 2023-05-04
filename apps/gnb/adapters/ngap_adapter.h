@@ -38,7 +38,7 @@ class ngap_network_adapter : public ngap_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(io_broker& broker_, ngap_pcap& pcap_) : broker(broker_), pcap(pcap_)
+  ngap_network_adapter(io_broker& broker_, dlt_pcap& pcap_) : broker(broker_), pcap(pcap_)
   {
     if (gateway_ctrl_handler != nullptr) {
       broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
@@ -117,7 +117,7 @@ private:
   }
 
   io_broker&                         broker;
-  ngap_pcap&                         pcap;
+  dlt_pcap&                          pcap;
   std::unique_ptr<ngap_asn1_packer>  packer;
   sctp_network_gateway_controller*   gateway_ctrl_handler = nullptr;
   sctp_network_gateway_data_handler* gateway_data_handler = nullptr;

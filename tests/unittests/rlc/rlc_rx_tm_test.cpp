@@ -56,18 +56,6 @@ protected:
     srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(-1);
 
-    init();
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  /// \brief Initializes fixture according to size sequence number size
-  void init()
-  {
     logger.info("Creating RLC Rx TM entity");
 
     // Create test frame
@@ -75,6 +63,12 @@ protected:
 
     // Create RLC AM TX entity
     rlc = std::make_unique<rlc_rx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);

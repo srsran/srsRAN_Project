@@ -237,6 +237,7 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
   }
   prev_tx_params.dci_cfg_type = dci_cfg_type;
   prev_tx_params.prbs         = pdsch.prbs;
+  prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)

@@ -31,13 +31,15 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                    const rlc_tx_um_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
-                                   rlc_tx_lower_layer_notifier&         lower_dn_) :
+                                   rlc_tx_lower_layer_notifier&         lower_dn_,
+                                   task_executor&                       pcell_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
-  head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length))
+  head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length)),
+  pcell_executor(pcell_executor_)
 {
   logger.log_info("RLC UM configured. {}", cfg);
 }
@@ -54,7 +56,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
                     sdu_.pdcp_sn,
                     sdu_queue);
     metrics.metrics_add_sdus(1, sdu_length);
-    handle_buffer_state_update(); // take lock
+    handle_changed_buffer_state();
   } else {
     logger.log_info("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu_.pdcp_sn, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
@@ -67,7 +69,7 @@ void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_sn)
   if (sdu_queue.discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard(1);
-    handle_buffer_state_update(); // take lock
+    handle_changed_buffer_state();
   } else {
     logger.log_info("Could not discard SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard_failure(1);
@@ -219,22 +221,23 @@ bool rlc_tx_um_entity::get_si_and_expected_header_size(uint32_t      so,
   return true;
 }
 
-// TS 38.322 v16.2.0 Sec 5.5
-uint32_t rlc_tx_um_entity::get_buffer_state()
+void rlc_tx_um_entity::handle_changed_buffer_state()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  return get_buffer_state_nolock();
+  if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
+    logger.log_debug("Triggering buffer state update to lower layer");
+    // Redirect handling of status to pcell_executor
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
+      logger.log_error("Failed to enqueue buffer state update");
+    }
+  } else {
+    logger.log_debug("Avoiding redundant buffer state update to lower layer");
+  }
 }
 
-void rlc_tx_um_entity::handle_buffer_state_update()
+void rlc_tx_um_entity::update_mac_buffer_state()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  handle_buffer_state_update_nolock();
-}
-
-void rlc_tx_um_entity::handle_buffer_state_update_nolock()
-{
-  unsigned bs = get_buffer_state_nolock();
+  pending_buffer_state.clear(std::memory_order_seq_cst);
+  unsigned bs = get_buffer_state();
   if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
@@ -247,8 +250,11 @@ void rlc_tx_um_entity::handle_buffer_state_update_nolock()
   prev_buffer_state = bs;
 }
 
-uint32_t rlc_tx_um_entity::get_buffer_state_nolock()
+// TS 38.322 v16.2.0 Sec 5.5
+uint32_t rlc_tx_um_entity::get_buffer_state()
 {
+  std::lock_guard<std::mutex> lock(mutex);
+
   // minimum bytes needed to tx all queued SDUs + each header
   uint32_t queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_len_full;
 

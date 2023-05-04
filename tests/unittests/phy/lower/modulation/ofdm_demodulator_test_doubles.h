@@ -31,20 +31,14 @@ namespace srsran {
 
 class ofdm_symbol_demodulator_spy : public ofdm_symbol_demodulator
 {
-private:
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> dist;
-  ofdm_demodulator_configuration        configuration;
-
+public:
   struct demodulate_entry {
     std::vector<cf_t>           input;
     const resource_grid_writer* grid;
     unsigned                    port_index;
     unsigned                    symbol_index;
   };
-  std::vector<demodulate_entry> demodulate_entries;
 
-public:
   ofdm_symbol_demodulator_spy(const ofdm_demodulator_configuration& config) :
     rgen(0), dist(-1, +1), configuration(config)
   {
@@ -76,14 +70,19 @@ public:
 
   void clear_demodulate_entries() { demodulate_entries.clear(); }
 
+  const ofdm_demodulator_configuration& get_configuration() const { return configuration; }
+
   const std::vector<demodulate_entry>& get_demodulate_entries() const { return demodulate_entries; }
+
+private:
+  std::mt19937                          rgen;
+  std::uniform_real_distribution<float> dist;
+  ofdm_demodulator_configuration        configuration;
+  std::vector<demodulate_entry>         demodulate_entries;
 };
 
 class ofdm_demodulator_factory_spy : public ofdm_demodulator_factory
 {
-private:
-  std::vector<ofdm_symbol_demodulator_spy*> demodulators;
-
 public:
   std::unique_ptr<ofdm_symbol_demodulator>
   create_ofdm_symbol_demodulator(const ofdm_demodulator_configuration& config) override
@@ -99,6 +98,9 @@ public:
   }
 
   std::vector<ofdm_symbol_demodulator_spy*>& get_demodulators() { return demodulators; };
+
+private:
+  std::vector<ofdm_symbol_demodulator_spy*> demodulators;
 };
 
 } // namespace srsran

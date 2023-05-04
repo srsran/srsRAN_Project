@@ -46,8 +46,12 @@ ue_creation_message generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_
 /// \return The dummy UE Context Release Command.
 cu_cp_ue_context_release_command generate_ue_context_release_command(ue_index_t ue_index);
 
-/// \brief Generate a dummy PDU Session Resource Setup message.
-cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup();
+/// \brief Generate a dummy PDU Session Resource Setup request.
+cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(unsigned num_pdu_sessions = 1,
+                                                                             unsigned num_qos_flows    = 1);
+
+/// \brief Generate a dummy PDU Session Resource Release Command.
+cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release();
 
 /// \brief Generate a dummy E1AP Bearer Context Setup Response.
 e1ap_bearer_context_setup_response generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,

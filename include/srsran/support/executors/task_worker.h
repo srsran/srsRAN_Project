@@ -22,35 +22,37 @@
 
 #pragma once
 
-#include "task_executor.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/compiler.h"
+#include "srsran/support/executors/task_executor.h"
 #include "srsran/support/unique_thread.h"
-#include <atomic>
-#include <condition_variable>
-#include <cstdint>
-#include <functional>
-#include <future>
-#include <memory>
-#include <mutex>
-#include <stack>
-#include <string>
-#include <vector>
 
 namespace srsran {
 
-/// Class used to create a single worker with an input task queue with a single reader
+/// \brief Single thread worker with a locking MPSC input task queue. This worker type is ideal for the cases where
+/// there is low contention between task producers.
 class task_worker
 {
   using task_t = unique_task;
 
 public:
-  task_worker(std::string                      thread_name_,
-              uint32_t                         queue_size,
-              bool                             start_postponed = false,
-              os_thread_realtime_priority      prio_           = os_thread_realtime_priority::no_realtime(),
-              const os_sched_affinity_bitmask& mask_           = {});
+  /// \brief Creates a task worker instance.
+  ///
+  /// \param thread_name Name of the thread instantiated by this task worker.
+  /// \param queue_size Number of pending tasks that this task worker can hold.
+  /// \param prio OS thread realtime priority.
+  /// \param mask OS scheduler thread affinity mask.
+  /// \param pop_wait_timeout Timeout for popping tasks from the task queue. By default, no timeout is set and
+  /// the task worker thread will stay blocked while the queue is empty. If a timeout is set, the wait for tasks to pop
+  /// will be a combination of busy and passive waiting. This may help offset some experienced delays associated with
+  /// using condition variables.
+  task_worker(std::string                      thread_name,
+              unsigned                         queue_size,
+              os_thread_realtime_priority      prio             = os_thread_realtime_priority::no_realtime(),
+              const os_sched_affinity_bitmask& mask             = {},
+              std::chrono::microseconds        pop_wait_timeout = std::chrono::microseconds{0});
   task_worker(const task_worker&)            = delete;
   task_worker(task_worker&&)                 = delete;
   task_worker& operator=(const task_worker&) = delete;
@@ -60,56 +62,38 @@ public:
   /// Stop task worker, if running.
   void stop();
 
-  /// Initialize task worker, if not yet running.
-  void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::no_realtime(),
-             const os_sched_affinity_bitmask& mask_ = {});
+  /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
+  /// \return true if task was successfully enqueued. False if task FIFO was full.
+  SRSRAN_NODISCARD bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)).has_value(); }
 
-  bool push_task(task_t&& task, bool log_on_failure = true)
-  {
-    auto ret = pending_tasks.try_push(std::move(task));
-    if (ret.is_error()) {
-      if (log_on_failure) {
-        logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
-                     worker_name,
-                     uint32_t(pending_tasks.max_size()));
-      }
-      return false;
-    }
-    return true;
-  }
-
+  /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
+  /// until the FIFO has space to enqueue the task.
   void push_task_blocking(task_t&& task)
   {
     auto ret = pending_tasks.push_blocking(std::move(task));
     if (ret.is_error()) {
-      logger.debug("Cannot push anymore tasks into the {} worker queue because it was closed", worker_name);
+      srslog::fetch_basic_logger("ALL").debug("Cannot push more tasks into the {} worker queue because it was closed",
+                                              t_handle.get_name());
       return;
     }
   }
 
   /// \brief Wait for all the currently enqueued tasks to complete.
-  void wait_pending_tasks()
-  {
-    std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
-    std::future<void>          fut = pkg_task.get_future();
-    push_task(std::move(pkg_task));
-    // blocks for enqueued task to complete.
-    fut.get();
-  }
+  void wait_pending_tasks();
 
-  uint32_t nof_pending_tasks() const { return pending_tasks.size(); }
+  /// Number of pending tasks. It requires locking mutex.
+  unsigned nof_pending_tasks() const { return pending_tasks.size(); }
 
+  /// Maximum number of pending tasks the task FIFO can hold.
+  unsigned max_pending_tasks() const { return pending_tasks.max_size(); }
+
+  /// Get worker thread id.
   std::thread::id get_id() const { return t_handle.get_id(); }
 
+  /// Get worker thread name.
+  const char* worker_name() const { return t_handle.get_name(); }
+
 private:
-  unique_thread make_thread();
-
-  // args
-  std::string                 worker_name;
-  os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
-  os_sched_affinity_bitmask   mask = {};
-  srslog::basic_logger&       logger;
-
   // Queue of tasks.
   srsran::blocking_queue<task_t> pending_tasks;
 
@@ -134,10 +118,21 @@ public:
       task();
       return true;
     }
-    return worker->push_task(std::move(task), report_on_failure);
+    return defer(std::move(task));
   }
 
-  bool defer(unique_task task) override { return worker->push_task(std::move(task), report_on_failure); }
+  bool defer(unique_task task) override
+  {
+    if (not worker->push_task(std::move(task))) {
+      if (report_on_failure) {
+        srslog::fetch_basic_logger("ALL").error("Cannot push more tasks into the {} worker queue. Maximum size is {}",
+                                                worker->worker_name(),
+                                                worker->max_pending_tasks());
+      }
+      return false;
+    }
+    return true;
+  }
 
 private:
   task_worker* worker            = nullptr;

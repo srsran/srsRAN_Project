@@ -48,5 +48,21 @@ private:
   cu_up_processor_e1ap_interface* cu_up_e1ap_handler = nullptr;
 };
 
+/// Adapter between E1AP and CU-CP
+class e1ap_cu_cp_adapter : public e1ap_cu_cp_notifier
+{
+public:
+  void connect_cu_cp(cu_cp_e1ap_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
+
+  void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "E1AP handler must not be nullptr");
+    cu_cp_handler->handle_bearer_context_inactivity_notification(msg);
+  }
+
+private:
+  cu_cp_e1ap_handler* cu_cp_handler = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran

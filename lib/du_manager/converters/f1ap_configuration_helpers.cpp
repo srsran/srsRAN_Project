@@ -24,6 +24,7 @@
 #include "asn1_cell_group_config_helpers.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -230,22 +231,25 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
         }
       } break;
       case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
-          scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT: {
-        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
-                                    .scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
-        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
-          first_pmo_of_po.push_back(v);
-        }
-      } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneEighthT_scs60khzOneSixteenthT: {
+          scs480khzOneT_scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT: {
         auto& first_pmo_of_po =
-            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                .scs480_kh_zone_t_scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneSixteenthT: {
-        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_sixteenth_t();
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
+          scs480khzHalfT_scs120khzOneEighthT_scs60khzOneSixteenthT: {
+        auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
+                                    .scs480_kh_zhalf_t_scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
+        for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
+          first_pmo_of_po.push_back(v);
+        }
+      } break;
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs480khzQuarterT_scs120khzOneSixteenthT: {
+        auto& first_pmo_of_po =
+            out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs480_kh_zquarter_t_scs120_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
@@ -332,12 +336,17 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   rach.rach_cfg_generic.pwr_ramp_step.value    = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
   bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
   srsran_assert(success, "Invalid ra-WindowSize");
+  if (rach_cfg.total_nof_ra_preambles.has_value()) {
+    rach.total_nof_ra_preambs_present = true;
+    rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles.value();
+    rach.total_nof_ra_preambs -= 1; // Account for zero-indexed ASN field.
+  }
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
-      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n64;
+      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n4;
   rach.ra_contention_resolution_timer.value =
       asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
-  if (rach_cfg.prach_root_seq_index_l839_present) {
+  if (rach_cfg.is_prach_root_seq_index_l839) {
     rach.prach_root_seq_idx.set_l839() = rach_cfg.prach_root_seq_index;
   } else {
     rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
@@ -480,21 +489,21 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   sib1.cell_sel_info.q_qual_min_present = true;
   sib1.cell_sel_info.q_qual_min         = -20;
 
-  sib1.cell_access_related_info.plmn_id_list.resize(1);
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
-  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0];
+  sib1.cell_access_related_info.plmn_id_info_list.resize(1);
+  sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);
+  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list[0];
   plmn.mcc_present = true;
-  plmn.mcc[0]      = du_cfg.plmn[0] - '0';
-  plmn.mcc[1]      = du_cfg.plmn[1] - '0';
-  plmn.mcc[2]      = du_cfg.plmn[2] - '0';
-  plmn.mnc.resize(du_cfg.plmn.size() == 5 ? 2 : 3);
-  for (unsigned i = 3; i < du_cfg.plmn.size(); ++i) {
-    plmn.mnc[i - 3] = du_cfg.plmn[i] - '0';
+  plmn.mcc[0]      = du_cfg.nr_cgi.plmn[0] - '0';
+  plmn.mcc[1]      = du_cfg.nr_cgi.plmn[1] - '0';
+  plmn.mcc[2]      = du_cfg.nr_cgi.plmn[2] - '0';
+  plmn.mnc.resize(du_cfg.nr_cgi.plmn.size() == 5 ? 2 : 3);
+  for (unsigned i = 3; i < du_cfg.nr_cgi.plmn.size(); ++i) {
+    plmn.mnc[i - 3] = du_cfg.nr_cgi.plmn[i] - '0';
   }
-  sib1.cell_access_related_info.plmn_id_list[0].tac_present = true;
-  sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(du_cfg.cell_id);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_reserved_for_oper.value =
+  sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;
+  sib1.cell_access_related_info.plmn_id_info_list[0].tac.from_number(du_cfg.tac);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
+  sib1.cell_access_related_info.plmn_id_info_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 
   sib1.conn_est_fail_ctrl_present                   = true;
@@ -568,8 +577,8 @@ void srsran::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
 
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg->pci;
-    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
-    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
+    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->nr_cgi.plmn));
+    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->nr_cgi.nci);
     f1ap_cell.served_cell_info.five_gs_tac_present = true;
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
 

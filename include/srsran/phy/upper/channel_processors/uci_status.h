@@ -27,7 +27,7 @@ namespace srsran {
 /// Labels for the UCI decoding/detection status, common for both PUCCH and PUSCH UCI.
 enum class uci_status {
   /// Unknown status.
-  unknown,
+  unknown = 0,
   /// \brief The UCI message is valid.
   ///
   /// Messages longer than 11 bits are considered as \c valid when the CRC has passed. For shorter messages, the \c

@@ -86,7 +86,7 @@ protected:
   }
 
   std::vector<du_cell_config>                                 cell_cfg_list;
-  std::map<uint8_t, du_qos_config>                            qos_cfg_list;
+  std::map<five_qi_t, du_qos_config>                          qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
   std::unique_ptr<du_ran_resource_manager>                    res_mng;
   slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES> ues;

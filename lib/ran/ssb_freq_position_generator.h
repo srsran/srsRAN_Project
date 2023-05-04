@@ -46,6 +46,10 @@ const double N_SIZE_SYNC_RASTER_2_HZ = 1440e3;
 const unsigned N_UB_SYNC_RASTER_1 = 2500;
 /// Upper-bound for \f$N\f$ within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned N_UB_SYNC_RASTER_2 = 14757;
+/// Lower-bound for GSCN within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
+const unsigned GSCN_LB_SYNC_RASTER_2 = 7499U;
+/// Lower-bound for GSCN for band n79 and bandwidth equal to or greater than 40MHz, as per Table 5.4.3.3-1, TS 38.104.
+const unsigned GSCN_LB_N_90_BW_40_MHZ = 8480U;
 
 /// Contains the parameters defining the SSB position within the band; returned by the DU config generator.
 struct ssb_freq_location {
@@ -64,7 +68,7 @@ class ssb_freq_position_generator
 {
 public:
   explicit ssb_freq_position_generator(unsigned           dl_arfcn,
-                                       nr_band            nr_band,
+                                       nr_band            nr_band_,
                                        unsigned           n_rbs_,
                                        subcarrier_spacing scs_common,
                                        subcarrier_spacing scs_ssb);
@@ -79,10 +83,16 @@ private:
   /// Finds the \f$M\f$ parameter of the sync raster so that the SSB subcarriers are aligned to those of the CRBs.
   unsigned find_M_raster();
   /// Get the SSB central frequency, or SS_ref, given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
-  double get_ss_ref_hz(unsigned N, unsigned M);
+  double get_ss_ref_hz(unsigned N, unsigned M) const;
+  /// Increase N_raster according to the raster step given by the band, as per Table 5.4.3.3-1, TS 38.104, ver 17.8.0.
+  void increase_N_raster();
+  /// Implements \ref get_next_ssb_location() for the specific case of bands n46, n96 and n102, which don't have a
+  /// standard raster.
+  ssb_freq_location get_next_ssb_location_special_raster();
 
   /// Parameters that are passed to the constructor.
   const unsigned dl_arfcn;
+  const nr_band  band;
   /// Transmission bandwidth configuration \f$N_{RB}\f$, as per Table 5.3.2-1, TS 38.104.
   const unsigned           n_rbs;
   const subcarrier_spacing scs_common;
@@ -106,6 +116,9 @@ private:
   unsigned N_raster;
   /// This is the \f$M\f$ parameter in the synchronization raster, as per Table 5.4.3.1-1, TS 38.104.
   unsigned M_raster;
+  /// Some bands have a non-regular set of GSCN values for the synchronization raster. This index keeps track of what
+  /// GSCN value has been used to generate the latest SSB frequency location.
+  size_t gscn_raster_idx;
 };
 
 } // namespace srsran

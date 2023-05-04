@@ -31,6 +31,7 @@ using namespace srsran;
 
 cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
   cell_index(msg.cell_index),
+  cell_group_index(msg.cell_group_index),
   pci(msg.pci),
   nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),
   nof_ul_prbs(get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),
@@ -46,16 +47,23 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),
+  band(msg.dl_carrier.band),
   L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn))
 {
   if (tdd_cfg_common.has_value()) {
     // Cache list of DL and UL slots in case of TDD
-    unsigned tdd_period_slots = nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common);
-    dl_enabled_slot_lst.resize(tdd_period_slots);
-    ul_enabled_slot_lst.resize(tdd_period_slots);
-    for (unsigned slot_period_idx = 0; slot_period_idx < dl_enabled_slot_lst.size(); ++slot_period_idx) {
-      dl_enabled_slot_lst[slot_period_idx] = has_active_tdd_dl_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
-      ul_enabled_slot_lst[slot_period_idx] = has_active_tdd_ul_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
+    const unsigned tdd_period_slots = nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common);
+    dl_symbols_per_slot_lst.resize(tdd_period_slots);
+    ul_symbols_per_slot_lst.resize(tdd_period_slots);
+    for (unsigned slot_period_idx = 0; slot_period_idx < dl_symbols_per_slot_lst.size(); ++slot_period_idx) {
+      dl_symbols_per_slot_lst[slot_period_idx] =
+          get_active_tdd_dl_symbols(
+              *msg.tdd_ul_dl_cfg_common, slot_period_idx, dl_cfg_common.init_dl_bwp.generic_params.cp_extended)
+              .length();
+      ul_symbols_per_slot_lst[slot_period_idx] =
+          get_active_tdd_ul_symbols(
+              *msg.tdd_ul_dl_cfg_common, slot_period_idx, ul_cfg_common.init_ul_bwp.generic_params.cp_extended)
+              .length();
     }
   }
 }

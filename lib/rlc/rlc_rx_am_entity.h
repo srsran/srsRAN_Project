@@ -27,7 +27,7 @@
 #include "rlc_am_window.h"
 #include "rlc_rx_entity.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <set>
 

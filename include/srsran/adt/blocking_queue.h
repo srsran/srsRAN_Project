@@ -45,7 +45,15 @@ class base_blocking_queue
 {
   using T = typename RingBuffer::value_type;
 
+  using blocking_tag     = std::true_type;
+  using non_blocking_tag = std::false_type;
+  using wait_for_tag     = std::chrono::microseconds;
+  using wait_until_tag   = std::chrono::steady_clock::time_point;
+
 public:
+  /// Possible outcomes for pop operation.
+  enum class result { failed, success, timeout };
+
   /// \brief Creates a blocking_queue.
   /// \param on_push_func Callable to be called on every inserted element.
   /// \param on_pop_func Callable to be called on every popped element.
@@ -59,7 +67,8 @@ public:
   base_blocking_queue& operator=(const base_blocking_queue&) = delete;
   base_blocking_queue& operator=(base_blocking_queue&&)      = delete;
 
-  /// \brief Sets queue state to "stopped" and awake any threads currently blocked waiting (either pushing or popping).
+  /// \brief Sets queue state to "notify_stop" and awake any threads currently blocked waiting (either pushing or
+  /// popping).
   void stop()
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -83,19 +92,19 @@ public:
 
   /// \brief Try to push new element to queue.
   /// \return If the queue is full or inactive, returns false. Otherwise, it returns true.
-  bool try_push(const T& t) { return push_(t, false); }
+  bool try_push(const T& t) { return push_(t, non_blocking_tag{}); }
 
   /// \brief Try to push new r-value element to queue.
   /// \return If the queue is full or inactive, returns error type storing the element that failed to be pushed.
   /// Otherwise, it returns success type.
-  error_type<T> try_push(T&& t) { return push_(std::move(t), false); }
+  error_type<T> try_push(T&& t) { return push_(std::move(t), non_blocking_tag{}); }
 
   /// \brief Tries to push all elements in a range into the queue.
   /// \return Returns number of inserted elements.
   template <typename It>
   unsigned try_push(It b, It e)
   {
-    return push_(b, e, false);
+    return push_(b, e, non_blocking_tag{});
   }
 
   /// \brief Tries to push all elements in a span into the queue.
@@ -105,13 +114,13 @@ public:
   /// \brief Pushes an element into the queue. If the queue is full, this call *blocks* waiting for another thread
   /// to pop an element from the queue or set the queue as inactive.
   /// \return Returns true if element was pushed. False, otherwise.
-  bool push_blocking(const T& t) { return push_(t, true); }
+  bool push_blocking(const T& t) { return push_(t, blocking_tag{}); }
 
   /// \brief Pushes an r-value element into the queue. If the queue is full, this call *blocks* waiting for another
   /// thread to pop an element from the queue or set the queue as inactive.
   /// \return If the queue is inactive, returns error type storing the element that failed to be pushed.
   /// Otherwise, it returns success type.
-  error_type<T> push_blocking(T&& t) { return push_(std::move(t), true); }
+  error_type<T> push_blocking(T&& t) { return push_(std::move(t), blocking_tag{}); }
 
   /// \brief Pushes all elements in a range into the queue. If the queue becomes full, this call *blocks* waiting
   /// for space to become available or the queue to become inactive.
@@ -119,7 +128,7 @@ public:
   template <typename It>
   unsigned push_blocking(It b, It e)
   {
-    return push_(b, e, true);
+    return push_(b, e, blocking_tag{});
   }
 
   /// \brief Pushes all elements in a span into the queue. If the queue becomes full, this call *blocks* waiting
@@ -129,14 +138,14 @@ public:
 
   /// \brief Tries to pop one object from the queue.
   /// \return If queue is empty or inactive, returns false. Otherwise, returns true.
-  bool try_pop(T& obj) { return pop_(obj, false); }
+  bool try_pop(T& obj) { return pop_(obj, non_blocking_tag{}) == result::success; }
 
   /// \brief Tries to pop a range of elements from the queue.
   /// \return Number of popped elements.
   template <typename It>
   unsigned try_pop(It b, It e)
   {
-    return pop_(b, e, false);
+    return pop_(b, e, non_blocking_tag{});
   }
 
   /// \brief Tries to pop a range of elements from the queue into a span.
@@ -148,10 +157,10 @@ public:
   /// \return Popped element.
   T pop_blocking(bool* success = nullptr)
   {
-    T    obj{};
-    bool ret = pop_(obj, true);
+    T      obj{};
+    result ret = pop_(obj, blocking_tag{});
     if (success != nullptr) {
-      *success = ret;
+      *success = ret == result::success;
     }
     return obj;
   }
@@ -164,7 +173,7 @@ public:
   template <typename It>
   unsigned pop_blocking(It b, It e)
   {
-    return pop_(b, e, true);
+    return pop_(b, e, blocking_tag{});
   }
 
   /// \brief Pops a span of elements from the queue. If queue is empty, this call *blocks* waiting for another thread
@@ -172,14 +181,21 @@ public:
   /// \param[out] t Span of elements popped from the queue. The size of this span defines the maximum number of elements
   /// to be popped.
   /// \return Number of actually popped elements.
-  unsigned pop_blocking(span<T> t) { return pop_blocking(t.begin(), t.end()); }
+  unsigned pop_blocking(span<T> t) { return pop_blocking(t.begin(), t.end(), blocking_tag{}); }
+
+  /// \brief Pops an element from the queue. If the queue is empty, this call *blocks* waiting an element to be pushed
+  /// to the queue or that the queue becomes inactive. This wait is bounded by \c duration.
+  /// \param[out] obj Popped element.
+  /// \param[in] duration Maximum duration to wait for a pushed element.
+  /// \return True if element was successfully popped. False, otherwise.
+  result pop_wait_for(T& obj, std::chrono::microseconds duration) { return pop_(obj, duration); }
 
   /// \brief Pops an element from the queue. If the queue is empty, this call *blocks* waiting an element to be pushed
   /// to the queue or that the queue becomes inactive. This wait is bounded by \c until.
   /// \param[out] obj Popped element.
   /// \param[in] until Maximum time point to wait for a pushed element.
   /// \return True if element was successfully popped. False, otherwise.
-  bool pop_wait_until(T& obj, const std::chrono::steady_clock::time_point& until) { return pop_(obj, true, &until); }
+  result pop_wait_until(T& obj, std::chrono::steady_clock::time_point until) { return pop_(obj, until); }
 
   /// \brief Keeps popping and discarding elements until the \c stop_condition returns true.
   /// \param[in] stop_condition Callable with signature "bool(const T&)" that checks if the discarding can be halted.
@@ -187,14 +203,14 @@ public:
   template <typename StopCondition>
   optional<T> pop_and_discard_until(const StopCondition& stop_condition)
   {
-    return pop_until_(stop_condition);
+    return pop_and_discard_until_(stop_condition);
   }
 
   /// \brief Clear all elements of the queue.
   void clear()
   {
     T obj;
-    while (pop_(obj, false)) {
+    while (pop_(obj, non_blocking_tag{})) {
     }
   }
 
@@ -265,60 +281,58 @@ protected:
 
   ~base_blocking_queue() { stop(); }
 
-  bool push_is_possible(std::unique_lock<std::mutex>& lock, bool block_mode)
+  // Blocks producer while task queue is full.
+  bool wait_push_possible(std::unique_lock<std::mutex>& lock, blocking_tag /**/)
   {
-    if (not active) {
-      return false;
-    }
-    if (ring_buf.full()) {
-      if (not block_mode) {
-        return false;
-      }
+    if (active and ring_buf.full()) {
       nof_waiting++;
       while (ring_buf.full() and active) {
         cvar_full.wait(lock);
       }
       nof_waiting--;
     }
-    if (not active) {
-      return false;
-    }
-    return true;
+    return active;
   }
 
-  bool push_(const T& t, bool block_mode)
+  // Returns true if there is space in the task queue.
+  bool wait_push_possible(std::unique_lock<std::mutex>& /**/, non_blocking_tag /**/)
+  {
+    return active and not ring_buf.full();
+  }
+
+  template <typename BlockingMode>
+  bool push_(const T& t, const BlockingMode& mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (push_is_possible(lock, block_mode)) {
+    if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(t);
-      // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
-      // it seems that TSAN complains if notify comes after.
       cvar_empty.notify_one();
-      lock.unlock();
       return true;
     }
     return false;
   }
-  srsran::error_type<T> push_(T&& t, bool block_mode)
+
+  template <typename BlockingMode>
+  srsran::error_type<T> push_(T&& t, const BlockingMode& mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (push_is_possible(lock, block_mode)) {
+    if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(std::move(t));
       cvar_empty.notify_one();
-      lock.unlock();
       return {};
     }
     return std::move(t);
   }
-  template <typename It>
-  unsigned push_(It b, It e, bool block_mode)
+
+  template <typename It, typename BlockingMode>
+  unsigned push_(It b, It e, const BlockingMode& mode)
   {
     unsigned count = 0;
     for (auto it = b; it != e;) {
       std::unique_lock<std::mutex> lock(mutex);
-      if (not push_is_possible(lock, block_mode)) {
+      if (not wait_push_possible(lock, mode)) {
         return count;
       }
       unsigned n = ring_buf.try_push(it, e);
@@ -335,51 +349,62 @@ protected:
     return count;
   }
 
-  bool pop_is_possible(std::unique_lock<std::mutex>&                lock,
-                       bool                                         block,
-                       const std::chrono::steady_clock::time_point* until = nullptr)
+  // Blocks until there is space in the queue.
+  void wait_pop_possible_(std::unique_lock<std::mutex>& lock, const blocking_tag& /**/)
   {
-    if (not active) {
-      return false;
-    }
-    if (ring_buf.empty()) {
-      if (not block) {
-        return false;
-      }
-      nof_waiting++;
-      if (until == nullptr) {
-        cvar_empty.wait(lock, [this]() { return not ring_buf.empty() or not active; });
-      } else {
-        cvar_empty.wait_until(lock, *until, [this]() { return not ring_buf.empty() or not active; });
-      }
-      nof_waiting--;
-      if (ring_buf.empty()) {
-        // either queue got deactivated or there was a timeout
-        return false;
-      }
-    }
-    return true;
+    cvar_empty.wait(lock, [this]() { return not ring_buf.empty() or not active; });
   }
-  bool pop_(T& obj, bool block, const std::chrono::steady_clock::time_point* until = nullptr)
+
+  // Blocks until there is space or timeout.
+  void wait_pop_possible_(std::unique_lock<std::mutex>& lock, const wait_for_tag& duration)
+  {
+    cvar_empty.wait_for(lock, duration, [this]() { return not ring_buf.empty() or not active; });
+  }
+
+  // Blocks until there is space or timeout.
+  void wait_pop_possible_(std::unique_lock<std::mutex>& lock, const wait_until_tag& until)
+  {
+    cvar_empty.wait_until(lock, until, [this]() { return not ring_buf.empty() or not active; });
+  }
+
+  // Blocks until there is space in the queue.
+  bool wait_pop_possible(std::unique_lock<std::mutex>& /**/, const non_blocking_tag& /**/)
+  {
+    return active and not ring_buf.empty();
+  }
+
+  template <typename BlockingMode>
+  bool wait_pop_possible(std::unique_lock<std::mutex>& lock, const BlockingMode& mode)
+  {
+    if (active and ring_buf.empty()) {
+      nof_waiting++;
+      wait_pop_possible_(lock, mode);
+      nof_waiting--;
+    }
+    return active and not ring_buf.empty();
+  }
+
+  template <typename BlockingMode>
+  result pop_(T& obj, const BlockingMode& mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (pop_is_possible(lock, block, until)) {
+    if (wait_pop_possible(lock, mode)) {
       obj = std::move(ring_buf.top());
       pop_func(obj);
       ring_buf.pop();
       cvar_full.notify_one();
-      lock.unlock();
-      return true;
+      return result::success;
     }
-    return false;
+    return active ? result::timeout : result::failed;
   }
-  template <typename It>
-  unsigned pop_(It b, It e, bool block, const std::chrono::steady_clock::time_point* until = nullptr)
+
+  template <typename It, typename BlockingMode>
+  unsigned pop_(It b, It e, const BlockingMode& mode)
   {
     unsigned count = 0;
     for (auto it = b; it != e;) {
       std::unique_lock<std::mutex> lock(mutex);
-      if (not pop_is_possible(lock, block, until)) {
+      if (not wait_pop_possible(lock, mode)) {
         break;
       }
       unsigned n = ring_buf.pop_into(it, e);
@@ -391,17 +416,20 @@ protected:
         ++it;
       }
       count += n;
-      cvar_full.notify_one();
+      lock.unlock();
+      // notify all waiting producers because we may have emptied more than one slot of the queue.
+      cvar_full.notify_all();
     }
     return count;
   }
+
   template <typename StopCondition>
-  optional<T> pop_until_(const StopCondition& cond)
+  optional<T> pop_and_discard_until_(const StopCondition& cond)
   {
     optional<T>                  ret{};
     bool                         notify_needed = false;
     std::unique_lock<std::mutex> lock(mutex);
-    while (pop_is_possible(lock, false)) {
+    while (wait_pop_possible(lock, non_blocking_tag{})) {
       pop_func(ring_buf.top());
       notify_needed = true;
       if (cond(ring_buf.top())) {
@@ -413,7 +441,6 @@ protected:
     }
     if (notify_needed) {
       cvar_full.notify_one();
-      lock.unlock();
     }
     return ret;
   }

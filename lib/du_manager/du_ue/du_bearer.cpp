@@ -21,7 +21,9 @@
  */
 
 #include "du_bearer.h"
+#include "../converters/rlc_config_helpers.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/du_manager/du_manager_params.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -77,6 +79,83 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
+void du_drb_connector::disconnect_rx()
+{
+  // Disconnect F1-U <-> RLC interface.
+  rlc_rx_sdu_notif.disconnect();
+  f1u_rx_sdu_notif.disconnect();
+
+  // Disconnect MAC -> RLC interface.
+  mac_rx_sdu_notifier.disconnect();
+}
+
+void du_ue_drb::disconnect_rx()
+{
+  connector.disconnect_rx();
+}
+
+std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
+                                                      du_cell_index_t                     pcell_index,
+                                                      drb_id_t                            drb_id,
+                                                      lcid_t                              lcid,
+                                                      const rlc_config&                   rlc_cfg,
+                                                      span<const up_transport_layer_info> uluptnl_info_list,
+                                                      const du_manager_params&            du_params)
+{
+  srsran_assert(not is_srb(lcid), "Invalid DRB LCID={}", lcid);
+  srsran_assert(not uluptnl_info_list.empty(), "Invalid UP TNL Info list");
+
+  // > Setup DL UP TNL info.
+  // TODO: Handle more than one tnl. Set IP.
+  // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
+  std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{
+      transport_layer_address{"127.0.0.1"}, int_to_gtp_teid((ue_index << 5U) + (unsigned)drb_id)}};
+
+  // > Create DRB instance.
+  std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
+
+  // > Setup DRB config
+  drb->drb_id  = drb_id;
+  drb->lcid    = lcid;
+  drb->rlc_cfg = rlc_cfg;
+  drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
+  drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
+
+  // > Create F1-U bearer.
+  f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
+      ue_index,
+      drb->dluptnl_info_list[0].gtp_teid.value(),
+      drb->uluptnl_info_list[0].gtp_teid.value(),
+      drb->connector.f1u_rx_sdu_notif,
+      timer_factory{du_params.services.timers, du_params.services.ue_execs.executor(ue_index)});
+  if (f1u_drb == nullptr) {
+    // Failed to connect F1-U bearer to CU-UP.
+    return nullptr;
+  }
+  auto f1u_bearer_deleter = [f1u_gw  = &du_params.f1u.f1u_gw,
+                             dl_teid = drb->dluptnl_info_list[0].gtp_teid.value()](f1u_bearer* p) {
+    if (p != nullptr) {
+      f1u_gw->remove_du_bearer(dl_teid);
+    }
+  };
+  drb->drb_f1u = std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>>(f1u_drb, f1u_bearer_deleter);
+
+  // > Create RLC DRB entity.
+  drb->rlc_bearer =
+      create_rlc_entity(make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services));
+  if (drb->rlc_bearer == nullptr) {
+    // Failed to create RLC DRB entity.
+    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0].gtp_teid.value());
+    return nullptr;
+  }
+
+  // > Connect DRB F1-U with RLC, and RLC with MAC logical channel notifier.
+  drb->connector.connect(
+      ue_index, drb->drb_id, drb->lcid, *drb->drb_f1u, *drb->rlc_bearer, du_params.rlc.mac_ue_info_handler);
+
+  return drb;
+}
+
 du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg)
 {
   srsran_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
@@ -86,27 +165,25 @@ du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_
   return srbs_[srb_id];
 }
 
-du_ue_drb& du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg)
+void du_ue_bearer_manager::add_drb(std::unique_ptr<du_ue_drb> drb)
 {
-  srsran_assert(not drbs().contains(drb_id), "DRB-Id={} already exists", drb_id);
-  drbs_.emplace(drb_id);
-  drbs_[drb_id].drb_id  = drb_id;
-  drbs_[drb_id].lcid    = lcid;
-  drbs_[drb_id].rlc_cfg = rlc_cfg;
-  return drbs_[drb_id];
+  srsran_assert(drbs().count(drb->drb_id) == 0, "DRB-Id={} already exists", drb->drb_id);
+  drbs_.emplace(drb->drb_id, std::move(drb));
 }
 
-void du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
+std::unique_ptr<du_ue_drb> du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
 {
-  srsran_assert(drbs().contains(drb_id), "DRB-Id={} does not exist", drb_id);
+  srsran_assert(drbs().count(drb_id) > 0, "DRB-Id={} does not exist", drb_id);
+  std::unique_ptr<du_ue_drb> drb = std::move(drbs_.at(drb_id));
   drbs_.erase(drb_id);
+  return drb;
 }
 
 optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
 {
   static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
   for (const auto& drb : drbs()) {
-    used_lcids.push_back(drb.lcid);
+    used_lcids.push_back(drb.second->lcid);
   }
   std::sort(used_lcids.begin(), used_lcids.end());
   if (used_lcids.empty() or used_lcids[0] > LCID_MIN_DRB) {

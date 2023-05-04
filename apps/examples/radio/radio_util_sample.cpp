@@ -21,6 +21,9 @@
  */
 
 #include "radio_notifier_sample.h"
+#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/baseband_gateway_receiver.h"
+#include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/file_sink.h"
@@ -319,12 +322,6 @@ int main(int argc, char** argv)
   radio = factory->create(config, *async_task_executor, notification_handler);
   report_fatal_error_if_not(radio, "Failed to create radio.");
 
-  // Get transmitter data plane
-  baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter();
-
-  // Get receiver data plane
-  baseband_gateway_receiver& receiver = radio->get_baseband_gateway().get_receiver();
-
   // Set signal handler.
   signal(SIGINT, signal_handler);
   signal(SIGTERM, signal_handler);
@@ -346,9 +343,15 @@ int main(int argc, char** argv)
   while (!stop && sample_count < total_nof_samples) {
     // For each stream...
     for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
+      // Get transmitter data plane.
+      baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter(stream_id);
+
+      // Get receiver data plane.
+      baseband_gateway_receiver& receiver = radio->get_baseband_gateway().get_receiver(stream_id);
+
       // Receive baseband.
       static_vector<baseband_gateway_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);
-      rx_metadata[stream_id] = receiver.receive(rx_baseband_buffers[stream_id], stream_id);
+      rx_metadata[stream_id] = receiver.receive(rx_baseband_buffers[stream_id]);
 
       // Save file.
       if (stream_id == 0 && rx_file.is_open()) {
@@ -360,7 +363,7 @@ int main(int argc, char** argv)
       tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
 
       // Transmit baseband.
-      transmitter.transmit(stream_id, tx_metadata, tx_baseband_buffers[stream_id]);
+      transmitter.transmit(tx_baseband_buffers[stream_id], tx_metadata);
     }
 
     // Increment sample counter.

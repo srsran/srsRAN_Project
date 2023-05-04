@@ -31,6 +31,8 @@
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/event_tracing.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -153,8 +155,11 @@ public:
   f1u_dummy_bearer             bearer;
   srs_du::f1u_rx_sdu_notifier* du_notif = nullptr;
 
-  f1u_bearer*
-  create_du_bearer(uint32_t ue_index, uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
+  f1u_bearer* create_du_bearer(uint32_t                     ue_index,
+                               uint32_t                     dl_teid,
+                               uint32_t                     ul_teid,
+                               srs_du::f1u_rx_sdu_notifier& du_rx,
+                               timer_factory                timers) override
   {
     du_notif = &du_rx;
     return &bearer;
@@ -336,7 +341,7 @@ public:
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};
-  unsigned                           slot_count;
+  unsigned                           slot_count = 0;
   test_helpers::dummy_mac_pcap       pcap;
 
   byte_buffer pdcp_pdu;

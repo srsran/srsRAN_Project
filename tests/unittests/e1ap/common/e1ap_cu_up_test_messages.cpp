@@ -55,7 +55,9 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned i
       "a6ae39efbe0d424cd85f4a9c3aee0414");
   bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
   bearer_context_setup_req->serving_plmn.value.from_string("02f899");
-  bearer_context_setup_req->activity_notif_level.value = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->activity_notif_level.value  = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->ue_inactivity_timer_present = true;
+  bearer_context_setup_req->ue_inactivity_timer.value   = 60;
 
   bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
   bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
@@ -144,6 +146,17 @@ e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(un
   bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
   bearer_context_setup_req->sys_bearer_context_setup_request.value.set_e_utran_bearer_context_setup_request();
 
+  return bearer_context_setup_request;
+}
+
+e1ap_message
+srsran::srs_cu_up::generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned int cu_cp_ue_e1ap_id)
+{
+  e1ap_message bearer_context_setup_request = {};
+  bearer_context_setup_request              = generate_bearer_context_setup_request(cu_cp_ue_e1ap_id);
+  // Invalidate UE inactivity timer
+  auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
+  bearer_context_setup_req->ue_inactivity_timer_present = false;
   return bearer_context_setup_request;
 }
 

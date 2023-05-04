@@ -24,6 +24,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/gateways/addr_info.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/sockets.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -66,7 +67,15 @@ void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockad
 
   int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, dest_addr, dest_len);
   if (bytes_sent == -1) {
-    logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
+    std::string local_addr_str;
+    std::string dest_addr_str;
+    sockaddr_to_ip_str(dest_addr, dest_addr_str, logger);
+    sockaddr_to_ip_str((sockaddr*)&local_addr, local_addr_str, logger);
+    logger.error("Couldn't send {} B of data on UDP socket: local_ip={} dest_ip={} error=\"{}\"",
+                 pdu_span.size_bytes(),
+                 local_addr_str,
+                 dest_addr_str,
+                 strerror(errno));
   }
 
   logger.debug("PDU was sent successfully");
@@ -174,7 +183,9 @@ void udp_network_gateway_impl::receive()
   if (rx_bytes == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
   } else if (rx_bytes == -1 && errno == EAGAIN) {
-    logger.debug("Socket timeout reached");
+    if (!config.non_blocking_mode) {
+      logger.debug("Socket timeout reached");
+    }
   } else {
     logger.debug("Received {} bytes on UDP socket", rx_bytes);
     span<uint8_t> payload(tmp_mem.data(), rx_bytes);

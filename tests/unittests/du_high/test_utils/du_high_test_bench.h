@@ -25,6 +25,7 @@
 #include "du_high_worker_manager.h"
 #include "dummy_test_components.h"
 #include "lib/du_high/du_high.h"
+#include "srsran/f1ap/common/f1ap_types.h"
 
 namespace srsran {
 namespace srs_du {
@@ -68,13 +69,20 @@ public:
 
   void on_new_message(const f1ap_message& msg) override;
 
-  f1ap_message          last_f1ap_msg;
-  task_executor&        test_exec;
-  f1ap_message_handler* f1ap_du = nullptr;
-  srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
+  /// Last messages sent to the CU.
+  std::vector<f1ap_message> last_f1ap_msgs;
+  task_executor&            test_exec;
+  f1ap_message_handler*     f1ap_du = nullptr;
+  srslog::basic_logger&     logger  = srslog::fetch_basic_logger("TEST");
 };
 
 mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
+
+bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, rnti_t rnti);
+
+bool is_ue_context_release_complete_valid(const f1ap_message& msg,
+                                          gnb_du_ue_f1ap_id_t du_ue_id,
+                                          gnb_cu_ue_f1ap_id_t cu_ue_id);
 
 class du_high_test_bench
 {
@@ -94,7 +102,8 @@ public:
   mac_pcap_dummy             pcap;
   timer_manager              timers;
 
-  du_high du_obj;
+  du_high_configuration du_high_cfg;
+  du_high               du_obj;
 
   slot_point next_slot;
 };

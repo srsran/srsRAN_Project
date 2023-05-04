@@ -193,7 +193,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 
     // Replace 0-valued soft bits with -1.
     uint8x16_t zero_mask = vceqq_u8(soft_bits_u8, vdupq_n_u8(0));
-    soft_bits_u8         = vbslq_u8(zero_mask, vdupq_n_u8(127), soft_bits_u8);
+    soft_bits_u8         = vbslq_u8(zero_mask, vdupq_n_u8(255), soft_bits_u8);
 
     // Reverse 8 bytes in every double-word, MSBs of each byte will form a mask.
     soft_bits_u8 = vrev64q_u8(soft_bits_u8);

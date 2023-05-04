@@ -27,21 +27,6 @@
 
 using namespace srsran;
 
-// Define struct to pass parameters from test functions.
-struct cfg_gen_input_params {
-  unsigned           dl_arfcn;
-  nr_band            band;
-  unsigned           n_rbs;
-  subcarrier_spacing scs_common;
-  subcarrier_spacing scs_ssb;
-  uint8_t            ss0_idx;
-
-  optional<band_helper::ssb_coreset0_freq_location> generate_ssb_coreset0_location()
-  {
-    return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx);
-  }
-};
-
 // Helper that compares the SSB and Coreset0 parameters returned by du_config_generator.
 static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_freq_location& rhs)
 {
@@ -379,7 +364,57 @@ TEST(ssb_freq_position_generation_test, band_66)
   ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
 }
 
+// Test all possible SSB position within a given band returned by the config generator.
+TEST(ssb_freq_position_generation_test, band_46)
+{
+  unsigned           dl_arfcn   = 769332;
+  nr_band            nr_band    = nr_band::n46;
+  unsigned           n_rbs      = 51;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
+
+  ssb_freq_location expected{true, 8, 0};
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
+
+  // Verify there are no possible SSB positions within the band.
+  ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
+}
+
+// Test all possible SSB position within a given band returned by the config generator.
+TEST(ssb_freq_position_generation_test, band_46_bw_40mhz)
+{
+  unsigned           dl_arfcn   = 780668;
+  nr_band            nr_band    = nr_band::n46;
+  unsigned           n_rbs      = 106;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+
+  ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
+
+  ssb_freq_location expected{true, 6, 4};
+  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
+
+  expected.offset_to_point_A = 118;
+  expected.k_ssb             = 4;
+  test                       = cfg_generator.get_next_ssb_location();
+  ASSERT_TRUE(compare_ssb_freq_location(expected, test));
+  ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
+
+  // Verify there are no possible SSB positions within the band.
+  ASSERT_FALSE(cfg_generator.get_next_ssb_location().is_valid);
+}
+
 // ============= Test Generation of CORESET#0 index based on SSB and SearchSpace#0 Index. ==============
+
+// Define struct to pass parameters from test functions.
+
+namespace ssb_coreset0_gen {
 
 struct cset0_test_params {
   optional<unsigned> expected_cset0_idx;
@@ -401,6 +436,50 @@ struct cset0_test_params {
   }
 };
 
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const cset0_test_params& value, ::std::ostream* os)
+{
+  return;
+}
+
+struct cfg_gen_input_params {
+  unsigned           dl_arfcn;
+  nr_band            band;
+  unsigned           n_rbs;
+  subcarrier_spacing scs_common;
+  subcarrier_spacing scs_ssb;
+  uint8_t            ss0_idx;
+
+  optional<band_helper::ssb_coreset0_freq_location> generate_ssb_coreset0_location()
+  {
+    return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx);
+  }
+};
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const cfg_gen_input_params& value, ::std::ostream* os)
+{
+  return;
+}
+
+struct test_params {
+  optional<band_helper::ssb_coreset0_freq_location> expected_result;
+  cfg_gen_input_params                              input_params;
+};
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  return;
+}
+
+} // namespace ssb_coreset0_gen
+
+using namespace ssb_coreset0_gen;
+
 class coreset0_index_generation_test : public ::testing::TestWithParam<cset0_test_params>
 {};
 
@@ -413,24 +492,24 @@ TEST_P(coreset0_index_generation_test, coreset0_params_are_valid)
 
 using scs_t = subcarrier_spacing;
 
-INSTANTIATE_TEST_SUITE_P(
-    coreset0_index_suite,
-    coreset0_index_generation_test,
-    testing::Values( // clang-format off
+INSTANTIATE_TEST_SUITE_P(coreset0_index_suite,
+                         coreset0_index_generation_test,
+                         testing::Values( // clang-format off
 //            cset_idx0 |  band  | n_rb | scs_common |  scs_ssb   | OffPtA | k_ssb | ssb_symb | ss0_idx | cset0_nof_symb
   cset0_test_params{2,  nr_band::n3, 52, scs_t::kHz15, scs_t::kHz15,   5,      2,      2,         0,       {}},
   cset0_test_params{0,  nr_band::n7, 25, scs_t::kHz15, scs_t::kHz15,   0,      0,      2,         0,       {}},
   cset0_test_params{12, nr_band::n7, 106, scs_t::kHz15, scs_t::kHz15, 38,      6,      2,         0,       1}
-)); // clang-format on
+                                          // clang-format on
+                             ),
+                         [](const ::testing::TestParamInfo<coreset0_index_generation_test::ParamType>& info_) {
+                           return fmt::format("offset_pA_{}_and_kssb_{}",
+                                              info_.param.offset_to_point_A.to_uint(),
+                                              info_.param.k_ssb.to_uint());
+                         });
 
 /*
  *      =====    TEST GENERATION OF SSB AND CORESET0 POSITIONS WITHIN THE BAND    =====
  */
-
-struct test_params {
-  optional<band_helper::ssb_coreset0_freq_location> expected_result;
-  cfg_gen_input_params                              input_params;
-};
 
 class ssb_coreset0_param_generator_test : public ::testing::TestWithParam<test_params>
 {
@@ -464,7 +543,14 @@ INSTANTIATE_TEST_SUITE_P(
             cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
             band_helper::ssb_coreset0_freq_location{14, 18, 390730, 2, 0},
-            cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}}));
+            cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}}),
+    [](const ::testing::TestParamInfo<ssb_coreset0_param_generator_test::ParamType>& info_) {
+      return fmt::format("dl_arfcn_{}_n_rbs_{}_scs_common_{}_scs_ssb_{}",
+                         info_.param.input_params.dl_arfcn,
+                         info_.param.input_params.n_rbs,
+                         to_string(info_.param.input_params.scs_common),
+                         to_string(info_.param.input_params.scs_ssb));
+    });
 
 /*
  *      =====    TEST SSB IS WITHIN SYNC RASTER AND CORESET0 IS WITHIN THE BAND    =====
@@ -498,4 +584,11 @@ INSTANTIATE_TEST_SUITE_P(
         cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, 0},
         cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, 0},
         cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, 0},
-        cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, 0}));
+        cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, 0}),
+    [](const ::testing::TestParamInfo<ssb_coreset0_compatibility_with_raster_and_band::ParamType>& info_) {
+      return fmt::format("dl_arfcn_{}_n_rbs_{}_scs_common_{}_scs_ssb_{}",
+                         info_.param.dl_arfcn,
+                         info_.param.n_rbs,
+                         to_string(info_.param.scs_common),
+                         to_string(info_.param.scs_ssb));
+    });

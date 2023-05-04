@@ -176,7 +176,7 @@ public:
     ngap_init_ue_msg.establishment_cause.value =
         rrc_establishment_cause_to_ngap_rrcestablishment_cause(msg.establishment_cause).value;
 
-    ngap_init_ue_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci.packed);
+    ngap_init_ue_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci);
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_init_ue_msg.tac = msg.cell.tac;
 
@@ -191,7 +191,7 @@ public:
     ngap_ul_nas_msg.ue_index = msg.ue_index;
     ngap_ul_nas_msg.nas_pdu  = msg.nas_pdu.copy();
 
-    ngap_ul_nas_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci.packed);
+    ngap_ul_nas_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci);
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_ul_nas_msg.tac = msg.cell.tac;
 

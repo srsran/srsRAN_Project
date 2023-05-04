@@ -315,7 +315,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the handling of an paging message when a DU is not connected
-TEST_F(cu_cp_test, when_no_du_connection_not_finished_then_paging_is_not_sent_to_du)
+TEST_F(cu_cp_test, when_du_connection_not_finished_then_paging_is_not_sent_to_du)
 {
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
@@ -423,4 +423,116 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
   cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
 
   ASSERT_FALSE(check_paging_result());
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Inactivity Notification                                                          */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the handling of a ue level inactivity notification
+TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_release_request_is_sent)
+{
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response();
+  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Attach UE
+  {
+    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+    rnti_t              crnti    = to_rnti(0x4601);
+
+    // Inject Initial UL RRC message
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(init_ul_rrc_msg);
+
+    // Inject UL RRC message containing RRC Setup Complete
+    f1ap_message ul_rrc_msg =
+        generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
+    test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+    cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(ul_rrc_msg);
+
+    // check that UE has been added
+    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+  }
+
+  cu_cp_inactivity_notification inactivity_notification;
+  inactivity_notification.ue_index    = uint_to_ue_index(0);
+  inactivity_notification.ue_inactive = true;
+
+  cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
+
+  // check that the UE Context Release Request was sent to the AMF
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+  ASSERT_EQ(
+      ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.radio_network(),
+      asn1::ngap::cause_radio_network_opts::options::user_inactivity);
+}
+
+/// Test the handling of an inactivity notification with unsupported activity level
+TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_release_request_is_not_sent)
+{
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response();
+  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Attach UE
+  {
+    gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+    gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+    rnti_t              crnti    = to_rnti(0x4601);
+
+    // Inject Initial UL RRC message
+    f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(init_ul_rrc_msg);
+
+    // Inject UL RRC message containing RRC Setup Complete
+    f1ap_message ul_rrc_msg =
+        generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
+    test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+    cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(ul_rrc_msg);
+
+    // check that UE has been added
+    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+  }
+
+  cu_cp_inactivity_notification inactivity_notification;
+  inactivity_notification.ue_index    = uint_to_ue_index(0);
+  inactivity_notification.ue_inactive = false;
+
+  cu_cp_obj->handle_bearer_context_inactivity_notification(inactivity_notification);
+
+  // check that the UE Context Release Request was not sent to the AMF
+  ASSERT_NE(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
 }

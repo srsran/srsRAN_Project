@@ -323,7 +323,7 @@ prach_occasion_info unittests::build_valid_prach_occassion()
   prach.index_fd_ra          = 2;
   prach.nof_fd_ra            = 4;
   prach.nof_prach_occasions  = 5;
-  prach.format               = preamble_format(preamble_format::values::FORMAT1);
+  prach.format               = prach_format_type::one;
 
   return prach;
 }

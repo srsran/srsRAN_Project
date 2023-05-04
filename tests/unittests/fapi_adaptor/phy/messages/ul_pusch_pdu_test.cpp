@@ -28,7 +28,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
 
-TEST(FapiPhyULPUSCHAdaptorTest, ValidPDUPass)
+TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
 {
   fapi::ul_pusch_pdu fapi_pdu = build_valid_ul_pusch_pdu();
 

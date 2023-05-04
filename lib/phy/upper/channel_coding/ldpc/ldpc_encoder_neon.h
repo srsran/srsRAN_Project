@@ -26,7 +26,6 @@
 #pragma once
 
 #include "ldpc_encoder_impl.h"
-#include "neon_support.h"
 
 namespace srsran {
 
@@ -35,15 +34,6 @@ namespace srsran {
 class ldpc_encoder_neon : public ldpc_encoder_impl
 {
 private:
-  /// Maximum number of NEON vectors needed to represent a BG node.
-  static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
-
-  /// Maximum number of NEON vectors needed to represent a codeblock.
-  static constexpr unsigned MAX_BLK_SIZE_NEON = MAX_NODE_SIZE_NEON * ldpc::MAX_BG_N_FULL;
-
-  /// Maximum number of NEON vectors needed for the auxiliary buffer.
-  static constexpr unsigned MAX_AUX_SIZE_NEON = MAX_NODE_SIZE_NEON * ldpc::MAX_BG_M;
-
   void select_strategy() override;
   void load_input(span<const uint8_t> in) override;
   void preprocess_systematic_bits() override { (this->*systematic_bits)(); }
@@ -103,18 +93,19 @@ private:
   void ext_region_inner();
 
   /// Buffer containing the codeblock.
-  neon::neon_array<MAX_BLK_SIZE_NEON> codeblock;
-
-  /// Used portion of the codeblock buffer.
+  std::array<uint8_t, ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE> codeblock_buffer = {};
+  /// Length of the portion of the codeblock buffer actually used for the current configuration (as a number of NEON
+  /// registers).
   size_t codeblock_used_size = 0;
 
   /// Auxiliary buffer for storing chunks of codeblocks.
-  neon::neon_array<MAX_AUX_SIZE_NEON> auxiliary;
-  /// Used portion of the auxiliary buffer.
+  std::array<uint8_t, ldpc::MAX_BG_M* ldpc::MAX_LIFTING_SIZE> auxiliary_buffer = {};
+  /// Length of the portion of the auxiliary buffer actually used for the current configuration (as a number of NEON
+  /// registers).
   size_t auxiliary_used_size = 0;
 
   /// Auxiliary buffer for storing a single node during rotations.
-  neon::neon_array<MAX_NODE_SIZE_NEON> rotated_node;
+  std::array<uint8_t, ldpc::MAX_LIFTING_SIZE> rotated_node_buffer = {};
 
   /// Node size as a number of NEON vectors.
   unsigned node_size_neon = 0;

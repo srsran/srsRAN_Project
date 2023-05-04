@@ -21,6 +21,17 @@
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
+add_executable(pdsch_processor_benchmark pdsch_processor_benchmark.cpp)
+target_link_libraries(pdsch_processor_benchmark
+        srsran_phy_support
+        srsran_pusch_processor
+        srsran_channel_equalizer
+        srsran_channel_processors
+        srsran_sched
+        srslog
+        srsvec)
+add_test(pdsch_processor_benchmark pdsch_processor_benchmark -s -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min)
+
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
 target_link_libraries(pusch_processor_benchmark
         srsran_phy_support

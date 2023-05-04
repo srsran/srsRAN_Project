@@ -24,6 +24,7 @@
 
 #include "srsran/ran/cu_types.h"
 #include "srsran/sdap/sdap.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 /// This factory header file depends on the SDAP interfaces (see above include list). It is kept separate as clients of
@@ -36,6 +37,7 @@ namespace srs_cu_up {
 struct sdap_entity_creation_message {
   uint32_t              ue_index;
   pdu_session_id_t      pdu_session_id;
+  unique_timer&         ue_inactivity_timer;
   sdap_rx_sdu_notifier* rx_sdu_notifier;
   sdap_tx_pdu_notifier* tx_pdu_notifier;
 };

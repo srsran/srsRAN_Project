@@ -553,6 +553,7 @@ TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
 {
   test_logger.info("Test params: {}", params);
   print_cfg();
+  srslog::flush();
 
   for (const multi_alloc_test_params::alloc& a : params.allocs) {
     this->allocate_pdcch(a);
@@ -561,7 +562,8 @@ TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
   ASSERT_FALSE(collisions_found());
   for (const multi_alloc_test_params::alloc& a : params.allocs) {
     const dci_context_information* ctx = this->find_pdcch_alloc(a);
-    ASSERT_EQ(ctx != nullptr, a.expected_ncce.has_value()) << fmt::format("For expected cce={}", a.expected_ncce);
+    ASSERT_EQ(ctx != nullptr, a.expected_ncce.has_value())
+        << fmt::format("For rnti={:#x} expected cce={}", a.rnti, a.expected_ncce);
     if (ctx != nullptr) {
       if (a.type == alloc_type::dl_crnti or a.type == alloc_type::ul_crnti) {
         ASSERT_NO_FATAL_FAILURE(verify_pdcch_context(*ctx, test_ues.at(a.rnti), a.ss_id));
@@ -605,7 +607,7 @@ INSTANTIATE_TEST_SUITE_P(
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), nullopt}}},
   multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
-     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), nullopt}}},
+     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0}}},
   multi_alloc_test_params{cell_bw::MHz20, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 8}}},

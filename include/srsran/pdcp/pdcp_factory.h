@@ -28,7 +28,7 @@
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 /// This factory header file depends on the PDCP entity interfaces (see above include list). It is kept separate as

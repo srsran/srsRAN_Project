@@ -50,6 +50,46 @@
 
 using namespace srsran;
 
+namespace fmt {
+
+struct pusch_results_wrapper {
+  optional<channel_state_information>      csi;
+  optional<pusch_processor_result_control> uci;
+  optional<pusch_processor_result_data>    sch;
+};
+
+/// \brief Custom formatter for \c pusch_results_wrapper.
+template <>
+struct formatter<pusch_results_wrapper> {
+  /// Helper used to parse formatting options and format fields.
+  srsran::delimited_formatter helper;
+
+  /// Default constructor.
+  formatter() = default;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return helper.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const pusch_results_wrapper& result, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (result.sch.has_value()) {
+      helper.format_always(ctx, result.sch.value());
+    }
+    if (result.uci.has_value()) {
+      helper.format_always(ctx, result.uci.value());
+    }
+    if (result.csi.has_value()) {
+      helper.format_always(ctx, result.csi.value());
+    }
+    return ctx.out();
+  }
+};
+} // namespace fmt
+
 namespace {
 
 class pbch_encoder_factory_sw : public pbch_encoder_factory
@@ -916,6 +956,36 @@ private:
 
 class logging_pusch_processor_decorator : public pusch_processor
 {
+  class pusch_processor_result_notifier_wrapper : public pusch_processor_result_notifier
+  {
+  public:
+    pusch_processor_result_notifier_wrapper(pusch_processor_result_notifier& notifier_) : notifier(notifier_) {}
+
+    void on_csi(const channel_state_information& csi) override
+    {
+      results.csi.emplace(csi);
+      notifier.on_csi(csi);
+    }
+
+    void on_uci(const pusch_processor_result_control& uci) override
+    {
+      results.uci.emplace(uci);
+      notifier.on_uci(uci);
+    }
+
+    void on_sch(const pusch_processor_result_data& sch) override
+    {
+      results.sch.emplace(sch);
+      notifier.on_sch(sch);
+    }
+
+    const fmt::pusch_results_wrapper& get_results() const { return results; }
+
+  private:
+    fmt::pusch_results_wrapper       results;
+    pusch_processor_result_notifier& notifier;
+  };
+
 public:
   logging_pusch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pusch_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
@@ -923,37 +993,41 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  pusch_processor_result
-  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override
+  void process(span<uint8_t>                    data,
+               rx_softbuffer&                   softbuffer,
+               pusch_processor_result_notifier& notifier,
+               const resource_grid_reader&      grid,
+               const pdu_t&                     pdu) override
   {
-    pusch_processor_result result;
+    pusch_processor_result_notifier_wrapper notifier_wrapper(notifier);
 
-    std::chrono::nanoseconds time_ns =
-        time_execution([&]() { result = processor->process(data, softbuffer, grid, pdu); });
+    std::chrono::nanoseconds time_ns = time_execution([this, &notifier_wrapper, &data, &softbuffer, &grid, &pdu]() {
+      processor->process(data, softbuffer, notifier_wrapper, grid, pdu);
+    });
+
+    const auto& results = notifier_wrapper.get_results();
+
+    // Data size in bytes for printing hex dump only if SCH is present and CRC is passed.
+    unsigned data_size = 0;
+    if (results.sch.has_value() && results.sch->data.tb_crc_ok) {
+      data_size = data.size();
+    }
 
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PDU fields.
       logger.debug(data.data(),
-                   result.data->tb_crc_ok ? data.size() : 0,
+                   data_size,
                    "PUSCH: {:s} tbs={} {:s} {}\n  {:n}\n  {:n}",
                    pdu,
                    data.size(),
-                   result,
+                   results,
                    time_ns,
                    pdu,
-                   result);
+                   results);
     } else {
       // Single line log entry.
-      logger.info(data.data(),
-                  result.data->tb_crc_ok ? data.size() : 0,
-                  "PUSCH: {:s} tbs={} {:s} {}",
-                  pdu,
-                  data.size(),
-                  result,
-                  time_ns);
+      logger.info(data.data(), data_size, "PUSCH: {:s} tbs={} {:s} {}", pdu, data.size(), results, time_ns);
     }
-
-    return result;
   }
 
 private:

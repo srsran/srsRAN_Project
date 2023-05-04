@@ -21,6 +21,7 @@
  */
 
 #include "resource_grid.h"
+#include "srsran/support/compiler.h"
 
 using namespace srsran;
 
@@ -253,7 +254,7 @@ void cell_resource_allocator::slot_indication(slot_point sl_tx)
   srsran_sanity_check(sl_tx.numerology() == to_numerology_value(get_max_scs(cfg.dl_cfg_common)),
                       "Invalid slot numerology");
 
-  if (srsran_unlikely(not last_slot_ind.valid())) {
+  if (SRSRAN_UNLIKELY(not last_slot_ind.valid())) {
     // First call to slot_indication. Set slot of all slot cell resource grids.
     for (unsigned i = 0; i < slots.size(); ++i) {
       slots[(sl_tx + i).to_uint() % slots.size()]->slot_indication(sl_tx + i);

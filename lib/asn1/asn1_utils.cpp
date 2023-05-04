@@ -45,7 +45,7 @@ void invalid_enum_number(int value, const char* name)
 
 void assert_choice_type(uint32_t val, uint32_t choice_id)
 {
-  if (srsran_unlikely(val != choice_id)) {
+  if (SRSRAN_UNLIKELY(val != choice_id)) {
     log_invalid_access_choice_id(val, choice_id);
   }
 }

@@ -62,9 +62,15 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
   }
   logger.log_info(buf.begin(), buf.end(), "RX PDU. pdu_len={} {}", buf.length(), header);
 
+  // length check: there must be at least one payload byte
+  size_t header_len = rlc_um_nr_packed_length(header);
+  if (buf.length() <= header_len) {
+    logger.log_warning("Dropped malformed PDU without payload. pdu_len={} header_len={}", buf.length(), header_len);
+    return;
+  }
+
   // strip header, extract payload
-  size_t            header_len = rlc_um_nr_packed_length(header);
-  byte_buffer_slice payload    = buf.make_slice(header_len, buf.length() - header_len);
+  byte_buffer_slice payload = buf.make_slice(header_len, buf.length() - header_len);
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {

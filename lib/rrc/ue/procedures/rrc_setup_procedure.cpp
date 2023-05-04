@@ -69,7 +69,7 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     send_initial_ue_msg(coro_res.value().msg.c1().rrc_setup_complete());
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
-    rrc_ue.on_ue_delete_request();
+    rrc_ue.on_ue_delete_request(cause_t::protocol);
   }
 
   CORO_RETURN();

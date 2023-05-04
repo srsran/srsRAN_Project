@@ -91,7 +91,7 @@ public:
 
 } // namespace
 
-class FAPIToPHYTranslatorFixture : public ::testing::Test
+class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
   resource_grid_spy              grid;
@@ -101,7 +101,7 @@ protected:
   uplink_slot_pdu_repository     pdu_repo;
   unsigned                       sector_id = 0;
   fapi::prach_config             prach_cfg;
-  fapi::carrier_config           carrier_cfg;
+  fapi::carrier_config           carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
   downlink_pdu_validator_dummy   dl_pdu_validator;
   uplink_pdu_validator_dummy     ul_pdu_validator;
   fapi_to_phy_translator_config  config = {sector_id,
@@ -119,10 +119,12 @@ protected:
   fapi_to_phy_translator         translator;
 
 public:
-  FAPIToPHYTranslatorFixture() : rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI")) {}
+  fapi_to_phy_translator_fixture() : rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI"))
+  {
+  }
 };
 
-TEST_F(FAPIToPHYTranslatorFixture, DownlinkProcessorIsConfiguredOnNewSlot)
+TEST_F(fapi_to_phy_translator_fixture, downlink_processor_is_configured_on_new_slot)
 {
   slot_point slot(1, 1, 0);
 
@@ -138,7 +140,7 @@ TEST_F(FAPIToPHYTranslatorFixture, DownlinkProcessorIsConfiguredOnNewSlot)
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 }
 
-TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
+TEST_F(fapi_to_phy_translator_fixture, current_grid_is_sent_on_new_slot)
 {
   slot_point slot(1, 1, 0);
 
@@ -161,7 +163,7 @@ TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
   ASSERT_FALSE(dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());
 }
 
-TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
+TEST_F(fapi_to_phy_translator_fixture, dl_ssb_pdu_is_processed)
 {
   const fapi::dl_tti_request_message& msg = build_valid_dl_tti_request();
   slot_point                          slot(subcarrier_spacing::kHz15, msg.sfn, msg.slot);
@@ -192,7 +194,7 @@ TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
   ASSERT_FALSE(dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());
 }
 
-TEST_F(FAPIToPHYTranslatorFixture, CallingDLTTIREQUESTWithoutHandlingSlotDoesNothing)
+TEST_F(fapi_to_phy_translator_fixture, calling_dl_tti_request_without_handling_slot_does_nothing)
 {
   slot_point slot(1, 1, 0);
 

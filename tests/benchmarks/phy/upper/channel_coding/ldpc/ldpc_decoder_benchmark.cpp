@@ -36,21 +36,24 @@ static unsigned     nof_repetitions = 1000;
 static unsigned     nof_iterations  = 6;
 static bool         silent          = false;
 static bool         use_crc         = false;
+static unsigned     l_size          = 0;
 
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
-  fmt::print("\t-T Encoder type generic, avx2 or avx512 [Default {}]\n", dec_type);
+  fmt::print("\t-T Encoder type generic, avx2, avx512 or neon [Default {}]\n", dec_type);
   fmt::print("\t-I Number of min-sum iterations [Default {}]\n", nof_iterations);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
+  fmt::print("\t-C Toggle early stopping with CRC [Default {}]\n", use_crc);
+  fmt::print("\t-L Lifting size - 0 for all [Default {}]\n", l_size);
   fmt::print("\t-h Show this message\n");
 }
 
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:I:Csh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:I:L:Csh")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -61,8 +64,11 @@ static void parse_args(int argc, char** argv)
       case 'I':
         nof_iterations = std::strtol(optarg, nullptr, 10);
         break;
+      case 'L':
+        l_size = std::strtol(optarg, nullptr, 10);
+        break;
       case 'C':
-        use_crc = true;
+        use_crc = (!use_crc);
         break;
       case 's':
         silent = (!silent);
@@ -85,8 +91,17 @@ int main(int argc, char** argv)
   benchmarker perf_meas_generic(fmt::format("LDPC decoder {}, {} MS iterations", dec_type, nof_iterations),
                                 nof_repetitions);
 
+  span<const lifting_size_t>    use_ls;
+  std::array<lifting_size_t, 1> one_ls = {lifting_size_t::LS384};
+  if (l_size != 0) {
+    one_ls[0] = static_cast<lifting_size_t>(l_size);
+    use_ls    = span<const lifting_size_t>(one_ls);
+  } else {
+    use_ls = span<const lifting_size_t>(all_lifting_sizes);
+  }
+
   for (const ldpc_base_graph_type& bg : {ldpc_base_graph_type::BG1, ldpc_base_graph_type::BG2}) {
-    for (const lifting_size_t& ls : all_lifting_sizes) {
+    for (const lifting_size_t& ls : use_ls) {
       std::unique_ptr<crc_calculator> crc16   = nullptr;
       std::unique_ptr<ldpc_encoder>   encoder = nullptr;
       // Decoder.

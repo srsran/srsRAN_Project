@@ -25,6 +25,7 @@
 #include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
 #include "srsran/rrc/rrc_du_factory.h"
@@ -61,7 +62,6 @@ public:
   rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler() override { return *this; }
   drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
   security::sec_as_config&              get_rrc_ue_secutity_config() override { return context.sec_cfg; }
 
@@ -76,6 +76,7 @@ public:
   // rrc_ue_control_message_handler
   void             handle_new_guami(const guami& msg) override;
   async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
+  async_task<bool> handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override;
   void             handle_rrc_ue_release() override;
 
 private:
@@ -96,7 +97,7 @@ private:
 
   // rrc_ue_setup_proc_notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override;
-  void on_ue_delete_request() override;
+  void on_ue_delete_request(const cause_t& cause) override;
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
@@ -104,9 +105,6 @@ private:
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
-
-  // triggers a RRC reconfiguration of the UE
-  async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
 
   // Helper to create PDU from RRC message
   template <class T>

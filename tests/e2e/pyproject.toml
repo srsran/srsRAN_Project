@@ -7,7 +7,10 @@
 #
 
 [tool.pytest.ini_options]
-addopts = "--tb=short"
+addopts = "--tb=short --random-order --random-order-bucket=class"
+filterwarnings = [
+  "ignore:HTTPResponse.getheaders:DeprecationWarning",
+]
 log_cli = true
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_format = "%(asctime)s [%(levelname)s] %(message)s"
@@ -22,6 +25,9 @@ markers = [
   "uplink",
   "bidirectional",
   "multiue",
+  "zmq_valgrind",
+  "rf_b200",
+  "rf_not_crash",
   "test",
 ]
 minversion = "6.0"
@@ -42,3 +48,59 @@ include_trailing_comma = true
 line_length = 120
 profile = "black"
 remove_redundant_aliases = true
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pylint]
+disable = ["fixme", "no-name-in-module", "duplicate-code", "import-error"]
+ignore-signatures = true
+max-line-length = 120
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 4.4.0
+envlist = 
+  format
+  lint
+  type
+  unittest
+  build
+
+[testenv:format]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black --check --diff --color tests
+  isort --check tests
+
+[testenv:format_apply]
+skip_install = true
+deps =
+  black
+  isort
+commands =
+  black tests
+  isort tests
+
+[testenv:lint]
+skip_install = true
+deps =
+  pylint
+commands =
+  pylint tests
+
+[testenv:type]
+skip_install = true
+deps = 
+  mypy
+commands = 
+  mypy tests
+"""

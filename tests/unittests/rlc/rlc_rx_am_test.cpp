@@ -71,21 +71,8 @@ protected:
     // init RLC logger
     srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(100);
-  }
 
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  /// \brief Initializes fixture according to size sequence number size
-  /// \param sn_size_ size of the sequence number
-  void init(rlc_am_sn_size sn_size_)
-  {
     logger.info("Creating RLC Rx AM entity ({} bit)", to_number(sn_size));
-
-    sn_size = sn_size_;
 
     // Set Rx config
     config.sn_field_length   = sn_size;
@@ -102,6 +89,12 @@ protected:
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
     rlc->set_status_notifier(tester.get());
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
   }
 
   /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments
@@ -418,14 +411,12 @@ protected:
 /// Test the instantiation of a new entity
 TEST_P(rlc_rx_am_test, create_new_entity)
 {
-  init(GetParam());
   EXPECT_NE(rlc, nullptr);
 }
 
 /// Verify the status report from a freshly created instance
 TEST_P(rlc_rx_am_test, read_initial_status)
 {
-  init(GetParam());
   EXPECT_FALSE(rlc->status_report_required());
   rlc_am_status_pdu status_report = rlc->get_status_pdu();
   EXPECT_EQ(status_report.ack_sn, 0);
@@ -439,7 +430,6 @@ TEST_P(rlc_rx_am_test, read_initial_status)
 /// Verify Rx window boundary checks if Rx window is currently at the lower edge, i.e. at smallest SN value
 TEST_P(rlc_rx_am_test, window_checker_lower_edge)
 {
-  init(GetParam());
   // RX_NEXT == 0
   uint32_t sn_inside_lower  = 0;
   uint32_t sn_inside_upper  = window_size(to_number(sn_size)) - 1;
@@ -454,8 +444,6 @@ TEST_P(rlc_rx_am_test, window_checker_lower_edge)
 /// Verify Rx window boundary checks if Rx window is currently at the upper edge, i.e. at maximum SN value
 TEST_P(rlc_rx_am_test, window_checker_upper_edge)
 {
-  init(GetParam());
-
   // Configure state to upper edge
   rlc_rx_am_state st = {};
   st.rx_next         = cardinality(to_number(sn_size)) - 1;
@@ -475,8 +463,6 @@ TEST_P(rlc_rx_am_test, window_checker_upper_edge)
 /// Verify proper forwarding of received status PDUs to the Tx entity (via interface)
 TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
 {
-  init(GetParam());
-
   EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 
@@ -504,8 +490,6 @@ TEST_P(rlc_rx_am_test, rx_valid_control_pdu)
 /// Verify that malformed status PDUs are not forwarded to the Tx entity (via interface)
 TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
 {
-  init(GetParam());
-
   EXPECT_EQ(tester->status.ack_sn, INVALID_RLC_SN);
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 
@@ -527,17 +511,52 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 }
 
+/// Verify empty PDUs are discarded.
+TEST_P(rlc_rx_am_test, rx_empty_pdu)
+{
+  // Create empty PDU
+  byte_buffer pdu_buf = {};
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_EQ(tester->status_trigger_counter, 0);
+}
+
 /// Verify malformed (too short) data PDUs are discarded. Testing here with polling bit set in the malformed PDU which
 /// shall not have any effect on the status-required state of the testee.
-TEST_P(rlc_rx_am_test, rx_short_data_pdu)
+TEST_P(rlc_rx_am_test, rx_data_pdu_with_short_header)
 {
-  init(GetParam());
-
   EXPECT_FALSE(rlc->status_report_required());
 
-  // Create too short data PDU with polling bit set
+  // Create a short header of a data PDU with polling bit set
   byte_buffer pdu_buf = {};
   pdu_buf.append(0b11000000); // D/C = 1; P = 1
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
+}
+
+/// Verify malformed (too short) data PDUs are discarded. Testing here with polling bit set in the malformed PDU which
+/// shall not have any effect on the status-required state of the testee.
+TEST_P(rlc_rx_am_test, rx_data_pdu_without_payload)
+{
+  EXPECT_FALSE(rlc->status_report_required());
+
+  // Create a complete header of a data PDU with polling bit set and with SO
+  byte_buffer pdu_buf = {};
+  pdu_buf.append(0b11110000); // D/C = 1; P = 1; SI = 0b11
+  pdu_buf.append({0x00, 0x00, 0x00});
+  if (sn_size == rlc_am_sn_size::size18bits) {
+    pdu_buf.append(0x00);
+  }
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
@@ -552,8 +571,6 @@ TEST_P(rlc_rx_am_test, rx_short_data_pdu)
 /// and the included SDU shall be forwarded to upper layer
 TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
 {
-  init(GetParam());
-
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = 0;
@@ -587,8 +604,6 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_inside_rx_window)
 /// but the included SDU shall be discarded
 TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 {
-  init(GetParam());
-
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = window_size(to_number(sn_size)); // out-of-window SN
@@ -619,8 +634,6 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sn_outside_rx_window)
 /// change but the duplicated SDU shall be discarded
 TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 {
-  init(GetParam());
-
   EXPECT_FALSE(rlc->status_report_required());
 
   uint32_t sn_state = 1; // further incremented SN to prevent that reception will advance rx_window
@@ -669,8 +682,6 @@ TEST_P(rlc_rx_am_test, rx_polling_bit_sdu_duplicate)
 ///   - Subsequent duplicates shall be discarded
 TEST_P(rlc_rx_am_test, rx_duplicate_segments)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 1;
@@ -726,8 +737,6 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
 /// for all positions of the missing element.
 TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_2_4)
 {
-  init(GetParam());
-
   uint32_t sn_state       = 0;
   uint32_t sdu_size       = 8;
   uint32_t segment_size_a = 2;
@@ -755,8 +764,6 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_2_4)
 /// The test is repeated for all positions of the missing element.
 TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_2)
 {
-  init(GetParam());
-
   uint32_t sn_state       = 0;
   uint32_t sdu_size       = 8;
   uint32_t segment_size_a = 4;
@@ -774,8 +781,6 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_2)
 /// The test is repeated for all positions of the missing element.
 TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_3_4)
 {
-  init(GetParam());
-
   uint32_t sn_state       = 0;
   uint32_t sdu_size       = 12;
   uint32_t segment_size_a = 3;
@@ -795,8 +800,6 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_3_4)
 /// The test is repeated for all positions of the missing element.
 TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_3)
 {
-  init(GetParam());
-
   uint32_t sn_state       = 0;
   uint32_t sdu_size       = 12;
   uint32_t segment_size_a = 4;
@@ -813,8 +816,6 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_3)
 /// - Status required state shall remain false until status prohibit timer expires
 TEST_P(rlc_rx_am_test, status_prohibit_timer)
 {
-  init(GetParam());
-
   EXPECT_FALSE(rlc->status_report_required());
   EXPECT_EQ(tester->status_trigger_counter, 0);
 
@@ -877,8 +878,6 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
 /// - Verify the status report NACK's the missing segment
 TEST_P(rlc_rx_am_test, reassembly_timer)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 1;
@@ -936,15 +935,13 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
 
 /// Verify reassembly timer is triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:
 ///
 TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_triggered)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 1;
@@ -983,15 +980,13 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_tr
 
 /// Verify reassembly timer is triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:
 ///
 TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer_triggered)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 1;
   uint32_t segment_size = 1;
@@ -1035,15 +1030,13 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer
 
 /// Verify reassembly timer is *not* triggered upon reception of PDUs:
 ///
-/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+/// - if t-Reassembly is not running (includes the case t-Reassembly is notify_stop due to actions above):
 ///   - if RX_Next_Highest> RX_Next +1; or
 ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
 ///     with SN = RX_Next before the last byte of all received segments of this SDU:
 ///
 TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing_then_reassembly_timer_not_triggered)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 1;
@@ -1091,8 +1084,6 @@ TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing
 /// - Check status report for NACK'ed segments, NACK'ed SDU and NACK'ed SDU range
 TEST_P(rlc_rx_am_test, status_report)
 {
-  init(GetParam());
-
   uint32_t sn_state     = 0;
   uint32_t sdu_size     = 10;
   uint32_t segment_size = 1;
@@ -1261,7 +1252,6 @@ TEST_P(rlc_rx_am_test, status_report)
 /// Example: [0][1][2][3][4]
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
@@ -1273,7 +1263,6 @@ TEST_P(rlc_rx_am_test, rx_without_segmentation)
 /// Example: [4][3][2][1][0]
 TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
@@ -1285,7 +1274,6 @@ TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
 /// Example: [0 0:0][0 1:1][1 0:0][1 1:1][2 0:0][2 1:1][3 0:0][3 1:1][4 0:0][4 1:1]
 TEST_P(rlc_rx_am_test, rx_with_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
@@ -1297,7 +1285,6 @@ TEST_P(rlc_rx_am_test, rx_with_segmentation)
 /// Example: [4 0:0][4 1:1][3 0:0][3 1:1][2 0:0][2 1:1][1 0:0][1 1:1][0 0:0][0 1:1]
 TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
@@ -1309,7 +1296,6 @@ TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
 /// Example: [0 1:1][0 0:0][1 1:1][1 0:0][2 1:1][2 0:0][3 0:0][3 1:1][3 0:0][4 1:1][4 0:0]
 TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
@@ -1321,7 +1307,6 @@ TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
 /// Example: [4 1:1][4 0:0][3 0:0][3 1:1][3 0:0][2 1:1][2 0:0][1 1:1][1 0:0][0 1:1][0 0:0]
 TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
 {
-  init(GetParam());
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 

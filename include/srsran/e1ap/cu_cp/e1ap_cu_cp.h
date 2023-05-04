@@ -95,6 +95,17 @@ public:
   virtual void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) = 0;
 };
 
+/// Methods used by E1AP to notify the CU-CP.
+class e1ap_cu_cp_notifier
+{
+public:
+  virtual ~e1ap_cu_cp_notifier() = default;
+
+  /// \brief Notifies about the reception of a Bearer Context Inactivity Notification message.
+  /// \param[in] msg The received Bearer Context Inactivity Notification message.
+  virtual void on_bearer_context_inactivity_notification_received(const cu_cp_inactivity_notification& msg) = 0;
+};
+
 /// Methods used by E1AP to notify the NGAP.
 class e1ap_ngap_notifier
 {

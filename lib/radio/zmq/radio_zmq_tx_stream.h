@@ -22,14 +22,24 @@
 
 #pragma once
 
+#include "radio_zmq_tx_align_interface.h"
 #include "radio_zmq_tx_channel.h"
+#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
+#include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
 #include <memory>
 
 namespace srsran {
 
-class radio_zmq_tx_stream
+/// Implements a gateway receiver based on ZMQ transmit socket.
+class radio_zmq_tx_stream : public baseband_gateway_transmitter, public radio_zmq_tx_align_interface
 {
 private:
+  /// Alignment timeout. Waits this time before padding zeros.
+  const std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
+  /// Desired transmit number of samples.
+  static constexpr unsigned TRANSMIT_BUFFER_SIZE = 1920;
+  /// Radio notification handler interface.
+  radio_notification_handler& notification_handler;
   /// Indicates whether the class was initialized successfully.
   bool successful = false;
   /// Stores independent channels.
@@ -63,9 +73,13 @@ public:
 
   bool is_successful() const { return successful; }
 
-  bool align(uint64_t timestamp, std::chrono::milliseconds timeout);
+  // See interface for documentation.
+  bool align(baseband_gateway_timestamp timestamp, std::chrono::milliseconds timeout) override;
 
-  void transmit(baseband_gateway_buffer& data);
+  unsigned get_buffer_size() const override;
+
+  // See interface for documentation.
+  void transmit(baseband_gateway_buffer& data, const metadata& md) override;
 
   void stop();
 

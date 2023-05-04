@@ -22,11 +22,13 @@
 
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
+#include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 
 using namespace srsran;
@@ -36,14 +38,16 @@ using namespace srs_du;
 f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
                            f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
-                           du_high_ue_executor_mapper& ue_exec_mapper_) :
+                           du_high_ue_executor_mapper& ue_exec_mapper_,
+                           f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
   f1ap_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
   du_mng(du_mng_),
   ues(du_mng_, f1ap_notifier),
-  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
+  paging_notifier(paging_notifier_)
 {
 }
 
@@ -63,6 +67,11 @@ f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue
 f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(const f1ap_ue_configuration_request& msg)
 {
   return update_f1ap_ue_config(msg, ues);
+}
+
+void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
+{
+  ues.remove_ue(ue_index);
 }
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
@@ -180,9 +189,13 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   // Forward SDU to lower layers.
   byte_buffer sdu;
   sdu.append(msg->rrc_container.value);
-  ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
-    srb_bearer->handle_pdu(std::move(sdu));
-  });
+  if (not ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
+        srb_bearer->handle_pdu(std::move(sdu));
+      })) {
+    logger.warning("Discarding DlRrcMessageTransfer. Cause: UE task queue is full.", srb_id);
+    // TODO: Handle error.
+    return;
+  }
 }
 
 async_task<f1ap_ue_context_modification_response_message>
@@ -236,22 +249,26 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   }
 
   // Run F1AP protocols in Control executor.
-  ctrl_exec.execute([this, msg]() {
-    switch (msg.pdu.type().value) {
-      case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+  if (not ctrl_exec.execute([this, msg]() {
+        switch (msg.pdu.type().value) {
+          case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.error("Unable to dispatch handling of F1AP PDU. Cause: DU task queue is full");
+    // TODO: Handle.
+    return;
+  }
 }
 
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
@@ -271,6 +288,9 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
+      break;
+    case f1ap_elem_procs_o::init_msg_c::types_opts::paging:
+      handle_paging_request(msg.value.paging());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -337,4 +357,66 @@ bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue
 void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c& cause)
 {
   // TODO
+}
+
+void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
+{
+  paging_information info{};
+  expected<unsigned> ue_identity_index_value = get_paging_ue_identity_index_value(msg);
+  if (not ue_identity_index_value.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging UE Identity index type {} is not supported",
+                 msg->ue_id_idx_value->type().to_string());
+    return;
+  }
+  info.ue_identity_index_value = ue_identity_index_value.value();
+
+  expected<paging_identity_type> paging_type_indicator = get_paging_identity_type(msg);
+  expected<uint64_t>             paging_identity       = get_paging_identity(msg);
+  if (not paging_type_indicator.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging Identity type {} is not supported",
+                 msg->paging_id->type().to_string());
+    return;
+  }
+  info.paging_type_indicator = paging_type_indicator.value();
+  if (not paging_identity.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging Identity type {} is not supported",
+                 msg->paging_id->type().to_string());
+    return;
+  }
+  info.paging_identity = paging_identity.value();
+
+  if (msg->paging_drx_present) {
+    expected<unsigned> paging_drx = get_paging_drx_in_nof_rf(msg);
+    if (not paging_drx.has_value()) {
+      logger.error("DRX value {} is not supported", msg->paging_drx.value.to_string());
+    } else {
+      info.paging_drx = paging_drx.value();
+    }
+  }
+  if (msg->paging_prio_present) {
+    expected<unsigned> paging_priority = get_paging_priority(msg);
+    if (not paging_priority.has_value()) {
+      logger.error("Paging priority value {} is not supported", msg->paging_prio.value.to_string());
+    } else {
+      info.paging_priority = paging_priority.value();
+    }
+  }
+  if (msg->paging_origin_present and msg->paging_origin.value == paging_origin_e::non_neg3gpp) {
+    info.is_paging_origin_non_3gpp_access = true;
+  }
+  for (const auto& asn_nr_cgi : msg->paging_cell_list.value) {
+    const auto paging_cell_cgi = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
+    const auto du_cell_it =
+        std::find_if(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(),
+                     ctxt.du_cell_index_to_nr_cgi_lookup.cend(),
+                     [&paging_cell_cgi](const nr_cell_global_id_t& cgi) { return paging_cell_cgi == cgi; });
+    // Cell not served by this DU.
+    if (du_cell_it == ctxt.du_cell_index_to_nr_cgi_lookup.cend()) {
+      logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn, paging_cell_cgi.nci);
+      continue;
+    }
+    info.paging_cells.push_back(
+        to_du_cell_index(std::distance(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(), du_cell_it)));
+  }
+  paging_notifier.on_paging_received(info);
 }

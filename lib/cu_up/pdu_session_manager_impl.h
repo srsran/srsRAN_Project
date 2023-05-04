@@ -28,7 +28,7 @@
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {
@@ -41,11 +41,11 @@ public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
                            network_interface_config&            net_config_,
                            srslog::basic_logger&                logger_,
+                           unique_timer&                        ue_inactivity_timer,
                            timer_factory                        timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                     gtpu_rx_demux_);
-  ~pdu_session_manager_impl() override;
 
   pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session) override;
@@ -59,6 +59,7 @@ private:
   ue_index_t                                               ue_index;
   network_interface_config&                                net_config;
   srslog::basic_logger&                                    logger;
+  unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            timers;
   gtpu_tunnel_tx_upper_layer_notifier&                     gtpu_tx_notifier;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;

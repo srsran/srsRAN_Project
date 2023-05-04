@@ -64,21 +64,23 @@ public:
     }
 
     // Queue write request.
-    worker.push_task([this, context, &grid]() {
-      // Save the resource grid.
-      for (unsigned symbol_idx = 0; symbol_idx != nof_symbols; ++symbol_idx) {
-        grid.get(temp_buffer, 0, symbol_idx, 0);
-        file.write(reinterpret_cast<const char*>(temp_buffer.data()), temp_buffer.size() * sizeof(cf_t));
-      }
+    if (not worker.push_task([this, context, &grid]() {
+          // Save the resource grid.
+          for (unsigned symbol_idx = 0; symbol_idx != nof_symbols; ++symbol_idx) {
+            grid.get(temp_buffer, 0, symbol_idx, 0);
+            file.write(reinterpret_cast<const char*>(temp_buffer.data()), temp_buffer.size() * sizeof(cf_t));
+          }
 
-      // Log the resource grid information.
-      logger.set_context(context.slot.sfn(), context.slot.slot_index());
-      logger.info(
-          "RX_SYMBOL: sector={} offset={} size={}", context.sector, file_offset, temp_buffer.size() * nof_symbols);
+          // Log the resource grid information.
+          logger.set_context(context.slot.sfn(), context.slot.slot_index());
+          logger.info(
+              "RX_SYMBOL: sector={} offset={} size={}", context.sector, file_offset, temp_buffer.size() * nof_symbols);
 
-      // Advance file offset.
-      file_offset += temp_buffer.size() * nof_symbols;
-    });
+          // Advance file offset.
+          file_offset += temp_buffer.size() * nof_symbols;
+        })) {
+      logger.warning("RX_PRACH: Failed to write PRACH samples. Cause: task worker queue is full");
+    }
   }
 
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
@@ -86,18 +88,20 @@ public:
     handler->handle_rx_prach_window(context, buffer);
 
     // Queue write request.
-    worker.push_task([this, context, &buffer]() {
-      // Save the first PRACH symbol only.
-      span<const cf_t> samples = buffer.get_symbol(0);
-      file.write(reinterpret_cast<const char*>(samples.data()), samples.size() * sizeof(cf_t));
+    if (not worker.push_task([this, context, &buffer]() {
+          // Save the first PRACH symbol only.
+          span<const cf_t> samples = buffer.get_symbol(0, 0, 0, 0);
+          file.write(reinterpret_cast<const char*>(samples.data()), samples.size() * sizeof(cf_t));
 
-      // Log the resource grid information.
-      logger.set_context(context.slot.sfn(), context.slot.slot_index());
-      logger.info("RX_PRACH: sector={} offset={} size={}", context.sector, file_offset, samples.size());
+          // Log the resource grid information.
+          logger.set_context(context.slot.sfn(), context.slot.slot_index());
+          logger.info("RX_PRACH: sector={} offset={} size={}", context.sector, file_offset, samples.size());
 
-      // Advance file offset.
-      file_offset += samples.size();
-    });
+          // Advance file offset.
+          file_offset += samples.size();
+        })) {
+      logger.warning("RX_PRACH: Failed to write PRACH samples. Cause: task worker queue is full");
+    }
   }
 
   void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override

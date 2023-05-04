@@ -26,6 +26,7 @@
 #include "srsran/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
 #include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
+#include "srsran/phy/lower/sampling_rate.h"
 
 namespace srsran {
 
@@ -95,9 +96,9 @@ std::shared_ptr<ofdm_demodulator_factory>
 create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config);
 
 /// \brief Creates a software generic PRACH demodulator.
-/// \param[in] dft_factory     DFT factory.
-/// \param[in] dft_size_15kHz  DFT size for 15kHz subcarrier spacing.
+/// \param[in] dft_factory DFT factory.
+/// \param[in] srate       Sampling rate.
 std::shared_ptr<ofdm_prach_demodulator_factory>
-create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, unsigned dft_size_15kHz);
+create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, sampling_rate srate);
 
 } // namespace srsran

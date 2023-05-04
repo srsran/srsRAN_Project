@@ -275,7 +275,7 @@ public:
   /// The constructed bitset size is equal to \c values size. The values in the list are mapped one to one.
   ///
   /// \param[in] values Boolean initializer list.
-  constexpr bounded_bitset(std::initializer_list<const bool> values)
+  constexpr bounded_bitset(const std::initializer_list<const bool>& values)
   {
     resize(values.size());
     std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable {
@@ -295,6 +295,9 @@ public:
 
   /// Current size of the bounded_bitset.
   size_t size() const noexcept { return cur_size; }
+
+  /// Returns true if the bounded_bitset size is 0.
+  bool empty() const noexcept { return size() == 0; }
 
   /// Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered.
   void resize(size_t new_size)
@@ -1041,7 +1044,7 @@ private:
   /// \param start first bit index of the bounded_bitset.
   /// \param stop end bit index of the bounded_bitset.
   /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
-  ///          When this callback returns true, the iteration is stopped.
+  ///          When this callback returns true, the iteration is notify_stop.
   /// \return true if the provided callback returns true for a given word. False otherwise.
   template <typename C>
   bool find_first_word_(size_t start, size_t stop, const C& c) const

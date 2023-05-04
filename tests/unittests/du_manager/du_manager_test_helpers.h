@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "lib/du_manager/du_ue/ue_manager_ctrl_configurator.h"
+#include "lib/du_manager/du_ue/du_ue_manager_repository.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -108,10 +108,11 @@ public:
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
   wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
-  optional<f1ap_ue_creation_request>                                      last_ue_create{};
+  optional<f1ap_ue_creation_request>                                      last_ue_create;
   f1ap_ue_creation_response                                               next_ue_create_response;
-  optional<f1ap_ue_configuration_request>                                 last_ue_config{};
+  optional<f1ap_ue_configuration_request>                                 last_ue_config;
   f1ap_ue_configuration_response                                          next_ue_config_response;
+  optional<du_ue_index_t>                                                 last_ue_deleted;
   optional<f1ap_ue_context_release_request_message>                       last_ue_release{};
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
@@ -132,6 +133,8 @@ public:
     last_ue_config = msg;
     return next_ue_config_response;
   }
+
+  void handle_ue_deletion_request(du_ue_index_t ue_index) override { last_ue_deleted = ue_index; }
 
   async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override
@@ -184,8 +187,11 @@ class f1u_gateway_dummy : public f1u_du_gateway
 public:
   bool next_bearer_is_created = true;
 
-  srs_du::f1u_bearer*
-  create_du_bearer(uint32_t ue_index, uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
+  srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
+                                       uint32_t                     dl_teid,
+                                       uint32_t                     ul_teid,
+                                       srs_du::f1u_rx_sdu_notifier& du_rx,
+                                       timer_factory                timers) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
       f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
@@ -208,7 +214,10 @@ public:
   std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
 };
 
-class mac_test_dummy : public mac_cell_manager, public mac_ue_configurator, public mac_ue_control_information_handler
+class mac_test_dummy : public mac_cell_manager,
+                       public mac_ue_configurator,
+                       public mac_ue_control_information_handler,
+                       public mac_paging_information_handler
 {
 public:
   class mac_cell_dummy : public mac_cell_controller
@@ -256,6 +265,8 @@ public:
   }
 
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  void handle_paging_information(const paging_information& msg) override {}
 };
 
 class dummy_ue_resource_configurator_factory : public du_ran_resource_manager

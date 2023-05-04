@@ -31,7 +31,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/executors/task_executor.h"
@@ -48,6 +47,7 @@ public:
                     f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
                     f1ap_message_notifier&              f1ap_notifier_,
                     du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
+                    du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
@@ -81,11 +81,16 @@ public:
 
   // du_processor_ngap_interface
   async_task<cu_cp_pdu_session_resource_setup_response>
-       handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  async_task<cu_cp_pdu_session_resource_release_response>
+       handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
   void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
+
+  // du_processor inactivity handler
+  void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -101,6 +106,7 @@ public:
   du_processor_ngap_interface&     get_du_processor_ngap_interface() override { return *this; }
   du_processor_ue_task_handler&    get_du_processor_ue_task_handler() override { return *this; }
   du_processor_paging_handler&     get_du_processor_paging_handler() override { return *this; }
+  du_processor_inactivity_handler& get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler& get_du_processor_statistics_handler() override { return *this; }
 
 private:
@@ -120,7 +126,7 @@ private:
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
-  void send_f1_setup_response(const du_processor_context& du_ctxt);
+  void send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id);
 
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
@@ -133,6 +139,7 @@ private:
   f1ap_du_management_notifier&         f1ap_du_mgmt_notifier;
   f1ap_message_notifier&               f1ap_notifier;
   du_processor_e1ap_control_notifier&  e1ap_ctrl_notifier;
+  du_processor_ngap_control_notifier&  ngap_ctrl_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
   du_processor_ue_task_scheduler&      task_sched;
@@ -151,9 +158,8 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1ap_cu>                                     f1ap;
-  std::unique_ptr<rrc_du_interface>                            rrc;
-  std::unordered_map<ue_index_t, std::unique_ptr<pdcp_entity>> pdcp_bearers;
+  std::unique_ptr<f1ap_cu>          f1ap;
+  std::unique_ptr<rrc_du_interface> rrc;
 
   // F1AP to DU processor adapter
   f1ap_du_processor_adapter f1ap_ev_notifier;

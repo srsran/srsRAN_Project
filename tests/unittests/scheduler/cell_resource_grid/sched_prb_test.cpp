@@ -61,7 +61,7 @@ TEST(prb_grant_test, test_all)
   TESTASSERT(grant.is_alloc_type1() and grant.prbs().length() == 3);
 
   // TEST: formatting
-  TESTASSERT_EQ("[2, 5)", fmt::format("{}", grant2));
+  TESTASSERT_EQ("[2..5)", fmt::format("{}", grant2));
   TESTASSERT_EQ("0x10000", fmt::format("0x{:x}", grant3));
 }
 

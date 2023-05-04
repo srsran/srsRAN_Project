@@ -24,6 +24,7 @@
 
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_up/cu_up_types.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -34,10 +35,16 @@ struct e1ap_ue_context {
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid;
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
 
-  e1ap_ue_context(ue_index_t             ue_index_,
-                  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id_,
-                  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id_) :
-    ue_index(ue_index_), cu_up_ue_e1ap_id(cu_up_ue_e1ap_id_), cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_)
+  activity_notification_level_t activity_notification_level = activity_notification_level_t::invalid;
+
+  e1ap_ue_context(ue_index_t                    ue_index_,
+                  gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id_,
+                  gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id_,
+                  activity_notification_level_t activity_notification_level_) :
+    ue_index(ue_index_),
+    cu_up_ue_e1ap_id(cu_up_ue_e1ap_id_),
+    cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_),
+    activity_notification_level(activity_notification_level_)
   {
   }
 };
@@ -57,13 +64,14 @@ public:
   e1ap_ue_context& operator[](gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id) { return ues.at(cu_up_ue_e1ap_id); }
   e1ap_ue_context& operator[](ue_index_t ue_index) { return ues.at(ue_index_to_ue_e1ap_id.at(ue_index)); }
 
-  e1ap_ue_context& add_ue(ue_index_t             ue_index,
-                          gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id,
-                          gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid)
+  e1ap_ue_context& add_ue(ue_index_t                    ue_index,
+                          gnb_cu_up_ue_e1ap_id_t        cu_up_ue_e1ap_id,
+                          gnb_cu_cp_ue_e1ap_id_t        cu_cp_ue_e1ap_id,
+                          activity_notification_level_t activity_notification_level)
   {
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(cu_up_ue_e1ap_id),
-                std::forward_as_tuple(ue_index, cu_up_ue_e1ap_id, cu_cp_ue_e1ap_id));
+                std::forward_as_tuple(ue_index, cu_up_ue_e1ap_id, cu_cp_ue_e1ap_id, activity_notification_level));
     ue_index_to_ue_e1ap_id.emplace(ue_index, cu_up_ue_e1ap_id);
     return ues.at(cu_up_ue_e1ap_id);
   }

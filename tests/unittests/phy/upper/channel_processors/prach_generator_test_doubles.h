@@ -40,7 +40,8 @@ public:
   span<const cf_t> generate(const configuration& config) override
   {
     // Extract sequence length.
-    unsigned sequence_length = get_prach_preamble_long_info(config.format).sequence_length;
+    unsigned sequence_length = is_long_preamble(config.format) ? prach_constants::LONG_SEQUENCE_LENGTH
+                                                               : prach_constants::SHORT_SEQUENCE_LENGTH;
 
     // Create entry.
     entries.emplace_back();

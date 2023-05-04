@@ -48,7 +48,6 @@
     "merge_trains_enabled": false,
     "only_allow_merge_if_all_discussions_are_resolved": false,
     "only_allow_merge_if_pipeline_succeeds": true,
-    "operations_access_level": "enabled",
     "packages_enabled": true,
     "pages_access_level": "private",
     "protectedbranches": [

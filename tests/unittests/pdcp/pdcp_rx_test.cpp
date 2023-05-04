@@ -333,13 +333,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
     ASSERT_EQ(1, test_frame->nof_protocol_failure);
   };
 
-  if (config.sn_size == pdcp_sn_size::size12bits) {
-    test_max_count(rx_next_start);
-  } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    test_max_count(rx_next_start);
-  } else {
-    FAIL();
-  }
+  test_max_count(rx_next_start);
 }
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //

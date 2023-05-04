@@ -139,6 +139,17 @@ public:
   virtual e1ap_message_handler& get_e1ap_message_handler(const cu_up_index_t cu_up_index) = 0;
 };
 
+/// Interface for an E1AP notifier to communicate with the CU-CP.
+class cu_cp_e1ap_handler
+{
+public:
+  virtual ~cu_cp_e1ap_handler() = default;
+
+  /// \brief Handle the reception of an Bearer Context Inactivity Notification message.
+  /// \param[in] msg The received Bearer Context Inactivity Notification message.
+  virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
+};
+
 class cu_cp_ng_interface
 {
 public:
@@ -161,6 +172,7 @@ class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,
+                        public cu_cp_e1ap_handler,
                         public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_handler,
                         public cu_cp_ngap_paging_handler
@@ -172,6 +184,7 @@ public:
   virtual cu_cp_du_interface&            get_cu_cp_du_interface()            = 0;
   virtual cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler()           = 0;
   virtual cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface()         = 0;
+  virtual cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler()            = 0;
   virtual cu_cp_ng_interface&            get_cu_cp_ng_interface()            = 0;
   virtual cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() = 0;
   virtual cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler()     = 0;

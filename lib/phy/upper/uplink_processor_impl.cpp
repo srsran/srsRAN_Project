@@ -25,9 +25,95 @@
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/upper/unique_rx_softbuffer.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
-#include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
+
+namespace {
+
+/// \brief Adapts the PUSCH processor result notifier to the upper PHY receive results notifier.
+///
+/// It collects the Channel State Information (CSI), control and data decoding information from a PUSCH processor object
+/// and notifies them through the upper PHY notification interface.
+///
+/// \remark The order of the calls matters. Method on_csi() must be called before on_uci() or on_sch(). Otherwise, an
+/// assertion is triggered.
+class pusch_processor_result_notifier_adaptor : public pusch_processor_result_notifier
+{
+public:
+  /// \brief Creates a PUSCH processor result notifier adaptor.
+  /// \param[in] notifier_   Upper physical layer result notifier.
+  /// \param[in] rnti_       User RNTI.
+  /// \param[in] slot_       Current slot.
+  /// \param[in] harq_id_    User HARQ process identifier.
+  /// \param[in] payload_    View to the data payload.
+  pusch_processor_result_notifier_adaptor(upper_phy_rx_results_notifier& notifier_,
+                                          uint16_t                       rnti_,
+                                          slot_point                     slot_,
+                                          unsigned                       harq_id_,
+                                          span<const uint8_t>            payload_) :
+    notifier(notifier_), rnti(to_rnti(rnti_)), slot(slot_), harq_id(to_harq_id(harq_id_)), payload(payload_)
+  {
+  }
+
+  // See interface for documentation.
+  void on_csi(const channel_state_information& csi_) override { csi.emplace(csi_); }
+
+  // See interface for documentation.
+  void on_uci(const pusch_processor_result_control& uci) override
+  {
+    srsran_assert(csi.has_value(), "Channel State Information is missing.");
+    ul_pusch_results_control result;
+    result.rnti = rnti;
+    result.slot = slot;
+    result.csi  = csi.value();
+
+    if (!uci.harq_ack.payload.empty()) {
+      result.harq_ack.emplace(uci.harq_ack);
+    }
+
+    if (!uci.csi_part1.payload.empty()) {
+      result.csi1.emplace(uci.csi_part1);
+    }
+
+    if (!uci.csi_part2.payload.empty()) {
+      result.csi2.emplace(uci.csi_part2);
+    }
+
+    notifier.on_new_pusch_results_control(result);
+  }
+
+  // See interface for documentation.
+  void on_sch(const pusch_processor_result_data& sch) override
+  {
+    srsran_assert(csi.has_value(), "Channel State Information is missing.");
+    ul_pusch_results_data result;
+    result.rnti           = rnti;
+    result.slot           = slot;
+    result.csi            = csi.value();
+    result.harq_id        = harq_id;
+    result.decoder_result = sch.data;
+    result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
+    notifier.on_new_pusch_results_data(result);
+
+    // Store the TB CRC okay flag.
+    tb_crc_ok = sch.data.tb_crc_ok;
+  }
+
+  /// \brief Gets the TB CRC okay flag.
+  /// \return True if the transport block CRC passed, otherwise False.
+  bool get_tb_crc_ok() const { return tb_crc_ok; }
+
+private:
+  upper_phy_rx_results_notifier&      notifier;
+  rnti_t                              rnti;
+  slot_point                          slot;
+  harq_id_t                           harq_id;
+  span<const uint8_t>                 payload;
+  optional<channel_state_information> csi;
+  bool                                tb_crc_ok = false;
+};
+
+} // namespace
 
 /// \brief Returns a PRACH detector slot configuration using the given PRACH buffer context.
 static prach_detector::configuration get_prach_dectector_config_from_prach_context(const prach_buffer_context& context)
@@ -39,6 +125,7 @@ static prach_detector::configuration get_prach_dectector_config_from_prach_conte
   config.zero_correlation_zone = context.zero_correlation_zone;
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
+  config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
 
   return config;
 }
@@ -71,49 +158,16 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
 {
-  pusch_processor_result proc_result = pusch_proc->process(data, softbuffer.get(), grid, pdu.pdu);
+  // Creates a PUSCH processor result notifier adaptor.
+  pusch_processor_result_notifier_adaptor processor_notifier(notifier, pdu.pdu.rnti, pdu.pdu.slot, pdu.harq_id, data);
 
-  ul_pusch_results result;
-  result.slot = pdu.pdu.slot;
-  result.csi  = proc_result.csi;
-  result.rnti = to_rnti(pdu.pdu.rnti);
+  // Processes PUSCH.
+  pusch_proc->process(data, softbuffer.get(), processor_notifier, grid, pdu.pdu);
 
-  if (proc_result.data.has_value()) {
-    ul_pusch_results::pusch_data& results_data = result.data.emplace();
-
-    results_data.harq_id        = pdu.harq_id;
-    results_data.decoder_result = *proc_result.data;
-    results_data.payload        = (proc_result.data->tb_crc_ok) ? data : span<const uint8_t>();
-
-    // Release softbuffer if the CRC is OK.
-    if (proc_result.data.value().tb_crc_ok) {
-      softbuffer.release();
-    }
+  // Release softbuffer if the TB CRC passed.
+  if (processor_notifier.get_tb_crc_ok()) {
+    softbuffer.release();
   }
-
-  // UCI HARQ information.
-  if (!proc_result.harq_ack.payload.empty()) {
-    ul_pusch_results::pusch_uci& results_uci = result.uci.emplace();
-
-    results_uci.harq_ack.emplace(proc_result.harq_ack);
-  }
-
-  // UCI CSI1 information.
-  if (!proc_result.csi_part1.payload.empty()) {
-    ul_pusch_results::pusch_uci& results_uci = result.uci.has_value() ? result.uci.value() : result.uci.emplace();
-
-    results_uci.csi1.emplace(proc_result.csi_part1);
-  }
-
-  // UCI CSI2 information.
-  if (!proc_result.csi_part2.payload.empty()) {
-    ul_pusch_results::pusch_uci& results_uci = result.uci.has_value() ? result.uci.value() : result.uci.emplace();
-
-    results_uci.csi2.emplace(proc_result.csi_part2);
-  }
-
-  // Notify the PUSCH results.
-  notifier.on_new_pusch_results(result);
 }
 
 void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     notifier,

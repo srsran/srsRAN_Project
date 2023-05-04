@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "../du_rnti_table.h"
+#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
@@ -33,6 +33,8 @@ namespace srsran {
 
 constexpr static size_t UE_CON_RES_ID_LEN = 6;
 using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 class mac_dl_ue_manager
 {
@@ -90,7 +92,7 @@ public:
 
   bool remove_ue(du_ue_index_t ue_index);
 
-  bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_to_setup> dl_logical_channels);
+  bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
   bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids);
 
@@ -121,7 +123,7 @@ private:
                      const byte_buffer*                ul_ccch_msg,
                      std::vector<std::vector<uint8_t>> dl_harq_buffers);
 
-  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_to_setup> dl_logical_channels);
+  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
   du_rnti_table& rnti_table;
 

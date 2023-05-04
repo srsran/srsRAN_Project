@@ -69,6 +69,8 @@ public:
 
   bool empty() const { return queue.size() == 0; }
 
+  bool is_stopped() const { return loop_task.empty(); }
+
 private:
   void run()
   {

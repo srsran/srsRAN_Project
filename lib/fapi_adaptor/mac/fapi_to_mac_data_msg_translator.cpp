@@ -191,13 +191,12 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 
   // Fill HARQ.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
-    mac_uci_pdu::pusch_type::harq_information& harq = mac_pusch.harq_info.emplace();
-    harq.harq_status                                = fapi_pusch.harq.detection_status;
-    if (fapi_pusch.harq.payload.size() > 0) {
-      harq.payload = fapi_pusch.harq.payload;
+    if (fapi_pusch.harq.payload.empty()) {
+      mac_pusch.harq_info.emplace(mac_uci_pdu::pusch_type::harq_information::create_undetected_harq_info(
+          fapi_pusch.harq.detection_status, fapi_pusch.harq.expected_bit_length));
     } else {
-      harq.payload.resize(fapi_pusch.harq.expected_bit_length);
-      harq.payload.reset();
+      mac_pusch.harq_info.emplace(mac_uci_pdu::pusch_type::harq_information::create_detected_harq_info(
+          fapi_pusch.harq.detection_status, fapi_pusch.harq.payload));
     }
   }
 
@@ -232,9 +231,13 @@ static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_
 
   // Fill HARQ.
   if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::HARQ_BIT)) {
-    mac_uci_pdu::pucch_f2_or_f3_or_f4_type::harq_information& harq = mac_pucch.harq_info.emplace();
-    harq.harq_status                                               = fapi_pucch.harq.detection_status;
-    harq.payload                                                   = fapi_pucch.harq.payload;
+    if (fapi_pucch.harq.payload.empty()) {
+      mac_pucch.harq_info.emplace(mac_uci_pdu::pucch_f2_or_f3_or_f4_type::harq_information::create_undetected_harq_info(
+          fapi_pucch.harq.detection_status, fapi_pucch.harq.expected_bit_length));
+    } else {
+      mac_pucch.harq_info.emplace(mac_uci_pdu::pucch_f2_or_f3_or_f4_type::harq_information::create_detected_harq_info(
+          fapi_pucch.harq.detection_status, fapi_pucch.harq.payload));
+    }
   }
 
   // Fill CSI Part 1.

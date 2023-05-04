@@ -42,9 +42,10 @@ protected:
   ue_index_t create_ue(du_index_t du_index, rnti_t rnti);
 
   srslog::basic_logger& test_logger   = srslog::fetch_basic_logger("TEST");
-  srslog::basic_logger& ue_mng_logger = srslog::fetch_basic_logger("UE-MNG");
+  srslog::basic_logger& ue_mng_logger = srslog::fetch_basic_logger("CU-UE-MNG");
 
-  ue_manager ue_mng;
+  ue_configuration ue_config;
+  ue_manager       ue_mng;
 
   // DU processor to RRC UE adapters
   slotted_id_vector<ue_index_t, dummy_du_processor_rrc_ue_control_message_notifier> rrc_ue_adapters;

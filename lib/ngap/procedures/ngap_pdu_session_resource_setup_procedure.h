@@ -33,11 +33,11 @@ namespace srs_cu_cp {
 class ngap_pdu_session_resource_setup_procedure
 {
 public:
-  ngap_pdu_session_resource_setup_procedure(ngap_ue&                                  ue_,
-                                            cu_cp_pdu_session_resource_setup_request& request_,
-                                            ngap_du_processor_control_notifier&       du_processor_ctrl_notif_,
-                                            ngap_message_notifier&                    amf_notif_,
-                                            srslog::basic_logger&                     logger_);
+  ngap_pdu_session_resource_setup_procedure(const cu_cp_pdu_session_resource_setup_request& request_,
+                                            ngap_ue&                                        ue_,
+                                            ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
+                                            ngap_message_notifier&                          amf_notif_,
+                                            srslog::basic_logger&                           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -45,8 +45,8 @@ private:
   // results senders
   void send_pdu_session_resource_setup_response();
 
+  cu_cp_pdu_session_resource_setup_request  request;
   ngap_ue&                                  ue;
-  cu_cp_pdu_session_resource_setup_request& request;
   cu_cp_pdu_session_resource_setup_response response;
   ngap_du_processor_control_notifier&       du_processor_ctrl_notifier;
   ngap_message_notifier&                    amf_notifier;

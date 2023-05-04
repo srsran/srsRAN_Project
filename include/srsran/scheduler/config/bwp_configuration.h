@@ -133,14 +133,16 @@ struct rach_config_generic {
   uint16_t zero_correlation_zone_config;
 };
 
-/// Used to specify the cell-specific random-access parameters as per TS38.331, "RACH-ConfigCommon".
+/// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
 struct rach_config_common {
   rach_config_generic rach_cfg_generic;
   /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
-  unsigned total_nof_ra_preambles;
+  optional<unsigned> total_nof_ra_preambles;
+  /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.
+  /// We use \c true for l839, while \c false for l139.
+  bool is_prach_root_seq_index_l839;
   /// PRACH root sequence index. Values: (1..839).
   /// \remark See TS 38.211, clause 6.3.3.1.
-  bool     prach_root_seq_index_l839_present;
   unsigned prach_root_seq_index;
   /// \brief Subcarrier spacing of PRACH as per TS38.331, "RACH-ConfigCommon". If invalid, the UE applies the SCS as
   /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS38.211 Tables 6.3.3.1-[1-3].

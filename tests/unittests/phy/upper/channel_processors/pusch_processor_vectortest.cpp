@@ -21,6 +21,7 @@
  */
 
 #include "../rx_softbuffer_test_doubles.h"
+#include "pusch_processor_result_test_doubles.h"
 #include "pusch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -81,7 +82,7 @@ protected:
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
     ASSERT_NE(short_block_det_factory, nullptr);
 
-    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
     if (!dft_factory) {
       dft_factory = create_dft_processor_factory_generic();
     }
@@ -175,33 +176,46 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
-  pusch_processor_result result = pusch_proc->process(data, softbuffer_spy, grid, config);
+  pusch_processor_result_notifier_spy results_notifier;
+  pusch_proc->process(data, softbuffer_spy, results_notifier, grid, config);
 
   // Verify UL-SCH decode results.
-  ASSERT_TRUE(result.data.has_value());
-  ASSERT_TRUE(result.data.value().tb_crc_ok);
+  const auto& sch_entries = results_notifier.get_sch_entries();
+  ASSERT_FALSE(sch_entries.empty());
+  const auto& sch_entry = sch_entries.front();
+  ASSERT_TRUE(sch_entry.data.tb_crc_ok);
   ASSERT_EQ(expected_data, data);
+
+  // Skip the rest of the assertions if UCI is not present.
+  if ((config.uci.nof_harq_ack == 0) && (config.uci.nof_csi_part1 == 0) && (config.uci.nof_csi_part2 == 0)) {
+    return;
+  }
+
+  // Extract UCI result.
+  const auto& uci_entries = results_notifier.get_uci_entries();
+  ASSERT_FALSE(uci_entries.empty());
+  const auto& uci_entry = uci_entries.front();
 
   // Verify HARQ-ACK result.
   if (config.uci.nof_harq_ack > 0) {
     std::vector<uint8_t> expected_harq_ack = test_case.harq_ack.read();
 
-    ASSERT_EQ(span<const uint8_t>(result.harq_ack.payload), span<const uint8_t>(expected_harq_ack));
-    ASSERT_EQ(result.harq_ack.status, uci_status::valid);
+    ASSERT_EQ(span<const uint8_t>(uci_entry.harq_ack.payload), span<const uint8_t>(expected_harq_ack));
+    ASSERT_EQ(uci_entry.harq_ack.status, uci_status::valid);
   } else {
-    ASSERT_TRUE(result.harq_ack.payload.empty());
-    ASSERT_EQ(result.harq_ack.status, uci_status::unknown);
+    ASSERT_TRUE(uci_entry.harq_ack.payload.empty());
+    ASSERT_EQ(uci_entry.harq_ack.status, uci_status::unknown);
   }
 
   // Verify CSI Part 1 result.
   if (config.uci.nof_csi_part1 > 0) {
     std::vector<uint8_t> expected_csi_part1 = test_case.csi_part1.read();
 
-    ASSERT_EQ(span<const uint8_t>(result.csi_part1.payload), span<const uint8_t>(expected_csi_part1));
-    ASSERT_EQ(result.csi_part1.status, uci_status::valid);
+    ASSERT_EQ(span<const uint8_t>(uci_entry.csi_part1.payload), span<const uint8_t>(expected_csi_part1));
+    ASSERT_EQ(uci_entry.csi_part1.status, uci_status::valid);
   } else {
-    ASSERT_TRUE(result.csi_part1.payload.empty());
-    ASSERT_EQ(result.csi_part1.status, uci_status::unknown);
+    ASSERT_TRUE(uci_entry.csi_part1.payload.empty());
+    ASSERT_EQ(uci_entry.csi_part1.status, uci_status::unknown);
   }
 }
 

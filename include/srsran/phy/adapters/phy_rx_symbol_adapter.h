@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 

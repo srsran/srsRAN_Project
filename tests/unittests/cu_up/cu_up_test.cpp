@@ -57,9 +57,10 @@ protected:
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
 
     // create worker thread and executer
-    worker   = std::make_unique<task_worker>("thread", 128, false, os_thread_realtime_priority::no_realtime());
+    worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
     executor = make_task_executor(*worker);
 
+    app_timers   = std::make_unique<timer_manager>(256);
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
     upf_addr_str = "127.0.0.1";
@@ -74,6 +75,7 @@ protected:
     cfg.e1ap_notifier        = &e1ap_message_notifier;
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
+    cfg.timers               = app_timers.get();
     cfg.net_cfg.n3_bind_port = 0; // Random free port selected by the OS.
 
     return cfg;
@@ -86,6 +88,8 @@ protected:
     // flush logger after each test
     srslog::flush();
   }
+
+  std::unique_ptr<timer_manager> app_timers;
 
   dummy_e1ap_notifier                         e1ap_message_notifier;
   dummy_inner_f1u_bearer                      f1u_bearer;
@@ -259,10 +263,4 @@ TEST_F(cu_up_test, ul_data_flow)
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + 3, t_pdu_span2.end(), rx_buf.begin() + 8));
 
   close(sock_fd);
-}
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

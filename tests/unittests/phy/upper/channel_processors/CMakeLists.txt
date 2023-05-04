@@ -28,7 +28,7 @@ target_link_libraries(pdcch_processor_unittest srsran_channel_processors srslog)
 add_test(pdcch_processor_unittest pdcch_processor_unittest)
 
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
-target_link_libraries(pdsch_processor_unittest srsran_channel_processors srslog)
+target_link_libraries(pdsch_processor_unittest srsran_channel_processors srslog gtest gtest_main)
 add_test(pdsch_processor_unittest pdsch_processor_unittest)
 
 add_executable(pdsch_processor_validator_test pdsch_processor_validator_test.cpp)
@@ -125,9 +125,13 @@ if (USE_PHY_TESTVECTORS)
     target_link_libraries(pdsch_modulator_test srsran_channel_processors srslog)
     add_test_vector(pdsch_modulator_test pdsch_modulator_test_data.tar.gz "")
 
+    add_executable(pdsch_processor_vectortest pdsch_processor_vectortest.cpp)
+    target_link_libraries(pdsch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    add_test_vector(pdsch_processor_vectortest pdsch_processor_test_data.tar.gz "")
+
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
     target_link_libraries(prach_detector_vectortest srsran_channel_processors srsran_generic_funcs srsran_phy_support srslog gtest gtest_main)
-    add_test(prach_detector_vectortest prach_detector_vectortest)
+    add_test_vector(prach_detector_vectortest prach_detector_test_data.tar.gz "")
 
     add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
     target_link_libraries(prach_generator_vectortest srsran_channel_processors srsran_generic_funcs srslog gtest gtest_main)

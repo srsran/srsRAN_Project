@@ -21,7 +21,7 @@
  */
 
 #include "pdu_rx_handler.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 
@@ -82,20 +82,20 @@ pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
-  // 0. Store PCAP
+  // > Store PCAP
   write_pcap_rx_pdu(sl_rx, pdu);
 
-  // 1. Fetch UE index based on PDU RNTI.
+  // > Fetch UE index based on PDU RNTI.
   du_ue_index_t ue_index = rnti_table[pdu.rnti];
 
-  // 2. Decode MAC UL PDU.
+  // > Decode MAC UL PDU.
   decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
   if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
     logger.warning("{}: Failed to decode PDU", create_prefix(ctx));
     return false;
   }
 
-  // 3. Log MAC UL PDU.
+  // > Log MAC UL PDU.
   if (logger.info.enabled()) {
     // Note: Since subPDUs are just views, they should not be passed by value to the logging backend.
     fmt::memory_buffer fmtbuf;
@@ -103,17 +103,17 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
   }
 
-  // 4. Check if MAC CRNTI CE is present.
+  // > Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
     const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
 
     if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
-      // 4. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+      // >> Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
       return handle_crnti_ce(ctx, subpdu);
     }
   }
 
-  // 5. Handle remaining MAC UL subPDUs.
+  // > Handle remaining MAC UL subPDUs.
   return handle_rx_subpdus(ctx);
 }
 
@@ -275,29 +275,31 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
   ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
   if (ctx.pdu_rx.rnti == INVALID_RNTI) {
-    logger.error("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
-                 create_prefix(ctx, subpdu));
+    logger.warning("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
+                   create_prefix(ctx, subpdu));
     return false;
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
-    // 3. Handle remaining subPDUs using old C-RNTI.
-    if (not handle_rx_subpdus(ctx)) {
-      return;
-    }
+  if (not ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
+        // 3. Handle remaining subPDUs using old C-RNTI.
+        if (not handle_rx_subpdus(ctx)) {
+          return;
+        }
 
-    // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
-    uci_indication uci{};
-    uci.cell_index = ctx.cell_index_rx;
-    uci.slot_rx    = ctx.slot_rx;
-    uci.ucis.resize(1);
-    uci.ucis[0].ue_index = ctx.ue_index;
-    uci.ucis[0].crnti    = ctx.pdu_rx.rnti;
-    uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
-    sched.handle_uci_indication(uci);
-  });
+        // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
+        uci_indication uci{};
+        uci.cell_index = ctx.cell_index_rx;
+        uci.slot_rx    = ctx.slot_rx;
+        uci.ucis.resize(1);
+        uci.ucis[0].ue_index = ctx.ue_index;
+        uci.ucis[0].crnti    = ctx.pdu_rx.rnti;
+        uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
+        sched.handle_uci_indication(uci);
+      })) {
+    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
+  }
 
   return true;
 }

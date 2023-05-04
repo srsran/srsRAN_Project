@@ -32,6 +32,14 @@ protected:
   void combine_softbits(span<log_likelihood_ratio>       out,
                         span<const log_likelihood_ratio> in0,
                         span<const log_likelihood_ratio> in1) const override;
+
+  void deinterleave_qpsk(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const override;
+
+  void deinterleave_qam16(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const override;
+
+  void deinterleave_qam64(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const override;
+
+  void deinterleave_qam256(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const override;
 };
 
 } // namespace srsran

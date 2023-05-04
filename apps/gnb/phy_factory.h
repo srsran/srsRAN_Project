@@ -24,6 +24,7 @@
 
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include <memory>
 
 namespace srsran {
 

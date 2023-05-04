@@ -35,7 +35,14 @@ class f1u_tx_sdu_handler
 public:
   virtual ~f1u_tx_sdu_handler() = default;
 
-  virtual void handle_sdu(pdcp_tx_pdu sdu)   = 0;
+  /// \brief Immediately transmits a PDCP TX PDU to lower layers towards the DU.
+  /// \param sdu The PDCP TX PDU to be transmitted to lower layers.
+  virtual void handle_sdu(pdcp_tx_pdu sdu) = 0;
+
+  /// \brief Enqueues a notification to discard the given PDCP TX PDU at the DU.
+  ///
+  /// The queued notifications are either piggy-backed with the next SDU or sent periodically (whatever comes first).
+  /// \param pdcp_sn The sequence number of the PDCP PDU that shall be discarded by lower layers.
   virtual void discard_sdu(uint32_t pdcp_sn) = 0;
 };
 

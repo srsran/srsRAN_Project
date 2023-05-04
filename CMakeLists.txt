@@ -61,6 +61,7 @@ option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            OFF)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
+option(ENABLE_TRX_DRIVER     "Enable Amarisoft TRX driver library"      OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
@@ -103,15 +104,10 @@ ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wsuggest-override HAVE_SUGGEST_OVERRIDE)
 ## Avoid shadow variables which can be caused due to C code ported into C++
 ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wshadow HAVE_SHADOW)
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG")
-else(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  if(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -DBUILD_TYPE_RELWITHDEBINFO")
-  else(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-trapping-math -fno-math-errno -DBUILD_TYPE_RELEASE")
-  endif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+# Set compiler flags for different build types.
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb -O0 -DDEBUG_MODE -DBUILD_TYPE_DEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ggdb -DBUILD_TYPE_RELWITHDEBINFO")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-trapping-math -fno-math-errno -DBUILD_TYPE_RELEASE")
 
 if(ENABLE_GPROF)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
@@ -199,6 +195,8 @@ if (ENABLE_UHD)
         include_directories(${UHD_INCLUDE_DIRS})
         link_directories(${UHD_LIBRARY_DIRS})
     endif (UHD_FOUND)
+else (ENABLE_UHD)
+    unset(UHD_FOUND CACHE)
 endif (ENABLE_UHD)
 
 # Yaml-cpp
@@ -217,6 +215,8 @@ if (ENABLE_ZEROMQ)
         include_directories(${ZEROMQ_INCLUDE_DIRS})
         link_directories(${ZEROMQ_LIBRARY_DIRS})
     endif (ZEROMQ_FOUND)
+else (ENABLE_ZEROMQ)
+    unset(ZEROMQ_FOUND CACHE)
 endif (ENABLE_ZEROMQ)
 
 ########################################################################
@@ -275,6 +275,8 @@ if (CCACHE_EXECUTABLE)
 endif ()
 
 include(CTest)
+execute_process(COMMAND sed -i "s|MemoryCheckCommandOptions: |MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes --exit-on-first-error=yes --error-exitcode=22 --suppressions=${CMAKE_SOURCE_DIR}/.memcheck-suppressions|" DartConfiguration.tcl
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include_directories(include)
 include_directories(external/fmt/include)
@@ -307,6 +309,7 @@ add_subdirectory(configs)
 add_subdirectory(docs)
 add_subdirectory(external)
 add_subdirectory(lib)
+add_subdirectory(utils)
 
 if (BUILD_TESTS)
     add_subdirectory(tests/unittests)

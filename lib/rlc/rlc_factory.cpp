@@ -31,8 +31,13 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
 {
   switch (msg.config.mode) {
     case rlc_mode::tm:
-      return std::make_unique<rlc_tm_entity>(
-          msg.ue_index, msg.rb_id, *msg.rx_upper_dn, *msg.tx_upper_dn, *msg.tx_upper_cn, *msg.tx_lower_dn);
+      return std::make_unique<rlc_tm_entity>(msg.ue_index,
+                                             msg.rb_id,
+                                             *msg.rx_upper_dn,
+                                             *msg.tx_upper_dn,
+                                             *msg.tx_upper_cn,
+                                             *msg.tx_lower_dn,
+                                             *msg.pcell_executor);
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
@@ -44,6 +49,7 @@ std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_
                                              *msg.tx_upper_cn,
                                              *msg.tx_lower_dn,
                                              *msg.timers,
+                                             *msg.pcell_executor,
                                              *msg.ue_executor);
     case rlc_mode::am:
       return std::make_unique<rlc_am_entity>(msg.ue_index,

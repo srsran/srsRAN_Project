@@ -71,7 +71,10 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
-  metrics.metrics_add_sdus(1, buf.length());
+  if (buf.empty()) {
+    logger.log_warning("Dropped empty PDU.");
+    return;
+  }
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     handle_control_pdu(std::move(buf));
   } else {
@@ -117,9 +120,14 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   }
   logger.log_info(buf.begin(), buf.end(), "RX PDU. pdu_len={} {}", buf.length(), header);
 
+  // length check: there must be at least one payload byte
+  size_t header_len = header.get_packed_size();
+  if (buf.length() <= header_len) {
+    logger.log_warning("Dropped malformed PDU without payload. pdu_len={} header_len={}", buf.length(), header_len);
+    return;
+  }
   // strip header, extract payload
-  size_t            header_len = header.get_packed_size();
-  byte_buffer_slice payload    = buf.make_slice(header_len, buf.length() - header_len);
+  byte_buffer_slice payload = buf.make_slice(header_len, buf.length() - header_len);
 
   // Store the poll bit for later evaluation on_function_exit.
   // We do this before checking if the PDU is inside the RX window,
@@ -546,7 +554,9 @@ rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 {
   do_status.store(false, std::memory_order_relaxed);
   if (status_prohibit_timer.is_valid() && cfg.t_status_prohibit > 0) {
-    ue_executor.defer([&]() { status_prohibit_timer.run(); });
+    if (not ue_executor.defer([&]() { status_prohibit_timer.run(); })) {
+      logger.log_error("Unable to start prohibit timer");
+    }
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
   std::unique_lock<std::mutex> lock(status_report_mutex);

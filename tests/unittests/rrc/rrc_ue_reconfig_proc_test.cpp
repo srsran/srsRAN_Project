@@ -70,7 +70,7 @@ TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
   cu_cp_rrc_reconfiguration_procedure_request args = generate_rrc_reconfiguration_procedure_request();
 
   // Trigger Reconfig
-  async_task<bool>         t = get_rrc_ue_reconfiguration_handler()->start_rrc_reconfiguration(args);
+  async_task<bool>         t = get_rrc_ue_control_message_handler()->handle_rrc_reconfiguration_request(args);
   lazy_task_launcher<bool> t_launcher(t);
 
   ASSERT_FALSE(t.ready());

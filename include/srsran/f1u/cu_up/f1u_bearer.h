@@ -28,6 +28,8 @@
 namespace srsran {
 namespace srs_cu_up {
 
+constexpr uint32_t f1u_dl_notif_time_ms = 10;
+
 class f1u_bearer_disconnector;
 
 class f1u_bearer

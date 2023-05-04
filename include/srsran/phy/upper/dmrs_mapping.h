@@ -51,11 +51,10 @@ public:
   constexpr bool operator==(const dmrs_type& other) const { return value == other.value; }
   constexpr bool operator!=(const dmrs_type& other) const { return value != other.value; }
 
-  /// \brief Calculates the number of resource elements that carry DMRS for PDSCH or PUSCH per resource block and
-  /// symbol.
+  /// \brief Calculates the number of resource elements that carry DM-RS for PDSCH or PUSCH per CDM group, physical
+  /// resource block, and OFDM symbol.
   ///
-  /// \param[in] type Provides the type of DMRS.
-  /// \return The number of resource elements occupied by DMRS in a resource block and symbol.
+  /// \return The number of resource elements.
   constexpr unsigned nof_dmrs_per_rb() const { return (value == dmrs_type::TYPE1) ? 6 : 4; }
 
   /// Defines the maximum number of ports for DMRS type 1.
@@ -70,7 +69,28 @@ public:
     return (value == TYPE1) ? DMRS_MAX_PORTS_TYPE1 : DMRS_MAX_PORTS_TYPE2;
   }
 
-  /// \brief Gets a DMRS transmission pattern.
+  /// \brief Gets a DM-RS position mask within a resource block.
+  ///
+  /// \param[in] nof_cdm_groups_without_data Number of CDM groups without data.
+  /// \return A RE mask within a PRB that contain DM-RS.
+  re_prb_mask get_dmrs_prb_mask(unsigned nof_cdm_groups_without_data) const
+  {
+    if (value == TYPE1) {
+      bounded_bitset<2> cdm_groups_pattern(2);
+      cdm_groups_pattern.fill(0, nof_cdm_groups_without_data);
+      bounded_bitset<6> groups(6);
+      groups.fill(0, 6, true);
+      return groups.kronecker_product<2>(cdm_groups_pattern);
+    }
+
+    bounded_bitset<6> cdm_groups_pattern(6);
+    cdm_groups_pattern.fill(0, 2 * nof_cdm_groups_without_data);
+    bounded_bitset<2> groups(2);
+    groups.fill(0, 2, true);
+    return groups.kronecker_product<6>(cdm_groups_pattern);
+  }
+
+  /// \brief Gets a DM-RS transmission pattern.
   ///
   /// It creates a RE pattern that describes the reserved resource elements for DM-RS in PDSCH or PUSCH transmissions.
   ///
@@ -97,22 +117,21 @@ public:
     dmrs_pattern.rb_begin  = bwp_start_rb;
     dmrs_pattern.rb_end    = bwp_start_rb + bwp_size_rb;
     dmrs_pattern.rb_stride = 1;
-    if (value == TYPE1) {
-      bounded_bitset<2> cdm_groups_pattern(2);
-      cdm_groups_pattern.fill(0, nof_cdm_groups_without_data);
-      bounded_bitset<6> groups(6);
-      groups.fill(0, 6, true);
-      dmrs_pattern.re_mask = groups.kronecker_product<2>(cdm_groups_pattern);
-    } else {
-      bounded_bitset<6> cdm_groups_pattern(6);
-      cdm_groups_pattern.fill(0, 2 * nof_cdm_groups_without_data);
-      bounded_bitset<2> groups(2);
-      groups.fill(0, 2, true);
-      dmrs_pattern.re_mask = groups.kronecker_product<6>(cdm_groups_pattern);
-    }
-    dmrs_pattern.symbols = symbol_mask;
+    dmrs_pattern.re_mask   = get_dmrs_prb_mask(nof_cdm_groups_without_data);
+    dmrs_pattern.symbols   = symbol_mask;
 
     return dmrs_pattern;
+  }
+
+  const char* to_string() const
+  {
+    switch (value) {
+      case TYPE1:
+        return "Type1";
+      case TYPE2:
+      default:
+        return "Type2";
+    }
   }
 
 private:

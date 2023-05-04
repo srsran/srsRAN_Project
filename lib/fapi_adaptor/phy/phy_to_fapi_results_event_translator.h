@@ -42,7 +42,10 @@ public:
   void on_new_prach_results(const ul_prach_results& result) override;
 
   // See interface for documentation.
-  void on_new_pusch_results(const ul_pusch_results& result) override;
+  void on_new_pusch_results_control(const ul_pusch_results_control& result) override;
+
+  // See interface for documentation.
+  void on_new_pusch_results_data(const ul_pusch_results_data& result) override;
 
   // See interface for documentation.
   void on_new_pucch_results(const ul_pucch_results& result) override;
@@ -55,13 +58,13 @@ public:
 
 private:
   /// Notifies a new FAPI \e CRC.indication through the data notifier.
-  void notify_crc_indication(const ul_pusch_results& result);
+  void notify_crc_indication(const ul_pusch_results_data& result);
 
   /// Notifies a new FAPI \e Rx_Data.indication through the data notifier.
-  void notify_rx_data_indication(const ul_pusch_results& result);
+  void notify_rx_data_indication(const ul_pusch_results_data& result);
 
   ///  Notifies a new FAPI \e UCI.indication through the data notifier that carries a PUSCH PDU.
-  void notify_pusch_uci_indication(const ul_pusch_results& result);
+  void notify_pusch_uci_indication(const ul_pusch_results_control& result);
 
 private:
   /// FAPI logger.

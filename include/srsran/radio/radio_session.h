@@ -41,9 +41,21 @@ public:
   /// \return The reference to the data plane for this radio session.
   virtual baseband_gateway& get_baseband_gateway() = 0;
 
+  /// \brief Starts the radio operation.
+  ///
+  /// It requests all radio streams to start simultaneously.
+  ///
+  /// \remark Radio streams run until halted by a call of the stop() method.
+  /// \remark Calling start() more than once results in undefined behavior, even after calling stop().
+  virtual void start() = 0;
+
   /// \brief Stops the radio session operation.
-  /// \remark Any call to transmit or receive after calling stop() will return instantly without interacting with the
-  /// physical radio.
+  ///
+  /// Any call to radio operation after calling stop() will return instantly without interacting with the physical
+  /// radio.
+  ///
+  /// \remark Calling stop() without having called start() results in undefined behavior.
+  /// \remark Calling start() after stop() results in undefined behavior.
   virtual void stop() = 0;
 };
 

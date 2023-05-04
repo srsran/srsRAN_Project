@@ -34,7 +34,10 @@ using namespace srsran;
 int main()
 {
   // Create a DFT factory.
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_slow();
+  if (!dft_factory) {
+    dft_factory = create_dft_processor_factory_generic();
+  }
   TESTASSERT(dft_factory);
 
   // Prepare OFDM demodulator factory configuration.

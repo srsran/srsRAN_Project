@@ -25,15 +25,19 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "5"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "5"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "2"
+    ref: "5"
+    file: .gitlab/ci-shared/tools/python.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "5"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
+  - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
 
 stages:
@@ -60,12 +64,20 @@ include-guards:
       - INPUT_PATH: "."
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
 
+full-code-format:
+  extends: .full-code-format
+  rules:
+    - if: $ON_MR
+      changes:
+        - .clang-format
+    - if: $CI_DESCRIPTION =~ /Nightly/
+
 .codechecker:
-  image: $CR_REGISTRY_URI/testing-tools/codechecker-gnb:1.0.3
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
   stage: static
   needs: []
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+    - ${INFRASTRUCTURE_TAG}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
@@ -150,7 +162,7 @@ coverity:
     KUBERNETES_CPU_REQUEST: 7
     KUBERNETES_MEMORY_REQUEST: 13Gi
   tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-amd64
+    - ${INFRASTRUCTURE_TAG}
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   script:
@@ -169,65 +181,31 @@ coverity:
         --form description="srsGNB dev build" \
         https://scan.coverity.com/builds?project=srsRAN_5G
 
+e2e tests tox:
+  stage: static
+  rules:
+    - if: $ON_MR
+      changes:
+        - tests/e2e/**/*
+  variables:
+    PY_DIR: tests/e2e
+  before_script:
+    - apk add build-base
+  extends: .tox
+
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
 
 # In build.yml
 
-intermediate commits:
-  extends: .build_and_unit
-  rules:
-    - if: $ON_MR
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: none
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    ASSERT_LEVEL: PARANOID
-    ENABLE_EXPORT: "False"
-    ENABLE_GCOV: "True"
-  script:
-    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs
-    - git lfs install
-    - git config advice.detachedHead false
-    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
-    - |
-      for rev in $(git rev-list --reverse origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME^1)
-      do
-        echo "##################################################"
-        echo "#### $rev ####"
-        echo "##################################################"
-        git checkout $rev
-        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
-        build_srsgnb
-        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
-      done
-  after_script:
-    - rm -Rf build
-
 ################################################################################
 # Doc generation
 ################################################################################
-.depends on unit test jobs:
-  # Here we handled how jobs in .gitlab-ci.yml depends on jobs inside build.yml
-  # If unit tests related jobs change in build.yml, we'll need to change this one too
-  needs:
-    - job: build cached
-      optional: true
-      artifacts: true
-    - job: build update cache
-      optional: true
-      artifacts: true
-    - job: build clean
-      optional: true
-      artifacts: true
-
 unit coverage:
   stage: documentation
-  extends: .depends on unit test jobs
   image:
-    name: $CR_REGISTRY_URI/testing-tools/report-generator:5.1.10
+    name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
   variables:
     GIT_STRATEGY: none
@@ -284,32 +262,23 @@ unit coverage:
     paths:
       - coverage_html
     expire_in: 10 minutes
-
-unit tests web:
-  stage: documentation
-  extends: .depends on unit test jobs
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      when: always # Even if previous stages/required jobs fail
-  image: python:3.9-alpine # sh entrypoint
-  variables:
-    GIT_STRATEGY: none
-  before_script:
-    - pip install junit2html
-  script:
-    - junit2html *xunit.xml --merge merged_xunit.xml
-    - junit2html merged_xunit.xml ./test_report.html
-  artifacts:
-    paths:
-      - test_report.html
-    expire_in: 10 minutes
+  needs:
+    - job: smoke release cached
+      optional: true
+      artifacts: true
+    - job: smoke release clean
+      optional: true
+      artifacts: true
+    - job: smoke release update cache
+      optional: true
+      artifacts: true
 
 pages:
   stage: documentation
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.5.0
   script:
     - ls
     - ls zmq
@@ -317,7 +286,6 @@ pages:
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
-    - mv test_report.html public/
     - mv docs/index.html public/index.html
     - doxygen_generator.sh
     - mv build/public/index.html build/public/index_doxygen.html
@@ -332,14 +300,15 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
     - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
-    - sed -i 's/zmq-tsan_job_id/'$( cat ./zmq-tsan/job.env  )'/' public/index.html
-    - sed -i 's/zmq-asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
+    - sed -i 's/zmq_asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
+    - sed -i 's/zmq_valgrind_job_id/'$( cat ./zmq-valgrind/job.env  )'/' public/index.html
     - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
+    - sed -i 's/rf_tsan_job_id/'$( cat ./rf-tsan/job.env  )'/' public/index.html
+    - sed -i 's/rf_asan_job_id/'$( cat ./rf-asan/job.env  )'/' public/index.html
+    - sed -i 's/rf_b200_config_job_id/'$( cat ./rf-b200-config/job.env  )'/' public/index.html
 
   needs:
     - job: unit coverage
-      artifacts: true
-    - job: unit tests web
       artifacts: true
     - job: clang-tidy
       artifacts: true
@@ -347,11 +316,17 @@ pages:
       artifacts: true
     - job: zmq
       artifacts: true
-    - job: zmq-tsan
-      artifacts: true
     - job: zmq-asan
       artifacts: true
+    - job: zmq-valgrind
+      artifacts: true
     - job: rf
+      artifacts: true
+    - job: rf-tsan
+      artifacts: true
+    - job: rf-asan
+      artifacts: true
+    - job: rf-b200-config
       artifacts: true
   artifacts:
     paths:
@@ -377,3 +352,44 @@ promote code:
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push
+  dependencies: []
+
+################################################################################
+# Enable / Disable pipelines
+################################################################################
+scheduler:
+  # Override default scheduler job
+  # Enabling branches on default_branch will also apply any change done
+  stage: ci
+  extends: .enable-schedule-by-branch
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+  variables:
+    ENABLE: "true"
+    BRANCH: $CI_COMMIT_BRANCH
+  dependencies: []
+
+disable current schedule:
+  stage: .post
+  extends: .enable-schedule-by-description
+  rules:
+    - if: $GRADUATION_BRANCH
+      when: always
+  variables:
+    ENABLE: "false"
+    BRANCH: $CI_COMMIT_REF_NAME
+    DESCRIPTION: $CI_DESCRIPTION
+  dependencies: []
+
+enable schedule on graduation branch:
+  stage: .post
+  extends: .enable-schedule-by-branch
+  rules:
+    - if: $GRADUATION_BRANCH
+  variables:
+    ENABLE: "true"
+    BRANCH: $GRADUATION_BRANCH
+  needs:
+    - job: promote code
+      artifacts: false
+  dependencies: []

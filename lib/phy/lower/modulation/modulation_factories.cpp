@@ -34,9 +34,10 @@ private:
   std::shared_ptr<dft_processor_factory> dft_factory;
 
 public:
-  ofdm_modulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
+  explicit ofdm_modulator_factory_generic(ofdm_factory_generic_configuration config) :
+    dft_factory(std::move(config.dft_factory))
   {
-    srsran_assert(config.dft_factory, "Invalid DFT factory.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_modulator>
@@ -61,9 +62,10 @@ private:
   std::shared_ptr<dft_processor_factory> dft_factory;
 
 public:
-  ofdm_demodulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
+  explicit ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration config) :
+    dft_factory(std::move(config.dft_factory))
   {
-    srsran_assert(config.dft_factory, "Invalid DFT factory.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_demodulator>
@@ -87,28 +89,29 @@ class ofdm_prach_demodulator_factory_sw : public ofdm_prach_demodulator_factory
 {
 private:
   std::shared_ptr<dft_processor_factory> dft_factory;
-  unsigned                               dft_size_15kHz;
+  sampling_rate                          srate;
 
 public:
-  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, unsigned dft_size_15kHz_) :
-    dft_factory(dft_factory_), dft_size_15kHz(dft_size_15kHz_)
+  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, sampling_rate srate_) :
+    dft_factory(std::move(dft_factory_)), srate(srate_)
   {
     srsran_assert(dft_factory, "Invalid DFT factory.");
-    srsran_assert(dft_size_15kHz, "Invalid DFT size for 15kHz.");
   }
 
   std::unique_ptr<ofdm_prach_demodulator> create() override
   {
-    dft_processor::configuration dft_config_1_25_kHz;
-    dft_config_1_25_kHz.size = (dft_size_15kHz * 15000) / 1250;
-    dft_config_1_25_kHz.dir  = dft_processor::direction::DIRECT;
-
-    dft_processor::configuration dft_config_5_kHz;
-    dft_config_5_kHz.size = (dft_size_15kHz * 15000) / 5000;
-    dft_config_5_kHz.dir  = dft_processor::direction::DIRECT;
-
-    return std::make_unique<ofdm_prach_demodulator_impl>(dft_factory->create(dft_config_1_25_kHz),
-                                                         dft_factory->create(dft_config_5_kHz));
+    using int_type = std::underlying_type_t<prach_subcarrier_spacing>;
+    ofdm_prach_demodulator_impl::dft_processors_table dft_processors;
+    for (int_type i_scs     = static_cast<int_type>(prach_subcarrier_spacing::kHz15),
+                  i_scs_end = static_cast<int_type>(prach_subcarrier_spacing::invalid);
+         i_scs != i_scs_end;
+         ++i_scs) {
+      prach_subcarrier_spacing     ra_scs     = static_cast<prach_subcarrier_spacing>(i_scs);
+      dft_processor::configuration dft_config = {.size = srate.get_dft_size(ra_scs_to_Hz(ra_scs)),
+                                                 .dir  = dft_processor::direction::DIRECT};
+      dft_processors.emplace(ra_scs, dft_factory->create(dft_config));
+    }
+    return std::make_unique<ofdm_prach_demodulator_impl>(srate, std::move(dft_processors));
   }
 };
 
@@ -128,7 +131,7 @@ srsran::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configurati
 
 std::shared_ptr<ofdm_prach_demodulator_factory>
 srsran::create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
-                                                 unsigned                               dft_size_15kHz)
+                                                 sampling_rate                          srate)
 {
-  return std::make_shared<ofdm_prach_demodulator_factory_sw>(dft_factory, dft_size_15kHz);
+  return std::make_shared<ofdm_prach_demodulator_factory_sw>(std::move(dft_factory), srate);
 }

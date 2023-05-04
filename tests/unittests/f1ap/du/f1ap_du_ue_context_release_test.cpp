@@ -53,6 +53,16 @@ TEST_F(f1ap_du_ue_context_release_test, when_f1ap_receives_request_then_f1ap_not
 {
   start_procedure();
 
+  // Let the release timeout expire.
+  const unsigned release_timeout = 1000;
+  for (unsigned i = 0; i != release_timeout; ++i) {
+    this->timer_service.tick();
+    this->ctrl_worker.run_pending_tasks();
+    if (this->f1ap_du_cfg_handler.last_ue_delete_req.has_value()) {
+      break;
+    }
+  }
+
   // DU manager receives UE Context Update Release.
   ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_delete_req.has_value());
   const f1ap_ue_delete_request& req = *this->f1ap_du_cfg_handler.last_ue_delete_req;
@@ -63,6 +73,16 @@ TEST_F(f1ap_du_ue_context_release_test,
        when_f1ap_finishes_handling_request_then_f1ap_responds_back_with_ue_context_release_complete)
 {
   start_procedure();
+
+  // Let the release timeout expire.
+  const unsigned release_timeout = 1000;
+  for (unsigned i = 0; i != release_timeout; ++i) {
+    this->timer_service.tick();
+    this->ctrl_worker.run_pending_tasks();
+    if (this->f1ap_du_cfg_handler.last_ue_delete_req.has_value()) {
+      break;
+    }
+  }
 
   // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);

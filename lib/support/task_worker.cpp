@@ -21,24 +21,52 @@
  */
 
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/srslog/srslog.h"
-#include <assert.h>
-#include <chrono>
-#include <stdio.h>
+#include <future>
 
-namespace srsran {
+using namespace srsran;
 
-task_worker::task_worker(std::string                      thread_name_,
-                         uint32_t                         queue_size,
-                         bool                             start_postponed,
-                         os_thread_realtime_priority      prio_,
-                         const os_sched_affinity_bitmask& mask_) :
-  worker_name(std::move(thread_name_)),
-  prio(prio_),
-  mask(mask_),
-  logger(srslog::fetch_basic_logger("ALL")),
+static unique_function<void()> make_blocking_pop_task(blocking_queue<unique_task>& queue)
+{
+  return [&queue]() {
+    while (true) {
+      bool        success;
+      unique_task task = queue.pop_blocking(&success);
+      if (not success) {
+        break;
+      }
+      task();
+    }
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
+}
+
+static unique_function<void()> make_waitable_pop_task(blocking_queue<unique_task>& queue,
+                                                      std::chrono::microseconds    duration)
+{
+  return [&queue, duration]() {
+    blocking_queue<unique_task>::result ret = blocking_queue<unique_task>::result::timeout;
+    while (ret != blocking_queue<unique_task>::result::failed) {
+      unique_task task;
+      ret = queue.pop_wait_for(task, duration);
+      if (ret == blocking_queue<unique_task>::result::success) {
+        task();
+      }
+    }
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
+}
+
+task_worker::task_worker(std::string                      thread_name,
+                         unsigned                         queue_size,
+                         os_thread_realtime_priority      prio,
+                         const os_sched_affinity_bitmask& mask,
+                         std::chrono::microseconds        pop_wait_timeout) :
   pending_tasks(queue_size),
-  t_handle(start_postponed ? unique_thread{} : make_thread())
+  t_handle(thread_name,
+           prio,
+           mask,
+           pop_wait_timeout.count() == 0 ? make_blocking_pop_task(pending_tasks)
+                                         : make_waitable_pop_task(pending_tasks, pop_wait_timeout))
 {
 }
 
@@ -55,32 +83,11 @@ void task_worker::stop()
   }
 }
 
-unique_thread task_worker::make_thread()
+void task_worker::wait_pending_tasks()
 {
-  auto task_func = [this]() {
-    while (true) {
-      bool   success;
-      task_t task = pending_tasks.pop_blocking(&success);
-      if (not success) {
-        break;
-      }
-      task();
-    }
-    logger.info("Task worker {} finished.", t_handle.get_name());
-  };
-  return unique_thread{worker_name, prio, mask, task_func};
+  std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
+  std::future<void>          fut = pkg_task.get_future();
+  push_task_blocking(std::move(pkg_task));
+  // blocks for enqueued task to complete.
+  fut.get();
 }
-
-void task_worker::start(os_thread_realtime_priority prio_, const os_sched_affinity_bitmask& mask_)
-{
-  if (t_handle.running()) {
-    logger.error("ERROR: Task Worker can only be started once.");
-    return;
-  }
-
-  prio     = prio_;
-  mask     = mask_;
-  t_handle = make_thread();
-}
-
-} // namespace srsran

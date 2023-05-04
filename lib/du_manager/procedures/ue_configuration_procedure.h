@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "../du_ue/du_ue_manager_repository.h"
+#include "procedure_logger.h"
 #include "srsran/du_manager/du_manager_params.h"
 
 namespace srsran {
@@ -32,32 +33,36 @@ class ue_configuration_procedure
 {
 public:
   ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
-                             ue_manager_ctrl_configurator&         ue_mng_,
+                             du_ue_manager_repository&             ue_mng_,
                              const du_manager_params&              du_params_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
 
+  const char* name() const { return "UE Configuration"; }
+
 private:
   /// \brief Update DU UE bearers. This stage includes the creation/modification/removal of SRBs/DRBs, creation of RLC
   /// and F1-U bearers.
-  void add_srbs_to_du_ue_context();
-  void add_drbs_to_du_ue_context();
-  void remove_drbs_from_du_ue_context();
+  void update_ue_context();
+  void clear_old_ue_context();
 
   /// \brief Update MAC MUX and DEMUX tables of the respective UE, given the newly added/modified/removed bearers.
-  async_task<mac_ue_reconfiguration_response_message> update_mac_lcid_mux();
+  async_task<mac_ue_reconfiguration_response_message> update_mac_mux_and_demux();
 
   f1ap_ue_context_update_response make_ue_config_response();
   f1ap_ue_context_update_response make_ue_config_failure();
 
   const f1ap_ue_context_update_request request;
-  ue_manager_ctrl_configurator&        ue_mng;
+  du_ue_manager_repository&            ue_mng;
   const du_manager_params&             du_params;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");
   du_ue*                ue     = nullptr;
+  ue_procedure_logger   proc_logger;
 
   cell_group_config prev_cell_group;
+
+  std::vector<std::unique_ptr<du_ue_drb>> drbs_to_rem;
 };
 
 } // namespace srs_du

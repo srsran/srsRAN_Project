@@ -35,35 +35,24 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
   // Fill TX/RX common config //
   //////////////////////////////
   // RB type
-  cfg.tx.rb_type = pdcp_rb_type::drb;
-  cfg.rx.rb_type = pdcp_rb_type::drb;
+  cfg.rb_type = pdcp_rb_type::drb;
 
   // RLC mode
-  if (e1ap_cfg.rlc_mod == rlc_mode::um_bidir) {
-    cfg.tx.rlc_mode = pdcp_rlc_mode::um;
-    cfg.rx.rlc_mode = pdcp_rlc_mode::um;
-  } else if (e1ap_cfg.rlc_mod == rlc_mode::am) {
-    cfg.tx.rlc_mode = pdcp_rlc_mode::am;
-    cfg.rx.rlc_mode = pdcp_rlc_mode::am;
-  } else {
-    report_fatal_error("Unsupported RLC mode for DRB. RLC mode={}", e1ap_cfg.rlc_mod);
-  }
+  cfg.rlc_mode = e1ap_cfg.rlc_mod;
+
+  // Integrity protection required
+  cfg.integrity_protection_required = false; // FIXME check this
+
+  // Ciphering required
+  cfg.ciphering_required = false; // FIXME check this
 
   // SN size
-  cfg.tx.sn_size = e1ap_cfg.pdcp_sn_size_dl;
+  cfg.tx.sn_size = e1ap_cfg.pdcp_sn_size_dl; // TODO check UL or DL from the UE or gNB perspective.
   cfg.rx.sn_size = e1ap_cfg.pdcp_sn_size_ul;
 
   // Direction
   cfg.tx.direction = pdcp_security_direction::downlink;
   cfg.rx.direction = pdcp_security_direction::uplink;
-
-  // Integrity protection required
-  cfg.tx.integrity_protection_required = false; // FIXME check this
-  cfg.rx.integrity_protection_required = false;
-
-  // Ciphering required
-  cfg.tx.ciphering_required = false; // FIXME check this
-  cfg.rx.ciphering_required = false;
 
   // TX config
   // Discard timer

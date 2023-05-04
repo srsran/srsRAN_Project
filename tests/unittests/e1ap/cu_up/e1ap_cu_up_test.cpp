@@ -184,6 +184,23 @@ TEST_F(e1ap_cu_up_test, when_invalid_bearer_context_setup_received_then_bearer_c
 }
 
 TEST_F(e1ap_cu_up_test,
+       when_invalid_bearer_context_setup_inactivity_timer_received_then_bearer_context_setup_failure_is_sent)
+{
+  // Receive BearerContextSetupRequest message
+  test_logger.info("TEST: Receive BearerContextSetupRequest message...");
+
+  // Generate BearerContextSetupRequest
+  e1ap_message bearer_context_setup = generate_invalid_bearer_context_setup_request_inactivity_timer(9);
+
+  e1ap->handle_message(bearer_context_setup);
+
+  // Check the generated PDU is indeed the Bearer Context Setup Failure
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier.last_e1ap_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::bearer_context_setup_fail,
+            msg_notifier.last_e1ap_msg.pdu.unsuccessful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test,
        when_valid_bearer_context_modification_received_then_bearer_context_modification_response_is_sent)
 {
   // Test preamble

@@ -9,8 +9,10 @@
 """
 Pytest configuration
 """
+from pytest_html.html_report import HTMLReport
 
-def pytest_html_report_title(report):
+
+def pytest_html_report_title(report: HTMLReport):
     """
     Change title
     """

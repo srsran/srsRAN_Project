@@ -23,19 +23,37 @@
 /// \file
 /// \brief AVX512 support for LDPC.
 ///
-/// Builds upon \ref avx2_support.h and specializes functions and templates for AVX512 registers.
+/// Builds upon \ref simd_support.h and specializes functions and templates for AVX512 registers.
 
 #pragma once
 
 #include "avx2_support.h"
 
 namespace srsran {
+
+namespace detail {
+
+template <typename simdWrapper, typename storageType>
+simd512_type simd_span<simdWrapper, storageType>::get_at(help_type<simd512_wrapper> /**/, unsigned pos) const
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(array_ptr) + pos);
+}
+
+template <typename simdWrapper, typename storageType>
+void simd_span<simdWrapper, storageType>::set_at(unsigned pos, simd512_type val)
+{
+  static_assert(SIMD_SIZE_BYTE == AVX512_SIZE_BYTE, "Cannot set an AVX2 vector with an AVX512 vector.");
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(array_ptr) + pos, val);
+}
+
+} // namespace detail
+
 namespace mm512 {
 
-template <size_t N>
-using avx512_array = detail::avx_array<detail::m512_wrapper, N>;
-
-using avx512_span = detail::avx_span<detail::m512_wrapper>;
+using avx512_span       = detail::simd_span<detail::simd512_wrapper, int8_t>;
+using avx512_const_span = detail::simd_span<detail::simd512_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///

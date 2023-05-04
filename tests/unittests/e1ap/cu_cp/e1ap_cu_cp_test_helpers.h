@@ -50,6 +50,9 @@ protected:
   /// \brief Helper method to run E1AP CU-CP Bearer Context Setup procedure.
   void run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
+  /// \brief Helper method to create a E1AP UE
+  test_ue& create_ue();
+
   void tick();
 
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
@@ -60,6 +63,7 @@ protected:
   timer_manager                       timers;
   dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;
   dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
+  dummy_e1ap_cu_cp_notifier           cu_cp_notifier;
   manual_task_worker                  ctrl_worker{128};
   std::unique_ptr<e1ap_interface>     e1ap;
 };

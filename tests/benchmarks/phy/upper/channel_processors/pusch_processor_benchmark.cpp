@@ -37,7 +37,21 @@ using namespace srsran;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
+namespace {
+
 enum class benchmark_modes : unsigned { silent, latency, throughput_total, throughput_thread, all, invalid };
+
+class pusch_processor_result_notifier_adaptor : public pusch_processor_result_notifier
+{
+public:
+  void on_csi(const channel_state_information& csi) override {}
+
+  void on_uci(const pusch_processor_result_control& uci) override {}
+
+  void on_sch(const pusch_processor_result_data& sch) override {}
+};
+
+} // namespace
 
 const char* to_string(benchmark_modes mode)
 {
@@ -153,12 +167,12 @@ static const std::vector<test_profile> profile_set = {
      {106},
      {{modulation_scheme::QAM16, 658.0F}}},
 
-    {"pusch_scs15_20MHz_64qam_high",
-     "Decodes PUSCH with 20 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
+    {"pusch_scs15_50MHz_64qam_max",
+     "Decodes PUSCH with 50 MHz of bandwidth and a 15 kHz SCS, 64-QAM modulation at a high code rate.",
      subcarrier_spacing::kHz15,
      cyclic_prefix::NORMAL,
      get_nsymb_per_slot(cyclic_prefix::NORMAL),
-     {106},
+     {270},
      {{modulation_scheme::QAM64, 873.0F}}},
 
     {"pusch_scs15_20MHz_256qam_max",
@@ -350,7 +364,7 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   TESTASSERT(short_block_det_factory);
 
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw_fast();
   if (!dft_factory) {
     dft_factory = create_dft_processor_factory_generic();
   }
@@ -472,7 +486,8 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
     unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
 
     // Process PDU.
-    proc->process(data, softbuffer.get(), *grid, config);
+    pusch_processor_result_notifier_adaptor result_notifier;
+    proc->process(data, softbuffer.get(), result_notifier, *grid, config);
 
     // Notify finish count.
     {

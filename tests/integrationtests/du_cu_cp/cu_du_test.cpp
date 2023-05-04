@@ -97,11 +97,11 @@ protected:
   }
 
 public:
-  std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
-  std::unique_ptr<srs_du::du_high>            du_obj;
   du_high_worker_manager                      workers;
   timer_manager                               timers;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
+  std::unique_ptr<srs_du::du_high>            du_obj;
 };
 
 /// Test the f1 setup procedure was successful

@@ -76,7 +76,7 @@ protected:
     if (dft_factory_str == "generic") {
       dft_factory = create_dft_processor_factory_generic();
     } else if (dft_factory_str == "fftw") {
-      dft_factory = create_dft_processor_factory_fftw();
+      dft_factory = create_dft_processor_factory_fftw_slow();
     }
   }
 };

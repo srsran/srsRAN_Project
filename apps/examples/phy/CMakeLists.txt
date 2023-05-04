@@ -32,9 +32,9 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
             srsran_signal_processors
             srsran_channel_processors)
     # Add lower PHY sample loopback test with ZeroMQ only if ZeroMQ is available.
-    if (ZEROMQ_FOUND)
+    if (ZEROMQ_FOUND AND BUILD_TESTS)
         add_test(radio_ssb_zmq_20MHz_n7 radio_ssb -P zmq_20MHz_n7 -D 10 -L 1 -v warning)
         add_test(radio_ssb_zmq_20MHz_n78 radio_ssb -P zmq_20MHz_n78 -D 10 -L 1 -v warning)
-    endif (ZEROMQ_FOUND)
+    endif (ZEROMQ_FOUND AND BUILD_TESTS)
 
 endif (ZEROMQ_FOUND OR UHD_FOUND)

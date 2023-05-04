@@ -24,6 +24,7 @@
 #include "e1ap_cu_cp_test_helpers.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -47,7 +48,7 @@ TEST_F(e1ap_cu_cp_test, when_unsupported_init_msg_received_then_message_ignored)
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1ap_cu_cp_test, when_unsupported_successful_outcome_received_then_message_ignored)
@@ -62,7 +63,7 @@ TEST_F(e1ap_cu_cp_test, when_unsupported_successful_outcome_received_then_messag
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1ap_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
@@ -77,5 +78,39 @@ TEST_F(e1ap_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_mess
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Inactivity Notification                                                          */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(e1ap_cu_cp_test, when_valid_inactivity_message_received_then_message_is_forwarded_to_cu_cp)
+{
+  // Test Preamble.
+  auto& ue = create_ue();
+
+  // Generate Bearer Context Inactivity Notification with UE activity level
+  e1ap_message inactivity_notification = generate_bearer_context_inactivity_notification_with_ue_level(
+      ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
+
+  e1ap->handle_message(inactivity_notification);
+
+  // Check that PDU has been forwarded to CU-CP
+  ASSERT_TRUE(cu_cp_notifier.last_msg.ue_inactive);
+}
+
+TEST_F(e1ap_cu_cp_test, when_invalid_inactivity_message_received_then_message_is_not_forwarded_to_cu_cp)
+{
+  // Test Preamble.
+  auto& ue = create_ue();
+
+  // Generate Invalid Bearer Context Inactivity Notification
+  e1ap_message inactivity_notification =
+      generate_invalid_bearer_context_inactivity_notification(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
+
+  e1ap->handle_message(inactivity_notification);
+
+  // Check that PDU has not been forwarded to CU-CP
+  ASSERT_FALSE(cu_cp_notifier.last_msg.ue_inactive);
 }

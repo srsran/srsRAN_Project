@@ -374,6 +374,10 @@ int main(int argc, char** argv)
           pdu.dci.payload.resize(pdcch_payload_size);
           pdu.dci.ports = {0};
 
+          // Initialize the DCI payload.
+          std::generate(
+              pdu.dci.payload.begin(), pdu.dci.payload.end(), [&]() { return static_cast<uint8_t>(rgen() & 0x01U); });
+
           // Skip case if the number of CORESET available CCE is not sufficient to accommodate the aggregation level.
           unsigned nof_cce_coreset = pdu.coreset.frequency_resources.count() * pdu.coreset.duration;
           if (nof_cce_coreset < pdcch_aggregation_level) {

@@ -41,8 +41,12 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
   // Number of receive antenna ports.
   unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
+  // Calculate the actual number of RE for data in each PRB.
+  unsigned nof_data_re_prb = NRE * config.nof_symbols - config.dmrs_config_type.nof_dmrs_per_rb() *
+                                                            config.nof_cdm_groups_without_data * nof_dmrs_symbols;
+
   // Number of data Resource Elements in a slot for a single Rx port.
-  unsigned nof_re_port = static_cast<unsigned>(config.rb_mask.count() * NRE) * (config.nof_symbols - nof_dmrs_symbols);
+  unsigned nof_re_port = static_cast<unsigned>(config.rb_mask.count() * nof_data_re_prb);
 
   // Resize equalizer input buffers.
   ch_re.resize({nof_re_port, nof_rx_ports});

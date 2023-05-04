@@ -59,127 +59,73 @@ inline asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ t_reordering_to_asn1(pdcp_t_reo
 /// \brief Converts type \c pdcp_config_t to an RRC NR ASN.1 type.
 /// \param[in] pdcp_cfg pdcp config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
-inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cfg)
+///
+/// Conditional presence | Explanation
+/// DRB                  | This field is mandatory present when the corresponding DRB is being set up, absent for SRBs.
+///                      | Otherwise this field is optionally present, need M.
+/// MoreThanOneRLC       | This field is mandatory present upon RRC reconfiguration with setup of a PDCP entity for a
+///                      | radio bearer with more than one associated logical channel and upon RRC reconfiguration with
+///                      | the association of an additional logical channel to the PDCP entity. Upon RRC reconfiguration
+///                      | when a PDCP entity is associated with multiple logical channels, this field is optionally
+///                      | present need M. Otherwise, this field is absent. Need R.
+/// Rlc-AM               | For RLC AM, the field is optionally present, need R. Otherwise, the field is absent.
+/// Setup                | The field is mandatory present in case of radio bearer setup. Otherwise the field is
+///                      | optionally present, need M.
+/// SplitBearer          | The field is absent for SRBs. Otherwise, the field is optional present, need M, in case of
+///                      | radio bearer with more than one associated RLC mapped to different cell groups.
+/// ConnectedTo5GC       | The field is optionally present, need R, if the UE is connected to 5GC. Otherwise the field
+///                      | is absent.
+/// ConnectedTo5GC1      | The field is optionally present, need R, if the UE is connected to NR/5GC. Otherwise the
+///                      | field is absent.
+/// Setup2               | This field is mandatory present in case for radio bearer setup for RLC-AM and RLC-UM.
+///                      | Otherwise, this field is absent, Need M.
+inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
 {
   asn1::rrc_nr::pdcp_cfg_s rrc_pdcp_cfg;
 
-  // drb
-  if (pdcp_cfg.drb.has_value()) {
-    rrc_pdcp_cfg.drb_present = true;
-
-    // hdr compress
-    if (pdcp_cfg.drb.value().hdr_compress.rohc.has_value()) {
-      rrc_pdcp_cfg.drb.hdr_compress.set_rohc();
-      auto& rrc_rohc = rrc_pdcp_cfg.drb.hdr_compress.rohc();
-
-      // profiles
-      rrc_rohc.profiles.profile0x0001 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0001;
-      rrc_rohc.profiles.profile0x0002 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0002;
-      rrc_rohc.profiles.profile0x0003 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0003;
-      rrc_rohc.profiles.profile0x0004 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0004;
-      rrc_rohc.profiles.profile0x0006 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0006;
-      rrc_rohc.profiles.profile0x0101 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0101;
-      rrc_rohc.profiles.profile0x0102 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0102;
-      rrc_rohc.profiles.profile0x0103 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0103;
-      rrc_rohc.profiles.profile0x0104 = pdcp_cfg.drb.value().hdr_compress.rohc.value().profiles.profile0x0104;
-
-      // drb continue rohc
-      rrc_rohc.drb_continue_rohc_present = pdcp_cfg.drb.value().hdr_compress.rohc.value().drb_continue_rohc_present;
-
-      // max c id
-      if (pdcp_cfg.drb.value().hdr_compress.rohc.value().max_cid.has_value()) {
-        rrc_rohc.max_c_id_present = true;
-        rrc_rohc.max_c_id         = pdcp_cfg.drb.value().hdr_compress.rohc.value().max_cid.value();
-      }
-    } else if (pdcp_cfg.drb.value().hdr_compress.ul_only_rohc.has_value()) {
-      rrc_pdcp_cfg.drb.hdr_compress.set_ul_only_rohc();
-      auto& rrc_ul_only_rohc = rrc_pdcp_cfg.drb.hdr_compress.ul_only_rohc();
-
-      // profiles
-      rrc_ul_only_rohc.profiles.profile0x0006 =
-          pdcp_cfg.drb.value().hdr_compress.ul_only_rohc.value().profiles.profile0x0006;
-
-      // drb continue rohc
-
-      rrc_ul_only_rohc.drb_continue_rohc_present =
-          pdcp_cfg.drb.value().hdr_compress.ul_only_rohc.value().drb_continue_rohc_present;
-
-      // max c id
-      if (pdcp_cfg.drb.value().hdr_compress.ul_only_rohc.value().max_cid.has_value()) {
-        rrc_ul_only_rohc.max_c_id_present = true;
-        rrc_ul_only_rohc.max_c_id         = pdcp_cfg.drb.value().hdr_compress.ul_only_rohc.value().max_cid.value();
-      }
-    } else {
-      rrc_pdcp_cfg.drb.hdr_compress.set_not_used();
-    }
-
-    // discard timer
-    if (pdcp_cfg.drb.value().discard_timer.has_value()) {
-      rrc_pdcp_cfg.drb.discard_timer_present = true;
-      rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.drb.value().discard_timer.value());
-    }
-
-    // pdcp sn size ul
-    if (pdcp_cfg.drb.value().pdcp_sn_size_ul.has_value()) {
-      rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_ul,
-                           pdcp_sn_size_to_uint(pdcp_cfg.drb.value().pdcp_sn_size_ul.value()));
-    }
-
-    // pdcp sn size dl
-    if (pdcp_cfg.drb.value().pdcp_sn_size_dl.has_value()) {
-      rrc_pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_dl,
-                           pdcp_sn_size_to_uint(pdcp_cfg.drb.value().pdcp_sn_size_dl.value()));
-    }
-
-    // integrity protection present
-    rrc_pdcp_cfg.drb.integrity_protection_present = pdcp_cfg.drb.value().integrity_protection_present;
-
-    // status report required present
-    rrc_pdcp_cfg.drb.status_report_required_present = pdcp_cfg.drb.value().status_report_required_present;
-
-    // out of order delivery present
-    rrc_pdcp_cfg.drb.out_of_order_delivery_present = pdcp_cfg.drb.value().out_of_order_delivery_present;
+  // t reordering -- Need S
+  if (pdcp_cfg.rx.t_reordering != pdcp_t_reordering::infinity) {
+    rrc_pdcp_cfg.t_reordering_present = true;
+    rrc_pdcp_cfg.t_reordering         = t_reordering_to_asn1(pdcp_cfg.rx.t_reordering);
   }
+
+  // ciphering disabled present -- Cond ConnectedTo5GC
+  rrc_pdcp_cfg.ciphering_disabled_present = not pdcp_cfg.ciphering_required;
 
   // more than one rlc
-  if (pdcp_cfg.more_than_one_rlc.has_value()) {
-    rrc_pdcp_cfg.more_than_one_rlc_present = true;
+  rrc_pdcp_cfg.more_than_one_rlc_present = false; // not supported.
 
-    // primary path
-    // cell group
-    if (pdcp_cfg.more_than_one_rlc.value().primary_path.cell_group.has_value()) {
-      rrc_pdcp_cfg.more_than_one_rlc.primary_path.cell_group_present = true;
-      rrc_pdcp_cfg.more_than_one_rlc.primary_path.cell_group =
-          pdcp_cfg.more_than_one_rlc.value().primary_path.cell_group.value();
-    }
-    // lc ch
-    if (pdcp_cfg.more_than_one_rlc.value().primary_path.lc_ch.has_value()) {
-      rrc_pdcp_cfg.more_than_one_rlc.primary_path.lc_ch_present = true;
-      rrc_pdcp_cfg.more_than_one_rlc.primary_path.lc_ch = pdcp_cfg.more_than_one_rlc.value().primary_path.lc_ch.value();
-    }
-    // ul data split thres
-    if (pdcp_cfg.more_than_one_rlc.value().ul_data_split_thres.has_value()) {
-      rrc_pdcp_cfg.more_than_one_rlc.ul_data_split_thres_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.more_than_one_rlc.ul_data_split_thres,
-                           pdcp_cfg.more_than_one_rlc.value().ul_data_split_thres.value());
-    }
-    // pdcp dupl
-    if (pdcp_cfg.more_than_one_rlc.value().pdcp_dupl.has_value()) {
-      rrc_pdcp_cfg.more_than_one_rlc.pdcp_dupl_present = true;
-      rrc_pdcp_cfg.more_than_one_rlc.pdcp_dupl         = pdcp_cfg.more_than_one_rlc.value().pdcp_dupl.value();
-    }
+  // no more configurable parameters for SRBs
+  if (pdcp_cfg.rb_type == pdcp_rb_type::srb) {
+    return rrc_pdcp_cfg;
   }
 
-  // t reordering
-  if (pdcp_cfg.t_reordering.has_value()) {
-    rrc_pdcp_cfg.t_reordering_present = true;
-    rrc_pdcp_cfg.t_reordering         = t_reordering_to_asn1(pdcp_cfg.t_reordering.value());
-  }
+  // drb -- Cond DRB
+  rrc_pdcp_cfg.drb_present = true;
 
-  // ciphering disabled present
-  rrc_pdcp_cfg.ciphering_disabled_present = pdcp_cfg.ciphering_disabled_present;
+  // hdr compress
+  rrc_pdcp_cfg.drb.hdr_compress.set_not_used(); // not supported.
+
+  // discard timer -- Cond Setup
+  rrc_pdcp_cfg.drb.discard_timer_present = true;
+  rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.tx.discard_timer);
+
+  // pdcp sn size ul -- Cond Setup2
+  rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
+  asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_ul, pdcp_sn_size_to_uint(pdcp_cfg.rx.sn_size));
+
+  // pdcp sn size dl -- Cond Setup2
+  rrc_pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
+  asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_dl, pdcp_sn_size_to_uint(pdcp_cfg.tx.sn_size));
+
+  // integrity protection present
+  rrc_pdcp_cfg.drb.integrity_protection_present = pdcp_cfg.integrity_protection_required;
+
+  // status report required present
+  rrc_pdcp_cfg.drb.status_report_required_present = pdcp_cfg.tx.status_report_required;
+
+  // out of order delivery present
+  rrc_pdcp_cfg.drb.out_of_order_delivery_present = pdcp_cfg.rx.out_of_order_delivery;
 
   return rrc_pdcp_cfg;
 }

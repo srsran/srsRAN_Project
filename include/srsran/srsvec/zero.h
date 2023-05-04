@@ -28,10 +28,14 @@
 namespace srsran {
 namespace srsvec {
 
+/// \brief Sets all elements of a sequence to zero.
+///
+/// \tparam T Type of the sequence container, must be span-compatible.
+/// \param  x Sequence container.
 template <typename T>
 void zero(T&& x)
 {
-  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span.");
   std::fill(x.begin(), x.end(), 0);
 }
 

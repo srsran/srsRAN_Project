@@ -48,17 +48,17 @@ template <typename T>
 class file_vector
 {
 private:
-  std::string file_name;
+  const char* file_name;
   openmode    op;
 
 public:
   /// \brief Constructor.
   ///
   /// Sets the name and the mode (default is \e read-only) of the binary file. No operations are performed on the file.
-  file_vector(std::string filename, openmode op_ = openmode::read_only) : file_name(std::move(filename)), op(op_) {}
+  file_vector(const char* filename, openmode op_ = openmode::read_only) : file_name(filename), op(op_) {}
 
   /// Returns the file name.
-  const std::string& get_file_name() const { return file_name; }
+  const char* get_file_name() const { return file_name; }
 
   /// \brief Reads the file.
   ///

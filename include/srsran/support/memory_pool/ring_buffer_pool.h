@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ring_memory_allocator.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -95,11 +96,11 @@ private:
     {
       srsran_assert(first_tick or tic_index != last_tick_index,
                     "This function cannot be called multiple times for the same tick");
-      if (srsran_unlikely(first_tick)) {
+      if (SRSRAN_UNLIKELY(first_tick)) {
         // first tick call.
         last_tick_index = tic_index - 1;
         first_tick      = false;
-      } else if (srsran_unlikely(last_tick_index > tic_index)) {
+      } else if (SRSRAN_UNLIKELY(last_tick_index > tic_index)) {
         // wrap-around case.
         last_tick_index = -(tic_wraparound - last_tick_index);
       }

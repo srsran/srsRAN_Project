@@ -37,6 +37,7 @@
 #include "srsran/gateways/addr_info.h"
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/sockets.h"
 
 using namespace srsran;
 
@@ -96,27 +97,27 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
   sockaddr_storage tmp_addr;
   socklen_t        tmp_addr_len = 0;
   struct addrinfo* addrinfo_results;
+  std::string      ip_addr;
+  auto&            logger = srslog::fetch_basic_logger("TEST");
 
   // Obtain addrinfo that is compatible with IPv4 and IPv6
   ret = getaddrinfo(bind_addr.c_str(), nullptr, &hints, &addrinfo_results);
   if (ret != 0) {
-    srslog::fetch_basic_logger("TEST").error(
-        "Failure in `getaddrinfo` for address `{}`: {}", bind_addr.c_str(), strerror(errno));
+    logger.error("Failure in `getaddrinfo` for address `{}`: {}", bind_addr.c_str(), strerror(errno));
     return result_port;
   }
 
   // Create socket of proper type
   int sock_fd = socket(addrinfo_results->ai_family, addrinfo_results->ai_socktype, addrinfo_results->ai_protocol);
   if (sock_fd < 0) {
-    srslog::fetch_basic_logger("TEST").error(
-        "Failed to create {} socket: {}", ipproto_to_string(addrinfo_results->ai_protocol), strerror(errno));
+    logger.error("Failed to create {} socket: {}", ipproto_to_string(addrinfo_results->ai_protocol), strerror(errno));
     goto free_addrinfo_results;
   }
 
   // Bind socket to a free port.
   ret = bind(sock_fd, addrinfo_results->ai_addr, addrinfo_results->ai_addrlen);
   if (ret != 0) {
-    srslog::fetch_basic_logger("TEST").error("Failed to bind socket to `{}`: {}", bind_addr.c_str(), strerror(errno));
+    logger.error("Failed to bind socket to `{}`: {}", bind_addr.c_str(), strerror(errno));
     goto close_socket;
   }
 
@@ -124,12 +125,11 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
   tmp_addr_len = sizeof(tmp_addr);
   ret          = getsockname(sock_fd, (struct sockaddr*)&tmp_addr, &tmp_addr_len);
   if (ret != 0) {
-    srslog::fetch_basic_logger("TEST").error(
-        "Failed to read port from socket bound to `{}`: {}", bind_addr.c_str(), strerror(errno));
+    logger.error("Failed to read port from socket bound to `{}`: {}", bind_addr.c_str(), strerror(errno));
     goto close_socket;
   }
   if (tmp_addr_len > sizeof(tmp_addr)) {
-    srslog::fetch_basic_logger("TEST").error("Insufficient tmp_addr_len for getsockname()");
+    logger.error("Insufficient tmp_addr_len for getsockname()");
     goto close_socket;
   }
 
@@ -143,11 +143,18 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
     default:
       srslog::fetch_basic_logger("TEST").error("Protocol family is neither IPv4 nor IPv6");
   }
+  sockaddr_to_ip_str(addrinfo_results->ai_addr, ip_addr, logger);
+  logger.debug("Got unused port. host=\"{}\", family={} proto={} addr=\"{}\" port={}",
+               bind_addr,
+               addrinfo_results->ai_family == AF_INET ? "AF_INET" : "AF_INET6",
+               sock_type_to_str(addrinfo_results->ai_socktype),
+               ip_addr,
+               result_port);
 
 close_socket:
   ret = close(sock_fd);
   if (ret != 0) {
-    srslog::fetch_basic_logger("TEST").error("Failed to close socket with sock_fd={}: {}", sock_fd, strerror(errno));
+    logger.error("Failed to close socket with sock_fd={}: {}", sock_fd, strerror(errno));
   }
 free_addrinfo_results:
   freeaddrinfo(addrinfo_results);

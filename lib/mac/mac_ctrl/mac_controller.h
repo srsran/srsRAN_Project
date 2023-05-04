@@ -36,7 +36,10 @@ struct mac_ue_context {
   du_cell_index_t pcell_idx   = MAX_NOF_DU_CELLS;
 };
 
-class du_rnti_table;
+template <typename T, T SentinelValue>
+class rnti_value_table;
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 class mac_controller : public mac_ctrl_configurator, public mac_ue_configurator, public mac_cell_manager
 {

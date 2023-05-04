@@ -44,6 +44,7 @@ public:
   e1ap_cu_cp_impl(timer_factory                  timers_,
                   e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                  e1ap_cu_cp_notifier&           cu_cp_notifier_,
                   task_executor&                 ctrl_exec_);
   ~e1ap_cu_cp_impl();
 
@@ -74,6 +75,10 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
 
+  /// \brief Handle a Bearer Context Inactivity notification as per TS 38.463 section 8.3.6.
+  /// \param[in] msg The received Bearer Context Inactivity notification message.
+  void handle_bearer_context_inactivity_notification(const asn1::e1ap::bearer_context_inactivity_notif_s& msg);
+
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome);
@@ -94,6 +99,7 @@ private:
   // nofifiers and handles
   e1ap_message_notifier&         pdu_notifier;
   e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
+  e1ap_cu_cp_notifier&           cu_cp_notifier;
   task_executor&                 ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id

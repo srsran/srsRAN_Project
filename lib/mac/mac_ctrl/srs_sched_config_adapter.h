@@ -36,7 +36,7 @@ namespace srsran {
 class srs_sched_config_adapter final : public mac_scheduler_configurator
 {
 public:
-  srs_sched_config_adapter(mac_common_config_t& cfg_) : cfg(cfg_), notifier(*this) {}
+  explicit srs_sched_config_adapter(mac_common_config_t& cfg_) : cfg(cfg_), notifier(*this) {}
 
   void set_sched(mac_scheduler& sched_) { srs_sched = &sched_; }
 
@@ -106,19 +106,23 @@ private:
     explicit sched_config_notif_adapter(srs_sched_config_adapter& parent_) : parent(parent_) {}
     void on_ue_config_complete(du_ue_index_t ue_index) override
     {
-      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
 
       // Remove continuation of task in ctrl executor.
-      parent.cfg.ctrl_exec.defer(
-          [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); });
+      if (not parent.cfg.ctrl_exec.defer(
+              [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
+        parent.cfg.logger.error("Unable to finish configuration of ue={}. Cause: DU task queue is full.", ue_index);
+      }
     }
     void on_ue_delete_response(du_ue_index_t ue_index) override
     {
-      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
 
-      // Remove continuation of task in ctrl executor.
-      parent.cfg.ctrl_exec.defer(
-          [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); });
+      // Continuation of ue remove task dispatched to the ctrl executor.
+      if (not parent.cfg.ctrl_exec.defer(
+              [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
+        parent.cfg.logger.error("Unable to remove ue={}. Cause: DU task queue is full.", ue_index);
+      }
     }
 
   private:

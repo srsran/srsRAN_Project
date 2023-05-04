@@ -36,9 +36,11 @@ class sync_task_executor final : public task_executor
     setter_deleter(sync_task_executor* parent_) : parent(parent_) {}
     void operator()(bool* p)
     {
-      std::unique_lock<std::mutex> lock(parent->mutex);
-      parent->done = true;
-      parent->cvar.notify_one();
+      if (p != nullptr) {
+        std::unique_lock<std::mutex> lock(parent->mutex);
+        parent->done = true;
+        parent->cvar.notify_one();
+      }
     }
   };
 
@@ -47,14 +49,17 @@ public:
   sync_task_executor(task_executor& exec_) : exec(&exec_) {}
   bool execute(unique_task task) override
   {
-    std::unique_lock<std::mutex> lock(mutex);
     done = false;
     std::unique_ptr<bool, setter_deleter> unique_setter(&done, setter_deleter{this});
-    exec->execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
+    bool ret = exec->execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
+
+    // wait for condition variable to be set.
+    std::unique_lock<std::mutex> lock(mutex);
     while (not done) {
       cvar.wait(lock);
     }
-    return true;
+
+    return ret;
   }
   bool defer(unique_task task) override { return execute(std::move(task)); }
 

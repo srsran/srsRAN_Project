@@ -51,6 +51,30 @@ protected:
                                 span<const log_likelihood_ratio> in0,
                                 span<const log_likelihood_ratio> in1) const;
 
+  /// \brief Deinterleaves a sequence of soft bits with a modulation order of two.
+  ///
+  /// \param[out] out Resulting sequence of soft bits.
+  /// \param[in] in   Input sequence of soft bits.
+  virtual void deinterleave_qpsk(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const;
+
+  /// \brief Deinterleaves a sequence of soft bits with a modulation order of four.
+  ///
+  /// \param[out] out Resulting sequence of soft bits.
+  /// \param[in] in   Input sequence of soft bits.
+  virtual void deinterleave_qam16(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const;
+
+  /// \brief Deinterleaves a sequence of soft bits with a modulation order of six.
+  ///
+  /// \param[out] out Resulting sequence of soft bits.
+  /// \param[in] in   Input sequence of soft bits.
+  virtual void deinterleave_qam64(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const;
+
+  /// \brief Deinterleaves a sequence of soft bits with a modulation order of eight.
+  ///
+  /// \param[out] out Resulting sequence of soft bits.
+  /// \param[in] in   Input sequence of soft bits.
+  virtual void deinterleave_qam256(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const;
+
 private:
   /// Initializes the rate dematcher internal state.
   void init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg);

@@ -24,12 +24,15 @@ add_library(asn1_utils STATIC asn1_utils.cpp)
 target_link_libraries(asn1_utils srslog)
 
 # RRC NR ASN1
-add_library(rrc_nr_asn1 STATIC rrc_nr/rrc_nr.cpp rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp)
+add_library(rrc_nr_asn1 STATIC rrc_nr/common.cpp rrc_nr/serving_cell.cpp rrc_nr/ue_cap.cpp
+        rrc_nr/msg_common.cpp rrc_nr/dl_dcch_msg.cpp rrc_nr/ul_dcch_msg.cpp rrc_nr/cell_group_config.cpp
+        rrc_nr/nr_ue_variables.cpp rrc_nr/pc5_rrc_definitions.cpp rrc_nr/nr_sidelink_preconf.cpp rrc_nr/rrc_nr.cpp)
 target_compile_options(rrc_nr_asn1 PRIVATE "-Os")
 target_link_libraries(rrc_nr_asn1 asn1_utils)
 
 # F1AP ASN1
-add_library(f1ap_asn1 STATIC f1ap/f1ap.cpp)
+add_library(f1ap_asn1 STATIC f1ap/common.cpp f1ap/f1ap_ies.cpp f1ap/f1ap_pdu_items.cpp f1ap/f1ap_pdu_contents_ue.cpp
+        f1ap/f1ap_pdu_contents.cpp f1ap/f1ap.cpp)
 target_compile_options(f1ap_asn1 PRIVATE "-Os")
 target_link_libraries(f1ap_asn1 asn1_utils)
 
@@ -44,7 +47,7 @@ target_compile_options(e2ap_asn1 PRIVATE "-Os")
 target_link_libraries(e2ap_asn1 asn1_utils)
 
 # NGAP ASN1
-add_library(ngap_asn1 STATIC ngap/ngap.cpp)
+add_library(ngap_asn1 STATIC ngap/common.cpp ngap/ngap_ies.cpp ngap/ngap_pdu_contents.cpp ngap/ngap.cpp)
 target_compile_options(ngap_asn1 PRIVATE "-Os")
 target_link_libraries(ngap_asn1 asn1_utils)
 

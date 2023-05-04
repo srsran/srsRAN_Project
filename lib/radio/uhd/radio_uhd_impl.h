@@ -32,11 +32,7 @@
 namespace srsran {
 
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
-class radio_session_uhd_impl : public radio_session,
-                               private radio_management_plane,
-                               private baseband_gateway,
-                               private baseband_gateway_transmitter,
-                               private baseband_gateway_receiver
+class radio_session_uhd_impl : public radio_session, private radio_management_plane, private baseband_gateway
 {
 private:
   /// Wait at most 1s for external clock locking.
@@ -118,43 +114,39 @@ public:
   /// \return True if no exception is caught during initialization. Otherwise false.
   bool is_successful() const { return (state != states::UNINITIALIZED); }
 
-  // See interface for documentation
+  // See interface for documentation.
   radio_management_plane& get_management_plane() override { return *this; }
 
-  // See interface for documentation
+  // See interface for documentation.
   baseband_gateway& get_baseband_gateway() override { return *this; }
 
-  // See interface for documentation
-  void stop() override;
-
-  // See interface for documentation
-  baseband_gateway_transmitter& get_transmitter() override { return *this; }
-
-  // See interface for documentation
-  baseband_gateway_receiver& get_receiver() override { return *this; }
-
-  // See interface for documentation
-  void transmit(unsigned                                      stream_id,
-                const baseband_gateway_transmitter::metadata& metadata,
-                baseband_gateway_buffer&                      data) override;
+  // See interface for documentation.
+  void start() override;
 
   // See interface for documentation.
-  baseband_gateway_receiver::metadata receive(baseband_gateway_buffer& data, unsigned stream_id) override;
+  void stop() override;
 
-  // See interface for documentation
+  // See interface for documentation.
+  baseband_gateway_transmitter& get_transmitter(unsigned stream_id) override;
+
+  // See interface for documentation.
+  baseband_gateway_receiver& get_receiver(unsigned stream_id) override;
+
+public:
+  // See interface for documentation.
   bool set_tx_gain(unsigned port_idx, double gain_dB) override { return set_tx_gain_unprotected(port_idx, gain_dB); }
 
-  // See interface for documentation
+  // See interface for documentation.
   bool set_rx_gain(unsigned port_idx, double gain_dB) override { return set_rx_gain_unprotected(port_idx, gain_dB); }
 };
 
 class radio_factory_uhd_impl : public radio_factory
 {
 public:
-  // See interface for documentation
+  // See interface for documentation.
   const radio_configuration::validator& get_configuration_validator() override { return config_validator; };
 
-  // See interface for documentation
+  // See interface for documentation.
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
                                         radio_notification_handler&       notifier) override;

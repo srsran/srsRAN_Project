@@ -31,11 +31,16 @@ void upper_phy_rx_results_notifier_wrapper::on_new_prach_results(const ul_prach_
   rx_results_notifier->on_new_prach_results(result);
 }
 
-void upper_phy_rx_results_notifier_wrapper::on_new_pusch_results(const ul_pusch_results& result)
+void upper_phy_rx_results_notifier_wrapper::on_new_pusch_results_control(const ul_pusch_results_control& result)
 {
   report_fatal_error_if_not(rx_results_notifier, "Invalid results notifier object.");
+  rx_results_notifier->on_new_pusch_results_control(result);
+}
 
-  rx_results_notifier->on_new_pusch_results(result);
+void upper_phy_rx_results_notifier_wrapper::on_new_pusch_results_data(const ul_pusch_results_data& result)
+{
+  report_fatal_error_if_not(rx_results_notifier, "Invalid results notifier object.");
+  rx_results_notifier->on_new_pusch_results_data(result);
 }
 
 void upper_phy_rx_results_notifier_wrapper::on_new_pucch_results(const ul_pucch_results& result)

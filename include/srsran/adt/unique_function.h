@@ -22,15 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/detail/type_storage.h"
 #include "srsran/support/error_handling.h"
-#include "srsran/support/srsran_assert.h"
-#include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <functional>
-#include <stdint.h>
 
 namespace srsran {
 

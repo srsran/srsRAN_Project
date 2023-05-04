@@ -20,6 +20,7 @@
  *
  */
 
+#include "../common/f1ap_cu_test_messages.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include <gtest/gtest.h>
 
@@ -80,31 +81,12 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-cu_cp_ue_context_modification_request generate_ue_context_mod_request()
-{
-  cu_cp_ue_context_modification_request msg           = {};
-  cu_cp_drb_setup_message               drb_setup_msg = {};
-  drb_setup_msg.drb_id                                = uint_to_drb_id(1);
-  drb_setup_msg.rlc                                   = rlc_mode::am;
-
-  up_transport_layer_info gtp_tunnel = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
-  drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
-
-  qos_flow_setup_request_item mapped_flow = {};
-  mapped_flow.qos_flow_id                 = uint_to_qos_flow_id(1);
-  drb_setup_msg.qos_flows_mapped_to_drb.emplace(mapped_flow.qos_flow_id, mapped_flow);
-
-  msg.cu_cp_drb_setup_msgs.emplace(drb_setup_msg.drb_id, drb_setup_msg);
-
-  return msg;
-}
-
 // Test correct filling and generation of F1AP ASN1 messages for UE context modficication request.
 TEST_F(f1ap_cu_msg_filler_test, when_context_mod_req_valid_then_valid_asn1_msg_generated)
 {
-  cu_cp_ue_context_modification_request msg = generate_ue_context_mod_request();
+  cu_cp_ue_context_modification_request msg = generate_ue_context_modification_request(uint_to_ue_index(1));
 
-  asn1::f1ap::ue_context_mod_request_s f1ap_ue_context_mod_request;
+  asn1::f1ap::ue_context_mod_request_s f1ap_ue_context_mod_request = {};
   fill_f1ap_ue_context_modification_request(f1ap_ue_context_mod_request, msg);
 
   // pack full F1AP PDU and verify correctnes

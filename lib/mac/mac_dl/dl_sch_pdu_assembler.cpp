@@ -206,7 +206,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
   mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, lc_grant_info.lcid.to_lcid());
   srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
-  unsigned rem_bytes = std::min(get_mac_sdu_required_bytes(lc_grant_info.sched_bytes), ue_pdu.nof_empty_bytes());
+  const unsigned total_space =
+      std::min(get_mac_sdu_required_bytes(lc_grant_info.sched_bytes), ue_pdu.nof_empty_bytes());
+  unsigned rem_bytes = total_space;
   while (rem_bytes >= MIN_MAC_SDU_SIZE) {
     // Fetch MAC Tx SDU.
     byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
@@ -226,7 +228,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Add SDU as a subPDU.
     unsigned nwritten = ue_pdu.add_sdu(lc_grant_info.lcid.to_lcid(), std::move(sdu));
     if (nwritten == 0) {
-      logger.error("ue={} rnti={:#x} lcid={}: Scheduled SubPDU with al={} cannot fit in scheduled DL grant",
+      logger.error("ue={} rnti={:#x} lcid={}: Scheduled SubPDU with size={} cannot fit in scheduled DL grant",
                    ue_mng.get_ue_index(rnti),
                    rnti,
                    lc_grant_info.lcid.to_lcid(),
@@ -240,7 +242,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
 
     rem_bytes -= nwritten;
   }
-  if (rem_bytes == get_mac_sdu_required_bytes(lc_grant_info.sched_bytes)) {
+  if (rem_bytes == total_space) {
     // No SDU was encoded for this LCID.
     // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
     // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
@@ -251,10 +253,10 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                      lc_grant_info.lcid.to_lcid(),
                      lc_grant_info.sched_bytes);
     } else {
-      logger.warning("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
-                     ue_mng.get_ue_index(rnti),
-                     rnti,
-                     lc_grant_info.lcid.to_lcid());
+      logger.info("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
+                  ue_mng.get_ue_index(rnti),
+                  rnti,
+                  lc_grant_info.lcid.to_lcid());
     }
   }
 }

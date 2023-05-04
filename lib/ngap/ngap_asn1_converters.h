@@ -174,13 +174,61 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 /// \return The NR Cell Identity.
 inline nr_cell_id_t cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
 {
-  nr_cell_id_t nci;
-  nci.packed = ngap_cgi.nr_cell_id.to_number();
+  return ngap_cgi.nr_cell_id.to_number();
+}
 
-  nci.cell_idenity = (ngap_cgi.nr_cell_id.to_number() & 0xfffc0000);
-  nci.gnb_identity = (ngap_cgi.nr_cell_id.to_number() & 0X3ff0);
+/// \brief Convert CU-CP NRCGI to NR Cell Identity.
+/// \param ngap_cgi The NGAP NRCGI.
+/// \return The NR Cell Identity.
+inline asn1::ngap::user_location_info_nr_s
+cu_cp_user_location_info_to_asn1(const cu_cp_user_location_info_nr& cu_cp_user_location_info)
+{
+  asn1::ngap::user_location_info_nr_s asn1_user_location_info;
 
-  return nci;
+  // add nr cgi
+  asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_user_location_info.nr_cgi.nci);
+  asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_user_location_info.nr_cgi.plmn_hex);
+  // add tai
+  asn1_user_location_info.tai.plmn_id.from_string(cu_cp_user_location_info.tai.plmn_id);
+  asn1_user_location_info.tai.tac.from_number(cu_cp_user_location_info.tai.tac);
+  // add timestamp
+  if (cu_cp_user_location_info.time_stamp.has_value()) {
+    asn1_user_location_info.time_stamp_present = true;
+    asn1_user_location_info.time_stamp.from_number(cu_cp_user_location_info.time_stamp.value());
+  }
+
+  return asn1_user_location_info;
+}
+
+/// \brief Convert ASN.1 cause to a human-readable string.
+/// \param cause The ASN.1 cause.
+/// \return The humand-readable string.
+inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
+{
+  std::string cause_str = "";
+
+  switch (cause.type()) {
+    case asn1::ngap::cause_c::types_opts::radio_network:
+      cause_str = cause.radio_network().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::transport:
+      cause_str = cause.transport().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::protocol:
+      cause_str = cause.protocol().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::nas:
+      cause_str = cause.nas().to_string();
+      break;
+    case asn1::ngap::cause_c::types_opts::misc:
+      cause_str = cause.misc().to_string();
+      break;
+    default:
+      cause_str = "unknown";
+      break;
+  }
+
+  return cause_str;
 }
 
 } // namespace srs_cu_cp

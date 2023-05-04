@@ -30,7 +30,7 @@ namespace {
 class amplitude_controller_clipping_factory : public amplitude_controller_factory
 {
 public:
-  std::unique_ptr<amplitude_controller> create_amplitude_controller() override
+  std::unique_ptr<amplitude_controller> create() override
   {
     return std::make_unique<amplitude_controller_clipping_impl>(amplitude_controller_config.enable_clipping,
                                                                 amplitude_controller_config.input_gain_dB,

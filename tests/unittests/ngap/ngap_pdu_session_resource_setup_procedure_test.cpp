@@ -93,7 +93,7 @@ protected:
   }
 };
 
-/// Test Initial Context Setup Request
+/// Test valid PDU Session Resource Setup Request
 TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_valid_pdu_session_resource_setup_request_received_then_pdu_session_setup_succeeds)
 {
@@ -119,7 +119,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   ASSERT_TRUE(was_pdu_session_resource_setup_request_valid());
 }
 
-/// Test Initial Context Setup Request
+/// Test invalid PDU Session Resource Setup Request
 TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_invalid_pdu_session_resource_setup_request_received_then_pdu_session_setup_failed)
 {

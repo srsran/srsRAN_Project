@@ -33,37 +33,15 @@ void srsran::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu& fapi_pd
   convert_prach_mac_to_fapi(builder, mac_pdu);
 }
 
-static fapi::prach_format_type convert_to_fapi_prach_format(preamble_format format)
-{
-  switch (format) {
-    case preamble_format::values::FORMAT0:
-      return fapi::prach_format_type::zero;
-    case preamble_format::values::FORMAT1:
-      return fapi::prach_format_type::one;
-    case preamble_format::values::FORMAT2:
-      return fapi::prach_format_type::two;
-    case preamble_format::values::FORMAT3:
-      return fapi::prach_format_type::three;
-    default:
-      srsran_assert(0, "Invalid preamble format {{}}", static_cast<unsigned>(format));
-      break;
-  }
-  return fapi::prach_format_type::zero;
-}
-
 void srsran::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder,
                                                      const prach_occasion_info&  mac_pdu)
 {
   // NOTE: For long preambles the number of time-domain PRACH occasions parameter does not apply, so set it to 1 to be
   // compliant with the FAPI specification.
-  unsigned nof_prach_occasions = mac_pdu.format.is_long_preamble() ? 1U : mac_pdu.nof_prach_occasions;
+  unsigned nof_prach_occasions = is_long_preamble(mac_pdu.format) ? 1U : mac_pdu.nof_prach_occasions;
 
-  builder.set_basic_parameters(mac_pdu.pci,
-                               nof_prach_occasions,
-                               convert_to_fapi_prach_format(mac_pdu.format),
-                               mac_pdu.index_fd_ra,
-                               mac_pdu.start_symbol,
-                               mac_pdu.nof_cs);
+  builder.set_basic_parameters(
+      mac_pdu.pci, nof_prach_occasions, mac_pdu.format, mac_pdu.index_fd_ra, mac_pdu.start_symbol, mac_pdu.nof_cs);
 
   // NOTE: Parameter not used for now, setting value to 0.
   static constexpr unsigned handle = 0;

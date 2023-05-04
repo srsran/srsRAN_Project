@@ -40,16 +40,18 @@ public:
   e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
                   e1ap_cu_up_notifier&   cu_up_notifier_,
                   task_executor&         cu_up_exec_);
-  ~e1ap_cu_up_impl();
+  ~e1ap_cu_up_impl() override;
 
   // e1ap connection manager functions
-
   void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) override;
 
   // e1ap message handler functions
-
   void handle_message(const e1ap_message& msg) override;
 
+  // e1ap control message handler functions
+  void handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) override;
+
+  // e1ap event handler functions
   void handle_connection_loss() override {}
 
 private:

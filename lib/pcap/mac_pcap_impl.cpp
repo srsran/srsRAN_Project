@@ -44,15 +44,18 @@ mac_pcap_impl::~mac_pcap_impl()
   close();
 }
 
-void mac_pcap_impl::open(const char* filename_)
+void mac_pcap_impl::open(const std::string& filename_)
 {
+  is_open = true;
+  // Capture filename_ by copy to prevent it goes out-of-scope when the lambda is executed later
   auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
 
 void mac_pcap_impl::close()
 {
-  if (is_write_enabled()) {
+  bool was_open = is_open.exchange(false, std::memory_order_relaxed);
+  if (was_open) {
     auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
     worker.wait_pending_tasks();
@@ -62,20 +65,24 @@ void mac_pcap_impl::close()
 
 bool mac_pcap_impl::is_write_enabled()
 {
-  return writter.is_write_enabled();
+  return is_open.load(std::memory_order_relaxed);
 }
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
 {
   auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_buffer buf)
@@ -131,10 +138,10 @@ void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_b
 /// Helper function to serialize MAC NR context
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
 {
-  int      offset = 0;
-  uint16_t tmp16;
+  int      offset = {};
+  uint16_t tmp16  = {};
 
-  if (buffer == NULL || length < PCAP_CONTEXT_HEADER_MAX) {
+  if (buffer == nullptr || length < PCAP_CONTEXT_HEADER_MAX) {
     printf("Error: Writing buffer null or length to small \n");
     return -1;
   }

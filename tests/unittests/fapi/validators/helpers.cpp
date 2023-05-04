@@ -251,6 +251,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.power_control_offset_profile_nr    = 6;
   pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
+  pdu.dl_dmrs_symb_pos                   = 0;
 
   // Maintenance v3.
   pdu.pdsch_maintenance_v3.trans_type = srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
@@ -282,16 +283,17 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.start_rb                                              = 23;
   pdu.num_rbs                                               = 28;
   pdu.type                                                  = csi_rs_type::CSI_RS_NZP;
-  pdu.row                                                   = 4;
-  pdu.freq_domain                                           = {1, 0, 0};
+  pdu.row                                                   = 1;
+  pdu.freq_domain                                           = {1, 0, 0, 0, 0, 0};
   pdu.symb_L0                                               = 8;
   pdu.symb_L1                                               = 7;
   pdu.cdm_type                                              = csi_rs_cdm_type::no_CDM;
-  pdu.freq_density                                          = csi_rs_freq_density_type::one;
+  pdu.freq_density                                          = csi_rs_freq_density_type::three;
   pdu.scramb_id                                             = 123;
   pdu.power_control_offset_profile_nr                       = 0;
   pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;
   pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
+  pdu.csi_rs_maintenance_v3.csi_rs_pdu_index                = 0;
 
   return pdu;
 }
@@ -395,13 +397,14 @@ rx_data_indication_message unittest::build_valid_rx_data_indication()
   msg.control_length = 0;
 
   msg.pdus.emplace_back();
-  auto& pdu   = msg.pdus.back();
-  pdu.handle  = generate_handle();
-  pdu.rnti    = generate_rnti();
-  pdu.rapid   = generate_rapid();
-  pdu.harq_id = generate_harq();
-  pdu.pdu_tag = rx_data_indication_pdu::pdu_tag_type::custom;
-  pdu.data    = reinterpret_cast<uint8_t*>(&pdu.data);
+  auto& pdu      = msg.pdus.back();
+  pdu.handle     = generate_handle();
+  pdu.rnti       = generate_rnti();
+  pdu.rapid      = generate_rapid();
+  pdu.harq_id    = generate_harq();
+  pdu.pdu_tag    = rx_data_indication_pdu::pdu_tag_type::custom;
+  pdu.pdu_length = 1;
+  pdu.data       = reinterpret_cast<uint8_t*>(&pdu.data);
 
   return msg;
 }
@@ -943,6 +946,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
 {
   ul_pusch_pdu pdu;
 
+  pdu.rb_bitmap                           = {};
   pdu.rnti                                = generate_rnti();
   pdu.handle                              = generate_handle();
   pdu.bwp_size                            = generate_bwp_size();

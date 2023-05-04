@@ -87,7 +87,9 @@ public:
     response.success                                       = true;
     for (const auto& request_setup_item : msg.pdu_session_res_to_setup_list) {
       e1ap_pdu_session_resource_setup_modification_item response_setup_item;
-      response_setup_item.pdu_session_id = request_setup_item.pdu_session_id;
+      response_setup_item.pdu_session_id               = request_setup_item.pdu_session_id;
+      response_setup_item.ng_dl_up_tnl_info.gtp_teid   = int_to_gtp_teid(1);
+      response_setup_item.ng_dl_up_tnl_info.tp_address = transport_layer_address{"127.0.0.1"};
 
       for (const auto& request_drb_item : request_setup_item.drb_to_setup_list_ng_ran) {
         e1ap_drb_setup_item_ng_ran response_drb_item;
@@ -278,6 +280,24 @@ public:
   }
 
   e1ap_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+/// Dummy notifier just printing the received msg.
+class dummy_e1ap_cu_cp_notifier : public srs_cu_cp::e1ap_cu_cp_notifier
+{
+public:
+  dummy_e1ap_cu_cp_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_bearer_context_inactivity_notification_received(const srs_cu_cp::cu_cp_inactivity_notification& msg) override
+  {
+    last_msg = msg;
+    logger.info("Received an inactivity notification");
+  }
+
+  srs_cu_cp::cu_cp_inactivity_notification last_msg;
 
 private:
   srslog::basic_logger& logger;

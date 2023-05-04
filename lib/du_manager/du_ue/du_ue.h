@@ -31,6 +31,7 @@
 namespace srsran {
 namespace srs_du {
 
+/// \brief This class holds the context of an UE in the DU.
 struct du_ue {
   explicit du_ue(du_ue_index_t                ue_index_,
                  du_cell_index_t              pcell_index_,

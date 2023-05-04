@@ -20,6 +20,7 @@
 
 set(SOURCES
     procedures/e2_setup_procedure.cpp
+    procedures/e2_subscription_setup_procedure.cpp
     common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp

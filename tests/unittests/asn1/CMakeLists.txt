@@ -29,7 +29,7 @@ target_link_libraries(asn1_rrc_nr_test asn1_utils rrc_nr_asn1 gtest gtest_main)
 gtest_discover_tests(asn1_rrc_nr_test)
 
 add_executable(asn1_e1ap_test asn1_e1ap_test.cpp)
-target_link_libraries(asn1_e1ap_test e1ap_asn1 srslog srsran_pcap gtest gtest_main)
+target_link_libraries(asn1_e1ap_test srsran_pcap srsran_support e1ap_asn1 srslog srsran_pcap gtest gtest_main)
 target_include_directories(asn1_e1ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_e1ap_test)
 

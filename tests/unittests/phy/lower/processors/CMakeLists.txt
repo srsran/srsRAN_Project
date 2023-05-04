@@ -18,4 +18,5 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(prach)
+add_subdirectory(downlink)
+add_subdirectory(uplink)

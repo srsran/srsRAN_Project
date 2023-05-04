@@ -26,7 +26,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager() {}
+ue_manager::ue_manager(const ue_configuration& ue_config_) : ue_config(ue_config_) {}
 
 // du_processor_ue_manager
 

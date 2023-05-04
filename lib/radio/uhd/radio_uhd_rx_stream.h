@@ -25,12 +25,15 @@
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_multi_usrp.h"
 #include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include <mutex>
 
 namespace srsran {
-class radio_uhd_rx_stream : public uhd_exception_handler
+
+/// Implements a gateway receiver based on UHD receive stream.
+class radio_uhd_rx_stream : public uhd_exception_handler, public baseband_gateway_receiver
 {
 private:
   /// Receive timeout in seconds.
@@ -44,6 +47,8 @@ private:
   std::atomic<states> state = {states::UNINITIALIZED};
   /// Indicates the stream identification for notifications.
   unsigned id;
+  /// Sampling rate in hertz.
+  double srate_Hz;
   /// Radio notification interface.
   radio_notification_handler& notifier;
   /// Owns the UHD Tx stream.
@@ -71,6 +76,8 @@ public:
   struct stream_description {
     /// Identifies the stream.
     unsigned id;
+    /// Sampling rate in hertz.
+    double srate_Hz;
     /// Over-the-wire format.
     radio_configuration::over_the_wire_format otw_format;
     /// Stream arguments.
@@ -92,14 +99,17 @@ public:
   /// \return True if no exception is caught. Otherwise false.
   bool start(const uhd::time_spec_t& time_spec);
 
-  /// \brief Receives a baseband transmission.
-  /// \param[in,out] buffs Provides the baseband buffers to receive.
-  /// \param[in] time_spec Indicates the baseband reception time.
-  /// \return True if no exception is caught. Otherwise false.
-  bool receive(baseband_gateway_buffer& buffs, uhd::time_spec_t& time_spec);
+  // See interface for documentation.
+  unsigned get_buffer_size() const override;
+
+  // See interface for documentation.
+  metadata receive(baseband_gateway_buffer& data) override;
 
   /// \brief Stops the reception stream.
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
+
+  /// Wait until radio is notify_stop.
+  void wait_stop();
 };
 } // namespace srsran

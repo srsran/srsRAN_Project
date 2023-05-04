@@ -28,7 +28,8 @@ set(SOURCES f1ap_du_setup_procedure_test.cpp
             f1ap_du_ue_config_test.cpp
             f1ap_du_ue_context_setup_procedure_test.cpp
             f1ap_du_ue_context_release_test.cpp
-            f1ap_du_ue_context_modification_test.cpp)
+            f1ap_du_ue_context_modification_test.cpp
+        f1ap_du_ul_rrc_message_transfer_test.cpp)
 
 add_executable(f1ap_du_test ${SOURCES})
 target_include_directories(f1ap_du_test PRIVATE ${CMAKE_SOURCE_DIR})

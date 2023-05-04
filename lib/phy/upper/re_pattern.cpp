@@ -81,7 +81,13 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
 
   // Fill RB mask.
-  rb_mask.fill(rb_begin, rb_end);
+  if (rb_stride == 1) {
+    rb_mask.fill(rb_begin, rb_end);
+  } else {
+    for (unsigned i_rb = rb_begin; i_rb < rb_end; i_rb += rb_stride) {
+      rb_mask.set(i_rb);
+    }
+  }
 
   // Apply the RE mask to all.
   bounded_bitset<MAX_RB* NRE> pattern_re_mask = rb_mask.kronecker_product<NRE>(re_mask);

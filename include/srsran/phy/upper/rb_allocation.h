@@ -165,15 +165,20 @@ public:
   /// \brief Determines whether the resource block allocation is valid for a given bandwidth part.
   ///
   /// The resource block allocation combined with the BWP parameters are valid if:
-  /// - The sum of the BWP start and size does not exceed \ref MAX_RB; and
-  /// - The size of the virtual resource block allocation does not exceed the BWP size.
+  /// - the sum of the BWP start and size does not exceed \ref MAX_RB; and
+  /// - the size of the virtual resource block allocation does not exceed the size of the available physical resources.
   ///
-  /// \param[in] bwp_start_rb Indicates the BWP lowest PRB index relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
-  /// \param[in] bwp_size_rb Indicates the BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
+  /// For PDSCH transmissions scheduled by DCI in a common SS, the PRBs used for VRB to PRB mapping start from the
+  /// lowest numbered resource block in the CORESET. For all other allocations, the available physical resources for VRB
+  /// to PRB mapping comprise the entire BWP size.
+  ///
+  /// \param[in] bwp_start_rb Lowest PRB index of the BWP relative to CRB0 (PointA), i.e. \f$N_{BWP,i}^{start}\f$.
+  /// \param[in] bwp_size_rb  BWP size in PRB, i.e. \f$N_{BWP,i}^{size}\f$.
   /// \return True if the combination of BWP and resource block is valid, false otherwise.
   bool is_bwp_valid(unsigned bwp_start_rb, unsigned bwp_size_rb) const
   {
-    return ((bwp_start_rb + bwp_size_rb <= MAX_RB) && vrb_mask.size() <= bwp_size_rb);
+    return ((bwp_start_rb + bwp_size_rb <= MAX_RB) &&
+            (vrb_mask.size() + vrb_to_prb_map.get_coreset_start() <= bwp_size_rb));
   }
 
   /// \brief Generates the PRB allocation mask for the frequency domain allocation.

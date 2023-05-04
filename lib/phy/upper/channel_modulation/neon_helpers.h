@@ -197,34 +197,6 @@ inline float32x4_t look_up_table(const float* table, uint32x4_t indexes)
   return value;
 }
 
-// Version that uses Table lookup instruction, but shows lower performance.
-/*
-inline float32x4_t look_up_table(const float* table, uint32x4_t indexes)
-{
-  const uint32_t bytes_idx[8] = {
-      0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c, 0x13121110, 0x17161514, 0x1b1a1918, 0x1f1e1d1c};
-
-  float32x4_t v0 = vld1q_f32(table);
-  float32x4_t v1 = vld1q_f32(table + 4);
-
-  uint8x8x4_t tbl;
-  tbl.val[0] = vreinterpret_u8_f32(vget_low_f32(v0));
-  tbl.val[1] = vreinterpret_u8_f32(vget_high_f32(v0));
-  tbl.val[2] = vreinterpret_u8_f32(vget_low_f32(v1));
-  tbl.val[3] = vreinterpret_u8_f32(vget_high_f32(v1));
-
-  uint8x8_t table_index_0 = vcreate_u8((uint64_t)bytes_idx[vgetq_lane_u32(indexes, 0)] |
-                                       (uint64_t)bytes_idx[vgetq_lane_u32(indexes, 1)] << 32u);
-  uint8x8_t table_index_1 = vcreate_u8((uint64_t)bytes_idx[vgetq_lane_u32(indexes, 2)] |
-                                       (uint64_t)bytes_idx[vgetq_lane_u32(indexes, 3)] << 32u);
-
-  uint8x8_t result_0 = vtbl4_u8(tbl, table_index_0);
-  uint8x8_t result_1 = vtbl4_u8(tbl, table_index_1);
-
-  return vreinterpretq_f32_u8(vcombine_u8(result_0, result_1));
-}
-*/
-
 /// \brief Applies an interval function to a series of values.
 /// \tparam Table             Look-up table type. All tables mut be of the same type.
 /// \param[in] value          Single-precision NEON register with eight input values.

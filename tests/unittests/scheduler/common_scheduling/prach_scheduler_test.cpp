@@ -32,11 +32,20 @@ using namespace srsran;
 // We assume normal cyclic prefix here.
 const unsigned NOF_SYM_PER_SLOT = 14;
 
+namespace prach_test {
+
 struct prach_test_params {
   subcarrier_spacing scs;
   nr_band            band;
   unsigned           prach_cfg_index;
 };
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+void PrintTo(const prach_test_params& value, ::std::ostream* os)
+{
+  return;
+}
 
 static sched_cell_configuration_request_message
 make_custom_sched_cell_configuration_request(const prach_test_params test_params)
@@ -77,6 +86,9 @@ make_custom_sched_cell_configuration_request(const prach_test_params test_params
 
   return sched_req;
 }
+} // namespace prach_test
+
+using namespace prach_test;
 
 class prach_tester : public ::testing::TestWithParam<prach_test_params>
 {
@@ -114,13 +126,29 @@ protected:
         prach_cfg.subframe.end()) {
       return false;
     }
-    // Start slot within the subframe. For FR1, the starting_symbol refers to the SCS 15kHz.
-    const unsigned start_slot_offset =
-        prach_cfg.starting_symbol * (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)) /
-        NOF_SYM_PER_SLOT;
-    if (sl.subframe_slot_index() != start_slot_offset) {
-      return false;
+
+    if (is_long_preamble(prach_cfg.format)) {
+      // With long Format PRACH, the starting_symbol refers to the SCS 15kHz. We need to map this starting symbol into
+      // the slot of the SCS used by the system to know whether this is the slot with the PRACH opportunity.
+      const unsigned start_slot_offset =
+          prach_cfg.starting_symbol *
+          (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)) / NOF_SYM_PER_SLOT;
+      if (sl.subframe_slot_index() != start_slot_offset) {
+        return false;
+      }
+    } else {
+      // With short Format PRACH, with 15kHz SCS, there is only 1 slot per subframe. This slot contrains a burst PRACH
+      // occasions. With 30kHz SCS, there are 2 slots per subframe; depending on the whether "number of PRACH slots
+      // within a subframe" 1 or 2 (as per Tables 6.3.3.2-2 and 6.3.3.2-3, TS 38.211), the occasions (and the
+      // transmission in one of the occasions) are expected in the second slot of the subframe (if number of PRACH
+      // slots within a subframe = 1) or in both slots (number of PRACH slots within a subframe = 2).
+      if (to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) ==
+              prach_subcarrier_spacing::kHz30 and
+          prach_cfg.nof_prach_slots_within_subframe == 1 and sl.subframe_slot_index() == 0U) {
+        return false;
+      }
     }
+
     return true;
   }
 
@@ -128,9 +156,17 @@ protected:
 
   grant_info get_prach_grant(const prach_occasion_info& occasion, unsigned prach_slot_idx) const
   {
+    // The information we need are not related to whether it is the last PRACH occasion.
+    const bool                 is_last_prach_occasion = false;
+    prach_preamble_information info =
+        is_long_preamble(prach_cfg.format)
+            ? get_prach_preamble_long_info(prach_cfg.format)
+            : get_prach_preamble_short_info(
+                  prach_cfg.format,
+                  to_ra_subcarrier_spacing(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs),
+                  is_last_prach_occasion);
     // Compute the grant PRBs
-    prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
-    const unsigned             prach_nof_prbs =
+    const unsigned prach_nof_prbs =
         prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
     const uint8_t prb_start =
         cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start +
@@ -138,16 +174,25 @@ protected:
     const prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs};
     const crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
-    // Compute the grant symbols.
-    const unsigned starting_symbol_pusch_scs =
-        (occasion.start_symbol * (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs))) %
-        NOF_SYM_PER_SLOT;
-    const ofdm_symbol_range prach_symbols{prach_slot_idx == 0 ? starting_symbol_pusch_scs : 0,
-                                          prach_slot_idx < prach_length_slots - 1
-                                              ? NOF_SYM_PER_SLOT
-                                              : (starting_symbol_pusch_scs + nof_symbols) % NOF_SYM_PER_SLOT};
+    if (is_long_preamble(prach_cfg.format)) {
+      // Compute the grant symbols.
+      const unsigned starting_symbol_pusch_scs =
+          (occasion.start_symbol * (1U << to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs))) %
+          NOF_SYM_PER_SLOT;
+      const ofdm_symbol_range prach_symbols{prach_slot_idx == 0 ? starting_symbol_pusch_scs : 0,
+                                            prach_slot_idx < prach_length_slots - 1
+                                                ? NOF_SYM_PER_SLOT
+                                                : (starting_symbol_pusch_scs + nof_symbols) % NOF_SYM_PER_SLOT};
 
-    return grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs};
+      return grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs};
+    } else {
+      const unsigned          starting_symbol_pusch_scs = occasion.start_symbol;
+      const ofdm_symbol_range prach_symbols{starting_symbol_pusch_scs,
+                                            starting_symbol_pusch_scs +
+                                                prach_cfg.duration * prach_cfg.nof_occasions_within_slot};
+
+      return grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs};
+    }
   }
 
   static const unsigned nof_slots_run = 1000;
@@ -184,7 +229,13 @@ TEST_P(prach_tester, prach_sched_allocates_in_sched_grid)
     if (is_prach_slot()) {
       ASSERT_GE(1, nof_prach_occasions_allocated());
       for (const auto& prach_pdu : res_grid[0].result.ul.prachs) {
+        // For long PRACHs, we have 1 PRACH PDU and up to 8 grid grants allocated per PRACH occasion; these are
+        // allocated by the scheduler at the slot where the PRACH pramble starts.
+        // For short PRACHs, we have 1 or 2 PRACH PDU and grid grant allocated per burst of PRACH occasions; the
+        // occasion extents over 1 or 2 slots, each slot containing 1 PRACH PDU and 1 grid grant.
         for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
+          // Note that prach_slot_idx is only used for long PRACH. For short PRACHs, the function below return t  he
+          // same grant regardless of the prach_slot_idx; this means the operation gets repeated twice.
           const grant_info grant = get_prach_grant(prach_pdu, prach_slot_idx);
           test_res_grid_has_re_set(res_grid, grant, 0);
         }
@@ -219,10 +270,24 @@ INSTANTIATE_TEST_SUITE_P(
         prach_test_params{.scs = srsran::subcarrier_spacing::kHz15, .band = srsran::nr_band::n3, .prach_cfg_index = 55},
         // Format 3.
         prach_test_params{.scs = srsran::subcarrier_spacing::kHz15, .band = srsran::nr_band::n3, .prach_cfg_index = 73},
-        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz15, .band = srsran::nr_band::n3, .prach_cfg_index = 86},
+        // Format A1.
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 87},
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 88},
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 99},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
                           .band            = srsran::nr_band::n3,
-                          .prach_cfg_index = 86}));
-
+                          .prach_cfg_index = 100},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n3,
+                          .prach_cfg_index = 106},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n3,
+                          .prach_cfg_index = 107}),
+    [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
+      return fmt::format("fdd_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
+    });
+//
 INSTANTIATE_TEST_SUITE_P(
     prach_scheduler_fdd_30kHz,
     prach_tester,
@@ -241,9 +306,23 @@ INSTANTIATE_TEST_SUITE_P(
         prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 55},
         // Format 3.
         prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 73},
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 86},
+        // Format A1.
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 87},
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 88},
+        prach_test_params{.scs = srsran::subcarrier_spacing::kHz30, .band = srsran::nr_band::n3, .prach_cfg_index = 99},
         prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
                           .band            = srsran::nr_band::n3,
-                          .prach_cfg_index = 86}));
+                          .prach_cfg_index = 100},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n3,
+                          .prach_cfg_index = 106},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n3,
+                          .prach_cfg_index = 107}),
+    [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
+      return fmt::format("fdd_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
+    });
 
 INSTANTIATE_TEST_SUITE_P(
     prach_scheduler_tdd_15kHz,
@@ -287,7 +366,26 @@ INSTANTIATE_TEST_SUITE_P(
                           .prach_cfg_index = 57},
         prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
                           .band            = srsran::nr_band::n41,
-                          .prach_cfg_index = 64}));
+                          .prach_cfg_index = 64},
+        // Format A1.
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 67},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 69},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 71},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 73},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz15,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 86}),
+    [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
+      return fmt::format("tdd_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
+    });
 
 INSTANTIATE_TEST_SUITE_P(
     prach_scheduler_tdd_30kHz,
@@ -337,4 +435,23 @@ INSTANTIATE_TEST_SUITE_P(
                           .prach_cfg_index = 56},
         prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
                           .band            = srsran::nr_band::n41,
-                          .prach_cfg_index = 65}));
+                          .prach_cfg_index = 65},
+        // Format A1.
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 67},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 69},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 71},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 73},
+        prach_test_params{.scs             = srsran::subcarrier_spacing::kHz30,
+                          .band            = srsran::nr_band::n41,
+                          .prach_cfg_index = 86}),
+    [](const testing::TestParamInfo<prach_tester::ParamType>& info_) {
+      return fmt::format("tdd_scs_{}_prach_cfg_idx_{}", to_string(info_.param.scs), info_.param.prach_cfg_index);
+    });

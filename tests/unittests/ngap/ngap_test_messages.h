@@ -135,6 +135,21 @@ ngap_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_
 cu_cp_pdu_session_resource_setup_response
 generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
 
+/// \brief Generate a dummy PDU Session Resource Release Command base.
+ngap_message generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate a valid dummy PDU Session Resource Release Command.
+ngap_message generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
+                                                                 ran_ue_id_t      ran_ue_id,
+                                                                 pdu_session_id_t pdu_session_id);
+
+/// \brief Generate an invalid dummy PDU Session Resource Release Command.
+ngap_message generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate a dummy PDU Session Resource Release Response.
+cu_cp_pdu_session_resource_release_response
+generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id);
+
 /// \brief Generate a valid dummy Paging message with only mandatory fields set.
 ngap_message generate_valid_minimal_paging_message();
 
@@ -143,6 +158,9 @@ ngap_message generate_valid_paging_message();
 
 /// \brief Generate an invalid dummy Paging message.
 ngap_message generate_invalid_paging_message();
+
+/// \brief Generate an Error Indication message.
+ngap_message generate_error_indication_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 } // namespace srs_cu_cp
 } // namespace srsran

@@ -74,7 +74,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_size_rb            = MAX_RB + 1;
        return pdu;
      },
-     R"(Invalid BWP configuration 0:276 for a VRB mask of size 52\.)"},
+     R"(Invalid BWP configuration 0\:276 for the given frequency allocation \[0\, 52\)\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.dmrs_symbol_mask       = {1};
@@ -148,6 +148,33 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        return pdu;
      },
      R"(Expected 1 codewords and got 0 for 1 layers\.)"},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+       pdu.bwp_start_rb           = 0;
+       pdu.bwp_size_rb            = 52;
+       pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
+       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_non_interleaved_common_ss(1));
+       return pdu;
+     },
+     R"(Invalid BWP configuration 0\:52 for the given frequency allocation \[1\, 53\)\.)"},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+       pdu.bwp_start_rb           = 0;
+       pdu.bwp_size_rb            = 52;
+       pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
+       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_common(1, 0, 52));
+       return pdu;
+     },
+     R"(Invalid BWP configuration 0\:52 for the given frequency allocation non-contiguous.)"},
+    {[] {
+       pdsch_processor::pdu_t pdu = base_pdu;
+       pdu.bwp_start_rb           = 0;
+       pdu.bwp_size_rb            = 52;
+       pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
+       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_coreset0(1, 52));
+       return pdu;
+     },
+     R"(Invalid BWP configuration 0\:52 for the given frequency allocation non-contiguous.)"},
 };
 
 class pdschProcessorFixture : public ::testing::TestWithParam<test_case_t>
@@ -223,8 +250,11 @@ protected:
 std::unique_ptr<pdsch_processor>     pdschProcessorFixture::pdsch_proc;
 std::unique_ptr<pdsch_pdu_validator> pdschProcessorFixture::pdu_validator;
 
-TEST_P(pdschProcessorFixture, pdschProcessorValidatortest)
+TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
 {
+  // Use thread safe death test.
+  ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
+
   ASSERT_NE(pdsch_proc, nullptr);
   ASSERT_NE(pdu_validator, nullptr);
 
@@ -244,12 +274,12 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatortest)
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-//  ASSERT_DEATH({ pdsch_proc->process(grid, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(grid, {data}, param.get_pdu()); }, param.expr);
 #endif // ASSERTS_ENABLED
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(pdschProcessorValidatortest,
+INSTANTIATE_TEST_SUITE_P(pdschProcessorValidatorDeathTest,
                          pdschProcessorFixture,
                          ::testing::ValuesIn(pdsch_processor_validator_test_data));
 

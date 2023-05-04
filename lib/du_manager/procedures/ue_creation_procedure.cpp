@@ -23,16 +23,16 @@
 #include "ue_creation_procedure.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
-#include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/rlc/rlc_factory.h"
+#include "srsran/rlc/rlc_rx.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;
 
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
                                              const ul_ccch_indication_message&            ccch_ind_msg,
-                                             ue_manager_ctrl_configurator&                ue_mng_,
+                                             du_ue_manager_repository&                    ue_mng_,
                                              const du_manager_params::service_params&     du_services_,
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,
@@ -45,7 +45,7 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   rlc_cfg(rlc_params_),
   f1ap_mng(f1ap_mng_),
   du_res_alloc(cell_res_alloc_),
-  logger(srslog::fetch_basic_logger("DU-MNG")),
+  proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), ue_index, ccch_ind_msg.crnti),
   ue_ctx(ue_mng.add_ue(std::make_unique<du_ue>(ue_index,
                                                ccch_ind_msg.cell_index,
                                                ccch_ind_msg.crnti,
@@ -57,18 +57,17 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  proc_logger.log_proc_started();
+
   // > Check if UE context was created in the DU manager.
   if (ue_ctx == nullptr) {
-    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Repeated RNTI.");
+    proc_logger.log_proc_failure("UE context not created because the RNTI is duplicated");
     clear_ue();
     CORO_EARLY_RETURN();
   }
 
-  log_proc_started(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
-
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
-    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to allocate DU UE.");
     clear_ue();
     CORO_EARLY_RETURN();
   }
@@ -76,7 +75,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Initiate creation of F1 UE context and await result.
   create_f1ap_ue();
   if (not f1ap_resp.result) {
-    log_proc_failure(logger, ue_ctx->ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
+    proc_logger.log_proc_failure("Failure to create F1AP UE context");
     clear_ue();
     CORO_EARLY_RETURN();
   }
@@ -90,7 +89,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Initiate MAC UE creation and await result.
   CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
   if (not mac_resp.result) {
-    log_proc_failure(logger, ue_ctx->ue_index, msg.crnti, "UE failed to be created in MAC.");
+    proc_logger.log_proc_failure("Failure to create MAC UE context");
     clear_ue();
     CORO_EARLY_RETURN();
   }
@@ -100,7 +99,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     mac_mng.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, std::move(msg.subpdu));
   }
 
-  log_proc_completed(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
+  proc_logger.log_proc_completed();
   CORO_RETURN();
 }
 
@@ -120,7 +119,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
 {
   // > Verify that the UE resource configurator is correctly setup.
   if (ue_ctx->resources.empty()) {
-    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Unable to allocate UE Resource Config instance.");
+    proc_logger.log_proc_failure("Unable to allocate DU UE Resource Config instance");
     return false;
   }
 
@@ -131,7 +130,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
   req.srbs_to_setup[0]                = srb_id_t::srb1;
   du_ue_resource_update_response resp = ue_ctx->resources.update(msg.cell_index, req);
   if (resp.release_required) {
-    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to setup DU UE PCell and SRB resources.");
+    proc_logger.log_proc_failure("Unable to setup DU UE PCell and SRB resources");
     return false;
   }
 
@@ -168,17 +167,17 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
-    mac_logical_channel_to_setup& lc = mac_ue_create_msg.bearers.back();
-    lc.lcid                          = bearer.lcid();
-    lc.ul_bearer                     = &bearer.connector.mac_rx_sdu_notifier;
-    lc.dl_bearer                     = &bearer.connector.mac_tx_sdu_notifier;
+    mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();
+    lc.lcid                        = bearer.lcid();
+    lc.ul_bearer                   = &bearer.connector.mac_rx_sdu_notifier;
+    lc.dl_bearer                   = &bearer.connector.mac_tx_sdu_notifier;
   }
-  for (du_ue_drb& bearer : ue_ctx->bearers.drbs()) {
+  for (auto& bearer : ue_ctx->bearers.drbs()) {
     mac_ue_create_msg.bearers.emplace_back();
-    mac_logical_channel_to_setup& lc = mac_ue_create_msg.bearers.back();
-    lc.lcid                          = bearer.lcid;
-    lc.ul_bearer                     = &bearer.connector.mac_rx_sdu_notifier;
-    lc.dl_bearer                     = &bearer.connector.mac_tx_sdu_notifier;
+    mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();
+    lc.lcid                        = bearer.second->lcid;
+    lc.ul_bearer                   = &bearer.second->connector.mac_rx_sdu_notifier;
+    lc.dl_bearer                   = &bearer.second->connector.mac_tx_sdu_notifier;
   }
   mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
 

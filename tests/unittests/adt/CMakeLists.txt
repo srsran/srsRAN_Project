@@ -24,19 +24,23 @@ add_executable(bounded_bitset_test bounded_bitset_test.cpp)
 target_link_libraries(bounded_bitset_test srslog gtest gtest_main)
 add_test(bounded_bitset_test bounded_bitset_test)
 
+add_executable(interval_test interval_test.cpp)
+target_link_libraries(interval_test srslog gtest gtest_main)
+add_test(interval_test interval_test)
+
 add_executable(byte_buffer_test
         byte_buffer_segment_test.cpp
         byte_buffer_test.cpp
         byte_buffer_slice_test.cpp
         byte_buffer_slice_chain_test.cpp)
 target_link_libraries(byte_buffer_test srslog gtest gtest_main)
-gtest_discover_tests(byte_buffer_test)
+gtest_discover_tests(byte_buffer_test DISCOVERY_TIMEOUT 15)
 
 add_executable(ring_buffer_test ring_buffer_test.cpp blocking_queue_test.cpp)
 target_link_libraries(ring_buffer_test srslog gtest gtest_main)
 add_test(ring_buffer_test ring_buffer_test)
 set_tests_properties(ring_buffer_test PROPERTIES LABELS "tsan")
-gtest_discover_tests(ring_buffer_test)
+gtest_discover_tests(ring_buffer_test DISCOVERY_TIMEOUT 15)
 
 add_executable(circular_map_test circular_map_test.cpp)
 target_link_libraries(circular_map_test srslog)
@@ -44,7 +48,7 @@ add_test(circular_map_test circular_map_test)
 
 add_executable(circular_map_test_alt circular_map_test_alt.cpp)
 target_link_libraries(circular_map_test_alt srslog gtest gtest_main)
-gtest_discover_tests(circular_map_test_alt)
+gtest_discover_tests(circular_map_test_alt DISCOVERY_TIMEOUT 15)
 
 add_executable(expected_test expected_test.cpp)
 target_link_libraries(expected_test srslog)
@@ -84,4 +88,4 @@ add_test(strong_type_test strong_type_test)
 
 add_executable(bounded_integer_test bounded_integer_test.cpp)
 target_link_libraries(bounded_integer_test srslog gtest gtest_main)
-gtest_discover_tests(bounded_integer_test)
+gtest_discover_tests(bounded_integer_test DISCOVERY_TIMEOUT 15)

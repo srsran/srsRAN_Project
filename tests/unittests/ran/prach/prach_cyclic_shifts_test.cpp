@@ -26,12 +26,9 @@
 
 namespace srsran {
 
-std::ostream& operator<<(std::ostream& os, const prach_subcarrier_spacing& prach_scs)
+std::ostream& operator<<(std::ostream& os, const prach_subcarrier_spacing& ra_scs)
 {
-  unsigned prach_scs_Hz = prach_scs.to_Hz();
-
-  fmt::print(os, "{:.{}f} kHz", static_cast<double>(prach_scs_Hz) / 1e3, (prach_scs_Hz % 1000 == 0) ? 0 : 3);
-
+  fmt::print(os, "{}", to_string(ra_scs));
   return os;
 }
 

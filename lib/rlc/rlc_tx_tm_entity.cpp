@@ -29,8 +29,9 @@ rlc_tx_tm_entity::rlc_tx_tm_entity(du_ue_index_t                        du_index
                                    rb_id_t                              rb_id,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
-                                   rlc_tx_lower_layer_notifier&         lower_dn_) :
-  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_)
+                                   rlc_tx_lower_layer_notifier&         lower_dn_,
+                                   task_executor&                       pcell_executor_) :
+  rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_), pcell_executor(pcell_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::tm);
   logger.log_info("RLC TM created.");
@@ -43,7 +44,7 @@ void rlc_tx_tm_entity::handle_sdu(rlc_sdu sdu)
   if (sdu_queue.write(sdu)) {
     logger.log_info(sdu.buf.begin(), sdu.buf.end(), "TX SDU. sdu_len={} {}", sdu.buf.length(), sdu_queue);
     metrics.metrics_add_sdus(1, sdu_length);
-    handle_buffer_state_update();
+    handle_changed_buffer_state();
   } else {
     logger.log_info("Dropped SDU. sdu_len={} {}", sdu.buf.length(), sdu_queue);
     metrics.metrics_add_lost_sdus(1);
@@ -92,19 +93,32 @@ byte_buffer_slice_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   pdu.push_back(std::move(sdu.buf));
   logger.log_info(pdu.begin(), pdu.end(), "TX PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
   metrics.metrics_add_pdus(1, pdu.length());
-  handle_buffer_state_update();
 
   return pdu;
+}
+
+void rlc_tx_tm_entity::handle_changed_buffer_state()
+{
+  if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
+    logger.log_debug("Triggering buffer state update to lower layer");
+    // Redirect handling of status to pcell_executor
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(); })) {
+      logger.log_error("Failed to enqueue buffer state update");
+    }
+  } else {
+    logger.log_debug("Avoiding redundant buffer state update to lower layer");
+  }
+}
+
+void rlc_tx_tm_entity::update_mac_buffer_state()
+{
+  pending_buffer_state.clear(std::memory_order_seq_cst);
+  unsigned bs = get_buffer_state();
+  logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
+  lower_dn.on_buffer_state_update(bs);
 }
 
 uint32_t rlc_tx_tm_entity::get_buffer_state()
 {
   return sdu_queue.size_bytes();
-}
-
-void rlc_tx_tm_entity::handle_buffer_state_update()
-{
-  unsigned bs = get_buffer_state();
-  logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
-  lower_dn.on_buffer_state_update(bs);
 }

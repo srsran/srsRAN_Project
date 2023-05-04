@@ -29,7 +29,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start
   unsigned offset = vrb_to_prb_map.get_coreset_start();
 
   // Make sure the VRB-to-PRB allocation does not exceed the BWP region.
-  srsran_assert(offset + vrb_mask.count() <= bwp_size_rb,
+  srsran_assert(offset + vrb_mask.size() <= bwp_size_rb,
                 "The contiguous VRB allocation {}:{} with CORESET start {} does not fit in BWP of size {}.",
                 vrb_mask.find_lowest(0, vrb_mask.size()),
                 vrb_mask.find_highest(0, vrb_mask.size()),

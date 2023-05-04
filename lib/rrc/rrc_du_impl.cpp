@@ -38,6 +38,9 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
   ngap_ctrl_notifier(ngap_ctrl_notif_),
   logger(srslog::fetch_basic_logger("RRC", false))
 {
+  for (const auto& qos : cfg.drb_config) {
+    logger.debug("5QI DRB config. 5QI={} PDCP={}", qos.first, qos.second.pdcp);
+  }
 }
 
 rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
@@ -56,7 +59,6 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
     logger.debug("Containerized MasterCellGroup: {}", js.to_string());
   }
 
-  logger.debug("UE config 5qi size: {}", cfg.drb_config.size());
   // create UE object
   ue_index_t   ue_index         = msg.ue_index;
   rrc_ue_cfg_t ue_cfg           = {};

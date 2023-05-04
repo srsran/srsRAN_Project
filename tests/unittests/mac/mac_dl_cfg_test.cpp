@@ -113,7 +113,8 @@ struct add_reconf_delete_ue_test_task {
     event_test(test_task_event::ue_created);
     // UE reconfiguration
     logger.info("Step 2: Reconfiguring UE");
-    CORO_AWAIT(mac_dl.reconfigure_ue(reconf_msg));
+    CORO_AWAIT(mac_dl.addmod_bearers(reconf_msg.ue_index, reconf_msg.pcell_index, reconf_msg.bearers_to_addmod));
+    CORO_AWAIT(mac_dl.remove_bearers(reconf_msg.ue_index, reconf_msg.pcell_index, reconf_msg.bearers_to_rem));
     logger.info("UE reconfigured");
     event_test(test_task_event::ue_reconfigured);
     // UE deletion

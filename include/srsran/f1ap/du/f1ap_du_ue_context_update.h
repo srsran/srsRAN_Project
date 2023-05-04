@@ -25,6 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/five_qi.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
@@ -39,7 +40,7 @@ struct f1ap_drb_to_setup {
   drb_id_t                             drb_id;
   optional<lcid_t>                     lcid;
   drb_rlc_mode                         mode;
-  uint8_t                              five_qi;
+  five_qi_t                            five_qi;
   std::vector<up_transport_layer_info> uluptnl_info_list;
 };
 

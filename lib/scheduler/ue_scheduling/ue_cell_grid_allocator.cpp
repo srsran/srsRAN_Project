@@ -25,6 +25,7 @@
 #include "../support/mcs_tbs_calculator.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
+#include "srsran/ran/pdcch/coreset.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -83,9 +84,14 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
   }
+  const coreset_configuration* cs_cfg = ue_cell_cfg.find_coreset(ss_cfg->cs_id);
+  if (cs_cfg == nullptr) {
+    logger.warning("Failed to allocate PDSCH. Cause: No valid CORESET found.");
+    return false;
+  }
 
   const bwp_configuration bwp_cfg =
-      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg->type);
+      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, *ss_cfg, *cs_cfg);
   const subcarrier_spacing                                scs = bwp_cfg.scs;
   const span<const pdsch_time_domain_resource_allocation> pdsch_list =
       ue_cell_cfg.get_pdsch_time_domain_list(ss_cfg->id);
@@ -148,7 +154,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   uci_allocation uci     = {};
   for (const uint8_t k1_candidate : k1_list) {
     const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
-    if (not cell_cfg.is_ul_enabled(uci_slot)) {
+    if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
       continue;
     }
     uci = get_uci_alloc(grant.cell_index)
@@ -178,10 +184,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
+  // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS REs.
+  sch_mcs_index adjusted_mcs{grant.mcs};
+  if (not pdsch_alloc.result.dl.csi_rs.empty()) {
+    adjusted_mcs = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
+  }
+
   optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
-    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, adjusted_mcs, grant.crbs.length());
   } else {
     // It is a retx.
     mcs_tbs_info.emplace(
@@ -252,6 +264,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f1_0,
+                               prbs,
                                h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
@@ -263,6 +276,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               ue_cc->active_bwp_id(),
                               *ss_cfg,
                               pdcch->dci.c_rnti_f1_0,
+                              prbs,
                               h_dl.tb(0).nof_retxs == 0);
       break;
     default:
@@ -442,6 +456,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f0_0,
+                               prbs,
                                h_ul.tb().nof_retxs == 0);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
@@ -452,6 +467,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               cell_cfg,
                               bwp_ul_cmn,
                               pdcch->dci.c_rnti_f0_0,
+                              prbs,
                               h_ul.tb().nof_retxs == 0);
       break;
     default:

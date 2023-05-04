@@ -25,6 +25,7 @@
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
+#include "adapters/e1ap_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
@@ -39,7 +40,6 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_worker.h"
 #include <memory>
 #include <unordered_map>
 
@@ -79,6 +79,7 @@ public:
   // CU-UP handler
   void handle_new_cu_up_connection() override;
   void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
+  void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
 
   // NGAP connection handler
   void handle_amf_connection() override;
@@ -92,6 +93,7 @@ public:
   cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
   cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler() override { return *this; }
   cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface() override { return *this; }
+  cu_cp_e1ap_handler&            get_cu_cp_e1ap_handler() override { return *this; }
   cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
   cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
   cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }
@@ -164,12 +166,18 @@ private:
   // DU Processor to E1AP adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
 
+  // DU Processor to NGAP adapter
+  du_processor_ngap_adapter du_processor_ngap_notifier;
+
   // CU-UP processor to CU-CP adapters
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
   // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;
+
+  // E1AP to CU-CP adapter
+  e1ap_cu_cp_adapter e1ap_ev_notifier;
 
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;

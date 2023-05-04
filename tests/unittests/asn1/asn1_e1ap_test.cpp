@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/pcap/e1ap_pcap.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -42,8 +42,6 @@ protected:
 
     srslog::init();
 
-    pcap_writer.open("e1ap.pcap");
-
     // Start the log backend.
     srslog::init();
   }
@@ -52,11 +50,9 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-    pcap_writer.close();
   }
 
-  srsran::e1ap_pcap     pcap_writer;
+  srsran::dlt_pcap_impl pcap_writer{srsran::PCAP_E1AP_DLT, "E1AP"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -65,6 +61,8 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
   auto& logger = srslog::fetch_basic_logger("ASN1", false);
   logger.set_level(srslog::basic_levels::debug);
   logger.set_hex_dump_max_size(-1);
+
+  pcap_writer.open("e1ap_e1_setup.pcap");
 
   asn1::e1ap::e1ap_pdu_c pdu;
   pdu.set_init_msg();
@@ -89,7 +87,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
-  pcap_writer.write_pdu(bytes);
+  pcap_writer.push_pdu(bytes);
 
   logger.info(bytes.data(), bytes.size(), "Packed PDU ({} bytes):", bref.distance_bytes());
 
@@ -100,10 +98,14 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
   test_logger.info(
       bytes.data(), unpacked_len, "E1AP unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
+
+  pcap_writer.close();
 }
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_successful)
 {
+  pcap_writer.open("e1ap_e1_bearer_context_setup_request.pcap");
+
   uint8_t rx_msg[] = {0x00, 0x08, 0x00, 0x69, 0x00, 0x00, 0x07, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x0d, 0x00,
                       0x13, 0x00, 0x00, 0x10, 0xa6, 0xae, 0x39, 0xef, 0xbe, 0x0d, 0x42, 0x4c, 0xd8, 0x5f, 0x4a, 0x9c,
                       0x3a, 0xee, 0x04, 0x14, 0x00, 0x0e, 0x00, 0x05, 0x30, 0x3b, 0x9a, 0xca, 0x00, 0x00, 0x3a, 0x40,
@@ -113,7 +115,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
                       0x00, 0x00, 0x00, 0x80, 0x00, 0x09, 0x7a, 0x00, 0x4d, 0x40, 0x02, 0x00, 0x00};
   srsran::byte_buffer rx_pdu{rx_msg};
 
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer.push_pdu(rx_msg);
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
@@ -162,17 +164,21 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
   session_item1.to_json(json_writer2);
   test_logger.info("PDU session item unpacked: \n {}", json_writer2.to_string().c_str());
 #endif
+
+  pcap_writer.close();
 }
 
 TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking_successful)
 {
+  pcap_writer.open("e1ap_e1_bearer_context_setup_response.pcap");
+
   uint8_t rx_msg[] = {0x20, 0x08, 0x00, 0x37, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x02, 0x00, 0x09, 0x00, 0x03,
                       0x00, 0x03, 0x40, 0x02, 0x80, 0x00, 0x10, 0x40, 0x23, 0x40, 0x00, 0x01, 0x00, 0x2e, 0x40,
                       0x1c, 0x00, 0x00, 0x01, 0x01, 0xf0, 0xac, 0x15, 0x06, 0x09, 0x00, 0x00, 0x02, 0x83, 0x00,
                       0x06, 0x00, 0x1f, 0xac, 0x15, 0x06, 0x09, 0x80, 0x00, 0x02, 0x83, 0x00, 0x00, 0x80};
   srsran::byte_buffer rx_pdu{rx_msg};
 
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer.push_pdu(rx_msg);
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
@@ -213,4 +219,6 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
   test_logger.info(
       rx_msg, unpacked_len, "E1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
+
+  pcap_writer.close();
 }

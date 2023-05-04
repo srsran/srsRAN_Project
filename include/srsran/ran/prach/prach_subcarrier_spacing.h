@@ -22,51 +22,94 @@
 
 #pragma once
 
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
-class prach_subcarrier_spacing
+/// Random Access subcarrier spacing.
+enum class prach_subcarrier_spacing : uint8_t { kHz15 = 0, kHz30, kHz60, kHz120, kHz1_25, kHz5, invalid };
+
+/// Check if SCS value is valid.
+constexpr inline bool is_scs_valid(prach_subcarrier_spacing scs)
 {
-public:
-  /// Possible PRACH subcarrier spacing.
-  enum values { kHz15, kHz30, kHz60, kHz120, kHz1_25, kHz5 };
+  return scs < prach_subcarrier_spacing::invalid;
+}
 
-  /// Default constructor.
-  prach_subcarrier_spacing() : value(kHz15) {}
+/// Check if the RA subcarrier spacing is suitable for long preambles formats.
+constexpr inline bool is_long_preamble(prach_subcarrier_spacing ra_scs)
+{
+  return (ra_scs != prach_subcarrier_spacing::invalid) && (ra_scs >= prach_subcarrier_spacing::kHz1_25);
+}
 
-  /// Construct from value.
-  prach_subcarrier_spacing(values value_) : value(value_) {}
+/// Check if the RA subcarrier spacing is suitable for short preambles formats.
+constexpr inline bool is_short_preamble(prach_subcarrier_spacing ra_scs)
+{
+  return (ra_scs != prach_subcarrier_spacing::invalid) && (ra_scs < prach_subcarrier_spacing::kHz1_25);
+}
 
-  /// Copy constructor.
-  prach_subcarrier_spacing(const prach_subcarrier_spacing& other) : value(other.value) {}
+/// Convert SCS to string.
+inline const char* to_string(prach_subcarrier_spacing ra_scs)
+{
+  switch (ra_scs) {
+    case prach_subcarrier_spacing::kHz15:
+      return "15kHz";
+    case prach_subcarrier_spacing::kHz30:
+      return "30kHz";
+    case prach_subcarrier_spacing::kHz60:
+      return "60kHz";
+    case prach_subcarrier_spacing::kHz120:
+      return "120kHz";
+    case prach_subcarrier_spacing::kHz1_25:
+      return "1.25kHz";
+    case prach_subcarrier_spacing::kHz5:
+      return "5kHz";
+    case prach_subcarrier_spacing::invalid:
+    default:
+      return "invalid";
+  }
+}
 
-  /// Gets PRACH subcarrier spacing in Hz.
-  unsigned to_Hz() const
-  {
-    switch (value) {
-      case kHz15:
-        return 15000;
-      case kHz30:
-        return 30000;
-      case kHz60:
-        return 60000;
-      case kHz120:
-        return 120000;
-      case kHz1_25:
-        return 1250;
-      case kHz5:
-      default:
-        return 5000;
-    }
+/// Convert SCS to numerology index (\f$\mu\f$).
+constexpr inline unsigned to_numerology_value(prach_subcarrier_spacing ra_scs)
+{
+  srsran_assert(
+      is_short_preamble(ra_scs), "RA subcarrier spacing (i.e., {}) must be for short preamble.", to_string(ra_scs));
+  return static_cast<unsigned>(ra_scs);
+}
+
+/// Converts SCS to its integer value in hertz.
+constexpr inline unsigned ra_scs_to_Hz(prach_subcarrier_spacing ra_scs)
+{
+  srsran_assert(is_scs_valid(ra_scs), "Invalid SCS.");
+  switch (ra_scs) {
+    case prach_subcarrier_spacing::kHz15:
+    case prach_subcarrier_spacing::kHz30:
+    case prach_subcarrier_spacing::kHz60:
+    case prach_subcarrier_spacing::kHz120:
+    case prach_subcarrier_spacing::invalid:
+    default:
+      return 15000U << to_numerology_value(ra_scs);
+    case prach_subcarrier_spacing::kHz1_25:
+      return 1250;
+    case prach_subcarrier_spacing::kHz5:
+      return 5000;
+  }
+}
+
+/// Adapt common resource grid subcarrier spacing to RA subcarrier spacing.
+constexpr inline prach_subcarrier_spacing to_ra_subcarrier_spacing(subcarrier_spacing scs)
+{
+  // Convert to numerology.
+  unsigned numerology = to_numerology_value(scs);
+
+  // Check if the numerology exceeds the maximum for RA.
+  if (numerology > static_cast<unsigned>(prach_subcarrier_spacing::kHz120)) {
+    return prach_subcarrier_spacing::invalid;
   }
 
-  /// Implicit cast to an enum.
-  operator values() const { return value; }
-
-private:
-  /// Actual value.
-  values value;
-};
+  // Convert to RA subcarrier spacing.
+  return static_cast<prach_subcarrier_spacing>(numerology);
+}
 
 } // namespace srsran

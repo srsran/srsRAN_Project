@@ -32,9 +32,10 @@ std::unique_ptr<e1ap_interface>
 srsran::srs_cu_cp::create_e1ap(timer_factory                  timers_,
                                e1ap_message_notifier&         e1ap_pdu_notifier_,
                                e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                               e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                task_executor&                 ctrl_exec_)
 {
-  auto e1ap_cu_cp =
-      std::make_unique<e1ap_cu_cp_impl>(timers_, e1ap_pdu_notifier_, e1ap_cu_up_processor_notifier_, ctrl_exec_);
+  auto e1ap_cu_cp = std::make_unique<e1ap_cu_cp_impl>(
+      timers_, e1ap_pdu_notifier_, e1ap_cu_up_processor_notifier_, cu_cp_notifier_, ctrl_exec_);
   return e1ap_cu_cp;
 }

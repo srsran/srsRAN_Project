@@ -24,6 +24,7 @@
 
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/du/du_test_config.h"
 #include "srsran/du_high/du_high_cell_executor_mapper.h"
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
@@ -40,11 +41,11 @@ namespace srs_du {
 
 struct du_manager_params {
   struct ran_params {
-    std::string                      gnb_du_name;
-    uint64_t                         gnb_du_id;
-    uint8_t                          rrc_version;
-    std::vector<du_cell_config>      cells;
-    std::map<uint8_t, du_qos_config> qos;
+    std::string                        gnb_du_name;
+    uint64_t                           gnb_du_id;
+    uint8_t                            rrc_version;
+    std::vector<du_cell_config>        cells;
+    std::map<five_qi_t, du_qos_config> qos;
   };
   struct service_params {
     timer_manager&                timers;

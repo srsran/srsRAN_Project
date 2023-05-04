@@ -91,13 +91,10 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 
   asn1::f1ap::served_plmns_item_s served_plmn;
   served_plmn.plmn_id.from_string("208991");
-  asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o> plmn_ext_container = {};
-  plmn_ext_container.set_item(ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST);
-  auto&                            tai_slice_support_list = plmn_ext_container.value().tai_slice_support_list();
   asn1::f1ap::slice_support_item_s slice_support_item;
   slice_support_item.snssai.sst.from_number(1);
-  tai_slice_support_list.push_back(slice_support_item);
-  served_plmn.ie_exts.push_back(plmn_ext_container);
+  served_plmn.ie_exts.tai_slice_support_list_present = true;
+  served_plmn.ie_exts.tai_slice_support_list->push_back(slice_support_item);
   served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();

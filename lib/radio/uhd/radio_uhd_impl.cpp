@@ -109,7 +109,7 @@ bool radio_session_uhd_impl::wait_sensor_locked(const std::string& sensor_name, 
   return is_locked;
 }
 
-bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, double gain_dB)
+bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned port_idx, double gain_dB)
 {
   if (port_idx >= tx_port_map.size()) {
     fmt::print(
@@ -125,7 +125,7 @@ bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, doub
   return true;
 }
 
-bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, double gain_dB)
+bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned port_idx, double gain_dB)
 {
   if (port_idx >= rx_port_map.size()) {
     fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)rx_port_map.size());
@@ -141,7 +141,7 @@ bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, doub
   return true;
 }
 
-bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
+bool radio_session_uhd_impl::set_tx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= tx_port_map.size()) {
     fmt::print(
@@ -158,7 +158,7 @@ bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configurat
   return true;
 }
 
-bool radio_session_uhd_impl::set_rx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
+bool radio_session_uhd_impl::set_rx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= rx_port_map.size()) {
     fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
@@ -216,7 +216,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   setenv("UHD_LOG_FASTPATH_DISABLE", "1", 0);
 
   // Set real time priority to UHD threads. All threads created from this thread inherit the priority.
-  if (uhd_set_thread_priority(1.0, true) != UHD_ERROR_NONE) {
+  if (uhd_set_thread_priority(0.90, true) != UHD_ERROR_NONE) {
     fmt::print(stderr, "Warning: Scheduling priority of UHD not changed. Cause: Not enough privileges.\n");
   }
 
@@ -392,6 +392,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     radio_uhd_rx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
     stream_description.otw_format                              = otw_format;
+    stream_description.srate_Hz                                = radio_config.sampling_rate_hz;
     stream_description.args                                    = stream.args;
 
     // Setup ports.
@@ -465,53 +466,50 @@ void radio_session_uhd_impl::stop()
   // Transition state to stop.
   state = states::STOP;
 
-  // Iterate transmit streams and stop.
+  // Signal stop for each transmit stream.
   for (auto& stream : tx_streams) {
     stream->stop();
   }
 
-  // Iterate receive streams and stop.
+  // Signal stop for each receive stream.
   for (auto& stream : rx_streams) {
     stream->stop();
   }
+
+  // Wait for transmitter streams to join.
+  for (auto& stream : tx_streams) {
+    stream->wait_stop();
+  }
+
+  // Wait for receiver streams to join.
+  for (auto& stream : rx_streams) {
+    stream->wait_stop();
+  }
 }
 
-void radio_session_uhd_impl::transmit(unsigned int                                  stream_id,
-                                      const baseband_gateway_transmitter::metadata& metadata,
-                                      baseband_gateway_buffer&                      data)
+void radio_session_uhd_impl::start()
 {
-  report_fatal_error_if_not(stream_id < tx_streams.size(),
-                            "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
-                            stream_id,
-                            (int)rx_streams.size());
-
-  uhd::time_spec_t time_spec = time_spec.from_ticks(metadata.ts, sampling_rate_hz);
-  tx_streams[stream_id]->transmit(data, time_spec);
-}
-
-// See interface for documentation.
-baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
-{
-  baseband_gateway_receiver::metadata ret = {};
-  report_fatal_error_if_not(stream_id < rx_streams.size(),
-                            "Stream identifier ({}) exceeds the number of receive streams  ({}).",
-                            stream_id,
-                            rx_streams.size());
-
   if (!start_rx_stream()) {
-    return ret;
+    fmt::print("Failed to start Rx streams.\n");
   }
+}
 
-  uhd::time_spec_t time_spec = {};
-  if (!rx_streams[stream_id]->receive(data, time_spec)) {
-    return ret;
-  }
+baseband_gateway_transmitter& radio_session_uhd_impl::get_transmitter(unsigned stream_id)
+{
+  srsran_assert(stream_id < tx_streams.size(),
+                "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
+                stream_id,
+                (int)rx_streams.size());
+  return *tx_streams[stream_id];
+}
 
-  ret.ts = static_cast<baseband_gateway_timestamp>(time_spec.get_full_secs()) *
-               static_cast<baseband_gateway_timestamp>(sampling_rate_hz) +
-           static_cast<baseband_gateway_timestamp>(sampling_rate_hz * time_spec.get_frac_secs());
-
-  return ret;
+baseband_gateway_receiver& radio_session_uhd_impl::get_receiver(unsigned stream_id)
+{
+  srsran_assert(stream_id < rx_streams.size(),
+                "Stream identifier ({}) exceeds the number of receive streams  ({}).",
+                stream_id,
+                (int)rx_streams.size());
+  return *rx_streams[stream_id];
 }
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,

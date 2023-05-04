@@ -45,7 +45,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
   logger.debug("Initial Context Setup Procedure started");
 
-  // Handle mendatorty IEs
+  // Handle mandatory IEs
   CORO_AWAIT_VALUE(
       success,
       ue->get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));

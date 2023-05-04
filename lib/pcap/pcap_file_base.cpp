@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
+bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const std::string& filename_)
 {
   if (pcap_fstream.is_open()) {
     logger.error("PCAP {} already open", filename);

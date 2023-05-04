@@ -24,18 +24,32 @@
 
 #include "srsran/adt/complex.h"
 
-namespace srsran {
+// Enables intel intrinsics, it includes AVX, AVX2, FMA, AVX512.
+#ifdef HAVE_SSE
 
-#ifdef HAVE_SSE /* AVX, AVX2, FMA, AVX512  are in this group */
+// Enables optimizations in this file.
 #ifndef __OPTIMIZE__
 #define __OPTIMIZE__
-#endif
+#endif // __OPTIMIZE__
+
+// gcc-12 gives a likely false alarm when including AVX512 intrinsics. Disable maybe-uninitialized diagnostics.
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif // __clang__
+
 #include <immintrin.h>
-#endif /* HAVE_SSE */
+
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif // __clang__
+#endif // HAVE_SSE
 
 #ifdef HAVE_NEON
 #include <arm_neon.h>
-#endif
+#endif // HAVE_NEON
+
+namespace srsran {
 
 /*
  * SIMD Vector bit alignment

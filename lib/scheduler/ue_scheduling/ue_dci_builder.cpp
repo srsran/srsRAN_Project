@@ -90,25 +90,29 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
 
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
+  unsigned N_rb_dl_bwp = 0;
   if (ss_type == srsran::search_space_configuration::type_t::common) {
-    f1_0.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
-                           ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
-                           : init_dl_bwp.generic_params.crbs.length();
+    N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
+                      ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
+                      : init_dl_bwp.generic_params.crbs.length();
   } else {
-    f1_0.N_rb_dl_bwp = active_dl_bwp.crbs.length();
+    N_rb_dl_bwp = active_dl_bwp.crbs.length();
   }
   f1_0.frequency_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, prbs.start(), prbs.length()});
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, prbs.start(), prbs.length()});
   f1_0.time_resource = time_resource;
 
   // PUSCH params.
   dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
+      ss_type != srsran::search_space_configuration::type_t::common,
+      false,
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
-      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
-  f1_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
+      false});
+  f1_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
                                                                                   : dci_sz.format1_0_common_size;
 
   // UCI resources.
@@ -147,13 +151,15 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
 
   // PUSCH params.
   dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
+      false,
+      false,
       init_dl_bwp.generic_params.crbs.length(),
       init_dl_bwp.generic_params.crbs.length(),
       ul_bwp.crbs.length(),
       ul_bwp.crbs.length(),
-      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0,
+      false});
   f0_0.payload_size = dci_sz.format0_0_common_size;
-  f0_0.N_rb_ul_bwp  = ul_bwp.crbs.length();
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), prbs.start(), prbs.length()});
   f0_0.time_resource = time_resource;
@@ -187,25 +193,31 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
   f0_0.ul_sul_indicator       = {};
 
   // PUSCH params.
-  dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
-      init_dl_bwp.generic_params.crbs.length(),
-      active_dl_bwp.crbs.length(),
-      init_ul_bwp.crbs.length(),
-      active_ul_bwp.crbs.length(),
-      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0});
-  f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size
+  dci_size_config dci_config;
+  dci_config.dci_0_0_and_1_0_ue_ss = ss_type != srsran::search_space_configuration::type_t::common;
+  dci_config.dci_0_1_and_1_1_ue_ss = false;
+  dci_config.dl_bwp_initial_bw     = init_dl_bwp.generic_params.crbs.length();
+  dci_config.dl_bwp_active_bw      = active_dl_bwp.crbs.length();
+  dci_config.ul_bwp_initial_bw     = init_ul_bwp.crbs.length();
+  dci_config.ul_bwp_active_bw      = active_ul_bwp.crbs.length();
+  dci_config.coreset0_bw =
+      init_dl_bwp.pdcch_common.coreset0.has_value() ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length() : 0;
+  dci_config.sul_configured = false;
+
+  dci_sizes dci_sz  = get_dci_sizes(dci_config);
+  f0_0.payload_size = ss_type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format0_0_ue_size.value()
                                                                                   : dci_sz.format0_0_common_size;
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
   if (ss_type == srsran::search_space_configuration::type_t::common) {
-    f0_0.N_rb_ul_bwp = init_ul_bwp.crbs.length();
+    f0_0.frequency_resource = ra_frequency_type1_get_riv(
+        ra_frequency_type1_configuration{init_ul_bwp.crbs.length(), prbs.start(), prbs.length()});
   } else {
-    f0_0.N_rb_ul_bwp = active_ul_bwp.crbs.length();
+    f0_0.frequency_resource = ra_frequency_type1_get_riv(
+        ra_frequency_type1_configuration{active_ul_bwp.crbs.length(), prbs.start(), prbs.length()});
   }
 
-  f0_0.frequency_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f0_0.N_rb_ul_bwp, prbs.start(), prbs.length()});
   f0_0.time_resource = time_resource;
 
   f0_0.modulation_coding_scheme = mcs_index.to_uint();

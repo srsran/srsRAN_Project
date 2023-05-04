@@ -25,12 +25,14 @@
 #include "du_processor_test_messages.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
+#include "srsran/adt/variant.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/test_utils.h"
+#include <list>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -93,13 +95,27 @@ private:
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
+// Stuct to configure Bearer Context Setup result content.
+struct bearer_context_setup_outcome_t {
+  bool                outcome = false;
+  std::list<unsigned> pdu_sessions_success_list; // List of PDU session IDs that were successful to setup.
+  std::list<unsigned> pdu_sessions_failed_list;
+};
+
+struct bearer_context_modification_outcome_t {
+  bool outcome = false;
+};
+
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
 
-  void set_bearer_context_setup_outcome(bool outcome) { bearer_context_setup_outcome = outcome; }
+  void set_first_message_outcome(variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> outcome)
+  {
+    first_e1ap_message = outcome;
+  }
 
-  void set_bearer_context_modification_outcome(bool outcome) { bearer_context_modification_outcome = outcome; }
+  void set_second_message_outcome(bearer_context_modification_outcome_t outcome) { second_e1ap_message = outcome; }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
@@ -110,14 +126,32 @@ public:
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (bearer_context_setup_outcome) {
-        // generate random ids to make sure its not only working for hardcoded values
-        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
-        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
+      const auto& result = variant_get<bearer_context_setup_outcome_t>(first_e1ap_message);
+      res.success        = result.outcome;
+      if (res.success) {
+        for (const auto& id : result.pdu_sessions_success_list) {
+          // add only the most relevant items
+          e1ap_pdu_session_resource_setup_modification_item res_setup_item;
+          res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
 
-        res = generate_e1ap_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      } else {
-        res.success = false;
+          // add a single DRB
+          drb_id_t                   drb_id = drb_id_t::drb1;
+          e1ap_drb_setup_item_ng_ran drb_item;
+          drb_item.drb_id = drb_id;
+
+          // add one UP transport item
+          e1ap_up_params_item up_item;
+          drb_item.ul_up_transport_params.push_back(up_item);
+          res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+
+          res.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
+        }
+
+        for (const auto& id : result.pdu_sessions_failed_list) {
+          e1ap_pdu_session_resource_failed_item res_failed_item;
+          res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
+          res.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
+        }
       }
 
       CORO_RETURN(res);
@@ -133,14 +167,21 @@ public:
                          this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (bearer_context_modification_outcome) {
+      if (variant_holds_alternative<bearer_context_modification_outcome_t>(first_e1ap_message)) {
+        // first E1AP message is already a bearer modification
+        const auto& result = variant_get<bearer_context_modification_outcome_t>(first_e1ap_message);
+        res.success        = result.outcome;
+      } else {
+        // second E1AP message is the bearer modification
+        res.success = second_e1ap_message.outcome;
+      }
+
+      if (res.success) {
         // generate random ids to make sure its not only working for hardcoded values
         gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
         gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
 
         res = generate_e1ap_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
-      } else {
-        res.success = false;
       }
 
       CORO_RETURN(res);
@@ -158,9 +199,22 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger                              = srslog::fetch_basic_logger("TEST");
-  bool                  bearer_context_setup_outcome        = false;
-  bool                  bearer_context_modification_outcome = false;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> first_e1ap_message;
+  bearer_context_modification_outcome_t                                          second_e1ap_message;
+};
+
+struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {
+public:
+  dummy_du_processor_ngap_control_notifier() = default;
+
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    logger.info("Received a UE Context Release Request");
+  }
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
@@ -233,6 +287,16 @@ public:
 
   void on_new_guami(const guami& msg) override { logger.info("Received a new GUAMI"); }
 
+  async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  {
+    logger.info("Received a new UE capability transfer request");
+
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(ue_cap_transfer_outcome);
+    });
+  }
+
   async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
     logger.info("Received a new RRC reconfiguration request");
@@ -247,6 +311,7 @@ public:
 
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
+  bool                  ue_cap_transfer_outcome     = true;
   bool                  rrc_reconfiguration_outcome = false;
 };
 

@@ -28,13 +28,13 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
-    ngap_ue&                                  ue_,
-    cu_cp_pdu_session_resource_setup_request& request_,
-    ngap_du_processor_control_notifier&       du_processor_ctrl_notif_,
-    ngap_message_notifier&                    amf_notif_,
-    srslog::basic_logger&                     logger_) :
-  ue(ue_),
+    const cu_cp_pdu_session_resource_setup_request& request_,
+    ngap_ue&                                        ue_,
+    ngap_du_processor_control_notifier&             du_processor_ctrl_notif_,
+    ngap_message_notifier&                          amf_notif_,
+    srslog::basic_logger&                           logger_) :
   request(request_),
+  ue(ue_),
   du_processor_ctrl_notifier(du_processor_ctrl_notif_),
   amf_notifier(amf_notif_),
   logger(logger_)

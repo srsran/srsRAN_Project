@@ -97,7 +97,7 @@ public:
   template <typename U>
   constexpr value_type to_samples(U sampling_rate_Hz_) const
   {
-    static_assert(std::is_convertible<U, uint64_t>::value, "Invalid type.");
+    static_assert(std::is_convertible<U, value_type>::value, "Invalid type.");
     value_type sampling_rate_Hz = static_cast<value_type>(sampling_rate_Hz_);
     srsran_assert(is_sample_accurate(sampling_rate_Hz),
                   "Incompatible sampling rate {}.{:02} MHz with time {}.",
@@ -118,13 +118,14 @@ public:
   }
 
   /// Overload addition operator.
-  constexpr phy_time_unit operator+(phy_time_unit other)
+  constexpr phy_time_unit operator+(phy_time_unit other) const
   {
-    value += other.value;
-    return *this;
+    phy_time_unit ret(*this);
+    ret += other;
+    return ret;
   }
 
-  /// Overload addition operator.
+  /// Overload addition assignment operator.
   constexpr phy_time_unit operator+=(phy_time_unit other)
   {
     value += other.value;
@@ -132,16 +133,47 @@ public:
   }
 
   /// Overload subtraction operator.
-  constexpr phy_time_unit operator-(phy_time_unit other)
+  constexpr phy_time_unit operator-(phy_time_unit other) const
   {
-    value -= other.value;
-    return *this;
+    phy_time_unit ret(*this);
+    ret -= other;
+    return ret;
   }
 
   /// Overload subtraction operator.
   constexpr phy_time_unit operator-=(phy_time_unit other)
   {
     value -= other.value;
+    return *this;
+  }
+
+  /// Overload multiplication assignment operator.
+  constexpr phy_time_unit operator*(unsigned multiplier) const
+  {
+    phy_time_unit ret(*this);
+    ret *= multiplier;
+    return ret;
+  }
+
+  /// Overload multiplication assignment operator.
+  constexpr phy_time_unit operator*=(unsigned multiplier)
+  {
+    value *= multiplier;
+    return *this;
+  }
+
+  /// Overload division operator.
+  constexpr phy_time_unit operator/(unsigned divisor) const
+  {
+    phy_time_unit ret(*this);
+    ret /= divisor;
+    return ret;
+  }
+
+  /// Overload division assignment operator.
+  constexpr phy_time_unit operator/=(unsigned divisor)
+  {
+    value /= divisor;
     return *this;
   }
 
@@ -156,6 +188,12 @@ public:
 
   /// Overload lower than operator.
   constexpr bool operator<(phy_time_unit other) const { return value < other.value; }
+
+  /// Overload greater than or equal to operator.
+  constexpr bool operator>=(phy_time_unit other) const { return value >= other.value; }
+
+  /// Overload lower than or equal to operator.
+  constexpr bool operator<=(phy_time_unit other) const { return value <= other.value; }
 
   /// Creates a physical layer time from units of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)

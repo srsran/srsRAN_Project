@@ -49,16 +49,20 @@ class dft_processor_factory_fftw : public dft_processor_factory
 
 public:
   dft_processor_factory_fftw(const std::string& optimization_flag,
+                             double             plan_creation_timeout_s,
                              bool               avoid_wisdom,
                              const std::string& wisdom_filename)
   {
-    fftw_config.avoid_wisdom    = avoid_wisdom;
-    fftw_config.wisdom_filename = wisdom_filename;
+    fftw_config.avoid_wisdom            = avoid_wisdom;
+    fftw_config.wisdom_filename         = wisdom_filename;
+    fftw_config.plan_creation_timeout_s = plan_creation_timeout_s;
 
     if ((optimization_flag == "") || (optimization_flag == "estimate")) {
       fftw_config.optimization_flag = fftw_plan_optimization::fftw_estimate;
     } else if (optimization_flag == "measure") {
       fftw_config.optimization_flag = fftw_plan_optimization::fftw_measure;
+    } else if (optimization_flag == "exhaustive") {
+      fftw_config.optimization_flag = fftw_plan_optimization::fftw_exhaustive;
     } else {
       report_error("Invalid FFTW optimization flag: {}\n", optimization_flag);
     }
@@ -80,11 +84,13 @@ std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_gene
 }
 
 std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_fftw(const std::string& optimization_flag,
-                                                                                 bool               avoid_wisdom,
+                                                                                 double plan_creation_timeout_s,
+                                                                                 bool   avoid_wisdom,
                                                                                  const std::string& wisdom_filename)
 {
 #ifdef ENABLE_FFTW
-  return std::make_shared<dft_processor_factory_fftw>(optimization_flag, avoid_wisdom, wisdom_filename);
+  return std::make_shared<dft_processor_factory_fftw>(
+      optimization_flag, plan_creation_timeout_s, avoid_wisdom, wisdom_filename);
 #else  // ENABLE_FFTW
   return nullptr;
 #endif // ENABLE_FFTW

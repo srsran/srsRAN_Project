@@ -25,7 +25,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
-#include "srsran/phy/upper/channel_processors/pusch_processor_result.h"
+#include "srsran/phy/upper/channel_processors/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/phy/upper/re_pattern.h"
@@ -150,12 +150,16 @@ public:
   ///
   /// The size of each transport block is determined by <tt> data[TB index].size() </tt>.
   ///
-  /// \param[out] data Provides the transport block to receive.
-  /// \param[in,out] softbuffer Provides the data reception softbuffer.
-  /// \param[in] grid Provides the destination resource grid.
-  /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
-  virtual pusch_processor_result
-  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) = 0;
+  /// \param[out] data          Received transport block..
+  /// \param[in,out] softbuffer Data reception softbuffer.
+  /// \param[in] notifier       Result notification interface.
+  /// \param[in] grid           Source resource grid.
+  /// \param[in] pdu            Necessary parameters to process the PUSCH transmission.
+  virtual void process(span<uint8_t>                    data,
+                       rx_softbuffer&                   softbuffer,
+                       pusch_processor_result_notifier& notifier,
+                       const resource_grid_reader&      grid,
+                       const pdu_t&                     pdu) = 0;
 };
 
 /// \brief Describes the PUSCH processor validator interface.

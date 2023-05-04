@@ -114,6 +114,41 @@ struct uplink_pdus {
 
 } // namespace
 
+/// Gets a RE pattern from the CSI-RS pattern for a given port.
+static re_pattern get_re_pattern_port(const csi_rs_pattern& pattern_all_ports, unsigned i_port)
+{
+  return re_pattern(pattern_all_ports.rb_begin,
+                    pattern_all_ports.rb_end,
+                    pattern_all_ports.rb_stride,
+                    pattern_all_ports.prb_patterns[i_port].re_mask,
+                    pattern_all_ports.prb_patterns[i_port].symbol_mask);
+}
+
+/// \brief Returns a vector of the RE patterns from the CSI-RS PDUs of the given DL_TTI.request.
+/// Each element of the vector refers to a CSI-RS PDU with the same index.
+static static_vector<re_pattern_list, MAX_CSI_RS_PDUS_PER_SLOT>
+calculate_csi_re_pattern(const fapi::dl_tti_request_message& msg, uint16_t cell_bandwidth_prb)
+{
+  // Get all the CSI-RS patterns from the message.
+  // NOTE: Assuming one port only in the pattern.
+  static_vector<re_pattern_list, MAX_CSI_RS_PDUS_PER_SLOT> re_pattern_lst;
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case fapi::dl_pdu_type::CSI_RS: {
+        csi_rs_pattern pattern;
+        get_csi_rs_pattern_from_fapi_pdu(pattern, pdu.csi_rs_pdu, cell_bandwidth_prb);
+        auto& re_pat = re_pattern_lst.emplace_back();
+        re_pat.merge(get_re_pattern_port(pattern, 0));
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  return re_pattern_lst;
+}
+
 /// \brief Translates, validates and returns the FAPI PDUs to PHY PDUs.
 /// \note If a PDU fails the validation, the whole DL_TTI.request message is dropped.
 static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_request_message& msg,
@@ -123,6 +158,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
                                                        uint16_t                            cell_bandwidth_prb)
 {
   downlink_pdus pdus;
+  const auto&   csi_re_patterns = calculate_csi_re_pattern(msg, cell_bandwidth_prb);
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
@@ -158,7 +194,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
       }
       case fapi::dl_pdu_type::PDSCH: {
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
-        convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot);
+        convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns);
         if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
           logger.warning(
               "Unsupported PDSCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
@@ -251,6 +287,7 @@ static prach_detector::configuration get_prach_dectector_config_from(const prach
   config.zero_correlation_zone = context.zero_correlation_zone;
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
+  config.ra_scs                = to_ra_subcarrier_spacing(context.pusch_scs);
 
   return config;
 }

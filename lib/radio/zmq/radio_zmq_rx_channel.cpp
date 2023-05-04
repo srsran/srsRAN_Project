@@ -90,7 +90,10 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
   state_fsm.init_successful();
 
   // Start processing.
-  async_executor.defer([this]() { run_async(); });
+  if (not async_executor.defer([this]() { run_async(); })) {
+    logger.error("Unable to initiate radio zmq execution");
+    return;
+  }
 }
 
 radio_zmq_rx_channel::~radio_zmq_rx_channel()
@@ -213,7 +216,9 @@ void radio_zmq_rx_channel::run_async()
 
   // Feedback task if not stopped.
   if (state_fsm.is_running()) {
-    async_executor.defer([this]() { run_async(); });
+    if (not async_executor.defer([this]() { run_async(); })) {
+      logger.error("Unable to initiate radio zmq async task");
+    }
   } else {
     logger.debug("Stopped asynchronous task.");
     state_fsm.async_task_stopped();

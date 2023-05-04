@@ -22,8 +22,8 @@
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "crc_calculator_lut_impl.h"
-#include "ldpc/ldpc_decoder_impl.h"
-#include "ldpc/ldpc_encoder_impl.h"
+#include "ldpc/ldpc_decoder_generic.h"
+#include "ldpc/ldpc_encoder_generic.h"
 #include "ldpc/ldpc_rate_dematcher_impl.h"
 #include "ldpc/ldpc_rate_matcher_impl.h"
 #include "ldpc/ldpc_segmenter_impl.h"
@@ -38,17 +38,11 @@
 #include "short/short_block_detector_impl.h"
 #include "srsran/support/cpu_features.h"
 
-#ifdef __AVX2__
-#include "ldpc/ldpc_decoder_avx2.h"
-#include "ldpc/ldpc_encoder_avx2.h"
-#endif // __AVX2__
-
-#ifdef HAVE_AVX512
-#include "ldpc/ldpc_decoder_avx512.h"
-#endif // HAVE_AVX512
-
 #ifdef __x86_64__
 #include "crc_calculator_clmul_impl.h"
+#include "ldpc/ldpc_decoder_avx2.h"
+#include "ldpc/ldpc_decoder_avx512.h"
+#include "ldpc/ldpc_encoder_avx2.h"
 #include "ldpc/ldpc_rate_dematcher_avx2_impl.h"
 #include "ldpc/ldpc_rate_dematcher_avx512_impl.h"
 #endif // __x86_64__
@@ -99,21 +93,22 @@ public:
 
   std::unique_ptr<ldpc_decoder> create() override
   {
+#ifdef __x86_64__
+    bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
+    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw);
+
+    if (((dec_type == "avx512") || (dec_type == "auto")) && supports_avx512) {
+      return std::make_unique<ldpc_decoder_avx512>();
+    }
+    if (((dec_type == "avx2") || (dec_type == "auto")) && supports_avx2) {
+      return std::make_unique<ldpc_decoder_avx2>();
+    }
+#endif // __x86_64__
 #ifdef HAVE_NEON
     if ((dec_type == "neon") || (dec_type == "auto")) {
       return std::make_unique<ldpc_decoder_neon>();
     }
 #endif // HAVE_NEON
-#ifdef HAVE_AVX512
-    if ((dec_type == "auto") || (dec_type == "avx512")) {
-      return std::make_unique<ldpc_decoder_avx512>();
-    }
-#endif // HAVE_AVX512
-#ifdef HAVE_AVX2
-    if ((dec_type == "auto") || (dec_type == "avx2")) {
-      return std::make_unique<ldpc_decoder_avx2>();
-    }
-#endif // HAVE_AVX2
     if ((dec_type == "auto") || (dec_type == "generic")) {
       return std::make_unique<ldpc_decoder_generic>();
     }
@@ -131,11 +126,13 @@ public:
 
   std::unique_ptr<ldpc_encoder> create() override
   {
-#ifdef HAVE_AVX2
-    if ((enc_type == "avx2") || (enc_type == "auto")) {
+#ifdef __x86_64__
+    bool supports_avx2 = cpu_supports_feature(cpu_feature::avx2);
+
+    if (((enc_type == "avx2") || (enc_type == "auto")) && supports_avx2) {
       return std::make_unique<ldpc_encoder_avx2>();
     }
-#endif // HAVE_AVX2
+#endif // __x86_64__
 #ifdef HAVE_NEON
     if ((enc_type == "neon") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_neon>();

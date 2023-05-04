@@ -115,7 +115,9 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
   state_fsm.init_successful();
 
   // Start processing.
-  async_executor.defer([this]() { run_async(); });
+  if (not async_executor.defer([this]() { run_async(); })) {
+    logger.error("Unable to initiate radio zmq tx async task");
+  }
 }
 
 radio_zmq_tx_channel::~radio_zmq_tx_channel()
@@ -216,7 +218,9 @@ void radio_zmq_tx_channel::run_async()
 
   // Feedback task if not stopped.
   if (state_fsm.is_running()) {
-    async_executor.defer([this]() { run_async(); });
+    if (not async_executor.defer([this]() { run_async(); })) {
+      logger.error("Unable to initiate async task");
+    }
   } else {
     logger.debug("Stopped asynchronous task.");
     state_fsm.async_task_stopped();
@@ -264,7 +268,8 @@ bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds t
   // If the channel has never transmitted, skip wait.
   if (is_tx_enabled && (timeout.count() != 0)) {
     // Otherwise, wait for the transmitter to transmit.
-    bool is_not_timeout = transmit_alignment_cvar.wait_for(lock, timeout, [&]() { return sample_count >= timestamp; });
+    bool is_not_timeout =
+        transmit_alignment_cvar.wait_for(lock, timeout, [this, timestamp]() { return sample_count >= timestamp; });
     if (is_not_timeout) {
       return sample_count > timestamp;
     }

@@ -67,7 +67,7 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
     logger.log_info(
         sdu.buf.begin(), sdu.buf.end(), "TX SDU. sdu_len={} pdcp_sn={} {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_sdus(1, sdu_length);
-    handle_buffer_state_update(); // take lock
+    handle_changed_buffer_state();
   } else {
     logger.log_info("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
@@ -80,7 +80,7 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
   if (sdu_queue.discard(pdcp_sn)) {
     logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard(1);
-    handle_buffer_state_update(); // take lock
+    handle_changed_buffer_state();
   } else {
     logger.log_info("Could not discard SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard_failure(1);
@@ -96,7 +96,11 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 
   // TX STATUS if requested
   if (status_provider->status_report_required()) {
-    rlc_am_status_pdu status_pdu = status_provider->get_status_pdu();
+    if (grant_len < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
+      logger.log_debug("Cannot fit status PDU into small grant_len={}.", grant_len);
+      return {};
+    }
+    rlc_am_status_pdu status_pdu = status_provider->get_status_pdu(); // this also resets status_report_required
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
@@ -478,7 +482,9 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 {
   // Redirect handling of status to pcell_executor
   auto handle_func = [this, status = std::move(status)]() mutable { handle_status_pdu(std::move(status)); };
-  pcell_executor.execute(std::move(handle_func));
+  if (not pcell_executor.execute(std::move(handle_func))) {
+    logger.log_error("Unable to handle status report");
+  }
 }
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
@@ -528,7 +534,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       logger.log_debug("Received ACK or NACK for poll_sn={}. Stopping t-PollRetransmit.", st.poll_sn);
       poll_retransmit_timer.stop();
     } else {
-      logger.log_debug("Received ACK or NACK for poll_sn={}. t-PollRetransmit already stopped.", st.poll_sn);
+      logger.log_debug("Received ACK or NACK for poll_sn={}. t-PollRetransmit already notify_stop.", st.poll_sn);
     }
   } else {
     logger.log_debug("poll_sn={} > ack_sn={}. Not stopping t-PollRetransmit.", st.poll_sn, status.ack_sn);
@@ -603,7 +609,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
 
-  handle_buffer_state_update_nolock(); // already locked
+  update_mac_buffer_state(/* is_locked = */ true);
 
   // Process retx_count and inform upper layers if needed
   for (uint32_t retx_sn : retx_sn_set) {
@@ -624,8 +630,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
 void rlc_tx_am_entity::on_status_report_changed()
 {
-  // Redirect handling of status to pcell_executor
-  pcell_executor.execute([this]() { handle_buffer_state_update(); });
+  handle_changed_buffer_state();
 }
 
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
@@ -693,22 +698,23 @@ void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
   }
 }
 
-// TS 38.322 v16.2.0 Sec 5.5
-uint32_t rlc_tx_am_entity::get_buffer_state()
+void rlc_tx_am_entity::handle_changed_buffer_state()
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  return get_buffer_state_nolock();
+  if (not pending_buffer_state.test_and_set(std::memory_order_seq_cst)) {
+    logger.log_debug("Triggering buffer state update to lower layer");
+    // Redirect handling of status to pcell_executor
+    if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* is_locked = */ false); })) {
+      logger.log_error("Failed to enqueue buffer state update");
+    }
+  } else {
+    logger.log_debug("Avoiding redundant buffer state update to lower layer");
+  }
 }
 
-void rlc_tx_am_entity::handle_buffer_state_update()
+void rlc_tx_am_entity::update_mac_buffer_state(bool is_locked)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-  handle_buffer_state_update_nolock();
-}
-
-void rlc_tx_am_entity::handle_buffer_state_update_nolock()
-{
-  unsigned bs = get_buffer_state_nolock();
+  pending_buffer_state.clear(std::memory_order_seq_cst);
+  unsigned bs = is_locked ? get_buffer_state_nolock() : get_buffer_state();
   if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
@@ -719,6 +725,13 @@ void rlc_tx_am_entity::handle_buffer_state_update_nolock()
         prev_buffer_state);
   }
   prev_buffer_state = bs;
+}
+
+// TS 38.322 v16.2.0 Sec 5.5
+uint32_t rlc_tx_am_entity::get_buffer_state()
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  return get_buffer_state_nolock();
 }
 
 uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
@@ -880,7 +893,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
     // TODO: Increment RETX counter, handle max_retx
     //
 
-    handle_buffer_state_update_nolock(); // already locked
+    update_mac_buffer_state(/* is_locked = */ true);
   }
   /*
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.

@@ -32,7 +32,6 @@
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include "srsran/support/executors/task_worker.h"
 #include <memory>
 
 namespace srsran {
@@ -73,6 +72,8 @@ private:
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
 
   du_manager_mac_event_indicator mac_ev_notifier;
+
+  mac_f1ap_paging_handler f1ap_paging_notifier;
 };
 
 } // namespace srs_du

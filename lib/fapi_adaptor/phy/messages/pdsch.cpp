@@ -26,10 +26,19 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-/// Fills the RE patterns parameter of the PDSCH PDU.
-static void fill_reserved_re_pattern(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
+/// Fills the reserved RE patterns parameter of the PDSCH PDU.
+static void fill_reserved_re_pattern(pdsch_processor::pdu_t&     proc_pdu,
+                                     const fapi::dl_pdsch_pdu&   fapi_pdu,
+                                     span<const re_pattern_list> csi_re_pattern_list)
 {
-  // :TODO: Implement me!
+  for (auto csi_index : fapi_pdu.pdsch_maintenance_v3.csi_for_rm) {
+    srsran_assert(csi_index < csi_re_pattern_list.size(),
+                  "CSI-RS PDU index={} value out of bounds CSI RE patterns={}",
+                  csi_index,
+                  csi_re_pattern_list.size());
+
+    proc_pdu.reserved.merge(csi_re_pattern_list[csi_index]);
+  }
 }
 
 /// Fills the codewords.
@@ -169,10 +178,11 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, mapper);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   proc_pdu,
-                                                     const fapi::dl_pdsch_pdu& fapi_pdu,
-                                                     uint16_t                  sfn,
-                                                     uint16_t                  slot)
+void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&     proc_pdu,
+                                                     const fapi::dl_pdsch_pdu&   fapi_pdu,
+                                                     uint16_t                    sfn,
+                                                     uint16_t                    slot,
+                                                     span<const re_pattern_list> csi_re_pattern_list)
 {
   proc_pdu.slot         = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.rnti         = fapi_pdu.rnti;
@@ -211,7 +221,7 @@ void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   p
   proc_pdu.ldpc_base_graph = fapi_pdu.pdsch_maintenance_v3.ldpc_base_graph;
   proc_pdu.tbs_lbrm_bytes  = fapi_pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes.value();
 
-  fill_reserved_re_pattern(proc_pdu, fapi_pdu);
+  fill_reserved_re_pattern(proc_pdu, fapi_pdu, csi_re_pattern_list);
 
   // :TODO: add the ports.
   proc_pdu.ports = {0};

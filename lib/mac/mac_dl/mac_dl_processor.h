@@ -52,11 +52,17 @@ public:
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
 
-  /// Deletes UE context in MAC DL and scheduler.
+  /// Deletes UE context in MAC MUX.
   async_task<void> remove_ue(const mac_ue_delete_request_message& request) override;
 
-  /// Reconfigures UE in MAC DL and in the scheduler.
-  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override;
+  /// Add/Modify UE bearers in the MUX.
+  async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
+                                  du_cell_index_t                                pcell_index,
+                                  const std::vector<mac_logical_channel_config>& logical_channels) override;
+
+  /// Add/Modify UE bearers in the DEMUX.
+  async_task<bool>
+  remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override;
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) { return *cells[cell_index]; }
 

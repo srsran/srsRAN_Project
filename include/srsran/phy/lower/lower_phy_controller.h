@@ -33,13 +33,10 @@ public:
   /// Default destructor.
   virtual ~lower_phy_controller() = default;
 
-  /// \brief Starts the lower physical layer operation.
-  ///
-  /// \param[in] realtime_task_executor Task executor for real time operation.
-  /// \note The real time task executor is exclusively dedicated to the lower physical layer operation.
-  virtual void start(task_executor& realtime_task_executor) = 0;
+  /// Starts the lower physical layer operation.
+  virtual void start() = 0;
 
-  /// Stops the lower physical layer operation.
+  /// Requests the lower physical layer to stop the operation.
   virtual void stop() = 0;
 };
 

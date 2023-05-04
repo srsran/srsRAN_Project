@@ -59,9 +59,9 @@ struct pcch_config {
     scs60khzOneT_scs30khzHalfT_scs15khzQuarterT,
     scs120khzOneT_scs60khzHalfT_scs30khzQuarterT_scs15khzOneEighthT,
     scs120khzHalfT_scs60khzQuarterT_scs30khzOneEighthT_scs15khzOneSixteenthT,
-    scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT,
-    scs120khzOneEighthT_scs60khzOneSixteenthT,
-    scs120khzOneSixteenthT,
+    scs480khzOneT_scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT,
+    scs480khzHalfT_scs120khzOneEighthT_scs60khzOneSixteenthT,
+    scs480khzQuarterT_scs120khzOneSixteenthT,
   };
 
   paging_cycle default_paging_cycle;

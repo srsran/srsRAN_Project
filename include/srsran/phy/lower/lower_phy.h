@@ -22,11 +22,14 @@
 
 #pragma once
 
-#include "srsran/phy/lower/lower_phy_controller.h"
-#include "srsran/phy/lower/lower_phy_request_handler.h"
-#include "srsran/phy/lower/lower_phy_rg_handler.h"
-
 namespace srsran {
+
+class lower_phy_controller;
+class lower_phy_error_notifier;
+class lower_phy_request_handler;
+class lower_phy_rg_handler;
+class lower_phy_rx_symbol_notifier;
+class lower_phy_timing_notifier;
 
 /// \brief Lower PHY main interface.
 ///

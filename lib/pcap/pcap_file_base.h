@@ -65,7 +65,7 @@ public:
 
   bool is_write_enabled();
 
-  bool dlt_pcap_open(uint32_t dlt, const char* filename);
+  bool dlt_pcap_open(uint32_t dlt, const std::string& filename);
   void dlt_pcap_close();
   void write_pcap_header(uint32_t length);
   void write_pcap_pdu(srsran::const_span<uint8_t> pdu);

@@ -420,11 +420,11 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
 
   srsran::byte_buffer buffer;
   bit_ref             b{buffer};
-  pack_fixed_seq_of(b, fixed_list.data(), fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
+  pack_fixed_seq_of(b, fixed_list, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(b.distance() == (int)(fixed_list_size * n_bits));
   cbit_ref                 b2(buffer);
   std::array<uint32_t, 33> fixed_list2;
-  unpack_fixed_seq_of(&fixed_list2[0], b2, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
+  unpack_fixed_seq_of(fixed_list2, b2, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(fixed_list == fixed_list2);
 
   // bounded seq_of

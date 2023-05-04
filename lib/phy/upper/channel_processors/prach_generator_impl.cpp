@@ -43,8 +43,6 @@ public:
   }
 };
 
-const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> prach_generator_cexp_table_long;
-
 } // namespace
 
 unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
@@ -91,8 +89,24 @@ unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_i
   return static_cast<unsigned>(lut[root_sequence_index % lut.size()]);
 }
 
+unsigned prach_generator_impl::get_sequence_number_short(unsigned root_sequence_index)
+{
+  static const std::array<uint8_t, SHORT - 1> lut = {
+      1,   138, 2,   137, 3,   136, 4,   135, 5,   134, 6,   133, 7,   132, 8,   131, 9,   130, 10,  129, 11,  128, 12,
+      127, 13,  126, 14,  125, 15,  124, 16,  123, 17,  122, 18,  121, 19,  120, 20,  119, 21,  118, 22,  117, 23,  116,
+      24,  115, 25,  114, 26,  113, 27,  112, 28,  111, 29,  110, 30,  109, 31,  108, 32,  107, 33,  106, 34,  105, 35,
+      104, 36,  103, 37,  102, 38,  101, 39,  100, 40,  99,  41,  98,  42,  97,  43,  96,  44,  95,  45,  94,  46,  93,
+      47,  92,  48,  91,  49,  90,  50,  89,  51,  88,  52,  87,  53,  86,  54,  85,  55,  84,  56,  83,  57,  82,  58,
+      81,  59,  80,  60,  79,  61,  78,  62,  77,  63,  76,  64,  75,  65,  74,  66,  73,  67,  72,  68,  71,  69,  70};
+
+  return static_cast<unsigned>(lut[root_sequence_index % lut.size()]);
+}
+
 span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_number, unsigned cyclic_shift)
 {
+  // Complex exponential look-up table.
+  static const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> cexp_table;
+
   // Sequence compression factor look-up table for each sequence number.
   static const std::array<uint16_t, LONG> compression_factor_table = {
       0,   1,   420, 280, 210, 168, 140, 120, 105, 373, 84,  534, 70,  710, 60,  56,  472, 691, 606, 265, 42,  40,  267,
@@ -184,9 +198,6 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
   // Create view of the sequence.
   span<cf_t> y_u_v = sequence.first(LONG);
 
-  // Exponential function LUT size.
-  uint64_t cexp_table_size = prach_generator_cexp_table_long.size();
-
   // Sequence compression factor and offset.
   uint64_t factor = static_cast<uint64_t>(compression_factor_table[sequence_number]);
   uint64_t offset = static_cast<uint64_t>(index_offset[sequence_number]);
@@ -203,7 +214,56 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
     y_u_v_index += ((2UL * cyclic_shift) * n);
 
     // Get value from the complex exponential table.
-    y_u_v[n] = prach_generator_cexp_table_long[(y_u_v_index * 2 + offset) % cexp_table_size];
+    y_u_v[n] = cexp_table[(y_u_v_index * 2 + offset) % cexp_table.size()];
+  }
+
+  return y_u_v;
+}
+
+span<const cf_t> prach_generator_impl::generate_y_u_v_short(unsigned sequence_number, unsigned cyclic_shift)
+{
+  // Complex exponential look-up table.
+  const prach_generator_cexp_table<prach_constants::SHORT_SEQUENCE_LENGTH> cexp_table;
+
+  // Sequence compression factor look-up table for each sequence number.
+  static const std::array<uint16_t, SHORT> compression_factor_table = {
+      0,   1,   70,  93,  35,  28,  116, 20, 87,  31,  14,  38, 58,  107, 10,  102, 113, 90, 85, 22,  7,  53,  19,  133,
+      29,  89,  123, 103, 5,   24,  51,  9,  126, 59,  45,  4,  112, 124, 11,  82,  73,  78, 96, 97,  79, 34,  136, 71,
+      84,  122, 114, 30,  131, 21,  121, 91, 72,  100, 12,  33, 95,  98,  74,  64,  63,  77, 99, 83,  92, 137, 2,   47,
+      56,  40,  62,  76,  75,  65,  41,  44, 106, 127, 39,  67, 48,  18,  118, 8,   109, 25, 17, 55,  68, 3,   105, 60,
+      42,  43,  61,  66,  57,  128, 15,  27, 135, 94,  80,  13, 130, 88,  115, 134, 36,  16, 50, 110, 6,  120, 86,  132,
+      117, 54,  49,  26,  37,  129, 32,  81, 101, 125, 108, 52, 119, 23,  111, 104, 46,  69, 138};
+
+  // Sequence phase offset look-up table for each sequence number.
+  static const std::array<uint16_t, SHORT> index_offset = {
+      0,   487, 1,   349, 419, 211, 3,   351, 421, 491, 5,   75,  145, 215, 285, 77,  147, 217, 9,  357,
+      427, 497, 289, 81,  151, 499, 13,  361, 431, 223, 15,  363, 433, 225, 295, 87,  435, 227, 19, 89,
+      437, 507, 299, 369, 439, 231, 23,  371, 441, 511, 25,  95,  443, 513, 27,  375, 445, 515, 29, 377,
+      169, 517, 309, 379, 171, 519, 311, 103, 173, 243, 313, 383, 453, 245, 37,  385, 177, 247, 39, 387,
+      179, 527, 41,  111, 181, 529, 43,  113, 461, 531, 45,  115, 185, 533, 325, 117, 187, 257, 49, 119,
+      467, 537, 329, 121, 469, 261, 331, 123, 193, 541, 333, 125, 195, 543, 57,  405, 475, 267, 59, 129,
+      199, 547, 339, 409, 479, 271, 341, 411, 481, 551, 65,  135, 205, 553, 345, 137, 207, 555, 69};
+
+  // Create view of the sequence.
+  span<cf_t> y_u_v = sequence.first(SHORT);
+
+  // Sequence compression factor and offset.
+  uint64_t factor = static_cast<uint64_t>(compression_factor_table[sequence_number]);
+  uint64_t offset = static_cast<uint64_t>(index_offset[sequence_number]);
+
+  // Zadoff-Chu root.
+  uint64_t root = static_cast<uint64_t>(sequence_number);
+
+  // Generate sequence and calculate the scaling of the sequence transform.
+  for (uint64_t n = 0; n != SHORT; ++n) {
+    // Calculate sequence table index considering the compression factor of the sequence sample index.
+    uint64_t y_u_v_index = ((root * factor) * n * (factor * n + 1UL));
+
+    // Apply cyclic shift.
+    y_u_v_index += ((2UL * cyclic_shift) * n);
+
+    // Get value from the complex exponential table.
+    y_u_v[n] = cexp_table[(y_u_v_index * 2 + offset) % cexp_table.size()];
   }
 
   return y_u_v;
@@ -211,23 +271,31 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
-  srsran_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
   srsran_assert(config.restricted_set == restricted_set_config::UNRESTRICTED, "Unrestricted sets are not implemented.");
-  prach_preamble_information info = get_prach_preamble_long_info(config.format);
 
-  unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
+  unsigned                 sequence_length = SHORT;
+  prach_subcarrier_spacing ra_scs          = prach_subcarrier_spacing::kHz15;
+  if (is_long_preamble(config.format)) {
+    prach_preamble_information info = get_prach_preamble_long_info(config.format);
+    ra_scs                          = info.scs;
+    sequence_length                 = info.sequence_length;
+  }
+
+  unsigned N_cs = prach_cyclic_shifts_get(ra_scs, config.restricted_set, config.zero_correlation_zone);
   srsran_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
 
   unsigned root_sequence_index = config.root_sequence_index + config.preamble_index;
   unsigned cyclic_shift        = 0;
 
   if (N_cs != 0) {
-    unsigned nof_sequences_per_root = info.sequence_length / N_cs;
+    unsigned nof_sequences_per_root = sequence_length / N_cs;
     root_sequence_index             = config.root_sequence_index + config.preamble_index / nof_sequences_per_root;
     cyclic_shift                    = (config.preamble_index % nof_sequences_per_root) * N_cs;
   }
 
-  unsigned sequence_number = get_sequence_number_long(root_sequence_index);
+  if (is_long_preamble(config.format)) {
+    return generate_y_u_v_long(get_sequence_number_long(root_sequence_index), cyclic_shift);
+  }
 
-  return generate_y_u_v_long(sequence_number, cyclic_shift);
+  return generate_y_u_v_short(get_sequence_number_short(root_sequence_index), cyclic_shift);
 }

@@ -23,9 +23,12 @@
 
 #pragma once
 
+#include "srsran/adt/slotted_array.h"
 #include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
+#include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/phy/support/prach_buffer.h"
+#include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
@@ -33,25 +36,48 @@ namespace srsran {
 /// Describes a generic OFDM PRACH demodulator.
 class ofdm_prach_demodulator_impl : public ofdm_prach_demodulator
 {
-private:
-  /// DFT processor for 1.25kHz subcarrier spacing.
-  std::unique_ptr<dft_processor> dft_1_25kHz;
-  /// DFT processor for 5kHz subcarrier spacing.
-  std::unique_ptr<dft_processor> dft_5kHz;
-
 public:
-  ofdm_prach_demodulator_impl(std::unique_ptr<dft_processor> dft_1_25kHz_, std::unique_ptr<dft_processor> dft_5kHz_) :
-    dft_1_25kHz(std::move(dft_1_25kHz_)), dft_5kHz(std::move(dft_5kHz_))
+  using dft_processors_table = slotted_id_table<prach_subcarrier_spacing,
+                                                std::unique_ptr<dft_processor>,
+                                                static_cast<unsigned>(prach_subcarrier_spacing::invalid)>;
+
+  /// \brief Builds a PRACH OFDM demodulator.
+  ///
+  /// \param[in] srate_          Sampling rate.
+  /// \param[in] dft_processors_ Table with one DFT processor for each of the possible RA subcarrier spacings.
+  /// \remark An assertion is triggered if \c dft_processors_ do not contain a valid DFT processor for each of the
+  /// possible random access subcarrier spacings.
+  ofdm_prach_demodulator_impl(sampling_rate srate_, dft_processors_table dft_processors_) :
+    srate(srate_), dft_processors(std::move(dft_processors_))
   {
-    srsran_assert(dft_1_25kHz, "Invalid DFT for 1.25kHz SCS");
-    srsran_assert(dft_1_25kHz->get_direction() == dft_processor::direction::DIRECT,
-                  "Invalid DFT direction for 1.25kHz SCS");
-    srsran_assert(dft_5kHz, "Invalid DFT for 1.25kHz SCS");
-    srsran_assert(dft_5kHz->get_direction() == dft_processor::direction::DIRECT, "Invalid DFT direction for 5kHz SCS");
+    using int_type = std::underlying_type_t<prach_subcarrier_spacing>;
+    for (int_type i_scs     = static_cast<int_type>(prach_subcarrier_spacing::kHz15),
+                  i_scs_end = static_cast<int_type>(prach_subcarrier_spacing::invalid);
+         i_scs != i_scs_end;
+         ++i_scs) {
+      prach_subcarrier_spacing ra_scs = static_cast<prach_subcarrier_spacing>(i_scs);
+      srsran_assert(dft_processors.contains(ra_scs),
+                    "Table does not contain a DFT processor for {} subcarrier spacing.",
+                    to_string(ra_scs));
+      srsran_assert(dft_processors[ra_scs], "Invalid DFT processor for {} subcarrier spacing.", to_string(ra_scs));
+      srsran_assert(dft_processors[ra_scs]->get_direction() == dft_processor::direction::DIRECT,
+                    "Invalid DFT processor direction for {} subcarrier spacing.",
+                    to_string(ra_scs));
+      srsran_assert(dft_processors[ra_scs]->get_size() == srate.get_dft_size(ra_scs_to_Hz(ra_scs)),
+                    "Invalid DFT processor size (i.e., {}) for {} subcarrier spacing.",
+                    dft_processors[ra_scs]->get_size(),
+                    to_string(ra_scs));
+    }
   }
 
   // See interface for documentation.
   void demodulate(prach_buffer& buffer, span<const cf_t> input, const configuration& config) override;
+
+private:
+  /// Sampling rate.
+  sampling_rate srate;
+  /// DFT processor table.
+  dft_processors_table dft_processors;
 };
 
 } // namespace srsran

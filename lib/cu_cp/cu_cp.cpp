@@ -26,6 +26,7 @@
 #include "srsran/cu_cp/du_processor_factory.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ngap/ngap_factory.h"
+#include <future>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -39,6 +40,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cfg(config_),
+  ue_mng(config_.ue_config),
   ue_task_sched(timers, *config_.cu_cp_executor),
   du_task_sched(timers, *config_.cu_cp_executor),
   cu_up_task_sched(timers, *config_.cu_cp_executor)
@@ -49,6 +51,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   f1ap_ev_notifier.connect_cu_cp(get_cu_cp_du_handler());
   cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), get_cu_cp_ngap_paging_handler());
+  e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
@@ -58,7 +61,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   // Create layers
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
-  ngap_adapter.connect_ngap(*ngap_entity);
+  ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager());
+  du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
 }
@@ -73,11 +77,13 @@ void cu_cp::start()
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  cfg.cu_cp_executor->execute([this, &p]() {
-    // start NG setup procedure.
-    routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
-    p.set_value();
-  });
+  if (not cfg.cu_cp_executor->execute([this, &p]() {
+        // start NG setup procedure.
+        routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
+        p.set_value();
+      })) {
+    report_fatal_error("Failed to initiate CU-CP setup.");
+  }
 
   // Block waiting for CU-CP setup to complete.
   fut.wait();
@@ -160,7 +166,6 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngap_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
   ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
-                                &rrc_ue->get_rrc_ue_control_message_handler(),
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
 }
 
@@ -179,6 +184,13 @@ void cu_cp::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
 {
   logger.info("removing CU-UP {}", cu_up_index);
   remove_cu_up(cu_up_index);
+}
+
+void cu_cp::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
+{
+  // Forward message to DU processor
+  auto& du_it = find_du(get_du_index_from_ue_index(msg.ue_index));
+  du_it.handle_inactivity_notification(msg);
 }
 
 void cu_cp::handle_amf_connection()
@@ -230,6 +242,7 @@ du_index_t cu_cp::add_du()
                                                                    f1ap_ev_notifier,
                                                                    *cfg.f1ap_notifier,
                                                                    du_processor_e1ap_notifier,
+                                                                   du_processor_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    du_processor_task_sched,
@@ -306,6 +319,7 @@ cu_up_index_t cu_cp::add_cu_up()
   std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
                                                                             cu_up_processor_ev_notifier,
                                                                             *cfg.e1ap_notifier,
+                                                                            e1ap_ev_notifier,
                                                                             cu_up_processor_task_sched,
                                                                             *cfg.cu_cp_executor);
 

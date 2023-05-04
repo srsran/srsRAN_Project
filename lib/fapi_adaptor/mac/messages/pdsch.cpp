@@ -23,6 +23,7 @@
 #include "srsran/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
+#include <numeric>
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -30,11 +31,13 @@ using namespace fapi_adaptor;
 /// CORESET0 is configured for the cell.
 static constexpr bool is_coreset0_configured_for_cell = true;
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const sib_information& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&    fapi_pdu,
+                                                     const sib_information& mac_pdu,
+                                                     unsigned               nof_csi_pdus)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
 }
 
 static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
@@ -198,7 +201,8 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
 }
 
 void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const sib_information&      mac_pdu)
+                                                     const sib_information&      mac_pdu,
+                                                     unsigned                    nof_csi_pdus)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -236,18 +240,24 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_coreset(
       builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
-  // :TODO Rate-Matching related parameters, not used now.
+  // As the CSI uses the whole bandwidth, all the CSI-RS PDUs will collide with the PDSCH.
+  static_vector<uint16_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rm_indexes(nof_csi_pdus);
+  std::iota(csi_rm_indexes.begin(), csi_rm_indexes.end(), 0U);
+  builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const rar_information& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&    fapi_pdu,
+                                                     const rar_information& mac_pdu,
+                                                     unsigned               nof_csi_pdus)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
 }
 
 void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const rar_information&      mac_pdu)
+                                                     const rar_information&      mac_pdu,
+                                                     unsigned                    nof_csi_pdus)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -285,17 +295,24 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_coreset(
       builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
-  // :TODO Rate-Matching related parameters, not used now.
+  // As the CSI uses the whole bandwidth, all the CSI-RS PDUs will collide with the PDSCH.
+  static_vector<uint16_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rm_indexes(nof_csi_pdus);
+  std::iota(csi_rm_indexes.begin(), csi_rm_indexes.end(), 0U);
+  builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const dl_msg_alloc& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu,
+                                                     const dl_msg_alloc& mac_pdu,
+                                                     unsigned            nof_csi_pdus)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
+                                                     const dl_msg_alloc&         mac_pdu,
+                                                     unsigned                    nof_csi_pdus)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -336,5 +353,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Fill PDSCH context for logging.
   builder.set_context_vendor_specific(mac_pdu.pdsch_cfg.harq_id, mac_pdu.context.k1);
 
-  // :TODO Rate-Matching related parameters, not used now.
+  // As the CSI uses the whole bandwidth, all the CSI-RS PDUs will collide with the PDSCH.
+  static_vector<uint16_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rm_indexes(nof_csi_pdus);
+  std::iota(csi_rm_indexes.begin(), csi_rm_indexes.end(), 0U);
+  builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }

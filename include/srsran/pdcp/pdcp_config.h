@@ -104,7 +104,7 @@ enum class pdcp_t_reordering {
   ms3000   = 3000,
   infinity = -1
 };
-inline bool pdcp_t_reordering_from_int(pdcp_t_reordering t_reord, int num)
+inline bool pdcp_t_reordering_from_int(pdcp_t_reordering& t_reord, int num)
 {
   switch (num) {
     case 0:
@@ -231,12 +231,24 @@ struct pdcp_max_count {
 ///
 /// Ref: 3GPP TS 38.331 version 15.2.1
 struct pdcp_config_common {
-  pdcp_rb_type  rb_type;
-  pdcp_rlc_mode rlc_mode;
-  pdcp_sn_size  sn_size = pdcp_sn_size::size12bits; // TODO remove default initialization and force parameter selection
+  pdcp_rb_type            rb_type;
+  pdcp_rlc_mode           rlc_mode;
+  pdcp_sn_size            sn_size;
   pdcp_security_direction direction;
   bool                    integrity_protection_required;
   bool                    ciphering_required;
+};
+
+struct pdcp_tx_config : pdcp_config_common {
+  pdcp_discard_timer discard_timer;
+  bool               status_report_required;
+  pdcp_max_count     max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+};
+
+struct pdcp_rx_config : pdcp_config_common {
+  bool              out_of_order_delivery;
+  pdcp_t_reordering t_reordering;
+  pdcp_max_count    max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
 };
 
 /// \brief Configurable parameters for PDCP
@@ -246,16 +258,51 @@ struct pdcp_config_common {
 ///
 /// Ref: 3GPP TS 38.331 version 15.2.1
 struct pdcp_config {
-  struct pdcp_tx_config : pdcp_config_common {
-    pdcp_discard_timer discard_timer;
-    bool               status_report_required;
-    pdcp_max_count     max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
+  pdcp_rb_type  rb_type;
+  pdcp_rlc_mode rlc_mode;
+  bool          integrity_protection_required;
+  bool          ciphering_required;
+  struct {
+    pdcp_sn_size            sn_size;
+    pdcp_security_direction direction;
+    pdcp_discard_timer      discard_timer;
+    bool                    status_report_required;
+    pdcp_max_count          max_count = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard};
   } tx;
-  struct pdcp_rx_config : pdcp_config_common {
-    bool              out_of_order_delivery;
-    pdcp_t_reordering t_reordering;
-    pdcp_max_count    max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
+  struct {
+    pdcp_sn_size            sn_size;
+    pdcp_security_direction direction;
+    bool                    out_of_order_delivery;
+    pdcp_t_reordering       t_reordering;
+    pdcp_max_count          max_count = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard};
   } rx;
+
+  pdcp_tx_config get_tx_config() const
+  {
+    pdcp_tx_config cfg;
+    cfg.rb_type                       = rb_type;
+    cfg.rlc_mode                      = rlc_mode;
+    cfg.integrity_protection_required = integrity_protection_required;
+    cfg.sn_size                       = tx.sn_size;
+    cfg.direction                     = tx.direction;
+    cfg.discard_timer                 = tx.discard_timer;
+    cfg.status_report_required        = tx.status_report_required;
+    cfg.max_count                     = tx.max_count;
+    return cfg;
+  }
+  pdcp_rx_config get_rx_config() const
+  {
+    pdcp_rx_config cfg;
+    cfg.rb_type                       = rb_type;
+    cfg.rlc_mode                      = rlc_mode;
+    cfg.integrity_protection_required = integrity_protection_required;
+    cfg.sn_size                       = rx.sn_size;
+    cfg.direction                     = rx.direction;
+    cfg.out_of_order_delivery         = rx.out_of_order_delivery;
+    cfg.t_reordering                  = rx.t_reordering;
+    cfg.max_count                     = rx.max_count;
+    return cfg;
+  }
 };
 
 /// \brief Make default SRB parameters for PDCP
@@ -264,24 +311,20 @@ inline pdcp_config pdcp_make_default_srb_config()
 {
   pdcp_config config = {};
   // common TX/RX parameters
-  config.tx.rb_type                       = pdcp_rb_type::srb;
-  config.rx.rb_type                       = pdcp_rb_type::srb;
-  config.tx.rlc_mode                      = pdcp_rlc_mode::am;
-  config.rx.rlc_mode                      = pdcp_rlc_mode::am;
-  config.tx.sn_size                       = pdcp_sn_size::size12bits;
-  config.rx.sn_size                       = pdcp_sn_size::size12bits;
-  config.tx.direction                     = pdcp_security_direction::downlink;
-  config.rx.direction                     = pdcp_security_direction::uplink;
-  config.tx.integrity_protection_required = true;
-  config.rx.integrity_protection_required = true;
-  config.tx.ciphering_required            = true;
-  config.rx.ciphering_required            = true;
+  config.rb_type                       = pdcp_rb_type::srb;
+  config.rlc_mode                      = pdcp_rlc_mode::am;
+  config.integrity_protection_required = true;
+  config.ciphering_required            = true;
 
   // Tx config
+  config.tx.sn_size                = pdcp_sn_size::size12bits;
+  config.tx.direction              = pdcp_security_direction::downlink;
   config.tx.discard_timer          = pdcp_discard_timer::not_configured;
   config.tx.status_report_required = false;
 
-  // Tx config
+  // Rx config
+  config.rx.sn_size               = pdcp_sn_size::size12bits;
+  config.rx.direction             = pdcp_security_direction::uplink;
   config.rx.out_of_order_delivery = false;
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
@@ -346,7 +389,7 @@ struct formatter<srsran::pdcp_rlc_mode> {
 
 // TX config
 template <>
-struct formatter<srsran::pdcp_config::pdcp_tx_config> {
+struct formatter<srsran::pdcp_tx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -354,8 +397,7 @@ struct formatter<srsran::pdcp_config::pdcp_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_config::pdcp_tx_config cfg, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_tx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} discard_timer={} count_notify={} count_max={}",
@@ -370,7 +412,7 @@ struct formatter<srsran::pdcp_config::pdcp_tx_config> {
 
 // RX config
 template <>
-struct formatter<srsran::pdcp_config::pdcp_rx_config> {
+struct formatter<srsran::pdcp_rx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -378,8 +420,7 @@ struct formatter<srsran::pdcp_config::pdcp_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_config::pdcp_rx_config cfg, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rx_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} t_reordering={} count_notify={} count_max={}",
@@ -404,7 +445,18 @@ struct formatter<srsran::pdcp_config> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
+    return format_to(ctx.out(),
+                     "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
+                     "RX=[sn_size={} t_reordering={} out_of_order={}]",
+                     cfg.rb_type,
+                     cfg.rlc_mode,
+                     cfg.integrity_protection_required,
+                     cfg.ciphering_required,
+                     cfg.tx.sn_size,
+                     cfg.tx.discard_timer,
+                     cfg.rx.sn_size,
+                     cfg.rx.t_reordering,
+                     cfg.rx.out_of_order_delivery);
   }
 };
 } // namespace fmt

@@ -26,7 +26,7 @@
 #include "cu_up_processor_context.h"
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <string>
 
 namespace srsran {

@@ -26,7 +26,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
@@ -142,6 +142,16 @@ public:
   virtual void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) = 0;
 };
 
+class ngap_control_message_handler
+{
+public:
+  virtual ~ngap_control_message_handler() = default;
+
+  /// \brief Initiates a UE Context Release Request procedure TS 38.413 section 8.3.2.
+  /// \param[in] msg The ue context release request to transmit.
+  virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
+};
+
 struct ngap_pdu_session_res_item {
   pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer      pdu_session_res;
@@ -179,6 +189,10 @@ public:
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Release Command.
+  virtual async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
 
   /// \brief Notify about the reception of a new UE Context Release Command.
   virtual void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
@@ -227,11 +241,20 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_event_handler,
                        public ngap_connection_manager,
                        public ngap_nas_message_handler,
+                       public ngap_control_message_handler,
                        public ngap_ue_control_manager,
                        public ngap_statistic_interface
 {
 public:
   virtual ~ngap_interface() = default;
+
+  virtual ngap_message_handler&         get_ngap_message_handler()         = 0;
+  virtual ngap_event_handler&           get_ngap_event_handler()           = 0;
+  virtual ngap_connection_manager&      get_ngap_connection_manager()      = 0;
+  virtual ngap_nas_message_handler&     get_ngap_nas_message_handler()     = 0;
+  virtual ngap_control_message_handler& get_ngap_control_message_handler() = 0;
+  virtual ngap_ue_control_manager&      get_ngap_ue_control_manager()      = 0;
+  virtual ngap_statistic_interface&     get_ngap_statistic_interface()     = 0;
 };
 
 } // namespace srs_cu_cp

@@ -21,19 +21,15 @@
 add_subdirectory(cu_up)
 add_subdirectory(du)
 
-if (ZEROMQ_FOUND OR UHD_FOUND)
+add_executable(f1u_local_connector_test common/f1u_connector_test.cpp)
+target_link_libraries(f1u_local_connector_test
+srsgnb_app_f1u_connector
+srsran_f1u_du
+srsran_f1u_cu_up
+srsran_support
+srslog
+gtest
+gtest_main)
 
-    add_executable(f1u_local_connector_test common/f1u_connector_test.cpp)
-    target_link_libraries(f1u_local_connector_test
-    srsgnb_app_f1u_connector
-    srsran_f1u_du
-    srsran_f1u_cu_up
-    srsran_support
-    srslog
-    gtest
-    gtest_main)
-
-    target_include_directories(f1u_local_connector_test PRIVATE ${CMAKE_SOURCE_DIR})
-    gtest_discover_tests(f1u_local_connector_test)
-
-endif (ZEROMQ_FOUND OR UHD_FOUND)
+target_include_directories(f1u_local_connector_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(f1u_local_connector_test)

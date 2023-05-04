@@ -122,14 +122,13 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   srsran_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
 
-pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
-                                                     rx_softbuffer&                softbuffer,
-                                                     const resource_grid_reader&   grid,
-                                                     const pusch_processor::pdu_t& pdu)
+void pusch_processor_impl::process(span<uint8_t>                    data,
+                                   rx_softbuffer&                   softbuffer,
+                                   pusch_processor_result_notifier& notifier,
+                                   const resource_grid_reader&      grid,
+                                   const pusch_processor::pdu_t&    pdu)
 {
   assert_pdu(pdu);
-
-  pusch_processor_result result;
 
   // Number of RB used by this transmission.
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
@@ -186,9 +185,6 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
   estimator->estimate(ch_estimate, grid, ch_est_config);
 
-  // Fill result channel state information.
-  result.csi = ch_estimate.get_channel_state_information();
-
   // Prepare demultiplex message information.
   ulsch_demultiplex::message_information demux_msg_info;
   demux_msg_info.nof_harq_ack_bits      = pdu.uci.nof_harq_ack;
@@ -232,7 +228,21 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
   pusch_demodulator::demodulation_status demod_status =
       demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
-  result.evm = demod_status.evm;
+
+  // Process channel state information.
+  {
+    // Extract channel state information.
+    channel_state_information csi = ch_estimate.get_channel_state_information();
+
+    // Current SINR estimation is not accurate enough for the purpose of adaptive MCS.
+    // Temporarily use an EVM-to-SINR conversion function.
+    if (demod_status.evm.has_value()) {
+      csi.sinr_dB = -20 * log10f(demod_status.evm.value()) - 3.7;
+    }
+
+    // Notify the completion of the channel state information measurement.
+    notifier.on_csi(csi);
+  }
 
   // Prepare buffers.
   span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());
@@ -252,23 +262,34 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     sch_llr = codeword_llr;
   }
 
-  // Prepare UCI decoder configuration.
-  uci_decoder::configuration uci_dec_config;
-  uci_dec_config.modulation = pdu.mcs_descr.modulation;
+  // Process UCI.
+  if (pdu.uci.nof_harq_ack || pdu.uci.nof_csi_part1 || pdu.uci.nof_csi_part2) {
+    // Prepare UCI decoder configuration.
+    uci_decoder::configuration uci_dec_config;
+    uci_dec_config.modulation = pdu.mcs_descr.modulation;
 
-  // Decode HARQ-ACK.
-  result.harq_ack = decode_uci_field(harq_ack_llr, pdu.uci.nof_harq_ack, uci_dec_config);
+    // Prepare UCI results.
+    pusch_processor_result_control result_uci;
+    result_uci.evm = demod_status.evm;
 
-  // Decode CSI Part 1.
-  result.csi_part1 = decode_uci_field(csi_part1_llr, pdu.uci.nof_csi_part1, uci_dec_config);
+    // Decode HARQ-ACK.
+    result_uci.harq_ack = decode_uci_field(harq_ack_llr, pdu.uci.nof_harq_ack, uci_dec_config);
 
-  // Decode HARQ-ACK.
-  result.csi_part2 = decode_uci_field(csi_part2_llr, pdu.uci.nof_csi_part2, uci_dec_config);
+    // Decode CSI Part 1.
+    result_uci.csi_part1 = decode_uci_field(csi_part1_llr, pdu.uci.nof_csi_part1, uci_dec_config);
+
+    // Decode HARQ-ACK.
+    result_uci.csi_part2 = decode_uci_field(csi_part2_llr, pdu.uci.nof_csi_part2, uci_dec_config);
+
+    // Report UCI if at least one field is present.
+    notifier.on_uci(result_uci);
+  }
 
   // Decode codeword if present.
   if (pdu.codeword) {
-    // Set the data field to present.
-    result.data.emplace();
+    // Prepare data result.
+    pusch_processor_result_data result_data;
+    result_data.evm = demod_status.evm;
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
@@ -284,16 +305,11 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Decode.
-    decoder->decode(data, result.data.value(), &softbuffer, sch_llr, decoder_config);
-  }
+    decoder->decode(data, result_data.data, &softbuffer, sch_llr, decoder_config);
 
-  // Current SINR estimation is not accurate enough for the purpose of adaptive MCS.
-  // Temporarily use an EVM-to-SINR conversion function.
-  if (result.evm.has_value()) {
-    result.csi.sinr_dB = -20 * log10f(result.evm.value()) - 3.7;
+    // Notify the outcome of the data decoding.
+    notifier.on_sch(result_data);
   }
-
-  return result;
 }
 
 void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const

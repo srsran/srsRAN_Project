@@ -26,7 +26,7 @@ namespace srsran {
 
 ngap_asn1_packer::ngap_asn1_packer(sctp_network_gateway_data_handler& gw_,
                                    ngap_message_handler&              ngap_handler,
-                                   ngap_pcap&                         pcap_) :
+                                   dlt_pcap&                          pcap_) :
   logger(srslog::fetch_basic_logger("NGAP")), gw(gw_), ngap(ngap_handler), pcap(pcap_)
 {
 }

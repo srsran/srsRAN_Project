@@ -104,23 +104,22 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
   });
 }
 
-async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
+async_task<bool> mac_dl_processor::addmod_bearers(du_ue_index_t                                  ue_index,
+                                                  du_cell_index_t                                pcell_index,
+                                                  const std::vector<mac_logical_channel_config>& logical_channels)
 {
-  return launch_async([this, request](coro_context<async_task<bool>>& ctx) {
-    CORO_BEGIN(ctx);
+  return dispatch_and_resume_on(
+      cfg.cell_exec_mapper.executor(pcell_index), cfg.ctrl_exec, [this, ue_index, logical_channels]() {
+        return ue_mng.addmod_bearers(ue_index, logical_channels);
+      });
+}
 
-    // 1. Change to respective DL executor
-    CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.pcell_index)));
-
-    // 2. Remove UE DL bearers
-    ue_mng.remove_bearers(request.ue_index, request.bearers_to_rem);
-
-    // 3. AddMod UE DL bearers
-    ue_mng.addmod_bearers(request.ue_index, request.bearers_to_addmod);
-
-    // 3. Change back to CTRL executor before returning
-    CORO_AWAIT(execute_on(cfg.ctrl_exec));
-
-    CORO_RETURN(true);
-  });
+async_task<bool>
+mac_dl_processor::remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem)
+{
+  std::vector<lcid_t> lcids(lcids_to_rem.begin(), lcids_to_rem.end());
+  return dispatch_and_resume_on(
+      cfg.cell_exec_mapper.executor(pcell_index), cfg.ctrl_exec, [this, ue_index, lcids = std::move(lcids)]() {
+        return ue_mng.remove_bearers(ue_index, lcids);
+      });
 }

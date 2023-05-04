@@ -44,6 +44,23 @@ using namespace config_validators;
     }                                                                                                                  \
   }
 
+static error_type<std::string> validate_pdcch_cfg_common(const sched_cell_configuration_request_message& msg)
+{
+  for (const auto& ss : msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+    bool cset_id_exits_in_common = msg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()
+                                       ? ss.cs_id == msg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->id
+                                       : false;
+    bool cset_id_exits_in_cset0 =
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value() ? ss.cs_id == 0 : false;
+    VERIFY(cset_id_exits_in_common or cset_id_exits_in_cset0,
+           "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Common Coresets",
+           ss.cs_id,
+           ss.id);
+  }
+
+  return {};
+}
+
 static error_type<std::string> validate_rach_cfg_common(const sched_cell_configuration_request_message& msg)
 {
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
@@ -54,10 +71,13 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
       prach_configuration_get(frequency_range::FR1,
                               msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
-  VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
+  VERIFY(prach_cfg.format < prach_format_type::invalid, "Invalid PRACH format");
 
   subcarrier_spacing           pusch_scs           = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
   prach_symbols_slots_duration prach_duration_info = get_prach_duration_info(prach_cfg, pusch_scs);
+  prach_subcarrier_spacing     prach_scs           = is_long_preamble(prach_cfg.format)
+                                                         ? get_prach_preamble_long_info(prach_cfg.format).scs
+                                                         : to_ra_subcarrier_spacing(pusch_scs);
 
   // Check if the PRACH preambles fall into UL slots
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
@@ -69,15 +89,14 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
       const unsigned start_slot_idx =
           subframe_idx * (1U << to_numerology_value(pusch_scs)) + prach_duration_info.start_slot_pusch_scs;
       for (unsigned sl = 0; sl < prach_duration_info.prach_length_slots; ++sl) {
-        VERIFY(cell_cfg.is_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
+        VERIFY(cell_cfg.is_fully_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
                "PRACH configuration index {} not supported with current TDD pattern. PRACH fall outside UL slots",
                rach_cfg_cmn.rach_cfg_generic.prach_config_index);
       }
     }
   }
 
-  const unsigned prach_nof_prbs =
-      prach_frequency_mapping_get(get_prach_preamble_long_info(prach_cfg.format).scs, pusch_scs).nof_rb_ra;
+  const unsigned prach_nof_prbs = prach_frequency_mapping_get(prach_scs, pusch_scs).nof_rb_ra;
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
     prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
@@ -152,6 +171,8 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
       VERIFY(pusch.k2 <= SCHEDULER_MAX_K2, "k2={} value exceeds maximum supported k2", pusch.k2);
     }
   }
+
+  HANDLE_CODE(validate_pdcch_cfg_common(msg));
 
   HANDLE_CODE(validate_rach_cfg_common(msg));
 

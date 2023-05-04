@@ -100,6 +100,8 @@ private:
   f1ap_message_notifier& f1ap_notifier;
   f1c_rx_sdu_notifier&   sdu_notifier;
   srslog::basic_logger&  logger;
+
+  uint32_t get_srb_pdcp_sn(const byte_buffer& pdu);
 };
 
 } // namespace srs_du

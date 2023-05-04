@@ -159,7 +159,14 @@ private:
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
 {
 public:
-  explicit ue_manager();
+  explicit ue_manager(const ue_configuration& ue_config_);
+  ~ue_manager() = default;
+
+  // common
+
+  /// \brief Get the CU-CP UE configuration stored in the UE manager.
+  /// \return The CU-CP UE configuration.
+  ue_configuration get_ue_config() override { return ue_config; }
 
   // du_processor_ue_manager
 
@@ -264,7 +271,8 @@ private:
     // TODO
   }
 
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("UE-MNG");
+  srslog::basic_logger&  logger = srslog::fetch_basic_logger("CU-UE-MNG");
+  const ue_configuration ue_config;
 
   std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 

@@ -24,8 +24,12 @@
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/async/execute_on.h"
+#include "srsran/support/event_tracing.h"
 
 using namespace srsran;
+
+/// MAC event tracing.
+static file_event_tracer<false> mac_tracer;
 
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
@@ -70,8 +74,14 @@ async_task<void> mac_cell_processor::stop()
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
+  trace_point slot_ind_enqueue_tp = mac_tracer.now();
   // Change execution context to slot indication executor.
-  slot_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
+  if (not slot_exec.execute([this, sl_tx, slot_ind_enqueue_tp]() {
+        mac_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
+        handle_slot_indication_impl(sl_tx);
+      })) {
+    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
+  }
 }
 
 void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
@@ -98,7 +108,7 @@ static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4
   static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> ret(
       payload.size(), crc_pass ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
   if (crc_pass) {
-    for (unsigned i = 0; i != ret.size(); ++i) {
+    for (unsigned i = 0, e = ret.size(); i != e; ++i) {
       if (payload.test(i)) {
         ret[i] = srsran::mac_harq_ack_report_status::ack;
       }
@@ -131,7 +141,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       if (pucch.harq_info.has_value()) {
         // NOTES:
         // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
-        // UCIc with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
+        // UCIs with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
         // retransmit the packet.
         // - This is to handle the case of simultaneous SR + HARQ UCI, for which we receive 2 UCI PDUs from the PHY,
         // 1 for SR + HARQ, 1 for HARQ only; note that only the SR + HARQ UCI is filled by the UE, meaning that we
@@ -207,6 +217,8 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
+  trace_point sched_tp = mac_tracer.now();
+
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
   // * Start of Critical Path * //
@@ -229,21 +241,32 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     return;
   }
 
+  mac_tracer << trace_event{"mac_sched", sched_tp};
+  trace_point dl_tti_req_tp = mac_tracer.now();
+
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
   assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
   // Send DL sched result to PHY.
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
+  mac_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
+
   // Start assembling Slot Data Result.
   mac_dl_data_result data_res;
   if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty() or
       not sl_res->dl.paging_grants.empty()) {
+    trace_point tx_data_req_tp = mac_tracer.now();
+
     assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
     // Send DL Data to PHY.
     phy_cell.on_new_downlink_data(data_res);
+
+    mac_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
   }
+
+  trace_point ul_tti_req_tp = mac_tracer.now();
 
   // Send UL sched result to PHY.
   mac_ul_sched_result mac_ul_res{};
@@ -254,13 +277,19 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   // All results have been notified at this point.
   phy_cell.on_cell_results_completion(sl_tx);
 
+  mac_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
+
   // * End of Critical Path * //
+
+  trace_point cleanup_tp = mac_tracer.now();
 
   // Update DL buffer state for the allocated logical channels.
   update_logical_channel_dl_buffer_states(sl_res->dl);
 
   // Write PCAP
   write_tx_pdu_pcap(sl_tx, sl_res, data_res);
+
+  mac_tracer << trace_event{"mac_cleanup_tp", cleanup_tp};
 }
 
 /// Encodes DL DCI.

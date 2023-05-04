@@ -65,8 +65,19 @@ public:
   void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
+  // ngap control message handler functions
+  void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override;
+
   // ngap_statistic_interface
   size_t get_nof_ues() const override;
+
+  ngap_message_handler&         get_ngap_message_handler() override { return *this; }
+  ngap_event_handler&           get_ngap_event_handler() override { return *this; }
+  ngap_connection_manager&      get_ngap_connection_manager() override { return *this; }
+  ngap_nas_message_handler&     get_ngap_nas_message_handler() override { return *this; }
+  ngap_control_message_handler& get_ngap_control_message_handler() override { return *this; }
+  ngap_ue_control_manager&      get_ngap_ue_control_manager() override { return *this; }
+  ngap_statistic_interface&     get_ngap_statistic_interface() override { return *this; }
 
 private:
   /// \brief Notify about the reception of an initiating message.
@@ -85,6 +96,10 @@ private:
   /// \param[in] msg The received PDU Session Resource Setup Request.
   void handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request);
 
+  /// \brief Notify about the reception of an PDU Session Resource Release Command.
+  /// \param[in] msg The received PDU Session Resource Release Command.
+  void handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command);
+
   /// \brief Notify about the reception of an UE Context Release Command.
   /// \param[in] msg The received UE Context Release Command.
   void handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd);
@@ -92,6 +107,10 @@ private:
   /// \brief Notify about the reception of a Paging message.
   /// \param[in] msg The received Paging message.
   void handle_paging(const asn1::ngap::paging_s& msg);
+
+  /// \brief Notify about the reception of a Error Indication message.
+  /// \param[in] msg The received Error Indication message.
+  void handle_error_indication(const asn1::ngap::error_ind_s& msg);
 
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.

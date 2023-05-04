@@ -198,7 +198,7 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 }
 
 template <unsigned Qm>
-static inline void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
+static void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
 {
   unsigned E = out.size();
   unsigned K = E / Qm;
@@ -209,22 +209,46 @@ static inline void deinterleave_bits_Qm(span<log_likelihood_ratio> out, span<con
   }
 }
 
+void ldpc_rate_dematcher_impl::deinterleave_qpsk(span<log_likelihood_ratio>       out,
+                                                 span<const log_likelihood_ratio> in) const
+{
+  deinterleave_bits_Qm<2>(out, in);
+}
+
+void ldpc_rate_dematcher_impl::deinterleave_qam16(span<log_likelihood_ratio>       out,
+                                                  span<const log_likelihood_ratio> in) const
+{
+  deinterleave_bits_Qm<4>(out, in);
+}
+
+void ldpc_rate_dematcher_impl::deinterleave_qam64(span<log_likelihood_ratio>       out,
+                                                  span<const log_likelihood_ratio> in) const
+{
+  deinterleave_bits_Qm<6>(out, in);
+}
+
+void ldpc_rate_dematcher_impl::deinterleave_qam256(span<log_likelihood_ratio>       out,
+                                                   span<const log_likelihood_ratio> in) const
+{
+  deinterleave_bits_Qm<8>(out, in);
+}
+
 void ldpc_rate_dematcher_impl::deinterleave_llrs(span<log_likelihood_ratio>       out,
                                                  span<const log_likelihood_ratio> in) const
 {
   switch (modulation_order) {
     default:
     case 2:
-      deinterleave_bits_Qm<2>(out, in);
+      deinterleave_qpsk(out, in);
       break;
     case 4:
-      deinterleave_bits_Qm<4>(out, in);
+      deinterleave_qam16(out, in);
       break;
     case 6:
-      deinterleave_bits_Qm<6>(out, in);
+      deinterleave_qam64(out, in);
       break;
     case 8:
-      deinterleave_bits_Qm<8>(out, in);
+      deinterleave_qam256(out, in);
       break;
   }
 }

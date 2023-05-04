@@ -48,11 +48,11 @@ public:
 
   void on_radio_rt_event(const event_description& description) override
   {
-    logger.debug("stream_id={} channel_id={} source={} type={}",
-                 description.stream_id == UNKNOWN_ID ? "na" : std::to_string(description.stream_id),
-                 description.channel_id == UNKNOWN_ID ? "na" : std::to_string(description.channel_id),
-                 description.source.to_string(),
-                 description.type.to_string());
+    logger.warning("stream_id={} channel_id={} source={} type={}",
+                   description.stream_id == UNKNOWN_ID ? "na" : std::to_string(description.stream_id),
+                   description.channel_id == UNKNOWN_ID ? "na" : std::to_string(description.channel_id),
+                   description.source.to_string(),
+                   description.type.to_string());
     switch (description.type) {
       case event_type::UNDEFINED:
         // Ignore.

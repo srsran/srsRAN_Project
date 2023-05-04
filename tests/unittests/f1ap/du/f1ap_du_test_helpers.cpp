@@ -34,6 +34,7 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
   du_cell_config                     cell         = config_helpers::make_default_du_cell_config();
   std::vector<const du_cell_config*> cells        = {&cell};
   fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
+  request_msg.du_cell_index_to_nr_cgi_lookup.push_back(cell.nr_cgi);
 
   return request_msg;
 }
@@ -87,7 +88,7 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
+  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100)));
 
   return msg;
 }
@@ -170,7 +171,7 @@ f1ap_du_test::f1ap_du_test()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(msg_notifier, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper);
+  f1ap = create_f1ap(msg_notifier, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper, paging_handler);
   f1ap_du_cfg_handler.connect(*f1ap);
 }
 

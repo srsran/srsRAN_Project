@@ -28,7 +28,8 @@ target_link_libraries(rrc_ue_test_helpers srsran_support srslog)
 set(SOURCES
         rrc_ue_setup_proc_test.cpp
         rrc_ue_smc_proc_test.cpp
-        rrc_ue_reconfig_proc_test.cpp)
+        rrc_ue_reconfig_proc_test.cpp
+        rrc_ue_capability_transfer_proc_test.cpp)
 
 add_executable(rrc_ue_test ${SOURCES})
 target_include_directories(rrc_ue_test PRIVATE ${CMAKE_SOURCE_DIR})

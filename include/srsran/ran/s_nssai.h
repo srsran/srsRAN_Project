@@ -28,8 +28,8 @@ namespace srsran {
 
 // Network slice information, see TS 38.413, Sec. 9.3.1.24
 struct s_nssai_t {
-  uint8_t            sst; // Slice/Service type (max 8bits)
-  optional<uint32_t> sd;  // Slice Differentiator (max 24bits)
+  uint8_t            sst = 0; // Slice/Service type (max 8bits)
+  optional<uint32_t> sd;      // Slice Differentiator (max 24bits)
 };
 
 } // namespace srsran

@@ -95,6 +95,9 @@ prach_frequency_mapping_information srsran::prach_frequency_mapping_get(prach_su
         result.k_bar     = 2;
       }
       break;
+    case prach_subcarrier_spacing::invalid:
+      // Ignore.
+      break;
   }
 
   return result;

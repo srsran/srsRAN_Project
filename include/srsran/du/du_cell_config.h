@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/carrier_configuration.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tdd_ul_dl_config.h"
@@ -34,10 +35,9 @@ namespace srsran {
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
 /// other layers (e.g. scheduler).
 struct du_cell_config {
-  pci_t       pci;
-  std::string plmn;
-  uint32_t    tac;
-  uint32_t    cell_id;
+  pci_t               pci;
+  uint32_t            tac;
+  nr_cell_global_id_t nr_cgi;
 
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;

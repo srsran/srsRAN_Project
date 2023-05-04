@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
@@ -175,7 +176,8 @@ public:
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
                                                           uint32_t                             ul_teid,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
-                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
+                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
+                                                          timer_factory                        timers) override
   {
     created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
@@ -187,6 +189,17 @@ public:
   std::list<uint32_t> created_ul_teid_list  = {};
   std::list<uint32_t> attached_ul_teid_list = {};
   std::list<uint32_t> removed_ul_teid_list  = {};
+};
+
+class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler
+{
+public:
+  explicit dummy_e1ap() {}
+  ~dummy_e1ap() override = default;
+  void handle_bearer_context_inactivity_notification(
+      const srs_cu_up::e1ap_bearer_context_inactivity_notification& msg) override
+  {
+  }
 };
 
 e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
@@ -204,7 +217,9 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
       "a6ae39efbe0d424cd85f4a9c3aee0414");
   bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
   bearer_context_setup_req->serving_plmn.value.from_string("02f899");
-  bearer_context_setup_req->activity_notif_level.value = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->activity_notif_level.value  = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->ue_inactivity_timer_present = true;
+  bearer_context_setup_req->ue_inactivity_timer.value   = 60;
 
   bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
   bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;

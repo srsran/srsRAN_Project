@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& out, const test_params& params)
 class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
 {
 protected:
-  static constexpr unsigned tx_rx_delay = 4U;
+  static constexpr unsigned tx_rx_delay = 2U;
 
   base_ra_scheduler_test(duplex_mode dplx_mode) : params(GetParam()), cell_cfg(get_sched_req(dplx_mode, params))
   {
@@ -151,7 +151,7 @@ protected:
     }
     for (unsigned i = 0; i != cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size(); ++i) {
       unsigned nof_msg3_matches = 0;
-      ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_puschs(i), nof_msg3_matches))
+      ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_msg3_newtxs(i), nof_msg3_matches))
           << "Msg3 PUSCHs parameters must match the content of the RAR grants";
       nof_puschs += nof_msg3_matches;
     }
@@ -163,7 +163,14 @@ protected:
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
 
-  void handle_rach_ind(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
+  void run_slot_until_next_rach_opportunity()
+  {
+    while (not cell_cfg.is_fully_ul_enabled(this->next_slot_rx() - 1)) {
+      run_slot();
+    }
+  }
+
+  void handle_rach_indication(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
 
   rach_indication_message::preamble create_preamble()
   {
@@ -197,6 +204,21 @@ protected:
     return rach_ind;
   }
 
+  ul_crc_indication create_crc_indication(span<const ul_sched_info> puschs, bool ack)
+  {
+    ul_crc_indication crc_ind;
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = this->next_slot_rx() - 1;
+    for (const ul_sched_info& ul : puschs) {
+      crc_ind.crcs.emplace_back();
+      crc_ind.crcs.back().ue_index       = ul.context.ue_index;
+      crc_ind.crcs.back().rnti           = ul.pusch_cfg.rnti;
+      crc_ind.crcs.back().harq_id        = to_harq_id(0);
+      crc_ind.crcs.back().tb_crc_success = ack;
+    }
+    return crc_ind;
+  }
+
   const pusch_time_domain_resource_allocation& get_pusch_td_resource(uint8_t time_resource) const
   {
     return cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
@@ -210,11 +232,16 @@ protected:
     return res_grid[k0].result.dl.rar_grants;
   }
 
-  span<const ul_sched_info> scheduled_puschs(uint8_t time_resource) const
+  span<const ul_sched_info> scheduled_msg3_newtxs(uint8_t time_resource) const
   {
     return res_grid[get_msg3_delay(get_pusch_td_resource(time_resource),
                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)]
         .result.ul.puschs;
+  }
+
+  span<const ul_sched_info> scheduled_msg3_retxs(uint8_t time_resource) const
+  {
+    return res_grid[get_pusch_td_resource(time_resource).k2].result.ul.puschs;
   }
 
   bool no_rar_grants_scheduled() const
@@ -249,7 +276,18 @@ protected:
   {
     nof_detected = 0;
     for (const rach_indication_message::occasion& occ : rach_ind.occasions) {
-      rnti_t                 ra_rnti = to_rnti(get_ra_rnti(rach_ind.slot_rx, occ.start_symbol, occ.frequency_index));
+      // As per Section 5.1.3, TS 38.321, and from Section 5.3.2, TS 38.211, slot_idx uses as the numerology of
+      // reference 15kHz for long PRACH Formats (i.e, slot_idx = subframe index); whereas, for short PRACH formats, it
+      // uses the same numerology as the SCS common (i.e, slot_idx = actual slot index within the frame).
+      const unsigned slot_idx =
+          is_long_preamble(prach_configuration_get(
+                               band_helper::get_freq_range(cell_cfg.band),
+                               band_helper::get_duplex_mode(cell_cfg.band),
+                               cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)
+                               .format)
+              ? rach_ind.slot_rx.subframe_index()
+              : rach_ind.slot_rx.slot_index();
+      rnti_t                 ra_rnti = to_rnti(get_ra_rnti(slot_idx, occ.start_symbol, occ.frequency_index));
       const rar_information* rar     = find_rar(rars, ra_rnti);
       if (rar == nullptr) {
         continue;
@@ -276,7 +314,7 @@ protected:
 
   /// \brief For a slot to be valid for RAR in TDD mode, the RAR PDCCH, RAR PDSCH and Msg3 PUSCH must fall in DL, DL
   /// and UL slots, respectively.
-  bool is_slot_valid_for_rar() const
+  bool is_slot_valid_for_rar_pdcch() const
   {
     if (not cell_cfg.is_tdd()) {
       // FDD case.
@@ -284,25 +322,49 @@ protected:
     }
     slot_point pdcch_slot = res_grid[0].slot;
 
-    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
       // slot for PDCCH is not DL slot.
       return false;
     }
     const auto& pdsch_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
-          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
+          return cell_cfg.is_fully_dl_enabled(pdcch_slot + pdsch.k0);
         })) {
       // slot for PDSCH is not DL slot.
       return false;
     }
     const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return cell_cfg.is_ul_enabled(pdcch_slot +
-                                        get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+          return cell_cfg.is_fully_ul_enabled(
+              pdcch_slot + get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
         })) {
       // slot for Msg3 PUSCH is not UL slot.
       return false;
     }
+    return true;
+  }
+
+  bool is_slot_valid_for_msg3_retx_pdcch() const
+  {
+    if (not cell_cfg.is_tdd()) {
+      // FDD case.
+      return true;
+    }
+    slot_point pdcch_slot = res_grid[0].slot;
+
+    if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
+      // slot for PDCCH is not DL slot.
+      return false;
+    }
+
+    const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
+          return cell_cfg.is_fully_ul_enabled(pdcch_slot + pusch.k2);
+        })) {
+      // slot for Msg3 reTx PUSCH is not UL slot.
+      return false;
+    }
+
     return true;
   }
 
@@ -339,7 +401,7 @@ protected:
   {
     slot_point rar_win_start;
     for (unsigned i = 1; i != rach_slot_rx.nof_slots_per_frame(); ++i) {
-      if (cell_cfg.is_dl_enabled(rach_slot_rx + i)) {
+      if (cell_cfg.is_fully_dl_enabled(rach_slot_rx + i)) {
         rar_win_start = rach_slot_rx + i;
         break;
       }
@@ -410,7 +472,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
   // Forward single RACH occasion with multiple preambles.
   rach_indication_message one_rach =
       create_rach_indication(test_rgen::uniform_int<unsigned>(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
-  handle_rach_ind(one_rach);
+  handle_rach_indication(one_rach);
 
   unsigned   ra_win_size  = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window;
   slot_point last_slot_tx = next_slot_rx() + ra_win_size;
@@ -428,7 +490,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
         << "All scheduled RAR grants must be for the provided occasion";
 
     // Msg3 allocated.
-    ASSERT_EQ(scheduled_puschs(0).size(), nof_grants);
+    ASSERT_EQ(scheduled_msg3_newtxs(0).size(), nof_grants);
 
     // PDCCH allocated.
     ASSERT_EQ(scheduled_dl_pdcchs().size(), 1);
@@ -444,7 +506,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
   // For the next slot, no RAR should be scheduled.
   run_slot();
   ASSERT_TRUE(scheduled_rars(0).empty());
-  ASSERT_TRUE(scheduled_puschs(0).empty());
+  ASSERT_TRUE(scheduled_msg3_newtxs(0).empty());
   ASSERT_TRUE(scheduled_dl_pdcchs().empty());
 }
 
@@ -462,7 +524,7 @@ TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
     rach_ind.occasions.back().frequency_index = i;
     rach_ind.occasions.back().preambles.emplace_back(create_preamble());
   }
-  handle_rach_ind(rach_ind);
+  handle_rach_indication(rach_ind);
 
   unsigned nof_sched_grants = 0;
   for (unsigned slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size(); ++slot_count) {
@@ -477,7 +539,7 @@ TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
         << "The number of scheduled RARs must match the number of (single-preamble) RACH occasions";
 
     // Since each RAR contains one single Msg3 grant, the number of scheduled Msg3 PUSCHs must match the number of RARs.
-    ASSERT_EQ(scheduled_puschs(0).size(), nof_grants) << "Number of Msg3 PUSCHs must match number of RARs";
+    ASSERT_EQ(scheduled_msg3_newtxs(0).size(), nof_grants) << "Number of Msg3 PUSCHs must match number of RARs";
 
     // PDCCH allocated.
     ASSERT_EQ(scheduled_dl_pdcchs().size(), nof_grants) << "Number of PDCCHs must match number of RARs";
@@ -495,13 +557,14 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
 {
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
+  run_slot_until_next_rach_opportunity();
   rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
-  handle_rach_ind(rach_ind);
+  handle_rach_indication(rach_ind);
 
   for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
     run_slot();
 
-    if (not is_slot_valid_for_rar()) {
+    if (not is_slot_valid_for_rar_pdcch()) {
       ASSERT_TRUE(scheduled_dl_pdcchs().empty())
           << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
       continue;
@@ -522,6 +585,38 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
   }
 }
 
+TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
+{
+  // Forward single RACH occasion with multiple preambles.
+  // Note: The number of preambles is small enough to fit all grants in one slot.
+  run_slot_until_next_rach_opportunity();
+  rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
+  handle_rach_indication(rach_ind);
+
+  unsigned       msg3_retx_count = 0;
+  const unsigned MAX_COUNT       = 100;
+  for (unsigned count = 0; count != MAX_COUNT; ++count) {
+    run_slot();
+
+    if (not res_grid[0].result.dl.ul_pdcchs.empty()) {
+      ASSERT_TRUE(is_slot_valid_for_msg3_retx_pdcch());
+    }
+
+    if (not res_grid[0].result.ul.puschs.empty()) {
+      // Forward CRC=KO for Msg3s.
+      ul_crc_indication crc_ind = create_crc_indication(res_grid[0].result.ul.puschs, false);
+      this->ra_sch.handle_crc_indication(crc_ind);
+
+      // count retxs.
+      msg3_retx_count += std::count_if(res_grid[0].result.ul.puschs.begin(),
+                                       res_grid[0].result.ul.puschs.end(),
+                                       [](const ul_sched_info& e) { return not e.pusch_cfg.new_data; });
+    }
+  }
+
+  ASSERT_GT(msg3_retx_count, 0);
+}
+
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          fdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2}},
@@ -535,7 +630,6 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          tdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));

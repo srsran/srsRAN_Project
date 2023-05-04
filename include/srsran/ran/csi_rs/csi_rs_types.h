@@ -49,6 +49,22 @@ enum class csi_rs_cdm_type {
   cdm8_FD2_TD4
 };
 
+/// Converts a CSI-RS CDM type to a string representation.
+inline const char* to_string(csi_rs_cdm_type value)
+{
+  switch (value) {
+    case csi_rs_cdm_type::no_CDM:
+      return "no_CDM";
+    case csi_rs_cdm_type::fd_CDM2:
+      return "fd_CDM2";
+    case csi_rs_cdm_type::cdm4_FD2_TD2:
+      return "cdm4_FD2_TD2";
+    case csi_rs_cdm_type::cdm8_FD2_TD4:
+    default:
+      return "cdm8_FD2_TD4";
+  }
+}
+
 /// Strategies regarding Resource Element (RE) density in the frequency domain for CSI-RS signals.
 enum class csi_rs_freq_density_type {
   /// One RE occupied in even-numbered PRB.
@@ -60,6 +76,22 @@ enum class csi_rs_freq_density_type {
   /// Three RE occupied in every PRB.
   three
 };
+
+/// Converts a CSI-RS density type to a string representation.
+inline const char* to_string(csi_rs_freq_density_type value)
+{
+  switch (value) {
+    case csi_rs_freq_density_type::dot5_even_RB:
+      return "dot5_even";
+    case csi_rs_freq_density_type::dot5_odd_RB:
+      return "dot5_odd";
+    case csi_rs_freq_density_type::one:
+      return "one";
+    case csi_rs_freq_density_type::three:
+    default:
+      return "three";
+  }
+}
 
 /// Computes the CDM group size.
 static constexpr unsigned get_cdm_group_size(csi_rs_cdm_type cdm)

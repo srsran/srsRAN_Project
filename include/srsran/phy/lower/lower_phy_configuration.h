@@ -38,14 +38,6 @@
 
 namespace srsran {
 
-/// Describes the lower physical layer RF port mapping.
-struct lower_phy_sector_port_mapping {
-  /// Indicates the radio stream identifier.
-  unsigned stream_id;
-  /// Indicates the radio channel identifier within the stream.
-  unsigned channel_id;
-};
-
 /// Describes a sector configuration.
 struct lower_phy_sector_description {
   /// Indicates the sector bandwidth in resource blocks.
@@ -54,14 +46,14 @@ struct lower_phy_sector_description {
   double dl_freq_hz;
   /// Indicates the uplink frequency.
   double ul_freq_hz;
-  /// Provides the sector port mapping.
-  std::vector<lower_phy_sector_port_mapping> port_mapping;
+  /// Number of transmit ports.
+  unsigned nof_tx_ports;
+  /// Number of receive ports.
+  unsigned nof_rx_ports;
 };
 
 /// Lower physical layer configuration.
 struct lower_phy_configuration {
-  /// Indicates the log level.
-  std::string log_level;
   /// Subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
   /// Cyclic prefix.
@@ -91,14 +83,10 @@ struct lower_phy_configuration {
   /// \remark Positive values cause a reduction of the RF transmission delay with respect to the RF reception, while
   /// negative values increase it.
   int time_alignment_calibration;
-  /// OFDM modulator scale.
-  float tx_scale;
   /// Amplitude control parameters, including baseband gain and clipping.
   amplitude_controller_clipping_config amplitude_config;
   /// Provides the sectors configuration.
   std::vector<lower_phy_sector_description> sectors;
-  /// Indicates the numbers of channels for every baseband stream.
-  std::vector<unsigned> nof_channels_per_stream;
   /// Provides the baseband gateway.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
@@ -107,6 +95,14 @@ struct lower_phy_configuration {
   lower_phy_timing_notifier* timing_notifier;
   /// Provides the error handler to notify runtime errors.
   lower_phy_error_notifier* error_notifier;
+  /// Receive task executor.
+  task_executor* rx_task_executor;
+  /// Transmit task executor.
+  task_executor* tx_task_executor;
+  /// Downlink task executor.
+  task_executor* dl_task_executor;
+  /// Uplink task executor.
+  task_executor* ul_task_executor;
   /// PRACH asynchronous task executor.
   task_executor* prach_async_executor;
 };

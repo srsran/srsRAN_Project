@@ -81,12 +81,14 @@ int main()
         dft_factory->clear_entries();
 
         // Create OFDM demodulator configuration. Use minimum number of RB.
-        ofdm_demodulator_configuration ofdm_config = {};
-        ofdm_config.numerology                     = to_numerology_value(scs);
-        ofdm_config.bw_rb                          = 11;
-        ofdm_config.dft_size                       = dft_size;
-        ofdm_config.cp                             = cp;
-        ofdm_config.scale                          = dist_rg(rgen);
+        ofdm_demodulator_configuration ofdm_config;
+        ofdm_config.numerology                = to_numerology_value(scs);
+        ofdm_config.bw_rb                     = 11;
+        ofdm_config.dft_size                  = dft_size;
+        ofdm_config.cp                        = cp;
+        ofdm_config.nof_samples_window_offset = 0;
+        ofdm_config.scale                     = dist_rg(rgen);
+        ofdm_config.center_freq_hz            = 0.0;
 
         unsigned nsubc = ofdm_config.bw_rb * NRE;
 

@@ -169,6 +169,7 @@ protected:
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
+    cell_cfg.csi_rs_enabled = true;
     return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
   }
 
@@ -332,17 +333,16 @@ protected:
     const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                   bench->sched_res->dl.dl_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    if (it == bench->sched_res->dl.dl_pdcchs.end()) {
+      return {};
+    }
 
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
     if (it->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
-      return it == bench->sched_res->dl.dl_pdcchs.end()
-                 ? optional<slot_point>{nullopt}
-                 : current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+      return current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
     }
-    return it == bench->sched_res->dl.dl_pdcchs.end()
-               ? optional<slot_point>{nullopt}
-               : current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+    return current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
@@ -632,6 +632,56 @@ TEST_P(multiple_ue_sched_tester, successfully_schedule_srb0_retransmission)
   }
 }
 
+TEST_P(multiple_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch)
+{
+  // Vector to keep track of ACKs to send.
+  std::vector<uci_indication> uci_ind_to_send;
+
+  setup_sched(create_expert_config(10), create_custom_cell_config_request());
+  // Add UE.
+  add_ue(to_du_ue_index(0), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
+
+  if (bench->cell_cfg.csi_meas_cfg.has_value()) {
+    // Flag to keep track of multiplexing status of PDSCH and CSI-RS.
+    bool is_csi_muplxed_with_pdsch = false;
+
+    for (unsigned i = 0; i != 640; ++i) {
+      // Assumption: LCID is DRB1 and DL buffer status indication of 100 bytes.
+      push_buffer_state_to_dl_ue(to_du_ue_index(0), 100, LCID_MIN_DRB);
+
+      run_slot();
+
+      std::vector<uci_indication> uci_ind_not_for_current_slot;
+      // Send ACKs if there are any to send.
+      for (const auto& ind : uci_ind_to_send) {
+        if (current_slot == ind.slot_rx) {
+          bench->sch.handle_uci_indication(ind);
+        } else {
+          uci_ind_not_for_current_slot.push_back(ind);
+        }
+      }
+      swap(uci_ind_to_send, uci_ind_not_for_current_slot);
+
+      auto&       test_ue       = get_ue(to_du_ue_index(0));
+      const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
+      if (ack_nack_slot.has_value()) {
+        uci_ind_to_send.push_back(build_harq_ack_pucch_f0_f1_uci_ind(to_du_ue_index(0), ack_nack_slot.value()));
+      }
+
+      if (ue_is_allocated_pdsch(test_ue) and (not bench->sched_res->dl.csi_rs.empty())) {
+        is_csi_muplxed_with_pdsch = true;
+        break;
+      }
+    }
+    ASSERT_TRUE(is_csi_muplxed_with_pdsch);
+  }
+}
+
+// Dummy function overload of template <typename T> void testing::internal::PrintTo(const T& value, ::std::ostream* os).
+// This prevents valgrind from complaining about uninitialized variables.
+// See https://github.com/google/googletest/issues/3805.
+void PrintTo(const multiple_ue_test_params&, ::std::ostream*) {}
+
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
                          testing::Values(multiple_ue_test_params{.nof_ues                  = 3,
@@ -645,7 +695,15 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                          multiple_ue_test_params{.nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::TDD}));
+                                                                 .duplx_mode               = duplex_mode::TDD}),
+                         [](const testing::TestParamInfo<multiple_ue_sched_tester::ParamType>& params) -> std::string {
+                           const auto& p = params.param;
+                           return fmt::format("nof_ues_{}_buffer_size_{}_{}_mode_{}",
+                                              p.nof_ues,
+                                              p.min_buffer_size_in_bytes,
+                                              p.max_buffer_size_in_bytes,
+                                              to_string(p.duplx_mode));
+                         });
 
 int main(int argc, char** argv)
 {

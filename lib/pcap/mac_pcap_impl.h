@@ -50,7 +50,7 @@ public:
   mac_pcap_impl(mac_pcap_impl&& other)                 = delete;
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
 
-  void open(const char* filename_) override;
+  void open(const std::string& filename_) override;
   void close() override;
   bool is_write_enabled() override;
   void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override;
@@ -61,5 +61,6 @@ private:
   std::vector<uint8_t> tmp_mem;
   task_worker          worker;
   pcap_file_base       writter;
+  std::atomic<bool>    is_open{false};
 };
 } // namespace srsran

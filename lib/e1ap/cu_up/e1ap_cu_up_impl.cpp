@@ -84,50 +84,86 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
   }
 }
 
+void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
+    const e1ap_bearer_context_inactivity_notification& msg)
+{
+  if (!ue_ctxt_list.contains(msg.ue_index)) {
+    logger.error("ue={} UE doesn't exist", msg.ue_index);
+    return;
+  }
+
+  // Get UE context
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[msg.ue_index];
+
+  e1ap_message e1ap_msg;
+  e1ap_msg.pdu.set_init_msg();
+  e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+  auto& inactivity_notification = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id.value.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id.value.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+
+  if (ue_ctxt.activity_notification_level == activity_notification_level_t::ue) {
+    inactivity_notification->activity_info.value.set_ue_activity();
+    inactivity_notification->activity_info.value.ue_activity() = asn1::e1ap::ue_activity_opts::options::not_active;
+  } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::pdu_session) {
+    logger.warning("ue={} pdu session level activity notifications not supported", msg.ue_index);
+  } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::drb) {
+    logger.warning("ue={} drb level activity notifications not supported", msg.ue_index);
+  } else {
+    logger.error("ue={} unsupported activity notification level", msg.ue_index);
+  }
+
+  // Send inactivity notification.
+  pdu_notifier.on_new_message(e1ap_msg);
+  logger.debug("ue={} bearer context inactivity notification sent", msg.ue_index);
+}
+
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
-  cu_up_exec.execute([this, msg]() {
-    logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
+  if (not cu_up_exec.execute([this, msg]() {
+        logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
 
-    // Log message.
-    expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
-    expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
-    if (transaction_id.has_value()) {
-      logger.debug("SDU \"{}.{}\" transaction id={}",
-                   msg.pdu.type().to_string(),
-                   get_message_type_str(msg.pdu),
-                   transaction_id.value());
-    } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
-      logger.debug("SDU \"{}.{}\" GNB-CU-UP-UE-E1AP-ID={}",
-                   msg.pdu.type().to_string(),
-                   get_message_type_str(msg.pdu),
-                   gnb_cu_up_ue_e1ap_id.value());
-    } else {
-      logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-    }
+        // Log message.
+        expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
+        expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
+        if (transaction_id.has_value()) {
+          logger.debug("SDU \"{}.{}\" transaction id={}",
+                       msg.pdu.type().to_string(),
+                       get_message_type_str(msg.pdu),
+                       transaction_id.value());
+        } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
+          logger.debug("SDU \"{}.{}\" GNB-CU-UP-UE-E1AP-ID={}",
+                       msg.pdu.type().to_string(),
+                       get_message_type_str(msg.pdu),
+                       gnb_cu_up_ue_e1ap_id.value());
+        } else {
+          logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+        }
 
-    if (logger.debug.enabled()) {
-      asn1::json_writer js;
-      msg.pdu.to_json(js);
-      logger.debug("Rx E1AP SDU: {}", js.to_string());
-    }
+        if (logger.debug.enabled()) {
+          asn1::json_writer js;
+          msg.pdu.to_json(js);
+          logger.debug("Rx E1AP SDU: {}", js.to_string());
+        }
 
-    switch (msg.pdu.type().value) {
-      case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+        switch (msg.pdu.type().value) {
+          case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.warning("Discarding E1AP PDU. Cause: CU-UP task queue is full");
+  }
 }
 
 void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
@@ -172,12 +208,8 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
       msg->gnb_cu_cp_ue_e1ap_id;
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value.set_protocol();
 
-  // We only support NG-RAN Bearer
-  if (msg->sys_bearer_context_setup_request.value.type() !=
-      asn1::e1ap::sys_bearer_context_setup_request_c::types::ng_ran_bearer_context_setup_request) {
-    logger.error("Not handling E-UTRAN Bearers");
-
-    // send response
+  // Do basic syntax/semantic checks on the validity of the received message.
+  if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
     logger.debug("Sending BearerContextSetupFailure message");
     pdu_notifier.on_new_message(e1ap_msg);
     return;
@@ -218,7 +250,8 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Create UE context and store it
   ue_ctxt_list.add_ue(bearer_context_setup_response_msg.ue_index,
                       cu_up_ue_e1ap_id,
-                      int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value));
+                      int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value),
+                      asn1_to_activity_notification_level(msg->activity_notif_level.value));
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_up_ue_e1ap_id];
 
   logger.debug("ue={} Added UE context (gnb_cu_up_ue_e1ap_id={}, gnb_cu_cp_e1ap_ue_id={}).",

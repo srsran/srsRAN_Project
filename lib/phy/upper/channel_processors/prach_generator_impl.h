@@ -46,11 +46,20 @@ private:
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);
 
-  /// \brief Generates the sequence \f$y_{u,v}\f$.
+  /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-4.
+  static unsigned get_sequence_number_short(unsigned root_sequence_index);
+
+  /// \brief Generates the sequence \f$y_{u,v}\f$ for long preambles.
   /// \param[in] u   Sequence number.
   /// \param[in] C_v Sequence shift.
   /// \return A read-only view of the generated sequence.
   span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
+
+  /// \brief Generates the sequence \f$y_{u,v}\f$ for short preambles.
+  /// \param[in] u   Sequence number.
+  /// \param[in] C_v Sequence shift.
+  /// \return A read-only view of the generated sequence.
+  span<const cf_t> generate_y_u_v_short(unsigned u, unsigned C_v);
 
 public:
   /// \brief Constructor - Acquires ownership of the internal components.

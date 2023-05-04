@@ -178,7 +178,7 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
-  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsran::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
 
@@ -188,8 +188,8 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
 
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
-  e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                                 = 8;
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                                 = uint_to_five_qi(8);
   qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
@@ -354,4 +354,42 @@ e1ap_message srsran::srs_cu_cp::generate_bearer_context_release_complete(gnb_cu_
   rel_complete_msg->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
 
   return bearer_ctxt_rel_complete_msg;
+}
+
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_inactivity_notification_with_ue_level(
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+    gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_message inactivity_notification = {};
+
+  inactivity_notification.pdu.set_init_msg();
+  inactivity_notification.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& bearer_context_inactivity_notification =
+      inactivity_notification.pdu.init_msg().value.bearer_context_inactivity_notif();
+  bearer_context_inactivity_notification->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_inactivity_notification->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  bearer_context_inactivity_notification->activity_info.value.set_ue_activity();
+  bearer_context_inactivity_notification->activity_info.value.ue_activity() =
+      asn1::e1ap::ue_activity_opts::options::not_active;
+
+  return inactivity_notification;
+}
+
+e1ap_message
+srsran::srs_cu_cp::generate_invalid_bearer_context_inactivity_notification(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                           gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_message inactivity_notification = {};
+
+  inactivity_notification.pdu.set_init_msg();
+  inactivity_notification.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
+
+  auto& bearer_context_inactivity_notification =
+      inactivity_notification.pdu.init_msg().value.bearer_context_inactivity_notif();
+  bearer_context_inactivity_notification->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+  bearer_context_inactivity_notification->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
+
+  return inactivity_notification;
 }

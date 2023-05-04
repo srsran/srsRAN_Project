@@ -82,8 +82,8 @@ TEST_P(test_pucch_guard_sched, test_first_slot)
   // Check if PUCCH guardbands have been allocated for all the slots in the grid.
   for (unsigned sl = 0; sl < res_grid_size; ++sl) {
     for (const auto& guard_b : t_bench.cell_cfg.pucch_guardbands) {
-      if (t_bench.cell_cfg.is_ul_enabled(t_bench.res_grid[sl].slot)) {
-        grant_info grant{ul_bwp_scs, guard_b.symbols, prb_to_crb(bwp_cfg, guard_b.prbs)};
+      if (t_bench.cell_cfg.is_fully_ul_enabled(t_bench.res_grid[sl].slot)) {
+        const grant_info grant{ul_bwp_scs, guard_b.symbols, prb_to_crb(bwp_cfg, guard_b.prbs)};
         ASSERT_TRUE(test_res_grid_has_re_set(t_bench.res_grid, grant, sl));
       }
     }
@@ -99,8 +99,8 @@ TEST_P(test_pucch_guard_sched, test_slots_after_initialization)
     // Check if, after initialization, PUCCH guardbands have been allocated for the last slot of the grid.
     if (sl > 0) {
       for (const auto& guard_b : t_bench.cell_cfg.pucch_guardbands) {
-        if (t_bench.cell_cfg.is_ul_enabled(t_bench.res_grid[res_grid_size - 1].slot)) {
-          grant_info grant{ul_bwp_scs, guard_b.symbols, prb_to_crb(bwp_cfg, guard_b.prbs)};
+        if (t_bench.cell_cfg.is_fully_ul_enabled(t_bench.res_grid[res_grid_size - 1].slot)) {
+          const grant_info grant{ul_bwp_scs, guard_b.symbols, prb_to_crb(bwp_cfg, guard_b.prbs)};
           ASSERT_TRUE(test_res_grid_has_re_set(t_bench.res_grid, grant, res_grid_size - 1));
         }
       }

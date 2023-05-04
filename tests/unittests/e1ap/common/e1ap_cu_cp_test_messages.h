@@ -111,5 +111,19 @@ e1ap_bearer_context_release_command generate_bearer_context_release_command(ue_i
 e1ap_message generate_bearer_context_release_complete(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                       gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
+/// \brief Generate a dummy Bearer Context Inactivity Notification with UE activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \return The Bearer Context Inactivity Notification.
+e1ap_message generate_bearer_context_inactivity_notification_with_ue_level(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                           gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+
+/// \brief Generate an invalid dummy Bearer Context Inactivity Notification with UE activity level.
+/// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
+/// \param[in] cu_up_ue_e1ap_id The CU-UP UE E1AP ID.
+/// \return The invalid Bearer Context Inactivity Notification.
+e1ap_message generate_invalid_bearer_context_inactivity_notification(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+
 } // namespace srs_cu_cp
 } // namespace srsran

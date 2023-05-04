@@ -33,9 +33,8 @@
 /// A frequency is considered valid within a range if the range clips the frequency value within 1 Hz error.
 static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range, double freq)
 {
-  uint64_t clipped_freq = static_cast<uint64_t>(std::round(range.clip(freq)));
-  uint64_t uint_freq    = static_cast<uint64_t>(freq);
-  return (clipped_freq == uint_freq);
+  double clipped_freq = range.clip(freq);
+  return std::abs(clipped_freq - freq) < 1.0;
 }
 
 /// \brief Determines whether a gain is valid within a range.
@@ -275,9 +274,7 @@ public:
       uhd::meta_range_t range = usrp->get_rx_rates();
 
       if (!radio_uhd_device_validate_freq_range(range, rate)) {
-        on_error("Rx Rate {:.2f} MHz is invalid. The nearest valid value is {:.2f}.",
-                 to_MHz(rate),
-                 to_MHz(range.clip(rate)));
+        on_error("Rx Rate {} MHz is invalid. The nearest valid value is {}.", to_MHz(rate), to_MHz(range.clip(rate)));
         return;
       }
 
@@ -292,9 +289,7 @@ public:
       uhd::meta_range_t range = usrp->get_tx_rates();
 
       if (!radio_uhd_device_validate_freq_range(range, rate)) {
-        on_error("Tx Rate {:.2f} MHz is invalid. The nearest valid value is {:.2f}.",
-                 to_MHz(rate),
-                 to_MHz(range.clip(rate)));
+        on_error("Tx Rate {} MHz is invalid. The nearest valid value is {}.", to_MHz(rate), to_MHz(range.clip(rate)));
         return;
       }
 

@@ -251,7 +251,7 @@ static void pdsch_conversion_test()
                         builder.set_maintenance_v3_tx_power_info_parameters(dmrs_profile_sss, data_profile_sss);
 
                         pdsch_processor::pdu_t proc_pdu;
-                        convert_pdsch_fapi_to_phy(proc_pdu, pdu, sfn, slot);
+                        convert_pdsch_fapi_to_phy(proc_pdu, pdu, sfn, slot, {});
 
                         // Test basic parameters.
                         TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());

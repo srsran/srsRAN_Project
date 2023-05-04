@@ -262,6 +262,90 @@ void test_rlc_am_18bit_malformed()
   TESTASSERT(header.sn == 0);
 }
 
+// Malformed RLC AM PDU 12bit with short header (lower SN is missing)
+void test_rlc_am_12bit_short_header_missing_lower_sn()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 12 bit (lower SN is missing)");
+  std::array<uint8_t, 1> tv  = {0b10110000};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size12bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 12bit with short header (upper SO is missing)
+void test_rlc_am_12bit_short_header_missing_upper_so()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 12 bit (upper SO is missing)");
+  std::array<uint8_t, 2> tv  = {0b10110000, 0x11};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size12bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 12bit with short header (lower SO is missing)
+void test_rlc_am_12bit_short_header_missing_lower_so()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 12 bit (lower SO is missing)");
+  std::array<uint8_t, 3> tv  = {0b10110000, 0x11, 0x22};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size12bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 18bit with short header (center SN is missing)
+void test_rlc_am_18bit_short_header_missing_center_sn()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 18 bit (center SN is missing)");
+  std::array<uint8_t, 1> tv  = {0b10110000};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size18bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 18bit with short header (lower SN is missing)
+void test_rlc_am_18bit_short_header_missing_lower_sn()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 18 bit (lower SN is missing)");
+  std::array<uint8_t, 2> tv  = {0b10110000, 0x11};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size18bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 18bit with short header (upper SO is missing)
+void test_rlc_am_18bit_short_header_missing_upper_so()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 18 bit (upper SO is missing)");
+  std::array<uint8_t, 3> tv  = {0b10110000, 0x11, 0x22};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size18bits, &header) == false);
+}
+
+// Malformed RLC AM PDU 18bit with short header (lower SO is missing)
+void test_rlc_am_18bit_short_header_missing_lower_so()
+{
+  test_delimit_logger    delimiter("Short AM PDU with 18 bit (lower SO is missing)");
+  std::array<uint8_t, 4> tv  = {0b10110000, 0x11, 0x22, 0x33};
+  byte_buffer            pdu = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_am_pdu_header header = {};
+  TESTASSERT(rlc_am_read_data_pdu_header(pdu, rlc_am_sn_size::size18bits, &header) == false);
+}
+
 ///////////////////////////////////////////
 // Control PDU tests (12 bit SN)
 ///////////////////////////////////////////
@@ -3104,6 +3188,14 @@ int main()
   srsran::test_rlc_am_18bit_middle_segment();
   srsran::test_rlc_am_18bit_last_segment();
   srsran::test_rlc_am_18bit_malformed();
+
+  srsran::test_rlc_am_12bit_short_header_missing_lower_sn();
+  srsran::test_rlc_am_12bit_short_header_missing_upper_so();
+  srsran::test_rlc_am_12bit_short_header_missing_lower_so();
+  srsran::test_rlc_am_18bit_short_header_missing_center_sn();
+  srsran::test_rlc_am_18bit_short_header_missing_lower_sn();
+  srsran::test_rlc_am_18bit_short_header_missing_upper_so();
+  srsran::test_rlc_am_18bit_short_header_missing_lower_so();
 
   logger.info("Testing Control PDU packing/unpacking (12 bit)");
   srslog::flush();

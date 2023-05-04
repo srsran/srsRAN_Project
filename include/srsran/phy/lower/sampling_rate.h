@@ -151,6 +151,12 @@ public:
     return from_Hz(value_MHz * 1e6);
   }
 
+  /// Overload equal to operator.
+  constexpr bool operator==(sampling_rate other) const { return value == other.value; }
+
+  /// Overload different than operator.
+  constexpr bool operator!=(sampling_rate other) const { return value != other.value; }
+
 private:
   /// Private constructor.
   constexpr explicit sampling_rate(value_type value_) : value(value_)

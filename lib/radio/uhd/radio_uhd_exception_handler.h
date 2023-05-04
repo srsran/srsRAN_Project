@@ -23,7 +23,6 @@
 #pragma once
 
 #include "fmt/format.h"
-#include <boost/exception/diagnostic_information.hpp>
 #include <string>
 
 #pragma GCC diagnostic push

@@ -66,3 +66,8 @@ add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp)
 target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ran_resource_manager_test)
+
+add_executable(pucch_resource_generator_test pucch_resource_generator_test.cpp)
+target_include_directories(pucch_resource_generator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(pucch_resource_generator_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(pucch_resource_generator_test)

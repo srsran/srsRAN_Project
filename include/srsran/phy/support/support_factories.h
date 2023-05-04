@@ -49,13 +49,22 @@ std::unique_ptr<resource_grid_pool> create_resource_grid_pool(unsigned          
 
 /// \brief Creates a long PRACH sequence buffer.
 ///
-/// Long buffers contain 839-element PRACH sequences for up to 4 OFDM symbols.
-std::unique_ptr<prach_buffer> create_prach_buffer_long();
+/// Long buffers contain 839-element PRACH sequences for up to 4 OFDM symbols and a given maximum number of
+/// frequency-domain occasions.
+///
+/// \param[in] max_nof_fd_occasions Maximum number of frequency-domain occasions.
+/// \return A long preamble sequence buffer.
+std::unique_ptr<prach_buffer> create_prach_buffer_long(unsigned max_nof_fd_occasions);
 
 /// \brief Creates a short PRACH sequence buffer.
 ///
-/// Short buffers contain 139-element PRACH sequences for up to 12 OFDM symbols.
-std::unique_ptr<prach_buffer> create_prach_buffer_short();
+/// Short buffers contain 139-element PRACH sequences for up to \ref prach_constants::SHORT_SEQUENCE_MAX_NOF_SYMBOLS
+/// symbols per occasion.
+///
+/// \param[in] max_nof_td_occasions Maximum number of time-domain occasions.
+/// \param[in] max_nof_fd_occasions Maximum number of frequency-domain occasions.
+/// \return A short preamble sequence buffer containing PRACH sequence buffers for the number of selected occasions.
+std::unique_ptr<prach_buffer> create_prach_buffer_short(unsigned max_nof_td_occasions, unsigned max_nof_fd_occasions);
 
 /// \brief Returns a pool for the given PRACH buffers.
 std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements);

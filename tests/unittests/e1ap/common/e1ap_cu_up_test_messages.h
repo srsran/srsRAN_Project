@@ -36,6 +36,9 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
 /// \brief Generate an invalid dummy bearer context setup request.
 e1ap_message generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id);
 
+/// \brief Generate a dummy bearer context setup request, with an invalid inactivity timer.
+e1ap_message generate_invalid_bearer_context_setup_request_inactivity_timer(unsigned int cu_cp_ue_e1ap_id);
+
 /// \brief Generate a dummy bearer context modification request.
 e1ap_message generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id, unsigned int cu_up_ue_e1ap_id);
 

@@ -24,7 +24,7 @@
 
 #include "e1ap_cu_cp.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
@@ -34,6 +34,7 @@ namespace srs_cu_cp {
 std::unique_ptr<e1ap_interface> create_e1ap(timer_factory                  timers_,
                                             e1ap_message_notifier&         e1ap_pdu_notifier_,
                                             e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                                            e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                             task_executor&                 ctrl_exec_);
 
 } // namespace srs_cu_cp

@@ -43,10 +43,11 @@ protected:
     rrc_logger.set_hex_dump_max_size(32);
 
     drb_manager_cfg cfg;
-    cfg.five_qi_config[9]          = {};
-    cfg.five_qi_config[9].pdcp     = pdcp_config_t{};
-    cfg.five_qi_config[9].pdcp.drb = drb_t{};
-    manager                        = std::make_unique<drb_manager_impl>(cfg);
+    cfg.five_qi_config[uint_to_five_qi(9)] = {};
+    pdcp_config p_cfg;
+    p_cfg.rb_type                               = pdcp_rb_type::drb;
+    cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
+    manager                                     = std::make_unique<drb_manager_impl>(cfg);
   }
 
   void TearDown() override
@@ -94,5 +95,5 @@ TEST_F(drb_manager_test, when_drb_is_added_pdcp_config_is_valid)
 
   // Verify DRB config
   const auto pdcp_cfg = manager->get_pdcp_config(drbs_to_add.at(0));
-  ASSERT_TRUE(pdcp_cfg.drb.has_value());
+  ASSERT_TRUE(pdcp_cfg.rb_type == pdcp_rb_type::drb);
 }
