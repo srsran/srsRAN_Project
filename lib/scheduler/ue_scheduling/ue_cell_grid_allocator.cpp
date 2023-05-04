@@ -464,7 +464,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   for (unsigned cell_idx = 0; cell_idx < u.nof_cells(); cell_idx++) {
     const ue_cell& ue_cell_info = u.get_cell(static_cast<ue_cell_index_t>(cell_idx));
     srsran_assert(has_cell(ue_cell_info.cell_index), "Invalid UE candidate cell_index={}", ue_cell_info.cell_index);
-    total_harq_ack_in_uci += get_uci_alloc(ue_cell_info.cell_index).get_ue_uci_harq_counter(pusch_alloc, u.crnti);
+    total_harq_ack_in_uci +=
+        get_uci_alloc(ue_cell_info.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
   }
   if (total_harq_ack_in_uci != 0) {
     dai = ((total_harq_ack_in_uci - 1) % 4);
