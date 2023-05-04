@@ -78,6 +78,9 @@ void rrc_ue_impl::on_new_as_security_context()
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)
 {
+  context.sec_context.k                   = sec_ctx.k;
+  context.sec_context.supported_int_algos = {true, true, true};
+  context.sec_context.supported_int_algos = {true, true, true};
   //  Launch RRC security mode procedure
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }

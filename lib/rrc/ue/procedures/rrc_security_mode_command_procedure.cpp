@@ -42,8 +42,8 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
     logger.debug("ue={} \"{}\" selected security algorithms integrity=NIA{} ciphering=NEA{}",
                  context.ue_index,
                  name(),
-                 sec_cfg.integ_algo,
-                 sec_cfg.cipher_algo);
+                 context.sec_context.sel_algos.integ_algo,
+                 context.sec_context.sel_algos.cipher_algo);
 
     generate_as_keys();
 
@@ -89,8 +89,8 @@ bool rrc_security_mode_command_procedure::select_security_algo()
   logger.debug("ue={} \"{}\" selected security algorithms NIA=NIA{} NEA=NEA{} ",
                context.ue_index,
                name(),
-               sec_cfg.integ_algo,
-               sec_cfg.cipher_algo);
+               context.sec_context.sel_algos.integ_algo,
+               context.sec_context.sel_algos.cipher_algo);
   return true;
 }
 
@@ -105,6 +105,7 @@ void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_security_mode_cmd();
   security_mode_cmd_s& rrc_smc = dl_dcch_msg.msg.c1().security_mode_cmd();
-  fill_asn1_rrc_smc_msg(rrc_smc, sec_cfg.integ_algo, sec_cfg.cipher_algo, transaction.id());
+  fill_asn1_rrc_smc_msg(
+      rrc_smc, context.sec_context.sel_algos.integ_algo, context.sec_context.sel_algos.cipher_algo, transaction.id());
   rrc_ue.on_new_dl_dcch(dl_dcch_msg);
 }

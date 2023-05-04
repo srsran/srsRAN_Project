@@ -231,10 +231,6 @@ sec_128_as_key truncate_key(const sec_as_key& key_in);
 /// on a given security context.
 sec_128_as_config truncate_config(const sec_as_config& cfg_in);
 
-/******************************************************************************
- * Algorithm selection
- *****************************************************************************/
-
 } // namespace security
 } // namespace srsran
 
