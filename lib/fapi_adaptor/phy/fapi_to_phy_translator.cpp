@@ -432,16 +432,16 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     return;
   }
 
-  // Skip if there is no PDSCH PDU in the repository. This may be caused by a PDU not supported in the
-  // DL_TTI.request.
-  if (pdsch_pdu_repository.empty()) {
-    return;
-  }
-
   if (msg.pdus.size() != pdsch_pdu_repository.size()) {
     logger.warning("Invalid TX_Data.request. Message contains ({}) payload PDUs but expected ({})",
                    msg.pdus.size(),
                    pdsch_pdu_repository.size());
+    return;
+  }
+
+  // Skip if there is no PDSCH PDU in the repository. This may be caused by a PDU not supported in the
+  // DL_TTI.request.
+  if (pdsch_pdu_repository.empty()) {
     return;
   }
 

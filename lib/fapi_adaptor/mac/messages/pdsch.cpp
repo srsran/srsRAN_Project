@@ -346,3 +346,58 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   std::iota(csi_rm_indexes.begin(), csi_rm_indexes.end(), 0U);
   builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
+
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
+                                                     const dl_paging_allocation& mac_pdu,
+                                                     unsigned                    nof_csi_pdus)
+{
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+  srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
+
+  // Fill all the parameters contained in the MAC PDSCH information struct.
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+
+  // Codeword information.
+  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+
+  // BWP parameters.
+  const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
+  builder.set_bwp_parameters(crbs.length(),
+                             crbs.start(),
+                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
+                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+
+  fill_power_parameters(builder);
+
+  // Get the VRB-to-PRB mapping from the DCI.
+  bool is_interleaved = mac_pdu.pdsch_cfg.is_interleaved;
+  // Frequency allocation.
+  // Note: As defined in TS38.214 Section 5.1.2.3, DCI format 1_0 uses bundle size of 2.
+  fill_frequency_allocation(builder,
+                            mac_pdu.pdsch_cfg.prbs,
+                            is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
+                                           : fapi::vrb_to_prb_mapping_type::non_interleaved);
+
+  fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
+                                                           mac_pdu.pdsch_cfg.ss_set_type,
+                                                           is_interleaved,
+                                                           mac_pdu.pdsch_cfg.dci_fmt == dci_dl_format::f1_0,
+                                                           is_coreset0_configured_for_cell);
+
+  fill_coreset(
+      builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
+
+  // As the CSI uses the whole bandwidth, all the CSI-RS PDUs will collide with the PDSCH.
+  static_vector<uint16_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rm_indexes(nof_csi_pdus);
+  std::iota(csi_rm_indexes.begin(), csi_rm_indexes.end(), 0U);
+  builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
+}
+
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&         fapi_pdu,
+                                                     const dl_paging_allocation& mac_pdu,
+                                                     unsigned                    nof_csi_pdus)
+{
+  fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
+
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
+}
