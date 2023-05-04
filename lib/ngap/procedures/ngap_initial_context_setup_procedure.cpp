@@ -48,6 +48,19 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   if (not success) {
     ngap_initial_context_failure_message fail_msg = {};
     fail_msg.cause.set_protocol();
+
+    // Add failed PDU Sessions
+    if (request->pdu_session_res_setup_list_cxt_req_present) {
+      for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req.value) {
+        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        failed_item.pdu_session_id = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
+        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+
+        fail_msg.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(pdu_session_item.pdu_session_id),
+                                                               failed_item);
+      }
+    }
+
     send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
     // Release UE

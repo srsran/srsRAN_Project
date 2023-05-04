@@ -105,8 +105,16 @@ ngap_message generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, 
 /// \brief Generate a valid dummy Initial Context Setup Request Message.
 ngap_message generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
+/// \brief Generate a valid dummy Initial Context Setup Request Message with a PDUSessionResourceSetupListCxtReq.
+ngap_message generate_valid_initial_context_setup_request_message_with_pdu_session(amf_ue_id_t amf_ue_id,
+                                                                                   ran_ue_id_t ran_ue_id);
+
 /// \brief Generate an invalid dummy Initial Context Setup Request Message.
 ngap_message generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
+/// \brief Generate an ivalid dummy Initial Context Setup Request Message with a PDUSessionResourceSetupListCxtReq.
+ngap_message generate_invalid_initial_context_setup_request_message_with_pdu_session(amf_ue_id_t amf_ue_id,
+                                                                                     ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy PDU Session Resource Setup Request base.
 ngap_message generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
