@@ -154,8 +154,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngap_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
   ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
-                                &rrc_ue->get_rrc_ue_init_security_context_handler(),
-                                &rrc_ue->get_rrc_ue_control_message_handler());
+                                &rrc_ue->get_rrc_ue_init_security_context_handler());
 }
 
 void cu_cp::handle_new_cu_up_connection()

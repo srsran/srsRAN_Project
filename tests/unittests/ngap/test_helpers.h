@@ -292,8 +292,6 @@ public:
     });
   }
 
-  void on_new_guami(const guami_t& msg) override { logger.info("Received a new GUAMI"); }
-
   byte_buffer last_nas_pdu;
 
 private:

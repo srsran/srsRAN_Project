@@ -108,8 +108,9 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
     res.msg     = transaction_sink.response();
     res.success = true;
 
-    // TODO: Support multiple guamis
-    context.current_guami = asn1_guami_to_guami(res.msg->served_guami_list.value.begin()->guami);
+    for (const auto& guami_item : res.msg->served_guami_list.value) {
+      context.served_guami_list.push_back(asn1_guami_to_guami(guami_item.guami));
+    }
 
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();

@@ -251,9 +251,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
 
   // start routine
-  task_sched.schedule_async_task(
-      ue_index,
-      launch_async<ngap_initial_context_setup_procedure>(ue_index, request, ue_manager, ngap_notifier, logger));
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_initial_context_setup_procedure>(
+                                     context, ue_index, request, ue_manager, ngap_notifier, logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)

@@ -48,7 +48,6 @@ public:
   const rrc_ue_cfg_t&                    cfg;
   rrc_state                              state = rrc_state::idle;
   std::unique_ptr<drb_manager>           drb_mng;
-  guami_t                                current_guami; // current GUAMI
   optional<uint32_t>                     five_g_tmsi;
   uint64_t                               setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts connection_cause;

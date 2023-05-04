@@ -173,10 +173,6 @@ public:
   /// \brief Notify about the reception of new security capabilities and key.
   virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
                                                    const asn1::fixed_bitstring<256, false, true>& key) = 0;
-
-  /// \brief Notify the RRC UE about an update of the GUAMI.
-  /// \param[in] msg The new GUAMI.
-  virtual void on_new_guami(const guami_t& msg) = 0;
 };
 
 /// Interface to notify the DU Processor about control messages.

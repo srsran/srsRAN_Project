@@ -233,10 +233,6 @@ class rrc_ue_control_message_handler
 public:
   virtual ~rrc_ue_control_message_handler() = default;
 
-  /// \brief Handle an update of the GUAMI.
-  /// \param[in] msg The new GUAMI.
-  virtual void handle_new_guami(const guami_t& msg) = 0;
-
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.

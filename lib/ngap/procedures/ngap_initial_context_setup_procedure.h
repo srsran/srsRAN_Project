@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
+#include "../ngap_context.h"
 #include "srsran/cu_cp/ue_manager.h" // for ngap_ue
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
@@ -21,7 +22,8 @@ namespace srs_cu_cp {
 class ngap_initial_context_setup_procedure
 {
 public:
-  ngap_initial_context_setup_procedure(const ue_index_t                                ue_index_,
+  ngap_initial_context_setup_procedure(ngap_context_t&                                 context_,
+                                       const ue_index_t                                ue_index_,
                                        const asn1::ngap::init_context_setup_request_s& request_,
                                        ngap_ue_manager&                                ue_manager_,
                                        ngap_message_notifier&                          amf_notif_,
@@ -38,6 +40,7 @@ private:
                                           const amf_ue_id_t&                          amf_ue_id,
                                           const ran_ue_id_t&                          ran_ue_id);
 
+  ngap_context_t&                                context;
   const ue_index_t                               ue_index;
   const asn1::ngap::init_context_setup_request_s request;
   cu_cp_pdu_session_resource_setup_request       pdu_session_setup_request;

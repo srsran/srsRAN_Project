@@ -17,12 +17,18 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
+    ngap_context_t&                                 context_,
     const ue_index_t                                ue_index_,
     const asn1::ngap::init_context_setup_request_s& request_,
     ngap_ue_manager&                                ue_manager_,
     ngap_message_notifier&                          amf_notif_,
     srslog::basic_logger&                           logger_) :
-  ue_index(ue_index_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
+  context(context_),
+  ue_index(ue_index_),
+  request(request_),
+  ue_manager(ue_manager_),
+  amf_notifier(amf_notif_),
+  logger(logger_)
 {
   ue = ue_manager.find_ngap_ue(ue_index);
   srsran_assert(ue != nullptr, "ue={} Couldn't find UE", ue_index);
@@ -59,7 +65,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   }
 
   // Handle GUAMI
-  ue->get_rrc_ue_control_notifier().on_new_guami(asn1_guami_to_guami(request->guami.value));
+  context.current_guami = asn1_guami_to_guami(request->guami.value);
 
   // Handle optional IEs
 
