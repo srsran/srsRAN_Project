@@ -25,6 +25,7 @@ variables:
   OS:
     description: Operating system
     options:
+      - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
       - "archlinux-latest"
@@ -138,7 +139,7 @@ pull_src_cache:
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.7.8"
+    DOCKER_BUILDER_VERSION: "1.7.9"
     SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
@@ -582,26 +583,40 @@ export on amd64:
     ENABLE_EXPORT: "True"
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
 # Build + unit tests combinations
 
-ubuntu-22.04 amd64 avx2:
+ubuntu-23.04 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 10 minutes
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+ubuntu-22.04 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 20 minutes
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -615,7 +630,7 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 20 minutes
+      start_in: 30 minutes
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -629,7 +644,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 40 minutes
   parallel:
     matrix:
       - OS: rhel-8
@@ -698,17 +713,17 @@ archlinux amd64 avx512:
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
         COMPILER: gcc
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: ubuntu-22.04
+      - OS: [ubuntu-23.04, ubuntu-22.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
@@ -726,12 +741,12 @@ sanitizers amd64 avx512:
     AUTO_DETECT_ISA: "True"
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
         COMPILER: gcc
         ENABLE_ASAN: "True"
@@ -763,6 +778,9 @@ build uhd alt:
     AUTO_DETECT_ISA: "False"
   parallel:
     matrix:
+      - OS: ubuntu-23.04
+        COMPILER: [gcc, clang]
+        UHD_VERSION: "4.3.0.0"
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         UHD_VERSION: "4.2.0.0"
@@ -772,10 +790,65 @@ build uhd alt:
 
 # Build + unit tests combinations
 
+ubuntu-23.04 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.04 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-23.04 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.04 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 15 minutes
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "True"
+
 ubuntu-22.04 amd64 no isa:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -787,6 +860,8 @@ ubuntu-22.04 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -799,6 +874,8 @@ ubuntu-22.04 arm no isa:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -811,7 +888,7 @@ ubuntu-22.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -824,7 +901,7 @@ ubuntu-20.04 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 45 minutes
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -837,7 +914,7 @@ ubuntu-20.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 45 minutes
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -851,7 +928,7 @@ ubuntu-20.04 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 45 minutes
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -864,7 +941,7 @@ ubuntu-20.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 45 minutes
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -877,7 +954,7 @@ rhel-8 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   parallel:
     matrix:
       - OS: rhel-8
@@ -890,7 +967,7 @@ rhel-8 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   parallel:
     matrix:
       - OS: rhel-8
@@ -904,7 +981,7 @@ rhel-8 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   parallel:
     matrix:
       - OS: rhel-8
@@ -917,7 +994,7 @@ rhel-8 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   parallel:
     matrix:
       - OS: rhel-8
