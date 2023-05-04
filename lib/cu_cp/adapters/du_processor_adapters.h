@@ -205,7 +205,7 @@ public:
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
-  virtual void on_rrc_ue_release() override
+  virtual cu_cp_user_location_info_nr on_rrc_ue_release() override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_ue_release();

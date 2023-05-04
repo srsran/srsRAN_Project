@@ -248,7 +248,8 @@ public:
   handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Handle an RRC UE Release.
-  virtual void handle_rrc_ue_release() = 0;
+  /// \returns The location info of the UE.
+  virtual cu_cp_user_location_info_nr handle_rrc_ue_release() = 0;
 };
 
 struct rrc_init_security_context {

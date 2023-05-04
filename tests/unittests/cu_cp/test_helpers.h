@@ -293,7 +293,13 @@ public:
     });
   }
 
-  void on_rrc_ue_release() override { logger.info("Received a new RRC UE Release request"); }
+  cu_cp_user_location_info_nr on_rrc_ue_release() override
+  {
+    logger.info("Received a new RRC UE Release request");
+    cu_cp_user_location_info_nr user_location_info;
+    // TODO: Add values
+    return user_location_info;
+  }
 
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");

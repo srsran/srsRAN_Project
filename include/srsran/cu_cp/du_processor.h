@@ -193,7 +193,8 @@ public:
   virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Notify the RRC UE to Release an UE.
-  virtual void on_rrc_ue_release() = 0;
+  /// \returns The location info of the UE.
+  virtual cu_cp_user_location_info_nr on_rrc_ue_release() = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor

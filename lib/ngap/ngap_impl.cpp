@@ -376,6 +376,12 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
     }
   }
 
+  if (release_complete.user_location_info.has_value()) {
+    ue_context_release_complete->user_location_info_present = true;
+    ue_context_release_complete->user_location_info.value.set_user_location_info_nr() =
+        cu_cp_user_location_info_to_asn1(release_complete.user_location_info.value());
+  }
+
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
