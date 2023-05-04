@@ -545,11 +545,13 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
 inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu_cp_paging_message& paging)
 {
   // Add ue id idx value
+  uint64_t five_g_s_tmsi = five_g_s_tmsi_struct_to_number(paging.ue_paging_id);
+
   // UE Identity Index value is defined as: UE_ID 5G-S-TMSI mod 1024  (see TS 38.304 section 7.1)
-  asn1_paging->ue_id_idx_value.value.set_idx_len10().from_number(paging.ue_paging_id.five_g_tmsi % 1024);
+  asn1_paging->ue_id_idx_value.value.set_idx_len10().from_number(five_g_s_tmsi % 1024);
 
   // Add paging id
-  asn1_paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(paging.ue_paging_id.five_g_tmsi);
+  asn1_paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(five_g_s_tmsi);
 
   // Add paging drx
   if (paging.paging_drx.has_value()) {

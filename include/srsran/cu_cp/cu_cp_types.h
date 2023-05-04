@@ -594,7 +594,7 @@ struct cu_cp_ue_context_release_complete {
 struct cu_cp_five_g_s_tmsi {
   uint16_t amf_set_id;
   uint8_t  amf_pointer;
-  uint64_t five_g_tmsi;
+  uint32_t five_g_tmsi;
 };
 
 struct cu_cp_tai_list_for_paging_item {

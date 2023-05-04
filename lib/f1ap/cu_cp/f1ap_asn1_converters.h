@@ -261,5 +261,13 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   return asn1_qos_info;
 }
 
+/// \brief Calculate the 5G-S-TMSI from the common type 5G-S-TMSI struct.
+inline uint64_t five_g_s_tmsi_struct_to_number(const cu_cp_five_g_s_tmsi& five_g_s_tmsi)
+{
+  // 5G-S-TMSI is a 48 bit string consisting of <aMFSetId (10 bit)><aMFPointer (6 bit)><5G-TMSI (32 bit)>
+  return ((uint64_t)five_g_s_tmsi.amf_set_id << 38) + ((uint64_t)five_g_s_tmsi.amf_pointer << 32) +
+         five_g_s_tmsi.five_g_tmsi;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran
