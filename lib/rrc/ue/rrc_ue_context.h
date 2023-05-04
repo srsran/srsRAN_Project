@@ -51,7 +51,7 @@ public:
   optional<uint32_t>                     five_g_tmsi;
   uint64_t                               setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
-  security::sec_as_config                sec_cfg;
+  security::security_context             sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s>    capabilities;
 };
 

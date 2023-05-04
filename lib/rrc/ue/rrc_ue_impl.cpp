@@ -65,18 +65,15 @@ void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
   send_dl_dcch(dl_dcch_msg);
 }
 
-void rrc_ue_impl::on_new_security_config(security::sec_as_config sec_cfg)
+void rrc_ue_impl::on_new_as_security_context()
 {
   srsran_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier != nullptr,
                       "Attempted to configure security, but there is no interface to PDCP TX");
   srsran_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier != nullptr,
                       "Attempted to configure security, but there is no interface to PDCP RX");
 
-  // store in rrc ue context
-  context.sec_cfg = sec_cfg;
-
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
+  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(context.sec_context.get_128_as_config());
+  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(context.sec_context.get_128_as_config());
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)

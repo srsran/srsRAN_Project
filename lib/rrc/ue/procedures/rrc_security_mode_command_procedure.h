@@ -48,8 +48,7 @@ private:
   /// \remark Send RRC Security Mode Command, see section 5.3.3 in TS 38.331
   void send_rrc_security_mode_command();
 
-  rrc_ue_context_t&          context;
-  security::security_context sec_ctx;
+  rrc_ue_context_t& context;
 
   rrc_ue_security_mode_command_proc_notifier& rrc_ue;    // handler to the parent RRC UE object
   rrc_ue_event_manager&                       event_mng; // event manager for the RRC UE entity

@@ -21,7 +21,7 @@ rrc_security_mode_command_procedure::rrc_security_mode_command_procedure(
     rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier_,
     rrc_ue_event_manager&                       event_mng_,
     srslog::basic_logger&                       logger_) :
-  context(context_), sec_ctx(sec_ctx_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
+  context(context_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
 {
 }
 
@@ -48,7 +48,7 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
     generate_as_keys();
 
     // activate SRB1 PDCP security
-    rrc_ue.on_new_security_config(sec_cfg);
+    rrc_ue.on_new_as_security_context();
 
     send_rrc_security_mode_command();
     // Await UE response
@@ -80,14 +80,9 @@ bool rrc_security_mode_command_procedure::select_security_algo()
                                                                   security::ciphering_algorithm::nea3};
   logger.debug("Integrity protection algorithms preference list: {}", inc_algo_pref_list);
   logger.debug("Ciphering algorithms preference list: {}", ciph_algo_pref_list);
-  logger.debug("Integrity protection algorithms supported list: {}", sec_ctx.supported_int_algos);
-  logger.debug("Ciphering algorithms preference list: {}", sec_ctx.supported_enc_algos);
-  if (not security::select_algorithms(sec_cfg,
-                                      inc_algo_pref_list,
-                                      ciph_algo_pref_list,
-                                      sec_ctx.supported_int_algos,
-                                      sec_ctx.supported_enc_algos,
-                                      logger)) {
+  logger.debug("Integrity protection algorithms supported list: {}", context.sec_context.supported_int_algos);
+  logger.debug("Ciphering algorithms preference list: {}", context.sec_context.supported_enc_algos);
+  if (not context.sec_context.select_algorithms(inc_algo_pref_list, ciph_algo_pref_list)) {
     logger.error("ue={} \"{}\" could not select security algorithm", context.ue_index, name());
     return false;
   }
@@ -102,16 +97,7 @@ bool rrc_security_mode_command_procedure::select_security_algo()
 void rrc_security_mode_command_procedure::generate_as_keys()
 {
   // Generate K_rrc_enc and K_rrc_int
-  security::generate_k_rrc(sec_cfg.k_rrc_enc, sec_cfg.k_rrc_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
-
-  // Generate K_up_enc and K_up_int
-  security::generate_k_up(sec_cfg.k_up_enc, sec_cfg.k_up_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
-
-  logger.debug("K_gNB {}", security::sec_as_key_to_string(sec_ctx.k));
-  logger.debug("RRC Integrity Key {}", security::sec_as_key_to_string(sec_cfg.k_rrc_int));
-  logger.debug("RRC Encryption Key {}", security::sec_as_key_to_string(sec_cfg.k_rrc_enc));
-  logger.debug("UP Encryption Key {}", security::sec_as_key_to_string(sec_cfg.k_up_enc));
-  logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(sec_cfg.k_up_int));
+  context.sec_context.generate_as_keys();
 }
 
 void rrc_security_mode_command_procedure::send_rrc_security_mode_command()

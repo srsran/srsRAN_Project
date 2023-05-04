@@ -51,7 +51,7 @@ public:
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
-  security::sec_as_config&              get_rrc_ue_secutity_config() override { return context.sec_cfg; }
+  security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,
@@ -88,7 +88,7 @@ private:
 
   // rrc_ue_security_mode_command_proc_notifier
   void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
-  void on_new_security_config(security::sec_as_config sec_cfg) override;
+  void on_new_as_security_context() override;
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;

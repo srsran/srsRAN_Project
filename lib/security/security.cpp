@@ -17,6 +17,85 @@
 using namespace srsran;
 using namespace srsran::security;
 
+bool security_context::select_algorithms(preferred_integrity_algorithms pref_inte_list,
+                                         preferred_ciphering_algorithms pref_ciph_list)
+{
+  // Select preferred integrity algorithm.
+  bool inte_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_inte_list[i]);
+    if (algo_id == 0) {
+      // Do not allow NIA0
+      logger.error("NIA0 selection not allowed");
+      break;
+    }
+    if (supported_int_algos[algo_id - 1]) {
+      inte_algo_found      = true;
+      sel_algos.integ_algo = security::integrity_algorithm_from_number(algo_id);
+      break;
+    }
+  }
+  if (not inte_algo_found) {
+    logger.error("Could not select integrity protection algorithm");
+    return false;
+  }
+
+  // Select preferred ciphering algorithm.
+  bool ciph_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_ciph_list[i]);
+    if (algo_id == 0) {
+      ciph_algo_found       = true;
+      sel_algos.cipher_algo = security::ciphering_algorithm::nea0;
+      break;
+    }
+    if (supported_enc_algos[algo_id - 1]) {
+      ciph_algo_found       = true;
+      sel_algos.cipher_algo = security::ciphering_algorithm_from_number(algo_id);
+      break;
+    }
+  }
+  if (not ciph_algo_found) {
+    logger.error("Could not select ciphering algorithm");
+    return false;
+  }
+  sel_algos.algos_selected = true;
+  return true;
+}
+
+void security_context::generate_as_keys()
+{
+  srsran_sanity_check(sel_algos.algos_selected, "Tried to generate AS keys, but no algo is selected");
+  // Generate K_rrc_enc and K_rrc_int
+  security::generate_k_rrc(as_keys.k_rrc_enc, as_keys.k_rrc_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
+
+  // Generate K_up_enc and K_up_int
+  security::generate_k_up(as_keys.k_up_enc, as_keys.k_up_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
+
+  logger.debug("K_gNB {}", security::sec_as_key_to_string(k));
+  logger.debug("RRC Integrity Key {}", security::sec_as_key_to_string(as_keys.k_rrc_int));
+  logger.debug("RRC Encryption Key {}", security::sec_as_key_to_string(as_keys.k_rrc_enc));
+  logger.debug("UP Encryption Key {}", security::sec_as_key_to_string(as_keys.k_up_enc));
+  logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(as_keys.k_up_int));
+}
+
+sec_128_as_config security_context::get_128_as_config()
+{
+  return truncate_config(get_as_config());
+}
+
+sec_as_config security_context::get_as_config()
+{
+  srsran_sanity_check(sel_algos.algos_selected, "Tried to get AS config, but no algorithms are selected");
+  sec_as_config as_cfg;
+  as_cfg.k_rrc_int   = as_keys.k_rrc_int;
+  as_cfg.k_rrc_enc   = as_keys.k_rrc_enc;
+  as_cfg.k_up_int    = as_keys.k_up_int;
+  as_cfg.k_up_enc    = as_keys.k_up_enc;
+  as_cfg.integ_algo  = sel_algos.integ_algo;
+  as_cfg.cipher_algo = sel_algos.cipher_algo;
+  return as_cfg;
+}
 /******************************************************************************
  * Key Generation
  *****************************************************************************/

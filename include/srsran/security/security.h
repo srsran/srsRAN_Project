@@ -137,10 +137,31 @@ struct sec_as_config {
   ciphering_algorithm cipher_algo;
 };
 
+struct sec_selected_algos {
+  bool                algos_selected = false;
+  integrity_algorithm integ_algo;
+  ciphering_algorithm cipher_algo;
+};
+
+struct sec_as_keys {
+  sec_as_key k_rrc_int;
+  sec_as_key k_rrc_enc;
+  sec_as_key k_up_int;
+  sec_as_key k_up_enc;
+};
+
 struct security_context {
+  srslog::basic_logger&          logger = srslog::fetch_basic_logger("SEC");
   security::sec_as_key           k;
   security::supported_algorithms supported_int_algos;
   security::supported_algorithms supported_enc_algos;
+  sec_selected_algos             sel_algos;
+  sec_as_keys                    as_keys;
+
+  bool select_algorithms(preferred_integrity_algorithms pref_inte_list, preferred_ciphering_algorithms pref_ciph_list);
+  void generate_as_keys();
+  sec_as_config     get_as_config();
+  sec_128_as_config get_128_as_config();
 };
 
 /******************************************************************************
@@ -213,54 +234,6 @@ sec_128_as_config truncate_config(const sec_as_config& cfg_in);
 /******************************************************************************
  * Algorithm selection
  *****************************************************************************/
-inline bool select_algorithms(sec_as_config&                 sec_cfg,
-                              preferred_integrity_algorithms pref_inte_list,
-                              preferred_ciphering_algorithms pref_ciph_list,
-                              supported_algorithms           supp_inte_list,
-                              supported_algorithms           supp_ciph_list,
-                              const srslog::basic_logger&    logger)
-{
-  // Select preferred integrity algorithm.
-  bool inte_algo_found = false;
-  for (unsigned i = 0; i < nof_pref_algos; ++i) {
-    uint16_t algo_id = to_number(pref_inte_list[i]);
-    if (algo_id == 0) {
-      // Do not allow NIA0
-      logger.error("NIA0 selection not allowed");
-      break;
-    }
-    if (supp_inte_list[algo_id - 1]) {
-      inte_algo_found    = true;
-      sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
-      break;
-    }
-  }
-  if (not inte_algo_found) {
-    logger.error("Could not select integrity protection algorithm");
-    return false;
-  }
-
-  // Select preferred ciphering algorithm.
-  bool ciph_algo_found = false;
-  for (unsigned i = 0; i < nof_pref_algos; ++i) {
-    uint16_t algo_id = to_number(pref_ciph_list[i]);
-    if (algo_id == 0) {
-      ciph_algo_found     = true;
-      sec_cfg.cipher_algo = security::ciphering_algorithm::nea0;
-      break;
-    }
-    if (supp_ciph_list[algo_id - 1]) {
-      ciph_algo_found     = true;
-      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id);
-      break;
-    }
-  }
-  if (not ciph_algo_found) {
-    logger.error("Could not select ciphering algorithm");
-    return false;
-  }
-  return true;
-}
 
 } // namespace security
 } // namespace srsran

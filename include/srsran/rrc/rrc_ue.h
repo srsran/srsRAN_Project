@@ -139,9 +139,9 @@ public:
   /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request(const cause_t& cause) = 0;
 
-  /// \brief Setup security in the UE. This includes storing the K_gNB,
-  /// the AS keys, and configuring the PDCP entity security on SRB1
-  virtual void on_new_security_config(security::sec_as_config sec_cfg) = 0;
+  /// \brief Setup AS security in the UE. This includes configuring
+  /// the PDCP entity security on SRB1 with the new AS keys.
+  virtual void on_new_as_security_context() = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.
@@ -280,7 +280,7 @@ public:
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
-  virtual security::sec_as_config&              get_rrc_ue_secutity_config()               = 0;
+  virtual security::security_context&           get_rrc_ue_security_context()              = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,
