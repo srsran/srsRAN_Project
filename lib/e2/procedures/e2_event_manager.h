@@ -25,10 +25,12 @@ public:
   /// Transaction Response Container, which gets indexed by transaction_id.
   constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
   protocol_transaction_manager<e2ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
+
+  protocol_transaction_event_source<asn1::e2ap::ricsubscription_delete_request_s> sub_del_request;
   // CU initiated E2 Setup Procedure
 
   explicit e2_event_manager(timer_factory timers) :
-    transactions(timers, e2ap_outcome{asn1::e2ap::unsuccessful_outcome_s{}})
+    transactions(timers, e2ap_outcome{asn1::e2ap::unsuccessful_outcome_s{}}), sub_del_request(timers)
   {
   }
 };
