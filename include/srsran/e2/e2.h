@@ -116,6 +116,16 @@ public:
   virtual void get_metrics(scheduler_ue_metrics& ue_metrics) = 0;
 };
 
+class e2sm_kpm_handler
+{
+public:
+  virtual ~e2sm_kpm_handler() = default;
+  virtual asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
+  handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& buf) = 0;
+  virtual asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
+  handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
+};
+
 /// Combined entry point for E2 handling.
 class e2_interface : public e2_message_handler, public e2_event_handler, public e2_connection_manager
 {

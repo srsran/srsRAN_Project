@@ -14,6 +14,8 @@
 using namespace asn1::e2ap;
 using namespace srsran;
 
+e2_subscriber_impl::e2_subscriber_impl(e2sm_kpm_handler& e2sm_kpm) : e2sm_handler(e2sm_kpm) {}
+
 e2_subscribe_reponse_message
 e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg)
 {
@@ -22,9 +24,11 @@ e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_
   for (auto& action : msg->ricsubscription_details.value.ric_action_to_be_setup_list) {
     auto& action_def = action.value().ri_caction_to_be_setup_item();
     subscription.action_list.push_back(
-        {unpack_ric_action_definition(action_def.ric_action_definition), action_def.ric_action_id});
+        {e2sm_handler.handle_packed_e2sm_kpm_action_definition(action_def.ric_action_definition),
+         action_def.ric_action_id});
   }
-  auto event_trigger_def = unpack_event_trigger_definition(msg->ricsubscription_details->ric_event_trigger_definition);
+  auto event_trigger_def =
+      e2sm_handler.handle_packed_event_trigger_definition(msg->ricsubscription_details->ric_event_trigger_definition);
   subscription.report_period = event_trigger_def.event_definition_formats.event_definition_format1().report_period;
   subscriptions.insert(std::pair<int, e2_subscription_t>(subscription.request_id.ric_instance_id, subscription));
   e2_subscribe_reponse_message outcome;

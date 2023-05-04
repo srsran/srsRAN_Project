@@ -7,7 +7,8 @@
  * the distribution.
  *
  */
-#include "e2sm_kpm_asn1_utils.h"
+
+#include "e2sm_kpm_asn1_packer.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
@@ -20,6 +21,7 @@ namespace srsran {
 class e2_subscriber_impl : public e2_subscriber
 {
 public:
+  explicit e2_subscriber_impl(e2sm_kpm_handler& e2sm_kpm);
   virtual ~e2_subscriber_impl() = default;
 
   e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) override;
@@ -33,6 +35,7 @@ public:
 private:
   std::map<int, e2_subscription_t> subscriptions;
   // std::vector of subscriptions TODO define subscription struct
+  e2sm_kpm_handler& e2sm_handler;
 };
 
 } // namespace srsran

@@ -208,6 +208,30 @@ public:
   byte_buffer last_pdu;
 };
 
+class dummy_e2sm_handler : public e2sm_kpm_handler
+{
+  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s
+  handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& buf) override
+  {
+    e2_sm_kpm_action_definition_s action_def;
+    action_def.ric_style_type = 3;
+    action_def.action_definition_formats.set_action_definition_format3();
+    action_def.action_definition_formats.action_definition_format3().meas_cond_list.resize(1);
+    action_def.action_definition_formats.action_definition_format3()
+        .meas_cond_list[0]
+        .meas_type.set_meas_name()
+        .from_string("RSRP");
+    action_def.action_definition_formats.action_definition_format3().granul_period = 10;
+    return action_def;
+  }
+  asn1::e2sm_kpm::e2_sm_kpm_event_trigger_definition_s
+  handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) override
+  {
+    e2_sm_kpm_event_trigger_definition_s event_trigger_def;
+    event_trigger_def.event_definition_formats.event_definition_format1().report_period = 10;
+    return event_trigger_def;
+  }
+};
 /// Fixture class for E2AP
 class e2_test_base : public ::testing::Test
 {
@@ -216,6 +240,7 @@ protected:
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
+  std::unique_ptr<e2sm_kpm_handler>                   e2sm_handler;
   std::unique_ptr<e2_subscriber>                      subscriber;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   manual_task_worker                                  task_worker{64};
@@ -254,7 +279,8 @@ class e2_test_subscriber : public e2_test_base
     srslog::init();
 
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    subscriber   = std::make_unique<e2_subscriber_impl>();
+    e2sm_handler = std::make_unique<dummy_e2sm_handler>();
+    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_handler);
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
     e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber, *du_metrics);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
