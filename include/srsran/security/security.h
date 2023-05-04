@@ -137,6 +137,12 @@ struct sec_as_config {
   ciphering_algorithm cipher_algo;
 };
 
+struct security_context {
+  security::sec_as_key           k;
+  security::supported_algorithms supported_int_algos;
+  security::supported_algorithms supported_enc_algos;
+};
+
 /******************************************************************************
  * Helper Functions
  *****************************************************************************/

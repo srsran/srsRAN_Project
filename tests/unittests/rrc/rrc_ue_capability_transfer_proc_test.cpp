@@ -62,8 +62,8 @@ protected:
     sec_cfg.k_rrc_int               = k_rrc_int;
 
     // Initialize security context and capabilities.
-    rrc_init_security_context init_sec_ctx = {};
-    init_sec_ctx.k                         = sk_gnb;
+    security::security_context init_sec_ctx = {};
+    init_sec_ctx.k                          = sk_gnb;
     std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
     std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 

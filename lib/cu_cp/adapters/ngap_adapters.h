@@ -118,7 +118,7 @@ public:
   {
     srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
 
-    rrc_init_security_context sec_ctxt;
+    security::security_context sec_ctxt;
     copy_asn1_key(sec_ctxt.k, key);
     fill_supported_algorithms(sec_ctxt.supported_int_algos, caps.nr_integrity_protection_algorithms);
     fill_supported_algorithms(sec_ctxt.supported_enc_algos, caps.nr_encryption_algorithms);

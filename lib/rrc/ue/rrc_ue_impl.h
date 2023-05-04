@@ -91,7 +91,7 @@ private:
   void on_new_security_config(security::sec_as_config sec_cfg) override;
 
   // initializes the security context and triggers the SMC procedure
-  async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
+  async_task<bool> handle_init_security_context(const security::security_context& sec_ctx) override;
 
   // Helper to create PDU from RRC message
   template <class T>

@@ -17,7 +17,7 @@ using namespace asn1::rrc_nr;
 
 rrc_security_mode_command_procedure::rrc_security_mode_command_procedure(
     rrc_ue_context_t&                           context_,
-    rrc_init_security_context                   sec_ctx_,
+    security::security_context                  sec_ctx_,
     rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier_,
     rrc_ue_event_manager&                       event_mng_,
     srslog::basic_logger&                       logger_) :

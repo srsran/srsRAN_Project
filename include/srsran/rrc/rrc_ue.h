@@ -248,12 +248,6 @@ public:
   virtual cu_cp_user_location_info_nr handle_rrc_ue_release() = 0;
 };
 
-struct rrc_init_security_context {
-  security::sec_as_key           k;
-  security::supported_algorithms supported_int_algos;
-  security::supported_algorithms supported_enc_algos;
-};
-
 /// Handler to initialize the security context from NGAP.
 class rrc_ue_init_security_context_handler
 {
@@ -262,7 +256,7 @@ public:
 
   /// \brief Handle the received Downlink NAS Transport message.
   /// \param[in] msg The Downlink NAS Transport message.
-  virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
+  virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

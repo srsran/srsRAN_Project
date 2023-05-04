@@ -73,8 +73,8 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
   security::sec_128_as_config sec_128_cfg = security::truncate_config(sec_cfg);
 
   // Initialize security context and capabilities.
-  rrc_init_security_context init_sec_ctx = {};
-  init_sec_ctx.k                         = sk_gnb;
+  security::security_context init_sec_ctx = {};
+  init_sec_ctx.k                          = sk_gnb;
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
@@ -104,7 +104,7 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
 TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
 {
   // Initialize security context and capabilities.
-  rrc_init_security_context init_sec_ctx = {};
+  security::security_context init_sec_ctx = {};
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 

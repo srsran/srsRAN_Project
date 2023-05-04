@@ -79,7 +79,7 @@ void rrc_ue_impl::on_new_security_config(security::sec_as_config sec_cfg)
   srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
 }
 
-async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_security_context& sec_ctx)
+async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)
 {
   //  Launch RRC security mode procedure
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
