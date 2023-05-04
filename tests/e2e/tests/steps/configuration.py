@@ -27,7 +27,6 @@ def configure_test_parameters(
     bandwidth: int,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
-    mcs: int = 10,
 ):
     """
     Configure test parameters
@@ -50,7 +49,6 @@ def configure_test_parameters(
                 "dl_arfcn": _get_dl_arfcn(band),
                 "common_scs": common_scs,
                 "bandwidth": bandwidth,
-                "mcs": mcs,
                 "time_alignment_calibration": time_alignment_calibration,
             },
         },
