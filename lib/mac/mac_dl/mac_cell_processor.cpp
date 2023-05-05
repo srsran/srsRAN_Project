@@ -430,4 +430,17 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       pcap.push_pdu(context, ue_pdu.pdu);
     }
   }
+  for (unsigned i = 0; i < dl_res.paging_pdus.size(); ++i) {
+    const mac_dl_data_result::dl_pdu& pg_pdu   = dl_res.paging_pdus[i];
+    const dl_paging_allocation&       dl_alloc = sl_res->dl.paging_grants[i];
+    srsran::mac_nr_context_info       context  = {};
+    context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+    context.direction           = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType            = PCAP_P_RNTI;
+    context.rnti                = dl_alloc.pdsch_cfg.rnti;
+    context.system_frame_number = sl_tx.sfn();
+    context.sub_frame_number    = sl_tx.subframe_index();
+    context.length              = pg_pdu.pdu.size();
+    pcap.push_pdu(context, pg_pdu.pdu);
+  }
 }
