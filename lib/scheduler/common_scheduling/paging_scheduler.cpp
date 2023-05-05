@@ -50,8 +50,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
       // PDCCH monitoring occasions for paging are same as for RMSI. See TS 38.304, clause 7.1.
-      sib1_period = std::max(ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period),
-                             sib1_rtx_periodicity_to_value(expert_cfg.si.sib1_retx_period));
+      ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
       for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
           continue;
@@ -146,11 +145,13 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     const auto&    pg_info   = pg_it.second.info;
     const unsigned drx_cycle = pg_info.paging_drx.has_value() ? pg_info.paging_drx.value() : default_paging_cycle;
 
-    const unsigned t_div_n     = drx_cycle / nof_pf_per_drx_cycle;
-    const unsigned ue_id_mod_n = pg_info.ue_identity_index_value % nof_pf_per_drx_cycle;
+    // N value used in equation found at TS 38.304, clause 7.1.
+    const unsigned N           = drx_cycle / nof_pf_per_drx_cycle;
+    const unsigned t_div_n     = drx_cycle / N;
+    const unsigned ue_id_mod_n = pg_info.ue_identity_index_value % N;
 
     // Check for paging frame.
-    // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See Ts 38.304, clause 7.1.
+    // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See TS 38.304, clause 7.1.
     if (((pdcch_slot.sfn() + paging_frame_offset) % drx_cycle) != (t_div_n * ue_id_mod_n)) {
       continue;
     }
@@ -158,7 +159,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     // Index (i_s), indicating the index of the PO.
     // i_s = floor (UE_ID/N) mod Ns.
     const unsigned i_s = static_cast<unsigned>(std::floor(static_cast<double>(pg_info.ue_identity_index_value) /
-                                                          static_cast<double>(nof_pf_per_drx_cycle))) %
+                                                          static_cast<double>(N))) %
                          nof_po_per_pf;
 
     for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
@@ -290,7 +291,7 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
   // NOTE2: SIB1 period is since Search Space #0 is used by both Paging and SIB1.
-  const unsigned paging_period_slots = sib1_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
+  const unsigned paging_period_slots = ssb_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -400,7 +401,7 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_pdcch_common(res_grid[0], rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.warning("Could not allocated Paging's DCI in PDCCH");
+    logger.warning("Could not allocate Paging's DCI in PDCCH");
     return false;
   }
 
