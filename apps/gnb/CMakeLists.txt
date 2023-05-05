@@ -46,6 +46,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 srsran_radio
                 srsran_pcap
                 srsran_support
+                srsran_version
                 srsran_build_info
                 )
         add_backward(gnb)

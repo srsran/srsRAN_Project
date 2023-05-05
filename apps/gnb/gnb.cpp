@@ -13,6 +13,7 @@
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
+#include "srsran/support/version/version.h"
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
@@ -73,7 +74,6 @@ using namespace srsran;
 ///
 /// \cond
 
-/// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static std::string config_file;
 
 static std::atomic<bool> is_running = {true};
@@ -83,7 +83,9 @@ const std::string                          srsgnb_version = "0.1";
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
-  app.set_version_flag("-v,--version", "srsGNB version " + srsgnb_version);
+  fmt::memory_buffer buffer;
+  format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
+  app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false);
 }
 
