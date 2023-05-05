@@ -30,12 +30,14 @@ public:
   // the subscription is still active and then call the function again
   int start_subscription() override;
 
-  void get_subscription_result(e2_subscribe_reponse_message& outcome, asn1::e2ap::ri_crequest_id_s request_id);
+  bool action_supported(ric_action_t action);
+
+  void get_subscription_result(e2_subscribe_reponse_message& outcome, e2_subscription_t& subscription);
 
 private:
   std::map<int, e2_subscription_t> subscriptions;
-  // std::vector of subscriptions TODO define subscription struct
-  e2sm_kpm_handler& e2sm_handler;
+  e2sm_kpm_handler&                e2sm_handler;
+  srslog::basic_logger&            logger;
 };
 
 } // namespace srsran

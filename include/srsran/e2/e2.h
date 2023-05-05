@@ -17,6 +17,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/async/async_task.h"
+#include "srsran/support/async/eager_async_task.h"
 
 namespace srsran {
 
@@ -60,6 +61,11 @@ typedef struct {
   asn1::e2ap::ri_crequest_id_s request_id;
   std::vector<ric_action_t>    action_list;
   uint64_t                     report_period;
+} e2_subscription_info_t;
+
+typedef struct {
+  e2_subscription_info_t subscription_info;
+  eager_async_task<void> indication_task;
 } e2_subscription_t;
 
 /// This interface is used to push E2 messages to the E2 interface.
