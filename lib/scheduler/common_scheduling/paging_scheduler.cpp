@@ -251,6 +251,12 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
   //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configure paging
   //   search space taking this into account when defining SearchSpace > 0 for paging.
 
+  const auto& ss_periodicity = ss_cfg.monitoring_slot_period;
+
+  if (pdcch_slot.to_uint() % ss_periodicity != 0) {
+    return false;
+  }
+
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
     // Do not schedule the paging for the SSB indices that are not used.
@@ -486,8 +492,9 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   std::vector<slot_point> pdcch_monitoring_occasions;
   // Initialize slot point to 0.
   slot_point sl = slot_point{to_numerology_value(scs_common), 0};
-  // Compute all PDCCH Monitoring Occasions in a frame.
-  for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num += ss_duration) {
+  // Compute all PDCCH Monitoring Occasions over max of nof. slots in frame and nof. slots in SearchSpace periodicity.
+  const auto periodicity_in_slots = std::max(ss_periodicity, sl.nof_slots_per_frame());
+  for (unsigned slot_num = 0; slot_num < periodicity_in_slots; slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
     if (not cell_cfg.is_fully_dl_enabled(ref_sl)) {
