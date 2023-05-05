@@ -88,7 +88,7 @@ void security_context::horizontal_key_defivation(pci_t new_pci, unsigned new_dl_
 
   // Generate K_NG-RAN*
   sec_key k_ng_ran_star;
-  security_generate_k_ng_ran_star(k_ng_ran_star, k, new_pci, new_dl_arfcn);
+  generate_k_ng_ran_star(k_ng_ran_star, k, new_pci, new_dl_arfcn);
 
   // K_NG-RAN* becomes K_gNB
   k = k_ng_ran_star;
@@ -168,28 +168,28 @@ void srsran::security::generate_k_up(sec_key&                  k_up_enc,
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsran::security::security_generate_k_ng_ran_star(sec_key&       k_star,
-                                                       const sec_key& k,
-                                                       const pci_t&   pci_,
-                                                       const uint32_t earfcn_)
+void srsran::security::generate_k_ng_ran_star(sec_key&       k_star,
+                                              const sec_key& k,
+                                              const pci_t&   pci_,
+                                              const uint32_t earfcn_)
 {
   // PCI
   std::vector<uint8_t> pci;
   pci.resize(2);
-  pci[0] = (pci_ >> 8) & 0xFF;
-  pci[1] = pci_ & 0xFF;
+  pci[0] = (pci_ >> 8) & 0xff;
+  pci[1] = pci_ & 0xff;
 
   // ARFCN, can be two or three bytes
   std::vector<uint8_t> earfcn;
   if (earfcn_ < pow(2, 16)) {
     earfcn.resize(2);
-    earfcn[0] = (earfcn_ >> 8) & 0xFF;
-    earfcn[1] = earfcn_ & 0xFF;
+    earfcn[0] = (earfcn_ >> 8) & 0xff;
+    earfcn[1] = earfcn_ & 0xff;
   } else if (earfcn_ < pow(2, 24)) {
     earfcn.resize(3);
-    earfcn[0] = (earfcn_ >> 16) & 0xFF;
-    earfcn[1] = (earfcn_ >> 8) & 0xFF;
-    earfcn[2] = earfcn_ & 0xFF;
+    earfcn[0] = (earfcn_ >> 16) & 0xff;
+    earfcn[1] = (earfcn_ >> 8) & 0xff;
+    earfcn[2] = earfcn_ & 0xff;
   } else {
     report_error("Invalid ARFCN in K_NG-RAN* derivation");
   }

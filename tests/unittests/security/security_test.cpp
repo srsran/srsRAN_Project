@@ -1249,6 +1249,22 @@ TEST(security_gen_k_up, testset1)
   EXPECT_TRUE(k_up_int_o == k_up_int);
 }
 
+/// Generation of k_up_end and k_up_int
+TEST(security_gen_k_ng_ran_star, testset1)
+{
+  // Testdata in plain format
+  const char* k_gnb_cstr         = "c4c7bc798ab94e3d354cd6608e79aa92f5569df46519507850051e36f018ca5f";
+  const char* k_ng_ran_star_cstr = "82fe5b109099321225a953633c4fec579051652b77f472b33840127bdfa7a655";
+
+  // Pack hex strings into srsran types
+  sec_key k_gnb         = make_sec_key(k_gnb_cstr);
+  sec_key k_ng_ran_star = make_sec_key(k_ng_ran_star_cstr);
+  sec_key k_ng_ran_star_o;
+
+  generate_k_ng_ran_star(k_ng_ran_star_o, k_gnb, 32, 561);
+  EXPECT_TRUE(k_ng_ran_star_o == k_ng_ran_star);
+}
+
 /// Truncation of 256-bit key to a 128-bit key
 TEST(security_truncate_key, testset1)
 {
