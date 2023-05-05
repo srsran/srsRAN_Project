@@ -12,6 +12,7 @@
 
 #include "srsran/security/security.h"
 #include "srsran/ran/pci.h"
+#include "srsran/security/integrity.h"
 #include "srsran/security/ssl.h"
 #include "srsran/support/error_handling.h"
 #include <arpa/inet.h>
@@ -94,6 +95,66 @@ void security_context::horizontal_key_derivation(pci_t target_pci, unsigned targ
   k = k_ng_ran_star;
 
   generate_as_keys();
+}
+
+bool security_context::var_short_mac_check(const sec_short_mac_i&                rx_short_mac,
+                                           const sec_var_short_mac_input_packed& packed_var)
+{
+  srsran_sanity_check(sel_algos.algos_selected, "Tried to check varShortMAC-I, but no algo is selected");
+  security::sec_mac mac_exp = {};
+
+  bool        is_valid = true;
+  sec_128_key key      = truncate_key(as_keys.k_rrc_int);
+  switch (sel_algos.integ_algo) {
+    case security::integrity_algorithm::nia0:
+      break;
+    case security::integrity_algorithm::nia1:
+      security_nia1(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    case security::integrity_algorithm::nia2:
+      security_nia2(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    case security::integrity_algorithm::nia3:
+      security_nia3(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    default:
+      break;
+  }
+
+  if (sel_algos.integ_algo != security::integrity_algorithm::nia0) {
+    for (uint8_t i = 0; i < 4; i++) {
+      if (rx_short_mac[i] != mac_exp[i]) {
+        is_valid = false;
+        break;
+      }
+    }
+  }
+
+  auto& channel = is_valid ? logger.debug : logger.warning;
+  channel(rx_short_mac.data(), rx_short_mac.size(), "shortMAC-I Integrity check. is_valid={}", is_valid);
+  channel(key.data(), 16, "Integrity check key.");
+  channel(mac_exp.data(), 4, "MAC expected.");
+  channel(rx_short_mac.data(), 4, "MAC found.");
+  channel(packed_var.data(), packed_var.size(), "Integrity check input message.");
+  return is_valid;
 }
 
 sec_128_as_config security_context::get_128_as_config()

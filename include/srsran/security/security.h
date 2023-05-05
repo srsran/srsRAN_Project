@@ -18,6 +18,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>
@@ -152,6 +153,9 @@ struct sec_as_keys {
   sec_key k_up_enc;
 };
 
+using sec_short_mac_i                = std::array<uint8_t, 2>;
+using sec_var_short_mac_input_packed = std::array<uint8_t, 16>;
+
 struct security_context {
   srslog::basic_logger&          logger = srslog::fetch_basic_logger("SEC");
   security::sec_key              k;
@@ -165,6 +169,7 @@ struct security_context {
   sec_as_config     get_as_config();
   sec_128_as_config get_128_as_config();
   void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
+  bool var_short_mac_check(const sec_short_mac_i& rx_short_mac, const sec_var_short_mac_input_packed& packed_var);
 };
 
 /******************************************************************************

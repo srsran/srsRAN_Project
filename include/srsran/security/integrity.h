@@ -34,7 +34,8 @@ void security_nia1(sec_mac&           mac,
                    It                 msg_end,
                    uint32_t           msg_len)
 {
-  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
+  static_assert(std::is_same<typename std::iterator_traits<It>::value_type, uint8_t>::value,
+                "Iterator value type is not uint8_t");
 
   // FIXME for now we copy the byte buffer to a contiguous piece of memory.
   // This will be fixed later.
@@ -74,7 +75,8 @@ void security_nia2(sec_mac&           mac,
                    It                 msg_end,
                    uint32_t           msg_len)
 {
-  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
+  static_assert(std::is_same<typename std::iterator_traits<It>::value_type, uint8_t>::value,
+                "Iterator value type is not uint8_t");
   uint32_t    len             = std::distance(msg_begin, msg_end);
   uint32_t    msg_len_block_8 = (msg_len + 7) / 8;
   uint8_t     M[msg_len_block_8 + 8 + 16];
@@ -190,7 +192,8 @@ void security_nia3(sec_mac&           mac,
                    It                 msg_end,
                    uint32_t           msg_len)
 {
-  static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
+  static_assert(std::is_same<typename std::iterator_traits<It>::value_type, uint8_t>::value,
+                "Iterator value type is not uint8_t");
   uint32_t len    = std::distance(msg_begin, msg_end);
   uint8_t  iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
