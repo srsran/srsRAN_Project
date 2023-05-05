@@ -84,7 +84,7 @@ void security_context::generate_as_keys()
 void security_context::horizontal_key_defivation(pci_t new_pci, unsigned new_dl_arfcn)
 {
   logger.info("Regenerating KgNB with PCI={}, SSB-ARFCN={}", new_pci, new_dl_arfcn);
-  logger.info(k.data(), sec_key_len, "Old K_gNB (k_gnb)");
+  logger.info("Old K_gNB (k_gnb) {}", security::sec_as_key_to_string(k));
 
   // Generate K_NG-RAN*
   sec_key k_ng_ran_star;
@@ -197,11 +197,11 @@ void srsran::security::generate_k_ng_ran_star(sec_key&       k_star,
   generic_kdf(k_star, k, fc_value::k_ng_ran_star_derivation, pci, earfcn);
 }
 
-void srsran::security::generic_kdf(sec_key&            key_out,
-                                   const sec_key&      key_in,
-                                   const fc_value      fc,
-                                   span<const uint8_t> p0,
-                                   span<const uint8_t> p1)
+void srsran::security::generic_kdf(sec_key&                   key_out,
+                                   const sec_key&             key_in,
+                                   const fc_value             fc,
+                                   const span<const uint8_t>& p0,
+                                   const span<const uint8_t>& p1)
 {
   union p_len {
     uint16_t                                  length_value;
