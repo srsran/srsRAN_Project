@@ -11,7 +11,9 @@
  */
 
 #include "srsran/security/security.h"
+#include "srsran/ran/pci.h"
 #include "srsran/security/ssl.h"
+#include "srsran/support/error_handling.h"
 #include <arpa/inet.h>
 
 using namespace srsran;
@@ -79,20 +81,19 @@ void security_context::generate_as_keys()
   logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(as_keys.k_up_int));
 }
 
-void security_context::horizontal_key_defivation(uint32_t new_pci, uint32_t new_dl_arfcn)
+void security_context::horizontal_key_defivation(pci_t new_pci, unsigned new_dl_arfcn)
 {
-  /*
-    logger.info("Regenerating KgNB with PCI=0x%02x, SSB-ARFCN=%d", new_pci, new_dl_arfcn);
-    logger.info(k_gnb, 32, "Old K_gNB (k_gnb)");
-    // Generate K_enb*
-    uint8_t k_gnb_star[32];
-    security_generate_k_gnb_star(k_gnb, new_pci, new_dl_arfcn, k_gnb_star);
+  logger.info("Regenerating KgNB with PCI={}, SSB-ARFCN={}", new_pci, new_dl_arfcn);
+  logger.info(k.data(), sec_key_len, "Old K_gNB (k_gnb)");
 
-    // K_enb becomes K_enb*
-    k = k_gnb_star;
+  // Generate K_NG-RAN*
+  sec_key k_ng_ran_star;
+  security_generate_k_ng_ran_star(k_ng_ran_star, k, new_pci, new_dl_arfcn);
 
-    generate_as_keys();
-    */
+  // K_NG-RAN* becomes K_gNB
+  k = k_ng_ran_star;
+
+  generate_as_keys();
 }
 
 sec_128_as_config security_context::get_128_as_config()
@@ -165,6 +166,35 @@ void srsran::security::generate_k_up(sec_key&                  k_up_enc,
 
   // Derive UP int
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
+}
+
+void srsran::security::security_generate_k_ng_ran_star(sec_key&       k_star,
+                                                       const sec_key& k,
+                                                       const pci_t&   pci_,
+                                                       const uint32_t earfcn_)
+{
+  // PCI
+  std::vector<uint8_t> pci;
+  pci.resize(2);
+  pci[0] = (pci_ >> 8) & 0xFF;
+  pci[1] = pci_ & 0xFF;
+
+  // ARFCN, can be two or three bytes
+  std::vector<uint8_t> earfcn;
+  if (earfcn_ < pow(2, 16)) {
+    earfcn.resize(2);
+    earfcn[0] = (earfcn_ >> 8) & 0xFF;
+    earfcn[1] = earfcn_ & 0xFF;
+  } else if (earfcn_ < pow(2, 24)) {
+    earfcn.resize(3);
+    earfcn[0] = (earfcn_ >> 16) & 0xFF;
+    earfcn[1] = (earfcn_ >> 8) & 0xFF;
+    earfcn[2] = earfcn_ & 0xFF;
+  } else {
+    report_error("Invalid ARFCN in K_NG-RAN* derivation");
+  }
+
+  generic_kdf(k_star, k, fc_value::k_ng_ran_star_derivation, pci, earfcn);
 }
 
 void srsran::security::generic_kdf(sec_key&            key_out,

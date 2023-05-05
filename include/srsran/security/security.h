@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 #include "srsran/adt/span.h"
+#include "srsran/ran/pci.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>
@@ -73,6 +74,7 @@ inline integrity_algorithm integrity_algorithm_from_number(unsigned int_algo)
 /// Ref: TS 33.501 Sec. A.1.2
 enum class fc_value {
   algorithm_key_derivation = 0x69, ///< Algorithm key derivation functions (Sec. A.8)
+  k_ng_ran_star_derivation = 0x70, ///< Algorithm key derivation functions (Sec. A.11)
 };
 constexpr uint8_t to_number(fc_value fc)
 {
@@ -162,7 +164,7 @@ struct security_context {
   void generate_as_keys();
   sec_as_config     get_as_config();
   sec_128_as_config get_128_as_config();
-  void              horizontal_key_defivation(uint32_t new_pci, uint32_t new_dl_arfcn);
+  void              horizontal_key_defivation(pci_t new_pci, unsigned new_dl_arfcn);
 };
 
 /******************************************************************************
@@ -224,6 +226,7 @@ void generate_k_up(sec_key&                  k_up_enc,
                    const ciphering_algorithm enc_alg_id,
                    const integrity_algorithm int_alg_id);
 
+void security_generate_k_ng_ran_star(sec_key& k_star, const sec_key& k, const pci_t& pci_, const uint32_t earfcn_);
 /// Truncate 256-bit key to 128-bit key using the least significant bits.
 /// Ref: TS 33.501 Sec. A.8
 sec_128_key truncate_key(const sec_key& key_in);
