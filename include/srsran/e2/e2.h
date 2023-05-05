@@ -51,6 +51,11 @@ struct e2_subscribe_reponse_message {
   bool                                       success;
 };
 
+struct e2_indication_message {
+  asn1::e2ap::ri_crequest_id_s request_id;
+  asn1::e2ap::ri_cind_s        indication;
+};
+
 typedef struct {
   asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_definition;
   uint16_t                                      ric_action_id;
