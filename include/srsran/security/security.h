@@ -107,8 +107,8 @@ enum class ciphering_enabled { off = 0, on = 1 };
 
 using sec_mac = std::array<uint8_t, sec_mac_len>;
 
-using sec_as_key     = std::array<uint8_t, sec_key_len>;
-using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
+using sec_key     = std::array<uint8_t, sec_key_len>;
+using sec_128_key = std::array<uint8_t, sec_128_key_len>;
 
 /// Helper types to communicate the preferred algorithm list. NIA/NEA0...3.
 constexpr uint16_t nof_pref_algos    = 4;
@@ -120,19 +120,19 @@ constexpr uint16_t nof_supported_algos = 3;
 using supported_algorithms             = std::array<bool, nof_supported_algos>;
 
 struct sec_128_as_config {
-  sec_128_as_key      k_128_rrc_int;
-  sec_128_as_key      k_128_rrc_enc;
-  sec_128_as_key      k_128_up_int;
-  sec_128_as_key      k_128_up_enc;
+  sec_128_key         k_128_rrc_int;
+  sec_128_key         k_128_rrc_enc;
+  sec_128_key         k_128_up_int;
+  sec_128_key         k_128_up_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
 };
 
 struct sec_as_config {
-  sec_as_key          k_rrc_int;
-  sec_as_key          k_rrc_enc;
-  sec_as_key          k_up_int;
-  sec_as_key          k_up_enc;
+  sec_key             k_rrc_int;
+  sec_key             k_rrc_enc;
+  sec_key             k_up_int;
+  sec_key             k_up_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
 };
@@ -144,15 +144,15 @@ struct sec_selected_algos {
 };
 
 struct sec_as_keys {
-  sec_as_key k_rrc_int;
-  sec_as_key k_rrc_enc;
-  sec_as_key k_up_int;
-  sec_as_key k_up_enc;
+  sec_key k_rrc_int;
+  sec_key k_rrc_enc;
+  sec_key k_up_int;
+  sec_key k_up_enc;
 };
 
 struct security_context {
   srslog::basic_logger&          logger = srslog::fetch_basic_logger("SEC");
-  security::sec_as_key           k;
+  security::sec_key              k;
   security::supported_algorithms supported_int_algos;
   security::supported_algorithms supported_enc_algos;
   sec_selected_algos             sel_algos;
@@ -162,6 +162,7 @@ struct security_context {
   void generate_as_keys();
   sec_as_config     get_as_config();
   sec_128_as_config get_128_as_config();
+  void              horizontal_key_defivation(uint32_t new_pci, uint32_t new_dl_arfcn);
 };
 
 /******************************************************************************
@@ -186,7 +187,7 @@ inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
   tail_byte &= (uint8_t)(0xff << bits);
 }
 
-inline std::string sec_as_key_to_string(const sec_as_key& key)
+inline std::string sec_as_key_to_string(const sec_key& key)
 {
   std::stringstream ss;
   for (auto val : key) {
@@ -201,31 +202,31 @@ inline std::string sec_as_key_to_string(const sec_as_key& key)
 
 /// Generic key derivation function
 /// Ref: TS 33.220 Sec. B.2
-void generic_kdf(sec_as_key&         key_out,
-                 const sec_as_key&   key_in,
+void generic_kdf(sec_key&            key_out,
+                 const sec_key&      key_in,
                  const fc_value      fc,
                  span<const uint8_t> p0,
                  span<const uint8_t> p1);
 
 /// Algorithm key derivation function (RRC)
 /// Ref: TS 33.501 Sec. A.8
-void generate_k_rrc(sec_as_key&               k_rrc_enc,
-                    sec_as_key&               k_rrc_int,
-                    const sec_as_key&         k_gnb,
+void generate_k_rrc(sec_key&                  k_rrc_enc,
+                    sec_key&                  k_rrc_int,
+                    const sec_key&            k_gnb,
                     const ciphering_algorithm enc_alg_id,
                     const integrity_algorithm int_alg_id);
 
 /// Algorithm key derivation function (UP)
 /// Ref: TS 33.501 Sec. A.8
-void generate_k_up(sec_as_key&               k_up_enc,
-                   sec_as_key&               k_up_int,
-                   const sec_as_key&         k_gnb,
+void generate_k_up(sec_key&                  k_up_enc,
+                   sec_key&                  k_up_int,
+                   const sec_key&            k_gnb,
                    const ciphering_algorithm enc_alg_id,
                    const integrity_algorithm int_alg_id);
 
 /// Truncate 256-bit key to 128-bit key using the least significant bits.
 /// Ref: TS 33.501 Sec. A.8
-sec_128_as_key truncate_key(const sec_as_key& key_in);
+sec_128_key truncate_key(const sec_key& key_in);
 
 /// Truncate 256-bit keys to 128-bit keys using the least significant bits,
 /// on a given security context.

@@ -313,7 +313,7 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
+  const security::sec_128_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
 
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
@@ -363,7 +363,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
                                            uint32_t                                count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
+  const security::sec_128_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key.");

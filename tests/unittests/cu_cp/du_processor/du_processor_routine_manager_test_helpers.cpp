@@ -42,8 +42,8 @@ void du_processor_routine_manager_test::init_security_config()
   const char* k_rrc_int_cstr = "aeeb5e0ae02c6188ecb1625c4a9e022fdfc2a1fc845b44b44443ac9a3bda667c";
 
   // Pack hex strings into srsgnb types
-  security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-  security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
+  security::sec_key k_rrc_enc = make_sec_key(k_rrc_enc_cstr);
+  security::sec_key k_rrc_int = make_sec_key(k_rrc_int_cstr);
 
   // Create expected SRB1 sec config
   security_cfg.integ_algo  = security::integrity_algorithm::nia2;

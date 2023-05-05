@@ -50,9 +50,9 @@ protected:
     const char* k_rrc_int_cstr = "aeeb5e0ae02c6188ecb1625c4a9e022fdfc2a1fc845b44b44443ac9a3bda667c";
 
     // Pack hex strings into srsgnb types
-    security::sec_as_key sk_gnb    = make_sec_as_key(sk_gnb_cstr);
-    security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-    security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
+    security::sec_key sk_gnb    = make_sec_key(sk_gnb_cstr);
+    security::sec_key k_rrc_enc = make_sec_key(k_rrc_enc_cstr);
+    security::sec_key k_rrc_int = make_sec_key(k_rrc_int_cstr);
 
     // Create expected SRB1 sec config
     security::sec_as_config sec_cfg = {};

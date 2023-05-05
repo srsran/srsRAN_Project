@@ -221,7 +221,7 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
 void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_as_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
+  const security::sec_128_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
   switch (sec_cfg.integ_algo) {
     case security::integrity_algorithm::nia0:
       break;
@@ -247,7 +247,7 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
 byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 {
   // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
+  const security::sec_128_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key.");

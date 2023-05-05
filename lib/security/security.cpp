@@ -79,6 +79,22 @@ void security_context::generate_as_keys()
   logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(as_keys.k_up_int));
 }
 
+void security_context::horizontal_key_defivation(uint32_t new_pci, uint32_t new_dl_arfcn)
+{
+  /*
+    logger.info("Regenerating KgNB with PCI=0x%02x, SSB-ARFCN=%d", new_pci, new_dl_arfcn);
+    logger.info(k_gnb, 32, "Old K_gNB (k_gnb)");
+    // Generate K_enb*
+    uint8_t k_gnb_star[32];
+    security_generate_k_gnb_star(k_gnb, new_pci, new_dl_arfcn, k_gnb_star);
+
+    // K_enb becomes K_enb*
+    k = k_gnb_star;
+
+    generate_as_keys();
+    */
+}
+
 sec_128_as_config security_context::get_128_as_config()
 {
   return truncate_config(get_as_config());
@@ -99,9 +115,9 @@ sec_as_config security_context::get_as_config()
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-void srsran::security::generate_k_rrc(sec_as_key&               k_rrc_enc,
-                                      sec_as_key&               k_rrc_int,
-                                      const sec_as_key&         k_gnb,
+void srsran::security::generate_k_rrc(sec_key&                  k_rrc_enc,
+                                      sec_key&                  k_rrc_int,
+                                      const sec_key&            k_gnb,
                                       const ciphering_algorithm enc_alg_id,
                                       const integrity_algorithm int_alg_id)
 {
@@ -125,9 +141,9 @@ void srsran::security::generate_k_rrc(sec_as_key&               k_rrc_enc,
   generic_kdf(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsran::security::generate_k_up(sec_as_key&               k_up_enc,
-                                     sec_as_key&               k_up_int,
-                                     const sec_as_key&         k_gnb,
+void srsran::security::generate_k_up(sec_key&                  k_up_enc,
+                                     sec_key&                  k_up_int,
+                                     const sec_key&            k_gnb,
                                      const ciphering_algorithm enc_alg_id,
                                      const integrity_algorithm int_alg_id)
 {
@@ -151,8 +167,8 @@ void srsran::security::generate_k_up(sec_as_key&               k_up_enc,
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsran::security::generic_kdf(sec_as_key&         key_out,
-                                   const sec_as_key&   key_in,
+void srsran::security::generic_kdf(sec_key&            key_out,
+                                   const sec_key&      key_in,
                                    const fc_value      fc,
                                    span<const uint8_t> p0,
                                    span<const uint8_t> p1)
@@ -190,9 +206,9 @@ void srsran::security::generic_kdf(sec_as_key&         key_out,
   sha256(key_in.data(), key_in.size(), s.data(), s.size(), key_out.data(), 0);
 }
 
-sec_128_as_key srsran::security::truncate_key(const sec_as_key& key_in)
+sec_128_key srsran::security::truncate_key(const sec_key& key_in)
 {
-  sec_128_as_key key_out = {};
+  sec_128_key key_out = {};
   static_assert(sec_key_len > 0, "sec_key_len too small");
   static_assert(sec_128_key_len > 0, "sec_128_key_len too small");
   static_assert(sec_128_key_len <= sec_key_len, "sec_128_key_len is larger than sec_key_len");

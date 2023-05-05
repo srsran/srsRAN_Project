@@ -13,18 +13,18 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-security::sec_as_key srsran::srs_cu_cp::make_sec_as_key(std::string hex_str)
+security::sec_key srsran::srs_cu_cp::make_sec_key(std::string hex_str)
 {
-  byte_buffer          key_buf = make_byte_buffer(hex_str);
-  security::sec_as_key key     = {};
+  byte_buffer       key_buf = make_byte_buffer(hex_str);
+  security::sec_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }
 
-security::sec_128_as_key srsran::srs_cu_cp::make_sec_128_as_key(std::string hex_str)
+security::sec_128_key srsran::srs_cu_cp::make_sec_128_key(std::string hex_str)
 {
-  byte_buffer              key_buf = make_byte_buffer(hex_str);
-  security::sec_128_as_key key     = {};
+  byte_buffer           key_buf = make_byte_buffer(hex_str);
+  security::sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }

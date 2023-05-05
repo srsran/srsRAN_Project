@@ -25,14 +25,14 @@ namespace security {
  *****************************************************************************/
 
 template <typename It>
-void security_nia1(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end,
-                   uint32_t              msg_len)
+void security_nia1(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end,
+                   uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
 
@@ -53,26 +53,26 @@ void security_nia1(sec_mac&              mac,
 }
 
 template <typename It>
-void security_nia1(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end)
+void security_nia1(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end)
 {
   security_nia1(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
 template <typename It>
-void security_nia2(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end,
-                   uint32_t              msg_len)
+void security_nia2(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end,
+                   uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint32_t    len             = std::distance(msg_begin, msg_end);
@@ -158,13 +158,13 @@ void security_nia2(sec_mac&              mac,
 }
 
 template <typename It>
-void security_nia2(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end)
+void security_nia2(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end)
 {
   security_nia2(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
@@ -181,14 +181,14 @@ inline uint32_t GET_WORD(uint32_t* DATA, uint32_t i)
 }
 
 template <typename It>
-void security_nia3(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end,
-                   uint32_t              msg_len)
+void security_nia3(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end,
+                   uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint32_t len    = std::distance(msg_begin, msg_end);
@@ -252,13 +252,13 @@ void security_nia3(sec_mac&              mac,
 }
 
 template <typename It>
-void security_nia3(sec_mac&              mac,
-                   const sec_128_as_key& key,
-                   uint32_t              count,
-                   uint8_t               bearer,
-                   security_direction    direction,
-                   It                    msg_begin,
-                   It                    msg_end)
+void security_nia3(sec_mac&           mac,
+                   const sec_128_key& key,
+                   uint32_t           count,
+                   uint8_t            bearer,
+                   security_direction direction,
+                   It                 msg_begin,
+                   It                 msg_end)
 {
   security_nia3(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }

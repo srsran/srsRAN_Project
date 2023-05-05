@@ -17,19 +17,19 @@ using namespace srsran;
 using namespace srsran::security;
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
-sec_as_key make_sec_as_key(std::string hex_str)
+sec_key make_sec_key(std::string hex_str)
 {
   byte_buffer key_buf = make_byte_buffer(hex_str);
-  sec_as_key  key     = {};
+  sec_key     key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }
 
 /// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
-sec_128_as_key make_sec_128_as_key(std::string hex_str)
+sec_128_key make_sec_128_key(std::string hex_str)
 {
-  byte_buffer    key_buf = make_byte_buffer(hex_str);
-  sec_128_as_key key     = {};
+  byte_buffer key_buf = make_byte_buffer(hex_str);
+  sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }
@@ -63,7 +63,7 @@ TEST(security_nea1_test, testset1)
   const char* ciphertext_cstr = "5D5BFE75EB04F68CE0A12377EA00B37D47C6A0BA06309155086A859C4341B378";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -93,7 +93,7 @@ TEST(security_nea1_test, testset2)
       "7B82F9EAD41A1FE65EABEBFBC1F3A4C56C9A26FCF7B3D66D0220EE4775BC58170A2B12F3431D11B344D6E36C";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -119,7 +119,7 @@ TEST(security_nea1_test, testset3)
   const char* ciphertext_cstr = "48148E5452A210C05F46BC80DC6F73495B02048C1B958B026102CA97280279A4C18D2EE308921C";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -149,7 +149,7 @@ TEST(security_nea1_test, testset4)
                                 "F6B4A9913E96B6DB7ABCACE415177C1D0115C5F09B5FDEA0B3ADB8F9DA6E9F9A04C543397B9D43F87330";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -181,7 +181,7 @@ TEST(security_nea1_test, testset5)
       "42E28E8A94EDB9119F412D054BE1FA7272B5FFB2B2570F4F7CEAF383A8A9D93572F04D6E3A6E293726EC62C8";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -225,7 +225,7 @@ TEST(security_nea1_test, testset6)
       "B68495CD75AB66D964D4CAFE64DD9404DAE2DC5110617F194FC3C184F583CD0DEF6D00";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -249,7 +249,7 @@ TEST(security_nia1_test, testset1)
   const char* mact_cstr    = "731f1165";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -274,7 +274,7 @@ TEST(security_nia1_test, testset2)
   const char* mact_cstr    = "e3259f6f";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -300,7 +300,7 @@ TEST(security_nia1_test, testset3)
   const char* mact_cstr    = "9a16c77d";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -327,7 +327,7 @@ TEST(security_nia1_test, testset4)
   const char* mact_cstr = "bba74492";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -353,7 +353,7 @@ TEST(security_nia1_test, testset5)
   const char* mact_cstr = "4145e4b0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -384,7 +384,7 @@ TEST(security_nia1_test, testset6)
   const char* mact_cstr = "0fa2b1ee";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -446,7 +446,7 @@ TEST(security_nia1_test, testset7)
   const char* mact_cstr = "abf3e651";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -471,7 +471,7 @@ TEST(security_nea2_test, testset1)
   const char* ciphertext_cstr = "e9fed8a63d155304d71df20bf3e82214b20ed7dad2f233dc3c22d7bdeeed8e78";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -499,7 +499,7 @@ TEST(security_nea2_test, testset2)
       "4cd97b870976503c0943f2cb5ae8f052c7b7d392239587b8956086bcab18836042e2e6ce42432a17105c53d0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -523,7 +523,7 @@ TEST(security_nea2_test, testset3)
   const char* ciphertext_cstr = "75750d37b4bba2a4dedb34235bd68c6645acdaaca48138a3b0c471e2a7041a576423d2927287f0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -552,7 +552,7 @@ TEST(security_nea2_test, testset4)
                                 "3f2f8f8e0592a9879201be7ff9777a162ab810feb324ba74c4c156e04d39097209653ac33e5a5f2d8864";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -582,7 +582,7 @@ TEST(security_nea2_test, testset5)
       "f1fc0ec684ddb21349747622e209295d27ff3f95623371d49b147c0af486171f22cd04b1cbeb2658223e6938";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -624,7 +624,7 @@ TEST(security_nea2_test, testset6)
       "c41b863da9e142e90020cfd074d6927b7ab3b6725d1a6f3f98b9c9daa8982aff067828";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -648,7 +648,7 @@ TEST(security_nia2_test, testset1)
   const char* mact_cstr    = "118c6eb8";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -673,7 +673,7 @@ TEST(security_nia2_test, testset2)
   const char* mact_cstr    = "b93787e6";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -698,7 +698,7 @@ TEST(security_nia2_test, testset3)
   const char* mact_cstr    = "1f60b01d";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -724,7 +724,7 @@ TEST(security_nia2_test, testset4)
   const char* mact_cstr    = "6846a2f0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -751,7 +751,7 @@ TEST(security_nia2_test, testset5)
   const char* mact_cstr = "e657e182";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -777,7 +777,7 @@ TEST(security_nia2_test, testset6)
   const char* mact_cstr = "f0668c1e";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -808,7 +808,7 @@ TEST(security_nia2_test, testset7)
   const char* mact_cstr = "f4cc8fa3";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -870,7 +870,7 @@ TEST(security_nia2_test, testset8)
   const char* mact_cstr = "ebd5ccb0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key      = make_sec_128_as_key(ik_cstr);
+  sec_128_key        key      = make_sec_128_key(ik_cstr);
   security_direction dir      = static_cast<security_direction>(direction);
   byte_buffer        message  = make_byte_buffer(message_cstr);
   byte_buffer        mact_buf = make_byte_buffer(mact_cstr);
@@ -897,7 +897,7 @@ TEST(security_nea3_test, testset1)
   const char* ciphertext_cstr = "a6c85fc66afb8533aafc2518dfe784940ee1e4b030238cc800";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -927,7 +927,7 @@ TEST(security_nea3_test, testset2)
       "3ecff7fcbc3b190fe82a204ed0e350fc0f6f2613b2f2bca6df5a473a57a4a00d985ebad880d6f23864a07b01";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -961,7 +961,7 @@ TEST(security_nea3_test, testset3)
       "fdbb7432e0e0bb2cfc09bcd96570cb0c0c39df5e29294e82703a637f80";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -1001,7 +1001,7 @@ TEST(security_nea3_test, testset4)
       "4a475c1a27f63f9ffd264989a1bc";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -1045,7 +1045,7 @@ TEST(security_nea3_test, testset5)
       "497a7e2a584037ea637b6981127174af57b471df4b2768fd79c1540fb3edf2ea22cb69bec0cf8d933d9c6fdd645e850591cca3d62c0cc0";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key        = make_sec_128_as_key(key_cstr);
+  sec_128_key        key        = make_sec_128_key(key_cstr);
   security_direction dir        = static_cast<security_direction>(direction);
   byte_buffer        plaintext  = make_byte_buffer(plaintext_cstr);
   byte_buffer        ciphertext = make_byte_buffer(ciphertext_cstr);
@@ -1071,7 +1071,7 @@ TEST(security_nia3_test, testset1)
   const char* mac_cstr     = "c8a9595e";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
   byte_buffer        message = make_byte_buffer(message_cstr);
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
@@ -1098,7 +1098,7 @@ TEST(security_nia3_test, testset2)
   const char* mac_cstr     = "6719a088";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
   byte_buffer        message = make_byte_buffer(message_cstr);
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
@@ -1126,7 +1126,7 @@ TEST(security_nia3_test, testset3)
   const char* mac_cstr     = "fae8ff0b";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
   byte_buffer        message = make_byte_buffer(message_cstr);
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
@@ -1158,7 +1158,7 @@ TEST(security_nia3_test, testset4)
   const char* mac_cstr = "004ac4d6";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
   byte_buffer        message = make_byte_buffer(message_cstr);
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
@@ -1198,7 +1198,7 @@ TEST(security_nia3_test, testset5)
   const char* mac_cstr = "0ca12792";
 
   // Pack hex strings into srsran types
-  sec_128_as_key     key     = make_sec_128_as_key(key_cstr);
+  sec_128_key        key     = make_sec_128_key(key_cstr);
   security_direction dir     = static_cast<security_direction>(direction);
   byte_buffer        message = make_byte_buffer(message_cstr);
   byte_buffer        mac_buf = make_byte_buffer(mac_cstr);
@@ -1218,11 +1218,11 @@ TEST(security_gen_k_rrc, testset1)
   const char* k_rrc_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
 
   // Pack hex strings into srsran types
-  sec_as_key sk_gnb    = make_sec_as_key(sk_gnb_cstr);
-  sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-  sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
-  sec_as_key k_rrc_enc_o;
-  sec_as_key k_rrc_int_o;
+  sec_key sk_gnb    = make_sec_key(sk_gnb_cstr);
+  sec_key k_rrc_enc = make_sec_key(k_rrc_enc_cstr);
+  sec_key k_rrc_int = make_sec_key(k_rrc_int_cstr);
+  sec_key k_rrc_enc_o;
+  sec_key k_rrc_int_o;
 
   generate_k_rrc(k_rrc_enc_o, k_rrc_int_o, sk_gnb, ciphering_algorithm::nea2, integrity_algorithm::nia0);
   EXPECT_TRUE(k_rrc_enc_o == k_rrc_enc);
@@ -1238,11 +1238,11 @@ TEST(security_gen_k_up, testset1)
   const char* k_up_int_cstr = "1ac74475a60bea4b4002a0439b722361d0deb4584095599e5806eae4f67656d8";
 
   // Pack hex strings into srsran types
-  sec_as_key sk_gnb   = make_sec_as_key(sk_gnb_cstr);
-  sec_as_key k_up_enc = make_sec_as_key(k_up_enc_cstr);
-  sec_as_key k_up_int = make_sec_as_key(k_up_int_cstr);
-  sec_as_key k_up_enc_o;
-  sec_as_key k_up_int_o;
+  sec_key sk_gnb   = make_sec_key(sk_gnb_cstr);
+  sec_key k_up_enc = make_sec_key(k_up_enc_cstr);
+  sec_key k_up_int = make_sec_key(k_up_int_cstr);
+  sec_key k_up_enc_o;
+  sec_key k_up_int_o;
 
   generate_k_up(k_up_enc_o, k_up_int_o, sk_gnb, ciphering_algorithm::nea2, integrity_algorithm::nia0);
   EXPECT_TRUE(k_up_enc_o == k_up_enc);
@@ -1257,10 +1257,10 @@ TEST(security_truncate_key, testset1)
   const char* k_128_cstr = "c05623c8a37b346aa4e041a08ea62a07";
 
   // Pack hex strings into srsran types
-  sec_as_key     k_256 = make_sec_as_key(k_256_cstr);
-  sec_128_as_key k_128 = make_sec_128_as_key(k_128_cstr);
+  sec_key     k_256 = make_sec_key(k_256_cstr);
+  sec_128_key k_128 = make_sec_128_key(k_128_cstr);
 
-  sec_128_as_key k_trunc = truncate_key(k_256);
+  sec_128_key k_trunc = truncate_key(k_256);
   EXPECT_TRUE(k_trunc == k_128);
 }
 
