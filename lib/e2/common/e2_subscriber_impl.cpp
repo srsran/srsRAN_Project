@@ -14,8 +14,15 @@
 using namespace asn1::e2ap;
 using namespace srsran;
 
-e2_subscriber_impl::e2_subscriber_impl(e2sm_kpm_handler& e2sm_kpm) :
-  e2sm_handler(e2sm_kpm), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
+e2_subscriber_impl::e2_subscriber_impl(e2sm_kpm_handler&        e2sm_kpm,
+                                       e2_message_notifier&     notif_,
+                                       timer_factory            timers_,
+                                       e2_du_metrics_interface& du_metrics_interface_) :
+  e2sm_handler(e2sm_kpm),
+  notif(notif_),
+  timers(timers_),
+  du_metrics_interface(du_metrics_interface_),
+  logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
 {
 }
 
@@ -47,8 +54,11 @@ e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_
   return outcome;
 }
 
-int e2_subscriber_impl::start_subscription()
+// in this function we start the indication procedure for this subscription
+int e2_subscriber_impl::start_subscription(int ric_instance_id, e2_event_manager& ev_mng)
 {
+  subscriptions[ric_instance_id].indication_task = launch_async<e2_indication_procedure>(
+      notif, ev_mng, timers, subscriptions[ric_instance_id].subscription_info, du_metrics_interface, logger);
   return 0;
 }
 

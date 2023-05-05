@@ -119,7 +119,7 @@ public:
     get_subscription_result(msg);
     return msg;
   }
-  int start_subscription() override { return 0; }
+  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override { return 0; }
 
 private:
   void get_subscription_result(e2_subscribe_reponse_message& msg)
@@ -236,6 +236,7 @@ class dummy_e2sm_handler : public e2sm_kpm_handler
 class e2_test_base : public ::testing::Test
 {
 protected:
+  timer_factory                                       factory;
   timer_manager                                       timers;
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
@@ -258,7 +259,8 @@ class e2_test : public e2_test_base
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     subscriber   = std::make_unique<dummy_e2_subscriber>();
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber, *du_metrics);
+    factory      = timer_factory{timers, task_worker};
+    e2           = create_e2(factory, *msg_notifier, *subscriber, *du_metrics);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
@@ -278,11 +280,12 @@ class e2_test_subscriber : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    factory      = timer_factory{timers, task_worker};
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_handler = std::make_unique<dummy_e2sm_handler>();
-    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_handler);
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber, *du_metrics);
+    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_handler, *msg_notifier, factory, *du_metrics);
+    e2           = create_e2(factory, *msg_notifier, *subscriber, *du_metrics);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));

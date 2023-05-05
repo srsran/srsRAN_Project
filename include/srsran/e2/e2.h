@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../lib/e2/procedures/e2_event_manager.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -152,7 +153,7 @@ public:
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
   /// @brief start the subscription request
-  virtual int start_subscription() = 0;
+  virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) = 0;
 };
 
 } // namespace srsran
