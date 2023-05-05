@@ -236,6 +236,11 @@ class dummy_e2sm_handler : public e2sm_kpm_handler
 class e2_test_base : public ::testing::Test
 {
 protected:
+  void tick()
+  {
+    timers.tick();
+    task_worker.run_pending_tasks();
+  }
   timer_factory                                       factory;
   timer_manager                                       timers;
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
