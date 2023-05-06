@@ -50,6 +50,15 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
       // PDCCH monitoring occasions for paging are same as for RMSI. See TS 38.304, clause 7.1.
+      // NOTE: We currently support only SS/PBCH and CORESET multiplexing patter 1.
+      if (cell_cfg.dl_cfg_common.pcch_cfg.nof_pf == pcch_config::nof_pf_per_drx_cycle::oneT) {
+        srsran_assertion_failure(
+            "Invalid nof. Paging frames per DRX Cycle for SS/PBCH and CORESET multiplexing patter 1.");
+      }
+      // ssb-periodicityServingCell is always 20 ms when using multiplexing pattern 1. See TS 38.331,
+      // nAndPagingFrameOffset.
+      srsran_assert(cell_cfg.ssb_cfg.ssb_period == ssb_periodicity::ms20,
+                    "SSB periodicity must be 20ms for SS/PBCH and CORESET multiplexing patter 1.");
       ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
       for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
