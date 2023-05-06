@@ -15,6 +15,7 @@
 #include "../support/prbs_calculator.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
@@ -55,6 +56,9 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         srsran_assertion_failure(
             "Invalid nof. Paging frames per DRX Cycle for SS/PBCH and CORESET multiplexing patter 1.");
       }
+      srsran_assert(
+          cell_cfg.dl_cfg_common.pcch_cfg.ns == pcch_config::nof_po_per_pf::one,
+          "Number of Paging Occasions per Paging Frame must be 1 for SS/PBCH and CORESET multiplexing patter 1.");
       // ssb-periodicityServingCell is always 20 ms when using multiplexing pattern 1. See TS 38.331,
       // nAndPagingFrameOffset.
       srsran_assert(cell_cfg.ssb_cfg.ssb_period == ssb_periodicity::ms20,
@@ -64,10 +68,10 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
           continue;
         }
-        // NOTE:
-        // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and Paging.
+        // For Ns = 1, there is only one PO which starts from the first PDCCH monitoring occasion for paging in the PF.
+        // TS 38.304, clause 7.1. Hence, n0 slot must be use and not n0 + 1 slot.
         type0_pdcch_css_slots[i_ssb] =
-            precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+            precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
       if (ss_cfg.cs_id != to_coreset_id(0) and
@@ -297,11 +301,6 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
   if ((i_s == 0 and pdcch_slot.is_odd_hrf()) or (i_s == 1 and (not pdcch_slot.is_odd_hrf()))) {
     return false;
   }
-
-  // - [Implementation defined] When pagingSearchSpace = 0, the UE monitors the SearchSpaceSet 0 for Paging in 2
-  //   consecutive slots, starting from n0 for multiplexing pattern 1.
-  //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for Paging in (n0 + 1) slot to make
-  //   space for SSB. This simplification is taken from SIB1 scheduler.
 
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
