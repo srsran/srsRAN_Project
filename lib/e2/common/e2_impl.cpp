@@ -50,7 +50,7 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
 void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg)
 {
   logger.info("Received RIC Subscription Request");
-  subscribe_proc.run_subscription_procedure(msg);
+  subscribe_proc.run_subscription_procedure(msg, *events);
 }
 
 void e2_impl::handle_message(const e2_message& msg)
@@ -93,6 +93,11 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
       break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_request:
       handle_ric_subscription_request(msg.value.ricsubscription_request());
+      break;
+    case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_delete_request:
+      logger.info("Received RIC Subscription Delete Request");
+      events->sub_del_request.set(msg.value.ricsubscription_delete_request());
+      // TODO - add subscription delete procedure
       break;
     default:
       logger.error("Invalid E2AP initiating message type");

@@ -13,19 +13,21 @@ using namespace srsran;
 using namespace asn1::e2ap;
 
 e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_notifier&  ric_notif_,
-                                                                 e2_subscriber&        sub_notif_,
+                                                                 e2_subscriber&        subscriber_,
                                                                  timer_factory         timers_,
                                                                  srslog::basic_logger& logger_) :
-  logger(logger_), ric_notif(ric_notif_), sub_notif(sub_notif_), timers(timers_)
+  logger(logger_), ric_notif(ric_notif_), subscriber(subscriber_), timers(timers_)
 {
 }
 
-void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_)
+void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_,
+                                                                 e2_event_manager& event_manager)
 {
   logger.info("E2AP: Received subscription request");
   e2_subscribe_reponse_message response;
-  response = sub_notif.handle_subscription_setup(request_);
+  response = subscriber.handle_subscription_setup(request_);
   if (response.success) {
+    subscriber.start_subscription(response.request_id.ric_instance_id, event_manager);
     send_e2_subscription_setup_response(response);
   } else {
     send_e2_subscription_setup_failure(response);
