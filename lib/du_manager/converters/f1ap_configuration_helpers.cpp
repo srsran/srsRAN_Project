@@ -148,19 +148,19 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
       out.pcch_cfg.nand_paging_frame_offset.set_one_t();
       break;
     case pcch_config::nof_pf_per_drx_cycle::halfT: {
-      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.half_t();
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.set_half_t();
       nof_pf       = cfg.pcch_cfg.paging_frame_offset;
     } break;
     case pcch_config::nof_pf_per_drx_cycle::quarterT: {
-      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.quarter_t();
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.set_quarter_t();
       nof_pf       = cfg.pcch_cfg.paging_frame_offset;
     } break;
     case pcch_config::nof_pf_per_drx_cycle::oneEighthT: {
-      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.one_eighth_t();
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.set_one_eighth_t();
       nof_pf       = cfg.pcch_cfg.paging_frame_offset;
     } break;
     case pcch_config::nof_pf_per_drx_cycle::oneSixteethT: {
-      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.one_sixteenth_t();
+      auto& nof_pf = out.pcch_cfg.nand_paging_frame_offset.set_one_sixteenth_t();
       nof_pf       = cfg.pcch_cfg.paging_frame_offset;
     } break;
     default:
