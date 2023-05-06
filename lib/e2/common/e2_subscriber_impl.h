@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+#pragma once
 
 #include "../procedures/e2_indication_procedure.h"
 #include "e2sm_kpm_asn1_packer.h"

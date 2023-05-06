@@ -33,9 +33,9 @@ e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
   for (auto& action : msg->ricsubscription_details.value.ric_action_to_be_setup_list) {
     auto& action_def = action.value().ri_caction_to_be_setup_item();
-    asn1::e2sm_kpm::e2_sm_kpm_action_definition_s act =
-        e2sm_handler.handle_packed_e2sm_kpm_action_definition(action_def.ric_action_definition);
-    subscription.subscription_info.action_list.push_back({act, action_def.ric_action_id});
+    subscription.subscription_info.action_list.push_back(
+        {e2sm_handler.handle_packed_e2sm_kpm_action_definition(action_def.ric_action_definition),
+         action_def.ric_action_id});
   }
   auto event_trigger_def =
       e2sm_handler.handle_packed_event_trigger_definition(msg->ricsubscription_details->ric_event_trigger_definition);
