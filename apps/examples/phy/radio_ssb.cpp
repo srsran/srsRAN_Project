@@ -256,6 +256,7 @@ static void usage(std::string prog)
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print("\t-u Enable uplink processing [Default {}]\n", enable_ul_processing);
   fmt::print("\t-p Enable PRACH processing [Default {}]\n", enable_prach_processing);
+  fmt::print("\t-a Number of antenna ports [Default {}]\n", nof_ports);
   fmt::print(
       "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
@@ -266,7 +267,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:cduph")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:a:cduph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -299,6 +300,11 @@ static void parse_args(int argc, char** argv)
         break;
       case 'p':
         enable_prach_processing = true;
+        break;
+      case 'a':
+        if (optarg != nullptr) {
+          nof_ports = std::strtol(optarg, nullptr, 10);
+        }
         break;
       case 'm':
         if (optarg != nullptr) {
@@ -449,7 +455,8 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor>                                dl_task_executor;
   std::unique_ptr<task_executor>                                prach_task_executor;
   if (thread_profile_name == "single") {
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy", std::make_unique<task_worker>("low_phy", 4)));
 
     async_task_executor = make_task_executor(*workers["async_thread"]);
@@ -465,7 +472,8 @@ int main(int argc, char** argv)
     low_ul_affinity.set(0);
     low_dl_affinity.set(1);
 
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy_ul",
                                    std::make_unique<task_worker>("low_phy_ul", 128, low_ul_priority, low_ul_affinity)));
     workers.emplace(std::make_pair("low_phy_dl",
@@ -489,7 +497,8 @@ int main(int argc, char** argv)
     low_tx_affinity.set(1);
     low_ul_affinity.set(2);
     low_dl_affinity.set(3);
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(
         std::make_pair("low_rx", std::make_unique<task_worker>("low_rx", 1, low_rx_priority, low_rx_affinity)));
     workers.emplace(

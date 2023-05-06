@@ -386,7 +386,7 @@ static std::unique_ptr<resource_grid_pool> create_dl_resource_grid_pool(const up
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
       std::unique_ptr<resource_grid> grid =
-          create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE);
+          create_resource_grid(config.nof_tx_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE);
       report_fatal_error_if_not(grid, "Invalid resource grid.");
       grids.push_back(std::move(grid));
     }
@@ -404,7 +404,7 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
       std::unique_ptr<resource_grid> grid =
-          create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.ul_bw_rb * NRE);
+          create_resource_grid(config.nof_rx_ports, MAX_NSYMB_PER_SLOT, config.ul_bw_rb * NRE);
       report_fatal_error_if_not(grid, "Invalid resource grid.");
       grids.push_back(std::move(grid));
     }
@@ -468,7 +468,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
   pusch_config.ch_estimate_dimensions.nof_tx_layers = 1;
   pusch_config.ch_estimate_dimensions.nof_prb       = config.ul_bw_rb;
-  pusch_config.ch_estimate_dimensions.nof_rx_ports  = 1;
+  pusch_config.ch_estimate_dimensions.nof_rx_ports  = config.nof_rx_ports;
 
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");

@@ -412,6 +412,10 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
   fapi_config.ul_grid_size             = {};
   fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
 
+  // Number of transmit and receive antenna ports.
+  fapi_config.num_tx_ant = config.common_cell_cfg.nof_antennas_dl;
+  fapi_config.num_rx_ant = config.common_cell_cfg.nof_antennas_ul;
+
   return fapi_config;
 }
 

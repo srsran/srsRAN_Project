@@ -31,7 +31,7 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     // Prepare transmit stream configuration.
     radio_zmq_tx_stream::stream_description stream_config;
     stream_config.socket_type = ZMQ_REP;
-    for (unsigned channel_id = 0; channel_id != config.tx_streams.size(); ++channel_id) {
+    for (unsigned channel_id = 0; channel_id != radio_stream_config.channels.size(); ++channel_id) {
       stream_config.address.push_back(radio_stream_config.channels[channel_id].args);
     }
     stream_config.stream_id         = stream_id;
@@ -58,7 +58,7 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
     // Prepare transmit stream configuration.
     radio_zmq_rx_stream::stream_description stream_config;
     stream_config.socket_type = ZMQ_REQ;
-    for (unsigned channel_id = 0; channel_id != config.rx_streams.size(); ++channel_id) {
+    for (unsigned channel_id = 0; channel_id != radio_stream_config.channels.size(); ++channel_id) {
       stream_config.address.push_back(radio_stream_config.channels[channel_id].args);
     }
     stream_config.stream_id         = stream_id;

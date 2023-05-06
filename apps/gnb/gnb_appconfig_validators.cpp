@@ -170,19 +170,15 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
   if (config.nof_antennas_dl == 0) {
-    fmt::print("The number of DL antennas cannot be zero.");
+    fmt::print("The number of DL antennas cannot be zero.\n");
     return false;
   }
   if (config.nof_antennas_ul == 0) {
-    fmt::print("The number of UL antennas cannot be zero.");
+    fmt::print("The number of UL antennas cannot be zero.\n");
     return false;
   }
-  if (config.nof_antennas_dl != 1) {
-    fmt::print("Currently, only one DL antenna is supported.\n", config.nof_antennas_dl);
-    return false;
-  }
-  if (config.nof_antennas_ul != 1) {
-    fmt::print("Currently, only one UL antenna is supported.\n", config.nof_antennas_ul);
+  if (config.nof_antennas_ul != config.nof_antennas_dl) {
+    fmt::print("Different number of UL and DL antennas is not currently supported.\n");
     return false;
   }
   if (config.common_scs == srsran::subcarrier_spacing::kHz15 and

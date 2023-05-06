@@ -7,8 +7,7 @@
 using namespace srsran;
 
 /// Static configuration that the gnb supports.
-static constexpr cyclic_prefix cp        = cyclic_prefix::NORMAL;
-static constexpr unsigned      nof_ports = 1U;
+static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
@@ -346,8 +345,8 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
     sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
     sector_config.ul_freq_hz =
         band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn, cell.band));
-    sector_config.nof_rx_ports = nof_ports;
-    sector_config.nof_tx_ports = nof_ports;
+    sector_config.nof_rx_ports = cell.nof_antennas_ul;
+    sector_config.nof_tx_ports = cell.nof_antennas_dl;
     out_cfg.sectors.push_back(sector_config);
   }
 
@@ -445,8 +444,8 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
                                                         config.rf_driver_cfg.center_freq_offset_Hz,
                                                         config.rf_driver_cfg.calibrate_clock_ppm);
 
-    // For each port in the cell...
-    for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
+    // For each DL antenna port in the cell...
+    for (unsigned port_id = 0; port_id != cell.nof_antennas_dl; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
       tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
@@ -457,16 +456,21 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       }
       tx_ch_config.gain_dB = config.rf_driver_cfg.tx_gain_dB;
 
-      // Add the tx ports.
+      // Add the TX ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
-        if (sector_id * nof_ports + port_id >= zmq_tx_addr.size()) {
+        if (sector_id * cell.nof_antennas_dl + port_id >= zmq_tx_addr.size()) {
           report_error("ZMQ transmission channel arguments out of bounds\n");
         }
 
-        tx_ch_config.args = zmq_tx_addr[sector_id * nof_ports + port_id];
+        tx_ch_config.args = zmq_tx_addr[sector_id * cell.nof_antennas_dl + port_id];
       }
       tx_stream_config.channels.emplace_back(tx_ch_config);
+    }
+    out_cfg.tx_streams.emplace_back(tx_stream_config);
 
+    // For each UL antenna port in the cell...
+    for (unsigned port_id = 0; port_id != cell.nof_antennas_ul; ++port_id) {
+      // Create channel configuration and append it to the previous ones.
       radio_configuration::channel rx_ch_config = {};
       rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
       if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
@@ -476,16 +480,16 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       }
       rx_ch_config.gain_dB = config.rf_driver_cfg.rx_gain_dB;
 
+      // Add the RX ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
-        if (sector_id * nof_ports + port_id >= zmq_rx_addr.size()) {
+        if (sector_id * cell.nof_antennas_dl + port_id >= zmq_rx_addr.size()) {
           report_error("ZMQ reception channel arguments out of bounds\n");
         }
 
-        rx_ch_config.args = zmq_rx_addr[sector_id * nof_ports + port_id];
+        rx_ch_config.args = zmq_rx_addr[sector_id * cell.nof_antennas_dl + port_id];
       }
       rx_stream_config.channels.emplace_back(rx_ch_config);
     }
-    out_cfg.tx_streams.emplace_back(tx_stream_config);
     out_cfg.rx_streams.emplace_back(rx_stream_config);
   }
 
@@ -550,7 +554,8 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;
     cfg.enable_evm                 = true;
     cfg.sector_id                  = i;
-    cfg.nof_ports                  = nof_ports;
+    cfg.nof_tx_ports               = cell.nof_antennas_dl;
+    cfg.nof_rx_ports               = cell.nof_antennas_ul;
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 

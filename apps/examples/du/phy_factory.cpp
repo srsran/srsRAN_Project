@@ -108,7 +108,8 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   upper_config.logger_max_hex_size     = 64;
   upper_config.enable_evm              = true;
   upper_config.sector_id               = 0;
-  upper_config.nof_ports               = 1;
+  upper_config.nof_tx_ports            = 1;
+  upper_config.nof_rx_ports            = 1;
   upper_config.ldpc_decoder_iterations = 6;
   upper_config.ldpc_decoder_early_stop = true;
 

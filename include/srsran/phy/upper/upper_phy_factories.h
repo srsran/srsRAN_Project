@@ -198,8 +198,10 @@ struct upper_phy_config {
   bool ldpc_decoder_early_stop;
   /// Radio sector identifier.
   unsigned sector_id;
-  /// Port identifier within the sector.
-  unsigned nof_ports;
+  /// Number of transmit antenna ports.
+  unsigned nof_tx_ports;
+  /// Number of receive antenna ports.
+  unsigned nof_rx_ports;
   /// Number of slots the downlink resource grid will support.
   unsigned nof_slots_dl_rg;
   /// Number of slots the uplink resource grid will support.
