@@ -267,11 +267,9 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
   //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configure paging
   //   search space taking this into account when defining SearchSpace > 0 for paging.
 
-  const auto& ss_periodicity = ss_cfg.monitoring_slot_period;
-
-  if (pdcch_slot.to_uint() % ss_periodicity != 0) {
-    return false;
-  }
+  // - [Implementation defined] PDCCH Monitoring Occasions (PMO) are pre-computed over max of nof. slots in radio frame
+  // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
+  const auto periodicity_in_slots = std::max(ss_cfg.monitoring_slot_period, pdcch_slot.nof_slots_per_frame());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -283,7 +281,7 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
     // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
     //  message are repeated in all transmitted beams.
 
-    if (pdcch_slot.slot_index() == type2_pdcch_css_slots[ssb_idx][i_s].slot_index()) {
+    if (pdcch_slot.to_uint() % periodicity_in_slots == type2_pdcch_css_slots[ssb_idx][i_s].to_uint()) {
       // All conditions are satisfied.
       return true;
     }
@@ -503,7 +501,8 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   std::vector<slot_point> pdcch_monitoring_occasions;
   // Initialize slot point to 0.
   slot_point sl = slot_point{to_numerology_value(scs_common), 0};
-  // Compute all PDCCH Monitoring Occasions over max of nof. slots in frame and nof. slots in SearchSpace periodicity.
+  // - [Implementation defined] Compute all PDCCH Monitoring Occasions (PMO) over max of nof. slots in radio frame
+  // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
   const auto periodicity_in_slots = std::max(ss_periodicity, sl.nof_slots_per_frame());
   for (unsigned slot_num = 0; slot_num < periodicity_in_slots; slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
