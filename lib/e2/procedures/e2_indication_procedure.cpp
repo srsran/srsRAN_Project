@@ -53,6 +53,7 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       e2_ind.indication->ri_cind_sn_present               = false;
       e2_ind.indication->ri_crequest_id->ric_instance_id  = subscription.request_id.ric_instance_id;
       e2_ind.indication->ri_crequest_id->ric_requestor_id = subscription.request_id.ric_requestor_id;
+      e2_ind.indication->ri_cind_type.value               = ri_cind_type_opts::report;
       auto& action_def                                    = action.action_definition;
       handle_action(e2_ind, action_def);
       logger.info("Sending E2 indication");

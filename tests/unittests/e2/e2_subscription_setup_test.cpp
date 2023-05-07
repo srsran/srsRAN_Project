@@ -62,7 +62,5 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
     printf("Couldn't unpack E2 PDU");
   }
 
-  if (msg1.pdu.init_msg().value.type() == e2_ap_elem_procs_o::init_msg_c::types_opts::ri_cind) {
-    printf("Received RIC Indication\n");
-  }
+  ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2_ap_elem_procs_o::init_msg_c::types_opts::ri_cind);
 }
