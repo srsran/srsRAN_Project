@@ -56,6 +56,9 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         srsran_assertion_failure(
             "Invalid nof. Paging frames per DRX Cycle for SS/PBCH and CORESET multiplexing patter 1.");
       }
+      // As per TS 38.304, clause 7.1, For Ns = 2, PO is either in the first half frame (i_s = 0) or the second half
+      // frame (i_s = 1) of the PF.  This is possible only when using ssb periodicity of 5ms which is in turn possible
+      // only when using SS/PBCH and CORESET multiplexing patter 2 or 3.
       srsran_assert(
           cell_cfg.dl_cfg_common.pcch_cfg.ns == pcch_config::nof_po_per_pf::one,
           "Number of Paging Occasions per Paging Frame must be 1 for SS/PBCH and CORESET multiplexing patter 1.");
