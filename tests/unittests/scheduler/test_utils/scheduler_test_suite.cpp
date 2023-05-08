@@ -208,9 +208,8 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
   const search_space_configuration& ss_cfg =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
           .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
-  crb_interval      coreset0_lims          = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  bwp_configuration effective_init_bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-  effective_init_bwp_cfg.crbs              = coreset0_lims;
+  crb_interval      coreset0_lims = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  bwp_configuration init_bwp_cfg  = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
@@ -222,10 +221,10 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(rar.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
 
-    const prb_interval rar_prbs = {
+    const prb_interval rar_vrbs = {
         rar.pdsch_cfg.rbs.vrbs().start() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb(),
         rar.pdsch_cfg.rbs.vrbs().stop() + rar.pdsch_cfg.coreset_cfg->get_coreset_start_crb()};
-    crb_interval rar_crbs = prb_to_crb(effective_init_bwp_cfg, rar_prbs);
+    crb_interval rar_crbs = prb_to_crb(init_bwp_cfg, rar_vrbs);
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
     TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-RNTI={:#x} detected", ra_rnti);
