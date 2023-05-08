@@ -88,16 +88,15 @@ struct bearer_context_outcome_t {
   bool                outcome = false;
   std::list<unsigned> pdu_sessions_success_list; // List of PDU session IDs that were successful to setup.
   std::list<unsigned> pdu_sessions_failed_list;  // List of PDU sessions IDs that failed to be setup.
-  // std::list<unsigned> pdu_sessions_failed_to_modify_list;
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
 
-  void set_first_message_outcome(const bearer_context_outcome_t& outcome) { first_e1ap_message = outcome; }
+  void set_first_message_outcome(const bearer_context_outcome_t& outcome) { first_e1ap_response = outcome; }
 
-  void set_second_message_outcome(const bearer_context_outcome_t& outcome) { second_e1ap_message = outcome; }
+  void set_second_message_outcome(const bearer_context_outcome_t& outcome) { second_e1ap_response = outcome; }
 
   template <typename T>
   void fill_bearer_context_response(T& result, const bearer_context_outcome_t& outcome)
@@ -133,16 +132,18 @@ public:
   {
     logger.info("Received a new bearer context setup request");
 
+    first_e1ap_request = msg; // store msg to verify content in TC
+
     return launch_async([res = e1ap_bearer_context_setup_response{}, msg, this](
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (first_e1ap_message.has_value()) {
-        const auto& response = first_e1ap_message.value();
+      if (first_e1ap_response.has_value()) {
+        const auto& response = first_e1ap_response.value();
         fill_bearer_context_response(res, response);
 
         // Invalidate E1 response so it's not consumed again.
-        first_e1ap_message.reset();
+        first_e1ap_response.reset();
       }
 
       CORO_RETURN(res);
@@ -154,22 +155,28 @@ public:
   {
     logger.info("Received a new bearer context modification request");
 
+    // store msg to be verify content in TC
+    if (first_e1ap_request.has_value()) {
+      second_e1ap_request = msg;
+    } else {
+      first_e1ap_request = msg;
+    }
+
     return launch_async([res = e1ap_bearer_context_modification_response{},
                          this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (first_e1ap_message.has_value()) {
+      if (first_e1ap_response.has_value()) {
         // first E1AP message is already a bearer modification
-        const auto& response = first_e1ap_message.value();
+        const auto& response = first_e1ap_response.value();
         fill_bearer_context_response(res, response);
-        first_e1ap_message.reset(); // Make sure it's not consumed again.
-      } else if (second_e1ap_message.has_value()) {
+        first_e1ap_response.reset(); // Make sure it's not consumed again.
+      } else if (second_e1ap_response.has_value()) {
         // second E1AP message is a bearer modification
-        const auto& response = second_e1ap_message.value();
+        const auto& response = second_e1ap_response.value();
         fill_bearer_context_response(res, response);
-        second_e1ap_message.reset(); // Make sure it's not consumed again.
+        second_e1ap_response.reset(); // Make sure it's not consumed again.
       }
-
       CORO_RETURN(res);
     });
   }
@@ -184,10 +191,19 @@ public:
     });
   }
 
+  void reset()
+  {
+    first_e1ap_request.reset();
+    second_e1ap_request.reset();
+  }
+
+  optional<variant<e1ap_bearer_context_setup_request, e1ap_bearer_context_modification_request>> first_e1ap_request;
+  optional<e1ap_bearer_context_modification_request>                                             second_e1ap_request;
+
 private:
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST");
-  optional<bearer_context_outcome_t> first_e1ap_message;
-  optional<bearer_context_outcome_t> second_e1ap_message;
+  optional<bearer_context_outcome_t> first_e1ap_response;
+  optional<bearer_context_outcome_t> second_e1ap_response;
 };
 
 struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {

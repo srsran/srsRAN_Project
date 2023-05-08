@@ -199,6 +199,8 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
       logger.info("Removing PDU session id {}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
     }
+  } else {
+    logger.warning("Ignoring empty Bearer Context Modification Request.");
   }
 
   // 3. Create response

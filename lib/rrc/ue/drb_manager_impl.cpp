@@ -69,8 +69,10 @@ up_config_update drb_manager_impl::calculate_update(const cu_cp_pdu_session_reso
         config.drb_to_add_list.push_back(id);
       }
     }
-
+    // Mark PDU session as active.
     pdu_sessions.emplace(pdu_session.pdu_session_id, true);
+
+    config.pdu_sessions_to_setup_list.push_back(pdu_session.pdu_session_id);
   }
 
   return config;

@@ -544,6 +544,25 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
         asn1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
       }
     }
+
+    if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list.empty()) {
+      asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list_present = true;
+
+      for (const auto& res_to_setup_mod_item :
+           request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
+        asn1::e1ap::pdu_session_res_to_setup_mod_item_s asn1_res_to_setup_mod_item;
+        asn1_res_to_setup_mod_item.pdu_session_id = pdu_session_id_to_uint(res_to_setup_mod_item.pdu_session_id);
+
+        for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran) {
+          asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;
+          asn1_drb_to_setup_mod_item.drb_id = drb_id_to_uint(drb_to_setup_mod_item.drb_id);
+          // TODO: DL/UL tunnel info missing?
+          asn1_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran.push_back(asn1_drb_to_setup_mod_item);
+        }
+
+        asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list.value.push_back(asn1_res_to_setup_mod_item);
+      }
+    }
   }
 }
 

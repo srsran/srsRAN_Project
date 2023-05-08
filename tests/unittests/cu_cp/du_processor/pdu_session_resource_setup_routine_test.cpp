@@ -49,19 +49,6 @@ protected:
 
   bool procedure_ready() const { return t.ready(); }
 
-  bool was_pdu_session_resource_setup_successful() const
-  {
-    if (not t.ready()) {
-      return false;
-    }
-
-    if (t.get().pdu_session_res_failed_to_setup_items.size() > 0) {
-      return false;
-    }
-
-    return t.get().pdu_session_res_setup_response_items.size() > 0;
-  }
-
   // Return PDU session IDs that failed to be setup.
   std::list<unsigned> pdu_session_res_failed_to_setup()
   {
@@ -106,7 +93,7 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unco
   start_procedure(request);
 
   // nothing has failed to setup
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_received_then_setup_fails)
@@ -121,8 +108,8 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_receiv
 
   start_procedure(request);
 
-  // nothing has failed to setup
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  // PDU session resource setup failed.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_received_then_setup_fails)
@@ -136,6 +123,7 @@ TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_rec
   set_expected_results(bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
   start_procedure(request);
 
+  // PDU session resource setup failed.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
@@ -150,8 +138,22 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure
   set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
   start_procedure(request);
 
-  // nothing has failed to setup
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  // Verify content of bearer modification request.
+  ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+  const auto& bearer_ctxt_mod_req = e1ap_ctrl_notifier.second_e1ap_request.value();
+  ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->pdu_session_id,
+            uint_to_pdu_session_id(1));
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->drb_to_modify_list_ng_ran.size(),
+            1);
+
+  // PDU session resource setup failed.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setup_fails)
@@ -165,8 +167,8 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setu
   set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
   start_procedure(request);
 
-  // nothing has failed to setup
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  // PDU session resource setup failed.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_setup_succeeds)
@@ -178,10 +180,21 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
   bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
   bearer_context_outcome_t bearer_context_modification_outcome{true};
   set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+
   start_procedure(request);
 
+  // Verify content of Bearer modification request.
+  ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+  const auto& bearer_context_mod_req = e1ap_ctrl_notifier.second_e1ap_request.value();
+  ASSERT_TRUE(bearer_context_mod_req.ng_ran_bearer_context_mod_request.has_value());
+  // The second bearer context modification includes a PDU session modification, but no setup.
+  ASSERT_EQ(bearer_context_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
+  ASSERT_EQ(bearer_context_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list.size(),
+            0);
+
   // nothing has failed to setup
-  ASSERT_TRUE(was_pdu_session_resource_setup_successful());
+  VERIFY_EQUAL(pdu_session_res_setup(), {1});
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_session_arrives_then_setup_fails)
@@ -196,13 +209,13 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_sess
   start_procedure(request);
 
   // nothing has failed to setup
-  ASSERT_TRUE(was_pdu_session_resource_setup_successful());
+  VERIFY_EQUAL(pdu_session_res_setup(), {1});
 
   // Inject same PDU session resource setup again.
   start_procedure(request);
 
   // 2nd setup attempt failed.
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 /// Test handling of PDU session setup request without any setup item.
@@ -221,8 +234,9 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
   // it should be ready immediately
   ASSERT_TRUE(procedure_ready());
 
-  // Nothing has been set up or failed
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  // Empy success and fail list.
+  VERIFY_EQUAL(pdu_session_res_setup(), {});
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
 }
 
 /// One PDU session with two QoS flows.
@@ -239,6 +253,18 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos
 
   // it should be ready immediately
   ASSERT_TRUE(procedure_ready());
+
+  // Verify Bearer Context Setup request for one DRB with two QoS flows.
+  ASSERT_TRUE(
+      variant_holds_alternative<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
+  const auto& context_setup_req =
+      variant_get<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
+  ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.size(), 1);
+  ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()->drb_to_setup_list_ng_ran.size(), 1);
+  ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()
+                ->drb_to_setup_list_ng_ran.begin()
+                ->qos_flow_info_to_be_setup.size(),
+            2);
 
   // Failed list empty.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
@@ -314,6 +340,9 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     VERIFY_EQUAL(pdu_session_res_setup(), {1});
   }
 
+  // clear stored E1AP requests for next procedure
+  e1ap_ctrl_notifier.reset();
+
   {
     // Generate 2nd request for different PDU session ID
     cu_cp_pdu_session_resource_setup_request request2 = generate_pdu_session_resource_setup(1);
@@ -333,6 +362,34 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
 
     start_procedure(request2);
     ASSERT_TRUE(procedure_ready());
+
+    // Verify content of first bearer context modifications which should be the setup of a new PDU session.
+    ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+        e1ap_ctrl_notifier.first_e1ap_request.value()));
+    const auto& context_mod_req =
+        variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value())
+            .ng_ran_bearer_context_mod_request;
+    ASSERT_TRUE(context_mod_req.has_value());
+    ASSERT_EQ(context_mod_req.value().pdu_session_res_to_setup_mod_list.size(), 1);
+    ASSERT_EQ(context_mod_req.value().pdu_session_res_to_modify_list.size(), 0);
+
+    // TODO: Verify content of UE context modification which should include the setup of DRB2.
+
+    // Verify content of second bearer modification request.
+    ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+    const auto& second_context_mod_req = e1ap_ctrl_notifier.second_e1ap_request.value();
+    ASSERT_TRUE(second_context_mod_req.ng_ran_bearer_context_mod_request.has_value());
+    // The second bearer context modification includes a PDU session modification again.
+    ASSERT_EQ(second_context_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(),
+              1);
+    ASSERT_EQ(second_context_mod_req.ng_ran_bearer_context_mod_request.value()
+                  .pdu_session_res_to_modify_list.begin()
+                  ->pdu_session_id,
+              uint_to_pdu_session_id(2));
+    ASSERT_EQ(second_context_mod_req.ng_ran_bearer_context_mod_request.value()
+                  .pdu_session_res_to_modify_list.begin()
+                  ->drb_to_modify_list_ng_ran.size(),
+              1);
 
     // PDU session setup for ID=2 succeeded.
     VERIFY_EQUAL(pdu_session_res_setup(), {2});

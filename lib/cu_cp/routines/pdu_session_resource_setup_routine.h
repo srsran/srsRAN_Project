@@ -18,7 +18,22 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Handles the setup of PDU session resources from the RRC viewpoint.
+/// \brief Handles the setup of PDU session resources from the CU-CP point of view.
+///
+/// The routine combines several (sub-)procedures involving the CU-UP and the DU.
+/// Depending on the current state of the UE and bearer context it may involve:
+/// * Initiate or modifiy the CU-UPs bearer context over E1AP
+/// * Modify the DU's UE context over F1AP
+/// * Modify the CU-UPs bearer context over E1AP (update TEIDs, etc)
+/// * Modify the UE's configuration over RRC signaling
+///
+/// All procedure are executed sequentially and their outcome and the contained values
+/// in the result messages may affect the next procedure's request content.
+/// The general paradigm of execution is that when processing the result message of
+/// one procedure in handle_procedure_response() the content for the subsequent request
+/// is already pre-filled based on the processed result. This avoid storing extra
+/// state information that needs to be stored and processed elsewhere.
+
 /// TODO Add seqdiag
 class pdu_session_resource_setup_routine
 {
@@ -38,7 +53,7 @@ public:
 
 private:
   void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
-  void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
+  void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
   bool valid_5qi(const qos_flow_setup_request_item& flow);
 
   cu_cp_pdu_session_resource_setup_response handle_pdu_session_resource_setup_result(bool success);

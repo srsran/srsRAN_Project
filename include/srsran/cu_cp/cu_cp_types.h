@@ -654,12 +654,9 @@ struct cu_cp_inactivity_notification {
 struct up_config_update {
   bool                          initial_context_creation = true;
   std::vector<pdu_session_id_t> pdu_sessions_to_setup_list;  // List of PDU sessions to be added.
-  std::vector<pdu_session_id_t> pdu_sessions_to_mod_list;    // List of PDU sessions to be modified.
   std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
-
-  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added.
-
-  std::vector<qos_flow_id_t> qos_flow_to_setup_list;
+  std::vector<drb_id_t>         drb_to_add_list;             // list of DRBs to be added.
+  std::vector<qos_flow_id_t>    qos_flow_to_setup_list;
 };
 
 } // namespace srs_cu_cp
