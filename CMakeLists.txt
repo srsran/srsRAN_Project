@@ -21,7 +21,7 @@ project(srsran)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 include(version) # sets version information
@@ -43,6 +43,7 @@ configure_file(
 ########################################################################
 
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
+option(ENABLE_WERROR         "Stop compilation on errors"               ON)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
 option(ENABLE_GCOV           "Enable code coverage"                     OFF)
@@ -58,6 +59,10 @@ option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              ON)
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
+
+if (ENABLE_WERROR)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif ()
 
 if (ENABLE_ASAN AND ENABLE_TSAN)
     message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
