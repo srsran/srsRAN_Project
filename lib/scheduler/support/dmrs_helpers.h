@@ -12,6 +12,7 @@
 
 #include "../cell/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
+#include "srsran/ran/dmrs.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/error_handling.h"
 
@@ -75,6 +76,40 @@ inline dmrs_information make_dmrs_info_common(const pdsch_time_domain_resource_a
   return dmrs;
 }
 
+inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                 pci_t                                        pci,
+                                                 dmrs_typeA_position                          dmrs_typeA_pos)
+{
+  dmrs_information dmrs{};
+
+  if (pdsch_td_cfg.map_type == sch_mapping_type::typeA) {
+    // Get DM-RS symbols.
+    pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
+    dmrscfg.typeA_pos                         = dmrs_typeA_pos;
+    dmrscfg.additional_position               = dmrs_additional_positions::pos1;
+    dmrscfg.last_symbol                       = pdsch_td_cfg.symbols.stop();
+    dmrscfg.lte_crs_match_around              = false;
+    dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
+    dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
+
+  } else {
+    srsran_terminate("Mapping type B not supported");
+  }
+
+  dmrs.config_type = dmrs_config_type::type1;
+  // TODO: See TS 38.211, 7.4.1.1.1.
+  dmrs.dmrs_scrambling_id = pci;
+  dmrs.low_papr_dmrs      = false;
+  dmrs.n_scid             = false;
+  // Refer to the table in TS 38.212, section 7.3.1.2.2.
+  dmrs.num_dmrs_cdm_grps_no_data = 2;
+  // Port 1000.
+  dmrs.dmrs_ports.resize(12);
+  dmrs.dmrs_ports.set(0);
+
+  return dmrs;
+}
+
 /// Helper factory of a default DM-RS Information object for DCI f1_0 or for when higher layer configuration parameters
 /// are not yet available.
 /// TODO: generalize to other cases (e.g. mapping type B).
@@ -124,6 +159,40 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
   // and the UE shall assume that the number of DM-RS CDM groups without data is 2 which corresponds to CDM group {0,1}
   // for all other cases.
   dmrs.num_dmrs_cdm_grps_no_data = pusch_td_cfg.symbols.length() == 2 ? 1 : 2;
+  // Port 1000.
+  dmrs.dmrs_ports.resize(12);
+  dmrs.dmrs_ports.set(0);
+
+  return dmrs;
+}
+
+inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                 pci_t                                        pci,
+                                                 dmrs_typeA_position                          dmrs_typeA_pos)
+{
+  dmrs_information dmrs{};
+
+  if (pusch_td_cfg.map_type == sch_mapping_type::typeA) {
+    // Get DM-RS symbols.
+    pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
+    dmrscfg.typeA_pos                         = dmrs_typeA_pos;
+    dmrscfg.additional_position               = dmrs_additional_positions::pos1;
+    dmrscfg.last_symbol                       = pusch_td_cfg.symbols.stop();
+    dmrscfg.lte_crs_match_around              = false;
+    dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
+    dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
+
+  } else {
+    srsran_terminate("Mapping type B not supported");
+  }
+
+  dmrs.config_type = dmrs_config_type::type1;
+  // TODO: See TS 38.211, 7.4.1.1.1.
+  dmrs.dmrs_scrambling_id = pci;
+  dmrs.low_papr_dmrs      = false;
+  dmrs.n_scid             = false;
+  // Refer to the table in TS 38.212, section 7.3.1.1.2.
+  dmrs.num_dmrs_cdm_grps_no_data = 2;
   // Port 1000.
   dmrs.dmrs_ports.resize(12);
   dmrs.dmrs_ports.set(0);

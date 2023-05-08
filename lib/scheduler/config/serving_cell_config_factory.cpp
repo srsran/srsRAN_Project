@@ -319,6 +319,7 @@ pusch_config srsran::config_helpers::make_default_pusch_config()
   // TODO: Verify whether its the correct Transmission Configuration we want to support.
   cfg.tx_cfg = pusch_config::tx_config::codebook;
   cfg.pusch_mapping_type_a_dmrs.emplace();
+  cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.emplace();
   cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos1;
 
   cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
