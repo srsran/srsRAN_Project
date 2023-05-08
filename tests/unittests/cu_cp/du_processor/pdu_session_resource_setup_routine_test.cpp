@@ -43,7 +43,7 @@ protected:
   void start_procedure(const cu_cp_pdu_session_resource_setup_request& msg)
   {
     t = routine_mng->start_pdu_session_resource_setup_routine(
-        msg, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_drb_manager);
+        msg, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 

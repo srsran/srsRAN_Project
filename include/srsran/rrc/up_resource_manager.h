@@ -18,15 +18,16 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief List of all supported 5QIs and their corresponding PDCP/SDAP configs
-struct drb_manager_cfg {
+struct up_resource_manager_cfg {
   std::map<five_qi_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
 };
 
-/// Object to manage DRB configs, allocation, creation and deletion for UE.
-class drb_manager
+/// Object to manage user-plane (UP) resources including configs, allocation, creation and deletion
+/// of PDU sessions, DRBs and QoS flows for a UE.
+class up_resource_manager
 {
 public:
-  virtual ~drb_manager() = default;
+  virtual ~up_resource_manager() = default;
 
   /// \brief Returns update UP config based on the PDU session resource setup message.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;

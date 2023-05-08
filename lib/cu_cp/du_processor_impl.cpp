@@ -262,7 +262,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   ue_context_release_request.cause    = request.cause;
 
   // Add PDU Session IDs
-  auto& drb_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_drb_manager();
+  auto& drb_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_up_resource_manager();
   ue_context_release_request.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
 
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
@@ -355,7 +355,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
   return routine_mng->start_pdu_session_resource_setup_routine(msg,
                                                                rrc_ue->get_rrc_ue_security_context().get_as_config(),
                                                                ue->get_rrc_ue_notifier(),
-                                                               rrc_ue->get_rrc_ue_drb_manager());
+                                                               rrc_ue->get_rrc_ue_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>
@@ -365,8 +365,8 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
 
-  return routine_mng->start_pdu_session_resource_release_routine(msg,
-                                                                 rrc->find_ue(msg.ue_index)->get_rrc_ue_drb_manager());
+  return routine_mng->start_pdu_session_resource_release_routine(
+      msg, rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager());
 }
 
 cu_cp_ue_context_release_complete
@@ -377,7 +377,7 @@ du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_
 
   cu_cp_ue_context_release_complete release_complete;
   release_complete.pdu_session_res_list_cxt_rel_cpl =
-      rrc->find_ue(cmd.ue_index)->get_rrc_ue_drb_manager().get_pdu_sessions();
+      rrc->find_ue(cmd.ue_index)->get_rrc_ue_up_resource_manager().get_pdu_sessions();
 
   // Call RRC UE notifier to release the UE and add the location info to the UE context release complete message
   release_complete.user_location_info = ue->get_rrc_ue_notifier().on_rrc_ue_release();
@@ -478,7 +478,7 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
     req.cause    = cause_t::radio_network;
 
     // Add PDU Session IDs
-    auto& drb_manager                    = rrc->find_ue(msg.ue_index)->get_rrc_ue_drb_manager();
+    auto& drb_manager                    = rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager();
     req.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
 
     ngap_ctrl_notifier.on_ue_context_release_request(req);

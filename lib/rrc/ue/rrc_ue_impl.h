@@ -50,7 +50,7 @@ public:
   rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
+  up_resource_manager&                  get_rrc_ue_up_resource_manager() override { return context.get_up_manager(); }
   security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,

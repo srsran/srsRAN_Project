@@ -28,7 +28,7 @@ protected:
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
 
-    t = routine_mng->start_pdu_session_resource_release_routine(msg, *rrc_ue_drb_manager);
+    t = routine_mng->start_pdu_session_resource_release_routine(msg, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 

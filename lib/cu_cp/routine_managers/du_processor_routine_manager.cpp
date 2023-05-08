@@ -35,7 +35,7 @@ du_processor_routine_manager::start_pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg,
     const srsran::security::sec_as_config&          security_cfg,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_ctrl_notifier,
-    drb_manager&                                    rrc_ue_drb_manager)
+    up_resource_manager&                            rrc_ue_up_resource_manager)
 {
   return launch_async<pdu_session_resource_setup_routine>(setup_msg,
                                                           ue_manager.get_ue_config(),
@@ -43,17 +43,17 @@ du_processor_routine_manager::start_pdu_session_resource_setup_routine(
                                                           e1ap_ctrl_notifier,
                                                           f1ap_ue_ctxt_notifier,
                                                           rrc_ue_ctrl_notifier,
-                                                          rrc_ue_drb_manager,
+                                                          rrc_ue_up_resource_manager,
                                                           logger);
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>
 du_processor_routine_manager::start_pdu_session_resource_release_routine(
     const cu_cp_pdu_session_resource_release_command& release_cmd,
-    drb_manager&                                      rrc_ue_drb_manager)
+    up_resource_manager&                              rrc_ue_up_resource_manager)
 {
   return launch_async<pdu_session_resource_release_routine>(
-      release_cmd, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_drb_manager, logger);
+      release_cmd, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_up_resource_manager, logger);
 }
 
 async_task<void>

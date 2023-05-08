@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "drb_manager.h"
 #include "rrc_cell_context.h"
+#include "up_resource_manager.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
@@ -279,7 +279,7 @@ public:
   virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
+  virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,

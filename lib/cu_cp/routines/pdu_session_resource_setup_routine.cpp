@@ -21,7 +21,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
-    drb_manager&                                    rrc_ue_drb_manager_,
+    up_resource_manager&                            rrc_ue_up_resource_manager_,
     srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
   ue_cfg(ue_cfg_),
@@ -29,7 +29,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   rrc_ue_notifier(rrc_ue_notifier_),
-  rrc_ue_drb_manager(rrc_ue_drb_manager_),
+  rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
 }
@@ -216,7 +216,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const cu_cp_ue_context_modification_response&   ue_context_modification_response,
-                               drb_manager&                                    rrc_ue_drb_manager,
+                               up_resource_manager&                            rrc_ue_up_resource_manager,
                                srslog::basic_logger&                           logger)
 {
   // Fail procedure if (single) DRB couldn't be setup
@@ -233,7 +233,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
   // Each DRB configured in the DU needs to be modified in the CU-UP as well.
   for (const auto& drb_id : ue_context_modification_response.drbs_setup_mod_list) {
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
-    e1ap_mod_item.pdu_session_id = rrc_ue_drb_manager.get_pdu_session_id(drb_id.drb_id);
+    e1ap_mod_item.pdu_session_id = rrc_ue_up_resource_manager.get_pdu_session_id(drb_id.drb_id);
 
     for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
       e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
@@ -291,7 +291,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
     // Make sure PDU session does not already exist.
-    if (!rrc_ue_drb_manager.get_drbs(setup_item.pdu_session_id).empty()) {
+    if (!rrc_ue_up_resource_manager.get_drbs(setup_item.pdu_session_id).empty()) {
       logger.error(
           "ue={}: \"{}\" PDU session ID {} already exists.", setup_msg.ue_index, name(), setup_item.pdu_session_id);
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -332,7 +332,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config = rrc_ue_drb_manager.calculate_update(setup_msg);
+    next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg);
   }
 
   // sanity check passed, decide whether we have to create a Bearer Context at the CU-UP or modify an existing one.
@@ -381,7 +381,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   bearer_context_modification_request,
                                   setup_msg,
                                   ue_context_modification_response,
-                                  rrc_ue_drb_manager,
+                                  rrc_ue_up_resource_manager,
                                   logger) == false) {
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -412,11 +412,11 @@ void pdu_session_resource_setup_routine::operator()(
       for (const auto& drb_to_add : next_config.drb_to_add_list) {
         cu_cp_drb_to_add_mod drb_to_add_mod;
         drb_to_add_mod.drb_id   = drb_to_add;
-        drb_to_add_mod.pdcp_cfg = rrc_ue_drb_manager.get_pdcp_config(drb_to_add);
+        drb_to_add_mod.pdcp_cfg = rrc_ue_up_resource_manager.get_pdcp_config(drb_to_add);
 
         // Add CN association and SDAP config
         cu_cp_cn_assoc cn_assoc;
-        cn_assoc.sdap_cfg       = rrc_ue_drb_manager.get_sdap_config(drb_to_add);
+        cn_assoc.sdap_cfg       = rrc_ue_up_resource_manager.get_sdap_config(drb_to_add);
         drb_to_add_mod.cn_assoc = cn_assoc;
 
         cu_cp_radio_bearer_config radio_bearer_config;
@@ -555,8 +555,8 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     for (const auto& drb_to_setup : next_config.drb_to_add_list) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
       e1ap_drb_setup_item.drb_id   = drb_to_setup;
-      e1ap_drb_setup_item.sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_setup);
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, rrc_ue_drb_manager.get_pdcp_config(drb_to_setup));
+      e1ap_drb_setup_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup);
+      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup));
 
       e1ap_cell_group_info_item e1ap_cell_group_item;
       e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
@@ -615,18 +615,19 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
     // Add DRBs for this PDU session.
     for (const auto& drb_to_setup : next_config.drb_to_add_list) {
       // Make sure DRB belongs to this PDU session.
-      if (rrc_ue_drb_manager.get_pdu_session_id(drb_to_setup) == pdu_session_id) {
+      if (rrc_ue_up_resource_manager.get_pdu_session_id(drb_to_setup) == pdu_session_id) {
         e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item;
         drb_to_setup_mod_item.drb_id   = drb_to_setup;
-        drb_to_setup_mod_item.sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_setup);
+        drb_to_setup_mod_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup);
 
-        fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg, rrc_ue_drb_manager.get_pdcp_config(drb_to_setup));
+        fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg,
+                                  rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup));
 
         e1ap_cell_group_info_item e1ap_cell_group_item;
         e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
         drb_to_setup_mod_item.cell_group_info.push_back(e1ap_cell_group_item);
 
-        std::vector<qos_flow_id_t> mapped_flows = rrc_ue_drb_manager.get_mapped_qos_flows(pdu_session_id);
+        std::vector<qos_flow_id_t> mapped_flows = rrc_ue_up_resource_manager.get_mapped_qos_flows(pdu_session_id);
         for (const auto& qos_flow_to_setup : next_config.qos_flow_to_setup_list) {
           // Make sure QoS flow belongs to this PDU session/DRB.
           if (std::find(mapped_flows.begin(), mapped_flows.end(), qos_flow_to_setup) != mapped_flows.end()) {
@@ -654,10 +655,11 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
 bool pdu_session_resource_setup_routine::valid_5qi(const qos_flow_setup_request_item& flow)
 {
   if (flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-    return rrc_ue_drb_manager.valid_5qi(flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi);
+    return rrc_ue_up_resource_manager.valid_5qi(
+        flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi);
   } else if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
     if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
-      return rrc_ue_drb_manager.valid_5qi(
+      return rrc_ue_up_resource_manager.valid_5qi(
           flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.value());
     }
   } else {

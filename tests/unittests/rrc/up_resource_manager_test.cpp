@@ -9,9 +9,9 @@
  */
 
 #include "../cu_cp/du_processor_test_messages.h"
-#include "../lib/rrc/ue/drb_manager_impl.h"
+#include "../lib/rrc/ue/up_resource_manager_impl.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/rrc/drb_manager.h"
+#include "srsran/rrc/up_resource_manager.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -19,7 +19,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 /// Fixture class RRC Reconfiguration tests preparation (to bring UE in RRC connected state)
-class drb_manager_test : public ::testing::Test
+class up_resource_manager_test : public ::testing::Test
 {
 protected:
   static void SetUpTestSuite() { srslog::init(); }
@@ -30,12 +30,12 @@ protected:
     rrc_logger.set_level(srslog::basic_levels::debug);
     rrc_logger.set_hex_dump_max_size(32);
 
-    drb_manager_cfg cfg;
+    up_resource_manager_cfg cfg;
     cfg.five_qi_config[uint_to_five_qi(9)] = {};
     pdcp_config p_cfg;
     p_cfg.rb_type                               = pdcp_rb_type::drb;
     cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
-    manager                                     = std::make_unique<drb_manager_impl>(cfg);
+    manager                                     = std::make_unique<up_resource_manager_impl>(cfg);
   }
 
   void TearDown() override
@@ -45,10 +45,10 @@ protected:
   }
 
 public:
-  std::unique_ptr<drb_manager> manager;
+  std::unique_ptr<up_resource_manager> manager;
 };
 
-TEST_F(drb_manager_test, when_initial_pdu_session_is_created_new_drb_is_set_up)
+TEST_F(up_resource_manager_test, when_initial_pdu_session_is_created_new_drb_is_set_up)
 {
   cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
 
@@ -63,7 +63,7 @@ TEST_F(drb_manager_test, when_initial_pdu_session_is_created_new_drb_is_set_up)
   ASSERT_EQ(manager->get_nof_drbs(), 1);
 }
 
-TEST_F(drb_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
+TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
 {
   cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
 
@@ -76,7 +76,7 @@ TEST_F(drb_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
   ASSERT_EQ(manager->get_nof_drbs(), 1);
 }
 
-TEST_F(drb_manager_test, when_drb_is_added_pdcp_config_is_valid)
+TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
 {
   cu_cp_pdu_session_resource_setup_request msg    = generate_pdu_session_resource_setup();
   up_config_update                         update = manager->calculate_update(msg);

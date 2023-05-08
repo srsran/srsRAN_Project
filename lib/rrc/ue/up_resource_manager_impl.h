@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/rrc/drb_manager.h"
+#include "srsran/rrc/up_resource_manager.h"
 #include <map>
 
 namespace srsran {
@@ -30,11 +30,11 @@ struct drb_context {
 };
 
 /// DRB manager implementation
-class drb_manager_impl final : public drb_manager
+class up_resource_manager_impl final : public up_resource_manager
 {
 public:
-  drb_manager_impl(const drb_manager_cfg& cfg);
-  ~drb_manager_impl() = default;
+  up_resource_manager_impl(const up_resource_manager_cfg& cfg);
+  ~up_resource_manager_impl() = default;
 
   up_config_update              calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
   pdcp_config                   get_pdcp_config(const drb_id_t drb_id) override;
@@ -56,8 +56,8 @@ private:
   pdcp_config   set_rrc_pdcp_config(const five_qi_t five_qi);
   sdap_config_t set_rrc_sdap_config(const drb_context& context);
 
-  drb_manager_cfg       cfg;
-  srslog::basic_logger& logger;
+  up_resource_manager_cfg cfg;
+  srslog::basic_logger&   logger;
 
   std::map<pdu_session_id_t, bool> pdu_sessions; // Map with active flag for existing PDU sessions
   std::map<drb_id_t, drb_context>  drbs;         // Stores existing DRBs

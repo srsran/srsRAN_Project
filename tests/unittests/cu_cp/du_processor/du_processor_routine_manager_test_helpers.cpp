@@ -24,7 +24,7 @@ du_processor_routine_manager_test::du_processor_routine_manager_test()
   drb_cfg.five_qi_config[uint_to_five_qi(9)]                 = {};
   drb_cfg.five_qi_config[uint_to_five_qi(9)].pdcp.tx.sn_size = pdcp_sn_size::size12bits;
   drb_cfg.five_qi_config[uint_to_five_qi(9)].pdcp.rx.sn_size = pdcp_sn_size::size12bits;
-  rrc_ue_drb_manager                                         = std::make_unique<drb_manager_impl>(drb_cfg);
+  rrc_ue_up_resource_manager                                 = std::make_unique<up_resource_manager_impl>(drb_cfg);
   // create routine manager
   routine_mng = std::make_unique<du_processor_routine_manager>(
       e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_du_notifier, ue_mng, cu_cp_logger);

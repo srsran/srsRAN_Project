@@ -8,16 +8,17 @@
  *
  */
 
-#include "drb_manager_impl.h"
+#include "up_resource_manager_impl.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
+up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg& cfg_) :
+  cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
 }
 
-up_config_update drb_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
+up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
   up_config_update config;
 
@@ -78,12 +79,11 @@ up_config_update drb_manager_impl::calculate_update(const cu_cp_pdu_session_reso
   return config;
 }
 
-drb_id_t drb_manager_impl::allocate_drb_id()
+drb_id_t up_resource_manager_impl::allocate_drb_id()
 {
   if (drbs.size() >= MAX_NOF_DRBS) {
     logger.error("No more DRBs available");
     return drb_id_t::invalid;
-    ;
   }
 
   drb_id_t new_drb_id = drb_id_t::drb1;
@@ -102,7 +102,7 @@ drb_id_t drb_manager_impl::allocate_drb_id()
   return new_drb_id;
 }
 
-sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
+sdap_config_t up_resource_manager_impl::set_rrc_sdap_config(const drb_context& context)
 {
   sdap_config_t sdap_cfg;
   sdap_cfg.pdu_session = context.pdu_session_id;
@@ -115,7 +115,7 @@ sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
   return sdap_cfg;
 }
 
-pdcp_config drb_manager_impl::set_rrc_pdcp_config(five_qi_t five_qi)
+pdcp_config up_resource_manager_impl::set_rrc_pdcp_config(five_qi_t five_qi)
 {
   srsran_assert(cfg.five_qi_config.find(five_qi) != cfg.five_qi_config.end(),
                 "Could not find PDCP configuration. 5QI {}",
@@ -124,7 +124,7 @@ pdcp_config drb_manager_impl::set_rrc_pdcp_config(five_qi_t five_qi)
   return cfg.five_qi_config.at(five_qi).pdcp;
 }
 
-pdu_session_id_t drb_manager_impl::get_pdu_session_id(drb_id_t drb_id)
+pdu_session_id_t up_resource_manager_impl::get_pdu_session_id(drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -133,7 +133,7 @@ pdu_session_id_t drb_manager_impl::get_pdu_session_id(drb_id_t drb_id)
   return drbs[drb_id].pdu_session_id;
 }
 
-std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(drb_id_t drb_id)
+std::vector<qos_flow_id_t> up_resource_manager_impl::get_mapped_qos_flows(drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -142,7 +142,7 @@ std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(drb_id_t drb_i
   return drbs[drb_id].mapped_qos_flows;
 }
 
-std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(pdu_session_id_t pdu_session_id)
+std::vector<qos_flow_id_t> up_resource_manager_impl::get_mapped_qos_flows(pdu_session_id_t pdu_session_id)
 {
   std::vector<qos_flow_id_t> mapped_flows;
 
@@ -156,7 +156,7 @@ std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(pdu_session_id
   return mapped_flows;
 }
 
-std::vector<drb_id_t> drb_manager_impl::get_drbs(pdu_session_id_t pdu_session_id)
+std::vector<drb_id_t> up_resource_manager_impl::get_drbs(pdu_session_id_t pdu_session_id)
 {
   std::vector<drb_id_t> mapped_drbs;
 
@@ -168,7 +168,7 @@ std::vector<drb_id_t> drb_manager_impl::get_drbs(pdu_session_id_t pdu_session_id
   return mapped_drbs;
 }
 
-pdcp_config drb_manager_impl::get_pdcp_config(drb_id_t drb_id)
+pdcp_config up_resource_manager_impl::get_pdcp_config(drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -177,7 +177,7 @@ pdcp_config drb_manager_impl::get_pdcp_config(drb_id_t drb_id)
   return drbs[drb_id].pdcp_cfg;
 }
 
-sdap_config_t drb_manager_impl::get_sdap_config(drb_id_t drb_id)
+sdap_config_t up_resource_manager_impl::get_sdap_config(drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -186,7 +186,7 @@ sdap_config_t drb_manager_impl::get_sdap_config(drb_id_t drb_id)
   return drbs[drb_id].sdap_cfg;
 }
 
-s_nssai_t drb_manager_impl::get_s_nssai(drb_id_t drb_id)
+s_nssai_t up_resource_manager_impl::get_s_nssai(drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -195,17 +195,17 @@ s_nssai_t drb_manager_impl::get_s_nssai(drb_id_t drb_id)
   return drbs[drb_id].s_nssai;
 }
 
-size_t drb_manager_impl::get_nof_drbs()
+size_t up_resource_manager_impl::get_nof_drbs()
 {
   return drbs.size();
 }
 
-size_t drb_manager_impl::get_nof_pdu_sessions()
+size_t up_resource_manager_impl::get_nof_pdu_sessions()
 {
   return pdu_sessions.size();
 }
 
-std::vector<pdu_session_id_t> drb_manager_impl::get_pdu_sessions()
+std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
 {
   std::vector<pdu_session_id_t> pdu_session_ids;
   for (const auto& session : pdu_sessions) {
@@ -215,7 +215,7 @@ std::vector<pdu_session_id_t> drb_manager_impl::get_pdu_sessions()
   return pdu_session_ids;
 }
 
-bool drb_manager_impl::valid_5qi(five_qi_t five_qi)
+bool up_resource_manager_impl::valid_5qi(five_qi_t five_qi)
 {
   if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {
     logger.warning("No config for 5QI={} present", five_qi);

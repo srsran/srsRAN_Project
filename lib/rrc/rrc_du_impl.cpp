@@ -48,10 +48,10 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   }
 
   // create UE object
-  ue_index_t   ue_index         = msg.ue_index;
-  rrc_ue_cfg_t ue_cfg           = {};
-  ue_cfg.drb_cfg.five_qi_config = cfg.drb_config;
-  auto res                      = ue_db.emplace(ue_index,
+  ue_index_t   ue_index        = msg.ue_index;
+  rrc_ue_cfg_t ue_cfg          = {};
+  ue_cfg.up_cfg.five_qi_config = cfg.drb_config;
+  auto res                     = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
