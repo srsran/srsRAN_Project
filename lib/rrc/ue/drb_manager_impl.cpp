@@ -17,9 +17,11 @@ drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), log
 {
 }
 
-std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu)
+up_config_update drb_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
-  std::vector<drb_id_t> drb_to_add_list;
+  up_config_update config;
+
+  config.initial_context_creation = pdu_sessions.empty();
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
   for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
@@ -45,7 +47,7 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         drb_id_t id = allocate_drb_id();
         if (id == drb_id_t::invalid) {
           logger.error("No more DRBs available");
-          return drb_to_add_list;
+          return config;
         }
 
         drb_context drb_ctx;
@@ -64,14 +66,14 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         five_qi_map.emplace(drb_ctx.five_qi, id);
 
         // enqueue as DRB to be added
-        drb_to_add_list.push_back(id);
+        config.drb_to_add_list.push_back(id);
       }
     }
 
     pdu_sessions.emplace(pdu_session.pdu_session_id, true);
   }
 
-  return drb_to_add_list;
+  return config;
 }
 
 drb_id_t drb_manager_impl::allocate_drb_id()

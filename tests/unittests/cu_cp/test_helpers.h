@@ -83,27 +83,50 @@ private:
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
-// Stuct to configure Bearer Context Setup result content.
-struct bearer_context_setup_outcome_t {
+// Stuct to configure Bearer Context Setup/Modification result content.
+struct bearer_context_outcome_t {
   bool                outcome = false;
   std::list<unsigned> pdu_sessions_success_list; // List of PDU session IDs that were successful to setup.
-  std::list<unsigned> pdu_sessions_failed_list;
-};
-
-struct bearer_context_modification_outcome_t {
-  bool outcome = false;
+  std::list<unsigned> pdu_sessions_failed_list;  // List of PDU sessions IDs that failed to be setup.
+  // std::list<unsigned> pdu_sessions_failed_to_modify_list;
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
 
-  void set_first_message_outcome(variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> outcome)
-  {
-    first_e1ap_message = outcome;
-  }
+  void set_first_message_outcome(const bearer_context_outcome_t& outcome) { first_e1ap_message = outcome; }
 
-  void set_second_message_outcome(bearer_context_modification_outcome_t outcome) { second_e1ap_message = outcome; }
+  void set_second_message_outcome(const bearer_context_outcome_t& outcome) { second_e1ap_message = outcome; }
+
+  template <typename T>
+  void fill_bearer_context_response(T& result, const bearer_context_outcome_t& outcome)
+  {
+    result.success = outcome.outcome;
+    for (const auto& id : outcome.pdu_sessions_success_list) {
+      // add only the most relevant items
+      e1ap_pdu_session_resource_setup_modification_item res_setup_item;
+      res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
+
+      // add a single DRB
+      drb_id_t                   drb_id = drb_id_t::drb1;
+      e1ap_drb_setup_item_ng_ran drb_item;
+      drb_item.drb_id = drb_id;
+
+      // add one UP transport item
+      e1ap_up_params_item up_item;
+      drb_item.ul_up_transport_params.push_back(up_item);
+      res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+
+      result.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
+    }
+
+    for (const auto& id : outcome.pdu_sessions_failed_list) {
+      e1ap_pdu_session_resource_failed_item res_failed_item;
+      res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
+      result.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
+    }
+  }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
@@ -114,32 +137,12 @@ public:
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      const auto& result = variant_get<bearer_context_setup_outcome_t>(first_e1ap_message);
-      res.success        = result.outcome;
-      if (res.success) {
-        for (const auto& id : result.pdu_sessions_success_list) {
-          // add only the most relevant items
-          e1ap_pdu_session_resource_setup_modification_item res_setup_item;
-          res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
+      if (first_e1ap_message.has_value()) {
+        const auto& response = first_e1ap_message.value();
+        fill_bearer_context_response(res, response);
 
-          // add a single DRB
-          drb_id_t                   drb_id = drb_id_t::drb1;
-          e1ap_drb_setup_item_ng_ran drb_item;
-          drb_item.drb_id = drb_id;
-
-          // add one UP transport item
-          e1ap_up_params_item up_item;
-          drb_item.ul_up_transport_params.push_back(up_item);
-          res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
-
-          res.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
-        }
-
-        for (const auto& id : result.pdu_sessions_failed_list) {
-          e1ap_pdu_session_resource_failed_item res_failed_item;
-          res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
-          res.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
-        }
+        // Invalidate E1 response so it's not consumed again.
+        first_e1ap_message.reset();
       }
 
       CORO_RETURN(res);
@@ -155,21 +158,16 @@ public:
                          this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (variant_holds_alternative<bearer_context_modification_outcome_t>(first_e1ap_message)) {
+      if (first_e1ap_message.has_value()) {
         // first E1AP message is already a bearer modification
-        const auto& result = variant_get<bearer_context_modification_outcome_t>(first_e1ap_message);
-        res.success        = result.outcome;
-      } else {
-        // second E1AP message is the bearer modification
-        res.success = second_e1ap_message.outcome;
-      }
-
-      if (res.success) {
-        // generate random ids to make sure its not only working for hardcoded values
-        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
-        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
-
-        res = generate_e1ap_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+        const auto& response = first_e1ap_message.value();
+        fill_bearer_context_response(res, response);
+        first_e1ap_message.reset(); // Make sure it's not consumed again.
+      } else if (second_e1ap_message.has_value()) {
+        // second E1AP message is a bearer modification
+        const auto& response = second_e1ap_message.value();
+        fill_bearer_context_response(res, response);
+        second_e1ap_message.reset(); // Make sure it's not consumed again.
       }
 
       CORO_RETURN(res);
@@ -187,9 +185,9 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
-  variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> first_e1ap_message;
-  bearer_context_modification_outcome_t                                          second_e1ap_message;
+  srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST");
+  optional<bearer_context_outcome_t> first_e1ap_message;
+  optional<bearer_context_outcome_t> second_e1ap_message;
 };
 
 struct dummy_du_processor_ngap_control_notifier : public du_processor_ngap_control_notifier {

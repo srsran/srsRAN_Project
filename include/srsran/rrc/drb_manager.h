@@ -28,8 +28,8 @@ class drb_manager
 public:
   virtual ~drb_manager() = default;
 
-  /// \brief Return list of DRBs to be added based on the PDU session resource setup message.
-  virtual std::vector<drb_id_t> calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+  /// \brief Returns update UP config based on the PDU session resource setup message.
+  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
 
   /// \brief Return PDPC config for a given DRB.
   virtual pdcp_config get_pdcp_config(drb_id_t drb_id) = 0;

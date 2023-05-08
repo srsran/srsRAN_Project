@@ -18,25 +18,36 @@ using namespace srs_cu_cp;
 
 /// Note: Check if UE ID is valid is done by caller. Injection of invalid ue_index results in assertion.
 
+// Helper function to verify that two lists are identical.
+template <typename T>
+void VERIFY_EQUAL(const T& result, const T& expected)
+{
+  ASSERT_EQ(result.size(), expected.size());
+  ASSERT_TRUE(std::equal(result.begin(), result.end(), expected.begin()));
+}
+
 class pdu_session_resource_setup_test : public du_processor_routine_manager_test
 {
 protected:
-  void start_procedure(
-      const cu_cp_pdu_session_resource_setup_request&                                msg,
-      variant<bearer_context_setup_outcome_t, bearer_context_modification_outcome_t> first_e1ap_message_outcome,
-      bool                                                                           ue_context_modification_outcome,
-      bearer_context_modification_outcome_t                                          second_e1ap_message_outcome,
-      bool                                                                           rrc_reconfiguration_outcome)
+  void set_expected_results(const bearer_context_outcome_t& first_e1ap_message_outcome,
+                            bool                            ue_context_modification_outcome,
+                            const bearer_context_outcome_t& second_e1ap_message_outcome,
+                            bool                            rrc_reconfiguration_outcome)
   {
     e1ap_ctrl_notifier.set_first_message_outcome(first_e1ap_message_outcome);
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
     e1ap_ctrl_notifier.set_second_message_outcome(second_e1ap_message_outcome);
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(rrc_reconfiguration_outcome);
+  }
 
+  void start_procedure(const cu_cp_pdu_session_resource_setup_request& msg)
+  {
     t = routine_mng->start_pdu_session_resource_setup_routine(
         msg, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_drb_manager);
     t_launcher.emplace(t);
   }
+
+  bool procedure_ready() const { return t.ready(); }
 
   bool was_pdu_session_resource_setup_successful() const
   {
@@ -51,10 +62,27 @@ protected:
     return t.get().pdu_session_res_setup_response_items.size() > 0;
   }
 
-  size_t num_pdu_session_res_failed_to_setup_size() { return t.get().pdu_session_res_failed_to_setup_items.size(); }
+  // Return PDU session IDs that failed to be setup.
+  std::list<unsigned> pdu_session_res_failed_to_setup()
+  {
+    std::list<unsigned> failed_list;
+    for (const auto& item : t.get().pdu_session_res_failed_to_setup_items) {
+      failed_list.push_back(pdu_session_id_to_uint(item.pdu_session_id));
+    }
+    return failed_list;
+  }
 
-  size_t num_pdu_session_res_setup_size() { return t.get().pdu_session_res_setup_response_items.size(); }
+  // Return PDU session IDs that succeeded to be setup.
+  std::list<unsigned> pdu_session_res_setup()
+  {
+    std::list<unsigned> setup_list;
+    for (const auto& item : t.get().pdu_session_res_setup_response_items) {
+      setup_list.push_back(pdu_session_id_to_uint(item.pdu_session_id));
+    }
+    return setup_list;
+  }
 
+private:
   async_task<cu_cp_pdu_session_resource_setup_response>                   t;
   optional<lazy_task_launcher<cu_cp_pdu_session_resource_setup_response>> t_launcher;
 };
@@ -70,9 +98,12 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unco
       .five_qi = uint_to_five_qi(99);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{false, {}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{false};
-  this->start_procedure(request, bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
+  bearer_context_outcome_t bearer_context_setup_outcome{false, {}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{false};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+
+  // it should be ready immediately
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -84,9 +115,11 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_receiv
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{false, {}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{false};
-  this->start_procedure(request, bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
+  bearer_context_outcome_t bearer_context_setup_outcome{false, {}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{false};
+  set_expected_results(bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
+
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -98,12 +131,12 @@ TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_rec
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {1}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{false};
-  this->start_procedure(request, bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{false};
+  set_expected_results(bearer_context_setup_outcome, false, bearer_context_modification_outcome, false);
+  start_procedure(request);
 
-  // nothing has failed to setup
-  ASSERT_FALSE(was_pdu_session_resource_setup_successful());
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure_received_then_setup_fails)
@@ -112,9 +145,10 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {1}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{false};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{false, {}, {1}};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -126,9 +160,10 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setu
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {1}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, false);
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -140,9 +175,10 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {1}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_setup_successful());
@@ -154,15 +190,16 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_sess
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {1}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_setup_successful());
 
   // Inject same PDU session resource setup again.
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // 2nd setup attempt failed.
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -176,12 +213,13 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
   request.ue_index                                 = uint_to_ue_index(0);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t        bearer_context_setup_outcome{true, {}, {}};
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {}, {}};
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // it should be ready immediately
-  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(procedure_ready());
 
   // Nothing has been set up or failed
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
@@ -194,18 +232,19 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(1, 2);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // first session success, second failed
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // first session success, second failed
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // it should be ready immediately
-  ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(procedure_ready());
 
-  // One PDU session failed to be setup.
-  ASSERT_EQ(num_pdu_session_res_failed_to_setup_size(), 0);
+  // Failed list empty.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
 
   // One PDU session succeeded to be setup.
-  ASSERT_EQ(num_pdu_session_res_setup_size(), 1);
+  VERIFY_EQUAL(pdu_session_res_setup(), {1});
 }
 
 /// Test with multiple PDU sessions in same request.
@@ -216,18 +255,19 @@ TEST_F(pdu_session_resource_setup_test,
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(2);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t bearer_context_setup_outcome{true, {1}, {2}}; // first session success, second failed
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {2}}; // first session success, second failed
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  this->start_procedure(request);
 
   // it should be ready immediately
-  ASSERT_TRUE(t.ready());
-
-  // One PDU session failed to be setup.
-  ASSERT_EQ(num_pdu_session_res_failed_to_setup_size(), 1);
+  ASSERT_TRUE(procedure_ready());
 
   // One PDU session succeeded to be setup.
-  ASSERT_EQ(num_pdu_session_res_setup_size(), 1);
+  VERIFY_EQUAL(pdu_session_res_setup(), {1});
+
+  // One PDU session failed to be setup.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {2});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_requested_and_both_succeed_setup_succeeds)
@@ -236,16 +276,65 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_reque
   cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(2);
 
   // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_setup_outcome_t bearer_context_setup_outcome{true, {1, 2}, {}}; // first session success, second failed
-  bearer_context_modification_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(request, bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  bearer_context_outcome_t bearer_context_setup_outcome{true, {1, 2}, {}}; // first session success, second failed
+  bearer_context_outcome_t bearer_context_modification_outcome{true};
+  set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+  start_procedure(request);
 
   // it should be ready immediately
-  ASSERT_TRUE(t.ready());
-
-  // Zero PDU session failed to be setup.
-  ASSERT_EQ(num_pdu_session_res_failed_to_setup_size(), 0);
+  ASSERT_TRUE(procedure_ready());
 
   // Two PDU session succeeded to be setup.
-  ASSERT_EQ(num_pdu_session_res_setup_size(), 2);
+  VERIFY_EQUAL(pdu_session_res_setup(), {1, 2});
+
+  // Zero PDU session failed to be setup.
+  VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
+}
+
+/// Test with two consecutive requests. Both with one PDU session.
+TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_bearer_setup_and_modification_succeed)
+{
+  // Initial PDU SESSION RESOURCE SETUP procdure using default executor.
+  {
+    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup(1);
+
+    bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}}; // PDU session 1 setup success, no failure
+    bearer_context_outcome_t bearer_context_modification_outcome{true};
+
+    set_expected_results(bearer_context_setup_outcome, true, bearer_context_modification_outcome, true);
+
+    // it should be ready immediately
+    start_procedure(request);
+    ASSERT_TRUE(procedure_ready());
+
+    // Failed list empty.
+    VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
+
+    // First PDU session setup succeeded.
+    VERIFY_EQUAL(pdu_session_res_setup(), {1});
+  }
+
+  {
+    // Generate 2nd request for different PDU session ID
+    cu_cp_pdu_session_resource_setup_request request2 = generate_pdu_session_resource_setup(1);
+    request2.pdu_session_res_setup_items.clear();
+
+    // Add entry for PDU session ID=2.
+    cu_cp_pdu_session_res_setup_item new_session;
+    new_session.pdu_session_id = uint_to_pdu_session_id(2);
+    request2.pdu_session_res_setup_items.emplace(new_session.pdu_session_id, new_session);
+
+    bearer_context_outcome_t first_bearer_context_modification_outcome{
+        true, {2}, {}}; // PDU session 2 setup success, no failure
+    bearer_context_outcome_t second_bearer_context_modification_outcome{true};
+
+    set_expected_results(
+        first_bearer_context_modification_outcome, true, second_bearer_context_modification_outcome, true);
+
+    start_procedure(request2);
+    ASSERT_TRUE(procedure_ready());
+
+    // PDU session setup for ID=2 succeeded.
+    VERIFY_EQUAL(pdu_session_res_setup(), {2});
+  }
 }

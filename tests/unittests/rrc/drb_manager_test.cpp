@@ -56,8 +56,8 @@ TEST_F(drb_manager_test, when_initial_pdu_session_is_created_new_drb_is_set_up)
   ASSERT_EQ(manager->get_nof_drbs(), 0);
 
   // single DRB could be added
-  std::vector<drb_id_t> drbs_to_add = manager->calculate_drb_to_add_list(msg);
-  ASSERT_EQ(drbs_to_add.size(), 1);
+  up_config_update update = manager->calculate_update(msg);
+  ASSERT_EQ(update.drb_to_add_list.size(), 1);
 
   // Verify DRB was added
   ASSERT_EQ(manager->get_nof_drbs(), 1);
@@ -68,20 +68,20 @@ TEST_F(drb_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
   cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
 
   // single DRB should be added
-  ASSERT_EQ(manager->calculate_drb_to_add_list(msg).size(), 1);
+  ASSERT_EQ(manager->calculate_update(msg).drb_to_add_list.size(), 1);
 
   // if same request is received again, no DRB should be added
-  ASSERT_EQ(manager->calculate_drb_to_add_list(msg).size(), 0);
+  ASSERT_EQ(manager->calculate_update(msg).drb_to_add_list.size(), 0);
 
   ASSERT_EQ(manager->get_nof_drbs(), 1);
 }
 
 TEST_F(drb_manager_test, when_drb_is_added_pdcp_config_is_valid)
 {
-  cu_cp_pdu_session_resource_setup_request msg         = generate_pdu_session_resource_setup();
-  std::vector<drb_id_t>                    drbs_to_add = manager->calculate_drb_to_add_list(msg);
+  cu_cp_pdu_session_resource_setup_request msg    = generate_pdu_session_resource_setup();
+  up_config_update                         update = manager->calculate_update(msg);
 
   // Verify DRB config
-  const auto pdcp_cfg = manager->get_pdcp_config(drbs_to_add.at(0));
+  const auto pdcp_cfg = manager->get_pdcp_config(update.drb_to_add_list.at(0));
   ASSERT_TRUE(pdcp_cfg.rb_type == pdcp_rb_type::drb);
 }

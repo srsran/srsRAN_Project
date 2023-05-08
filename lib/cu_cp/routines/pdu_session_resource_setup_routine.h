@@ -47,7 +47,7 @@ private:
   const ue_configuration                         ue_cfg;
   const srsran::security::sec_as_config          security_cfg;
 
-  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
+  up_config_update next_config;
 
   du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
   du_processor_f1ap_ue_context_notifier&        f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
