@@ -164,7 +164,7 @@ struct security_context {
   void generate_as_keys();
   sec_as_config     get_as_config();
   sec_128_as_config get_128_as_config();
-  void              horizontal_key_defivation(pci_t new_pci, unsigned new_dl_arfcn);
+  void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 };
 
 /******************************************************************************
@@ -226,7 +226,13 @@ void generate_k_up(sec_key&                  k_up_enc,
                    const ciphering_algorithm enc_alg_id,
                    const integrity_algorithm int_alg_id);
 
-void generate_k_ng_ran_star(sec_key& k_star, const sec_key& k, const pci_t& pci_, const uint32_t earfcn_);
+/// K_NG-RAN* derivation function for target gNB
+/// Ref: TS 33.501 Sec. A.11
+void generate_k_ng_ran_star(sec_key&       k_star,
+                            const sec_key& k,
+                            const pci_t&   target_pci_,
+                            const uint32_t target_ssb_arfcn_);
+
 /// Truncate 256-bit key to 128-bit key using the least significant bits.
 /// Ref: TS 33.501 Sec. A.8
 sec_128_key truncate_key(const sec_key& key_in);
