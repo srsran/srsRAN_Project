@@ -367,9 +367,9 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.time_resource = units::bits(log2_ceil(dci_config.nof_dl_time_domain_res));
   sizes.total += sizes.time_resource;
 
-  // VRP-to-PRB mapping - 0 or 1 bit.
+  // VRB-to-PRB mapping - 0 or 1 bit.
   sizes.vrb_prb_mapping = (dci_config.pdsch_res_allocation_type != resource_allocation::resource_allocation_type_0) &&
-                                  dci_config.interleaved_vrb_prb_mapping
+                                  dci_config.interleaved_vrb_prb_mapping.value()
                               ? units::bits(1)
                               : units::bits(0);
   sizes.total += sizes.vrb_prb_mapping;
