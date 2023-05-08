@@ -228,10 +228,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
-                            init_dl_bwp,
-                            bwp_dl_cmn,
-                            ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id()),
-                            ss_cfg->type,
+                            ue_cell_cfg,
+                            u.nof_cells() > 1,
+                            ue_cc->active_bwp_id(),
+                            grant.ss_id,
                             prbs,
                             grant.time_res_index,
                             k1,
@@ -332,7 +332,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_common&     init_ul_bwp = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
   const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
 
@@ -475,12 +474,10 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   switch (dci_type) {
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_dci_f0_0_c_rnti(pdcch->dci,
-                            cell_cfg.dl_cfg_common.init_dl_bwp,
-                            ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()),
-                            ue_cell_cfg.find_dl_bwp_ded(ue_cc->active_bwp_id()),
-                            init_ul_bwp.generic_params,
-                            bwp_ul_cmn.generic_params,
-                            ss_cfg->type,
+                            ue_cell_cfg,
+                            u.nof_cells() > 1,
+                            ue_cc->active_bwp_id(),
+                            grant.ss_id,
                             prbs,
                             grant.time_res_index,
                             mcs_tbs_info.value().mcs,
