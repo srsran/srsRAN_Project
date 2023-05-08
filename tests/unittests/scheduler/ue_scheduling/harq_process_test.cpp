@@ -72,7 +72,7 @@ TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
   pdsch.rbs                        = vrbs;
   h_dl.save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
   ASSERT_EQ(h_dl.last_alloc_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);
-  ASSERT_EQ(h_dl.last_alloc_params().rbs.vrbs(), vrbs);
+  ASSERT_EQ(h_dl.last_alloc_params().rbs.type1(), vrbs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->mcs, mcs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->tbs_bytes, tbs_bytes);
 }

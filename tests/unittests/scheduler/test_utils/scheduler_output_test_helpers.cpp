@@ -47,7 +47,7 @@ std::vector<grant_info> srsran::get_pdcch_grant_info(const pdcch_ul_information&
 static grant_info get_common_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const pdsch_information& pdsch)
 {
   crb_interval cs0_crbs = bwp_cfg.pdcch_common.coreset0->coreset0_crbs();
-  crb_interval crbs     = {pdsch.rbs.vrbs().start() + cs0_crbs.start(), pdsch.rbs.vrbs().stop() + cs0_crbs.start()};
+  crb_interval crbs     = {pdsch.rbs.type1().start() + cs0_crbs.start(), pdsch.rbs.type1().stop() + cs0_crbs.start()};
   return grant_info{bwp_cfg.generic_params.scs, pdsch.symbols, crbs};
 }
 
@@ -69,7 +69,7 @@ grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
 
 grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_msg_alloc& ue_grant)
 {
-  const vrb_interval vrbs   = ue_grant.pdsch_cfg.rbs.vrbs();
+  const vrb_interval vrbs   = ue_grant.pdsch_cfg.rbs.type1();
   unsigned           ref_rb = 0;
   if (ue_grant.pdsch_cfg.ss_set_type != search_space_set_type::ue_specific and
       ue_grant.pdsch_cfg.dci_fmt == dci_dl_format::f1_0) {
@@ -175,7 +175,7 @@ std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cel
   // Fill PUSCHs.
   for (const ul_sched_info& pusch : ul_res.puschs) {
     const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
-    prb_interval             prbs    = {pusch.pusch_cfg.rbs.vrbs().start(), pusch.pusch_cfg.rbs.vrbs().stop()};
+    prb_interval             prbs    = {pusch.pusch_cfg.rbs.type1().start(), pusch.pusch_cfg.rbs.type1().stop()};
     crb_interval             crbs    = prb_to_crb(bwp_cfg, prbs);
     grants.emplace_back();
     grants.back().type  = test_grant_info::UE_UL;

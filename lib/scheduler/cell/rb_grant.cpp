@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/scheduler/rb_grant.h"
+#include "srsran/scheduler/rb_alloc.h"
 #include "srsran/scheduler/resource_block_group.h"
 
 using namespace srsran;

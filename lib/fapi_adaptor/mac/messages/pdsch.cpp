@@ -84,19 +84,19 @@ static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_informatio
 }
 
 static void fill_frequency_allocation(fapi::dl_pdsch_pdu_builder&   builder,
-                                      const rb_grant&               rbs,
+                                      const rb_alloc&               rbs,
                                       fapi::vrb_to_prb_mapping_type mapping)
 {
-  if (rbs.is_alloc_type0()) {
+  if (rbs.is_type0()) {
     static_vector<uint8_t, fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP> rb_map;
     rb_map.resize(fapi::dl_pdsch_pdu::MAX_SIZE_RB_BITMAP, 0U);
-    const rbg_bitmap& mac_rbg_map = rbs.rbgs();
+    const rbg_bitmap& mac_rbg_map = rbs.type0();
     for (unsigned i = 0, e = mac_rbg_map.size(); i != e; ++i) {
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
     builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, mapping);
   } else {
-    const vrb_interval& vrb_int = rbs.vrbs();
+    const vrb_interval& vrb_int = rbs.type1();
     builder.set_pdsch_allocation_in_frequency_type_1(vrb_int.start(), vrb_int.length(), mapping);
   }
 }

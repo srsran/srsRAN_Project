@@ -13,7 +13,7 @@
 #include "../support/rb_helper.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/interval.h"
-#include "srsran/scheduler/rb_grant.h"
+#include "srsran/scheduler/rb_alloc.h"
 
 namespace srsran {
 
@@ -49,20 +49,20 @@ public:
     rbgs_ |= grant;
     add_rbgs_to_prbs(grant);
   }
-  void add(const rb_grant& grant)
+  void add(const rb_alloc& grant)
   {
-    if (grant.is_alloc_type0()) {
-      add(grant.rbgs());
+    if (grant.is_type0()) {
+      add(grant.type0());
     } else {
-      add(grant.vrbs());
+      add(grant.type1());
     }
   }
-  bool collides(const rb_grant& grant) const
+  bool collides(const rb_alloc& grant) const
   {
-    if (grant.is_alloc_type0()) {
-      return (rbgs() & grant.rbgs()).any();
+    if (grant.is_type0()) {
+      return (rbgs() & grant.type0()).any();
     }
-    return prbs().any(grant.vrbs().start(), grant.vrbs().stop());
+    return prbs().any(grant.type1().start(), grant.type1().stop());
   }
   bool test(uint32_t prb_idx) { return prbs().test(prb_idx); }
   void set(uint32_t prb_idx)

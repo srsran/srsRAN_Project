@@ -18,36 +18,36 @@ using namespace srsran;
 TEST(prb_grant_test, test_all)
 {
   // TEST: default ctor
-  rb_grant grant;
-  TESTASSERT(grant.is_alloc_type1());
-  TESTASSERT(grant.vrbs().length() == 0);
+  rb_alloc grant;
+  TESTASSERT(grant.is_type1());
+  TESTASSERT(grant.type1().length() == 0);
 
   // TEST: assignment of RBGs
   rbg_bitmap rbgs(18);
   rbgs.set(1);
   grant = rbgs;
-  TESTASSERT(grant.is_alloc_type0() and grant.rbgs().count() == 1);
+  TESTASSERT(grant.is_type0() and grant.type0().count() == 1);
 
   // TEST: assignment of PRBs
   vrb_interval vrb_interv(2, 5);
   grant = vrb_interv;
-  TESTASSERT(grant.is_alloc_type1() and grant.vrbs().length() == 3);
+  TESTASSERT(grant.is_type1() and grant.type1().length() == 3);
 
   // TEST: non-default ctor
-  rb_grant grant2(vrb_interv), grant3(rbgs);
-  TESTASSERT(grant2.is_alloc_type1() and grant2.vrbs().length() == 3);
-  TESTASSERT(grant3.is_alloc_type0() and grant3.rbgs().count() == 1);
+  rb_alloc grant2(vrb_interv), grant3(rbgs);
+  TESTASSERT(grant2.is_type1() and grant2.type1().length() == 3);
+  TESTASSERT(grant3.is_type0() and grant3.type0().count() == 1);
 
   // TEST: copy ctor
-  rb_grant grant4(grant2), grant5(grant3);
-  TESTASSERT(grant4.is_alloc_type1() and grant4.vrbs().length() == 3);
-  TESTASSERT(grant5.is_alloc_type0() and grant5.rbgs().count() == 1);
+  rb_alloc grant4(grant2), grant5(grant3);
+  TESTASSERT(grant4.is_type1() and grant4.type1().length() == 3);
+  TESTASSERT(grant5.is_type0() and grant5.type0().count() == 1);
 
   // TEST: copy assignment
   grant = grant3;
-  TESTASSERT(grant.is_alloc_type0() and grant.rbgs().count() == 1);
+  TESTASSERT(grant.is_type0() and grant.type0().count() == 1);
   grant = grant2;
-  TESTASSERT(grant.is_alloc_type1() and grant.vrbs().length() == 3);
+  TESTASSERT(grant.is_type1() and grant.type1().length() == 3);
 
   // TEST: formatting
   TESTASSERT_EQ("[2..5)", fmt::format("{}", grant2));

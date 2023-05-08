@@ -487,7 +487,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     }
 
     // >> Check CRBs available in PUSCH for Msg3.
-    const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.vrbs().length();
+    const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.type1().length();
     unsigned       nof_msg3_rbs     = nof_rbs_per_msg3 * pusch_res_max_allocs;
     prb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
     crb_interval   msg3_crbs        = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs, 0);
@@ -653,7 +653,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     }
 
     // Try to reuse previous HARQ PRBs.
-    const vrb_interval msg3_vrbs = msg3_ctx.harq.last_tx_params().rbs.vrbs();
+    const vrb_interval msg3_vrbs = msg3_ctx.harq.last_tx_params().rbs.type1();
     grant_info         grant;
     grant.scs     = bwp_ul_cmn.scs;
     grant.symbols = pusch_tds[pusch_td_res_index].symbols;

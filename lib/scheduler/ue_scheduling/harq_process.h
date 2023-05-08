@@ -216,7 +216,7 @@ public:
     };
 
     dci_dl_rnti_config_type                                 dci_cfg_type;
-    rb_grant                                                rbs;
+    rb_alloc                                                rbs;
     unsigned                                                nof_symbols;
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
   };
@@ -273,7 +273,7 @@ public:
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
     dci_ul_rnti_config_type dci_cfg_type;
-    rb_grant                rbs;
+    rb_alloc                rbs;
     pusch_mcs_table         mcs_table;
     sch_mcs_index           mcs;
     unsigned                tbs_bytes;

@@ -114,11 +114,11 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
-  if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.vrbs().length()) {
+  if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().rbs.type1().length()) {
     logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retxs (Harq-id={}, "
                    "nof_prbs={}!={})",
                    h_dl.id,
-                   h_dl.last_alloc_params().rbs.vrbs().length(),
+                   h_dl.last_alloc_params().rbs.type1().length(),
                    grant.crbs.length());
     return false;
   }
@@ -378,11 +378,11 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
-  if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().rbs.vrbs().length()) {
+  if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().rbs.type1().length()) {
     logger.warning("Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
                    "nof_prbs={}!={})",
                    h_ul.id,
-                   h_ul.last_tx_params().rbs.vrbs().length(),
+                   h_ul.last_tx_params().rbs.type1().length(),
                    grant.crbs.length());
     return false;
   }
