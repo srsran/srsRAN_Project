@@ -29,14 +29,25 @@ public:
                               e2_du_metrics_interface& du_metrics_interface_);
   virtual ~e2_subscriber_impl() = default;
 
+  /// \brief  Handles the subscription request message.
+  /// \param[in] msg  The subscription request message.
+  /// \return The subscription response message.
   e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) override;
 
-  // in this function we will start a timer with a lambda function create and send the indication message, check whether
-  // the subscription is still active and then call the function again
+  /// \brief  Starts the subscription procedure associated with the given ric instance id.
+  /// \param[in] ric_instance_id  The ric instance id.
+  /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
+  /// \return true if the subscription procedure was started successfully, false otherwise.
   int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override;
 
+  /// \brief checks whether the given action is supported.
+  /// \param[in] action The action to check.
+  /// \return true if the action is supported, false otherwise.
   bool action_supported(ric_action_t action);
 
+  /// \brief  Gets the subscription outcome based on the subscription.
+  /// \param[out] outcome The subscription response message.
+  /// \param[in] subscription  The subscription to use.
   void get_subscription_result(e2_subscribe_reponse_message& outcome, e2_subscription_t& subscription);
 
 private:
