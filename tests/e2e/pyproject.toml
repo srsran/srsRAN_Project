@@ -19,6 +19,7 @@ markers = [
   "smoke",
   "zmq",
   "rf",
+  "android",
   "udp",
   "tcp",
   "downlink",

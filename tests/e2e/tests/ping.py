@@ -29,6 +29,45 @@ from .steps.stub import ping, start_and_attach
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
+        param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        # This requires "sample_rate: 23040000"
+        # param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_android(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    RF Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        log_search=False,
+        always_download_artifacts=True,
+    )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
         param(3, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
         param(3, 15, 10, marks=(mark.zmq, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
         param(3, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
