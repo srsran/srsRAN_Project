@@ -252,11 +252,11 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_0;
         dci_sz_cfg.nof_dl_rb_groups          = static_cast<unsigned>(
             get_nominal_rbg_size(active_dl_bwp.crbs.length(), opt_pdsch_cfg.value().rbg_sz == rbg_size::config1));
-        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
         break;
       }
       case pdsch_config::resource_allocation::resource_allocation_type_1: {
-        dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
+        dci_sz_cfg.pdsch_res_allocation_type   = resource_allocation::resource_allocation_type_1;
+        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
         break;
       }
       case pdsch_config::resource_allocation::dynamic_switch: {
@@ -430,7 +430,9 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   f1_1.srs_request             = 0;
   f1_1.dmrs_seq_initialization = 0;
   // TODO: Set proper value based on nof. layers used. See TS 38.212, clause 7.3.1.2.2.
-  f1_1.antenna_ports = 0;
+  // PHY does not support nof. DMRS CDM groups(s) without data other than 2, hence selected antenna port value from
+  // Table Table 7.3.1.2.2-1 in TS 38.212 based on assumption of max. rank 1 and DMRS max. length 1.
+  f1_1.antenna_ports = 3;
 
   // See 38.212, clause 7.3.1.2.2 - N^{DL,BWP}_RB for C-RNTI.
   f1_1.frequency_resource = ra_frequency_type1_get_riv(
@@ -445,9 +447,11 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f1_1.payload_size = dci_sz.format1_1_ue_size.value();
 
-  if (dci_sz_cfg.pdsch_res_allocation_type == resource_allocation::resource_allocation_type_1 and
-      dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
-    f1_1.vrb_prb_mapping = static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value());
+  if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value()) {
+    f1_1.vrb_prb_mapping = dci_sz_cfg.interleaved_vrb_prb_mapping.value();
+    if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
+      f1_1.vrb_prb_mapping = static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value());
+    }
   }
 
   // TODO:
@@ -607,7 +611,9 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   f0_1.srs_request             = 0;
   f0_1.dmrs_seq_initialization = 0;
   // TODO: Set proper value based on nof. layers used. See TS 38.212, clause 7.3.1.1.2.
-  f0_1.antenna_ports = 0;
+  // PHY does not support nof. DMRS CDM groups(s) without data other than 2, hence selected antenna port value from
+  // Table 7.3.1.1.2-8 in TS 38.212 based on assumption of max. rank 1 and DMRS max. length 1.
+  f0_1.antenna_ports = 2;
 
   // See 38.212, clause 7.3.1.1.2 - N^{UL,BWP}_RB for C-RNTI.
   f0_1.frequency_resource = ra_frequency_type1_get_riv(
