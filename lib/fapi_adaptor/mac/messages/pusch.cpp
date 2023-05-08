@@ -75,7 +75,7 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
                               dmrs_cfg.num_dmrs_cdm_grps_no_data,
                               dmrs_cfg.dmrs_ports.to_uint64());
 
-  const rb_alloc& rbs = pusch_pdu.rbs;
+  const vrb_alloc& rbs = pusch_pdu.rbs;
   if (rbs.is_type0()) {
     static_vector<uint8_t, fapi::ul_pusch_pdu::RB_BITMAP_SIZE_IN_BYTES> rb_map;
     rb_map.resize(fapi::ul_pusch_pdu::RB_BITMAP_SIZE_IN_BYTES, 0U);

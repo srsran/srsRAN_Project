@@ -21,21 +21,23 @@ namespace srsran {
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
-/// RB Resource Allocation that can be of allocation type 0 (RBGs) or 1 (VRB range).
-struct rb_alloc {
+/// VRB Resource Allocation that can be of allocation type 0 (RBGs) or 1 (VRB range).
+struct vrb_alloc {
   /// Creates an empty interval.
-  rb_alloc() = default;
+  vrb_alloc() = default;
 
   /// \brief Creates a RB grant of allocation type1, i.e. a contiguous range of RBs.
-  rb_alloc(const vrb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
+  vrb_alloc(const vrb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
 
   /// \brief Creates a RB grant of allocation type0, i.e. a set of potentially non-contiguous RBGs.
-  rb_alloc(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
+  vrb_alloc(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
 
   /// \brief Creates a copy of the RB grant.
-  rb_alloc(const rb_alloc& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc) {}
+  vrb_alloc(const vrb_alloc& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc)
+  {
+  }
 
-  rb_alloc& operator=(const rb_alloc& other) noexcept
+  vrb_alloc& operator=(const vrb_alloc& other) noexcept
   {
     if (this == &other) {
       return *this;
@@ -47,7 +49,7 @@ struct rb_alloc {
     }
     return *this;
   }
-  rb_alloc& operator=(const vrb_interval& vrbs)
+  vrb_alloc& operator=(const vrb_interval& vrbs)
   {
     if (alloc_type_0) {
       alloc_type_0 = false;
@@ -58,7 +60,7 @@ struct rb_alloc {
     }
     return *this;
   }
-  rb_alloc& operator=(const rbg_bitmap& rbgs)
+  vrb_alloc& operator=(const rbg_bitmap& rbgs)
   {
     if (alloc_type_0) {
       alloc.rbgs = rbgs;
@@ -69,7 +71,7 @@ struct rb_alloc {
     }
     return *this;
   }
-  ~rb_alloc()
+  ~vrb_alloc()
   {
     if (is_type0()) {
       alloc.rbgs.~rbg_bitmap();
@@ -148,9 +150,9 @@ prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, no
 namespace fmt {
 
 template <>
-struct formatter<srsran::rb_alloc> : public formatter<srsran::vrb_interval> {
+struct formatter<srsran::vrb_alloc> : public formatter<srsran::vrb_interval> {
   template <typename FormatContext>
-  auto format(const srsran::rb_alloc& grant, FormatContext& ctx)
+  auto format(const srsran::vrb_alloc& grant, FormatContext& ctx)
   {
     if (grant.is_type0()) {
       return format_to(ctx.out(), "{}", grant.type0());

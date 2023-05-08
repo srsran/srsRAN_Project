@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rb_alloc.h"
+#include "vrb_alloc.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/rnti.h"

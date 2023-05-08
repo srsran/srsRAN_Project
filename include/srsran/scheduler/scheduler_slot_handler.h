@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "rb_alloc.h"
 #include "sched_consts.h"
 #include "scheduler_dci.h"
+#include "vrb_alloc.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
@@ -141,7 +141,7 @@ struct pdsch_information {
   rnti_t                                                 rnti;
   const bwp_configuration*                               bwp_cfg;
   const coreset_configuration*                           coreset_cfg;
-  rb_alloc                                               rbs;
+  vrb_alloc                                              rbs;
   ofdm_symbol_range                                      symbols;
   static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
   dmrs_information                                       dmrs;
@@ -187,7 +187,7 @@ struct dl_msg_alloc {
 struct pusch_information {
   rnti_t                   rnti;
   const bwp_configuration* bwp_cfg;
-  rb_alloc                 rbs;
+  vrb_alloc                rbs;
   ofdm_symbol_range        symbols;
   /// \brief For resource allocation type 1, it indicates if intra-slot frequency hopping is enabled, as per TS38.212
   /// Section 7.3.1.1.

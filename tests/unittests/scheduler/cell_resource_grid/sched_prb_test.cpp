@@ -18,7 +18,7 @@ using namespace srsran;
 TEST(prb_grant_test, test_all)
 {
   // TEST: default ctor
-  rb_alloc grant;
+  vrb_alloc grant;
   TESTASSERT(grant.is_type1());
   TESTASSERT(grant.type1().length() == 0);
 
@@ -34,12 +34,12 @@ TEST(prb_grant_test, test_all)
   TESTASSERT(grant.is_type1() and grant.type1().length() == 3);
 
   // TEST: non-default ctor
-  rb_alloc grant2(vrb_interv), grant3(rbgs);
+  vrb_alloc grant2(vrb_interv), grant3(rbgs);
   TESTASSERT(grant2.is_type1() and grant2.type1().length() == 3);
   TESTASSERT(grant3.is_type0() and grant3.type0().count() == 1);
 
   // TEST: copy ctor
-  rb_alloc grant4(grant2), grant5(grant3);
+  vrb_alloc grant4(grant2), grant5(grant3);
   TESTASSERT(grant4.is_type1() and grant4.type1().length() == 3);
   TESTASSERT(grant5.is_type0() and grant5.type0().count() == 1);
 

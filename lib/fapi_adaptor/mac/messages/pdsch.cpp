@@ -84,7 +84,7 @@ static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_informatio
 }
 
 static void fill_frequency_allocation(fapi::dl_pdsch_pdu_builder&   builder,
-                                      const rb_alloc&               rbs,
+                                      const vrb_alloc&              rbs,
                                       fapi::vrb_to_prb_mapping_type mapping)
 {
   if (rbs.is_type0()) {

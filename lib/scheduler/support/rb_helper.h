@@ -13,7 +13,7 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/rb_alloc.h"
+#include "srsran/scheduler/vrb_alloc.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
