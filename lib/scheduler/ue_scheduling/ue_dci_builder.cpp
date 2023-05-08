@@ -166,20 +166,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
           break;
         }
       }
-      switch (opt_pusch_cfg.value().cb_subset) {
-        case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
-          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent;
-          break;
-        case pusch_config::codebook_subset::partial_and_non_coherent:
-          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::partial_and_non_coherent;
-          break;
-        case pusch_config::codebook_subset::non_coherent:
-          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::non_coherent;
-          break;
-        default:
-          break;
-      }
-      if (opt_pusch_cfg.value().max_rank.has_value()) {
+      if (not dci_sz_cfg.tx_config_non_codebook and opt_pusch_cfg.value().max_rank.has_value()) {
         dci_sz_cfg.max_rank = opt_pusch_cfg.value().max_rank.value();
       }
       if (opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value()) {
@@ -216,8 +203,26 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                        opt_srs_cfg.value().srs_res.end(),
                        [srs_resource_id](const srs_config::srs_resource& res) { return res.id == srs_resource_id; });
       srsran_assert(srs_res != opt_srs_cfg.value().srs_res.end(), "No valid SRS resource found");
-      dci_sz_cfg.nof_srs_ports     = static_cast<unsigned>(srs_res->nof_ports);
+      if (not dci_sz_cfg.tx_config_non_codebook) {
+        dci_sz_cfg.nof_srs_ports = static_cast<unsigned>(srs_res->nof_ports);
+      }
       dci_sz_cfg.nof_srs_resources = srs_res_set->srs_res_id_list.size();
+    }
+    if (not dci_sz_cfg.tx_config_non_codebook and dci_sz_cfg.nof_srs_ports.has_value() and
+        dci_sz_cfg.nof_srs_ports.value() > 1) {
+      switch (opt_pusch_cfg.value().cb_subset) {
+        case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
+          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::fully_and_partial_and_non_coherent;
+          break;
+        case pusch_config::codebook_subset::partial_and_non_coherent:
+          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::partial_and_non_coherent;
+          break;
+        case pusch_config::codebook_subset::non_coherent:
+          dci_sz_cfg.cb_subset = tx_scheme_codebook_subset::non_coherent;
+          break;
+        default:
+          break;
+      }
     }
     if (opt_pusch_sc_cfg.has_value() and opt_pusch_sc_cfg.value().cbg_tx.has_value()) {
       dci_sz_cfg.max_cbg_tb_pusch = static_cast<unsigned>(opt_pusch_sc_cfg.value().cbg_tx.value().max_cgb_per_tb);
@@ -233,16 +238,15 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   }
 
   // Fill out parameters for Format 1_1.
-  dci_sz_cfg.nof_dl_bwp_rrc              = ue_cell_cfg.cfg_dedicated().dl_bwps.size();
-  dci_sz_cfg.nof_dl_time_domain_res      = ue_cell_cfg.get_pdsch_time_domain_list(ss_id).size();
-  dci_sz_cfg.nof_aperiodic_zp_csi        = 0;
-  dci_sz_cfg.nof_pdsch_ack_timings       = k1_candidates.size();
-  dci_sz_cfg.dynamic_prb_bundling        = false;
-  dci_sz_cfg.rm_pattern_group1           = false;
-  dci_sz_cfg.rm_pattern_group2           = false;
-  dci_sz_cfg.pdsch_two_codewords         = false;
-  dci_sz_cfg.pdsch_res_allocation_type   = resource_allocation::resource_allocation_type_1;
-  dci_sz_cfg.interleaved_vrb_prb_mapping = false;
+  dci_sz_cfg.nof_dl_bwp_rrc            = ue_cell_cfg.cfg_dedicated().dl_bwps.size();
+  dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.get_pdsch_time_domain_list(ss_id).size();
+  dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
+  dci_sz_cfg.nof_pdsch_ack_timings     = k1_candidates.size();
+  dci_sz_cfg.dynamic_prb_bundling      = false;
+  dci_sz_cfg.rm_pattern_group1         = false;
+  dci_sz_cfg.rm_pattern_group2         = false;
+  dci_sz_cfg.pdsch_two_codewords       = false;
+  dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::resource_allocation_type_1;
   if (opt_pdsch_cfg.has_value()) {
     dci_sz_cfg.dynamic_prb_bundling =
         variant_holds_alternative<prb_bundling::dynamic_bundling>(opt_pdsch_cfg.value().prb_bndlg.bundling);
@@ -256,14 +260,20 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
       case pdsch_config::resource_allocation::resource_allocation_type_1: {
         dci_sz_cfg.pdsch_res_allocation_type   = resource_allocation::resource_allocation_type_1;
-        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        dci_sz_cfg.interleaved_vrb_prb_mapping = false;
+        if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
+          dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        }
         break;
       }
       case pdsch_config::resource_allocation::dynamic_switch: {
         dci_sz_cfg.pdsch_res_allocation_type = resource_allocation::dynamic_switch;
         dci_sz_cfg.nof_dl_rb_groups          = static_cast<unsigned>(
             get_nominal_rbg_size(active_dl_bwp.crbs.length(), opt_pdsch_cfg.value().rbg_sz == rbg_size::config1));
-        dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        dci_sz_cfg.interleaved_vrb_prb_mapping = false;
+        if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
+          dci_sz_cfg.interleaved_vrb_prb_mapping = opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value();
+        }
         break;
       }
     }
@@ -449,8 +459,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
   f1_1.payload_size = dci_sz.format1_1_ue_size.value();
 
-  if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value()) {
-    f1_1.vrb_prb_mapping = dci_sz_cfg.interleaved_vrb_prb_mapping.value();
+  if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
     if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
       f1_1.vrb_prb_mapping = static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value());
     }
