@@ -23,7 +23,3 @@ add_executable(rrc_ue_test ${SOURCES})
 target_include_directories(rrc_ue_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_ue_test rrc_ue_test_helpers srsran_e1ap srsran_rrc srsran_support srslog gtest gtest_main)
 gtest_discover_tests(rrc_ue_test PROPERTIES "LABELS;rrc_ue")
-
-add_executable(up_resource_manager_test up_resource_manager_test.cpp)
-target_link_libraries(up_resource_manager_test rrc_ue_test_helpers du_processor_test_helpers srsran_rrc srsran_e1ap srsran_support srslog gtest gtest_main)
-gtest_discover_tests(up_resource_manager_test)

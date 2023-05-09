@@ -12,6 +12,7 @@ include_directories(../../..)
 add_subdirectory(du_processor)
 add_subdirectory(cu_up_processor)
 add_subdirectory(ue_manager)
+add_subdirectory(up_resource_manager)
 
 add_library(cu_cp_test_helpers cu_cp_test_helpers.cpp du_processor_test_messages.cpp test_helpers.cpp)
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})

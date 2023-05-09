@@ -8,17 +8,16 @@
  *
  */
 
-#include "../cu_cp/du_processor_test_messages.h"
-#include "../lib/rrc/ue/up_resource_manager_impl.h"
+#include "../du_processor_test_messages.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/rrc/up_resource_manager.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-/// Fixture class RRC Reconfiguration tests preparation (to bring UE in RRC connected state)
+/// Fixture class to create UP resource manager object.
 class up_resource_manager_test : public ::testing::Test
 {
 protected:
@@ -35,7 +34,7 @@ protected:
     pdcp_config p_cfg;
     p_cfg.rb_type                               = pdcp_rb_type::drb;
     cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
-    manager                                     = std::make_unique<up_resource_manager_impl>(cfg);
+    manager                                     = create_up_resource_manager(cfg);
   }
 
   void TearDown() override
@@ -82,6 +81,6 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
   up_config_update                         update = manager->calculate_update(msg);
 
   // Verify DRB config
-  const auto pdcp_cfg = manager->get_pdcp_config(update.drb_to_add_list.at(0));
+  const auto pdcp_cfg = manager->get_pdcp_config(update.drb_to_add_list.at(0).drb_id);
   ASSERT_TRUE(pdcp_cfg.rb_type == pdcp_rb_type::drb);
 }

@@ -411,16 +411,16 @@ void pdu_session_resource_setup_routine::operator()(
       // Add radio bearer config
       for (const auto& drb_to_add : next_config.drb_to_add_list) {
         cu_cp_drb_to_add_mod drb_to_add_mod;
-        drb_to_add_mod.drb_id   = drb_to_add;
-        drb_to_add_mod.pdcp_cfg = rrc_ue_up_resource_manager.get_pdcp_config(drb_to_add);
+        drb_to_add_mod.drb_id   = drb_to_add.drb_id;
+        drb_to_add_mod.pdcp_cfg = rrc_ue_up_resource_manager.get_pdcp_config(drb_to_add.drb_id);
 
         // Add CN association and SDAP config
         cu_cp_cn_assoc cn_assoc;
-        cn_assoc.sdap_cfg       = rrc_ue_up_resource_manager.get_sdap_config(drb_to_add);
+        cn_assoc.sdap_cfg       = rrc_ue_up_resource_manager.get_sdap_config(drb_to_add.drb_id);
         drb_to_add_mod.cn_assoc = cn_assoc;
 
         cu_cp_radio_bearer_config radio_bearer_config;
-        radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add, drb_to_add_mod);
+        radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.drb_id, drb_to_add_mod);
         rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
       }
 
@@ -554,9 +554,10 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 
     for (const auto& drb_to_setup : next_config.drb_to_add_list) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id   = drb_to_setup;
-      e1ap_drb_setup_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup);
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup));
+      e1ap_drb_setup_item.drb_id   = drb_to_setup.drb_id;
+      e1ap_drb_setup_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup.drb_id);
+      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg,
+                                rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup.drb_id));
 
       e1ap_cell_group_info_item e1ap_cell_group_item;
       e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
@@ -572,7 +573,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         e1ap_drb_setup_item.drb_inactivity_timer = ue_cfg.inactivity_timer;
       }
 
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup, e1ap_drb_setup_item);
+      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
     }
 
     if (e1ap_request.activity_notif_level == "pdu-session") {
@@ -615,13 +616,13 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
     // Add DRBs for this PDU session.
     for (const auto& drb_to_setup : next_config.drb_to_add_list) {
       // Make sure DRB belongs to this PDU session.
-      if (rrc_ue_up_resource_manager.get_pdu_session_id(drb_to_setup) == pdu_session_id) {
+      if (rrc_ue_up_resource_manager.get_pdu_session_id(drb_to_setup.drb_id) == pdu_session_id) {
         e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item;
-        drb_to_setup_mod_item.drb_id   = drb_to_setup;
-        drb_to_setup_mod_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup);
+        drb_to_setup_mod_item.drb_id   = drb_to_setup.drb_id;
+        drb_to_setup_mod_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup.drb_id);
 
         fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg,
-                                  rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup));
+                                  rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup.drb_id));
 
         e1ap_cell_group_info_item e1ap_cell_group_item;
         e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value

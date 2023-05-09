@@ -10,26 +10,14 @@
 
 #pragma once
 
-#include "srsran/rrc/up_resource_manager.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include <map>
 
 namespace srsran {
 
 namespace srs_cu_cp {
 
-struct drb_context {
-  srsran::drb_id_t           drb_id         = drb_id_t::invalid;
-  pdu_session_id_t           pdu_session_id = pdu_session_id_t::min;
-  s_nssai_t                  s_nssai        = {};
-  bool                       default_drb    = false;
-  five_qi_t                  five_qi        = five_qi_t::invalid;
-  std::vector<qos_flow_id_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
-
-  pdcp_config   pdcp_cfg;
-  sdap_config_t sdap_cfg;
-};
-
-/// DRB manager implementation
+/// UP resource manager implementation
 class up_resource_manager_impl final : public up_resource_manager
 {
 public:
@@ -37,6 +25,7 @@ public:
   ~up_resource_manager_impl() = default;
 
   up_config_update              calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  bool                          apply_config_update(const up_config_update& config) override;
   pdcp_config                   get_pdcp_config(const drb_id_t drb_id) override;
   sdap_config_t                 get_sdap_config(const drb_id_t drb_id) override;
   std::vector<qos_flow_id_t>    get_mapped_qos_flows(const drb_id_t drb_id) override;
@@ -50,18 +39,11 @@ public:
   bool                          valid_5qi(const five_qi_t five_qi) override;
 
 private:
-  drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it
-
-  // returns valid RRC PDCP config for a given FiveQI
-  pdcp_config   set_rrc_pdcp_config(const five_qi_t five_qi);
-  sdap_config_t set_rrc_sdap_config(const drb_context& context);
-
   up_resource_manager_cfg cfg;
-  srslog::basic_logger&   logger;
 
-  std::map<pdu_session_id_t, bool> pdu_sessions; // Map with active flag for existing PDU sessions
-  std::map<drb_id_t, drb_context>  drbs;         // Stores existing DRBs
-  std::map<five_qi_t, drb_id_t>    five_qi_map;  // Maps QoS flow characteristics to existing DRBs
+  up_context context; // The currently active state.
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace srs_cu_cp

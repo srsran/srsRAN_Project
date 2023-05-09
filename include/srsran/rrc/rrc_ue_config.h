@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
-#include "srsran/rrc/up_resource_manager.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {

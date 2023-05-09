@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "up_resource_manager_impl.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/rrc/rrc_ue_config.h"
-#include "srsran/rrc/up_resource_manager.h"
 
 namespace srsran {
 
@@ -32,11 +31,7 @@ public:
                    const rnti_t           c_rnti_,
                    const rrc_cell_context cell_,
                    const rrc_ue_cfg_t&    cfg_) :
-    ue_index(ue_index_),
-    c_rnti(c_rnti_),
-    cell(cell_),
-    cfg(cfg_),
-    up_mng(std::make_unique<up_resource_manager_impl>(cfg_.up_cfg))
+    ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_), up_mng(create_up_resource_manager(cfg_.up_cfg))
   {
   }
 
