@@ -37,7 +37,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
-        auto& dci = pdcch.dci.c_rnti_f1_0;
+        const auto& dci = pdcch.dci.c_rnti_f1_0;
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
@@ -46,13 +46,25 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                        dci.modulation_coding_scheme);
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
-        auto& dci = pdcch.dci.tc_rnti_f1_0;
+        const auto& dci = pdcch.dci.tc_rnti_f1_0;
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
+      } break;
+      case dci_dl_rnti_config_type::c_rnti_f1_1: {
+        const auto& dci = pdcch.dci.c_rnti_f1_1;
+        fmt::format_to(fmtbuf,
+                       " dci: h_id={} ndi1={} rv1={} mcs1={}",
+                       dci.harq_process_number,
+                       dci.tb1_new_data_indicator ? 1 : 0,
+                       dci.tb1_redundancy_version,
+                       dci.tb1_modulation_coding_scheme);
+        if (dci.downlink_assignment_index.has_value()) {
+          fmt::format_to(fmtbuf, " dai={}", *dci.downlink_assignment_index);
+        }
       } break;
       default:
         break;
@@ -70,7 +82,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_ul_rnti_config_type::c_rnti_f0_0: {
-        auto& dci = pdcch.dci.c_rnti_f0_0;
+        const auto& dci = pdcch.dci.c_rnti_f0_0;
         fmt::format_to(fmtbuf,
                        " h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
@@ -79,8 +91,18 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                        dci.modulation_coding_scheme);
       } break;
       case dci_ul_rnti_config_type::tc_rnti_f0_0: {
-        auto& dci = pdcch.dci.tc_rnti_f0_0;
+        const auto& dci = pdcch.dci.tc_rnti_f0_0;
         fmt::format_to(fmtbuf, "h_id=0 ndi=1 rv={} mcs={}", dci.redundancy_version, dci.modulation_coding_scheme);
+      } break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1: {
+        const auto& dci = pdcch.dci.c_rnti_f0_1;
+        fmt::format_to(fmtbuf,
+                       " h_id={} ndi={} rv={} mcs={} dai1={}",
+                       dci.harq_process_number,
+                       dci.new_data_indicator ? 1 : 0,
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme,
+                       dci.first_dl_assignment_index);
       } break;
       default:
         break;
@@ -179,12 +201,13 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       fmt::format_to(fmtbuf, "tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     }
     fmt::format_to(fmtbuf,
-                   "h_id={} prb={} symb={} tbs={} rv={}",
+                   "h_id={} prb={} symb={} tbs={} rv={} k2={}",
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.prbs.prbs(),
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
-                   ul_info.pusch_cfg.rv_index);
+                   ul_info.pusch_cfg.rv_index,
+                   ul_info.context.k2);
     if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,
                      " uci: harq_bits={} csi-1_bits={} csi-2_bits={}",
@@ -275,13 +298,14 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} prb={} rv={} tbs={}",
+                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} prb={} k2={} rv={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.context.ue_index,
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.harq_id,
                    ue_msg.context.ss_id,
                    ue_msg.pusch_cfg.prbs.prbs(),
+                   ue_msg.context.k2,
                    ue_msg.pusch_cfg.rv_index,
                    ue_msg.pusch_cfg.tb_size_bytes);
   }

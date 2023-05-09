@@ -373,6 +373,8 @@ struct ul_sched_info {
   struct decision_context {
     du_ue_index_t   ue_index;
     search_space_id ss_id;
+    /// Chosen k2 delay between UL PDCCH annd PUSCH.
+    unsigned k2;
   } context;
 };
 

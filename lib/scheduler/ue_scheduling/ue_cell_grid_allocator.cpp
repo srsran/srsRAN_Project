@@ -504,6 +504,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   ul_sched_info& msg   = pusch_alloc.result.ul.puschs.emplace_back();
   msg.context.ue_index = u.ue_index;
   msg.context.ss_id    = ss_cfg->id;
+  msg.context.k2       = pusch_td_cfg.k2;
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       build_pusch_f0_0_tc_rnti(msg.pusch_cfg,
