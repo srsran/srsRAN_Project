@@ -191,3 +191,16 @@ rf-b200-config:
   interruptible: false
   variables:
     MARKERS: "rf_b200"
+
+android:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    TESTBED: "android"
+    MARKERS: "android"
+    E2E_LOG_LEVEL: "warning"
+    RETINA_ARGS: gnb.all.pcap=False
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
