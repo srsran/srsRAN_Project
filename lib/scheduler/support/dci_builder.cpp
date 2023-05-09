@@ -301,6 +301,79 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   return dci_sz_cfg;
 }
 
+void srsran::build_dci_f1_0_si_rnti(dci_dl_info&               dci,
+                                    const bwp_downlink_common& init_dl_bwp,
+                                    crb_interval               crbs,
+                                    unsigned                   time_resource,
+                                    sch_mcs_index              mcs_index,
+                                    uint8_t                    si_indicator)
+{
+  dci.type                              = srsran::dci_dl_rnti_config_type::si_f1_0;
+  dci.si_f1_0                           = {};
+  dci_1_0_si_rnti_configuration& si_dci = dci.si_f1_0;
+  // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
+  si_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  const vrb_interval si_vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  si_dci.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{si_dci.N_rb_dl_bwp, si_vrbs.start(), si_vrbs.length()});
+  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
+  // TODO: Verify if interleaved is suitable for SIB1.
+  si_dci.vrb_to_prb_mapping       = 0;
+  si_dci.time_resource            = time_resource;
+  si_dci.modulation_coding_scheme = mcs_index.to_uint();
+  // Redundancy version for first transmission.
+  // TODO: Check what is the best RV for SIB1.
+  si_dci.redundancy_version           = 0;
+  si_dci.system_information_indicator = si_indicator;
+}
+
+void srsran::build_dci_f1_0_p_rnti(dci_dl_info&               dci,
+                                   const bwp_downlink_common& init_dl_bwp,
+                                   crb_interval               crbs,
+                                   unsigned                   time_resource,
+                                   sch_mcs_index              mcs_index)
+{
+  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
+  dci.p_rnti_f1_0 = {};
+  auto& p_dci     = dci.p_rnti_f1_0;
+  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
+  p_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  const vrb_interval paging_vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  p_dci.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{p_dci.N_rb_dl_bwp, paging_vrbs.start(), paging_vrbs.length()});
+  p_dci.time_resource = time_resource;
+  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
+  // TODO: Verify if interleaved is suitable for Paging.
+  p_dci.vrb_to_prb_mapping       = 0;
+  p_dci.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
+  p_dci.modulation_coding_scheme = mcs_index.to_uint();
+}
+
+void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
+                                    const bwp_downlink_common& init_dl_bwp,
+                                    crb_interval               crbs,
+                                    unsigned                   time_resource,
+                                    sch_mcs_index              mcs_index)
+{
+  dci.type                              = srsran::dci_dl_rnti_config_type::ra_f1_0;
+  dci.ra_f1_0                           = {};
+  dci_1_0_ra_rnti_configuration& ra_dci = dci.ra_f1_0;
+  // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
+  ra_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
+                           ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
+                           : init_dl_bwp.generic_params.crbs.length();
+  const vrb_interval rar_vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  ra_dci.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{ra_dci.N_rb_dl_bwp, rar_vrbs.start(), rar_vrbs.length()});
+  ra_dci.vrb_to_prb_mapping       = 0;
+  ra_dci.time_resource            = time_resource;
+  ra_dci.modulation_coding_scheme = mcs_index.to_uint();
+  ra_dci.tb_scaling               = 0; // TODO.
+}
+
 void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
                                     const bwp_downlink_common& init_dl_bwp,
                                     crb_interval               crbs,
@@ -324,7 +397,7 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
   const crb_interval cs0_crbs = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
   f1_0.N_rb_dl_bwp            = cs0_crbs.length();
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
-  const vrb_interval vrbs = {crbs.start() - cs0_crbs.start(), crbs.stop() - cs0_crbs.start()};
+  const vrb_interval vrbs = crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, cs0_crbs.start());
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -374,13 +447,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
     N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   }
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
-  vrb_interval vrbs;
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    vrbs = vrb_interval{crbs.start() - cs_cfg.get_coreset_start_crb(), crbs.stop() - cs_cfg.get_coreset_start_crb()};
-  } else {
-    const prb_interval prbs = crb_to_prb(init_dl_bwp.generic_params.crbs, crbs);
-    vrbs                    = {prbs.start(), prbs.stop()};
-  }
+  const vrb_interval vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(
+      crbs, active_dl_bwp.crbs.start(), cs_cfg.get_coreset_start_crb(), dci_dl_format::f1_0, ss_cfg.type);
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -514,9 +582,9 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (TC-RNTI)");
   dci_sizes dci_sz        = get_dci_sizes(dci_sz_cfg);
   f0_0.payload_size       = dci_sz.format0_0_common_size;
-  const prb_interval prbs = crb_to_prb(ul_bwp.crbs, crbs);
+  const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, ul_bwp.crbs.start());
   f0_0.frequency_resource =
-      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), prbs.start(), prbs.length()});
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{ul_bwp.crbs.length(), vrbs.start(), vrbs.length()});
   f0_0.time_resource = time_resource;
 
   f0_0.modulation_coding_scheme = mcs_index.to_uint();
@@ -564,14 +632,12 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
-  const prb_interval prbs = crb_to_prb(active_ul_bwp.crbs, crbs);
-  if (ss_cfg->type == srsran::search_space_configuration::type_t::common) {
-    f0_0.frequency_resource = ra_frequency_type1_get_riv(
-        ra_frequency_type1_configuration{init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
-  } else {
-    f0_0.frequency_resource = ra_frequency_type1_get_riv(
-        ra_frequency_type1_configuration{active_ul_bwp.crbs.length(), prbs.start(), prbs.length()});
-  }
+  const unsigned     N_ul_bwp_rb = (ss_cfg->type == srsran::search_space_configuration::type_t::common)
+                                       ? init_ul_bwp.generic_params.crbs.length()
+                                       : active_ul_bwp.crbs.length();
+  const vrb_interval vrbs        = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
+  f0_0.frequency_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_ul_bwp_rb, vrbs.start(), vrbs.length()});
 
   f0_0.time_resource = time_resource;
 

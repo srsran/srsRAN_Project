@@ -9,6 +9,7 @@
  */
 
 #include "paging_scheduler.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
@@ -446,20 +447,9 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
   const crb_interval cs0_crbs    = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
   const vrb_interval paging_vrbs = {crbs_grant.start() - cs0_crbs.start(), crbs_grant.stop() - cs0_crbs.start()};
 
-  auto& dci = pdcch.dci;
   // Fill Paging DCI.
-  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
-  dci.p_rnti_f1_0 = {};
-  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
-  dci.p_rnti_f1_0.N_rb_dl_bwp              = cs0_crbs.length();
-  dci.p_rnti_f1_0.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
-  dci.p_rnti_f1_0.frequency_resource       = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.p_rnti_f1_0.N_rb_dl_bwp, paging_vrbs.start(), paging_vrbs.length()});
-  dci.p_rnti_f1_0.time_resource = time_resource;
-  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
-  // TODO: Verify if interleaved is suitable for Paging.
-  dci.p_rnti_f1_0.vrb_to_prb_mapping       = 0;
-  dci.p_rnti_f1_0.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
+  build_dci_f1_0_p_rnti(
+      pdcch.dci, cell_cfg.dl_cfg_common.init_dl_bwp, crbs_grant, time_resource, expert_cfg.pg.paging_mcs_index);
 
   // Add Paging UE info to list of Paging information to pass to lower layers.
   for (const auto& pg_info : ues_paging_info) {
@@ -476,18 +466,18 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
   pdsch.rnti               = pdcch.ctx.rnti;
   pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
   pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
-  pdsch.symbols            = pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
+  pdsch.symbols            = pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].symbols;
   pdsch.rbs                = paging_vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
   pdsch.n_id = cell_cfg.pci;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.mcs_index         = dci.p_rnti_f1_0.modulation_coding_scheme;
+  cw.mcs_index         = pdcch.dci.p_rnti_f1_0.modulation_coding_scheme;
   cw.mcs_table         = pdsch_mcs_table::qam64;
   cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
   pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = dci.p_rnti_f1_0.vrb_to_prb_mapping > 0;
+  pdsch.is_interleaved = pdcch.dci.p_rnti_f1_0.vrb_to_prb_mapping > 0;
   pdsch.ss_set_type    = search_space_set_type::type2;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
 }

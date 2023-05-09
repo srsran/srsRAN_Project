@@ -11,6 +11,7 @@
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
+#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"

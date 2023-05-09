@@ -10,6 +10,7 @@
 
 #include "sib_scheduler.h"
 #include "../support/config_helpers.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/prbs_calculator.h"
@@ -173,21 +174,12 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   vrb_interval sib1_vrbs  = sib_crbs_to_vrbs(cell_cfg, sib1_crbs_grant);
 
   // Fill SIB1 DCI.
-  sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
-  sib1_pdcch.dci.si_f1_0             = {};
-  dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
-  dci.N_rb_dl_bwp                    = coreset0_bwp_cfg.crbs.length();
-  dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_vrbs.start(), sib1_vrbs.length()});
-  dci.time_resource = time_resource;
-  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
-  // TODO: Verify if interleaved is suitable for SIB1.
-  dci.vrb_to_prb_mapping       = 0;
-  dci.modulation_coding_scheme = expert_cfg.sib1_mcs_index.to_uint();
-  // Redundancy version for first transmission.
-  // TODO: Check what is the best RV for SIB1.
-  dci.redundancy_version           = 0;
-  dci.system_information_indicator = sib1_si_indicator;
+  build_dci_f1_0_si_rnti(sib1_pdcch.dci,
+                         cell_cfg.dl_cfg_common.init_dl_bwp,
+                         sib1_crbs_grant,
+                         time_resource,
+                         expert_cfg.sib1_mcs_index,
+                         sib1_si_indicator);
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
@@ -198,14 +190,15 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.rnti               = sib1_pdcch.ctx.rnti;
   pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
   pdsch.coreset_cfg        = sib1_pdcch.ctx.coreset_cfg;
-  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
-  pdsch.rbs     = sib1_vrbs;
+  pdsch.symbols =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols;
+  pdsch.rbs = sib1_vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
   pdsch.n_id = cell_cfg.pci;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.rv_index          = dci.redundancy_version;
-  cw.mcs_index         = dci.modulation_coding_scheme;
+  cw.rv_index          = sib1_pdcch.dci.si_f1_0.redundancy_version;
+  cw.mcs_index         = sib1_pdcch.dci.si_f1_0.modulation_coding_scheme;
   cw.mcs_table         = pdsch_mcs_table::qam64;
   cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.tb_size_bytes     = static_cast<uint32_t>(tbs);

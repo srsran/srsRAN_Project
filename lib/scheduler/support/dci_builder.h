@@ -25,6 +25,28 @@ inline unsigned get_redundancy_version(unsigned nof_retxs)
   return rv_idx[nof_retxs % rv_idx.size()];
 }
 
+/// Builds DCI f1_0 for SI-RNTI used in SIBs.
+void build_dci_f1_0_si_rnti(dci_dl_info&               dci,
+                            const bwp_downlink_common& init_dl_bwp,
+                            crb_interval               crbs,
+                            unsigned                   time_resource,
+                            sch_mcs_index              mcs_index,
+                            uint8_t                    si_indicator);
+
+/// Builds DCI f1_0 for P-RNTI used in PCCHs.
+void build_dci_f1_0_p_rnti(dci_dl_info&               dci,
+                           const bwp_downlink_common& init_dl_bwp,
+                           crb_interval               crbs,
+                           unsigned                   time_resource,
+                           sch_mcs_index              mcs_index);
+
+/// Builds DCI f1_0 for RA-RNTI used in RAR.
+void build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
+                            const bwp_downlink_common& init_dl_bwp,
+                            crb_interval               crbs,
+                            unsigned                   time_resource,
+                            sch_mcs_index              mcs_index);
+
 /// Builds DCI f1_0 for TC-RNTI, used for instance in Msg4.
 void build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
                             const bwp_downlink_common& init_dl_bwp,

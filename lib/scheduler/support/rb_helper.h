@@ -27,11 +27,11 @@ namespace rb_helper {
 /// \param dci_fmt DCI DL format.
 /// \param ss_type type of Search Space.
 /// \return VRB interval.
-inline vrb_interval crb_to_vrb_non_interleaved(crb_interval                       crbs,
-                                               unsigned                           bwp_crb_start,
-                                               unsigned                           coreset_crb_start,
-                                               dci_dl_format                      dci_fmt,
-                                               search_space_configuration::type_t ss_type)
+inline vrb_interval crb_to_vrb_dl_non_interleaved(crb_interval                       crbs,
+                                                  unsigned                           bwp_crb_start,
+                                                  unsigned                           coreset_crb_start,
+                                                  dci_dl_format                      dci_fmt,
+                                                  search_space_configuration::type_t ss_type)
 {
   if (dci_fmt == dci_dl_format::f1_0 and ss_type == search_space_configuration::type_t::common) {
     return crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, coreset_crb_start);
