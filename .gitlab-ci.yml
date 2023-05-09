@@ -134,7 +134,7 @@ clangsa:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
 
-coverity:
+.coverity_base:
   image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
   stage: static
   needs: []
@@ -143,8 +143,6 @@ coverity:
     KUBERNETES_MEMORY_REQUEST: 13Gi
   tags:
     - ${INFRASTRUCTURE_TAG}
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
   interruptible: false
   script:
     - |
@@ -155,12 +153,30 @@ coverity:
       tar czvf srsgnb.tgz cov-int
       ver=$(git rev-parse HEAD)
 
-      curl --form token=$COVERITY_TOKEN \
+      curl --form token=$COV_TOKEN \
         --form email=nils@srs.io \
         --form file=@srsgnb.tgz \
         --form version=$ver \
-        --form description="srsGNB dev build" \
-        https://scan.coverity.com/builds?project=srsRAN_5G
+        --form description="srsRAN Project dev build" \
+        https://scan.coverity.com/builds?project=${PROJECT_NAME}
+
+coverity-dev:
+  extends: .coverity_base
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G"
+    - export DESCRIPTION="srsRAN Project dev build"
+    - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
+
+coverity-agpl:
+  extends: .coverity_base
+  rules:
+    - if: $CI_DESCRIPTION =~ /AGPL-COVERITY/
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G_agpl"
+    - export DESCRIPTION="srsRAN Project AGPL build"
+    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
 
 e2e tests tox:
   stage: static
