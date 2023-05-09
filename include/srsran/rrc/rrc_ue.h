@@ -213,7 +213,7 @@ class rrc_ue_control_notifier
 public:
   virtual ~rrc_ue_control_notifier() = default;
 
-  // TODO: Add other control messages
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 };
 
 /// Handle downlink NAS transport messages.

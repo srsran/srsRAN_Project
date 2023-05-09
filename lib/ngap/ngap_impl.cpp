@@ -465,10 +465,12 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   }
 
   ue_context_release_request->cause.value.set_radio_network();
-  ue_context_release_request->cause.value.radio_network() =
-      asn1::ngap::cause_radio_network_opts::options::user_inactivity;
+  // TODO: Add sub causes to common type
+  // ue_context_release_request->cause.value.radio_network() =
+  //     asn1::ngap::cause_radio_network_opts::options::user_inactivity;
 
   // Forward message to AMF
+  logger.info("Sending UeContextReleaseRequest");
   ngap_notifier.on_new_message(ngap_msg);
 }
 

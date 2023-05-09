@@ -107,6 +107,11 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
+  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    logger.info("Received UE Context Release Request");
+  }
+
   bool initial_ue_msg_received = false;
 
 private:

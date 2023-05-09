@@ -151,7 +151,12 @@ private:
 class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void connect_ngap(ngap_nas_message_handler& ngap_nas_msg_handler_) { ngap_nas_msg_handler = &ngap_nas_msg_handler_; }
+  void connect_ngap(ngap_nas_message_handler&     ngap_nas_msg_handler_,
+                    ngap_control_message_handler& ngap_ctrl_msg_handler_)
+  {
+    ngap_nas_msg_handler  = &ngap_nas_msg_handler_;
+    ngap_ctrl_msg_handler = &ngap_ctrl_msg_handler_;
+  }
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
@@ -188,8 +193,16 @@ public:
     ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }
 
+  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
+
+    ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
+  }
+
 private:
-  ngap_nas_message_handler* ngap_nas_msg_handler = nullptr;
+  ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
+  ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;
 
   /// \brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
   /// \param establishment_cause The RRC Establishment Cause.

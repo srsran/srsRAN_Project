@@ -238,7 +238,8 @@ du_index_t cu_cp::add_du()
                                                                    *cfg.cu_cp_executor);
 
   du_processor_ev_notifier.connect_cu_cp(*this);
-  rrc_ue_ngap_notifier.connect_ngap(*ngap_entity);
+  rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
+                                    ngap_entity->get_ngap_control_message_handler());
   ngap_du_processor_ev_notifiers[du_index] = {};
   ngap_du_processor_ev_notifiers.at(du_index).connect_du_processor(du.get());
 
