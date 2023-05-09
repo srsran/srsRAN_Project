@@ -50,7 +50,7 @@ variables:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.4rc0
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.4
     entrypoint: ["/bin/sh", "-c"]
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
