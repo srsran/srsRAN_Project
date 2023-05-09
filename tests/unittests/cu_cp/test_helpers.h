@@ -31,6 +31,9 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
+/// \brief Generate RRC Container with invalid RRC Reestablishment Request.
+byte_buffer generate_invalid_rrc_reestablishment_request();
+
 /// \brief Generate a random gnb_cu_cp_ue_e1ap_id
 gnb_cu_cp_ue_e1ap_id_t generate_random_gnb_cu_cp_ue_e1ap_id();
 

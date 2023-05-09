@@ -33,6 +33,13 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_setup_complete()
   return octet_str.to_byte_buffer();
 }
 
+byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request()
+{
+  asn1::unbounded_octstring<true> octet_str;
+  octet_str.from_string("460100400020");
+  return octet_str.to_byte_buffer();
+}
+
 gnb_cu_cp_ue_e1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_cp_ue_e1ap_id()
 {
   return int_to_gnb_cu_cp_ue_e1ap_id(
