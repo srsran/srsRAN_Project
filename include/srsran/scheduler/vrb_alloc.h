@@ -150,11 +150,14 @@ prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, no
 namespace fmt {
 
 template <>
-struct formatter<srsran::vrb_alloc> : public formatter<srsran::vrb_interval> {
+struct formatter<srsran::vrb_alloc> : public formatter<srsran::rbg_bitmap> {
   template <typename FormatContext>
   auto format(const srsran::vrb_alloc& grant, FormatContext& ctx)
   {
     if (grant.is_type0()) {
+      if (this->mode == hexadecimal) {
+        return format_to(ctx.out(), "{:x}", grant.type0());
+      }
       return format_to(ctx.out(), "{}", grant.type0());
     }
     return format_to(ctx.out(), "{}", grant.type1());
