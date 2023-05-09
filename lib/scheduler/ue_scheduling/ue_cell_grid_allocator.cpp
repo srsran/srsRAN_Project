@@ -467,6 +467,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
         get_uci_alloc(ue_cell_info.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
   }
   if (total_harq_ack_in_uci != 0) {
+    // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
     dai = ((total_harq_ack_in_uci - 1) % 4);
   }
 
