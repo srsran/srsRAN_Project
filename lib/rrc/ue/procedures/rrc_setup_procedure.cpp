@@ -15,16 +15,16 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&                        context_,
-                                         const asn1::rrc_nr::rrc_setup_request_s& request_,
-                                         const byte_buffer&                       du_to_cu_container_,
-                                         rrc_ue_setup_proc_notifier&              rrc_ue_notifier_,
-                                         rrc_ue_du_processor_notifier&            du_processor_notifier_,
-                                         rrc_ue_nas_notifier&                     nas_notifier_,
-                                         rrc_ue_event_manager&                    event_mng_,
-                                         srslog::basic_logger&                    logger_) :
+rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&                          context_,
+                                         const asn1::rrc_nr::establishment_cause_e& cause_,
+                                         const byte_buffer&                         du_to_cu_container_,
+                                         rrc_ue_setup_proc_notifier&                rrc_ue_notifier_,
+                                         rrc_ue_du_processor_notifier&              du_processor_notifier_,
+                                         rrc_ue_nas_notifier&                       nas_notifier_,
+                                         rrc_ue_event_manager&                      event_mng_,
+                                         srslog::basic_logger&                      logger_) :
   context(context_),
-  request(request_),
+  cause(cause_),
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),
   du_processor_notifier(du_processor_notifier_),
@@ -91,7 +91,7 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
   init_ue_msg.nas_pdu.resize(ded_nas_msg.size());
   std::copy(ded_nas_msg.begin(), ded_nas_msg.end(), init_ue_msg.nas_pdu.begin());
 
-  init_ue_msg.establishment_cause = request.rrc_setup_request.establishment_cause;
+  init_ue_msg.establishment_cause = cause;
   init_ue_msg.cell                = context.cell;
 
   cu_cp_five_g_s_tmsi five_g_s_tmsi;
