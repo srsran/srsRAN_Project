@@ -116,6 +116,7 @@ zmq:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     TESTBED: "zmq"
     MARKERS: "zmq and not smoke"
@@ -130,6 +131,7 @@ zmq-asan:
   variables:
     MARKERS: "smoke"
     RETINA_ARGS: "gnb.all.pcap=True"
+  interruptible: false
   needs:
     - job: "basic asan"
       artifacts: true
@@ -140,6 +142,7 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
+  interruptible: false
   needs:
     - job: "basic debug"
       artifacts: true
@@ -148,6 +151,7 @@ rf:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     TESTBED: "rf"
     MARKERS: "rf"
@@ -161,6 +165,7 @@ rf-tsan:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -171,6 +176,7 @@ rf-asan:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -181,5 +187,6 @@ rf-b200-config:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_b200"

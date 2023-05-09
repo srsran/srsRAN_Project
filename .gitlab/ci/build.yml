@@ -88,6 +88,7 @@ push_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   script:
     - echo "Saving git repo in cache"
   cache:
@@ -101,6 +102,7 @@ pull_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     GIT_STRATEGY: none
   needs:
@@ -467,6 +469,7 @@ smoke release update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
@@ -479,6 +482,7 @@ smoke tsan update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
@@ -491,6 +495,7 @@ smoke rhel update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -501,6 +506,7 @@ smoke archlinux update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -511,6 +517,7 @@ basic debug:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -526,6 +533,7 @@ basic asan:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -542,6 +550,7 @@ basic valgrind:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -557,6 +566,7 @@ not rf and not zmq:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -577,6 +587,7 @@ export on amd64:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     COMPILER: gcc
     TEST_MODE: none
@@ -603,6 +614,7 @@ ubuntu-23.04 amd64 avx2:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 10 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -617,6 +629,7 @@ ubuntu-22.04 amd64 avx2:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 20 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -631,6 +644,7 @@ ubuntu-20.04 amd64 avx2:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -645,6 +659,7 @@ rhel-8 amd64 avx2:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
       start_in: 40 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -666,6 +681,7 @@ archlinux amd64 no isa:
   extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -679,6 +695,7 @@ archlinux amd64 avx2:
     - if: $CI_DESCRIPTION =~ /Archlinux/
       when: delayed
       start_in: 15 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -691,6 +708,7 @@ archlinux amd64 avx512:
   extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
@@ -708,6 +726,7 @@ archlinux amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   variables:
     ASSERT_LEVEL: PARANOID
     BUILD_TYPE: Debug
@@ -771,6 +790,7 @@ build uhd alt:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   variables:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
@@ -796,6 +816,7 @@ ubuntu-23.04 amd64 no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -809,6 +830,7 @@ ubuntu-23.04 amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -823,6 +845,7 @@ ubuntu-23.04 arm no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -836,6 +859,7 @@ ubuntu-23.04 arm neon:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-23.04
@@ -849,6 +873,7 @@ ubuntu-22.04 amd64 no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -862,6 +887,7 @@ ubuntu-22.04 amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -876,6 +902,7 @@ ubuntu-22.04 arm no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -889,6 +916,7 @@ ubuntu-22.04 arm neon:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -902,6 +930,7 @@ ubuntu-20.04 amd64 no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 45 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -915,6 +944,7 @@ ubuntu-20.04 amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 45 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -929,6 +959,7 @@ ubuntu-20.04 arm no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 45 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -942,6 +973,7 @@ ubuntu-20.04 arm neon:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 45 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -955,6 +987,7 @@ rhel-8 amd64 no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -968,6 +1001,7 @@ rhel-8 amd64 avx512:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -982,6 +1016,7 @@ rhel-8 arm no isa:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -995,6 +1030,7 @@ rhel-8 arm neon:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8

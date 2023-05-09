@@ -117,12 +117,8 @@ clang-tidy:
 cppcheck:
   extends: .codechecker
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-      variables:
-        ARTIFACT_EXTRA_PATH: "/index.html"
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     ANALYZER: cppcheck
     ANALYZER_ARGS: --cppcheck-max-template-recursion 10
@@ -130,14 +126,10 @@ cppcheck:
 clangsa:
   extends: .codechecker
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-      variables:
-        ARTIFACT_EXTRA_PATH: "/index.html"
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: manual
       allow_failure: true
+  interruptible: false      
   variables:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
@@ -153,6 +145,7 @@ coverity:
     - ${INFRASTRUCTURE_TAG}
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   script:
     - |
       mkdir -p build
@@ -328,6 +321,7 @@ promote code:
   stage: .post
   rules:
     - if: $GRADUATION_BRANCH
+  interruptible: false
   variables:
     GIT_STRATEGY: none
   image: alpine:3.16.0 # sh entrypoint
@@ -363,6 +357,7 @@ disable current schedule:
   rules:
     - if: $GRADUATION_BRANCH
       when: always
+  interruptible: false
   variables:
     ENABLE: "false"
     BRANCH: $CI_COMMIT_REF_NAME
@@ -374,6 +369,7 @@ enable schedule on graduation branch:
   extends: .enable-schedule-by-branch
   rules:
     - if: $GRADUATION_BRANCH
+  interruptible: false
   variables:
     ENABLE: "true"
     BRANCH: $GRADUATION_BRANCH
