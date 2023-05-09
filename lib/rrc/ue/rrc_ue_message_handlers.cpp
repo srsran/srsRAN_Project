@@ -13,6 +13,7 @@
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
+#include "srsran/asn1/rrc_nr/nr_ue_variables.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -94,6 +95,19 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // TODO: handle RRC reestablishment request
+
+  // Get RX short MAC
+  security::sec_short_mac_i short_mac = {};
+  memcpy(short_mac.data(), msg.rrc_reest_request.ue_id.short_mac_i.data(), 2);
+
+  // Get packed varShortMAC-Input
+  var_short_mac_input_s var_short_mac_input        = {};
+  byte_buffer           var_short_mac_input_packed = {};
+  asn1::bit_ref         bref(var_short_mac_input_packed);
+  var_short_mac_input.pack(bref);
+
+  // bool valid = context.sec_context.verify_short_mac(short_mac, var_short_mac_input_packed);
+  logger.error("Recevide RRC Restablishment.");
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)

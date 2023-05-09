@@ -97,8 +97,8 @@ void security_context::horizontal_key_derivation(pci_t target_pci, unsigned targ
   generate_as_keys();
 }
 
-bool security_context::var_short_mac_check(const sec_short_mac_i&                rx_short_mac,
-                                           const sec_var_short_mac_input_packed& packed_var)
+bool security_context::verify_short_mac(const sec_short_mac_i&                rx_short_mac,
+                                        const sec_var_short_mac_input_packed& packed_var)
 {
   srsran_sanity_check(sel_algos.algos_selected, "Tried to check varShortMAC-I, but no algo is selected");
   security::sec_mac mac_exp = {};
