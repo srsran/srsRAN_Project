@@ -58,10 +58,11 @@ span<const uint8_t> paging_pdu_assembler::encode_paging_pdu(const dl_paging_allo
                 "The TBS for Paging cannot be smaller than the Paging payload");
 
   span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(pg.pdsch_cfg.codewords[0].tb_size_bytes);
-  // Fill with zeros. Also takes care of padding if RRC message does not fill a transport block.
-  std::fill(pdu_bytes.data(), pdu_bytes.data() + pdu_bytes.size(), 0);
   for (unsigned idx = 0; idx < payload.length(); ++idx) {
     pdu_bytes[idx] = payload[idx];
   }
+  // Apply RRC padding if RRC message does not fill a transport block. See TS 38.321, clause 6.1.4 and TS 38.331,
+  // clause 8.5.
+  std::fill(pdu_bytes.data() + payload.length(), pdu_bytes.data() + pdu_bytes.size(), 0);
   return pdu_bytes;
 }
