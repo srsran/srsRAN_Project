@@ -180,7 +180,6 @@ if (BUILD_TESTS)
 
     # Alias gtest_discover_tests increase discovery the timeout.
     function(gtest_discover_tests)
-        message(STATUS "_gtest_discover_tests ${ARGV}")
         _gtest_discover_tests(${ARGV} DISCOVERY_TIMEOUT 15)
     endfunction()
 endif (BUILD_TESTS)
