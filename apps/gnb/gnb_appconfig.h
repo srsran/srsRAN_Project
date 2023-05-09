@@ -289,6 +289,7 @@ struct log_appconfig {
   std::string ngap_level  = "warning";
   std::string sdap_level  = "warning";
   std::string gtpu_level  = "warning";
+  std::string sec_level   = "warning";
   std::string fapi_level  = "warning";
   int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
   bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
