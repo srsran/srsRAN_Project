@@ -8,7 +8,7 @@
 
 - name: android-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/android:0.4.4
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/android:0.4.5rc0
   ephemeral-storage: "3G"
   resources:
     - type: android
@@ -16,7 +16,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.4.4
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.4.5rc0
   ephemeral-storage: "3G"
   resources:
     - type: sdr
@@ -25,5 +25,5 @@
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.4.4
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.4.5rc0
   ephemeral-storage: "3G"
