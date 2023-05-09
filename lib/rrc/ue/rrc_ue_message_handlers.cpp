@@ -106,8 +106,8 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   asn1::bit_ref         bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
-  // bool valid = context.sec_context.verify_short_mac(short_mac, var_short_mac_input_packed);
-  logger.error("Recevide RRC Restablishment.");
+  bool valid = context.sec_context.verify_short_mac(short_mac, var_short_mac_input_packed);
+  logger.debug("Recevide RRC Restablishment. short_mac_valid={}", valid);
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)

@@ -97,8 +97,7 @@ void security_context::horizontal_key_derivation(pci_t target_pci, unsigned targ
   generate_as_keys();
 }
 
-bool security_context::verify_short_mac(const sec_short_mac_i&                rx_short_mac,
-                                        const sec_var_short_mac_input_packed& packed_var)
+bool security_context::verify_short_mac(const sec_short_mac_i& rx_short_mac, const byte_buffer& packed_var)
 {
   srsran_sanity_check(sel_algos.algos_selected, "Tried to check varShortMAC-I, but no algo is selected");
   security::sec_mac mac_exp = {};
@@ -140,20 +139,21 @@ bool security_context::verify_short_mac(const sec_short_mac_i&                rx
   }
 
   if (sel_algos.integ_algo != security::integrity_algorithm::nia0) {
-    for (uint8_t i = 0; i < 4; i++) {
-      if (rx_short_mac[i] != mac_exp[i]) {
+    // Check only the two least significant bits
+    for (uint8_t i = 2; i < 4; i++) {
+      if (rx_short_mac[i - 2] != mac_exp[i]) {
         is_valid = false;
         break;
       }
     }
   }
 
-  auto& channel = is_valid ? logger.debug : logger.warning;
+  auto& channel = logger.debug; // TODO log as warning when shortMAC-I is invalid.
   channel(rx_short_mac.data(), rx_short_mac.size(), "shortMAC-I Integrity check. is_valid={}", is_valid);
   channel(key.data(), 16, "Integrity check key.");
   channel(mac_exp.data(), 4, "MAC expected.");
-  channel(rx_short_mac.data(), 4, "MAC found.");
-  channel(packed_var.data(), packed_var.size(), "Integrity check input message.");
+  channel(rx_short_mac.data(), 2, "MAC found.");
+  channel(packed_var.begin(), packed_var.end(), "Integrity check input message.");
   return is_valid;
 }
 
