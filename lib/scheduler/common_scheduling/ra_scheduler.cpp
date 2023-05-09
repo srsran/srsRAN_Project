@@ -53,35 +53,46 @@ uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigne
   return ra_rnti;
 }
 
-/// \brief Derive N^{DL,BWP}_RB from a DCI format 1_0 scrambled by RA-RNTI as per TS38.212 clause 7.3.1.2.1.
-static unsigned get_N_dl_bwp_rb(const cell_configuration& cell_cfg)
-{
-  const bwp_downlink_common& bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
-  if (bwp_dl.pdcch_common.coreset0.has_value()) {
-    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 if CORESET 0 is configured for the cell
-    // and N^{DL,BWP}_RB is the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
-    return get_coreset0_crbs(bwp_dl.pdcch_common).length();
-  }
-  return bwp_dl.generic_params.crbs.length();
-}
-
 static vrb_interval rar_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
 {
-  unsigned cs_rb_start = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb();
-  srsran_sanity_check(grant_crbs.start() >= cs_rb_start, "Invalid CRB start");
-  return {grant_crbs.start() - cs_rb_start, grant_crbs.stop() - cs_rb_start};
+  return crb_to_vrb_f1_0_common_ss_non_interleaved(
+      grant_crbs, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
 }
 
 static vrb_interval msg3_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
 {
-  const prb_interval prbs = crb_to_prb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, grant_crbs);
-  return vrb_interval{prbs.start(), prbs.stop()};
+  return rb_helper::crb_to_vrb_ul_non_interleaved(grant_crbs,
+                                                  cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
 }
 
 static crb_interval msg3_vrb_to_crb(const cell_configuration& cell_cfg, vrb_interval grant_vrbs)
 {
-  return prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                    prb_interval{grant_vrbs.start(), grant_vrbs.stop()});
+  return rb_helper::vrb_to_crb_ul_non_interleaved(grant_vrbs,
+                                                  cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
+}
+
+/// Builds DCI f1_0 for RA-RNTI used in RAR.
+static void build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
+                                   const bwp_downlink_common& init_dl_bwp,
+                                   crb_interval               crbs,
+                                   unsigned                   time_resource,
+                                   sch_mcs_index              mcs_index)
+{
+  dci.type                              = srsran::dci_dl_rnti_config_type::ra_f1_0;
+  dci.ra_f1_0                           = {};
+  dci_1_0_ra_rnti_configuration& ra_dci = dci.ra_f1_0;
+  // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
+  ra_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
+                           ? get_coreset0_crbs(init_dl_bwp.pdcch_common).length()
+                           : init_dl_bwp.generic_params.crbs.length();
+  const vrb_interval rar_vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+  ra_dci.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{ra_dci.N_rb_dl_bwp, rar_vrbs.start(), rar_vrbs.length()});
+  ra_dci.vrb_to_prb_mapping       = 0;
+  ra_dci.time_resource            = time_resource;
+  ra_dci.modulation_coding_scheme = mcs_index.to_uint();
+  ra_dci.tb_scaling               = 0; // TODO.
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,8 +106,9 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   pdcch_sch(pdcch_sch_),
   ev_logger(ev_logger_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
-  ra_crb_lims(cell_cfg.get_grant_crb_limits(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
-  Nrb_dl_bwp(get_N_dl_bwp_rb(cell_cfg)),
+  ra_crb_lims(
+      rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp,
+                                                cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
   prach_format_is_long(is_long_preamble(
       prach_configuration_get(band_helper::get_freq_range(cell_cfg.band),
                               band_helper::get_duplex_mode(cell_cfg.band),
@@ -536,17 +548,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   const vrb_interval            rar_vrbs    = rar_crb_to_vrb(cell_cfg, rar_crbs);
 
   // Fill RAR DCI.
-  pdcch_dl_information& pdcch        = pdcch_alloc.result.dl.dl_pdcchs.back();
-  pdcch.dci.type                     = dci_dl_rnti_config_type::ra_f1_0;
-  pdcch.dci.ra_f1_0                  = {};
-  dci_1_0_ra_rnti_configuration& dci = pdcch.dci.ra_f1_0;
-  dci.N_rb_dl_bwp                    = Nrb_dl_bwp;
-  dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_vrbs.start(), rar_vrbs.length()});
-  dci.time_resource            = pdsch_time_res_index;
-  dci.vrb_to_prb_mapping       = 0;
-  dci.modulation_coding_scheme = sched_cfg.rar_mcs_index.to_uint();
-  dci.tb_scaling               = 0; // TODO.
+  pdcch_dl_information& pdcch = pdcch_alloc.result.dl.dl_pdcchs.back();
+  build_dci_f1_0_ra_rnti(
+      pdcch.dci, cell_cfg.dl_cfg_common.init_dl_bwp, rar_crbs, pdsch_time_res_index, sched_cfg.rar_mcs_index);
 
   // Allocate RBs and space for RAR.
   rar_alloc.dl_res_grid.fill(
@@ -562,14 +566,14 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   pdsch_codeword& cw = rar.pdsch_cfg.codewords.emplace_back();
   cw.mcs_table       = pdsch_mcs_table::qam64;
-  cw.mcs_index       = dci.modulation_coding_scheme;
+  cw.mcs_index       = sched_cfg.rar_mcs_index;
   cw.rv_index        = 0;
   cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes   = get_nof_pdsch_prbs_required(dci.time_resource, msg3_candidates.size()).tbs_bytes;
-  rar.pdsch_cfg.dmrs = rar_data[dci.time_resource].dmrs_info;
+  cw.tb_size_bytes   = get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size()).tbs_bytes;
+  rar.pdsch_cfg.dmrs = rar_data[pdsch_time_res_index].dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
   rar.pdsch_cfg.n_id           = cell_cfg.pci;
-  rar.pdsch_cfg.is_interleaved = dci.vrb_to_prb_mapping > 0;
+  rar.pdsch_cfg.is_interleaved = pdcch.dci.ra_f1_0.vrb_to_prb_mapping > 0;
   rar.pdsch_cfg.ss_set_type    = search_space_set_type::type1;
   rar.pdsch_cfg.dci_fmt        = dci_dl_format::f1_0;
 

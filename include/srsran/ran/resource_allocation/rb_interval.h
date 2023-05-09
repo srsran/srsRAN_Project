@@ -66,6 +66,16 @@ inline crb_interval prb_to_crb(crb_interval bwp_crb_lims, prb_interval prbs)
   return crb_interval{prb_to_crb(bwp_crb_lims, prbs.start()), prb_to_crb(bwp_crb_lims, prbs.stop())};
 }
 
+/// \brief Conversion of CRBs to VRBs for a common search space and DCI format 1_0 as per TS38.211, clause 7.3.1.6.
+/// \param crbs CRB interval to be converted to VRB interval.
+/// \param coreset_crb_start Start of the coreset CRB interval.
+/// \return VRB interval.
+inline vrb_interval crb_to_vrb_f1_0_common_ss_non_interleaved(crb_interval crbs, unsigned coreset_crb_start)
+{
+  srsran_sanity_check(crbs.start() >= coreset_crb_start, "Invalid CRB start");
+  return vrb_interval{crbs.start() - coreset_crb_start, crbs.stop() - coreset_crb_start};
+}
+
 } // namespace srsran
 
 namespace fmt {

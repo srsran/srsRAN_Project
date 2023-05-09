@@ -128,7 +128,6 @@ private:
   /// RA window size in number of slots.
   const unsigned ra_win_nof_slots;
   crb_interval   ra_crb_lims;
-  unsigned       Nrb_dl_bwp;
   const bool     prach_format_is_long;
 
   /// Pre-cached information related to RAR for a given PDSCH time resource.

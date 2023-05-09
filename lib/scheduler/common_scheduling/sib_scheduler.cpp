@@ -125,7 +125,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-        cell_cfg.get_grant_crb_limits(to_search_space_id(0)),
+        rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0)),
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
     sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {

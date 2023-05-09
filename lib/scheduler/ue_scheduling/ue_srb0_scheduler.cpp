@@ -133,7 +133,9 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
 
   prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
-      initial_active_dl_bwp.scs, cell_cfg.get_grant_crb_limits(ss_cfg.id), pdsch_cfg.symbols);
+      initial_active_dl_bwp.scs,
+      rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
+      pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
   crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
   // Try to find least MCS to fit SRB0 message.

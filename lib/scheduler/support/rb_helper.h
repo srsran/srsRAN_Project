@@ -13,11 +13,45 @@
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/scheduler/vrb_alloc.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
 namespace rb_helper {
+
+/// \brief Conversion of CRBs to VRBs as per TS38.211, clause 7.3.1.6.
+/// \param crbs CRB interval to be converted to VRB interval.
+/// \param bwp_crb_start Start of the BWP CRBs.
+/// \param coreset_crb_start Start of the coreset CRBs.
+/// \param dci_fmt DCI DL format.
+/// \param ss_type type of Search Space.
+/// \return VRB interval.
+inline vrb_interval crb_to_vrb_non_interleaved(crb_interval                       crbs,
+                                               unsigned                           bwp_crb_start,
+                                               unsigned                           coreset_crb_start,
+                                               dci_dl_format                      dci_fmt,
+                                               search_space_configuration::type_t ss_type)
+{
+  if (dci_fmt == dci_dl_format::f1_0 and ss_type == search_space_configuration::type_t::common) {
+    return crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, coreset_crb_start);
+  }
+  return vrb_interval{crbs.start() - bwp_crb_start, crbs.stop() - bwp_crb_start};
+}
+
+/// \brief Conversion of CRBs to VRBs as per TS38.211, clause 7.3.1.6.
+/// \param crbs CRB interval to be converted to VRB interval.
+/// \param bwp_crb_start Start of the BWP CRBs.
+/// \return VRB interval.
+inline vrb_interval crb_to_vrb_ul_non_interleaved(crb_interval crbs, unsigned bwp_crb_start)
+{
+  srsran_sanity_check(crbs.start() >= bwp_crb_start, "Invalid CRB start");
+  return vrb_interval{crbs.start() - bwp_crb_start, crbs.stop() - bwp_crb_start};
+}
+inline crb_interval vrb_to_crb_ul_non_interleaved(vrb_interval vrbs, unsigned bwp_crb_start)
+{
+  return crb_interval{vrbs.start() + bwp_crb_start, vrbs.stop() + bwp_crb_start};
+}
 
 /// \brief Finds the next contiguous range of PRBs whose respective bit in provided RB bitmap is set to zero.
 ///
@@ -63,6 +97,17 @@ inline constexpr crb_interval get_dl_alloc_crb_limits(const bwp_downlink_common&
     crbs                  = {crbs.start(), cs0_crbs.start() + cs0_crbs.length()};
   }
   return crbs;
+}
+
+/// \brief Get CRB boundaries where a RB allocation can be made given an initial BWP configuration and a SearchSpaceId.
+inline crb_interval get_dl_alloc_crb_limits_common(const bwp_downlink_common& init_and_active_bwp_dl,
+                                                   search_space_id            ss_id)
+{
+  const search_space_configuration& ss_cfg = init_and_active_bwp_dl.pdcch_common.search_spaces[ss_id];
+  const coreset_configuration&      cs_cfg = ss_cfg.cs_id == to_coreset_id(0)
+                                                 ? *init_and_active_bwp_dl.pdcch_common.coreset0
+                                                 : *init_and_active_bwp_dl.pdcch_common.common_coreset;
+  return get_dl_alloc_crb_limits(init_and_active_bwp_dl, init_and_active_bwp_dl.generic_params, cs_cfg, ss_cfg);
 }
 
 } // namespace rb_helper
