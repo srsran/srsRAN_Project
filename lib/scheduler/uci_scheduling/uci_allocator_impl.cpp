@@ -129,12 +129,12 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
   if (uci_output.alloc_successful) {
     auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
     if (uci == nullptr) {
-      uci                          = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
-      uci->rnti                    = crnti;
-      uci->scheduled_pdsch_counter = 0;
+      uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
+      uci->rnti                       = crnti;
+      uci->scheduled_dl_pdcch_counter = 0;
     }
-    uci_output.dai = uci->scheduled_pdsch_counter % DAI_MOD;
-    uci->scheduled_pdsch_counter++;
+    uci_output.dai = uci->scheduled_dl_pdcch_counter % DAI_MOD;
+    uci->scheduled_dl_pdcch_counter++;
   }
 
   return uci_output;
@@ -240,5 +240,5 @@ uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_reso
   if (uci == nullptr) {
     return 0;
   }
-  return uci->scheduled_pdsch_counter;
+  return uci->scheduled_dl_pdcch_counter;
 }
