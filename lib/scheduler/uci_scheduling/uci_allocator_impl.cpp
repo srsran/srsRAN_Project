@@ -133,11 +133,8 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
       uci->rnti                    = crnti;
       uci->scheduled_pdsch_counter = 0;
     }
-    // Set DAI if TDD is enabled.
-    if (slot_alloc.cfg.is_tdd()) {
-      uci_output.dai = uci->scheduled_pdsch_counter % DAI_MOD;
-      uci->scheduled_pdsch_counter++;
-    }
+    uci_output.dai = uci->scheduled_pdsch_counter % DAI_MOD;
+    uci->scheduled_pdsch_counter++;
   }
 
   return uci_output;
