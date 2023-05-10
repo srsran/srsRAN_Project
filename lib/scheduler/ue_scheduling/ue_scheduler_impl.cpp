@@ -50,8 +50,7 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
   // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
   // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
-  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or
-      (not expert_cfg.enable_csi_rs_pdsch_multiplexing and (*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty())) {
+  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
     sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
     sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
   }
