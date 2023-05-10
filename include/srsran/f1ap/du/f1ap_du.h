@@ -96,12 +96,6 @@ public:
   virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
 };
 
-/// \brief Command to initiate F1AP UE CONTEXT Release Request.
-struct f1ap_ue_context_release_request {
-  du_ue_index_t       ue_index;
-  asn1::f1ap::cause_c cause;
-};
-
 struct f1ap_ue_context_modification_required_message {
   asn1::f1ap::ue_context_mod_required_s msg;
 };

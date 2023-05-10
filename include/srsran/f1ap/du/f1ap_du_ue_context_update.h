@@ -63,5 +63,11 @@ struct f1ap_ue_context_update_response {
   byte_buffer                 du_to_cu_rrc_container;
 };
 
+/// \brief Request Command for F1AP UE CONTEXT Release Request.
+struct f1ap_ue_context_release_request {
+  du_ue_index_t       ue_index;
+  asn1::f1ap::cause_c cause;
+};
+
 } // namespace srs_du
 } // namespace srsran

@@ -73,31 +73,35 @@ public:
   f1ap_paging_manager&      get_f1ap_paging_manager() override { return *this; }
 
 private:
-  /// \brief Notify about the reception of an initiating message.
+  /// \brief Handle the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  /// \brief Notify about the reception of an Initial UL RRC Message Transfer message.
+  /// \brief Handle the reception of an Initial UL RRC Message Transfer message.
   /// This starts the UE and SRB creation at the DU processor, F1 and RRC UE.
   /// @see rrc_setup_procedure.
   /// \param[in] msg The F1AP initial UL RRC message.
   void handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_msg_transfer_s& msg);
 
-  /// \brief Notify about the reception of an UL RRC Message Transfer message.
+  /// \brief Handle the reception of an UL RRC Message Transfer message.
   /// \param[in] msg The F1AP UL RRC message.
   void handle_ul_rrc_message(const asn1::f1ap::ul_rrc_msg_transfer_s& msg);
 
-  /// \brief Notify about the reception of an successful outcome.
+  /// \brief Handle the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
 
-  /// \brief Notify about the reception of an unsuccessful outcome.
+  /// \brief Handle the reception of an unsuccessful outcome.
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Notify about the reception of an F1 Removal Request.
+  /// \brief Handle the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.
   void handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg);
+
+  /// \brief Handle the reception of an UE Context Release Request.
+  /// \param[in] msg The UE Context Release Request message.
+  void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
   srslog::basic_logger& logger;
 

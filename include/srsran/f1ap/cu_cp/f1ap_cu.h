@@ -165,6 +165,9 @@ public:
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
 
+  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473 section 8.3.2.
+  virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
+
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
@@ -175,6 +178,7 @@ class f1ap_du_management_notifier
 {
 public:
   virtual ~f1ap_du_management_notifier() = default;
+
   /// \brief Notifies about a successful F1 Removal procedure.
   /// The corresponding DU processor will be removed now.
   /// \param[in] du_index The index of the DU processor to delete.

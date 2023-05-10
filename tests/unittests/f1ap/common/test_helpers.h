@@ -64,6 +64,12 @@ public:
     return ret;
   }
 
+  void on_du_initiated_ue_context_release_request(const srs_cu_cp::f1ap_ue_context_release_request& req) override
+  {
+    logger.info("Received UEContextReleaseRequest");
+    // TODO
+  }
+
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::f1_setup_request_message              last_f1_setup_request_msg;

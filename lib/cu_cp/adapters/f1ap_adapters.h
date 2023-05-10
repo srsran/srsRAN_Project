@@ -62,6 +62,11 @@ public:
     return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
   }
 
+  void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
+  {
+    // TODO
+  }
+
 private:
   du_processor_f1ap_interface* du_f1ap_handler = nullptr;
 };

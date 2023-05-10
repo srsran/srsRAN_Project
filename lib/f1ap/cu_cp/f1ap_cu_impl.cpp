@@ -204,6 +204,9 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
       handle_f1_removal_request(msg.value.f1_removal_request());
     } break;
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ue_context_release_request: {
+      handle_ue_context_release_request(msg.value.ue_context_release_request());
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -315,4 +318,15 @@ void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_reques
 {
   du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
+}
+
+void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
+{
+  f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value)];
+
+  f1ap_ue_context_release_request req;
+  req.ue_index = ue_ctxt.ue_index;
+  req.cause    = msg->cause.value;
+
+  du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }
