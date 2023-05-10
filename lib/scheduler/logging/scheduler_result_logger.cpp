@@ -57,7 +57,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       case dci_dl_rnti_config_type::c_rnti_f1_1: {
         const auto& dci = pdcch.dci.c_rnti_f1_1;
         fmt::format_to(fmtbuf,
-                       " dci: h_id={} ndi1={} rv1={} mcs1={}",
+                       " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.tb1_new_data_indicator ? 1 : 0,
                        dci.tb1_redundancy_version,
@@ -97,7 +97,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       case dci_ul_rnti_config_type::c_rnti_f0_1: {
         const auto& dci = pdcch.dci.c_rnti_f0_1;
         fmt::format_to(fmtbuf,
-                       " h_id={} ndi={} rv={} mcs={} dai1={}",
+                       " h_id={} ndi={} rv={} mcs={} dai={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
                        dci.redundancy_version,
