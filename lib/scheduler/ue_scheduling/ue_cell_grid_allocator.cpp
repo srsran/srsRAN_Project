@@ -13,6 +13,7 @@
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
+#include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -458,17 +459,18 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // occasions for PDCCH with DCI format 1_0 or DCI format 1_1 for scheduling PDSCH receptions or SPS PDSCH
   // release on any serving cell c and the UE does not have HARQ-ACK information in response to a SPS PDSCH
   // reception to multiplex in the PUSCH, the UE does not multiplex HARQ-ACK information in the PUSCH transmission.
-  unsigned dai                   = 3;
-  unsigned total_harq_ack_in_uci = 0;
-  for (unsigned cell_idx = 0; cell_idx < u.nof_cells(); cell_idx++) {
-    const ue_cell& ue_cell_info = u.get_cell(static_cast<ue_cell_index_t>(cell_idx));
-    srsran_assert(has_cell(ue_cell_info.cell_index), "Invalid UE candidate cell_index={}", ue_cell_info.cell_index);
-    total_harq_ack_in_uci +=
-        get_uci_alloc(ue_cell_info.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
-  }
-  if (total_harq_ack_in_uci != 0) {
-    // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
-    dai = ((total_harq_ack_in_uci - 1) % 4);
+  unsigned dai = 3;
+  if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
+    unsigned total_harq_ack_in_uci = 0;
+    for (unsigned cell_idx = 0; cell_idx < u.nof_cells(); cell_idx++) {
+      const ue_cell& ue_cell_info = u.get_cell(static_cast<ue_cell_index_t>(cell_idx));
+      total_harq_ack_in_uci +=
+          get_uci_alloc(ue_cell_info.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
+    }
+    if (total_harq_ack_in_uci != 0) {
+      // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
+      dai = ((total_harq_ack_in_uci - 1) % 4);
+    }
   }
 
   // Fill UL PDCCH DCI.
