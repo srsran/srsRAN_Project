@@ -161,7 +161,7 @@ search_space_configuration srsran::config_helpers::make_default_ue_search_space_
   cfg.cs_id                      = to_coreset_id(1);
   cfg.id                         = to_search_space_id(2);
   cfg.type                       = search_space_configuration::type_t::ue_dedicated;
-  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
   return cfg;
 }
 
