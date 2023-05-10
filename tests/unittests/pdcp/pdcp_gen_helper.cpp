@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   srslog::init();
   srslog::basic_logger& logger = srslog::fetch_basic_logger("PDCP", false);
   logger.set_level(srslog::basic_levels::debug);
+  logger.set_hex_dump_max_size(1500);
 
   pdcp_sn_size sn_size = args.sn_size == "12" ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
   logger.info("Creating PDCP TX ({} bit)", sn_size);

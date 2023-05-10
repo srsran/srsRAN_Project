@@ -128,6 +128,29 @@ struct sec_128_as_config {
   sec_128_key         k_128_up_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
+
+  bool operator==(const sec_128_as_config& rhs) const
+  {
+    if (integ_algo != rhs.integ_algo) {
+      return false;
+    }
+    if (cipher_algo != rhs.cipher_algo) {
+      return false;
+    }
+    if (k_128_rrc_int != rhs.k_128_rrc_int) {
+      return false;
+    }
+    if (k_128_rrc_enc != rhs.k_128_rrc_enc) {
+      return false;
+    }
+    if (k_128_up_int != rhs.k_128_up_int) {
+      return false;
+    }
+    if (k_128_up_enc != rhs.k_128_up_enc) {
+      return false;
+    }
+    return true;
+  }
 };
 
 struct sec_as_config {

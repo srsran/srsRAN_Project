@@ -19,15 +19,59 @@
 
 using namespace srsran;
 
-/// Test
-/// All PDUs are received before the t-Reordering expires.
+/// Test SRB reestablishment
 TEST_P(pdcp_rx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
 {
-  uint32_t count = 262143;
+  init(GetParam(), pdcp_rb_type::srb);
 
-  srsran::test_delimit_logger delimiter(
-      "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-  init(GetParam());
+  auto test_rx_reestablish = [this](uint32_t count) {
+    srsran::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+
+    security::sec_128_as_config reest_sec_cfg = sec_cfg;
+    reest_sec_cfg.integ_algo                  = security::integrity_algorithm::nia3;
+    reest_sec_cfg.cipher_algo                 = security::ciphering_algorithm::nea3;
+    pdcp_rx->enable_security(sec_cfg);
+
+    // Prepare 3 PDUs.
+    byte_buffer test_pdu1;
+    get_test_pdu(count, test_pdu1);
+    byte_buffer test_pdu2;
+    get_test_pdu(count + 1, test_pdu2);
+    byte_buffer test_pdu3;
+    get_test_pdu(count + 2, test_pdu3);
+
+    // RX PDU 2 and 3, none should arrive.
+    pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+    pdcp_rx->set_state(init_state);
+    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu2)});
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+    pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu3)});
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+
+    // Check PDCP state.
+    {
+      pdcp_rx_state st = pdcp_rx->get_state();
+      ASSERT_EQ(st.rx_next, 2);
+    }
+    // Re-establish entity.
+    pdcp_rx->reestablish(reest_sec_cfg);
+
+    // Check no PDU was delivered
+    // and that state was reset.
+    {
+      pdcp_rx_state st = pdcp_rx->get_state();
+      ASSERT_EQ(st.rx_next, 0);
+    }
+    ASSERT_EQ(0, test_frame->sdu_queue.size());
+
+    // Check security config changed
+    {
+      security::sec_128_as_config reest_sec_config2 = pdcp_rx->get_sec_config();
+      ASSERT_EQ(reest_sec_cfg, reest_sec_config2);
+    }
+  };
+
+  test_rx_reestablish(0);
 }
 
 ///////////////////////////////////////////////////////////////////
