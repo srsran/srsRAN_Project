@@ -257,8 +257,9 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
         pdcp_entity*                     pdcp    = drb_iter->second->pdcp.get();
         pdcp_rx_upper_control_interface& pdcp_rx = pdcp->get_rx_upper_control_interface();
         pdcp_tx_upper_control_interface& pdcp_tx = pdcp->get_tx_upper_control_interface();
+        security::sec_as_config          sec     = {};
         pdcp_tx.reestablish();
-        pdcp_rx.reestablish();
+        pdcp_rx.reestablish(security::truncate_config(sec));
       }
     }
     // F1-U apply modification

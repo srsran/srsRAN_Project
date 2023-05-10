@@ -57,7 +57,7 @@ public:
   void handle_pdu(byte_buffer_slice_chain buf) override;
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
-  void reestablish() override {}
+  void reestablish(security::sec_128_as_config sec_cfg_) override;
 
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -132,6 +132,8 @@ private:
   void handle_control_pdu(byte_buffer_slice_chain buf);
 
   void deliver_all_consecutive_counts();
+  void deliver_all_sdus();
+  void discard_all_sdus();
 
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
   byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,

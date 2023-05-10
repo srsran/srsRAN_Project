@@ -67,6 +67,52 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   }
 }
 
+void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg_)
+{
+  // - process the PDCP Data PDUs that are received from lower layers due to the re-establishment of the lower layers,
+  //   as specified in the clause 5.2.2.1;
+
+  // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
+  if (is_srb()) {
+    discard_all_sdus();
+  }
+
+  // - for SRBs and UM DRBs, if t-Reordering is running:
+  //   - stop and reset t-Reordering;
+  //   - for UM DRBs, deliver all stored PDCP SDUs to the upper layers in ascending order of associated COUNT
+  //     values after performing header decompression;
+  if (is_srb() || is_um()) {
+    if (reordering_timer.is_running()) {
+      reordering_timer.stop();
+    }
+    if (is_um()) {
+      deliver_all_sdus();
+    }
+  }
+
+  // - for AM DRBs for Uu interface, perform header decompression using ROHC for all stored PDCP SDUs if drb-
+  //   ContinueROHC is not configured in TS 38.331 [3];
+  // - for AM DRBs for PC5 interface, perform header decompression using ROHC for all stored PDCP IP SDUs;
+  // - for AM DRBs for Uu interface, perform header decompression using EHC for all stored PDCP SDUs if drb-
+  //   ContinueEHC-DL is not configured in TS 38.331 [3];
+  // - for UM DRBs and AM DRBs, reset the ROHC protocol for downlink and start with NC state in U-mode (as
+  //   defined in RFC 3095 [8] and RFC 4815 [9]) if drb-ContinueROHC is not configured in TS 38.331 [3];
+  // - for UM DRBs and AM DRBs, reset the EHC protocol for downlink if drb-ContinueEHC-DL is not configured in
+  //   TS 38.331 [3];
+  // TODO header compression not supported yet.
+
+  // - for UM DRBs and SRBs, set RX_NEXT and RX_DELIV to the initial value;
+  if (is_srb() || is_um()) {
+    st = {};
+  }
+
+  // - apply the ciphering algorithm and key provided by upper layers during the PDCP entity re-establishment
+  //   procedure;
+  // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
+  //   establishment procedure.
+  enable_security(sec_cfg_);
+}
+
 void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
 {
   // Sanity check
@@ -258,7 +304,7 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
 }
 
 // Deliver all consecutively associated COUNTs.
-// Update RX_NEXT after submitting to higher layers
+// Update RX_DELIV after submitting to higher layers
 void pdcp_entity_rx::deliver_all_consecutive_counts()
 {
   for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin();
@@ -272,6 +318,30 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
 
     // Update RX_DELIV
     st.rx_deliv = st.rx_deliv + 1;
+  }
+}
+
+// Deliver all RX'ed SDUs, regardless of order. Used during re-establishment.
+// No need to update RX_DELIV, as the re-establishment procedure will be responsible
+// for updating the state.
+void pdcp_entity_rx::deliver_all_sdus()
+{
+  for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin(); it != reorder_queue.end();
+       reorder_queue.erase(it++)) {
+    logger.log_info("RX SDU. count={}", it->first);
+
+    // Pass PDCP SDU to the upper layers
+    metrics_add_sdus(1, it->second.length());
+    upper_dn.on_new_sdu(std::move(it->second));
+  }
+}
+
+// Discard all SDUs.
+void pdcp_entity_rx::discard_all_sdus()
+{
+  for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin(); it != reorder_queue.end();
+       reorder_queue.erase(it++)) {
+    logger.log_debug("Discarded RX SDU. count={}", it->first);
   }
 }
 
