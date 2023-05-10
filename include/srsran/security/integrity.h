@@ -266,5 +266,71 @@ void security_nia3(sec_mac&           mac,
   security_nia3(mac, key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
+/// \brief Verify shortMAC-I as specified in TS 38.331, section 5.3.7.4
+///
+/// \param[in] rx_short_mac The received shortMAC-I
+/// \param[in] packed_var The varShortMAC-I packed over ASN.1 rules
+/// \param[in] source_as_config The AS keys/algorithms used on the source PCell.
+inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
+                             const byte_buffer&     packed_var,
+                             const sec_as_config&   source_as_config)
+{
+  security::sec_mac mac_exp = {};
+
+  bool        is_valid = true;
+  sec_128_key key      = truncate_key(source_as_config.k_rrc_int);
+  switch (source_as_config.integ_algo) {
+    case security::integrity_algorithm::nia0:
+      break;
+    case security::integrity_algorithm::nia1:
+      security_nia1(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    case security::integrity_algorithm::nia2:
+      security_nia2(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    case security::integrity_algorithm::nia3:
+      security_nia3(mac_exp,
+                    key,
+                    0xffffffff,                   // 32-bit all to ones
+                    0x1f,                         // 5-bit all to ones
+                    security_direction::downlink, // 1-bit to one
+                    packed_var.begin(),
+                    packed_var.end());
+      break;
+    default:
+      break;
+  }
+
+  if (source_as_config.integ_algo != security::integrity_algorithm::nia0) {
+    // Check only the two least significant bits
+    for (uint8_t i = 2; i < 4; i++) {
+      if (rx_short_mac[i - 2] != mac_exp[i]) {
+        is_valid = false;
+        break;
+      }
+    }
+  }
+
+  auto& logger  = srslog::fetch_basic_logger("SEC"); // TODO log as warning when shortMAC-I is invalid.
+  auto& channel = logger.debug;                      // TODO log as warning when shortMAC-I is invalid.
+  channel(rx_short_mac.data(), rx_short_mac.size(), "shortMAC-I Integrity check. is_valid={}", is_valid);
+  channel(key.data(), 16, "Integrity check key.");
+  channel(mac_exp.data(), 4, "MAC expected.");
+  channel(rx_short_mac.data(), 2, "MAC found.");
+  channel(packed_var.begin(), packed_var.end(), "Integrity check input message.");
+  return is_valid;
+}
 } // namespace security
 } // namespace srsran

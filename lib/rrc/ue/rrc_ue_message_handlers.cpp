@@ -14,6 +14,7 @@
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 #include "srsran/asn1/rrc_nr/nr_ue_variables.h"
+#include "srsran/security/integrity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -101,12 +102,17 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   memcpy(short_mac.data(), msg.rrc_reest_request.ue_id.short_mac_i.data(), 2);
 
   // Get packed varShortMAC-Input
-  var_short_mac_input_s var_short_mac_input        = {};
-  byte_buffer           var_short_mac_input_packed = {};
-  asn1::bit_ref         bref(var_short_mac_input_packed);
+  var_short_mac_input_s var_short_mac_input = {};
+  var_short_mac_input.source_pci            = {}; // TODO: fill in with source PCI
+  var_short_mac_input.target_cell_id        = {}; // TODO: fill in with target CellID
+  var_short_mac_input.source_c_rnti         = {}; // TODO: fill in with target Source C-RNTI
+  byte_buffer   var_short_mac_input_packed  = {};
+  asn1::bit_ref bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
-  bool valid = context.sec_context.verify_short_mac(short_mac, var_short_mac_input_packed);
+  // Get source PCell AS config
+  security::sec_as_config source_as_config = {}; // TODO
+  bool                    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
   logger.debug("Recevide RRC Restablishment. short_mac_valid={}", valid);
 }
 

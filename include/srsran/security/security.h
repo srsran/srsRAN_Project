@@ -169,7 +169,6 @@ struct security_context {
   sec_as_config     get_as_config();
   sec_128_as_config get_128_as_config();
   void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
-  bool              verify_short_mac(const sec_short_mac_i& rx_short_mac, const byte_buffer& packed_var);
 };
 
 /******************************************************************************
