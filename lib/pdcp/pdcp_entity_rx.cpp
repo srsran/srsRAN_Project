@@ -21,7 +21,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_factory                   timers_) :
-  pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
+  pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
   upper_dn(upper_dn_),

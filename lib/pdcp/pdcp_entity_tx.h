@@ -49,7 +49,7 @@ public:
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers_) :
-    pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
+    pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
     logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
     lower_dn(lower_dn_),
@@ -194,14 +194,6 @@ private:
   /// Currently, this is only supported when using RLC AM, as only AM has the ability to stop the timers.
   std::map<uint32_t, discard_info> discard_timers_map;
   class discard_callback;
-
-  /*
-   * RB helpers
-   */
-  bool is_srb() const { return cfg.rb_type == pdcp_rb_type::srb; }
-  bool is_drb() const { return cfg.rb_type == pdcp_rb_type::drb; }
-  bool is_um() const { return cfg.rlc_mode == pdcp_rlc_mode::um; }
-  bool is_am() const { return cfg.rlc_mode == pdcp_rlc_mode::am; }
 };
 
 class pdcp_entity_tx::discard_callback
