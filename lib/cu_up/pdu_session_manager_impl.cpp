@@ -248,7 +248,20 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
-    // apply modification
+    // PDCP apply modification
+    if (drb_to_mod.pdcp_cfg.has_value()) {
+      // PDCP configuration modification not supported.
+      const e1ap_pdcp_config& pdcp_cfg = drb_to_mod.pdcp_cfg.value();
+      if (pdcp_cfg.pdcp_reest.has_value() and pdcp_cfg.pdcp_reest) {
+        // Apply
+        pdcp_entity*                     pdcp    = drb_iter->second->pdcp.get();
+        pdcp_rx_upper_control_interface& pdcp_rx = pdcp->get_rx_upper_control_interface();
+        pdcp_tx_upper_control_interface& pdcp_tx = pdcp->get_tx_upper_control_interface();
+        pdcp_tx.reestablish();
+        pdcp_rx.reestablish();
+      }
+    }
+    // F1-U apply modification
     f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
                           drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);

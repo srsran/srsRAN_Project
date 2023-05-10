@@ -66,6 +66,9 @@ public:
     logger.log_info("PDCP configured. {}", cfg);
   }
 
+  /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
+  void reestablish() override {}
+
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
 

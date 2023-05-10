@@ -38,13 +38,13 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
-/// Base class used for receiving RLC bearers.
-/// It provides interfaces for the RLC bearers, for the lower layers
-class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
-                       public pdcp_rx_status_provider,
-                       public pdcp_rx_lower_interface,
-                       public pdcp_rx_upper_control_interface,
-                       public pdcp_rx_metrics
+/// Base class used for transmitting PDCP bearers.
+/// It provides interfaces for the PDCP bearers, for the higher and lower layers
+class pdcp_entity_rx final : public pdcp_entity_tx_rx_base,
+                             public pdcp_rx_status_provider,
+                             public pdcp_rx_lower_interface,
+                             public pdcp_rx_upper_control_interface,
+                             public pdcp_rx_metrics
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
@@ -54,17 +54,19 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers);
 
+  void handle_pdu(byte_buffer_slice_chain buf) override;
+
+  /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
+  void reestablish() override {}
+
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
 
-  void handle_pdu(byte_buffer_slice_chain buf) final;
-
-  /// \brief Compiles a PDCP status report
   ///
   /// Ref: TS 38.323, Sec. 5.4.1, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
   ///
   /// \return Control PDU for PDCP status report as a byte_buffer
-  byte_buffer compile_status_report() final;
+  byte_buffer compile_status_report() override;
 
   /*
    * Header helpers
