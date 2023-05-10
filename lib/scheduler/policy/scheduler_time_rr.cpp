@@ -272,21 +272,20 @@ static bool alloc_ul_ue(const ue&                    u,
       const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
       const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 
-      // Search minimum k2 that corresponds to a UL slot.
-      unsigned time_res = 0;
-      for (; time_res != pusch_list.size(); ++time_res) {
-        const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;
-        const unsigned   start_ul_symbols =
-            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
-        // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-        // the first transmission.
-        const bool sym_length_match_prev_grant_for_rext =
-            is_retx ? pusch_list[time_res].symbols.length() != h->last_tx_params().nof_symbols : true;
-        if (cell_cfg_common.is_ul_enabled(pusch_slot) and pusch_list[time_res].symbols.start() >= start_ul_symbols and
-            sym_length_match_prev_grant_for_rext) {
-          // UL needs to be active for PUSCH in this slot.
-          break;
-        }
+      // - [Implementation-defined] Use fixed ke value of 4 for TDD pattern: DDDDDDXUUU. This configuration ensures that
+      // all DL slots are filled with PDSCH and all UL slots are filled with PUSCH.
+      const unsigned   time_res   = 0;
+      const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;
+      const unsigned   start_ul_symbols =
+          NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
+      // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
+      // the first transmission.
+      const bool sym_length_match_prev_grant_for_retx =
+          is_retx ? pusch_list[time_res].symbols.length() != h->last_tx_params().nof_symbols : true;
+      if (not cell_cfg_common.is_ul_enabled(pusch_slot) or pusch_list[time_res].symbols.start() < start_ul_symbols or
+          !sym_length_match_prev_grant_for_retx) {
+        // UL needs to be active for PUSCH in this slot.
+        continue;
       }
       if (time_res == pusch_list.size()) {
         // no valid k2 found.
