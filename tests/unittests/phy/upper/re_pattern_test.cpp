@@ -30,9 +30,10 @@ void test_merge_even()
   // - even subcarrier indexes, and
   // - even symbol indexes.
   re_pattern pattern_1 = {};
-  pattern_1.rb_begin   = rb_begin;
-  pattern_1.rb_end     = rb_end;
-  pattern_1.rb_stride  = rb_stride;
+  pattern_1.prb_mask   = bounded_bitset<MAX_RB>(rb_end);
+  for (unsigned i_prb = rb_begin; i_prb < rb_end; i_prb += rb_stride) {
+    pattern_1.prb_mask.set(i_prb);
+  }
   for (unsigned k = 0; k != NRE; ++k) {
     pattern_1.re_mask.set(k, k % 2 == 0);
   }
@@ -46,6 +47,7 @@ void test_merge_even()
   // - Even subcarrier indexes, and
   // - odd symbol indexes.
   re_pattern pattern_2 = pattern_1;
+  pattern_2.symbols    = symbol_slot_mask();
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_2.symbols.set(l, l % 2 == 1); // Only odd symbols
   }
@@ -98,9 +100,10 @@ void test_merge_odd()
   // - even subcarrier indexes, and
   // - even symbol indexes.
   re_pattern pattern_1 = {};
-  pattern_1.rb_begin   = rb_begin;
-  pattern_1.rb_end     = rb_end;
-  pattern_1.rb_stride  = rb_stride;
+  pattern_1.prb_mask   = bounded_bitset<MAX_RB>(rb_end);
+  for (unsigned i_prb = rb_begin; i_prb < rb_end; i_prb += rb_stride) {
+    pattern_1.prb_mask.set(i_prb);
+  }
   for (unsigned k = 0; k != NRE; ++k) {
     pattern_1.re_mask.set(k, k % 2 == 0);
   }
@@ -155,9 +158,8 @@ void test_merge_same()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin  = 0;
-  pattern.rb_end    = 1;
-  pattern.rb_stride = 1;
+  pattern.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern.prb_mask.set(0);
   pattern.re_mask.set(0);
   pattern.symbols.set(0);
 
@@ -175,17 +177,15 @@ void test_merge_diff_rb()
 {
   // Create pattern 1.
   re_pattern pattern1;
-  pattern1.rb_begin  = 0;
-  pattern1.rb_end    = 1;
-  pattern1.rb_stride = 1;
+  pattern1.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern1.prb_mask.set(0);
   pattern1.re_mask.set(0);
   pattern1.symbols.set(0);
 
   // Create a pattern 2.
   re_pattern pattern2;
-  pattern2.rb_begin  = 1;
-  pattern2.rb_end    = 2;
-  pattern2.rb_stride = 1;
+  pattern1.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern1.prb_mask.set(1);
   pattern2.re_mask.set(0);
   pattern2.symbols = {};
   pattern2.symbols.set(0);
@@ -196,16 +196,15 @@ void test_merge_diff_rb()
   list.merge(pattern2);
 
   // The number of entries shall be 2.
-  TESTASSERT_EQ(list.get_nof_entries(), 2);
+  TESTASSERT_EQ(list.get_nof_entries(), 1);
 }
 
 void test_inclusion_count()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin  = 0;
-  pattern.rb_end    = 1;
-  pattern.rb_stride = 1;
+  pattern.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern.prb_mask.set(0);
   pattern.re_mask.set(0);
   pattern.symbols.set(0);
 
@@ -215,12 +214,12 @@ void test_inclusion_count()
 
   // Validate the inclusion count with an RB mask that matches.
   bounded_bitset<MAX_RB> rb_mask_match(2);
-  rb_mask_match.set(pattern.rb_begin, true);
+  rb_mask_match.set(0, true);
   TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_match), 1);
 
   // Validate the inclusion count with an RB mask that does not match.
   bounded_bitset<MAX_RB> rb_mask_unmatch(2);
-  rb_mask_unmatch.set(pattern.rb_end, true);
+  rb_mask_unmatch.set(1, true);
   TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
 }
 
@@ -229,9 +228,8 @@ void test_equal()
 {
   // Create a pattern.
   re_pattern pattern;
-  pattern.rb_begin  = 0;
-  pattern.rb_end    = 1;
-  pattern.rb_stride = 1;
+  pattern.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern.prb_mask.set(0);
   pattern.re_mask.set(0);
   pattern.symbols.set(0);
 
@@ -264,10 +262,9 @@ void test_bracket_initializer()
 
   // Create same pattern using parameters.
   re_pattern pattern;
-  pattern.rb_begin  = 0;
-  pattern.rb_end    = 52;
-  pattern.rb_stride = 1;
-  pattern.re_mask   = re_prb_mask();
+  pattern.prb_mask = bounded_bitset<MAX_RB>(MAX_RB);
+  pattern.prb_mask.fill(0, 52);
+  pattern.re_mask = re_prb_mask();
   pattern.re_mask.set(0);
   pattern.re_mask.set(4);
   pattern.re_mask.set(8);

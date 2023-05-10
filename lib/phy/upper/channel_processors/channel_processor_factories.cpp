@@ -824,9 +824,9 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(resource_grid_writer& grid, const pdu_t& pdu) override
+  void process(resource_grid_mapper& mapper, const pdu_t& pdu) override
   {
-    const auto&& func = [&]() { processor->process(grid, pdu); };
+    const auto&& func = [this, &mapper, &pdu]() { processor->process(mapper, pdu); };
 
     if (!enable_logging_broadcast && is_broadcast_rnti(pdu.dci.rnti)) {
       func();

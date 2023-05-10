@@ -16,6 +16,7 @@
 #include "channel_processors/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/srsran_test.h"
 
@@ -58,6 +59,7 @@ static void test_works_in_order()
   TESTASSERT(ssb_ref.is_process_called());
 
   pdcch_processor::pdu_t pdu;
+  pdu.dci.precoding = make_single_port();
   dl_processor->process_pdcch(pdu);
   TESTASSERT(pdcch_ref.is_process_called());
 
@@ -105,6 +107,7 @@ static void test_finish_is_called_before_processing_pdus()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
+  pdu.dci.precoding = make_single_port();
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -162,6 +165,7 @@ static void test_process_pdu_after_finish_processing_pdus_does_nothing()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
+  pdu.dci.precoding = make_single_port();
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -201,6 +205,7 @@ static void test_process_pdu_before_configure_does_nothing()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
+  pdu.dci.precoding = make_single_port();
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -256,6 +261,7 @@ static void test_2consecutive_slots()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
+  pdu.dci.precoding = make_single_port();
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});

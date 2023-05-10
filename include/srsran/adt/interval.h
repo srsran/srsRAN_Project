@@ -34,7 +34,7 @@ public:
   interval() : start_(T{}), stop_(T{}) {}
 
   template <typename U, typename V>
-  interval(U start_point, V stop_point) : start_(start_point), stop_(stop_point)
+  constexpr interval(U start_point, V stop_point) : start_(start_point), stop_(stop_point)
   {
     static_assert(std::is_convertible<U, T>::value, "Invalid interval start point type");
     static_assert(std::is_convertible<V, T>::value, "Invalid interval stop point type");

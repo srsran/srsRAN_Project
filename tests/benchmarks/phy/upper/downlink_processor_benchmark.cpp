@@ -11,6 +11,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_test.h"
@@ -360,7 +361,7 @@ int main(int argc, char** argv)
           pdu.dci.dmrs_power_offset_dB   = 0.0;
           pdu.dci.data_power_offset_dB   = 0.0;
           pdu.dci.payload.resize(pdcch_payload_size);
-          pdu.dci.ports = {0};
+          pdu.dci.precoding = make_single_port();
 
           // Initialize the DCI payload.
           std::generate(
