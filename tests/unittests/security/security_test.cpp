@@ -1360,6 +1360,24 @@ TEST(security_select_algo, do_not_allow_nia0_selection)
   ASSERT_EQ(false, sec_context.select_algorithms(inte_algo_pref_list, ciph_algo_pref_list));
 }
 
+/// shortMAC-I verification
+TEST(short_mac, short_mac_valid)
+{
+  // Testdata in plain format
+  const char* k_rrc_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
+
+  // Pack hex strings into srsran types
+  sec_as_config sec_config = {};
+  sec_config.integ_algo    = integrity_algorithm::nia2;
+  sec_config.k_rrc_int     = make_sec_key(k_rrc_int_cstr);
+
+  sec_short_mac_i short_mac                  = {0x6c, 0x24};
+  byte_buffer     var_short_mac_input_packed = {
+          0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+  bool valid = verify_short_mac(short_mac, var_short_mac_input_packed, sec_config);
+  ASSERT_EQ(true, valid);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

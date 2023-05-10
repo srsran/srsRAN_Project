@@ -16,10 +16,8 @@
  * Common security header - wraps ciphering/integrity check algorithms.
  *****************************************************************************/
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/rnti.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>

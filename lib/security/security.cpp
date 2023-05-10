@@ -12,7 +12,6 @@
 
 #include "srsran/security/security.h"
 #include "srsran/ran/pci.h"
-#include "srsran/security/integrity.h"
 #include "srsran/security/ssl.h"
 #include "srsran/support/error_handling.h"
 #include <arpa/inet.h>

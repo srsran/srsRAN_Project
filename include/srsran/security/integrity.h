@@ -16,9 +16,12 @@
 #include "security.h"
 #include "ssl.h"
 #include "zuc.h"
+#include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
 namespace security {
+
+constexpr uint32_t sec_var_short_mac_input_packed_len = 16;
 
 /******************************************************************************
  * Integrity Protection
@@ -275,10 +278,16 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
                              const byte_buffer&     packed_var,
                              const sec_as_config&   source_as_config)
 {
-  security::sec_mac mac_exp = {};
+  auto& logger = srslog::fetch_basic_logger("SEC");
 
-  bool        is_valid = true;
-  sec_128_key key      = truncate_key(source_as_config.k_rrc_int);
+  if (packed_var.length() != sec_var_short_mac_input_packed_len) {
+    logger.error("Invalid varShortMAC-Input incorrect length. len={}", packed_var.length());
+    return false;
+  }
+
+  security::sec_mac mac_exp  = {};
+  bool              is_valid = true;
+  sec_128_key       key      = truncate_key(source_as_config.k_rrc_int);
   switch (source_as_config.integ_algo) {
     case security::integrity_algorithm::nia0:
       break;
@@ -323,8 +332,8 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
     }
   }
 
-  auto& logger  = srslog::fetch_basic_logger("SEC"); // TODO log as warning when shortMAC-I is invalid.
-  auto& channel = logger.debug;                      // TODO log as warning when shortMAC-I is invalid.
+  // TODO log as warning when shortMAC-I is invalid.
+  auto& channel = logger.debug;
   channel(rx_short_mac.data(), rx_short_mac.size(), "shortMAC-I Integrity check. is_valid={}", is_valid);
   channel(key.data(), 16, "Integrity check key.");
   channel(mac_exp.data(), 4, "MAC expected.");
