@@ -272,7 +272,7 @@ static bool alloc_ul_ue(const ue&                    u,
       const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
       const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 
-      // - [Implementation-defined] Use fixed ke value of 4 for TDD pattern: DDDDDDXUUU. This configuration ensures that
+      // - [Implementation-defined] Use fixed k2 value of 4 for TDD pattern: DDDDDDXUUU. This configuration ensures that
       // all DL slots are filled with PDSCH and all UL slots are filled with PUSCH.
       const unsigned   time_res   = 0;
       const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;

@@ -42,7 +42,8 @@ static unsigned get_dci_1_1_pdsch_to_harq_timing_indicator(unsigned k1, span<con
 
 /// \brief Determines whether the given DCI format is monitored in UE specific SS or not.
 /// \param[in] active_dl_bwp_cmn Active DL BWP common configuration.
-/// \param[in] active_dl_bwp_ded Active DL BWP dedicated configuration.
+/// \param[in] active_dl_bwp_ded Active DL BWP dedicated configuration. If its nullptr then dedicated config does not
+/// exist yet.
 /// \param[in] check_for_fallback_dci_formats Boolean denoting a fallback or non-fallback DCI format.
 /// \return Returns whether the given DCI format are monitored in UE specific SS or not.
 static bool is_dci_format_monitored_in_ue_ss(const bwp_downlink_common&    active_dl_bwp_cmn,
@@ -58,7 +59,7 @@ static bool is_dci_format_monitored_in_ue_ss(const bwp_downlink_common&    activ
                            return ss.type == search_space_configuration::type_t::ue_dedicated and
                                   ss.ue_specific == dci_format;
                          });
-  bool       is_monitired = it != active_dl_bwp_cmn.pdcch_common.search_spaces.end();
+  bool       is_monitored = it != active_dl_bwp_cmn.pdcch_common.search_spaces.end();
   if (active_dl_bwp_ded != nullptr and active_dl_bwp_ded->pdcch_cfg.has_value()) {
     it           = std::find_if(active_dl_bwp_ded->pdcch_cfg.value().search_spaces.begin(),
                       active_dl_bwp_ded->pdcch_cfg.value().search_spaces.end(),
@@ -66,9 +67,9 @@ static bool is_dci_format_monitored_in_ue_ss(const bwp_downlink_common&    activ
                         return ss.type == search_space_configuration::type_t::ue_dedicated and
                                ss.ue_specific == dci_format;
                       });
-    is_monitired = it != active_dl_bwp_ded->pdcch_cfg.value().search_spaces.end();
+    is_monitored = it != active_dl_bwp_ded->pdcch_cfg.value().search_spaces.end();
   }
-  return is_monitired;
+  return is_monitored;
 }
 
 /// \brief Fetches DCI size configurations required to compute DCI size.
