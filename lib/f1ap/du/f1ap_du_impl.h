@@ -49,6 +49,7 @@ public:
   void                           handle_ue_deletion_request(du_ue_index_t ue_index) override;
 
   // F1AP UE context manager functions
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
   async_task<f1ap_ue_context_modification_response_message>
        handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override;
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}

@@ -102,7 +102,7 @@ public:
   optional<f1ap_ue_configuration_request>                                 last_ue_config;
   f1ap_ue_configuration_response                                          next_ue_config_response;
   optional<du_ue_index_t>                                                 last_ue_deleted;
-  optional<f1ap_ue_context_release_request_message>                       last_ue_release{};
+  optional<f1ap_ue_context_release_request>                               last_ue_release_req;
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
@@ -124,6 +124,11 @@ public:
   }
 
   void handle_ue_deletion_request(du_ue_index_t ue_index) override { last_ue_deleted = ue_index; }
+
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request& msg) override
+  {
+    last_ue_release_req = msg;
+  }
 
   async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override

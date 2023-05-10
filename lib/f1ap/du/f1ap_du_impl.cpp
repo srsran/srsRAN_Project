@@ -186,6 +186,21 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 }
 
+void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
+{
+  f1ap_du_ue* ue = ues.find(request.ue_index);
+  srsran_assert(ue != nullptr, "Attempt to initiate UE Context Release Request for non-existent UE.");
+
+  f1ap_message msg;
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+  auto& rel_req = msg.pdu.init_msg().value.ue_context_release_request();
+
+  rel_req->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
+  rel_req->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+  rel_req->cause.value              = request.cause;
+  ue->f1ap_msg_notifier.on_new_message(msg);
+}
+
 async_task<f1ap_ue_context_modification_response_message>
 f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg)
 {

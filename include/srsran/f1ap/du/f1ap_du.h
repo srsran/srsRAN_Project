@@ -96,8 +96,10 @@ public:
   virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
 };
 
-struct f1ap_ue_context_release_request_message {
-  asn1::f1ap::ue_context_release_request_s msg;
+/// \brief Command to initiate F1AP UE CONTEXT Release Request.
+struct f1ap_ue_context_release_request {
+  du_ue_index_t       ue_index;
+  asn1::f1ap::cause_c cause;
 };
 
 struct f1ap_ue_context_modification_required_message {
@@ -136,6 +138,9 @@ public:
 
   /// \brief Removes UE Context from F1AP.
   virtual void handle_ue_deletion_request(du_ue_index_t ue_index) = 0;
+
+  /// \brief Initiates the UE Context Release Request (gNB-DU initiated) procedure as per TS 38.473 section 8.3.2.
+  virtual void handle_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
 
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
