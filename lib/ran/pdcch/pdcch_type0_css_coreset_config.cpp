@@ -18,7 +18,8 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_chan
                                                                         subcarrier_spacing    ssb_scs,
                                                                         subcarrier_spacing    pdcch_scs,
                                                                         uint8_t               coreset_zero_index,
-                                                                        uint8_t               subcarrier_offset)
+                                                                        uint8_t               subcarrier_offset,
+                                                                        bool                  is_for_shared_spectrum)
 {
   // TS38.213 Table 13-1. {SS/PBCH block, PDCCH} SCS is {15, 15} kHz and minimum channel bandwidth 5 MHz or 10 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 15> TABLE_13_1 = {{
@@ -37,6 +38,18 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_chan
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 38},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 38},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 3, 38},
+  }};
+  // TS38.213 Table 13-1A (Only in Rel.17). {SS/PBCH block, PDCCH} SCS is {15, 15} kHz for frequency bands operated with
+  // shared spectrum channel access.
+  static const std::array<pdcch_type0_css_coreset_description, 8> TABLE_13_1_A = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 10},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 12},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 14},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 16},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 10},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 12},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 14},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 16},
   }};
   // TS38.213 Table 13-2. {SS/PBCH block, PDCCH} SCS is {15, 30} kHz and minimum channel bandwidth 5 MHz or 10 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 14> TABLE_13_2 = {{
@@ -85,6 +98,18 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_chan
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 12},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 14},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 16},
+  }};
+  // TS38.213 Table 13-4A (Only in Rel.17). {SS/PBCH block, PDCCH} SCS is {30, 30} kHz for frequency bands operated with
+  // shared spectrum channel access.
+  static const std::array<pdcch_type0_css_coreset_description, 8> TABLE_13_4_A = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 1},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 2},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 3},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 1},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 2},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 3},
   }};
   // TS38.213 Table 13-5. {SS/PBCH block, PDCCH} SCS is {30, 15} kHz and minimum channel bandwidth 40 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 9> TABLE_13_5 = {{
@@ -157,8 +182,11 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_chan
   }};
 
   span<const pdcch_type0_css_coreset_description> table = {};
-  if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz15 &&
-      (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 || minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
+  if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz15 && is_for_shared_spectrum) {
+    table = TABLE_13_1_A;
+  } else if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz15 &&
+             (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
+              minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_1;
   } else if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz30 &&
              (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
@@ -168,6 +196,8 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_chan
              (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
               minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_3;
+  } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 && is_for_shared_spectrum) {
+    table = TABLE_13_4_A;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 &&
              (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
               minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {

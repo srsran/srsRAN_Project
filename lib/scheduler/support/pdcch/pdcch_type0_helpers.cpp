@@ -58,14 +58,14 @@ slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searc
                                                  unsigned                  ssb_index)
 {
   const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, scs_common);
-  srsran_assert(min_channel_bw < min_channel_bandwidth::MHz40, "Bands with minimum channel BW 40MHz not supported.");
 
   pdcch_type0_css_coreset_description coreset0_param =
       pdcch_type0_css_coreset_get(min_channel_bw,
                                   cell_cfg.ssb_cfg.scs,
                                   scs_common,
                                   coreset0,
-                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()));
+                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()),
+                                  band_helper::is_band_for_shared_spectrum(cell_cfg.dl_carrier.band));
 
   srsran_assert(coreset0_param.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1,
                 "SS/PBCH and CORESET multiplexing pattern not supported.");

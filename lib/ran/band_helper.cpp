@@ -133,7 +133,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 60;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -676,6 +676,12 @@ static error_type<std::string> validate_band_n90(uint32_t arfcn, subcarrier_spac
 
 nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
+  // As per Table 5.4.2.3-1, TS 38.104, v17.8.0, band n28 has an additional ARFCN value outside the interval of step 20.
+  const uint32_t arfcn_n28 = 155608U;
+  if (arfcn == arfcn_n28) {
+    return nr_band::n28;
+  }
+
   for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
     if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and
@@ -701,8 +707,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   }
 
   if (band == nr_band::n90) {
-    return validate_band_n90(arfcn, scs) ? error_type<std::string>{}
-                                         : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n90(arfcn, scs);
   }
 
   if (band == nr_band::n96) {
@@ -786,6 +791,15 @@ uint32_t srsran::band_helper::freq_to_nr_arfcn(double freq)
   }
   return static_cast<uint32_t>(((freq - params.F_REF_Offs_MHz * 1e6) / 1e3 / params.delta_F_global_kHz) +
                                params.N_REF_Offs);
+}
+
+bool srsran::band_helper::is_band_for_shared_spectrum(nr_band band)
+{
+  // As per TS 38.104, Table 5.2-1, only bands where Note 3 or Note 4 apply.
+  if (band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102) {
+    return true;
+  }
+  return false;
 }
 
 ssb_pattern_case srsran::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
@@ -1087,21 +1101,33 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
     // As per Table 5.4.3.1-1, TS 38.104, case 3000MHz – 24250MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
     const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_3GHZ_24_5GHZ);
-    ss_ref         = (3000 + N * 1.44) * 1e6;
+    ss_ref         = (3000000 + N * 1440) * 1e3;
   } else if (gscn < MAX_GSCN_FREQ_24_5GHZ_100GHZ) {
     // As per Table 5.4.3.1-1, TS 38.104, case 24250MHz – 100000MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
     const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5GHZ_100GHZ);
-    ss_ref         = (24250.08 + N * 17.28) * 1e6;
+    ss_ref         = (24250080 + N * 17280) * 1e3;
   }
 
   return ss_ref;
 }
 
 // Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
-static unsigned
-get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb, min_channel_bandwidth min_channel_bw)
+static unsigned get_max_coreset0_index(subcarrier_spacing    scs_common,
+                                       subcarrier_spacing    scs_ssb,
+                                       min_channel_bandwidth min_channel_bw,
+                                       bool                  is_for_shared_spectrum = false)
 {
+  // Check first if the band is for shared spectrum channel access, as per Table 5.2-1, TS 38.104, ver. 17.8.0 and
+  // Section 13, TS 38.213, ver.17.5.0.
+  if (is_for_shared_spectrum) {
+    if ((scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz15) or
+        (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30)) {
+      return 7;
+    }
+    return 0;
+  }
+
   if (min_channel_bw == min_channel_bandwidth::MHz5 || min_channel_bw == min_channel_bandwidth::MHz10) {
     if (scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz15) {
       return 14;
@@ -1210,13 +1236,15 @@ optional<unsigned> srsran::band_helper::get_coreset0_index(nr_band              
       scs_common == subcarrier_spacing::kHz15 ? offset_to_point_A.to_uint() : offset_to_point_A.to_uint() / 2;
 
   // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
-  const unsigned max_cset0_idx = get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw);
+  const unsigned max_cset0_idx =
+      get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw, is_band_for_shared_spectrum(band));
 
   // Iterate over the coreset0_indices and corresponding configurations.
   unsigned           max_nof_avail_rbs = 0;
   optional<unsigned> chosen_cset0_idx;
   for (int cset0_idx = static_cast<int>(max_cset0_idx); cset0_idx >= 0; --cset0_idx) {
-    auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+    auto coreset0_cfg = pdcch_type0_css_coreset_get(
+        min_ch_bw, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint(), is_band_for_shared_spectrum(band));
     if (max_nof_avail_rbs > coreset0_cfg.nof_rb_coreset) {
       // No point in continuing search for this and lower CORESET#0s.
       break;
@@ -1264,8 +1292,12 @@ unsigned srsran::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
                                                                         ssb_subcarrier_offset k_ssb)
 {
   // Coreset0 configuration for the provided CORESET#0 index.
-  auto cset0_cfg = pdcch_type0_css_coreset_get(
-      band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+  auto cset0_cfg = pdcch_type0_css_coreset_get(band_helper::get_min_channel_bw(band, scs_common),
+                                               scs_ssb,
+                                               scs_common,
+                                               cset0_idx,
+                                               k_ssb.to_uint(),
+                                               is_band_for_shared_spectrum(band));
 
   const interval<unsigned> ssb_prbs   = get_ssb_crbs(scs_common, scs_ssb, offset_to_point_A, k_ssb);
   const unsigned           crb_ssb_0  = get_ssb_crb_0(scs_common, offset_to_point_A.to_uint());

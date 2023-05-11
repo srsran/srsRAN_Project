@@ -213,9 +213,8 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
 
   // Exclude a priori the bands that are not yet supported.
-  if (band == srsran::nr_band::n28 or band == srsran::nr_band::n79 or band == srsran::nr_band::n90 or
-      band == srsran::nr_band::n96 or band == srsran::nr_band::n102 or band == srsran::nr_band::n104) {
-    fmt::print("Band {} not currently supported: {}.\n", band);
+  if (band == srsran::nr_band::n102 or band == srsran::nr_band::n104) {
+    fmt::print("Band {} not currently supported.\n", band);
     return false;
   }
 

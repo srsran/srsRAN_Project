@@ -147,6 +147,10 @@ duplex_mode get_duplex_mode(nr_band band);
 /// \return    The band number if the ARFCN is bounded in a band, UINT16_MAX otherwise.
 nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 
+/// \brief     Returns true if the band is used for shared spectrum channel access.
+/// \remark    As per TS 38.104, Table 5.2-1, only bands where Note 3 or Note 4 apply.
+bool is_band_for_shared_spectrum(nr_band band);
+
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
 /// \param[in] arfcn Given Downlink ARFCN.
