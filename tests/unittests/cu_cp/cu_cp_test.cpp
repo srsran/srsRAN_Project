@@ -8,6 +8,7 @@
  *
  */
 
+#include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
 #include <gtest/gtest.h>
 
@@ -579,7 +580,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 
     // Add invalid RRC Reestablishment Request to Initial UL RRC message
     init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container.value =
-        generate_invalid_rrc_reestablishment_request();
+        generate_invalid_rrc_reestablishment_request_pdu();
 
     // Create Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message");

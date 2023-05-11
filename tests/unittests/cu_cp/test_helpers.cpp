@@ -9,6 +9,7 @@
  */
 
 #include "test_helpers.h"
+#include "../rrc/rrc_ue_test_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -30,13 +31,6 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_setup_complete()
       "000010c01000082727e01c3ff100c047e004139000bf202f8998000410000000f2e04f070f0707100517e004139000bf202f899800041000"
       "0000f1001032e04f070f0702f1b08010027db00000000080101b669000000000801000001000000005202f8990000011707f070c0401980b"
       "018010174000090530101000000000");
-  return octet_str.to_byte_buffer();
-}
-
-byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request()
-{
-  asn1::unbounded_octstring<true> octet_str;
-  octet_str.from_string("460100400020");
   return octet_str.to_byte_buffer();
 }
 

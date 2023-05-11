@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/rrc/ue/rrc_ue_impl.h"
+#include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rrc/rrc_du_factory.h"
@@ -99,7 +100,7 @@ protected:
   void receive_invalid_reestablishment_request()
   {
     // inject RRC Reestablishment Request into UE object
-    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{invalid_rrc_reest_pdu});
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu());
   }
 
   void receive_setup_complete()
@@ -248,9 +249,6 @@ private:
       0xb0, 0x00, 0x00, 0x00, 0x00, 0x80, 0x10, 0x1b, 0x66, 0x90, 0x00, 0x00, 0x00, 0x00, 0x80, 0x10, 0x00, 0x00,
       0x10, 0x00, 0x00, 0x00, 0x05, 0x20, 0x2f, 0x89, 0x90, 0x00, 0x00, 0x11, 0x70, 0x7f, 0x07, 0x0c, 0x04, 0x01,
       0x98, 0x0b, 0x01, 0x80, 0x10, 0x17, 0x40, 0x00, 0x09, 0x05, 0x30, 0x10, 0x10};
-
-  // UL-CCCH with invalid RRC Reestablishment Request
-  std::array<uint8_t, 6> invalid_rrc_reest_pdu = {0x46, 0x01, 0x00, 0x40, 0x00, 0x20};
 
   // DL-DCCH with RRC security mode command
   std::array<uint8_t, 3> rrc_smc_pdu = {0x22, 0x08, 0x10};

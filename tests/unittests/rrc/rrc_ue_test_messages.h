@@ -24,5 +24,8 @@ security::sec_128_key make_sec_128_key(std::string hex_str);
 /// \brief Constructs full RRC Reconfig request with radioBearerConfig, masterCellGroup and NAS PDU
 cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_request();
 
+/// \brief Generate RRC Container with invalid RRC Reestablishment Request.
+byte_buffer generate_invalid_rrc_reestablishment_request_pdu();
+
 } // namespace srs_cu_cp
 } // namespace srsran
