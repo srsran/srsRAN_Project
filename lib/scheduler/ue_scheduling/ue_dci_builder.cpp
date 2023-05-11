@@ -41,35 +41,23 @@ static unsigned get_dci_1_1_pdsch_to_harq_timing_indicator(unsigned k1, span<con
 }
 
 /// \brief Determines whether the given DCI format is monitored in UE specific SS or not.
-/// \param[in] active_dl_bwp_cmn Active DL BWP common configuration.
-/// \param[in] active_dl_bwp_ded Active DL BWP dedicated configuration. If its nullptr then dedicated config does not
-/// exist yet.
+/// \param[in] ue_cell_cfg UE cell configuration.
+/// \param[in] active_bwp_id Active BWP Id.
 /// \param[in] check_for_fallback_dci_formats Boolean denoting a fallback or non-fallback DCI format.
 /// \return Returns whether the given DCI format are monitored in UE specific SS or not.
-static bool is_dci_format_monitored_in_ue_ss(const bwp_downlink_common&    active_dl_bwp_cmn,
-                                             const bwp_downlink_dedicated* active_dl_bwp_ded,
-                                             bool                          check_for_fallback_dci_formats)
+static bool is_dci_format_monitored_in_ue_ss(const ue_cell_configuration& ue_cell_cfg,
+                                             bwp_id_t                     active_bwp_id,
+                                             bool                         check_for_fallback_dci_formats)
 {
-  const auto dci_format   = check_for_fallback_dci_formats
-                                ? search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
-                                : search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
-  auto       it           = std::find_if(active_dl_bwp_cmn.pdcch_common.search_spaces.begin(),
-                         active_dl_bwp_cmn.pdcch_common.search_spaces.end(),
-                         [dci_format](const search_space_configuration& ss) {
-                           return ss.type == search_space_configuration::type_t::ue_dedicated and
-                                  ss.ue_specific == dci_format;
-                         });
-  bool       is_monitored = it != active_dl_bwp_cmn.pdcch_common.search_spaces.end();
-  if (active_dl_bwp_ded != nullptr and active_dl_bwp_ded->pdcch_cfg.has_value()) {
-    it           = std::find_if(active_dl_bwp_ded->pdcch_cfg.value().search_spaces.begin(),
-                      active_dl_bwp_ded->pdcch_cfg.value().search_spaces.end(),
-                      [dci_format](const search_space_configuration& ss) {
-                        return ss.type == search_space_configuration::type_t::ue_dedicated and
-                               ss.ue_specific == dci_format;
-                      });
-    is_monitored = it != active_dl_bwp_ded->pdcch_cfg.value().search_spaces.end();
-  }
-  return is_monitored;
+  const auto  bwp_search_spaces = ue_cell_cfg.get_search_spaces(active_bwp_id);
+  const auto  dci_format        = check_for_fallback_dci_formats
+                                      ? search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
+                                      : search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+  const auto* it                = std::find_if(
+      bwp_search_spaces.begin(), bwp_search_spaces.end(), [dci_format](const search_space_configuration* ss) {
+        return ss->type == search_space_configuration::type_t::ue_dedicated and ss->ue_specific == dci_format;
+      });
+  return it != bwp_search_spaces.end();
 }
 
 /// \brief Fetches DCI size configurations required to compute DCI size.
@@ -86,7 +74,6 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
 {
   const bwp_downlink_common&          init_dl_bwp       = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
   const bwp_downlink_common&          active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
-  const bwp_downlink_dedicated*       active_dl_bwp_ded = ue_cell_cfg.find_dl_bwp_ded(active_bwp_id);
   const bwp_configuration&            active_dl_bwp     = active_dl_bwp_cmn.generic_params;
   const bwp_uplink_common&            init_ul_bwp       = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
   const bwp_configuration&            active_ul_bwp     = ue_cell_cfg.ul_bwp_common(active_bwp_id).generic_params;
@@ -98,8 +85,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   const auto& opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
 
   dci_size_config dci_sz_cfg = dci_size_config{
-      is_dci_format_monitored_in_ue_ss(active_dl_bwp_cmn, active_dl_bwp_ded, true),
-      is_dci_format_monitored_in_ue_ss(active_dl_bwp_cmn, active_dl_bwp_ded, false),
+      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp_id, true),
+      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp_id, false),
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
       init_ul_bwp.generic_params.crbs.length(),
@@ -198,6 +185,9 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
           [usage](const srs_config::srs_resource_set& res_set) { return res_set.srs_res_set_usage == usage; });
       srsran_assert(srs_res_set != opt_srs_cfg.value().srs_res_set.end(), "No valid SRS resource set found");
       srsran_assert(not srs_res_set->srs_res_id_list.empty(), "No SRS resource configured in SRS resource set");
+      // As per TS 38.214, clause 6.1.1.1, When multiple SRS resources are configured by SRS-ResourceSet with usage set
+      // to 'codebook', the UE shall expect that higher layer parameters nrofSRS-Ports in SRS-Resource in
+      // SRS-ResourceSet shall be configured with the same value for all these SRS resources.
       const auto  srs_resource_id = srs_res_set->srs_res_id_list.front();
       const auto* srs_res =
           std::find_if(opt_srs_cfg.value().srs_res.begin(),
