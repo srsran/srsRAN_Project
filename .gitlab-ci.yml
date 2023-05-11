@@ -28,6 +28,7 @@ include:
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
   - local: .gitlab/ci/release.yml
+  - local: .gitlab/ci/deb.yml
 
 stages:
   - ci

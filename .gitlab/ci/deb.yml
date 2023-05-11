@@ -1,0 +1,60 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "6"
+    file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/srsran_project_packaging
+    ref: "1"
+    file: .gitlab/ci-shared/package.yml
+
+stages:
+  - build and unit tests
+
+package:
+  extends: .deb-package
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs: []
+
+install-package:
+  extends: .deb-install
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  script:
+    - gnb --version
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs:
+    - package
