@@ -197,7 +197,11 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
 
   rel_req->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
   rel_req->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
-  rel_req->cause.value              = request.cause;
+
+  // Set F1AP cause.
+  rel_req->cause.value.set_radio_network().value = (request.cause == rlf_cause::max_rlc_retxs_reached)
+                                                       ? cause_radio_network_opts::rl_fail_rlc
+                                                       : cause_radio_network_opts::rl_fail_others;
   ue->f1ap_msg_notifier.on_new_message(msg);
 }
 

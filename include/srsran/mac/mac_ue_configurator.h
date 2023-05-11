@@ -17,6 +17,16 @@ namespace srsran {
 
 class unique_timer;
 
+/// Interface used to notify detected radio link failures in the MAC (e.g. due to max KOs reached) for a given UE.
+class mac_ue_radio_link_notifier
+{
+public:
+  virtual ~mac_ue_radio_link_notifier() = default;
+
+  /// \brief Notifies that a radio link failure has been detected for a given UE.
+  virtual void on_rlf_detected() = 0;
+};
+
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_config {
   lcid_t               lcid;
@@ -29,6 +39,7 @@ struct mac_ue_create_request_message {
   du_cell_index_t                         cell_index;
   du_ue_index_t                           ue_index;
   rnti_t                                  crnti;
+  mac_ue_radio_link_notifier*             rlf_notifier;
   std::vector<mac_logical_channel_config> bearers;
   mac_cell_group_config                   mac_cell_group_cfg;
   physical_cell_group_config              phy_cell_group_cfg;

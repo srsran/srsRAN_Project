@@ -21,7 +21,7 @@
 namespace srsran {
 namespace srs_du {
 
-class du_manager_mac_event_indicator : public mac_ul_ccch_notifier, public mac_ue_radio_link_notifier
+class du_manager_mac_event_indicator : public mac_ul_ccch_notifier
 {
 public:
   void connect(du_manager_mac_event_handler& du_mng_) { du_mng = &du_mng_; }
@@ -30,8 +30,6 @@ public:
   {
     du_mng->handle_ul_ccch_indication(msg);
   }
-
-  void on_rlf_detected(du_ue_index_t ue_index) override { du_mng->handle_mac_radio_link_failure(ue_index); }
 
 private:
   du_manager_mac_event_handler* du_mng;

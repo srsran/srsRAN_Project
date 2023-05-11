@@ -140,7 +140,7 @@ public:
 class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
-  mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_bearers(2), dl_sch_enc(ue_mng)
+  mac_dl_sch_assembler_tester() : ue_mng(mac_expert_config{10000, 10000}, rnti_table), dl_bearers(2), dl_sch_enc(ue_mng)
   {
     srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
     srslog::init();

@@ -31,7 +31,6 @@ public:
 
   // MAC interface
   void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
-  void handle_mac_radio_link_failure(du_ue_index_t ue_index) override;
 
   // Task scheduling interface.
   void schedule_async_task(async_task<void>&& task) override { main_ctrl_loop.schedule(std::move(task)); }

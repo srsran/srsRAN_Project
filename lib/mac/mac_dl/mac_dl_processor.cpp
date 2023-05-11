@@ -13,10 +13,9 @@
 
 using namespace srsran;
 
-mac_dl_processor::mac_dl_processor(mac_common_config_t& cfg_, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
-  cfg(cfg_), logger(cfg.logger), ue_mng(rnti_table_), sched_obj(sched_)
+mac_dl_processor::mac_dl_processor(const mac_dl_config& mac_cfg, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
+  cfg(mac_cfg), ue_mng(cfg.mac_cfg, rnti_table_), sched_obj(sched_)
 {
-  (void)logger;
 }
 
 bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const

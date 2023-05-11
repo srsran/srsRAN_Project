@@ -38,6 +38,7 @@ public:
     }
     return nullptr;
   }
+  void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override {}
 };
 
 ul_ccch_indication_message create_test_ul_ccch_message(rnti_t rnti);

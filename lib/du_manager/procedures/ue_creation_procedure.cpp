@@ -18,6 +18,31 @@
 using namespace srsran;
 using namespace srsran::srs_du;
 
+class mac_ue_rlf_notification_adapter final : public mac_ue_radio_link_notifier
+{
+public:
+  mac_ue_rlf_notification_adapter(du_ue_index_t             ue_index_,
+                                  task_executor&            ctrl_exec_,
+                                  du_ue_manager_repository& du_ue_mng_) :
+    ue_index(ue_index_), ctrl_exec(ctrl_exec_), du_ue_mng(du_ue_mng_)
+  {
+  }
+
+  void on_rlf_detected() override
+  {
+    if (not ctrl_exec.execute(
+            [this]() { du_ue_mng.handle_radio_link_failure(ue_index, rlf_cause::max_mac_kos_reached); })) {
+      srslog::fetch_basic_logger("DU-MNG").warning(
+          "Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full", ue_index);
+    }
+  }
+
+private:
+  du_ue_index_t             ue_index;
+  task_executor&            ctrl_exec;
+  du_ue_manager_repository& du_ue_mng;
+};
+
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
                                              const ul_ccch_indication_message&            ccch_ind_msg,
                                              du_ue_manager_repository&                    ue_mng_,
@@ -34,10 +59,12 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   f1ap_mng(f1ap_mng_),
   du_res_alloc(cell_res_alloc_),
   proc_logger(srslog::fetch_basic_logger("DU-MNG"), name(), ue_index, ccch_ind_msg.crnti),
-  ue_ctx(ue_mng.add_ue(std::make_unique<du_ue>(ue_index,
-                                               ccch_ind_msg.cell_index,
-                                               ccch_ind_msg.crnti,
-                                               du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index))))
+  ue_ctx(ue_mng.add_ue(
+      std::make_unique<du_ue>(ue_index,
+                              ccch_ind_msg.cell_index,
+                              ccch_ind_msg.crnti,
+                              std::make_unique<mac_ue_rlf_notification_adapter>(ue_index, services.du_mng_exec, ue_mng),
+                              du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index))))
 {
 }
 
@@ -153,6 +180,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   mac_ue_create_msg.cell_index         = msg.cell_index;
   mac_ue_create_msg.mac_cell_group_cfg = ue_ctx->resources->mcg_cfg;
   mac_ue_create_msg.phy_cell_group_cfg = ue_ctx->resources->pcg_cfg;
+  mac_ue_create_msg.rlf_notifier       = ue_ctx->mac_rlf_notifier.get();
   for (du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
     mac_ue_create_msg.bearers.emplace_back();
     mac_logical_channel_config& lc = mac_ue_create_msg.bearers.back();

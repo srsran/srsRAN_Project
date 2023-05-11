@@ -88,7 +88,14 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
     ind.crcs[i].tb_crc_success = msg.crcs[i].tb_crc_success;
     ind.crcs[i].ul_sinr_metric = msg.crcs[i].ul_sinr_metric;
   }
+
+  // Forward CRC indication to the scheduler.
   sched_obj.handle_crc_indication(ind);
+
+  // Report CRCs for RLF detection purposes.
+  for (const auto& crc : ind.crcs) {
+    ue_mng.report_crc(crc.ue_index, crc.tb_crc_success);
+  }
 }
 
 static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
@@ -158,6 +165,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
             default:
               pdu.harqs[j] = mac_harq_ack_report_status::dtx;
           }
+
+          // Report ACK for RLF detection purposes.
+          ue_mng.report_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
@@ -167,6 +177,11 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       if (pusch.harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().harq_status, pusch.harq_info->payload);
+
+        // Report ACK for RLF detection purposes.
+        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+          ue_mng.report_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+        }
       }
       if (pusch.csi_part1_info.has_value() and
           pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
@@ -189,6 +204,11 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       if (pucch.harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().harq_status, pucch.harq_info->payload);
+
+        // Report ACK for RLF detection purposes.
+        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+          ue_mng.report_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+        }
       }
       if (pucch.uci_part1_or_csi_part1_info.has_value() and
           pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {

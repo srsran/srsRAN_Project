@@ -30,7 +30,6 @@ public:
   void                                        handle_ue_create_request(const ul_ccch_indication_message& msg);
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
   async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
-  void handle_radio_link_failure(du_ue_index_t ue_index, const asn1::f1ap::cause_c& cause);
 
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();
@@ -48,6 +47,7 @@ private:
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;
+  void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
 
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;

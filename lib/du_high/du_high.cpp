@@ -65,12 +65,13 @@ du_high::du_high(const du_high_configuration& config_) :
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac = create_mac(mac_config{*cfg.pcap,
-                              mac_ev_notifier,
+  mac = create_mac(mac_config{mac_ev_notifier,
                               *cfg.ue_executors,
                               *cfg.cell_executors,
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
+                              mac_expert_config{10000, 10000},
+                              *cfg.pcap,
                               cfg.sched_cfg,
                               cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
   if (cfg.test_cfg.test_ue.has_value()) {

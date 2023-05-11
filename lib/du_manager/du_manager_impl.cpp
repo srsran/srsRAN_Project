@@ -117,19 +117,6 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
   }
 }
 
-void du_manager_impl::handle_mac_radio_link_failure(du_ue_index_t ue_index)
-{
-  // Switch DU Manager exec context
-  if (not params.services.du_mng_exec.execute([this, ue_index]() {
-        asn1::f1ap::cause_c cause;
-        cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::rl_fail_others;
-        ue_mng.handle_radio_link_failure(ue_index, cause);
-      })) {
-    logger.warning("Discarding Radio Link Failure message for UE index {}. Cause: DU manager task queue is full",
-                   ue_index);
-  }
-}
-
 async_task<f1ap_ue_context_update_response>
 du_manager_impl::handle_ue_context_update(const f1ap_ue_context_update_request& request)
 {

@@ -24,9 +24,6 @@ public:
 
   /// \brief Handle UL CCCH message arrival.
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
-
-  /// \brief Handle radio link failure for a UE.
-  virtual void handle_mac_radio_link_failure(du_ue_index_t ue_index) = 0;
 };
 
 /// This class handles updates in cell and UE configurations. TODO: Better naming needed.

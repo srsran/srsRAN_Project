@@ -25,7 +25,7 @@ class mac_cell_processor_tester : public ::testing::TestWithParam<test_params>
 {
 protected:
   mac_cell_processor_tester() :
-    ue_mng(rnti_table),
+    ue_mng(mac_expert_config{10000, 10000}, rnti_table),
     mac_cell(test_helpers::make_default_mac_cell_config(),
              sched,
              ue_mng,
