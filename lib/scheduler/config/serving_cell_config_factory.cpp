@@ -282,6 +282,10 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4});
   } else {
     // TDD
+    // - [Implementation-defined] Ensure k2 value which is less than or equal to minimum value of k1(s) exist in the
+    // first entry of list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with PDSCH and all
+    // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
+    // DCI Format 0_1.
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4, 5, 6, 7});
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
@@ -532,7 +536,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     pucch_cfg.dl_data_to_ul_ack = {4};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7};
+    pucch_cfg.dl_data_to_ul_ack = {7, 6, 5, 4};
   }
 
   // > PUSCH config.

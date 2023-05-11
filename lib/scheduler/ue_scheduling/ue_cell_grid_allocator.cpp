@@ -454,11 +454,14 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Compute total DAI. See TS 38.213, 9.1.3.2.
+  // Total DAI provides total number of transmissions at the end of each interval (slot in a cell). Values range from 1
+  // to 4.
   // If a UE is not provided PDSCH-CodeBlockGroupTransmission and the UE is scheduled for a PUSCH transmission by
   // DCI format 0_1 with DAI field value V_T_DAI_UL = 4 and the UE has not received any PDCCH within the monitoring
   // occasions for PDCCH with DCI format 1_0 or DCI format 1_1 for scheduling PDSCH receptions or SPS PDSCH
   // release on any serving cell c and the UE does not have HARQ-ACK information in response to a SPS PDSCH
   // reception to multiplex in the PUSCH, the UE does not multiplex HARQ-ACK information in the PUSCH transmission.
+  // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
   unsigned dai = 3;
   if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
     unsigned total_harq_ack_in_uci = 0;

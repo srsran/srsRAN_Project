@@ -272,10 +272,10 @@ static bool alloc_ul_ue(const ue&                    u,
       const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
       const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 
-      // - [Implementation-defined] Use fixed k2 value of 4 for TDD pattern: DDDDDDXUUU. This configuration ensures that
-      // all DL slots are filled with PDSCH and all UL slots are filled with PUSCH.
+      // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       const unsigned   time_res   = 0;
-      const slot_point pusch_slot = pdcch_slot + pusch_list[time_res].k2;
+      const unsigned   k2         = pusch_list[time_res].k2;
+      const slot_point pusch_slot = pdcch_slot + k2;
       const unsigned   start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
@@ -292,7 +292,6 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      const unsigned                 k2   = pusch_list[time_res].k2;
       const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
       if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), k2)) {
         // only one PUSCH per UE per slot.
