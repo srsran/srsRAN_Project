@@ -38,7 +38,7 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
-/// Base class used for transmitting PDCP bearers.
+/// Base class used for receiving PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
 class pdcp_entity_rx final : public pdcp_entity_tx_rx_base,
                              public pdcp_rx_status_provider,
