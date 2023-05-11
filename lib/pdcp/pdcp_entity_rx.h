@@ -62,6 +62,7 @@ public:
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
 
+  /// \brief Compiles a PDCP status report
   ///
   /// Ref: TS 38.323, Sec. 5.4.1, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
   ///
