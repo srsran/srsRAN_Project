@@ -19,15 +19,10 @@ using namespace asn1::e2ap;
 
 e2_indication_procedure::e2_indication_procedure(e2_message_notifier&     notif_,
                                                  e2_event_manager&        ev_mng_,
-                                                 timer_factory            timers,
                                                  e2_subscription_info_t   subscription_info_,
                                                  e2_du_metrics_interface& du_metrics_interface_,
                                                  srslog::basic_logger&    logger_) :
-  notifier(notif_),
-  ev_mng(ev_mng_),
-  e2_indication_wait_timer(timers.create_timer()),
-  logger(logger_),
-  du_metrics_interface(du_metrics_interface_)
+  notifier(notif_), ev_mng(ev_mng_), logger(logger_), du_metrics_interface(du_metrics_interface_)
 {
   subscription = subscription_info_;
 }

@@ -289,7 +289,7 @@ class e2_test_subscriber : public e2_test_base
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_handler = std::make_unique<dummy_e2sm_handler>();
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_handler, *msg_notifier, factory, *du_metrics);
+    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_handler, *msg_notifier, *du_metrics);
     e2           = create_e2(factory, *msg_notifier, *subscriber);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);

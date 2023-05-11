@@ -25,7 +25,6 @@ class e2_indication_procedure
 public:
   e2_indication_procedure(e2_message_notifier&     notif_,
                           e2_event_manager&        ev_mng_,
-                          timer_factory            timers,
                           e2_subscription_info_t   subscription_info_,
                           e2_du_metrics_interface& du_metrics_interface_,
                           srslog::basic_logger&    logger_);
@@ -50,7 +49,6 @@ private:
   bool                               check_measurement_name(meas_type_c meas_type, const char* meas);
   e2_message_notifier&               notifier;
   e2_event_manager&                  ev_mng;
-  unique_timer                       e2_indication_wait_timer;
   srslog::basic_logger&              logger;
   e2_du_metrics_interface&           du_metrics_interface;
   e2_subscription_info_t             subscription;
