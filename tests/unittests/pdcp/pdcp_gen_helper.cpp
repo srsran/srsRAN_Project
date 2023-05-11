@@ -101,6 +101,7 @@ int main(int argc, char** argv)
   config.rb_type                = pdcp_rb_type::drb;
   config.rlc_mode               = pdcp_rlc_mode::am;
   config.sn_size                = sn_size;
+  config.direction              = pdcp_security_direction::downlink;
   config.discard_timer          = pdcp_discard_timer::ms10;
   config.status_report_required = false;
 

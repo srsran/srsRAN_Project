@@ -58,6 +58,7 @@ protected:
   /// \param sn_size_ size of the sequence number
   void init(pdcp_sn_size      sn_size_,
             pdcp_rb_type      rb_type_     = pdcp_rb_type::drb,
+            pdcp_rlc_mode     rlc_mode_    = pdcp_rlc_mode::am,
             pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10,
             pdcp_max_count    max_count    = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
   {
@@ -67,7 +68,7 @@ protected:
 
     // Set Rx config
     config.rb_type               = rb_type_;
-    config.rlc_mode              = pdcp_rlc_mode::am;
+    config.rlc_mode              = rlc_mode_;
     config.sn_size               = sn_size;
     config.direction             = pdcp_security_direction::downlink;
     config.out_of_order_delivery = false;

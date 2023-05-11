@@ -24,14 +24,12 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
+  direction(cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
+                                                             : security::security_direction::downlink),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
   timers(timers_)
 {
-  // Security direction
-  direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
-                                                               : security::security_direction::downlink;
-
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::ms0 && cfg.t_reordering != pdcp_t_reordering::infinity) {
     reordering_timer = timers.create_timer();
