@@ -30,6 +30,7 @@ public:
   void                                        handle_ue_create_request(const ul_ccch_indication_message& msg);
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
   async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
+  void handle_radio_link_failure(du_ue_index_t ue_index, const asn1::f1ap::cause_c& cause);
 
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();

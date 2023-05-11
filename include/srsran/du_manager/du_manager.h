@@ -16,16 +16,17 @@ struct ul_ccch_indication_message;
 
 namespace srs_du {
 
-struct du_ue_delete_message {
-  du_ue_index_t ue_index;
-};
-
 /// Interface used to handle external events (e.g. UL CCCH).
-class du_manager_ccch_handler
+class du_manager_mac_event_handler
 {
 public:
-  virtual ~du_manager_ccch_handler()                                            = default;
+  virtual ~du_manager_mac_event_handler() = default;
+
+  /// \brief Handle UL CCCH message arrival.
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
+
+  /// \brief Handle radio link failure for a UE.
+  virtual void handle_mac_radio_link_failure(du_ue_index_t ue_index) = 0;
 };
 
 /// This class handles updates in cell and UE configurations. TODO: Better naming needed.
@@ -66,9 +67,9 @@ public:
 };
 
 class du_manager_interface : public du_manager_interface_query,
-                             public du_manager_ccch_handler,
                              public du_manager_controller,
-                             public du_manager_configurator
+                             public du_manager_configurator,
+                             public du_manager_mac_event_handler
 {
 public:
   virtual ~du_manager_interface() = default;

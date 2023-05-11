@@ -32,4 +32,14 @@ public:
   virtual void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) = 0;
 };
 
+/// Interface used to notify detected radio link failures in the MAC (e.g. due to max KOs reached).
+class mac_ue_radio_link_notifier
+{
+public:
+  virtual ~mac_ue_radio_link_notifier() = default;
+
+  /// \brief Notifies that a radio link failure has been detected for a given UE.
+  virtual void on_rlf_detected(du_ue_index_t ue_index) = 0;
+};
+
 } // namespace srsran

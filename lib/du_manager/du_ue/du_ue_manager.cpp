@@ -57,6 +57,17 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
   return launch_async<ue_deletion_procedure>(msg, *this, cfg);
 }
 
+void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, const asn1::f1ap::cause_c& cause)
+{
+  if (find_ue(ue_index) == nullptr) {
+    logger.warning("Discarding RLF for unknown UE index {}", ue_index);
+    return;
+  }
+
+  // Start F1AP UE Release Request (gNB-initiated) procedure with cause set to RLF.
+  cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_index, cause});
+}
+
 async_task<void> du_ue_manager::stop()
 {
   auto ue_it = ue_db.begin();
