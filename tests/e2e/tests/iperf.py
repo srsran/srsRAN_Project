@@ -25,6 +25,7 @@ from retina.protocol.ue_pb2_grpc import UEStub
 from .steps.configuration import configure_test_parameters
 from .steps.stub import iperf, start_and_attach
 
+TINY_DURATION = 5
 SHORT_DURATION = 20
 LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
@@ -32,6 +33,66 @@ HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        # This requires "sample_rate: 23040000"
+        # param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_android(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    RF IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=HIGH_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        log_search=False,
+        always_download_artifacts=True,
+    )
 
 
 @mark.parametrize(
