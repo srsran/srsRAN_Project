@@ -252,6 +252,22 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   return ue_creation_complete_msg;
 }
 
+void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request)
+{
+  du_ue* ue = ue_manager.find_du_ue(request.ue_index);
+  srsran_assert(ue != nullptr, "Could not find DU UE");
+
+  cu_cp_ue_context_release_request ue_context_release_request;
+  ue_context_release_request.ue_index = request.ue_index;
+  ue_context_release_request.cause    = request.cause;
+
+  // Add PDU Session IDs
+  auto& drb_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_drb_manager();
+  ue_context_release_request.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
+
+  ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
+}
+
 void du_processor_impl::create_srb(const srb_creation_message& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
