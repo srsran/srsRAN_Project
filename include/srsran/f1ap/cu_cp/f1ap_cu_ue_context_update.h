@@ -45,8 +45,8 @@ struct f1ap_ue_context_modification_response {
 
 /// \brief Request Command for F1AP UE CONTEXT Release Request.
 struct f1ap_ue_context_release_request {
-  ue_index_t          ue_index;
-  asn1::f1ap::cause_c cause;
+  ue_index_t ue_index;
+  cause_t    cause;
 };
 
 } // namespace srs_cu_cp

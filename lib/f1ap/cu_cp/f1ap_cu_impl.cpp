@@ -326,7 +326,7 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 
   f1ap_ue_context_release_request req;
   req.ue_index = ue_ctxt.ue_index;
-  req.cause    = msg->cause.value;
+  req.cause    = f1ap_cause_to_cause(msg->cause.value);
 
   du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }
