@@ -66,28 +66,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
 
-    logger.info(
-        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-        base_cell.pci,
-        *param.band,
-        base_cell.dl_arfcn,
-        nof_crbs,
-        to_string(base_cell.common_scs),
-        to_string(out_cfg.back().ssb_cfg.scs),
-        (*ssb_freq_loc).offset_to_point_A.to_uint(),
-        (*ssb_freq_loc).k_ssb.to_uint(),
-        (*ssb_freq_loc).ssb_arfcn,
-        (*ssb_freq_loc).coreset0_idx,
-        (*ssb_freq_loc).searchspace0_idx);
-
     // Set the rest of the parameters.
-    du_cell_config& out_cell = out_cfg.back();
-    out_cell.nr_cgi.plmn     = base_cell.plmn;
-    out_cell.nr_cgi.nci      = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
-    out_cell.tac             = base_cell.tac;
-
+    du_cell_config& out_cell  = out_cfg.back();
+    out_cell.nr_cgi.plmn      = base_cell.plmn;
+    out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
+    out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = ss0_idx;
+    out_cell.ssb_cfg.ssb_period = (ssb_periodicity)config.common_cell_cfg.ssb_period_msec;
 
     // Carrier config.
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
@@ -147,6 +132,21 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_symbols = tdd_cfg.pattern2->nof_ul_symbols;
       }
     }
+
+    logger.info(
+        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
+        base_cell.pci,
+        *param.band,
+        base_cell.dl_arfcn,
+        nof_crbs,
+        to_string(base_cell.common_scs),
+        to_string(out_cfg.back().ssb_cfg.scs),
+        (*ssb_freq_loc).offset_to_point_A.to_uint(),
+        (*ssb_freq_loc).k_ssb.to_uint(),
+        (*ssb_freq_loc).ssb_arfcn,
+        (*ssb_freq_loc).coreset0_idx,
+        (*ssb_freq_loc).searchspace0_idx);
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {

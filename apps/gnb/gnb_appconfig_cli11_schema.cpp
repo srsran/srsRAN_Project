@@ -374,6 +374,9 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
+  app.add_option("--ssb_period", cell_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20}));
 
   // PDCCH configuration.
   CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");

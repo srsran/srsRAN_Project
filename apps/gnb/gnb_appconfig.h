@@ -157,6 +157,8 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
+  /// SSB period in milliseconds.
+  unsigned ssb_period_msec = 10;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
