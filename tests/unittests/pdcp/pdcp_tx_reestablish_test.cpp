@@ -20,7 +20,7 @@
 using namespace srsran;
 
 /// Test SRB reestablishment
-TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
+TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
 {
   if (sn_size == pdcp_sn_size::size18bits) {
     return; // 18 bits not supported for SRBs
@@ -45,61 +45,60 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
 }
 
 /// Test DRB UM reestablishment
-TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
+TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_timers_preserved)
 {
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um);
+
+  // Set state of PDCP entiy
+  pdcp_tx_state st = {0};
+  pdcp_tx->set_state(st);
+  pdcp_tx->enable_security(sec_cfg);
+
+  // Write 5 SDU
+  int n_pdus = 5;
+  for (int i = 0; i < n_pdus; i++) {
+    byte_buffer sdu = {sdu1};
+    pdcp_tx->handle_sdu(std::move(sdu));
+  }
+  tick_all(5);
+  ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+  pdcp_tx->reestablish(sec_cfg);
+  ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+
+  // Check if discard timer was not reset.
+  tick_all(5);
+  ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
 }
 
 /// Test DRB AM reestablishment
-TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
+TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
 {
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am);
-  /*
-  uint32_t                    count         = 0;
-  security::sec_128_as_config reest_sec_cfg = sec_cfg;
 
-  pdcp_rx->enable_security(sec_cfg);
+  // Set state of PDCP entiy
+  pdcp_tx_state st = {0};
+  pdcp_tx->set_state(st);
+  pdcp_tx->enable_security(sec_cfg);
 
-  // Prepare 3 PDUs.
-  byte_buffer test_pdu1;
-  get_test_pdu(count, test_pdu1);
-  byte_buffer test_pdu2;
-  get_test_pdu(count + 1, test_pdu2);
-  byte_buffer test_pdu3;
-  get_test_pdu(count + 2, test_pdu3);
-
-  // RX PDU 2 and 3, none should arrive.
-  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
-  pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu2)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu3)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-
-  // Check PDCP state.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 3);
-    ASSERT_EQ(true, pdcp_rx->is_reordering_timer_running());
+  // Write 5 SDU
+  int n_pdus = 5;
+  for (int i = 0; i < n_pdus; i++) {
+    byte_buffer sdu = {sdu1};
+    pdcp_tx->handle_sdu(std::move(sdu));
   }
-  // Re-establish entity.
-  pdcp_rx->reestablish(reest_sec_cfg);
+  tick_all(5);
+  ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
 
-  // Check that PDUs were *not* delivered
-  // and that state was *not* reset.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 3);
-  }
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
+  // Check that non-ACKed SDUs are retransmitted.
+  ASSERT_EQ(5, test_frame.pdu_queue.size());
+  pdcp_tx->handle_delivery_notification(1); // ACK SN=0 and 1.
+  pdcp_tx->reestablish(sec_cfg);
+  ASSERT_EQ(8, test_frame.pdu_queue.size()); // SN=2, 3 and 4 RETXed
 
-  // Check re-ordering timer is still running
-  ASSERT_EQ(true, pdcp_rx->is_reordering_timer_running());
-
-  // Deliver first PDU
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu1)});
-  ASSERT_EQ(3, test_frame->sdu_queue.size());
-  */
+  // Check if discard timer was not reset.
+  ASSERT_EQ(3, pdcp_tx->nof_discard_timers());
+  tick_all(5);
+  ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
 }
 
 ///////////////////////////////////////////////////////////////////
