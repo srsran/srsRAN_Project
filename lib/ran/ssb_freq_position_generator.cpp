@@ -103,9 +103,22 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   if (dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ) {
     N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
   } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
-    // Band n79 has a different sync raster step size and need to be handled separately.
-    if (band == nr_band::n79) {
+    // For BW >= 40MHz, Band n79 has a different sync raster step size and need to be handled separately.
+    const bool is_band_40mhz_or_above = (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 216U) or
+                                        (scs_common == subcarrier_spacing::kHz30 and n_rbs >= 106U) or
+                                        (scs_common == subcarrier_spacing::kHz60 and n_rbs >= 51U);
+
+    // For bands n79 and n104, the sync raster has a specific step and need to be handled separately, as per
+    // Table 5.4.3.3-1, TS 38.104, ver. 17.8.0. In the following, we compute the starting point of parameter N for the
+    // sync-raster, so that the resulting GSCN (i) is compatible with the raster step and starting point and (ii) the
+    // SSB lowest subcarrier is greater than pointA.
+    if (band == nr_band::n79 and is_band_40mhz_or_above) {
       N_raster = GSCN_LB_N_79_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
+        increase_N_raster();
+      }
+    } else if (band == nr_band::n104) {
+      N_raster = GSCN_LB_N_104 - GSCN_LB_SYNC_RASTER_2;
       while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
         increase_N_raster();
       }
