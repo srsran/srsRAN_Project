@@ -303,7 +303,7 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
   cfg.scs = band_helper::get_most_suitable_ssb_scs(
       params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn), params.scs_common);
   cfg.offset_to_point_A = ssb_offset_to_pointA{params.offset_to_point_a};
-  cfg.ssb_period        = ssb_periodicity::ms20;
+  cfg.ssb_period        = ssb_periodicity::ms10;
   cfg.k_ssb             = params.k_ssb;
 
   const unsigned beam_index = 63;
