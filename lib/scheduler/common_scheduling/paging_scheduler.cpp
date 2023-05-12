@@ -62,11 +62,6 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
       srsran_assert(
           cell_cfg.dl_cfg_common.pcch_cfg.ns == pcch_config::nof_po_per_pf::one,
           "Number of Paging Occasions per Paging Frame must be 1 for SS/PBCH and CORESET multiplexing patter 1.");
-      // ssb-periodicityServingCell is always 20 ms when using multiplexing pattern 1. See TS 38.331,
-      // nAndPagingFrameOffset.
-      srsran_assert(cell_cfg.ssb_cfg.ssb_period == ssb_periodicity::ms20,
-                    "SSB periodicity must be 20ms for SS/PBCH and CORESET multiplexing patter 1.");
-      ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
       for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
           continue;
@@ -303,10 +298,14 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
     return false;
   }
 
+  // SearchSpace#0 periodicity is always 20 ms when using multiplexing pattern 1. See TS 38.213, clause 13.
+  // TODO: Populate SS#0 periodicity based on config when other multiplexing patterns are supported.
+  static const unsigned ss0_periodicity_in_ms = 20;
+
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
-  // NOTE2: SSB period is used since Search Space #0 is used by both Paging and SIB1.
-  const unsigned paging_period_slots = ssb_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
+  const unsigned paging_period_slots =
+      ss0_periodicity_in_ms * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
