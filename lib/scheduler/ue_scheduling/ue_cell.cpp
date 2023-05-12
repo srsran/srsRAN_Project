@@ -12,7 +12,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
 #include "../support/prbs_calculator.h"
-#include "../ue_scheduling/ue_sch_pdu_builder.h"
+#include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
 using namespace srsran;

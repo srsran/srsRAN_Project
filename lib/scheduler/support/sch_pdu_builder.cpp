@@ -7,7 +7,7 @@
  *
  */
 
-#include "ue_sch_pdu_builder.h"
+#include "sch_pdu_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
 #include "srsran/adt/optional.h"

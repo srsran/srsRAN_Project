@@ -8,11 +8,10 @@
  */
 
 #include "ue_cell_grid_allocator.h"
+#include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
-#include "../support/rb_helper.h"
-#include "ue_dci_builder.h"
-#include "ue_sch_pdu_builder.h"
+#include "../support/sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"
 #include "srsran/support/error_handling.h"

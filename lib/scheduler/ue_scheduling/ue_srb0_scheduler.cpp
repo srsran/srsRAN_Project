@@ -10,11 +10,11 @@
 
 #include "ue_srb0_scheduler.h"
 #include "../support/config_helpers.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
-#include "ue_dci_builder.h"
-#include "ue_sch_pdu_builder.h"
 
 using namespace srsran;
 

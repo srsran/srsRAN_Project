@@ -7,7 +7,7 @@
  *
  */
 
-#include "ue_dci_builder.h"
+#include "dci_builder.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"

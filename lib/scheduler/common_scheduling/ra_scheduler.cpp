@@ -12,10 +12,10 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
-#include "../ue_scheduling/ue_dci_builder.h"
-#include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/compiler.h"
 

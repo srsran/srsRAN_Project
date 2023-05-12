@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../policy/ue_allocator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/slot_event_list.h"
 #include "ue_repository.h"
-#include "ue_sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include <queue>
 

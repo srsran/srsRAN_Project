@@ -10,8 +10,8 @@
 
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
+#include "lib/scheduler/support/sch_pdu_builder.h"
 #include "lib/scheduler/support/tbs_calculator.h"
-#include "lib/scheduler/ue_scheduling/ue_sch_pdu_builder.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pusch/ulsch_info.h"

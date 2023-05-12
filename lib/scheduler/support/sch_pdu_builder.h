@@ -11,8 +11,8 @@
 
 #include "../cell/cell_configuration.h"
 #include "../support/mcs_tbs_calculator.h"
-#include "harq_process.h"
-#include "ue_configuration.h"
+#include "../ue_scheduling/harq_process.h"
+#include "../ue_scheduling/ue_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
