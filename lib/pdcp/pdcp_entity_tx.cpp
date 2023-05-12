@@ -59,8 +59,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   write_data_pdu_header(header_buf, hdr);
 
   // Apply ciphering and integrity protection
-  byte_buffer protected_buf =
-      apply_ciphering_and_integrity_protection(std::move(header_buf), std::move(sdu), st.tx_next);
+  byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
 
   // Set meta-data for RLC (TODO)
   // sdu->md.pdcp_sn = tx_next;
@@ -74,9 +73,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
     discard_timer.run();
     discard_info info;
     if (cfg.rlc_mode == pdcp_rlc_mode::um) {
-      info = {{}, std::move(discard_timer)};
+      info = {st.tx_next, {}, std::move(discard_timer)};
     } else {
-      info = {protected_buf.copy(), std::move(discard_timer)};
+      info = {st.tx_next, std::move(sdu), std::move(discard_timer)};
     }
     discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
     logger.log_debug("Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
@@ -87,6 +86,57 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
   // Increment TX_NEXT
   st.tx_next++;
+}
+
+void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
+{
+  // - for UM DRBs and AM DRBs, reset the ROHC protocol for uplink and start with an IR state in U-mode (as
+  //   defined in RFC 3095 [8] and RFC 4815 [9]) if drb-ContinueROHC is not configured in TS 38.331 [3];
+  // - for UM DRBs and AM DRBs, reset the EHC protocol for uplink if drb-ContinueEHC-UL is not configured in
+  //   TS 38.331 [3];
+  // TODO header compression not supported.
+
+  // - for UM DRBs and SRBs, set TX_NEXT to the initial value;
+  if (is_srb() || is_um()) {
+    st = {};
+  }
+
+  // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
+  if (is_srb()) {
+    discard_all_pdus();
+  }
+
+  // - apply the ciphering algorithm and key provided by upper layers during the PDCP entity re-establishment
+  //   procedure;
+  // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
+  //   establishment procedure;
+  enable_security(sec_cfg_);
+
+  // - for UM DRBs, for each PDCP SDU already associated with a PDCP SN but for which a corresponding PDU has
+  //   not previously been submitted to lower layers, and;
+  // - for AM DRBs for Uu interface whose PDCP entities were suspended, from the first PDCP SDU for which the
+  //   successful delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, for each
+  //   PDCP SDU already associated with a PDCP SN:
+  //   - consider the PDCP SDUs as received from upper layer;
+  //   - perform transmission of the PDCP SDUs in ascending order of the COUNT value associated to the PDCP
+  //     SDU prior to the PDCP re-establishment without restarting the discardTimer, as specified in clause 5.2.1;
+  //
+  //  When SDUs are associated with a PDCP SN they are immediately pushed to the lower-layer.
+  //  As such, there is nothing to do here.
+  //  TODO PDCP entity suspension is not supported.
+
+  // - for AM DRBs whose PDCP entities were not suspended, from the first PDCP SDU for which the successful
+  //   delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, perform retransmission
+  //   or transmission of all the PDCP SDUs already associated with PDCP SNs in ascending order of the COUNT
+  //   values associated to the PDCP SDU prior to the PDCP entity re-establishment as specified below:
+  //   - perform header compression of the PDCP SDU using ROHC as specified in the clause 5.7.4 and/or using
+  //     EHC as specified in the clause 5.12.4;
+  //   - perform integrity protection and ciphering of the PDCP SDU using the COUNT value associated with this
+  //     PDCP SDU as specified in the clause 5.9 and 5.8;
+  //   - submit the resulting PDCP Data PDU to lower layer, as specified in clause 5.2.1.
+  if (is_am()) {
+    retransmit_all_pdus();
+  }
 }
 
 void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)
@@ -176,7 +226,8 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
 /*
  * Ciphering and Integrity Protection Helpers
  */
-byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer sdu, uint32_t count)
+byte_buffer
+pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count)
 {
   // TS 38.323, section 5.9: Integrity protection
   // The data unit that is integrity protected is the PDU header
@@ -302,10 +353,31 @@ void pdcp_entity_tx::data_recovery()
   if (cfg.status_report_required) {
     send_status_report();
   }
-  for (const auto& info : discard_timers_map) {
-    write_data_pdu_to_lower_layers(info.first, info.second.buf.copy());
+  retransmit_all_pdus();
+}
+
+void pdcp_entity_tx::discard_all_pdus()
+{
+  discard_timers_map.clear();
+}
+
+void pdcp_entity_tx::retransmit_all_pdus()
+{
+  for (const std::pair<const uint32_t, discard_info>& info : discard_timers_map) {
+    // Prepare header
+    pdcp_data_pdu_header hdr = {};
+    hdr.sn                   = SN(info.second.count);
+
+    // Pack header
+    byte_buffer header_buf = {};
+    write_data_pdu_header(header_buf, hdr);
+
+    byte_buffer protected_buf =
+        apply_ciphering_and_integrity_protection(std::move(header_buf), info.second.sdu, info.second.count);
+    write_data_pdu_to_lower_layers(info.first, std::move(protected_buf));
   }
 }
+
 /*
  * PDU Helpers
  */

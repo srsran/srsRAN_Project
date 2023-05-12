@@ -124,7 +124,7 @@ public:
   virtual void data_recovery() = 0;
 
   /// Trigger re-establishment
-  virtual void reestablish() = 0;
+  virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
 };
 
 /// This interface represents the control upper layer that the

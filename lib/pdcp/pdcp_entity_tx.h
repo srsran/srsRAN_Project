@@ -35,12 +35,12 @@ struct pdcp_tx_state {
 
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
-class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
-                       public pdcp_tx_status_handler,
-                       public pdcp_tx_upper_data_interface,
-                       public pdcp_tx_upper_control_interface,
-                       public pdcp_tx_lower_interface,
-                       public pdcp_tx_metrics
+class pdcp_entity_tx final : public pdcp_entity_tx_rx_base,
+                             public pdcp_tx_status_handler,
+                             public pdcp_tx_upper_data_interface,
+                             public pdcp_tx_upper_control_interface,
+                             public pdcp_tx_lower_interface,
+                             public pdcp_tx_metrics
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
@@ -67,7 +67,7 @@ public:
   }
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
-  void reestablish() override {}
+  void reestablish(security::sec_128_as_config sec_cfg) override;
 
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -77,7 +77,7 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_transmit_notification(uint32_t highest_sn) final
+  void handle_transmit_notification(uint32_t highest_sn) override
   {
     logger.log_debug("Handling transmit notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
@@ -89,7 +89,7 @@ public:
     }
   }
 
-  void handle_delivery_notification(uint32_t highest_sn) final
+  void handle_delivery_notification(uint32_t highest_sn) override
   {
     logger.log_debug("Handling delivery notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
@@ -151,7 +151,13 @@ public:
   void send_status_report();
 
   /// Performs data recovery, as specified in TS 38.323, Sec. 5.5.
-  void data_recovery() final;
+  void data_recovery() override;
+
+  /// Discard all PDUs, delivery information and discard timers.
+  void discard_all_pdus();
+
+  /// Retransmits all PDUs. Integrity protection and ciphering is re-applied.
+  void retransmit_all_pdus();
 
 private:
   pdcp_bearer_logger   logger;
@@ -173,7 +179,7 @@ private:
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
-  byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
+  byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
@@ -184,7 +190,8 @@ private:
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
   struct discard_info {
-    byte_buffer  buf;
+    uint32_t     count;
+    byte_buffer  sdu;
     unique_timer discard_timer;
   };
 
