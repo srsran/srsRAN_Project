@@ -94,7 +94,10 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
 
   // Report CRCs for RLF detection purposes.
   for (const auto& crc : ind.crcs) {
-    ue_mng.report_crc(crc.ue_index, crc.tb_crc_success);
+    if (crc.ue_index != INVALID_DU_UE_INDEX) {
+      // if not Msg3.
+      ue_mng.report_crc(crc.ue_index, crc.tb_crc_success);
+    }
   }
 }
 
