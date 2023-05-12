@@ -64,6 +64,7 @@ public:
 
   void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) override
   {
+    srslog::fetch_basic_logger("DU-F1").info("Received DU initiated UE context release request");
     // TODO
   }
 

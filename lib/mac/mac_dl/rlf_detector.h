@@ -23,7 +23,7 @@ class rlf_detector
 {
 public:
   rlf_detector(unsigned max_consecutive_dl_kos, unsigned max_consecutive_ul_kos) :
-    max_consecutive_kos({max_consecutive_dl_kos, max_consecutive_ul_kos})
+    max_consecutive_kos({max_consecutive_dl_kos, max_consecutive_ul_kos}), logger(srslog::fetch_basic_logger("MAC"))
   {
   }
 
@@ -65,6 +65,10 @@ private:
       if (current_count == max_consecutive_kos[count_index]) {
         std::lock_guard<std::mutex> lock(u.notifier_mutex);
         if (u.notifier != nullptr) {
+          logger.info("ue={}: RLF detected. Cause: {} consecutive {} KOs.",
+                      ue_index,
+                      max_consecutive_kos[count_index],
+                      count_index == 0 ? "HARQ-ACK" : "CRC");
           u.notifier->on_rlf_detected();
         }
       }
@@ -73,6 +77,7 @@ private:
 
   // DL for index 0 and UL for index 1.
   std::array<const unsigned, 2> max_consecutive_kos;
+  srslog::basic_logger&         logger;
 
   struct ue_context {
     std::array<std::atomic<unsigned>, 2> ko_counters{};
