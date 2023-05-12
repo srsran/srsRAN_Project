@@ -48,6 +48,7 @@ inline vrb_interval crb_to_vrb_ul_non_interleaved(crb_interval crbs, unsigned bw
   srsran_sanity_check(crbs.start() >= bwp_crb_start, "Invalid CRB start");
   return vrb_interval{crbs.start() - bwp_crb_start, crbs.stop() - bwp_crb_start};
 }
+
 inline crb_interval vrb_to_crb_ul_non_interleaved(vrb_interval vrbs, unsigned bwp_crb_start)
 {
   return crb_interval{vrbs.start() + bwp_crb_start, vrbs.stop() + bwp_crb_start};

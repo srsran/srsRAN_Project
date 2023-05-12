@@ -334,7 +334,7 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
   cw.mcs_table       = pdsch_mcs_table::qam64;
   cw.mcs_index       = dci_cfg.modulation_coding_scheme;
-  cw.rv_index        = 0;
+  cw.rv_index        = 0; // Implementation-defined.
   cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
 

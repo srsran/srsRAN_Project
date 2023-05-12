@@ -56,7 +56,7 @@ inline prb_interval crb_to_prb(crb_interval bwp_crb_lims, crb_interval crbs)
 /// \return Calculated PRB.
 inline unsigned prb_to_crb(crb_interval bwp_crb_lims, unsigned prb)
 {
-  srsran_sanity_check(prb <= bwp_crb_lims.length(), "PRB={} falls outside BWP limits={}", prb, bwp_crb_lims);
+  srsran_sanity_check(prb <= bwp_crb_lims.length(), "PRB={} exceeds BWP width={}", prb, bwp_crb_lims.length());
   return prb + bwp_crb_lims.start();
 }
 
