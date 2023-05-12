@@ -62,5 +62,8 @@ f1ap_message generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_
 /// \brief Generate a dummy Paging message.
 cu_cp_paging_message generate_paging_message();
 
+/// \brief Generates dummy F1AP UE CONTEXT RELEASE REQUEST message.
+f1ap_message generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
+
 } // namespace srs_cu_cp
 } // namespace srsran

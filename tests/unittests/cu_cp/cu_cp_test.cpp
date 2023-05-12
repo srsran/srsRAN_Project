@@ -492,7 +492,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     f1ap_message ul_rrc_msg =
         generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, generate_rrc_setup_complete());
     test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
-    cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(ul_rrc_msg);
+    cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg);
   }
 
   // check that UE has been added as new UE
@@ -503,4 +503,30 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 1);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* DU Initiated UE Context Release                                                  */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the handling of a ue level inactivity notification
+TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context_release_request_is_sent)
+{
+  // Test preamble
+  du_index_t          du_index = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti    = to_rnti(0x4601);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, crnti);
+
+  // Inject UE Context Release Request
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0))
+      .handle_message(generate_ue_context_release_request(cu_ue_id, du_ue_id));
+
+  // check that the UE Context Release Request was sent to the AMF
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.type(),
+            asn1::ngap::cause_c::types_opts::options::radio_network);
 }

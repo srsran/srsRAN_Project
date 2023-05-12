@@ -535,3 +535,18 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
 
   return paging_msg;
 }
+
+f1ap_message srsran::srs_cu_cp::generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                    gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+
+  auto& release_req                    = msg.pdu.init_msg().value.ue_context_release_request();
+  release_req->gnb_cu_ue_f1ap_id.value = (unsigned)cu_ue_id;
+  release_req->gnb_du_ue_f1ap_id.value = (unsigned)du_ue_id;
+  release_req->cause.value.set_radio_network();
+
+  return msg;
+}
