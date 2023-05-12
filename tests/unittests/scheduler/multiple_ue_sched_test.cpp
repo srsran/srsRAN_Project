@@ -309,20 +309,20 @@ protected:
     const auto& cell_ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     const auto& ul_lst      = ue_ul_lst.empty() ? cell_ul_lst : ue_ul_lst;
 
-    switch (it->dci.type) {
-      case dci_ul_rnti_config_type::tc_rnti_f0_0:
-        return it == bench->sched_res->dl.ul_pdcchs.end()
-                   ? optional<slot_point>{nullopt}
-                   : current_slot + ul_lst[it->dci.tc_rnti_f0_0.time_resource].k2;
-      case dci_ul_rnti_config_type::c_rnti_f0_0:
-        return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                          : current_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
-      case dci_ul_rnti_config_type::c_rnti_f0_1:
-        return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                          : current_slot + ul_lst[it->dci.c_rnti_f0_1.time_resource].k2;
+    if (it == bench->sched_res->dl.ul_pdcchs.end()) {
+      return {};
     }
 
-    return nullopt;
+    switch (it->dci.type) {
+      case dci_ul_rnti_config_type::tc_rnti_f0_0:
+        return current_slot + ul_lst[it->dci.tc_rnti_f0_0.time_resource].k2;
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        return current_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        return current_slot + ul_lst[it->dci.c_rnti_f0_1.time_resource].k2;
+    }
+
+    return {};
   }
 
   optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
@@ -334,22 +334,22 @@ protected:
     const auto& cell_dl_lst        = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     const auto& dl_lst             = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
 
+    if (it == bench->sched_res->dl.dl_pdcchs.end()) {
+      return {};
+    }
+
     switch (it->dci.type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0:
-        return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                          : current_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
+        return current_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
       case dci_dl_rnti_config_type::tc_rnti_f1_0:
-        return it == bench->sched_res->dl.dl_pdcchs.end()
-                   ? optional<slot_point>{nullopt}
-                   : current_slot + dl_lst[it->dci.tc_rnti_f1_0.time_resource].k0;
+        return current_slot + dl_lst[it->dci.tc_rnti_f1_0.time_resource].k0;
       case dci_dl_rnti_config_type::c_rnti_f1_1:
-        return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                          : current_slot + dl_lst[it->dci.c_rnti_f1_1.time_resource].k0;
+        return current_slot + dl_lst[it->dci.c_rnti_f1_1.time_resource].k0;
       default:
         break;
     }
 
-    return nullopt;
+    return {};
   }
 
   optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
