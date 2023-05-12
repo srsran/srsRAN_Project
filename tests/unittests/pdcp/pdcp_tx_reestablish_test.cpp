@@ -22,100 +22,32 @@ using namespace srsran;
 /// Test SRB reestablishment
 TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_sdus_dropped)
 {
+  if (sn_size == pdcp_sn_size::size18bits) {
+    return; // 18 bits not supported for SRBs
+  }
   init(GetParam(), pdcp_rb_type::srb);
-  /*
-  uint32_t count = 0;
 
-  security::sec_128_as_config reest_sec_cfg = sec_cfg;
-  reest_sec_cfg.integ_algo                  = security::integrity_algorithm::nia3;
-  reest_sec_cfg.cipher_algo                 = security::ciphering_algorithm::nea3;
-  pdcp_rx->enable_security(sec_cfg);
+  // Set state of PDCP entiy
+  pdcp_tx_state st = {0};
+  pdcp_tx->set_state(st);
+  pdcp_tx->enable_security(sec_cfg);
 
-  // Prepare 3 PDUs.
-  byte_buffer test_pdu1;
-  get_test_pdu(count, test_pdu1);
-  byte_buffer test_pdu2;
-  get_test_pdu(count + 1, test_pdu2);
-  byte_buffer test_pdu3;
-  get_test_pdu(count + 2, test_pdu3);
-
-  // RX PDU 2 and 3, none should arrive.
-  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
-  pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu2)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu3)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-
-  // Check PDCP state.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 3);
+  // Write 5 SDU
+  int n_pdus = 5;
+  for (int i = 0; i < n_pdus; i++) {
+    byte_buffer sdu = {sdu1};
+    pdcp_tx->handle_sdu(std::move(sdu));
   }
-  // Re-establish entity.
-  pdcp_rx->reestablish(reest_sec_cfg);
 
-  // Check no PDU was delivered
-  // and that state was reset.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 0);
-  }
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-
-  // Check security config changed
-  {
-    security::sec_128_as_config reest_sec_config2 = pdcp_rx->get_sec_config();
-    ASSERT_EQ(reest_sec_cfg, reest_sec_config2);
-  }
-  */
+  ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+  pdcp_tx->reestablish({});
+  ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
 }
 
 /// Test DRB UM reestablishment
 TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_forwared)
 {
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um);
-  /*
-  uint32_t count = 0;
-
-  pdcp_rx->enable_security(sec_cfg);
-
-  // Prepare 3 PDUs.
-  byte_buffer test_pdu1;
-  get_test_pdu(count, test_pdu1);
-  byte_buffer test_pdu2;
-  get_test_pdu(count + 1, test_pdu2);
-  byte_buffer test_pdu3;
-  get_test_pdu(count + 2, test_pdu3);
-
-  // RX PDU 2 and 3, none should arrive.
-  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
-  pdcp_rx->set_state(init_state);
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu2)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-  pdcp_rx->handle_pdu(byte_buffer_slice_chain{std::move(test_pdu3)});
-  ASSERT_EQ(0, test_frame->sdu_queue.size());
-
-  // Check PDCP state.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 3);
-    ASSERT_EQ(true, pdcp_rx->is_reordering_timer_running());
-  }
-  // Re-establish entity.
-  pdcp_rx->reestablish(sec_cfg);
-
-  // Check that 2 PDUs were delivered
-  // and that state was reset.
-  {
-    pdcp_rx_state st = pdcp_rx->get_state();
-    ASSERT_EQ(st.rx_next, 0);
-  }
-  ASSERT_EQ(2, test_frame->sdu_queue.size());
-
-  // Check re-ordering timer was stopped
-  ASSERT_EQ(false, pdcp_rx->is_reordering_timer_running());
-  */
 }
 
 /// Test DRB AM reestablishment

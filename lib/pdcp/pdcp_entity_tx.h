@@ -57,10 +57,13 @@ public:
     timers(timers_)
   {
     // Validate configuration
-    if (is_um() && (cfg.discard_timer != pdcp_discard_timer::not_configured &&
-                    cfg.discard_timer != pdcp_discard_timer::infinity)) {
-      report_error("RLC UM with discard timer is not supported. {}", cfg);
+    if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
+      report_error("PDCP SRB with invalid sn_size. {}", cfg);
     }
+    if (is_srb() && is_um()) {
+      report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
+    }
+
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);
