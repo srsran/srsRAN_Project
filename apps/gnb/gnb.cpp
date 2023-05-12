@@ -750,10 +750,11 @@ int main(int argc, char** argv)
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.timers                        = &app_timers;
   du_hi_cfg.cells                         = du_cfg;
-  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
-  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
   du_hi_cfg.pcap                          = mac_p.get();
+  du_hi_cfg.mac_cfg                       = generate_mac_expert_config(gnb_cfg);
+  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
+  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,

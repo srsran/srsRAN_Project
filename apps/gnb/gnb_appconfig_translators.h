@@ -17,6 +17,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_qos_config.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/radio/radio_configuration.h"
@@ -38,6 +39,9 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const
 
 /// Converts and returns the given gnb application QoS configuration to a DU configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application configuration to a mac expert configuration.
+mac_expert_config generate_mac_expert_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a scheduler expert configuration.
 scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& config);

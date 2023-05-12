@@ -8,6 +8,7 @@
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -33,6 +34,7 @@ struct du_high_configuration {
   scheduler_ue_metrics_notifier*     metrics_notifier = nullptr;
   std::vector<du_cell_config>        cells;
   std::map<five_qi_t, du_qos_config> qos; // 5QI as key
+  mac_expert_config                  mac_cfg;
   scheduler_expert_config            sched_cfg;
   mac_pcap*                          pcap = nullptr;
   du_test_config                     test_cfg;

@@ -570,6 +570,15 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
   return out_cfg;
 }
 
+mac_expert_config srsran::generate_mac_expert_config(const gnb_appconfig& config)
+{
+  mac_expert_config out_cfg      = {};
+  out_cfg.max_consecutive_dl_kos = config.common_cell_cfg.pdsch_cfg.max_consecutive_kos;
+  out_cfg.max_consecutive_ul_kos = config.common_cell_cfg.pusch_cfg.max_consecutive_kos;
+
+  return out_cfg;
+}
+
 scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appconfig& config)
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();

@@ -70,7 +70,7 @@ du_high::du_high(const du_high_configuration& config_) :
                               *cfg.cell_executors,
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
-                              mac_expert_config{10000, 10000},
+                              cfg.mac_cfg,
                               *cfg.pcap,
                               cfg.sched_cfg,
                               cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});

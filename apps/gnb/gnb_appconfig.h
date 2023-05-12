@@ -103,26 +103,30 @@ struct pdcch_appconfig {
 struct pdsch_appconfig {
   /// Minimum modulation and coding scheme index for C-RNTI PDSCH allocations. Note that setting a high minimum MCS
   /// may lead to a high BLER if the SINR is low.
-  uint8_t min_ue_mcs = 0;
+  unsigned min_ue_mcs = 0;
   /// Maximum modulation and coding scheme index for C-RNTI PDSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
-  uint8_t max_ue_mcs = 28;
+  unsigned max_ue_mcs = 28;
   /// RAR modulation and coding scheme index.
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
   unsigned fixed_sib1_mcs = 5;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
+  /// Maximum number of consecutive DL KOs before an RLF is reported.
+  unsigned max_consecutive_kos = 1000;
 };
 
 /// PUSCH application configuration.
 struct pusch_appconfig {
   /// Minimum modulation and coding scheme index for C-RNTI PUSCH allocations. Note that setting a high minimum MCS
   /// may lead to a high BLER if the SINR is low.
-  uint8_t min_ue_mcs = 0;
+  unsigned min_ue_mcs = 0;
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
-  uint8_t max_ue_mcs = 28;
+  unsigned max_ue_mcs = 28;
+  /// Maximum number of consecutive UL KOs before an RLF is reported.
+  unsigned max_consecutive_kos = 1000;
 };
 
 /// Amplitude control application configuration.

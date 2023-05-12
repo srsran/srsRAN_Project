@@ -226,6 +226,10 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--nof_harqs", pdsch_params.nof_harqs, "Number of DL HARQ processes")
       ->capture_default_str()
       ->check(CLI::IsMember({2, 4, 6, 8, 10, 12, 16}));
+  app.add_option("--max_consecutive_kos",
+                 pdsch_params.max_consecutive_kos,
+                 "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -236,6 +240,10 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
   app.add_option("--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  app.add_option("--max_consecutive_kos",
+                 pusch_params.max_consecutive_kos,
+                 "Maximum number of CRC consecutive KOs before an Radio Link Failure is reported")
+      ->capture_default_str();
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
