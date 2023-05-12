@@ -12,7 +12,7 @@ Configuration related steps
 import logging
 from collections import defaultdict
 from pprint import pformat
-from typing import Union
+from typing import Optional, Union
 
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -25,7 +25,7 @@ def configure_test_parameters(
     band: int,
     common_scs: int,
     bandwidth: int,
-    sample_rate: int,
+    sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
 ):

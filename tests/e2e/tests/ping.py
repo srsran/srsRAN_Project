@@ -11,7 +11,7 @@ Test ping
 """
 import logging
 from contextlib import suppress
-from typing import Sequence, Union
+from typing import Sequence, Optional, Union
 
 import grpc
 from pytest import mark
@@ -248,7 +248,7 @@ def _ping(
     band: int,
     common_scs: int,
     bandwidth: int,
-    sample_rate: int,
+    sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
     log_search: bool,

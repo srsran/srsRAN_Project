@@ -10,7 +10,7 @@
 Attach / Detach Tests
 """
 import logging
-from typing import Sequence, Union
+from typing import Sequence, Optional, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -161,7 +161,7 @@ def _attach_and_detach_multi_ues(
     band: int,
     common_scs: int,
     bandwidth: int,
-    sample_rate: int,
+    sample_rate: Optional[int],
     iperf_duration: int,
     bitrate: int,
     protocol: IPerfProto,
