@@ -47,6 +47,14 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   return req;
 }
 
+class dummy_ue_rlf_notifier : public mac_ue_radio_link_notifier
+{
+public:
+  bool rlf_detected = false;
+
+  void on_rlf_detected() override { rlf_detected = true; }
+};
+
 inline mac_ue_create_request_message make_default_ue_creation_request()
 {
   mac_ue_create_request_message msg{};
@@ -54,6 +62,8 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   msg.ue_index   = to_du_ue_index(0);
   msg.crnti      = to_rnti(0x4601);
   msg.cell_index = to_du_cell_index(0);
+
+  msg.rlf_notifier = nullptr;
 
   msg.mac_cell_group_cfg = config_helpers::make_initial_mac_cell_group_config();
 
