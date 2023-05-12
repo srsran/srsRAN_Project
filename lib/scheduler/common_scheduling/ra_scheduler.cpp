@@ -53,12 +53,6 @@ uint16_t srsran::get_ra_rnti(unsigned slot_index, unsigned symbol_index, unsigne
   return ra_rnti;
 }
 
-static vrb_interval rar_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
-{
-  return crb_to_vrb_f1_0_common_ss_non_interleaved(
-      grant_crbs, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
-}
-
 static vrb_interval msg3_crb_to_vrb(const cell_configuration& cell_cfg, crb_interval grant_crbs)
 {
   return rb_helper::crb_to_vrb_ul_non_interleaved(grant_crbs,
@@ -521,7 +515,6 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   cell_slot_resource_allocator& rar_alloc   = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
-  const vrb_interval            rar_vrbs    = rar_crb_to_vrb(cell_cfg, rar_crbs);
 
   // Fill RAR DCI.
   pdcch_dl_information& pdcch = pdcch_alloc.result.dl.dl_pdcchs.back();
@@ -533,25 +526,14 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
       grant_info{get_dl_bwp_cfg().scs, get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
 
   // Fill RAR PDSCH.
-  rar_information& rar      = rar_alloc.result.dl.rar_grants.emplace_back();
-  rar.pdsch_cfg.rnti        = pdcch.ctx.rnti;
-  rar.pdsch_cfg.bwp_cfg     = pdcch.ctx.bwp_cfg;
-  rar.pdsch_cfg.coreset_cfg = pdcch.ctx.coreset_cfg;
-  rar.pdsch_cfg.rbs         = rar_vrbs;
-  rar.pdsch_cfg.symbols     = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
-
-  pdsch_codeword& cw = rar.pdsch_cfg.codewords.emplace_back();
-  cw.mcs_table       = pdsch_mcs_table::qam64;
-  cw.mcs_index       = sched_cfg.rar_mcs_index;
-  cw.rv_index        = 0;
-  cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes   = get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size()).tbs_bytes;
-  rar.pdsch_cfg.dmrs = rar_data[pdsch_time_res_index].dmrs_info;
-  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
-  rar.pdsch_cfg.n_id           = cell_cfg.pci;
-  rar.pdsch_cfg.is_interleaved = pdcch.dci.ra_f1_0.vrb_to_prb_mapping > 0;
-  rar.pdsch_cfg.ss_set_type    = search_space_set_type::type1;
-  rar.pdsch_cfg.dci_fmt        = dci_dl_format::f1_0;
+  rar_information& rar = rar_alloc.result.dl.rar_grants.emplace_back();
+  build_pdsch_f1_0_ra_rnti(rar.pdsch_cfg,
+                           get_nof_pdsch_prbs_required(pdsch_time_res_index, msg3_candidates.size()).tbs_bytes,
+                           pdcch.ctx.rnti,
+                           cell_cfg,
+                           pdcch.dci.ra_f1_0,
+                           rar_crbs,
+                           rar_data[pdsch_time_res_index].dmrs_info);
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];

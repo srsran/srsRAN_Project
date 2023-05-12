@@ -10,9 +10,9 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
-#include "../support/mcs_tbs_calculator.h"
 #include "../ue_scheduling/harq_process.h"
 #include "../ue_scheduling/ue_configuration.h"
+#include "mcs_tbs_calculator.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
@@ -43,7 +43,7 @@ struct pusch_config_params {
   unsigned          nof_csi_part2_bits{0};
 };
 
-/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
+/// \brief Fetches the PDSCH parameters needed for PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
 ///
 /// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_0_tc_rnti(const cell_configuration&                    cell_cfg,
@@ -83,6 +83,33 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const cell_configuration&      
 pusch_config_params get_pusch_config_f0_1_c_rnti(const cell_configuration&                    cell_cfg,
                                                  const ue_cell_configuration&                 ue_cell_cfg,
                                                  const pusch_time_domain_resource_allocation& pusch_td_cfg);
+
+/// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by SI-RNTI.
+void build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,
+                              const cell_configuration&            cell_cfg,
+                              unsigned                             tbs_bytes,
+                              const dci_1_0_si_rnti_configuration& dci_cfg,
+                              const crb_interval&                  crbs,
+                              const ofdm_symbol_range&             symbols,
+                              const dmrs_information&              dmrs_info);
+
+/// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by P-RNTI.
+void build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
+                             const cell_configuration&           cell_cfg,
+                             unsigned                            tbs_bytes,
+                             const dci_1_0_p_rnti_configuration& dci_cfg,
+                             const crb_interval&                 crbs,
+                             const ofdm_symbol_range&            symbols,
+                             const dmrs_information&             dmrs_info);
+
+/// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by RA-RNTI.
+void build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch,
+                              unsigned                             tbs_bytes,
+                              rnti_t                               rnti,
+                              const cell_configuration&            cell_cfg,
+                              const dci_1_0_ra_rnti_configuration& dci_cfg,
+                              const crb_interval&                  crbs,
+                              const dmrs_information&              dmrs_info);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
 void build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,

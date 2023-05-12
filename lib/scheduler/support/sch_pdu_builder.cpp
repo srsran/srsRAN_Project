@@ -11,6 +11,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
@@ -240,6 +241,109 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const cell_configuratio
   pusch.nof_csi_part2_bits = nof_csi_part2_bits;
 
   return pusch;
+}
+
+void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,
+                                      const cell_configuration&            cell_cfg,
+                                      unsigned                             tbs_bytes,
+                                      const dci_1_0_si_rnti_configuration& dci_cfg,
+                                      const crb_interval&                  crbs,
+                                      const ofdm_symbol_range&             symbols,
+                                      const dmrs_information&              dmrs_info)
+{
+  const bwp_downlink_common& bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
+  const vrb_interval         vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, bwp_dl.pdcch_common.coreset0->get_coreset_start_crb());
+
+  pdsch.rnti        = SI_RNTI;
+  pdsch.bwp_cfg     = &bwp_dl.generic_params;
+  pdsch.coreset_cfg = &*bwp_dl.pdcch_common.coreset0;
+  pdsch.symbols     = symbols;
+  pdsch.rbs         = vrbs;
+  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
+  pdsch.n_id = cell_cfg.pci;
+
+  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
+  cw.rv_index          = dci_cfg.redundancy_version;
+  cw.mcs_index         = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table         = pdsch_mcs_table::qam64;
+  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes     = tbs_bytes;
+  pdsch.dmrs           = dmrs_info;
+  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch.ss_set_type    = search_space_set_type::type0;
+  pdsch.dci_fmt        = dci_dl_format::f1_0;
+}
+
+void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
+                                     const cell_configuration&           cell_cfg,
+                                     unsigned                            tbs_bytes,
+                                     const dci_1_0_p_rnti_configuration& dci_cfg,
+                                     const crb_interval&                 crbs,
+                                     const ofdm_symbol_range&            symbols,
+                                     const dmrs_information&             dmrs_info)
+{
+  const bwp_downlink_common&        bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
+  const search_space_configuration& ss_cfg =
+      bwp_dl.pdcch_common.search_spaces[*bwp_dl.pdcch_common.paging_search_space_id];
+  const coreset_configuration& cs_cfg =
+      ss_cfg.cs_id == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
+  const vrb_interval vrbs =
+      crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, bwp_dl.pdcch_common.coreset0->get_coreset_start_crb());
+
+  pdsch.rnti        = P_RNTI;
+  pdsch.bwp_cfg     = &bwp_dl.generic_params;
+  pdsch.coreset_cfg = &cs_cfg;
+  pdsch.symbols     = symbols;
+  pdsch.rbs         = vrbs;
+  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
+  pdsch.n_id = cell_cfg.pci;
+
+  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
+  cw.mcs_index         = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table         = pdsch_mcs_table::qam64;
+  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes     = tbs_bytes;
+  pdsch.dmrs           = dmrs_info;
+  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch.ss_set_type    = search_space_set_type::type2;
+  pdsch.dci_fmt        = dci_dl_format::f1_0;
+}
+
+void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch,
+                                      unsigned                             tbs_bytes,
+                                      rnti_t                               rnti,
+                                      const cell_configuration&            cell_cfg,
+                                      const dci_1_0_ra_rnti_configuration& dci_cfg,
+                                      const crb_interval&                  crbs,
+                                      const dmrs_information&              dmrs_info)
+{
+  const bwp_downlink_common&        bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
+  const search_space_configuration& ss_cfg = bwp_dl.pdcch_common.search_spaces[bwp_dl.pdcch_common.ra_search_space_id];
+  const coreset_configuration&      cs_cfg =
+      ss_cfg.cs_id == to_coreset_id(0) ? *bwp_dl.pdcch_common.coreset0 : *bwp_dl.pdcch_common.common_coreset;
+  const vrb_interval vrbs = crb_to_vrb_f1_0_common_ss_non_interleaved(
+      crbs, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
+
+  pdsch.rnti        = rnti;
+  pdsch.bwp_cfg     = &bwp_dl.generic_params;
+  pdsch.coreset_cfg = &cs_cfg;
+  pdsch.rbs         = vrbs;
+  pdsch.symbols     = bwp_dl.pdsch_common.pdsch_td_alloc_list[dci_cfg.time_resource].symbols;
+
+  pdsch_codeword& cw = pdsch.codewords.emplace_back();
+  cw.mcs_table       = pdsch_mcs_table::qam64;
+  cw.mcs_index       = dci_cfg.modulation_coding_scheme;
+  cw.rv_index        = 0;
+  cw.mcs_descr       = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes   = tbs_bytes;
+
+  pdsch.dmrs = dmrs_info;
+  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
+  pdsch.n_id           = cell_cfg.pci;
+  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch.ss_set_type    = search_space_set_type::type1;
+  pdsch.dci_fmt        = dci_dl_format::f1_0;
 }
 
 void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,

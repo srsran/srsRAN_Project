@@ -14,6 +14,7 @@
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -444,9 +445,6 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
                                          const dmrs_information&               dmrs_info,
                                          unsigned                              tbs)
 {
-  const crb_interval cs0_crbs    = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  const vrb_interval paging_vrbs = {crbs_grant.start() - cs0_crbs.start(), crbs_grant.stop() - cs0_crbs.start()};
-
   // Fill Paging DCI.
   build_dci_f1_0_p_rnti(
       pdcch.dci, cell_cfg.dl_cfg_common.init_dl_bwp, crbs_grant, time_resource, expert_cfg.pg.paging_mcs_index);
@@ -463,23 +461,13 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = pg_grant.pdsch_cfg;
-  pdsch.rnti               = pdcch.ctx.rnti;
-  pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
-  pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
-  pdsch.symbols            = pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].symbols;
-  pdsch.rbs                = paging_vrbs;
-  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
-  pdsch.n_id = cell_cfg.pci;
-
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.mcs_index         = pdcch.dci.p_rnti_f1_0.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = pdcch.dci.p_rnti_f1_0.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type2;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  build_pdsch_f1_0_p_rnti(pdsch,
+                          cell_cfg,
+                          tbs,
+                          pdcch.dci.p_rnti_f1_0,
+                          crbs_grant,
+                          pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].symbols,
+                          dmrs_info);
 }
 
 void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)

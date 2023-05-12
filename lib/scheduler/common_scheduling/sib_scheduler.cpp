@@ -14,22 +14,13 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/ran/sib_configuration.h"
 
 using namespace srsran;
-
-/// \brief Convert a SIB allocation CRBs to VRBs.
-static vrb_interval sib_crbs_to_vrbs(const cell_configuration& cell_cfg, crb_interval grant_crbs)
-{
-  const coreset_configuration& cs_cfg      = *cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
-  unsigned                     cs_rb_start = cs_cfg.get_coreset_start_crb();
-  srsran_sanity_check(grant_crbs.start() >= cs_rb_start, "Invalid CRB start");
-  return {grant_crbs.start() - cs_rb_start, grant_crbs.stop() - cs_rb_start};
-}
 
 //  ------   Public methods   ------ .
 
@@ -170,10 +161,9 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
-  auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
-  vrb_interval sib1_vrbs  = sib_crbs_to_vrbs(cell_cfg, sib1_crbs_grant);
 
   // Fill SIB1 DCI.
+  auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
   build_dci_f1_0_si_rnti(sib1_pdcch.dci,
                          cell_cfg.dl_cfg_common.init_dl_bwp,
                          sib1_crbs_grant,
@@ -187,23 +177,12 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;
-  pdsch.rnti               = sib1_pdcch.ctx.rnti;
-  pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
-  pdsch.coreset_cfg        = sib1_pdcch.ctx.coreset_cfg;
-  pdsch.symbols =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols;
-  pdsch.rbs = sib1_vrbs;
-  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
-  pdsch.n_id = cell_cfg.pci;
-
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.rv_index          = sib1_pdcch.dci.si_f1_0.redundancy_version;
-  cw.mcs_index         = sib1_pdcch.dci.si_f1_0.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = sib1_pdcch.dci.si_f1_0.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type0;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  build_pdsch_f1_0_si_rnti(
+      pdsch,
+      cell_cfg,
+      tbs,
+      sib1_pdcch.dci.si_f1_0,
+      sib1_crbs_grant,
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
+      dmrs_info);
 }
