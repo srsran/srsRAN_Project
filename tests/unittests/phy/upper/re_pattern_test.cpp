@@ -12,6 +12,11 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/srsran_test.h"
 
+#if defined(__GNUC__) && (__GNUC__ == 12) && defined(__OPTIMIZE__)
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma message "GCC 12 gives a likely false array-bounds alarm."
+#endif // defined(__GNUC__) && defined(__GNUC_MINOR__)
+
 using namespace srsran;
 
 // Tests that two patterns with subcarrier mask in common are merged into one.
