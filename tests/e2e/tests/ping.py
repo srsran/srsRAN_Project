@@ -30,8 +30,7 @@ from .steps.stub import ping, start_and_attach
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-        # This requires "sample_rate: 23040000"
-        # param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
 # pylint: disable=too-many-arguments
@@ -46,7 +45,7 @@ def test_android(
     bandwidth: int,
 ):
     """
-    RF Pings
+    Android Pings
     """
 
     _ping(
