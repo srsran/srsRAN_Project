@@ -547,6 +547,7 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_release_request(gnb_cu_ue_f1
   release_req->gnb_cu_ue_f1ap_id.value = (unsigned)cu_ue_id;
   release_req->gnb_du_ue_f1ap_id.value = (unsigned)du_ue_id;
   release_req->cause.value.set_radio_network();
+  release_req->cause.value.radio_network().value = asn1::f1ap::cause_radio_network_e::rl_fail_others;
 
   return msg;
 }
