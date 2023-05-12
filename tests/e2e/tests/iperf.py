@@ -22,7 +22,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters
+from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
 from .steps.stub import iperf, start_and_attach
 
 TINY_DURATION = 5
@@ -84,6 +84,7 @@ def test_android(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
         bitrate=HIGH_BITRATE,
@@ -157,6 +158,7 @@ def test_zmq(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=SHORT_DURATION,
         bitrate=bitrate,
         protocol=protocol,
@@ -211,6 +213,7 @@ def test_rf_udp(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=LONG_DURATION,
         protocol=IPerfProto.UDP,
         bitrate=HIGH_BITRATE,
@@ -232,6 +235,7 @@ def _iperf(
     band: int,
     common_scs: int,
     bandwidth: int,
+    sample_rate: int,
     iperf_duration: int,
     bitrate: int,
     protocol: IPerfProto,
@@ -249,6 +253,7 @@ def _iperf(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
     )

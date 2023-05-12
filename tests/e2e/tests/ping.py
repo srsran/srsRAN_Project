@@ -22,7 +22,7 @@ from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters
+from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
 from .steps.stub import ping, start_and_attach
 
 
@@ -58,6 +58,7 @@ def test_android(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         log_search=False,
@@ -104,6 +105,7 @@ def test_zmq(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         global_timing_advance=0,
         time_alignment_calibration=0,
         log_search=True,
@@ -144,6 +146,7 @@ def test_zmq_valgrind(
             band=band,
             common_scs=common_scs,
             bandwidth=bandwidth,
+            sample_rate=None,  # default from testbed
             global_timing_advance=0,
             time_alignment_calibration=0,
             log_search=False,
@@ -186,6 +189,7 @@ def test_rf(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         log_search=False,
@@ -227,6 +231,7 @@ def test_rf_does_not_crash(
             band=band,
             common_scs=common_scs,
             bandwidth=bandwidth,
+            sample_rate=None,  # default from testbed
             global_timing_advance=-1,
             time_alignment_calibration="auto",
             log_search=False,
@@ -244,6 +249,7 @@ def _ping(
     band: int,
     common_scs: int,
     bandwidth: int,
+    sample_rate: int,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
     log_search: bool,
@@ -260,6 +266,7 @@ def _ping(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
     )

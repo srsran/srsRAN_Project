@@ -82,6 +82,7 @@ def test_zmq(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=30,
         bitrate=HIGH_BITRATE,
         protocol=protocol,
@@ -138,6 +139,7 @@ def test_rf_udp(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=120,
         protocol=IPerfProto.UDP,
         bitrate=HIGH_BITRATE,
@@ -159,6 +161,7 @@ def _attach_and_detach_multi_ues(
     band: int,
     common_scs: int,
     bandwidth: int,
+    sample_rate: int,
     iperf_duration: int,
     bitrate: int,
     protocol: IPerfProto,
@@ -176,6 +179,7 @@ def _attach_and_detach_multi_ues(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
     )

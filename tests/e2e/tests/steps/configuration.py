@@ -25,6 +25,7 @@ def configure_test_parameters(
     band: int,
     common_scs: int,
     bandwidth: int,
+    sample_rate: int,
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
 ):
@@ -53,6 +54,9 @@ def configure_test_parameters(
             },
         },
     }
+    if sample_rate is not None:
+        retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
+        retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate
     if _is_tdd(band):
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
 
@@ -107,3 +111,12 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
         ),
         78: defaultdict(lambda: 632544),
     }[band][bandwidth]
+
+
+def get_minimum_sample_rate_for_bandwidth(bandwidth: int) -> int:
+    """
+    Get the smallest sample rate for the selected bandwidth
+    """
+    f_s_list = [5.76, 7.68, 11.52, 15.36, 23.04, 30.72, 61.44, 122.88, 245.76]
+    f_s_min = int(1e6 * min(filter(lambda f: f > bandwidth, f_s_list)))
+    return f_s_min
