@@ -101,14 +101,12 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
            coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
            "CORESET#0 Precoder Granularity");
 
-  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, cell_cfg.scs_common);
   pdcch_type0_css_coreset_description coreset0_param =
-      pdcch_type0_css_coreset_get(min_channel_bw,
+      pdcch_type0_css_coreset_get(cell_cfg.dl_carrier.band,
                                   cell_cfg.ssb_cfg.scs,
                                   cell_cfg.scs_common,
                                   cell_cfg.coreset0_idx,
-                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()),
-                                  band_helper::is_band_for_shared_spectrum(cell_cfg.dl_carrier.band));
+                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()));
 
   // CRB (with reference to SCScommon carrier) pointed to by offset_to_point_A.
   unsigned crb_ssb = cell_cfg.scs_common == subcarrier_spacing::kHz15

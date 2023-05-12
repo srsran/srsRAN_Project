@@ -105,8 +105,8 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
     // Band n79 has a different sync raster step size and need to be handled separately.
     if (band == nr_band::n79) {
-      N_raster = GSCN_LB_N_90_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
-      while (get_ss_ref_hz(N_raster, 0) >= ss_ref_l_bound_hz) {
+      N_raster = GSCN_LB_N_79_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
         increase_N_raster();
       }
     } else {
@@ -182,8 +182,8 @@ unsigned ssb_freq_position_generator::find_M_raster()
 void ssb_freq_position_generator::increase_N_raster()
 {
   const bool is_band_40mhz_or_above = (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 216U) or
-                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 106U) or
-                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 51U);
+                                      (scs_common == subcarrier_spacing::kHz30 and n_rbs >= 106U) or
+                                      (scs_common == subcarrier_spacing::kHz60 and n_rbs >= 51U);
 
   // N_raster increase as per Table 5.4.3.3-1, TS 38.104, ver.17.8.0.
   if (band == nr_band::n79 and is_band_40mhz_or_above) {

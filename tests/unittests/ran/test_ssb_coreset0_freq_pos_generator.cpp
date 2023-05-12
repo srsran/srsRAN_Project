@@ -474,7 +474,7 @@ class coreset0_index_generation_test : public ::testing::TestWithParam<cset0_tes
 
 TEST_P(coreset0_index_generation_test, coreset0_params_are_valid)
 {
-  cset0_test_params  params    = GetParam();
+  cset0_test_params        params    = GetParam();
   const optional<unsigned> cset0_idx = params.get_coreset0_index();
   ASSERT_EQ(params.expected_cset0_idx, cset0_idx);
 }
@@ -508,7 +508,7 @@ protected:
 // Test whether the position of SSB and Coreset0/SS0 indices are correctly generated.
 TEST_P(ssb_coreset0_param_generator_test, test_du_ssb_coreset0_idx)
 {
-  test_params                                       params = GetParam();
+  test_params                                             params = GetParam();
   const optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
       params.input_params.generate_ssb_coreset0_location();
   ASSERT_EQ(params.expected_result, ssb_coreset0_alloc);
@@ -534,7 +534,7 @@ INSTANTIATE_TEST_SUITE_P(
             band_helper::ssb_coreset0_freq_location{8, 7, 643296, 3, 0},
             cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30}},
         test_params{
-            band_helper::ssb_coreset0_freq_location{2, 0, 712320, 6, 0},
+            band_helper::ssb_coreset0_freq_location{26, 0, 712608, 6, 0},
             cfg_gen_input_params{713328, nr_band::n79, 106, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
             band_helper::ssb_coreset0_freq_location{28, 6, 435650, 14, 0},

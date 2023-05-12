@@ -151,6 +151,10 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \remark    As per TS 38.104, Table 5.2-1, only bands where Note 3 or Note 4 apply.
 bool is_band_for_shared_spectrum(nr_band band);
 
+/// \brief     Returns true if the band should be considered as for 40MHz minimum channel BW.
+/// \remark    As per TS 38.101, Table 5.2-1, only bands where Note 17 applies.
+bool is_band_40mhz_min_ch_bw_equivalent(nr_band band);
+
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
 /// \param[in] arfcn Given Downlink ARFCN.

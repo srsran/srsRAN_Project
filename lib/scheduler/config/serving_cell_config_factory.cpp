@@ -30,11 +30,6 @@ static unsigned cell_nof_crbs(const cell_config_builder_params& params)
                                                                 : frequency_range::FR1);
 }
 
-static min_channel_bandwidth min_channel_bw(const cell_config_builder_params& params)
-{
-  return band_helper::get_min_channel_bw(get_band(params), params.scs_common);
-}
-
 static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params& params)
 {
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
@@ -96,12 +91,7 @@ coreset_configuration srsran::config_helpers::make_default_coreset_config(const 
   nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   // Number of symbols equal to max(CORESET#0, 2).
   pdcch_type0_css_coreset_description desc =
-      pdcch_type0_css_coreset_get(min_channel_bw(params),
-                                  params.scs_common,
-                                  params.scs_common,
-                                  params.coreset0_index,
-                                  0,
-                                  band_helper::is_band_for_shared_spectrum(band));
+      pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
   cfg.duration             = std::max(2U, static_cast<unsigned>(desc.nof_symb_coreset));
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
@@ -116,12 +106,7 @@ coreset_configuration srsran::config_helpers::make_default_coreset0_config(const
   const nr_band band =
       params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   pdcch_type0_css_coreset_description desc =
-      pdcch_type0_css_coreset_get(min_channel_bw(params),
-                                  params.scs_common,
-                                  params.scs_common,
-                                  params.coreset0_index,
-                                  0,
-                                  band_helper::is_band_for_shared_spectrum(band));
+      pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
   cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
   int rb_start = params.scs_common == subcarrier_spacing::kHz15
