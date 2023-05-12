@@ -25,20 +25,18 @@ public:
   ~up_resource_manager_impl() = default;
 
   up_config_update              calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
-  bool                          apply_config_update(const up_config_update& config) override;
-  pdcp_config                   get_pdcp_config(const drb_id_t drb_id) override;
-  sdap_config_t                 get_sdap_config(const drb_id_t drb_id) override;
-  std::vector<qos_flow_id_t>    get_mapped_qos_flows(const drb_id_t drb_id) override;
-  std::vector<qos_flow_id_t>    get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
-  std::vector<drb_id_t>         get_drbs(const pdu_session_id_t pdu_session_id) override;
-  pdu_session_id_t              get_pdu_session_id(const drb_id_t drb_id) override;
-  s_nssai_t                     get_s_nssai(const drb_id_t drb_id) override;
+  bool                          apply_config_update(const up_config_update_result& config) override;
+  up_pdu_session_context        get_context(pdu_session_id_t psi) override;
+  up_drb_context                get_context(drb_id_t drb_id) override;
+  bool                          has_pdu_session(pdu_session_id_t pdu_session_id) override;
   size_t                        get_nof_drbs() override;
   size_t                        get_nof_pdu_sessions() override;
   std::vector<pdu_session_id_t> get_pdu_sessions() override;
   bool                          valid_5qi(const five_qi_t five_qi) override;
 
 private:
+  up_drb_context get_drb(drb_id_t drb_id);
+
   up_resource_manager_cfg cfg;
 
   up_context context; // The currently active state.

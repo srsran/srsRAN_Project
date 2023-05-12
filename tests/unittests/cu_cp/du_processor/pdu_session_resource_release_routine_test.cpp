@@ -22,7 +22,7 @@ class pdu_session_resource_release_test : public du_processor_routine_manager_te
 {
 protected:
   void start_procedure(const cu_cp_pdu_session_resource_release_command& msg,
-                       bool                                              ue_context_modification_outcome,
+                       ue_context_outcome_t                              ue_context_modification_outcome,
                        bearer_context_outcome_t                          bearer_context_modification_outcome)
   {
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
@@ -49,34 +49,34 @@ protected:
   optional<lazy_task_launcher<cu_cp_pdu_session_resource_release_response>> t_launcher;
 };
 
-TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_received_then_setup_succeeds)
+TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_modification_outcome{false};
-  this->start_procedure(command, true, bearer_context_modification_outcome);
+  this->start_procedure(command, {true}, bearer_context_modification_outcome);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_release_successful());
 }
 
-TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failure_received_then_setup_succeeds)
+TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(command, true, bearer_context_modification_outcome);
+  this->start_procedure(command, {true}, bearer_context_modification_outcome);
 
   // nothing has failed to setup
   ASSERT_TRUE(was_pdu_session_resource_release_successful());
 }
 
-/// Test handling of PDU session setup command without any setup item.
-TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command_received_then_setup_fails)
+/// Test handling of PDU session release command without any release item.
+TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command_received_then_release_fails)
 {
   // Test Preamble.
   cu_cp_pdu_session_resource_release_command command = {}; // empty message
@@ -84,7 +84,7 @@ TEST_F(pdu_session_resource_release_test, when_empty_pdu_session_release_command
 
   // Start PDU SESSION RESOURCE SETUP routine.
   bearer_context_outcome_t bearer_context_modification_outcome{true};
-  this->start_procedure(command, true, bearer_context_modification_outcome);
+  this->start_procedure(command, {true}, bearer_context_modification_outcome);
 
   // it should be ready immediately
   ASSERT_TRUE(t.ready());

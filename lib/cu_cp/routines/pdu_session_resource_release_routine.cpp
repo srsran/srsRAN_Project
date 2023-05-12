@@ -40,10 +40,9 @@ void pdu_session_resource_release_routine::operator()(
     // prepare UeContextModificationRequest and call F1 notifier
     ue_context_mod_request.ue_index = release_cmd.ue_index;
     for (const auto& pdu_session_res_to_release : release_cmd.pdu_session_res_to_release_list_rel_cmd) {
-      auto drbs = rrc_ue_up_resource_manager.get_drbs(pdu_session_res_to_release.pdu_session_id);
-
-      for (const auto& drb : drbs) {
-        ue_context_mod_request.drbs_to_be_released_list.push_back(drb);
+      const auto& session_context = rrc_ue_up_resource_manager.get_context(pdu_session_res_to_release.pdu_session_id);
+      for (const auto& drb : session_context.drbs) {
+        ue_context_mod_request.drbs_to_be_released_list.push_back(drb.first);
       }
     }
 

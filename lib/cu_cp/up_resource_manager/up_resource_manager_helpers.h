@@ -17,6 +17,9 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// \brief Perform sanity check on incoming resource setup request.
+bool is_valid(const cu_cp_pdu_session_resource_setup_request& pdu, const up_context& context);
+
 /// \brief Function to calculate a configuration update based on the active config and an incoming PDU session
 /// setup request. No configuration state is altered.
 /// \param pdu The PDU session resource setup request

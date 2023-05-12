@@ -102,13 +102,13 @@ public:
   void fill_bearer_context_response(T& result, const bearer_context_outcome_t& outcome)
   {
     result.success = outcome.outcome;
-    for (const auto& id : outcome.pdu_sessions_success_list) {
+    for (const auto& psi : outcome.pdu_sessions_success_list) {
       // add only the most relevant items
       e1ap_pdu_session_resource_setup_modification_item res_setup_item;
-      res_setup_item.pdu_session_id = uint_to_pdu_session_id(id);
+      res_setup_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
-      // add a single DRB
-      drb_id_t                   drb_id = drb_id_t::drb1;
+      // add a single DRB with the same ID like the PDU session it belongs to
+      drb_id_t                   drb_id = uint_to_drb_id(psi); // Note: we use the PDU session ID here also as DRB ID
       e1ap_drb_setup_item_ng_ran drb_item;
       drb_item.drb_id = drb_id;
 
@@ -219,13 +219,19 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
+struct ue_context_outcome_t {
+  bool                outcome = false;
+  std::list<unsigned> drb_success_list; // List of DRB IDs that were successful to setup.
+  std::list<unsigned> drb_failed_list;  // List of DRB IDs that failed to be setup.
+};
+
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
 public:
   dummy_du_processor_f1ap_ue_context_notifier() = default;
 
   void set_ue_context_setup_outcome(bool outcome) { ue_context_setup_outcome = outcome; }
 
-  void set_ue_context_modification_outcome(bool outcome) { ue_context_modification_outcome = outcome; }
+  void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
 
   async_task<f1ap_ue_context_setup_response>
   on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
@@ -251,15 +257,14 @@ public:
                          this](coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      if (ue_context_modification_outcome) {
-        // generate random ids to make sure its not only working for hardcoded values
-        gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = generate_random_gnb_cu_ue_f1ap_id();
-        gnb_du_ue_f1ap_id_t du_ue_f1ap_id = generate_random_gnb_du_ue_f1ap_id();
-
-        res = generate_cu_cp_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
-      } else {
-        res.success = false;
+      res.success = ue_context_modification_outcome.outcome;
+      for (const auto& drb_id : ue_context_modification_outcome.drb_success_list) {
+        // add only the most relevant items
+        cu_cp_drbs_setup_modified_item drb_item;
+        drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
+        res.drbs_setup_mod_list.emplace(drb_item.drb_id, drb_item);
       }
+      // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);
     });
@@ -276,9 +281,9 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger                          = srslog::fetch_basic_logger("TEST");
-  bool                  ue_context_setup_outcome        = false;
-  bool                  ue_context_modification_outcome = false;
+  srslog::basic_logger& logger                   = srslog::fetch_basic_logger("TEST");
+  bool                  ue_context_setup_outcome = false;
+  ue_context_outcome_t  ue_context_modification_outcome;
 };
 
 struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {

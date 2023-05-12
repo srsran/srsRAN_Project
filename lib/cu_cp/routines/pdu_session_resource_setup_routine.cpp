@@ -38,14 +38,21 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
                        cu_cp_ue_context_modification_request&         ue_context_mod_request,
                        const cu_cp_pdu_session_resource_setup_request setup_msg,
                        const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                             pdu_session_resource_setup_list,
-                       srslog::basic_logger& logger)
+                                               pdu_session_resource_setup_list,
+                       const up_config_update& next_config,
+                       srslog::basic_logger&   logger)
 {
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
     // Sanity check - make sure this session ID is present in the original setup message.
     if (setup_msg.pdu_session_res_setup_items.contains(e1ap_item.pdu_session_id) == false) {
       logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
                    e1ap_item.pdu_session_id);
+      return false;
+    }
+    // Also check if PDU session is included in expected next configuration.
+    if (next_config.pdu_sessions_to_setup_list.find(e1ap_item.pdu_session_id) ==
+        next_config.pdu_sessions_to_setup_list.end()) {
+      logger.error("Didn't expect setup for PDU session {}", e1ap_item.pdu_session_id);
       return false;
     }
 
@@ -148,6 +155,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                cu_cp_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request   setup_msg,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+                               const up_config_update&                          next_config,
                                srslog::basic_logger&                            logger)
 {
   // Traverse setup list
@@ -155,6 +163,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                         ue_context_mod_request,
                         setup_msg,
                         bearer_context_modification_response.pdu_session_resource_setup_list,
+                        next_config,
                         logger) == false) {
     return false;
   }
@@ -180,6 +189,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                cu_cp_ue_context_modification_request&          ue_context_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                               const up_config_update&                         next_config,
                                srslog::basic_logger&                           logger)
 {
   // Traverse setup list
@@ -187,6 +197,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                         ue_context_mod_request,
                         setup_msg,
                         bearer_context_setup_response.pdu_session_resource_setup_list,
+                        next_config,
                         logger) == false) {
     return false;
   }
@@ -209,14 +220,14 @@ void fill_response_failed_list(cu_cp_pdu_session_resource_setup_response&      r
   }
 }
 
-// This method takes the result from F1AP UE Context Setup message and pre-fills the subsequent
+// This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
 // bearer context modification message to be send to the CU-UP.
 // In case of a negative outcome it also prefills the final PDU session resource setup respone message.
 bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
                                e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const cu_cp_ue_context_modification_response&   ue_context_modification_response,
-                               up_resource_manager&                            rrc_ue_up_resource_manager,
+                               const up_config_update&                         next_config,
                                srslog::basic_logger&                           logger)
 {
   // Fail procedure if (single) DRB couldn't be setup
@@ -230,26 +241,30 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
   e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
       bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
 
-  // Each DRB configured in the DU needs to be modified in the CU-UP as well.
-  for (const auto& drb_id : ue_context_modification_response.drbs_setup_mod_list) {
+  /// Iterate over all PDU sessions to be setup and match the containing DRBs.
+  for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
+    // The modifications are only for this PDU session.
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
-    e1ap_mod_item.pdu_session_id = rrc_ue_up_resource_manager.get_pdu_session_id(drb_id.drb_id);
+    e1ap_mod_item.pdu_session_id = pdu_session.second.id;
 
     for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
-      e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
-      e1ap_drb_item.drb_id = drb_item.drb_id;
+      // Only include the DRB if it belongs to the this session.
+      if (pdu_session.second.drbs.find(drb_item.drb_id) != pdu_session.second.drbs.end()) {
+        // DRB belongs to this PDU session
+        e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
+        e1ap_drb_item.drb_id = drb_item.drb_id;
 
-      for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
-        e1ap_up_params_item e1ap_dl_up_param;
+        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+          e1ap_up_params_item e1ap_dl_up_param;
 
-        e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
-        e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
+          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+          e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
 
-        e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
+          e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
+        }
+        e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
       }
-      e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
     }
-
     e1ap_bearer_context_mod.pdu_session_res_to_modify_list.emplace(e1ap_mod_item.pdu_session_id, e1ap_mod_item);
   }
 
@@ -291,7 +306,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
     // Make sure PDU session does not already exist.
-    if (!rrc_ue_up_resource_manager.get_drbs(setup_item.pdu_session_id).empty()) {
+    if (rrc_ue_up_resource_manager.has_pdu_session(setup_item.pdu_session_id)) {
       logger.error(
           "ue={}: \"{}\" PDU session ID {} already exists.", setup_msg.ue_index, name(), setup_item.pdu_session_id);
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -346,7 +361,8 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle BearerContextSetupResponse
     if (handle_procedure_response(
-            response_msg, ue_context_mod_request, setup_msg, bearer_context_setup_response, logger) == false) {
+            response_msg, ue_context_mod_request, setup_msg, bearer_context_setup_response, next_config, logger) ==
+        false) {
       logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
@@ -360,8 +376,12 @@ void pdu_session_resource_setup_routine::operator()(
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle BearerContextModificationResponse
-    if (handle_procedure_response(
-            response_msg, ue_context_mod_request, setup_msg, bearer_context_modification_response, logger) == false) {
+    if (handle_procedure_response(response_msg,
+                                  ue_context_mod_request,
+                                  setup_msg,
+                                  bearer_context_modification_response,
+                                  next_config,
+                                  logger) == false) {
       logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
@@ -381,7 +401,7 @@ void pdu_session_resource_setup_routine::operator()(
                                   bearer_context_modification_request,
                                   setup_msg,
                                   ue_context_modification_response,
-                                  rrc_ue_up_resource_manager,
+                                  next_config,
                                   logger) == false) {
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -398,8 +418,12 @@ void pdu_session_resource_setup_routine::operator()(
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
 
     // Handle BearerContextModificationResponse
-    if (handle_procedure_response(
-            response_msg, ue_context_mod_request, setup_msg, bearer_context_modification_response, logger) == false) {
+    if (handle_procedure_response(response_msg,
+                                  ue_context_mod_request,
+                                  setup_msg,
+                                  bearer_context_modification_response,
+                                  next_config,
+                                  logger) == false) {
       logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
@@ -408,33 +432,36 @@ void pdu_session_resource_setup_routine::operator()(
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
-      // Add radio bearer config
-      for (const auto& drb_to_add : next_config.drb_to_add_list) {
-        cu_cp_drb_to_add_mod drb_to_add_mod;
-        drb_to_add_mod.drb_id   = drb_to_add.drb_id;
-        drb_to_add_mod.pdcp_cfg = rrc_ue_up_resource_manager.get_pdcp_config(drb_to_add.drb_id);
+      for (const auto& pdu_session_to_add : next_config.pdu_sessions_to_setup_list) {
+        // Add radio bearer config
+        for (const auto& drb_to_add : pdu_session_to_add.second.drbs) {
+          cu_cp_drb_to_add_mod drb_to_add_mod;
+          drb_to_add_mod.drb_id   = drb_to_add.first;
+          drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
 
-        // Add CN association and SDAP config
-        cu_cp_cn_assoc cn_assoc;
-        cn_assoc.sdap_cfg       = rrc_ue_up_resource_manager.get_sdap_config(drb_to_add.drb_id);
-        drb_to_add_mod.cn_assoc = cn_assoc;
+          // Add CN association and SDAP config
+          cu_cp_cn_assoc cn_assoc;
+          cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
+          drb_to_add_mod.cn_assoc = cn_assoc;
 
-        cu_cp_radio_bearer_config radio_bearer_config;
-        radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.drb_id, drb_to_add_mod);
-        rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
-      }
-
-      // set masterCellGroupConfig as received by DU
-      cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-      rrc_recfg_v1530_ies.master_cell_group = ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
-
-      // append NAS PDUs as received by AMF
-      for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
-        if (!pdu_session.pdu_session_nas_pdu.empty()) {
-          rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
+          cu_cp_radio_bearer_config radio_bearer_config;
+          radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
+          rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
         }
+
+        // set masterCellGroupConfig as received by DU
+        cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
+        rrc_recfg_v1530_ies.master_cell_group =
+            ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
+
+        // append NAS PDUs as received by AMF
+        for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
+          if (!pdu_session.pdu_session_nas_pdu.empty()) {
+            rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
+          }
+        }
+        rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
       }
-      rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
@@ -470,6 +497,13 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 {
   if (success) {
     logger.debug("ue={}: \"{}\" finalized.", setup_msg.ue_index, name());
+
+    // Prepare update for UP resource manager.
+    up_config_update_result result;
+    for (const auto& pdu_session_to_add : next_config.pdu_sessions_to_setup_list) {
+      result.pdu_sessions_added_list.push_back(pdu_session_to_add.second);
+    }
+    rrc_ue_up_resource_manager.apply_config_update(result);
   } else {
     logger.error("ue={}: \"{}\" failed.", setup_msg.ue_index, name());
 
@@ -536,12 +570,13 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_request.ue_inactivity_timer = ue_cfg.inactivity_timer;
   }
 
-  for (const auto& session_id : next_config.pdu_sessions_to_setup_list) {
-    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session_id),
+  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
+    const auto& session = setup_item.second;
+    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
                   "Setup request doesn't contain config for PDU session id={}",
-                  session_id);
+                  session.id);
     // Obtain PDU session config from original setup request.
-    const auto&                        pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session_id];
+    const auto&                        pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
     e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
 
     e1ap_pdu_session_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
@@ -552,12 +587,11 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
     e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
 
-    for (const auto& drb_to_setup : next_config.drb_to_add_list) {
+    for (const auto& drb_to_setup : session.drbs) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id   = drb_to_setup.drb_id;
-      e1ap_drb_setup_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup.drb_id);
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg,
-                                rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup.drb_id));
+      e1ap_drb_setup_item.drb_id   = drb_to_setup.first;
+      e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
+      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
 
       e1ap_cell_group_info_item e1ap_cell_group_item;
       e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
@@ -596,12 +630,13 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
       e1ap_request.ng_ran_bearer_context_mod_request.emplace();
 
   // Add new PDU sessions.
-  for (const auto& pdu_session_id : next_config.pdu_sessions_to_setup_list) {
-    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(pdu_session_id),
+  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
+    const auto& session = setup_item.second;
+    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
                   "Setup request doesn't contain config for PDU session id={}",
-                  pdu_session_id);
+                  session.id);
     // Obtain PDU session config from original setup request.
-    const auto& pdu_session_cfg = setup_msg.pdu_session_res_setup_items[pdu_session_id];
+    const auto& pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
 
     // TODO: Add helper function to avoid duplicated code for this item.
     e1ap_pdu_session_res_to_setup_mod_item setup_mod_item;
@@ -614,37 +649,30 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
     setup_mod_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
 
     // Add DRBs for this PDU session.
-    for (const auto& drb_to_setup : next_config.drb_to_add_list) {
-      // Make sure DRB belongs to this PDU session.
-      if (rrc_ue_up_resource_manager.get_pdu_session_id(drb_to_setup.drb_id) == pdu_session_id) {
-        e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item;
-        drb_to_setup_mod_item.drb_id   = drb_to_setup.drb_id;
-        drb_to_setup_mod_item.sdap_cfg = rrc_ue_up_resource_manager.get_sdap_config(drb_to_setup.drb_id);
+    for (const auto& drb_to_setup : session.drbs) {
+      e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item;
+      drb_to_setup_mod_item.drb_id   = drb_to_setup.first;
+      drb_to_setup_mod_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
 
-        fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg,
-                                  rrc_ue_up_resource_manager.get_pdcp_config(drb_to_setup.drb_id));
+      fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
 
-        e1ap_cell_group_info_item e1ap_cell_group_item;
-        e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-        drb_to_setup_mod_item.cell_group_info.push_back(e1ap_cell_group_item);
+      e1ap_cell_group_info_item e1ap_cell_group_item;
+      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
+      drb_to_setup_mod_item.cell_group_info.push_back(e1ap_cell_group_item);
 
-        std::vector<qos_flow_id_t> mapped_flows = rrc_ue_up_resource_manager.get_mapped_qos_flows(pdu_session_id);
-        for (const auto& qos_flow_to_setup : next_config.qos_flow_to_setup_list) {
-          // Make sure QoS flow belongs to this PDU session/DRB.
-          if (std::find(mapped_flows.begin(), mapped_flows.end(), qos_flow_to_setup) != mapped_flows.end()) {
-            e1ap_qos_flow_qos_param_item flow_item;
-            flow_item.qos_flow_id = qos_flow_to_setup;
-
-            // todo: add values
-            // flow_item.qos_flow_level_qos_params
-
-            drb_to_setup_mod_item.flow_map_info.emplace(qos_flow_to_setup, flow_item);
-          }
-        }
+      // Setup QoS flows
+      for (const auto& qos_flow_to_setup : drb_to_setup.second.qos_flows) {
+        e1ap_qos_flow_qos_param_item flow_item;
+        flow_item.qos_flow_id = qos_flow_to_setup;
+        // todo: add values
+        // flow_item.qos_flow_level_qos_params
+        drb_to_setup_mod_item.flow_map_info.emplace(qos_flow_to_setup, flow_item);
       }
+
+      setup_mod_item.drb_to_setup_mod_list_ng_ran.emplace(drb_to_setup_mod_item.drb_id, drb_to_setup_mod_item);
     }
 
-    e1ap_bearer_context_mod.pdu_session_res_to_setup_mod_list.emplace(pdu_session_id, setup_mod_item);
+    e1ap_bearer_context_mod.pdu_session_res_to_setup_mod_list.emplace(session.id, setup_mod_item);
   }
 
   // Remove PDU sessions.

@@ -262,8 +262,8 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
   ue_context_release_request.cause    = request.cause;
 
   // Add PDU Session IDs
-  auto& drb_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_up_resource_manager();
-  ue_context_release_request.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
+  auto& up_resource_manager = rrc->find_ue(request.ue_index)->get_rrc_ue_up_resource_manager();
+  ue_context_release_request.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
 
   ngap_ctrl_notifier.on_ue_context_release_request(ue_context_release_request);
 }
@@ -478,8 +478,8 @@ void du_processor_impl::handle_inactivity_notification(const cu_cp_inactivity_no
     req.cause    = cause_t::radio_network;
 
     // Add PDU Session IDs
-    auto& drb_manager                    = rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager();
-    req.pdu_session_res_list_cxt_rel_req = drb_manager.get_pdu_sessions();
+    auto& up_resource_manager            = rrc->find_ue(msg.ue_index)->get_rrc_ue_up_resource_manager();
+    req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
 
     ngap_ctrl_notifier.on_ue_context_release_request(req);
   } else {

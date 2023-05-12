@@ -21,85 +21,66 @@ up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg
 
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
+  if (!is_valid(pdu, context)) {
+    logger.error("Invalid PDU Session Resource Setup request.");
+    return {};
+  }
+
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
-bool up_resource_manager_impl::apply_config_update(const up_config_update& config)
+bool up_resource_manager_impl::apply_config_update(const up_config_update_result& result)
 {
-  // add FiveQI to map
-  // context.drb_map.five_qi_map.emplace(drb_ctx.five_qi, id);
+  // Apply config update in an additive way.
+  for (const auto& session : result.pdu_sessions_added_list) {
+    for (const auto& drb : session.drbs) {
+      // Add to DRB-to-PDU session look-up table.
+      context.drb_map.emplace(drb.first, session.id);
+
+      // add FiveQI to map of existing QoS groups.
+      context.five_qi_map.emplace(drb.second.five_qi, drb.first);
+    }
+
+    // Add PDU session to list of active sessions.
+    context.pdu_sessions.emplace(session.id, session);
+  }
+
   return true;
 }
 
-pdu_session_id_t up_resource_manager_impl::get_pdu_session_id(drb_id_t drb_id)
+up_pdu_session_context up_resource_manager_impl::get_context(pdu_session_id_t psi)
 {
-  if (context.drb_map.find(drb_id) == context.drb_map.end()) {
-    logger.error("DRB {} not found", drb_id);
-    return pdu_session_id_t::invalid;
-  }
-  return context.drb_map.at(drb_id).pdu_session_id;
+  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "PDU session {} not allocated", psi);
+  return context.pdu_sessions.at(psi);
 }
 
-std::vector<qos_flow_id_t> up_resource_manager_impl::get_mapped_qos_flows(drb_id_t drb_id)
+up_drb_context up_resource_manager_impl::get_context(drb_id_t drb_id)
 {
-  if (context.drb_map.find(drb_id) == context.drb_map.end()) {
-    logger.error("DRB {} not found", drb_id);
-    return {};
-  }
-  return context.drb_map.at(drb_id).mapped_qos_flows;
+  srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "DRB ID {} not allocated", drb_id);
+  const auto& psi = context.drb_map.find(drb_id);
+  srsran_assert(
+      context.pdu_sessions.find(psi->second) != context.pdu_sessions.end(), "PDU session {} not allocated", psi->first);
+  return context.pdu_sessions.at(psi->second).drbs.at(drb_id);
 }
 
-std::vector<qos_flow_id_t> up_resource_manager_impl::get_mapped_qos_flows(pdu_session_id_t pdu_session_id)
+bool up_resource_manager_impl::has_pdu_session(pdu_session_id_t pdu_session_id)
 {
-  std::vector<qos_flow_id_t> mapped_flows;
-
-  for (const auto& drb : context.drb_map) {
-    if (drb.second.pdu_session_id == pdu_session_id) {
-      for (const auto& flow : drb.second.mapped_qos_flows) {
-        mapped_flows.push_back(flow);
-      }
-    }
-  }
-  return mapped_flows;
+  return context.pdu_sessions.find(pdu_session_id) != context.pdu_sessions.end();
 }
 
-std::vector<drb_id_t> up_resource_manager_impl::get_drbs(pdu_session_id_t pdu_session_id)
-{
-  std::vector<drb_id_t> mapped_drbs;
-
-  for (const auto& drb : context.drb_map) {
-    if (drb.second.pdu_session_id == pdu_session_id) {
-      mapped_drbs.push_back(drb.first);
-    }
-  }
-  return mapped_drbs;
-}
-
-pdcp_config up_resource_manager_impl::get_pdcp_config(drb_id_t drb_id)
+up_drb_context up_resource_manager_impl::get_drb(drb_id_t drb_id)
 {
   if (context.drb_map.find(drb_id) == context.drb_map.end()) {
     logger.error("DRB {} not found", drb_id);
     return {};
   }
-  return context.drb_map.at(drb_id).pdcp_cfg;
-}
-
-sdap_config_t up_resource_manager_impl::get_sdap_config(drb_id_t drb_id)
-{
-  if (context.drb_map.find(drb_id) == context.drb_map.end()) {
-    logger.error("DRB {} not found", drb_id);
-    return {};
-  }
-  return context.drb_map.at(drb_id).sdap_cfg;
-}
-
-s_nssai_t up_resource_manager_impl::get_s_nssai(drb_id_t drb_id)
-{
-  if (context.drb_map.find(drb_id) == context.drb_map.end()) {
-    logger.error("DRB {} not found", drb_id);
-    return {};
-  }
-  return context.drb_map.at(drb_id).s_nssai;
+  const auto& psi = context.drb_map.at(drb_id);
+  srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "Couldn't find PDU session ID {}", psi);
+  srsran_assert(context.pdu_sessions.at(psi).drbs.find(drb_id) != context.pdu_sessions.at(psi).drbs.end(),
+                "Couldn't find DRB id {} in PDU session {}",
+                drb_id,
+                psi);
+  return context.pdu_sessions.at(psi).drbs.at(drb_id);
 }
 
 size_t up_resource_manager_impl::get_nof_drbs()
@@ -116,7 +97,7 @@ std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
 {
   std::vector<pdu_session_id_t> pdu_session_ids;
   for (const auto& session : context.pdu_sessions) {
-    pdu_session_ids.push_back(session.id);
+    pdu_session_ids.push_back(session.first);
   }
 
   return pdu_session_ids;

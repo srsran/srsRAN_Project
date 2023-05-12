@@ -36,6 +36,17 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_context& context, srslog::b
   return new_drb_id;
 }
 
+bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_setup_request& pdu, const up_context& context)
+{
+  // Reject request if PDU session with same ID already exists.
+  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+    if (context.pdu_sessions.find(pdu_session.pdu_session_id) != context.pdu_sessions.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
                                                      const up_context&                               context,
                                                      const up_resource_manager_cfg&                  cfg,
@@ -47,6 +58,11 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
   for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
+    srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
+                  "PDU session already exists.");
+    // Create new PDU session context.
+    up_pdu_session_context new_ctxt;
+    new_ctxt.id = pdu_session.pdu_session_id;
     for (const auto& qos_flow : pdu_session.qos_flow_setup_request_items) {
       // TODO: check if FiveQI has configuration
 
@@ -63,7 +79,8 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
         report_fatal_error("Invalid QoS characteristics. Either dynamic or non-dynamic 5qi must be set");
       }
 
-      // check if other DRB with same FiveQI exists
+      // Check if other DRB with same FiveQI exists.
+      // Note: the current assumption is that there is no need to have a second DRB with the same 5QI.
       if (context.five_qi_map.find(five_qi) == context.five_qi_map.end()) {
         // no existing DRB with same FiveQI, create new DRB
         drb_id_t id = allocate_drb_id(context, logger);
@@ -78,14 +95,16 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
         drb_ctx.default_drb    = context.drb_map.empty() ? true : false; // make first DRB the default
         drb_ctx.five_qi        = five_qi;
         drb_ctx.pdcp_cfg       = set_rrc_pdcp_config(drb_ctx.five_qi, cfg);
-        drb_ctx.mapped_qos_flows.push_back(qos_flow.qos_flow_id);
+        drb_ctx.qos_flows.push_back(qos_flow.qos_flow_id);
         drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
 
         // add new DRB to list
-        config.drb_to_add_list.push_back(drb_ctx);
+        new_ctxt.drbs.emplace(id, drb_ctx);
+      } else {
+        logger.error("Setup of new QoS flow not supported yet.");
       }
     }
-    config.pdu_sessions_to_setup_list.push_back(pdu_session.pdu_session_id);
+    config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
   }
 
   return config;
@@ -98,7 +117,7 @@ sdap_config_t srsran::srs_cu_cp::set_rrc_sdap_config(const up_drb_context& conte
   sdap_cfg.default_drb = context.default_drb;
   sdap_cfg.sdap_hdr_dl = "absent";
   sdap_cfg.sdap_hdr_ul = "absent";
-  for (const auto& qos_flow : context.mapped_qos_flows) {
+  for (const auto& qos_flow : context.qos_flows) {
     sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
   }
   return sdap_cfg;

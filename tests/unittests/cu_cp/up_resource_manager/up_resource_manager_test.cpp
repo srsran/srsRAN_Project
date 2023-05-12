@@ -54,12 +54,19 @@ TEST_F(up_resource_manager_test, when_initial_pdu_session_is_created_new_drb_is_
   // No DRB present
   ASSERT_EQ(manager->get_nof_drbs(), 0);
 
-  // single DRB could be added
+  // single PDU Session/DRB could be added
   up_config_update update = manager->calculate_update(msg);
-  ASSERT_EQ(update.drb_to_add_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
 
-  // Verify DRB was added
+  // Assume DRB setup was successful.
+  up_config_update_result result;
+  result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)));
+  manager->apply_config_update(result);
+
+  // Verify PDU session and DRB were added
   ASSERT_EQ(manager->get_nof_drbs(), 1);
+  ASSERT_EQ(manager->get_pdu_sessions().size(), 1);
 }
 
 TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
@@ -67,12 +74,19 @@ TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_
   cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
 
   // single DRB should be added
-  ASSERT_EQ(manager->calculate_update(msg).drb_to_add_list.size(), 1);
+  up_config_update update = manager->calculate_update(msg);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
 
-  // if same request is received again, no DRB should be added
-  ASSERT_EQ(manager->calculate_update(msg).drb_to_add_list.size(), 0);
+  // Assume DRB setup was successful.
+  up_config_update_result result;
+  result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)));
+  manager->apply_config_update(result);
 
   ASSERT_EQ(manager->get_nof_drbs(), 1);
+
+  // if same request is received again, no DRB should be added
+  ASSERT_EQ(manager->calculate_update(msg).pdu_sessions_to_setup_list.size(), 0);
 }
 
 TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
@@ -81,6 +95,8 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
   up_config_update                         update = manager->calculate_update(msg);
 
   // Verify DRB config
-  const auto pdcp_cfg = manager->get_pdcp_config(update.drb_to_add_list.at(0).drb_id);
-  ASSERT_TRUE(pdcp_cfg.rb_type == pdcp_rb_type::drb);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs[uint_to_drb_id(1)].pdcp_cfg.rb_type,
+            pdcp_rb_type::drb);
 }
