@@ -72,12 +72,14 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                                            bwp_id_t                     active_bwp_id,
                                            search_space_id              ss_id)
 {
-  const bwp_downlink_common&          init_dl_bwp       = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_downlink_common&          active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
+  const bwp_info&                     init_bwp          = ue_cell_cfg.bwp(to_bwp_id(0));
+  const bwp_info&                     active_bwp        = ue_cell_cfg.bwp(active_bwp_id);
+  const bwp_downlink_common&          init_dl_bwp       = *init_bwp.dl_common;
+  const bwp_downlink_common&          active_dl_bwp_cmn = *active_bwp.dl_common;
   const bwp_configuration&            active_dl_bwp     = active_dl_bwp_cmn.generic_params;
-  const bwp_uplink_common&            init_ul_bwp       = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
-  const bwp_configuration&            active_ul_bwp     = ue_cell_cfg.ul_bwp_common(active_bwp_id).generic_params;
-  const optional<rach_config_common>& opt_rach_cfg      = ue_cell_cfg.ul_bwp_common(active_bwp_id).rach_cfg_common;
+  const bwp_uplink_common&            init_ul_bwp       = *init_bwp.ul_common;
+  const bwp_configuration&            active_ul_bwp     = active_bwp.ul_common->generic_params;
+  const optional<rach_config_common>& opt_rach_cfg      = active_bwp.ul_common->rach_cfg_common;
   const optional<csi_meas_config>&    opt_csi_meas_cfg  = ue_cell_cfg.cfg_dedicated().csi_meas_cfg;
   const optional<uplink_config>&      opt_ul_cfg        = ue_cell_cfg.cfg_dedicated().ul_config;
   const auto  k1_candidates              = ue_cell_cfg.get_k1_candidates(dci_dl_rnti_config_type::c_rnti_f1_1);
@@ -100,7 +102,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   // Fill out parameters for Format 0_1.
   // TODO: Once additional UL BWPs are added to uplinkConfig, populate below field from configs.
   dci_sz_cfg.nof_ul_bwp_rrc         = 0;
-  dci_sz_cfg.nof_ul_time_domain_res = ue_cell_cfg.get_pusch_time_domain_list(ss_id).size();
+  dci_sz_cfg.nof_ul_time_domain_res = ue_cell_cfg.search_space(ss_id).pusch_time_domain_list.size();
   dci_sz_cfg.report_trigger_size    = 0;
   if (opt_csi_meas_cfg.has_value() and opt_csi_meas_cfg.value().report_trigger_size.has_value()) {
     dci_sz_cfg.report_trigger_size = opt_csi_meas_cfg.value().report_trigger_size.value();
@@ -230,7 +232,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
 
   // Fill out parameters for Format 1_1.
   dci_sz_cfg.nof_dl_bwp_rrc            = ue_cell_cfg.cfg_dedicated().dl_bwps.size();
-  dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.get_pdsch_time_domain_list(ss_id).size();
+  dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.search_space(ss_id).pdsch_time_domain_list.size();
   dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
   dci_sz_cfg.nof_pdsch_ack_timings     = k1_candidates.size();
   dci_sz_cfg.dynamic_prb_bundling      = false;
@@ -427,11 +429,11 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                                    sch_mcs_index                mcs_index,
                                    const dl_harq_process&       h_dl)
 {
-  const search_space_configuration& ss_cfg            = ue_cell_cfg.search_space(ss_id);
-  const coreset_configuration&      cs_cfg            = ue_cell_cfg.coreset(ss_cfg.cs_id);
-  const bwp_downlink_common&        active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
-  const bwp_downlink_common&        init_dl_bwp       = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_configuration&          active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+  const search_space_info&     ss_info           = ue_cell_cfg.search_space(ss_id);
+  const coreset_configuration& cs_cfg            = *ss_info.coreset;
+  const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common;
+  const bwp_downlink_common&   init_dl_bwp       = *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common;
+  const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
 
   dci.type                           = srsran::dci_dl_rnti_config_type::c_rnti_f1_0;
   dci.c_rnti_f1_0                    = {};
@@ -443,12 +445,13 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
   unsigned N_rb_dl_bwp = active_dl_bwp.crbs.length();
-  if (ss_cfg.type == search_space_configuration::type_t::common and init_dl_bwp.pdcch_common.coreset0.has_value()) {
+  if (ss_info.cfg->type == search_space_configuration::type_t::common and
+      init_dl_bwp.pdcch_common.coreset0.has_value()) {
     N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   }
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
   const vrb_interval vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(
-      crbs, active_dl_bwp.crbs.start(), cs_cfg.get_coreset_start_crb(), dci_dl_format::f1_0, ss_cfg.type);
+      crbs, active_dl_bwp.crbs.start(), cs_cfg.get_coreset_start_crb(), dci_dl_format::f1_0, ss_info.cfg->type);
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -459,8 +462,9 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
 
   // Compute DCI size.
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
-  f1_0.payload_size = ss_cfg.type == search_space_configuration::type_t::ue_dedicated ? dci_sz.format1_0_ue_size.value()
-                                                                                      : dci_sz.format1_0_common_size;
+  f1_0.payload_size = ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated
+                          ? dci_sz.format1_0_ue_size.value()
+                          : dci_sz.format1_0_common_size;
 
   // UCI resources.
   f1_0.pucch_resource_indicator       = pucch_res_indicator;
@@ -488,12 +492,11 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                                    sch_mcs_index                tb1_mcs_index,
                                    const dl_harq_process&       h_dl)
 {
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(ss_id);
-  srsran_assert(ss_cfg != nullptr, "No valid SearchSpace found");
-  srsran_assert(ss_cfg->type == search_space_configuration::type_t::ue_dedicated,
+  const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
+  srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
                 "SearchSpace must be of type UE-Specific SearchSpace");
 
-  const bwp_downlink_common& active_dl_bwp_cmn = ue_cell_cfg.dl_bwp_common(active_bwp_id);
+  const bwp_downlink_common& active_dl_bwp_cmn = *ue_cell_cfg.bwp(active_bwp_id).dl_common;
   const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
   const auto                 k1_candidates     = ue_cell_cfg.get_k1_candidates(dci_dl_rnti_config_type::c_rnti_f1_1);
   const auto&                opt_pdsch_cfg     = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
@@ -603,11 +606,9 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
                                    sch_mcs_index                mcs_index,
                                    const ul_harq_process&       h_ul)
 {
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(ss_id);
-  srsran_assert(ss_cfg != nullptr, "No valid SearchSpace found");
-
-  const bwp_configuration& active_ul_bwp = ue_cell_cfg.ul_bwp_common(active_bwp_id).generic_params;
-  const bwp_uplink_common& init_ul_bwp   = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
+  const search_space_info& ss_info       = ue_cell_cfg.search_space(ss_id);
+  const bwp_configuration& active_ul_bwp = ue_cell_cfg.bwp(active_bwp_id).ul_common->generic_params;
+  const bwp_uplink_common& init_ul_bwp   = *ue_cell_cfg.bwp(to_bwp_id(0)).ul_common;
 
   dci.type                           = dci_ul_rnti_config_type::c_rnti_f0_0;
   dci.c_rnti_f0_0                    = {};
@@ -626,13 +627,13 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
-  f0_0.payload_size = ss_cfg->type == search_space_configuration::type_t::ue_dedicated
+  f0_0.payload_size = ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated
                           ? dci_sz.format0_0_ue_size.value()
                           : dci_sz.format0_0_common_size;
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
-  const unsigned     N_ul_bwp_rb = (ss_cfg->type == srsran::search_space_configuration::type_t::common)
+  const unsigned     N_ul_bwp_rb = (ss_info.cfg->type == srsran::search_space_configuration::type_t::common)
                                        ? init_ul_bwp.generic_params.crbs.length()
                                        : active_ul_bwp.crbs.length();
   const vrb_interval vrbs        = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
@@ -660,12 +661,11 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                                    const ul_harq_process&       h_ul,
                                    unsigned                     dai)
 {
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(ss_id);
-  srsran_assert(ss_cfg != nullptr, "No valid SearchSpace found");
-  srsran_assert(ss_cfg->type == search_space_configuration::type_t::ue_dedicated,
+  const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
+  srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
                 "SearchSpace must be of type UE-Specific SearchSpace");
 
-  const bwp_configuration& active_ul_bwp = ue_cell_cfg.ul_bwp_common(active_bwp_id).generic_params;
+  const bwp_configuration& active_ul_bwp = ue_cell_cfg.bwp(active_bwp_id).ul_common->generic_params;
 
   dci.type                    = dci_ul_rnti_config_type::c_rnti_f0_1;
   dci.c_rnti_f0_1             = {};

@@ -79,8 +79,8 @@ public:
                                            search_space_configuration::type_t ss_type) const
   {
     return get_resource_alloc_type_1_ul_bwp_size(dci_type,
-                                                 ue_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
-                                                 ue_cfg.ul_bwp_common(active_bwp_id()).generic_params,
+                                                 ue_cfg.bwp(to_bwp_id(0)).ul_common->generic_params,
+                                                 ue_cfg.bwp(active_bwp_id()).ul_common->generic_params,
                                                  ss_type);
   }
 

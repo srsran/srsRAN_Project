@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
+#include "../support/pdcch/search_space_helper.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
@@ -19,6 +20,7 @@ namespace srsran {
 
 /// \brief Grouping of information associated with a given BWP.
 struct bwp_info {
+  bwp_id_t                      bwp_id;
   const bwp_downlink_common*    dl_common = nullptr;
   const bwp_downlink_dedicated* dl_ded    = nullptr;
   const bwp_uplink_common*      ul_common = nullptr;
@@ -34,6 +36,14 @@ struct search_space_info {
   const bwp_info*                                   bwp     = nullptr;
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list;
+
+  /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
+  /// \return DL DCI format.
+  dci_dl_format get_dl_dci_format() const { return search_space_helper::get_dl_dci_format(*cfg); }
+
+  /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
+  /// \return UL DCI format.
+  dci_ul_format get_ul_dci_format() const { return search_space_helper::get_ul_dci_format(*cfg); }
 };
 
 /// UE-dedicated configuration for a given cell.
@@ -59,22 +69,10 @@ public:
   }
   const bwp_info& bwp(bwp_id_t bwp_id) const
   {
-    const bwp_info* ret = find_bwp(bwp_id);
-    srsran_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
-    return *ret;
+    const bwp_info* bwp = find_bwp(bwp_id);
+    srsran_assert(bwp != nullptr, "Invalid BWP-Id={} access", bwp_id);
+    return *bwp;
   }
-
-  /// Fetches DL BWP common configuration based on BWP-Id.
-  const bwp_downlink_common* find_dl_bwp_common(bwp_id_t bwp_id) const { return bwp_table[bwp_id].dl_common; }
-  const bwp_downlink_common& dl_bwp_common(bwp_id_t bwp_id) const
-  {
-    const bwp_downlink_common* ret = find_dl_bwp_common(bwp_id);
-    srsran_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
-    return *ret;
-  }
-
-  /// Fetches DL BWP dedicated configuration based on BWP-Id.
-  const bwp_downlink_dedicated* find_dl_bwp_ded(bwp_id_t bwp_id) const { return bwp_table[bwp_id].dl_ded; }
 
   /// Fetches CORESET configuration based on Coreset-Id.
   const coreset_configuration* find_coreset(coreset_id cs_id) const { return coresets[cs_id]; }
@@ -86,31 +84,17 @@ public:
   }
 
   /// Fetches SearchSpace configuration based on SearchSpace-Id.
-  const search_space_configuration* find_search_space(search_space_id ss_id) const { return search_spaces[ss_id]; }
-  const search_space_configuration& search_space(search_space_id ss_id) const
+  const search_space_info* find_search_space(search_space_id ss_id) const
   {
-    const search_space_configuration* ret = find_search_space(ss_id);
-    srsran_assert(ret != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-    return *ret;
+    return ss_list.contains(ss_id) ? &ss_list[ss_id] : nullptr;
   }
+  const search_space_info& search_space(search_space_id ss_id) const { return ss_list[ss_id]; }
 
   /// Get Search Space List for a given BWP-Id.
   const static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>&
   get_search_spaces(bwp_id_t bwpid) const
   {
     return bwp_table[bwpid].search_spaces;
-  }
-
-  /// Get UE list of pdsch-TimeDomainAllocationList as per TS 38.214 clause 5.1.2.1.1.
-  span<const pdsch_time_domain_resource_allocation> get_pdsch_time_domain_list(search_space_id ss_id) const
-  {
-    return ss_list[ss_id].pdsch_time_domain_list;
-  }
-
-  /// Get UE list of pusch-TimeDomainAllocationList as per TS 38.214 clause 6.1.2.1.1.
-  span<const pusch_time_domain_resource_allocation> get_pusch_time_domain_list(search_space_id ss_id) const
-  {
-    return ss_list[ss_id].pusch_time_domain_list;
   }
 
   /// \brief Gets UL DCI RNTI type to use based on SearchSpace configuration.
@@ -121,26 +105,6 @@ public:
   /// \param[in] ss_id SearchSpace Id.
   /// \return DL DCI RNTI type.
   dci_dl_rnti_config_type get_dl_rnti_config_type(search_space_id ss_id) const;
-  /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
-  /// \param[in] ss_id SearchSpace Id.
-  /// \return UL DCI format.
-  dci_ul_format get_ul_dci_format(search_space_id ss_id) const;
-  /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
-  /// \param[in] ss_id SearchSpace Id.
-  /// \return DL DCI format.
-  dci_dl_format get_dl_dci_format(search_space_id ss_id) const;
-
-  /// Fetches UL BWP common configuration based on BWP-Id.
-  const bwp_uplink_common* find_ul_bwp_common(bwp_id_t bwp_id) const { return bwp_table[bwp_id].ul_common; }
-  const bwp_uplink_common& ul_bwp_common(bwp_id_t bwp_id) const
-  {
-    const bwp_uplink_common* ret = find_ul_bwp_common(bwp_id);
-    srsran_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
-    return *ret;
-  }
-
-  /// Fetches UL BWP dedicated configuration based on BWP-Id.
-  const bwp_uplink_dedicated* find_ul_bwp_ded(bwp_id_t bwp_id) const { return bwp_table[bwp_id].ul_ded; }
 
   span<const uint8_t> get_k1_candidates(dci_dl_rnti_config_type dci_type) const
   {

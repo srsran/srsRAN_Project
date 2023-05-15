@@ -89,7 +89,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
 
-  const bwp_downlink_common& bwp_dl_cmn = ue_cfg.dl_bwp_common(active_bwp_id());
+  const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
   return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
 }
 
@@ -99,7 +99,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  const bwp_uplink_common& bwp_ul_cmn = ue_cfg.ul_bwp_common(active_bwp_id());
+  const bwp_uplink_common& bwp_ul_cmn = *ue_cfg.bwp(active_bwp_id()).ul_common;
 
   pusch_config_params pusch_cfg;
   switch (type) {

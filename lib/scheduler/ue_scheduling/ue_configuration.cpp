@@ -1,9 +1,7 @@
 
 #include "ue_configuration.h"
-#include "../../asn1/asn1_diff_utils.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
-#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
@@ -49,6 +47,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
 void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common)
 {
   // Compute DL BWP-Id lookup table.
+  bwp_table[bwpid].bwp_id    = bwpid;
   bwp_table[bwpid].dl_common = &bwp_dl_common;
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
     bwp_table[bwpid].search_spaces.push_back(&ss);
@@ -135,84 +134,12 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
 
 dci_ul_rnti_config_type ue_cell_configuration::get_ul_rnti_config_type(search_space_id ss_id) const
 {
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg = *search_spaces[ss_id];
-
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    if (ss_cfg.common.f0_0_and_f1_0) {
-      return dci_ul_rnti_config_type::c_rnti_f0_0;
-    }
-    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
-    report_fatal_error("Unsupported UL DCI format");
-  }
-  switch (ss_cfg.ue_specific) {
-    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
-      return dci_ul_rnti_config_type::c_rnti_f0_0;
-    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
-      return dci_ul_rnti_config_type::c_rnti_f0_1;
-  }
-  report_fatal_error("Unsupported UL DCI RNTI type");
+  dci_ul_format dci_fmt = search_space(ss_id).get_ul_dci_format();
+  return dci_fmt == dci_ul_format::f0_0 ? dci_ul_rnti_config_type::c_rnti_f0_0 : dci_ul_rnti_config_type::c_rnti_f0_1;
 }
 
 dci_dl_rnti_config_type ue_cell_configuration::get_dl_rnti_config_type(search_space_id ss_id) const
 {
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg = *search_spaces[ss_id];
-
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    if (ss_cfg.common.f0_0_and_f1_0) {
-      return dci_dl_rnti_config_type::c_rnti_f1_0;
-    }
-    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
-    report_fatal_error("Unsupported UL DCI format");
-  }
-  switch (ss_cfg.ue_specific) {
-    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
-      return dci_dl_rnti_config_type::c_rnti_f1_0;
-    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
-      return dci_dl_rnti_config_type::c_rnti_f1_1;
-  }
-  report_fatal_error("Unsupported DL DCI RNTI type");
-}
-
-dci_ul_format ue_cell_configuration::get_ul_dci_format(search_space_id ss_id) const
-{
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg = *search_spaces[ss_id];
-
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    if (ss_cfg.common.f0_0_and_f1_0) {
-      return dci_ul_format::f0_0;
-    }
-    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
-    report_fatal_error("Unsupported UL DCI format");
-  }
-  switch (ss_cfg.ue_specific) {
-    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
-      return dci_ul_format::f0_0;
-    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
-      return dci_ul_format::f0_1;
-  }
-  report_fatal_error("Unsupported UL DCI format");
-}
-
-dci_dl_format ue_cell_configuration::get_dl_dci_format(search_space_id ss_id) const
-{
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg = *search_spaces[ss_id];
-
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    if (ss_cfg.common.f0_0_and_f1_0) {
-      return dci_dl_format::f1_0;
-    }
-    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
-    report_fatal_error("Unsupported DL DCI format");
-  }
-  switch (ss_cfg.ue_specific) {
-    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
-      return dci_dl_format::f1_0;
-    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
-      return dci_dl_format::f1_1;
-  }
-  report_fatal_error("Unsupported DL DCI format");
+  dci_dl_format dci_fmt = search_space(ss_id).get_dl_dci_format();
+  return dci_fmt == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0 : dci_dl_rnti_config_type::c_rnti_f1_1;
 }

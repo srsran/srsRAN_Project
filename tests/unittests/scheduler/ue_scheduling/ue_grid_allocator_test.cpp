@@ -72,9 +72,9 @@ protected:
 
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.rnti = grant.user->crnti;
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.bwp_cfg =
-        &ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
+        &ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->generic_params;
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.coreset_cfg =
-        &*ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).pdcch_common.coreset0;
+        &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
   scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;

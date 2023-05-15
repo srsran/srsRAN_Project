@@ -80,8 +80,9 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
 static static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 get_type1_pdcch_css(const ue_cell& ue_cc)
 {
-  return {ue_cc.cfg().find_search_space(
-      ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)};
+  return {ue_cc.cfg()
+              .search_space(ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)
+              .cfg};
 }
 
 /// Allocate UE PDSCH grant.
@@ -145,12 +146,12 @@ static bool alloc_dl_ue(const ue&                    u,
       }
 
       const span<const pdsch_time_domain_resource_allocation> pdsch_list =
-          ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
+          ue_cc.cfg().search_space(ss_cfg->id).pdsch_time_domain_list;
 
-      bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
+      bwp_configuration bwp_cfg = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->generic_params;
       if (ss_cfg->type == search_space_configuration::type_t::common) {
         // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-        bwp_cfg = ue_cc.cfg().dl_bwp_common(to_bwp_id(0)).generic_params;
+        bwp_cfg = ue_cc.cfg().bwp(to_bwp_id(0)).dl_common->generic_params;
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
         }
@@ -204,7 +205,7 @@ static bool alloc_dl_ue(const ue&                    u,
                                                            ss_cfg->id,
                                                            time_res,
                                                            ue_grant_crbs,
-                                                           ue_cc.cfg().get_dl_dci_format(ss_cfg->id),
+                                                           ue_cc.cfg().search_space(ss_cfg->id).get_dl_dci_format(),
                                                            agg_lvl,
                                                            mcs_prbs.mcs});
           if (res_allocated) {
@@ -269,7 +270,7 @@ static bool alloc_ul_ue(const ue&                    u,
       }
 
       const span<const pusch_time_domain_resource_allocation> pusch_list =
-          ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
+          ue_cc.cfg().search_space(ss_cfg->id).pusch_time_domain_list;
       const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
       const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 

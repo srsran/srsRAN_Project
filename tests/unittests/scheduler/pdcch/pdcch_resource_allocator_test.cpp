@@ -89,7 +89,7 @@ protected:
   void verify_pdcch_context(const dci_context_information& pdcch_ctx, const test_ue& u, search_space_id ss_id) const
   {
     ASSERT_EQ(pdcch_ctx.rnti, u.rnti);
-    const search_space_configuration& ss_cfg = u.cfg->search_space(ss_id);
+    const search_space_configuration& ss_cfg = *u.cfg->search_space(ss_id).cfg;
     const coreset_configuration&      cs_cfg = u.cfg->coreset(ss_cfg.cs_id);
     ASSERT_EQ(pdcch_ctx.coreset_cfg, &cs_cfg);
     ASSERT_EQ(pdcch_ctx.n_id_pdcch_dmrs,
@@ -213,7 +213,7 @@ protected:
                    fmt::join(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].nof_candidates, ", "));
     fmt::format_to(fmtbuf,
                    "\n- SearchSpace#2: nof_candidates={}",
-                   fmt::join(default_ue_cfg.search_space(to_search_space_id(2)).nof_candidates, ", "));
+                   fmt::join(default_ue_cfg.search_space(to_search_space_id(2)).cfg->nof_candidates, ", "));
     test_logger.info("{}", to_string(fmtbuf));
   }
 
@@ -337,7 +337,7 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_dl_pdcch_allo
   test_ue* u    = this->add_ue(create_ue_cfg(rnti, params.ss2_type, params.cs1_pdcch_dmrs_scrambling_id));
 
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->cfg, to_bwp_id(0), params.ss_id, aggregation_level::n4);
+      pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4);
 
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
@@ -354,7 +354,7 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester, single_crnti_ul_pdcch_allo
   test_ue* u    = this->add_ue(create_ue_cfg(rnti, params.ss2_type, params.cs1_pdcch_dmrs_scrambling_id));
 
   pdcch_ul_information* pdcch =
-      pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], rnti, *u->cfg, to_bwp_id(0), params.ss_id, aggregation_level::n4);
+      pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], rnti, *u->cfg, params.ss_id, aggregation_level::n4);
 
   ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.ul_pdcchs.size(), 1);
@@ -523,13 +523,13 @@ protected:
       } break;
       case alloc_type::dl_crnti: {
         pdcch_dl_information* dl_pdcch =
-            pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], alloc.rnti, *u->cfg, to_bwp_id(0), alloc.ss_id, alloc.aggr_lvl);
+            pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], alloc.rnti, *u->cfg, alloc.ss_id, alloc.aggr_lvl);
         return dl_pdcch != nullptr ? &dl_pdcch->ctx : nullptr;
 
       } break;
       case alloc_type::ul_crnti: {
         pdcch_ul_information* ul_pdcch =
-            pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], alloc.rnti, *u->cfg, to_bwp_id(0), alloc.ss_id, alloc.aggr_lvl);
+            pdcch_sch.alloc_ul_pdcch_ue(res_grid[0], alloc.rnti, *u->cfg, alloc.ss_id, alloc.aggr_lvl);
         return ul_pdcch != nullptr ? &ul_pdcch->ctx : nullptr;
 
       } break;

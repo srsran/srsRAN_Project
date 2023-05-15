@@ -11,7 +11,6 @@
 #include "../support/dci_builder.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
-#include "../support/rb_helper.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/scheduler/scheduler_dci.h"
@@ -51,24 +50,25 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_downlink_common&   init_dl_bwp = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_downlink_common&   bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
+  const bwp_downlink_common&   init_dl_bwp = *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common;
+  const bwp_downlink_common&   bwp_dl_cmn  = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).dl_common;
   dl_harq_process&             h_dl        = ue_cc->harqs.dl_harq(grant.h_id);
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
-  if (ss_cfg == nullptr) {
+  const search_space_info* ss_info = ue_cell_cfg.find_search_space(grant.ss_id);
+  if (ss_info == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
   }
-  const coreset_configuration* cs_cfg = ue_cell_cfg.find_coreset(ss_cfg->cs_id);
-  if (cs_cfg == nullptr) {
-    logger.warning("Failed to allocate PDSCH. Cause: No valid CORESET found.");
+  if (ss_info->bwp->bwp_id != ue_cc->active_bwp_id()) {
+    logger.warning("Failed to allocate PDSCH. Cause: SearchSpace not valid for active BWP.");
     return false;
   }
+  const search_space_configuration& ss_cfg = *ss_info->cfg;
+  const coreset_configuration*      cs_cfg = ss_info->coreset;
 
   const dci_dl_rnti_config_type dci_type =
-      h_dl.empty() ? ue_cell_cfg.get_dl_rnti_config_type(ss_cfg->id) : h_dl.last_alloc_params().dci_cfg_type;
+      h_dl.empty() ? ue_cell_cfg.get_dl_rnti_config_type(ss_cfg.id) : h_dl.last_alloc_params().dci_cfg_type;
 
   // See 3GPP TS 38.213, clause 10.1,
   // A UE monitors PDCCH candidates in one or more of the following search spaces sets
@@ -81,10 +81,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   const bwp_configuration bwp_cfg =
-      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, *ss_cfg, *cs_cfg);
+      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg, *cs_cfg);
   const subcarrier_spacing                                scs = bwp_cfg.scs;
   const span<const pdsch_time_domain_resource_allocation> pdsch_list =
-      ue_cell_cfg.get_pdsch_time_domain_list(ss_cfg->id);
+      ue_cell_cfg.search_space(ss_cfg.id).pdsch_time_domain_list;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
@@ -131,8 +131,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch =
-      get_pdcch_sched(grant.cell_index)
-          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index).alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -261,7 +260,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   dl_msg_alloc& msg    = pdsch_alloc.result.dl.ue_grants.emplace_back();
   msg.context.ue_index = u.ue_index;
   msg.context.k1       = k1;
-  msg.context.ss_id    = ss_cfg->id;
+  msg.context.ss_id    = ss_cfg.id;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
@@ -279,8 +278,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               mcs_tbs_info.value().tbs,
                               u.crnti,
                               ue_cell_cfg,
-                              ue_cc->active_bwp_id(),
-                              *ss_cfg,
+                              ss_cfg,
                               pdcch->dci.c_rnti_f1_0,
                               grant.crbs,
                               h_dl.tb(0).nof_retxs == 0);
@@ -292,7 +290,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               u.crnti,
                               ue_cell_cfg,
                               ue_cc->active_bwp_id(),
-                              *ss_cfg,
+                              ss_cfg,
                               pdcch->dci.c_rnti_f1_1,
                               grant.crbs,
                               h_dl);
@@ -331,21 +329,23 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
+  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common;
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
-  if (ss_cfg == nullptr) {
+  const search_space_info* ss_info = ue_cell_cfg.find_search_space(grant.ss_id);
+  if (ss_info == nullptr) {
     logger.warning("Failed to allocate PUSCH. Cause: No valid SearchSpace found.");
     return false;
   }
+  const search_space_configuration& ss_cfg = *ss_info->cfg;
 
-  const dci_ul_rnti_config_type                     dci_type   = ue_cell_cfg.get_ul_rnti_config_type(ss_cfg->id);
-  const bwp_configuration                           bwp_lims   = ue_cc->alloc_type1_bwp_limits(dci_type, ss_cfg->type);
-  const subcarrier_spacing                          scs        = bwp_ul_cmn.generic_params.scs;
-  span<const pusch_time_domain_resource_allocation> pusch_list = ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
-  const pusch_time_domain_resource_allocation&      pusch_td_cfg = pusch_list[grant.time_res_index];
+  const dci_ul_rnti_config_type                     dci_type = ue_cell_cfg.get_ul_rnti_config_type(ss_cfg.id);
+  const bwp_configuration                           bwp_lims = ue_cc->alloc_type1_bwp_limits(dci_type, ss_cfg.type);
+  const subcarrier_spacing                          scs      = bwp_ul_cmn.generic_params.scs;
+  span<const pusch_time_domain_resource_allocation> pusch_list =
+      ue_cell_cfg.search_space(ss_cfg.id).pusch_time_domain_list;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -395,8 +395,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_ul_information* pdcch =
-      get_pdcch_sched(grant.cell_index)
-          .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index).alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
     return false;
@@ -503,7 +502,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Fill PUSCH.
   ul_sched_info& msg   = pusch_alloc.result.ul.puschs.emplace_back();
   msg.context.ue_index = u.ue_index;
-  msg.context.ss_id    = ss_cfg->id;
+  msg.context.ss_id    = ss_cfg.id;
   msg.context.k2       = pusch_td_cfg.k2;
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:

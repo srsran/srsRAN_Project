@@ -398,15 +398,16 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      unsigned                            tbs_bytes,
                                      rnti_t                              rnti,
                                      const ue_cell_configuration&        ue_cell_cfg,
-                                     bwp_id_t                            active_bwp_id,
                                      const search_space_configuration&   ss_cfg,
                                      const dci_1_0_c_rnti_configuration& dci_cfg,
                                      const crb_interval&                 crbs,
                                      bool                                is_new_data)
 {
-  const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
-  const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
-  const bwp_downlink_common&   bwp_dl   = *ue_cell_cfg.find_dl_bwp_common(active_bwp_id);
+  const cell_configuration&    cell_cfg   = ue_cell_cfg.cell_cfg_common;
+  const search_space_info&     ss_info    = ue_cell_cfg.search_space(ss_cfg.id);
+  const coreset_configuration& cs_cfg     = *ss_info.coreset;
+  const bwp_info&              active_bwp = *ss_info.bwp;
+  const bwp_downlink_common&   bwp_dl     = *active_bwp.dl_common;
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
@@ -430,7 +431,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_0;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(active_bwp_id);
+  const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
   pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_cfg.type);
 
   // One Codeword.
@@ -456,11 +457,12 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
 {
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
   const coreset_configuration& cs_cfg         = ue_cell_cfg.coreset(ss_cfg.cs_id);
-  const bwp_configuration&     active_bwp_cfg = ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
+  const bwp_info&              active_bwp     = ue_cell_cfg.bwp(active_bwp_id);
+  const bwp_configuration&     active_bwp_cfg = active_bwp.dl_common->generic_params;
   const prb_interval           prbs           = crb_to_prb(active_bwp_cfg.crbs, crbs);
 
   pdsch.rnti        = rnti;
-  pdsch.bwp_cfg     = &ue_cell_cfg.find_dl_bwp_common(active_bwp_id)->generic_params;
+  pdsch.bwp_cfg     = &active_bwp_cfg;
   pdsch.coreset_cfg = &cs_cfg;
 
   pdsch.rbs            = vrb_interval{prbs.start(), prbs.stop()};
@@ -472,8 +474,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(active_bwp_id);
-  pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_1, ss_cfg.type);
+  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_cfg.type);
 
   // TODO: Add second Codeword when supported.
   // One Codeword.
@@ -589,9 +590,9 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                                      const ul_harq_process&       h_ul)
 {
   const cell_configuration&           cell_cfg      = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_dedicated*         bwp_ul_ded    = ue_cell_cfg.find_ul_bwp_ded(active_bwp_id);
-  const bwp_uplink_common&            bwp_ul_cmn    = ue_cell_cfg.ul_bwp_common(active_bwp_id);
-  const optional<rach_config_common>& opt_rach_cfg  = ue_cell_cfg.ul_bwp_common(active_bwp_id).rach_cfg_common;
+  const bwp_uplink_dedicated*         bwp_ul_ded    = ue_cell_cfg.bwp(active_bwp_id).ul_ded;
+  const bwp_uplink_common&            bwp_ul_cmn    = *ue_cell_cfg.bwp(active_bwp_id).ul_common;
+  const optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
   const optional<pusch_config>        pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const optional<pusch_config_common> pusch_cfg_cmn = bwp_ul_cmn.pusch_cfg_common;
   const prb_interval                  prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
@@ -606,7 +607,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg = &ue_cell_cfg.find_ul_bwp_common(active_bwp_id)->generic_params;
+  pusch.bwp_cfg = &ue_cell_cfg.bwp(active_bwp_id).ul_common->generic_params;
   pusch.rbs     = vrb_interval{prbs.start(), prbs.stop()};
   pusch.symbols = pusch_cfg.symbols;
 

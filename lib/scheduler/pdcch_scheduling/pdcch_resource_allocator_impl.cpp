@@ -306,31 +306,27 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_common(cell_
 pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                                                        rnti_t                        rnti,
                                                                        const ue_cell_configuration&  user,
-                                                                       bwp_id_t                      bwpid,
                                                                        search_space_id               ss_id,
                                                                        aggregation_level             aggr_lvl)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwp_common(bwpid).generic_params;
-  const search_space_configuration& ss_cfg  = user.search_space(ss_id);
-  const coreset_configuration&      cs_cfg  = user.coreset(ss_cfg.cs_id);
+  const search_space_info& ss_cfg  = user.search_space(ss_id);
+  const bwp_configuration& bwp_cfg = ss_cfg.bwp->dl_common->generic_params;
 
-  return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl);
+  return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                                                        rnti_t                        rnti,
                                                                        const ue_cell_configuration&  user,
-                                                                       bwp_id_t                      bwpid,
                                                                        search_space_id               ss_id,
                                                                        aggregation_level             aggr_lvl)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.ul_bwp_common(bwpid).generic_params;
-  const search_space_configuration& ss_cfg  = user.search_space(ss_id);
-  const coreset_configuration&      cs_cfg  = user.coreset(ss_cfg.cs_id);
+  const search_space_info& ss_cfg  = user.search_space(ss_id);
+  const bwp_configuration& bwp_cfg = ss_cfg.bwp->ul_common->generic_params;
 
-  return alloc_ul_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl);
+  return alloc_ul_pdcch_helper(slot_alloc, rnti, bwp_cfg, *ss_cfg.coreset, *ss_cfg.cfg, aggr_lvl);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
