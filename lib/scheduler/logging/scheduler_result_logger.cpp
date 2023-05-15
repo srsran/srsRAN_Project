@@ -198,7 +198,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     if (ul_info.context.ue_index != INVALID_DU_UE_INDEX) {
       fmt::format_to(fmtbuf, "ue={} c-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     } else {
-      fmt::format_to(fmtbuf, "tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
+      fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     }
     fmt::format_to(fmtbuf,
                    "h_id={} rb={} symb={} tbs={} rv={} k2={}",
