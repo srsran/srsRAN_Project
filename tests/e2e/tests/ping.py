@@ -11,7 +11,7 @@ Test ping
 """
 import logging
 from contextlib import suppress
-from typing import Sequence, Optional, Union
+from typing import Optional, Sequence, Union
 
 import grpc
 from pytest import mark

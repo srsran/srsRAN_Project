@@ -10,7 +10,7 @@
 Attach / Detach Tests
 """
 import logging
-from typing import Sequence, Optional, Union
+from typing import Optional, Sequence, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
