@@ -666,6 +666,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.emplace_back();
     ul_info.context.ue_index   = INVALID_DU_UE_INDEX;
     ul_info.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+    ul_info.context.k2         = k2;
     ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
     ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
     ul_info.pusch_cfg.rbs      = msg3_vrbs;

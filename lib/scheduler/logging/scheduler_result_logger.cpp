@@ -147,11 +147,12 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    rar.grants.size());
     for (const rar_ul_grant& grant : rar.grants) {
       fmt::format_to(fmtbuf,
-                     "{}tc-rnti={:#x}: rapid={} ta={}",
+                     "{}tc-rnti={:#x}: rapid={} ta={} resource={}",
                      (&grant == &rar.grants.front()) ? "" : ", ",
                      grant.temp_crnti,
                      grant.rapid,
-                     grant.ta);
+                     grant.ta,
+                     grant.time_resource_assignment);
     }
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
