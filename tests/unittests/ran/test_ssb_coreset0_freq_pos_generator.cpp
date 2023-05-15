@@ -418,7 +418,7 @@ struct cset0_test_params {
   uint8_t               ss0_idx;
   optional<unsigned>    nof_coreset0_symb;
 
-  optional<unsigned> const get_coreset0_index()
+  optional<unsigned> get_coreset0_index()
   {
     return band_helper::get_coreset0_index(
         band, n_rbs, scs_common, scs_ssb, offset_to_point_A, k_ssb, ssb_first_symbol, ss0_idx, nof_coreset0_symb);
