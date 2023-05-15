@@ -217,10 +217,6 @@ struct cell_slot_resource_allocator {
 
   /// Sets new slot.
   void slot_indication(slot_point sl);
-
-private:
-  /// Clears all allocations.
-  void clear();
 };
 
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of

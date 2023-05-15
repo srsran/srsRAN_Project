@@ -230,13 +230,14 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
+  // * Start of Critical Path * //
+
   trace_point sched_tp = mac_tracer.now();
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
-  // * Start of Critical Path * //
-
   mac_dl_sched_result mac_dl_res{};
+  mac_dl_data_result  data_res;
 
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());
@@ -255,42 +256,47 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   }
 
   mac_tracer << trace_event{"mac_sched", sched_tp};
-  trace_point dl_tti_req_tp = mac_tracer.now();
 
-  // Assemble MAC DL scheduling request that is going to be passed to the PHY.
-  assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
+  // If it is a DL slot, process results.
+  if (sl_res->dl.nof_dl_symbols > 0) {
+    trace_point dl_tti_req_tp = mac_tracer.now();
 
-  // Send DL sched result to PHY.
-  phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
+    // Assemble MAC DL scheduling request that is going to be passed to the PHY.
+    assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
-  mac_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
+    // Send DL sched result to PHY.
+    phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
-  // Start assembling Slot Data Result.
-  mac_dl_data_result data_res;
-  if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty() or
-      not sl_res->dl.paging_grants.empty()) {
-    trace_point tx_data_req_tp = mac_tracer.now();
+    mac_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
 
-    assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
+    // Start assembling Slot Data Result.
+    if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty() or
+        not sl_res->dl.paging_grants.empty()) {
+      trace_point tx_data_req_tp = mac_tracer.now();
 
-    // Send DL Data to PHY.
-    phy_cell.on_new_downlink_data(data_res);
+      assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
-    mac_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
+      // Send DL Data to PHY.
+      phy_cell.on_new_downlink_data(data_res);
+
+      mac_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
+    }
   }
 
-  trace_point ul_tti_req_tp = mac_tracer.now();
+  if (sl_res->ul.nof_ul_symbols > 0) {
+    trace_point ul_tti_req_tp = mac_tracer.now();
 
-  // Send UL sched result to PHY.
-  mac_ul_sched_result mac_ul_res{};
-  mac_ul_res.slot   = sl_tx;
-  mac_ul_res.ul_res = &sl_res->ul;
-  phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
+    // Send UL sched result to PHY.
+    mac_ul_sched_result mac_ul_res{};
+    mac_ul_res.slot   = sl_tx;
+    mac_ul_res.ul_res = &sl_res->ul;
+    phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
+
+    mac_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
+  }
 
   // All results have been notified at this point.
   phy_cell.on_cell_results_completion(sl_tx);
-
-  mac_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
 
   // * End of Critical Path * //
 

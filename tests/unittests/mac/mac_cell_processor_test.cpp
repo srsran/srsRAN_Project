@@ -54,6 +54,7 @@ protected:
   void init(test_params params)
   {
     // Creates the next sched result based on test parameters.
+    sched.next_sched_result.dl.nof_dl_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
     sched.next_sched_result.dl.bc.sibs.resize(params.nof_sib_allocated);
     for (auto& sib_grant : sched.next_sched_result.dl.bc.sibs) {
       sib_grant.pdsch_cfg.rnti = SI_RNTI;

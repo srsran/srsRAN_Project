@@ -344,6 +344,9 @@ struct csi_rs_info {
 };
 
 struct dl_sched_result {
+  /// Number of DL symbols active for this slot.
+  unsigned nof_dl_symbols;
+
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
   static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
 
@@ -422,6 +425,8 @@ struct pucch_info {
 };
 
 struct ul_sched_result {
+  /// Number of UL symbols active for this slot.
+  unsigned nof_ul_symbols;
   /// PUSCH grants allocated in the current slot.
   static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs;
   /// PRACH occasions within the given slot.
