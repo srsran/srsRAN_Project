@@ -44,7 +44,7 @@ public:
 
   du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
-  void on_f1_setup_request_received(const f1_setup_request_message& msg) override
+  void on_f1_setup_request_received(const cu_cp_f1_setup_request& msg) override
   {
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
     du_f1ap_handler->handle_f1_setup_request(msg);

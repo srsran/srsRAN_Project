@@ -48,7 +48,8 @@ du_processor_test::~du_processor_test()
 void du_processor_test::attach_ue()
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request_msg;
+  generate_valid_f1_setup_request(f1_setup_request_msg);
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 

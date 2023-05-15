@@ -48,10 +48,6 @@ public:
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
 };
 
-struct f1_setup_request_message {
-  asn1::f1ap::f1_setup_request_s request;
-};
-
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -152,7 +148,7 @@ public:
 
   /// \brief Notifies about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
+  virtual void on_f1_setup_request_received(const cu_cp_f1_setup_request& msg) = 0;
 
   /// \brief Notifies the DU processor to create a UE.
   /// \param[in] msg The received initial UL RRC message transfer message.

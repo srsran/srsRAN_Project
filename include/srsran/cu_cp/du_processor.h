@@ -27,7 +27,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Forward declared messages.
-struct f1_setup_request_message;
 struct rrc_ue_creation_message;
 
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
@@ -83,7 +82,7 @@ public:
 
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
+  virtual void handle_f1_setup_request(const cu_cp_f1_setup_request& request) = 0;
 
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.

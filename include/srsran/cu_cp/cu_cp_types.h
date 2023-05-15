@@ -140,6 +140,34 @@ struct cu_cp_tai {
   uint32_t    tac;
 };
 
+struct cu_cp_served_cell_info {
+  nr_cell_global_id_t      nr_cgi;
+  pci_t                    nr_pci;
+  optional<uint32_t>       five_gs_tac;
+  optional<uint32_t>       cfg_eps_tac;
+  std::vector<std::string> served_plmns;
+  std::string              nr_mode_info;
+  byte_buffer              meas_timing_cfg;
+};
+
+struct cu_cp_gnb_du_sys_info {
+  byte_buffer mib_msg;
+  byte_buffer sib1_msg;
+};
+
+struct cu_cp_du_served_cells_item {
+  cu_cp_served_cell_info          served_cell_info;
+  optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info;
+};
+
+struct cu_cp_f1_setup_request {
+  uint64_t                                gnb_du_id;
+  optional<std::string>                   gnb_du_name;
+  std::vector<cu_cp_du_served_cells_item> gnb_du_served_cells_list;
+  uint8_t                                 gnb_du_rrc_version;
+  // TODO: Add optional fields
+};
+
 struct cu_cp_cells_to_be_activ_list_item {
   nr_cell_global_id_t nr_cgi;
   optional<pci_t>     nr_pci;

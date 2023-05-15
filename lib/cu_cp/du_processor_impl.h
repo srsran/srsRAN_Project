@@ -44,7 +44,7 @@ public:
   ~du_processor_impl() = default;
 
   // message handlers
-  void handle_f1_setup_request(const f1_setup_request_message& msg) override;
+  void handle_f1_setup_request(const cu_cp_f1_setup_request& request) override;
 
   // getter functions
 
@@ -116,7 +116,7 @@ private:
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
-  void send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id);
+  void send_f1_setup_response(const du_processor_context& du_ctxt);
 
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.

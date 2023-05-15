@@ -41,10 +41,32 @@ public:
 
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
 
-  void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
+  void on_f1_setup_request_received(const srs_cu_cp::cu_cp_f1_setup_request& msg) override
   {
     logger.info("Received F1SetupRequest");
-    last_f1_setup_request_msg = msg;
+    last_f1_setup_request_msg.gnb_du_id          = msg.gnb_du_id;
+    last_f1_setup_request_msg.gnb_du_name        = msg.gnb_du_name;
+    last_f1_setup_request_msg.gnb_du_rrc_version = msg.gnb_du_rrc_version;
+    for (const auto& served_cell : msg.gnb_du_served_cells_list) {
+      srs_cu_cp::cu_cp_du_served_cells_item served_cell_item;
+      served_cell_item.served_cell_info.nr_cgi          = served_cell.served_cell_info.nr_cgi;
+      served_cell_item.served_cell_info.nr_pci          = served_cell.served_cell_info.nr_pci;
+      served_cell_item.served_cell_info.five_gs_tac     = served_cell.served_cell_info.five_gs_tac;
+      served_cell_item.served_cell_info.cfg_eps_tac     = served_cell.served_cell_info.cfg_eps_tac;
+      served_cell_item.served_cell_info.served_plmns    = served_cell.served_cell_info.served_plmns;
+      served_cell_item.served_cell_info.nr_mode_info    = served_cell.served_cell_info.nr_mode_info;
+      served_cell_item.served_cell_info.meas_timing_cfg = served_cell.served_cell_info.meas_timing_cfg.copy();
+
+      if (served_cell.gnb_du_sys_info.has_value()) {
+        srs_cu_cp::cu_cp_gnb_du_sys_info gnb_du_sys_info;
+        gnb_du_sys_info.mib_msg  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
+        gnb_du_sys_info.sib1_msg = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
+
+        served_cell_item.gnb_du_sys_info = gnb_du_sys_info;
+      }
+
+      last_f1_setup_request_msg.gnb_du_served_cells_list.push_back(served_cell_item);
+    }
   }
 
   srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
@@ -72,7 +94,7 @@ public:
 
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
-  srs_cu_cp::f1_setup_request_message              last_f1_setup_request_msg;
+  srs_cu_cp::cu_cp_f1_setup_request                last_f1_setup_request_msg;
   srs_cu_cp::f1ap_initial_ul_rrc_message           last_ue_creation_request_msg;
   optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
   std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();

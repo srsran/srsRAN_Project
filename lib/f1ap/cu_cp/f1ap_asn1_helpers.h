@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common/asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/bcd_helpers.h"
@@ -17,6 +18,78 @@
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// \brief Convert the F1 Setup Request from ASN.1 to common type.
+/// \param[out] request The common type struct to store the result.
+/// \param[in] asn1_request The ASN.1 type F1 Setup Request.
+inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f1ap::f1_setup_request_s& asn1_request)
+{
+  // GNB DU ID
+  request.gnb_du_id = asn1_request->gnb_du_id.value.value;
+
+  // GNB DU name
+  if (asn1_request->gnb_du_name_present) {
+    request.gnb_du_name = asn1_request->gnb_du_name.value.to_string();
+  }
+
+  // GNB DU served cells list
+  if (asn1_request->gnb_du_served_cells_list_present) {
+    for (const auto& asn1_served_cell_item : asn1_request->gnb_du_served_cells_list.value) {
+      auto& asn1_served_cell = asn1_served_cell_item.value().gnb_du_served_cells_item();
+
+      cu_cp_du_served_cells_item served_cell;
+
+      // served cell info
+      // NR CGI
+      served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi);
+
+      // NR PCI
+      served_cell.served_cell_info.nr_pci = asn1_served_cell.served_cell_info.nr_pci;
+
+      // 5GS TAC
+      if (asn1_served_cell.served_cell_info.five_gs_tac_present) {
+        served_cell.served_cell_info.five_gs_tac = asn1_served_cell.served_cell_info.five_gs_tac.to_number();
+      }
+
+      // cfg EPS TAC
+      if (asn1_served_cell.served_cell_info.cfg_eps_tac_present) {
+        served_cell.served_cell_info.cfg_eps_tac = asn1_served_cell.served_cell_info.cfg_eps_tac.to_number();
+      }
+
+      // served PLMNs
+      for (const auto& asn1_plmn : asn1_served_cell.served_cell_info.served_plmns) {
+        served_cell.served_cell_info.served_plmns.push_back(asn1_plmn.plmn_id.to_string());
+      }
+
+      // NR mode info
+      served_cell.served_cell_info.nr_mode_info = asn1_served_cell.served_cell_info.nr_mode_info.type().to_string();
+
+      // meas timing cfg
+      served_cell.served_cell_info.meas_timing_cfg = byte_buffer(served_cell.served_cell_info.meas_timing_cfg.begin(),
+                                                                 served_cell.served_cell_info.meas_timing_cfg.end());
+
+      // GNB DU sys info
+      if (asn1_served_cell.gnb_du_sys_info_present) {
+        cu_cp_gnb_du_sys_info gnb_du_sys_info;
+
+        // MIB msg
+        gnb_du_sys_info.mib_msg = asn1_served_cell.gnb_du_sys_info.mib_msg.copy();
+
+        // SIB1 msg
+        gnb_du_sys_info.sib1_msg = asn1_served_cell.gnb_du_sys_info.sib1_msg.copy();
+
+        served_cell.gnb_du_sys_info = gnb_du_sys_info;
+      }
+
+      request.gnb_du_served_cells_list.push_back(served_cell);
+    }
+  }
+
+  // GNB DU RRC version
+  request.gnb_du_rrc_version = asn1_request->gnb_du_rrc_version.value.latest_rrc_version.to_number();
+
+  // TODO: Add optional fields
+}
 
 /// \brief Convert the F1 Setup Response from common type to ASN.1.
 /// \param[out] asn1_response The F1 Setup Response ASN.1 struct to store the result.

@@ -62,25 +62,24 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
       e1ap_ctrl_notifier, f1ap_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
 }
 
-void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
+void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& request)
 {
   logger.debug("Received F1 setup request");
 
   // Reject request without served cells
-  if (not msg.request->gnb_du_served_cells_list_present) {
+  if (request.gnb_du_served_cells_list.size() == 0) {
     logger.error("Not handling F1 setup without served cells");
     send_f1_setup_failure(cause_t::radio_network);
     return;
   }
 
   // Set DU context
-  context.id = msg.request->gnb_du_id.value;
-  if (msg.request->gnb_du_name_present) {
-    context.name = msg.request->gnb_du_name.value.to_string();
+  context.id = request.gnb_du_id;
+  if (request.gnb_du_name.has_value()) {
+    context.name = request.gnb_du_name.value();
   }
 
-  for (const auto& served_cell : msg.request->gnb_du_served_cells_list.value) {
-    const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
+  for (const auto& served_cell : request.gnb_du_served_cells_list) {
     du_cell_context du_cell;
     du_cell.du_index   = context.du_index;
     du_cell.cell_index = get_next_du_cell_index();
@@ -91,31 +90,32 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
       return;
     }
 
-    du_cell.pci = cell_item.served_cell_info.nr_pci;
-    du_cell.cgi = cgi_from_asn1(cell_item.served_cell_info.nr_cgi);
+    du_cell.cgi = served_cell.served_cell_info.nr_cgi;
     if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
       logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
       send_f1_setup_failure(cause_t::radio_network);
       return;
     }
-    if (not cell_item.served_cell_info.five_gs_tac_present) {
+
+    du_cell.pci = served_cell.served_cell_info.nr_pci;
+
+    if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
       logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
       send_f1_setup_failure(cause_t::radio_network);
       return;
+    } else {
+      du_cell.tac = served_cell.served_cell_info.five_gs_tac.value();
     }
-    du_cell.tac = cell_item.served_cell_info.five_gs_tac.to_number();
 
-    if (not cell_item.gnb_du_sys_info_present) {
+    if (not served_cell.gnb_du_sys_info.has_value()) {
       logger.error("Not handling served cells without system information");
       send_f1_setup_failure(cause_t::radio_network);
       return;
+    } else {
+      // Store and unpack system information
+      du_cell.sys_info.packed_mib  = served_cell.gnb_du_sys_info.value().mib_msg.copy();
+      du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
     }
-
-    // Store and unpack system information
-    du_cell.sys_info.packed_mib =
-        byte_buffer(cell_item.gnb_du_sys_info.mib_msg.begin(), cell_item.gnb_du_sys_info.mib_msg.end());
-    du_cell.sys_info.packed_sib1 =
-        byte_buffer(cell_item.gnb_du_sys_info.sib1_msg.begin(), cell_item.gnb_du_sys_info.sib1_msg.end());
 
     // TODO: add unpacking
 
@@ -128,7 +128,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
   }
 
   // send setup response
-  send_f1_setup_response(context, msg.request->transaction_id.value);
+  send_f1_setup_response(context);
 
   // connect paging f1ap paging adapter
   f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
@@ -151,7 +151,7 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 }
 
 /// Sender for F1AP messages
-void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id)
+void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
   cu_cp_f1_setup_response response;
   response.success = true;

@@ -190,10 +190,7 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request: {
-      f1_setup_request_message req_msg = {};
-      req_msg.request                  = msg.value.f1_setup_request();
-      current_transaction_id           = msg.value.f1_setup_request()->transaction_id.value;
-      du_processor_notifier.on_f1_setup_request_received(req_msg);
+      handle_f1_setup_request(msg.value.f1_setup_request());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
       handle_initial_ul_rrc_message(msg.value.init_ul_rrc_msg_transfer());
@@ -210,6 +207,16 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
+}
+
+void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
+{
+  current_transaction_id = request->transaction_id.value;
+
+  cu_cp_f1_setup_request req_msg = {};
+  fill_f1_setup_request(req_msg, request);
+
+  du_processor_notifier.on_f1_setup_request_received(req_msg);
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
