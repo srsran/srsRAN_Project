@@ -68,7 +68,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   const coreset_configuration*      cs_cfg = ss_info->coreset;
 
   const dci_dl_rnti_config_type dci_type =
-      h_dl.empty() ? ue_cell_cfg.get_dl_rnti_config_type(ss_cfg.id) : h_dl.last_alloc_params().dci_cfg_type;
+      h_dl.empty() ? ss_info->get_crnti_dl_dci_format() : h_dl.last_alloc_params().dci_cfg_type;
 
   // See 3GPP TS 38.213, clause 10.1,
   // A UE monitors PDCCH candidates in one or more of the following search spaces sets
@@ -138,9 +138,9 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  unsigned       k1      = 0;
-  auto           k1_list = ue_cell_cfg.get_k1_candidates(dci_type);
-  uci_allocation uci     = {};
+  unsigned            k1      = 0;
+  span<const uint8_t> k1_list = ss_info->get_k1_candidates();
+  uci_allocation      uci     = {};
   for (const uint8_t k1_candidate : k1_list) {
     const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
@@ -228,7 +228,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       build_dci_f1_0_c_rnti(pdcch->dci,
                             ue_cell_cfg,
                             u.nof_cells() > 1,
-                            ue_cc->active_bwp_id(),
                             grant.ss_id,
                             grant.crbs,
                             grant.time_res_index,
@@ -242,7 +241,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       build_dci_f1_1_c_rnti(pdcch->dci,
                             ue_cell_cfg,
                             u.nof_cells() > 1,
-                            ue_cc->active_bwp_id(),
                             grant.ss_id,
                             crb_to_prb(bwp_cfg, grant.crbs),
                             grant.time_res_index,
@@ -329,7 +327,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common;
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
 
   // Find a SearchSpace candidate.
@@ -338,14 +335,18 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     logger.warning("Failed to allocate PUSCH. Cause: No valid SearchSpace found.");
     return false;
   }
-  const search_space_configuration& ss_cfg = *ss_info->cfg;
-
-  const dci_ul_rnti_config_type                     dci_type = ue_cell_cfg.get_ul_rnti_config_type(ss_cfg.id);
-  const bwp_configuration                           bwp_lims = ue_cc->alloc_type1_bwp_limits(dci_type, ss_cfg.type);
-  const subcarrier_spacing                          scs      = bwp_ul_cmn.generic_params.scs;
-  span<const pusch_time_domain_resource_allocation> pusch_list =
-      ue_cell_cfg.search_space(ss_cfg.id).pusch_time_domain_list;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_list[grant.time_res_index];
+  if (ss_info->bwp->bwp_id != ue_cc->active_bwp_id()) {
+    logger.warning("Failed to allocate PUSCH. Cause: Chosen SearchSpace {} does not belong to the active BWP {}",
+                   grant.ss_id,
+                   ue_cc->active_bwp_id());
+    return false;
+  }
+  const search_space_configuration&            ss_cfg       = *ss_info->cfg;
+  const bwp_uplink_common&                     bwp_ul_cmn   = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common;
+  const dci_ul_rnti_config_type                dci_type     = ss_info->get_crnti_ul_dci_format();
+  const bwp_configuration                      bwp_lims     = ue_cc->alloc_type1_bwp_limits(dci_type, ss_cfg.type);
+  const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg = ss_info->pusch_time_domain_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -403,7 +404,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Fetch PUSCH parameters based on type of transmission.
   pusch_config_params pusch_cfg;
-  switch (dci_type) {
+  switch (ss_info->get_crnti_ul_dci_format()) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;

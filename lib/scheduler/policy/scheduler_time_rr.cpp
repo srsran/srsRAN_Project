@@ -276,7 +276,7 @@ static bool alloc_ul_ue(const ue&                    u,
 
       const span<const pusch_time_domain_resource_allocation> pusch_list =
           ue_cc.cfg().search_space(ss_cfg->id).pusch_time_domain_list;
-      const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
+      const dci_ul_rnti_config_type dci_type = ue_cc.cfg().search_space(ss_cfg->id).get_crnti_ul_dci_format();
       const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.

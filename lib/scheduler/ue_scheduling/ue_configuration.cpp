@@ -5,6 +5,31 @@
 
 using namespace srsran;
 
+dci_dl_rnti_config_type search_space_info::get_crnti_dl_dci_format() const
+{
+  dci_dl_format dci_fmt = get_dl_dci_format();
+  return dci_fmt == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0 : dci_dl_rnti_config_type::c_rnti_f1_1;
+}
+
+dci_ul_rnti_config_type search_space_info::get_crnti_ul_dci_format() const
+{
+  dci_ul_format dci_fmt = get_ul_dci_format();
+  return dci_fmt == dci_ul_format::f0_0 ? dci_ul_rnti_config_type::c_rnti_f0_0 : dci_ul_rnti_config_type::c_rnti_f0_1;
+}
+
+span<const uint8_t> search_space_info::get_k1_candidates() const
+{
+  // TS38.213, clause 9.2.3 - For DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to
+  // {1, 2, 3, 4, 5, 6, 7, 8}. For DCI format 1_1, if present, the PDSCH-to-HARQ-timing-indicator field values map to
+  // values for a set of number of slots provided by dl-DataToUL-ACK as defined in Table 9.2.3-1.
+  // Note: Tested UEs do not support k1 < 4.
+  static const std::array<uint8_t, 5> f1_0_list = {4, 5, 6, 7, 8};
+  if (get_dl_dci_format() == srsran::dci_dl_format::f1_0) {
+    return f1_0_list;
+  }
+  return bwp->ul_ded->pucch_cfg->dl_data_to_ul_ack;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ue_cell_configuration::ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
@@ -125,16 +150,4 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
     search_spaces[ss.id].pusch_time_domain_list =
         get_c_rnti_pusch_time_domain_list(ss, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
   }
-}
-
-dci_ul_rnti_config_type ue_cell_configuration::get_ul_rnti_config_type(search_space_id ss_id) const
-{
-  dci_ul_format dci_fmt = search_space(ss_id).get_ul_dci_format();
-  return dci_fmt == dci_ul_format::f0_0 ? dci_ul_rnti_config_type::c_rnti_f0_0 : dci_ul_rnti_config_type::c_rnti_f0_1;
-}
-
-dci_dl_rnti_config_type ue_cell_configuration::get_dl_rnti_config_type(search_space_id ss_id) const
-{
-  dci_dl_format dci_fmt = search_space(ss_id).get_dl_dci_format();
-  return dci_fmt == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0 : dci_dl_rnti_config_type::c_rnti_f1_1;
 }

@@ -70,19 +70,19 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
                                            bwp_id_t                     active_bwp_id,
                                            search_space_id              ss_id)
 {
-  const bwp_info&                     init_bwp          = ue_cell_cfg.bwp(to_bwp_id(0));
-  const bwp_info&                     active_bwp        = ue_cell_cfg.bwp(active_bwp_id);
-  const bwp_downlink_common&          init_dl_bwp       = *init_bwp.dl_common;
-  const bwp_downlink_common&          active_dl_bwp_cmn = *active_bwp.dl_common;
-  const bwp_configuration&            active_dl_bwp     = active_dl_bwp_cmn.generic_params;
-  const bwp_uplink_common&            init_ul_bwp       = *init_bwp.ul_common;
-  const bwp_configuration&            active_ul_bwp     = active_bwp.ul_common->generic_params;
-  const optional<rach_config_common>& opt_rach_cfg      = active_bwp.ul_common->rach_cfg_common;
-  const optional<csi_meas_config>&    opt_csi_meas_cfg  = ue_cell_cfg.cfg_dedicated().csi_meas_cfg;
-  const optional<uplink_config>&      opt_ul_cfg        = ue_cell_cfg.cfg_dedicated().ul_config;
-  const auto  k1_candidates              = ue_cell_cfg.get_k1_candidates(dci_dl_rnti_config_type::c_rnti_f1_1);
-  const auto& opt_pdsch_cfg              = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
-  const auto& opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
+  const search_space_info&            ss_info                    = ue_cell_cfg.search_space(ss_id);
+  const bwp_info&                     init_bwp                   = ue_cell_cfg.bwp(to_bwp_id(0));
+  const bwp_info&                     active_bwp                 = *ss_info.bwp;
+  const bwp_downlink_common&          init_dl_bwp                = *init_bwp.dl_common;
+  const bwp_downlink_common&          active_dl_bwp_cmn          = *active_bwp.dl_common;
+  const bwp_configuration&            active_dl_bwp              = active_dl_bwp_cmn.generic_params;
+  const bwp_uplink_common&            init_ul_bwp                = *init_bwp.ul_common;
+  const bwp_configuration&            active_ul_bwp              = active_bwp.ul_common->generic_params;
+  const optional<rach_config_common>& opt_rach_cfg               = active_bwp.ul_common->rach_cfg_common;
+  const optional<csi_meas_config>&    opt_csi_meas_cfg           = ue_cell_cfg.cfg_dedicated().csi_meas_cfg;
+  const optional<uplink_config>&      opt_ul_cfg                 = ue_cell_cfg.cfg_dedicated().ul_config;
+  const auto&                         opt_pdsch_cfg              = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
+  const auto&                         opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
 
   dci_size_config dci_sz_cfg = dci_size_config{
       is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp_id, true),
@@ -232,7 +232,7 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   dci_sz_cfg.nof_dl_bwp_rrc            = ue_cell_cfg.cfg_dedicated().dl_bwps.size();
   dci_sz_cfg.nof_dl_time_domain_res    = ue_cell_cfg.search_space(ss_id).pdsch_time_domain_list.size();
   dci_sz_cfg.nof_aperiodic_zp_csi      = 0;
-  dci_sz_cfg.nof_pdsch_ack_timings     = k1_candidates.size();
+  dci_sz_cfg.nof_pdsch_ack_timings     = ss_info.get_k1_candidates().size();
   dci_sz_cfg.dynamic_prb_bundling      = false;
   dci_sz_cfg.rm_pattern_group1         = false;
   dci_sz_cfg.rm_pattern_group2         = false;
@@ -417,7 +417,6 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
 void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    bool                         is_ue_configured_multiple_serving_cells,
-                                   bwp_id_t                     active_bwp_id,
                                    search_space_id              ss_id,
                                    crb_interval                 crbs,
                                    unsigned                     time_resource,
@@ -455,7 +454,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   f1_0.time_resource = time_resource;
 
   const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
+      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
 
   // Compute DCI size.
@@ -480,7 +479,6 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
 void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    bool                         is_ue_configured_multiple_serving_cells,
-                                   bwp_id_t                     active_bwp_id,
                                    search_space_id              ss_id,
                                    prb_interval                 prbs,
                                    unsigned                     time_resource,
@@ -494,9 +492,9 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
                 "SearchSpace must be of type UE-Specific SearchSpace");
 
-  const bwp_downlink_common& active_dl_bwp_cmn = *ue_cell_cfg.bwp(active_bwp_id).dl_common;
+  const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common;
   const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
-  const auto                 k1_candidates     = ue_cell_cfg.get_k1_candidates(dci_dl_rnti_config_type::c_rnti_f1_1);
+  const auto                 k1_candidates     = ss_info.get_k1_candidates();
   const auto&                opt_pdsch_cfg     = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
 
   dci.type                    = srsran::dci_dl_rnti_config_type::c_rnti_f1_1;
@@ -517,7 +515,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   f1_1.time_resource = time_resource;
 
   const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
+      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
 
   // Compute DCI size.
