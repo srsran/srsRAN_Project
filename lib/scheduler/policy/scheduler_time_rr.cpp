@@ -58,9 +58,14 @@ du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
 static static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level agg_lvl)
 {
-  auto search_spaces = ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id());
-  std::sort(search_spaces.begin(),
-            search_spaces.end(),
+  const auto& bwp_search_spaces = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
+
+  static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP> ss_list;
+  for (const auto& ss : bwp_search_spaces) {
+    ss_list.push_back(ss->cfg);
+  }
+  std::sort(ss_list.begin(),
+            ss_list.end(),
             [agg_lvl](const search_space_configuration* lhs, const search_space_configuration* rhs) -> bool {
               if (lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] ==
                   rhs->nof_candidates[to_aggregation_level_index(agg_lvl)]) {
@@ -71,7 +76,7 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
               return lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] >
                      rhs->nof_candidates[to_aggregation_level_index(agg_lvl)];
             });
-  return search_spaces;
+  return ss_list;
 }
 
 /// \brief Gets SearchSpace configuration of Type-1 PDCCH CSS for a UE.

@@ -49,15 +49,13 @@ static bool is_dci_format_monitored_in_ue_ss(const ue_cell_configuration& ue_cel
                                              bwp_id_t                     active_bwp_id,
                                              bool                         check_for_fallback_dci_formats)
 {
-  const auto  bwp_search_spaces = ue_cell_cfg.get_search_spaces(active_bwp_id);
+  const auto& bwp_search_spaces = ue_cell_cfg.bwp(active_bwp_id).search_spaces;
   const auto  dci_format        = check_for_fallback_dci_formats
                                       ? search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
                                       : search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
-  const auto* it                = std::find_if(
-      bwp_search_spaces.begin(), bwp_search_spaces.end(), [dci_format](const search_space_configuration* ss) {
-        return ss->type == search_space_configuration::type_t::ue_dedicated and ss->ue_specific == dci_format;
-      });
-  return it != bwp_search_spaces.end();
+  return std::any_of(bwp_search_spaces.begin(), bwp_search_spaces.end(), [dci_format](const search_space_info* ss) {
+    return ss->cfg->type == search_space_configuration::type_t::ue_dedicated and ss->cfg->ue_specific == dci_format;
+  });
 }
 
 /// \brief Fetches DCI size configurations required to compute DCI size.

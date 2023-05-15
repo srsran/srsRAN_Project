@@ -18,6 +18,8 @@
 
 namespace srsran {
 
+struct search_space_info;
+
 /// \brief Grouping of information associated with a given BWP.
 struct bwp_info {
   bwp_id_t                      bwp_id;
@@ -26,7 +28,8 @@ struct bwp_info {
   const bwp_uplink_common*      ul_common = nullptr;
   const bwp_uplink_dedicated*   ul_ded    = nullptr;
 
-  static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
+  /// \brief List of SearchSpaces associated with this BWP.
+  slotted_id_table<search_space_id, const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
 };
 
 /// \brief Grouping of information associated with a given search space.
@@ -84,18 +87,12 @@ public:
   }
 
   /// Fetches SearchSpace configuration based on SearchSpace-Id.
+  /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
   const search_space_info* find_search_space(search_space_id ss_id) const
   {
-    return ss_list.contains(ss_id) ? &ss_list[ss_id] : nullptr;
+    return search_spaces.contains(ss_id) ? &search_spaces[ss_id] : nullptr;
   }
-  const search_space_info& search_space(search_space_id ss_id) const { return ss_list[ss_id]; }
-
-  /// Get Search Space List for a given BWP-Id.
-  const static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>&
-  get_search_spaces(bwp_id_t bwpid) const
-  {
-    return bwp_table[bwpid].search_spaces;
-  }
+  const search_space_info& search_space(search_space_id ss_id) const { return search_spaces[ss_id]; }
 
   /// \brief Gets UL DCI RNTI type to use based on SearchSpace configuration.
   /// \param[in] ss_id SearchSpace Id.
@@ -136,15 +133,11 @@ private:
   std::array<bwp_info, MAX_NOF_BWPS> bwp_table = {};
 
   /// This array maps SearchSpace-Ids (the array indexes) to SearchSpace parameters (the array values).
-  slotted_array<search_space_info, MAX_NOF_SEARCH_SPACES> ss_list;
+  slotted_array<search_space_info, MAX_NOF_SEARCH_SPACES> search_spaces;
 
   /// This array maps Coreset-Ids (the array indexes) to CORESET configurations (the array values).
   /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
   std::array<const coreset_configuration*, MAX_NOF_CORESETS> coresets = {};
-
-  /// This array maps SearchSpace-Ids (the array indexes) to SearchSpace configurations (the array values).
-  /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
-  std::array<const search_space_configuration*, MAX_NOF_SEARCH_SPACES> search_spaces = {};
 
   /// This array maps Coreset-Ids (the array indexes) to BWP-Ids (the array values).
   std::array<bwp_id_t, MAX_NOF_BWPS> coreset_id_to_bwp_id;
