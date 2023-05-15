@@ -45,6 +45,28 @@ protected:
     return true;
   }
 
+  void setup_pdu_session()
+  {
+    // Setup single PDU session.
+    cu_cp_pdu_session_resource_setup_request request = generate_pdu_session_resource_setup();
+    optional<lazy_task_launcher<cu_cp_pdu_session_resource_setup_response>> setup_launcher;
+
+    bearer_context_outcome_t bearer_context_setup_outcome{true, {1}, {}};
+    ue_context_outcome_t     ue_context_modification_outcome{true};
+    bearer_context_outcome_t bearer_context_modification_outcome{true};
+
+    // Expected results
+    e1ap_ctrl_notifier.set_first_message_outcome(bearer_context_setup_outcome);
+    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
+    e1ap_ctrl_notifier.set_second_message_outcome(bearer_context_modification_outcome);
+    rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
+
+    async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
+        routine_mng->start_pdu_session_resource_setup_routine(
+            request, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+    setup_launcher.emplace(setup_task);
+  }
+
   async_task<cu_cp_pdu_session_resource_release_response>                   t;
   optional<lazy_task_launcher<cu_cp_pdu_session_resource_release_response>> t_launcher;
 };
@@ -52,6 +74,8 @@ protected:
 TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
+  setup_pdu_session();
+
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
@@ -65,6 +89,8 @@ TEST_F(pdu_session_resource_release_test, when_ue_context_modification_failure_r
 TEST_F(pdu_session_resource_release_test, when_bearer_context_modification_failure_received_then_release_succeeds)
 {
   // Test Preamble.
+  setup_pdu_session();
+
   cu_cp_pdu_session_resource_release_command command = generate_pdu_session_resource_release();
 
   // Start PDU SESSION RESOURCE SETUP routine.
