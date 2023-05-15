@@ -379,12 +379,15 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   res.res_mapping.re_factor     = srs_config::srs_resource::resource_mapping::repetition_factor::n1;
   res.freq_domain_pos           = 0;
   res.freq_domain_shift         = 5;
-  res.freq_hop.c_srs            = 11;
-  res.freq_hop.b_srs            = 3;
-  res.freq_hop.b_hop            = 0;
-  res.grp_or_seq_hop            = srs_config::srs_resource::group_or_sequence_hopping::neither;
-  res.res_type                  = srs_config::srs_resource::aperiodic;
-  res.sequence_id               = params.pci;
+  // NOTE: C_SRS, B_SRS and B_hop are chosen to disable SRS frequency hopping and to monitor SRS over smallest
+  // possible BW i.e. 4 RBs. See TS 38.211, Table 6.4.1.4.3-1.
+  // This is done to cater to setups of all BWs until SRS is supported in scheduler.
+  res.freq_hop.c_srs = 0;
+  res.freq_hop.b_srs = 0;
+  res.freq_hop.b_hop = 0;
+  res.grp_or_seq_hop = srs_config::srs_resource::group_or_sequence_hopping::neither;
+  res.res_type       = srs_config::srs_resource::aperiodic;
+  res.sequence_id    = params.pci;
 
   cfg.srs_res_set.emplace_back();
   // TODO: Verify correctness of the config based on what we support.
