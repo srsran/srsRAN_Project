@@ -1111,7 +1111,7 @@ static unsigned get_max_coreset0_index(nr_band band, subcarrier_spacing scs_comm
   const min_channel_bandwidth min_channel_bw         = band_helper::get_min_channel_bw(band, scs_common);
   const bool                  is_for_shared_spectrum = band_helper::is_band_for_shared_spectrum(band);
 
-  // As per TS 38.101, Table 5.2-1, band n79 and n104 use Table 13-5 and  Table 13-6, regardless of the minimum
+  // As per TS 38.101, Table 5.2-1, band n79 and n104 use Table 13-5 and Table 13-6, regardless of the minimum
   // channel BW.
   const bool is_40mhz_min_ch_bw_equivalent = band_helper::is_band_40mhz_min_ch_bw_equivalent(band);
 
@@ -1125,7 +1125,7 @@ static unsigned get_max_coreset0_index(nr_band band, subcarrier_spacing scs_comm
     return 0;
   }
 
-  // Next, continue with the bands with is_40mhz_min_ch_bw_equivalent == true, as these use Table 13-5 and  Table 13-6,
+  // Next, continue with the bands with is_40mhz_min_ch_bw_equivalent == true, as these use Table 13-5 and Table 13-6,
   // regardless of the minimum channel BW.
   if (min_channel_bw == min_channel_bandwidth::MHz40 or is_40mhz_min_ch_bw_equivalent) {
     if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz15) {

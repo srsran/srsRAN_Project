@@ -184,7 +184,7 @@ pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(nr_band 
   const min_channel_bandwidth minimum_bandwidth_MHz  = band_helper::get_min_channel_bw(band, pdcch_scs);
   const bool                  is_for_shared_spectrum = band_helper::is_band_for_shared_spectrum(band);
 
-  // As per TS 38.101, Table 5.2-1, band n79 and n104 use Table 13-5 and  Table 13-6, regardless of the minimum
+  // As per TS 38.101, Table 5.2-1, band n79 and n104 use Table 13-5 and Table 13-6, regardless of the minimum
   // channel BW.
   const bool is_40mhz_min_ch_bw_equivalent = band_helper::is_band_40mhz_min_ch_bw_equivalent(band);
 

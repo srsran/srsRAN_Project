@@ -212,6 +212,24 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
 {
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
 
+  // Check if the band is supported with given SCS or band.
+  // NOTE: Band n46 would be compatible with the 10MHz BW, but there is no sync raster that falls within the band
+  // limits. Also, the Coreset#0 width in RBs given in Table 13-4A, TS 38.213, is larger than the band itself, which is
+  // odd. Therefore, we limit the band to minimum 20MHz BW.
+  if (band == srsran::nr_band::n46 and config.channel_bw_mhz < bs_channel_bandwidth_fr1::MHz20) {
+    fmt::print("Minimum supported bandwidth for n46 is 20MHz.\n");
+    return false;
+  }
+
+  if (bs_channel_bandwidth_to_MHz(config.channel_bw_mhz) <
+      min_channel_bandwidth_to_MHz(band_helper::get_min_channel_bw(band, config.common_scs))) {
+    fmt::print("Minimum supported bandwidth for n{} with SCS {} is {}MHz.\n",
+               config.band,
+               to_string(config.common_scs),
+               min_channel_bandwidth_to_MHz(band_helper::get_min_channel_bw(band, config.common_scs)));
+    return false;
+  }
+
   // Check whether the DL-ARFCN is within the band and follows the Raster step.
   if (config.band.has_value()) {
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
