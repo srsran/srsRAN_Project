@@ -14,24 +14,15 @@ using namespace srsran;
 
 void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
-  // Verify attributes and inputs.
-  srsran_assert(mask.size() >= prb_mask.count() * NRE,
-                "Provided mask size ({}) is too small. The minimum is {}.",
-                (unsigned)mask.size(),
-                prb_mask.count() * NRE);
-
   // Skip if the symbol is not set to true.
   if (!symbols.test(symbol)) {
     return;
   }
 
-  // Create a mask for the maximum bandwidth.
-  bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
-
   // Generate a RE mask for the entire bandwidth.
   bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
-  // Append zeros to match the input mask.
+  // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
 
   // The following logical operation shall result in:
@@ -42,12 +33,6 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
 
 void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
-  // Verify attributes and inputs.
-  srsran_assert(mask.size() >= prb_mask.count() * NRE,
-                "Provided mask size ({}) is too small. The minimum is {}.",
-                (unsigned)mask.size(),
-                prb_mask.count() * NRE);
-
   // Skip if the symbol is not used.
   if (!symbols.test(symbol)) {
     return;
@@ -56,7 +41,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   // Generate a RE mask for the entire bandwidth.
   bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
-  // Append zeros to match the input mask.
+  // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
 
   // The following logical operation shall result in:
