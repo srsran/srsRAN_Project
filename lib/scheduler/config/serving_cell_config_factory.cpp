@@ -90,13 +90,11 @@ coreset_configuration srsran::config_helpers::make_default_coreset_config(const 
   cfg.id = to_coreset_id(1);
   // PRBs spanning the maximnum number of CRBs possible.
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  unsigned             coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
-  // Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of UE decoding the DCI in CSS
-  // rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-  freq_resources.fill(1, coreset_nof_resources, true);
+  const unsigned       coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+  freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
   // Number of symbols equal to max(CORESET#0, 2).
-  pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
+  const pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
       min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
   cfg.duration             = std::max(2U, static_cast<unsigned>(desc.nof_symb_coreset));
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
@@ -760,7 +758,7 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].nof_candidates = {
-      0, 0, std::min((uint8_t)4U, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0])), 0, 0};
+      0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0};
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
