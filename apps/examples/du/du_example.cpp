@@ -316,7 +316,7 @@ struct worker_manager {
   task_worker_executor     cell_execs{cell_workers};
   task_worker_executor     ue_execs{ue_workers};
   pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
-  cell_executor_mapper     cell_exec_mapper{{&cell_execs}, false};
+  cell_executor_mapper     cell_exec_mapper{std::initializer_list<task_executor*>{&cell_execs}};
   // Downlink Lower PHY task executors.
   task_worker          lower_dl_task_worker{"low_dl", 1, os_thread_realtime_priority::max()};
   task_worker_executor lower_tx_task_executor{{lower_dl_task_worker}};

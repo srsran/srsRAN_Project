@@ -308,7 +308,7 @@ private:
 
     // Executor mappers.
     ue_exec_mapper.emplace(pcell_ue_executor_mapper{du_ue_exec.get()});
-    cell_exec_mapper.emplace(cell_executor_mapper{{du_cell_exec.get()}, blocking_mode_active});
+    cell_exec_mapper.emplace(cell_executor_mapper({du_cell_exec.get()}));
   }
 };
 
