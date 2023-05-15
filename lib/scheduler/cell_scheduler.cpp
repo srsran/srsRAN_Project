@@ -25,6 +25,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   event_logger(ev_logger),
   metrics(metrics_handler),
   result_logger(sched_cfg.log_broadcast_messages),
+  logger(srslog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
   csi_sch(cell_cfg),
@@ -69,6 +70,16 @@ void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 
 void cell_scheduler::run_slot(slot_point sl_tx)
 {
+  // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
+  if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
+    while (SRSRAN_UNLIKELY(res_grid.slot_tx() + 1 != sl_tx)) {
+      logger.info("Status: Detected skipped slot={}.", res_grid.slot_tx() + 1);
+      res_grid.slot_indication(res_grid.slot_tx() + 1);
+      pdcch_sch.slot_indication(res_grid.slot_tx() + 1);
+      pucch_alloc.slot_indication(res_grid.slot_tx() + 1);
+    }
+  }
+
   // > Start with clearing old allocations from the grid.
   res_grid.slot_indication(sl_tx);
   pdcch_sch.slot_indication(sl_tx);
