@@ -60,13 +60,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
     byte_buffer sdu = {sdu1};
     pdcp_tx->handle_sdu(std::move(sdu));
   }
-  tick_all(5);
   ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
   pdcp_tx->reestablish(sec_cfg);
-  ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
-
-  // Check if discard timer was not reset.
-  tick_all(5);
   ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
 }
 

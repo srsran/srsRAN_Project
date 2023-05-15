@@ -61,9 +61,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // Apply ciphering and integrity protection
   byte_buffer protected_buf = apply_ciphering_and_integrity_protection(std::move(header_buf), sdu, st.tx_next);
 
-  // Set meta-data for RLC (TODO)
-  // sdu->md.pdcp_sn = tx_next;
-
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
   if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
@@ -97,13 +94,14 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   // TODO header compression not supported.
 
   // - for UM DRBs and SRBs, set TX_NEXT to the initial value;
+  // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
   if (is_srb() || is_um()) {
     st = {};
-  }
-
-  // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
-  if (is_srb()) {
-    discard_all_pdus();
+    discard_all_pdus(); // While not explicitly stated in the spec,
+                        // there is no point in storing PDCP UM PDUs.
+                        // They cannot be RETXed and RLC already discarded them.
+                        // Also, this avoids having multiple discard timers
+                        // associated with the with the same COUNT.
   }
 
   // - apply the ciphering algorithm and key provided by upper layers during the PDCP entity re-establishment
@@ -111,19 +109,6 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure;
   enable_security(sec_cfg_);
-
-  // - for UM DRBs, for each PDCP SDU already associated with a PDCP SN but for which a corresponding PDU has
-  //   not previously been submitted to lower layers, and;
-  // - for AM DRBs for Uu interface whose PDCP entities were suspended, from the first PDCP SDU for which the
-  //   successful delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, for each
-  //   PDCP SDU already associated with a PDCP SN:
-  //   - consider the PDCP SDUs as received from upper layer;
-  //   - perform transmission of the PDCP SDUs in ascending order of the COUNT value associated to the PDCP
-  //     SDU prior to the PDCP re-establishment without restarting the discardTimer, as specified in clause 5.2.1;
-  //
-  //  When SDUs are associated with a PDCP SN they are immediately pushed to the lower-layer.
-  //  As such, there is nothing to do here.
-  //  TODO PDCP entity suspension is not supported.
 
   // - for AM DRBs whose PDCP entities were not suspended, from the first PDCP SDU for which the successful
   //   delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, perform retransmission
@@ -168,14 +153,14 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   bit_decoder dec(buf);
 
   // Unpack and check PDU header
-  uint32_t dc;
+  uint32_t dc = 0;
   dec.unpack(dc, 1);
   if (dc != to_number(pdcp_dc_field::control)) {
     logger.log_warning(
         buf.begin(), buf.end(), "Invalid D/C field in status report. dc={}", to_number(pdcp_dc_field::control), dc);
     return;
   }
-  uint32_t cpt;
+  uint32_t cpt = 0;
   dec.unpack(cpt, 3);
   if (cpt != to_number(pdcp_control_pdu_type::status_report)) {
     logger.log_warning(buf.begin(),
@@ -185,7 +170,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
                        cpt);
     return;
   }
-  uint32_t reserved;
+  uint32_t reserved = 0;
   dec.unpack(reserved, 4);
   if (reserved != 0) {
     logger.log_warning(
@@ -194,7 +179,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   }
 
   // Unpack FMC field
-  uint32_t fmc;
+  uint32_t fmc = 0;
   dec.unpack(fmc, 32);
   logger.log_info("Status report. fmc={}", fmc);
 
@@ -210,7 +195,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   }
 
   // Evaluate bitmap: discard any SDU with the bit in the bitmap set to 1
-  unsigned bit;
+  unsigned bit = 0;
   while (dec.unpack(bit, 1)) {
     fmc++;
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
