@@ -312,6 +312,14 @@ void pdu_session_resource_setup_routine::operator()(
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
 
+    if (setup_item.qos_flow_setup_request_items.empty()) {
+      logger.error("ue={}: \"{}\" Setup request for PDU session ID {} has empty QoS flow to setup list.",
+                   setup_msg.ue_index,
+                   name(),
+                   setup_item.pdu_session_id);
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+
     // initial sanity check, making sure we only allow flows with a configured 5QI
     for (const qos_flow_setup_request_item& flow_item : setup_item.qos_flow_setup_request_items) {
       if (not valid_5qi(flow_item)) {
@@ -661,12 +669,10 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
       drb_to_setup_mod_item.cell_group_info.push_back(e1ap_cell_group_item);
 
       // Setup QoS flows
-      for (const auto& qos_flow_to_setup : drb_to_setup.second.qos_flows) {
-        e1ap_qos_flow_qos_param_item flow_item;
-        flow_item.qos_flow_id = qos_flow_to_setup;
-        // todo: add values
-        // flow_item.qos_flow_level_qos_params
-        drb_to_setup_mod_item.flow_map_info.emplace(qos_flow_to_setup, flow_item);
+      for (const auto& qos_flow_to_setup : pdu_session_cfg.qos_flow_setup_request_items) {
+        e1ap_qos_flow_qos_param_item e1ap_qos_item;
+        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_to_setup);
+        drb_to_setup_mod_item.flow_map_info.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
       }
 
       setup_mod_item.drb_to_setup_mod_list_ng_ran.emplace(drb_to_setup_mod_item.drb_id, drb_to_setup_mod_item);
