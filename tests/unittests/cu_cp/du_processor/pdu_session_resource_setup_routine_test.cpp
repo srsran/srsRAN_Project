@@ -9,6 +9,7 @@
  */
 
 #include "du_processor_routine_manager_test_helpers.h"
+#include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -67,6 +68,44 @@ protected:
       setup_list.push_back(pdu_session_id_to_uint(item.pdu_session_id));
     }
     return setup_list;
+  }
+
+  void is_valid_e1ap_message(const e1ap_bearer_context_modification_request& request)
+  {
+    e1ap_message e1ap_msg;
+    e1ap_msg.pdu.set_init_msg();
+    e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+    auto& bearer_context_mod_request = e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
+    bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id.value =
+        gnb_cu_cp_ue_e1ap_id_to_uint(generate_random_gnb_cu_cp_ue_e1ap_id());
+    bearer_context_mod_request->gnb_cu_up_ue_e1ap_id.value =
+        gnb_cu_up_ue_e1ap_id_to_uint(generate_random_gnb_cu_up_ue_e1ap_id());
+
+    fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
+
+    byte_buffer   packed_pdu;
+    asn1::bit_ref bref(packed_pdu);
+    ASSERT_EQ(e1ap_msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
+  }
+
+  void is_valid_e1ap_message(const e1ap_bearer_context_setup_request& request)
+  {
+    e1ap_message e1ap_msg;
+    e1ap_msg.pdu.set_init_msg();
+    e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
+
+    auto& bearer_context_setup_request = e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
+    bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id.value =
+        gnb_cu_cp_ue_e1ap_id_to_uint(generate_random_gnb_cu_cp_ue_e1ap_id());
+    bearer_context_setup_request->gnb_cu_up_ue_e1ap_id.value =
+        gnb_cu_up_ue_e1ap_id_to_uint(generate_random_gnb_cu_up_ue_e1ap_id());
+
+    fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
+
+    byte_buffer   packed_pdu;
+    asn1::bit_ref bref(packed_pdu);
+    ASSERT_EQ(e1ap_msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
   }
 
 private:
@@ -357,6 +396,11 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
 
     // First PDU session setup succeeded.
     VERIFY_EQUAL(pdu_session_res_setup(), {1});
+
+    // Verify generated messages can be packed into valid ASN.1 encoded messages
+    is_valid_e1ap_message(
+        variant_get<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
+    is_valid_e1ap_message(e1ap_ctrl_notifier.second_e1ap_request.value());
   }
 
   // clear stored E1AP requests for next procedure
@@ -396,6 +440,10 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     ASSERT_EQ(context_mod_req.value().pdu_session_res_to_setup_mod_list.size(), 1);
     ASSERT_EQ(context_mod_req.value().pdu_session_res_to_modify_list.size(), 0);
 
+    // Verify generated messages can be packed into valid ASN.1 encoded messages
+    is_valid_e1ap_message(
+        variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
+
     // TODO: Verify content of UE context modification which should include the setup of DRB2.
 
     // Verify content of second bearer modification request.
@@ -413,6 +461,9 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
                   .pdu_session_res_to_modify_list.begin()
                   ->drb_to_modify_list_ng_ran.size(),
               1);
+
+    // Verify generated messages can be packed into valid ASN.1 encoded messages
+    is_valid_e1ap_message(e1ap_ctrl_notifier.second_e1ap_request.value());
 
     // PDU session setup for ID=2 succeeded.
     VERIFY_EQUAL(pdu_session_res_setup(), {2});
