@@ -25,6 +25,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   bwp_table     = {};
   coresets      = {};
   search_spaces = {};
+  ss_list       = {};
 
   // Recompute DL param lookup tables.
   configure_bwp_common_cfg(to_bwp_id(0), cell_cfg_common.dl_cfg_common.init_dl_bwp);
@@ -48,7 +49,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
 void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common)
 {
   // Compute DL BWP-Id lookup table.
-  bwp_table[bwpid].dl_bwp_common = &bwp_dl_common;
+  bwp_table[bwpid].dl_common = &bwp_dl_common;
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
     bwp_table[bwpid].search_spaces.push_back(&ss);
   }
@@ -67,19 +68,29 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
   // Compute SearchSpace-Id lookup table.
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
     search_spaces[ss.id] = &ss;
+    ss_list.emplace(ss.id);
+    ss_list[ss.id].cfg     = &ss;
+    ss_list[ss.id].coreset = &*coresets[ss.cs_id];
+    ss_list[ss.id].bwp     = &bwp_table[bwpid];
+    ss_list[ss.id].pdsch_time_domain_list =
+        get_c_rnti_pdsch_time_domain_list(ss, *ss_list[ss.id].bwp->dl_common, nullptr, cell_cfg_common.dmrs_typeA_pos);
   }
 }
 
 void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common)
 {
   // Compute UL BWP-Id lookup table.
-  bwp_table[bwpid].ul_bwp_common = &bwp_ul_common;
+  bwp_table[bwpid].ul_common = &bwp_ul_common;
+
+  for (const search_space_configuration& ss : bwp_table[bwpid].dl_common->pdcch_common.search_spaces) {
+    ss_list[ss.id].pusch_time_domain_list = get_c_rnti_pusch_time_domain_list(ss, *bwp_table[bwpid].ul_common, nullptr);
+  }
 }
 
 void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded)
 {
   // Compute DL BWP-Id lookup table.
-  bwp_table[bwpid].dl_bwp_ded = &bwp_dl_ded;
+  bwp_table[bwpid].dl_ded = &bwp_dl_ded;
   if (not bwp_dl_ded.pdcch_cfg.has_value()) {
     return;
   }
@@ -102,66 +113,24 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
   // Compute SearchSpace-Id lookup table.
   for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
     search_spaces[ss.id] = &ss;
+    ss_list.emplace(ss.id);
+    ss_list[ss.id].cfg                    = &ss;
+    ss_list[ss.id].coreset                = coresets[ss.cs_id];
+    ss_list[ss.id].bwp                    = &bwp_table[bwpid];
+    ss_list[ss.id].pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
+        ss, *bwp_table[bwpid].dl_common, bwp_table[bwpid].dl_ded, cell_cfg_common.dmrs_typeA_pos);
   }
 }
 
 void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_uplink_dedicated& bwp_ul_ded)
 {
   // Compute UL BWP-Id lookup table.
-  bwp_table[bwpid].ul_bwp_ded = &bwp_ul_ded;
-}
+  bwp_table[bwpid].ul_ded = &bwp_ul_ded;
 
-span<const pdsch_time_domain_resource_allocation>
-ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
-{
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
-  const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
-  // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for DCI formats 1_0 and 1_1.
-  if (ss_cfg.type != search_space_configuration::type_t::common or ss_cfg.cs_id != to_coreset_id(0)) {
-    if (not bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
-      // UE dedicated pdsch-TimeDomain list.
-      return bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list;
-    }
+  for (const search_space_configuration& ss : bwp_table[bwpid].dl_ded->pdcch_cfg->search_spaces) {
+    ss_list[ss.id].pusch_time_domain_list =
+        get_c_rnti_pusch_time_domain_list(ss, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
   }
-
-  if (not bwp_row.dl_bwp_common->pdsch_common.pdsch_td_alloc_list.empty()) {
-    // common pdsch-TimeDomain list.
-    return bwp_row.dl_bwp_common->pdsch_common.pdsch_td_alloc_list;
-  }
-
-  // default A table case.
-  return pdsch_default_time_allocations_default_A_table(
-      bwp_row.dl_bwp_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
-      cell_cfg_common.dmrs_typeA_pos);
-}
-
-span<const pusch_time_domain_resource_allocation>
-ue_cell_configuration::get_pusch_time_domain_list(search_space_id ss_id) const
-{
-  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
-  const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
-  const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
-
-  // See TS 38.214, Table 6.1.2.1.1-1.
-  if (ss_cfg.type != search_space_configuration::type_t::common or ss_cfg.cs_id != to_coreset_id(0)) {
-    if (bwp_row.ul_bwp_ded->pusch_cfg.has_value() and
-        (not bwp_row.ul_bwp_ded->pusch_cfg.value().pusch_td_alloc_list.empty())) {
-      // UE dedicated pusch-TimeDomain list.
-      return bwp_row.ul_bwp_ded->pusch_cfg.value().pusch_td_alloc_list;
-    }
-  }
-
-  if (bwp_row.ul_bwp_common->pusch_cfg_common.has_value() and
-      (not bwp_row.ul_bwp_common->pusch_cfg_common.value().pusch_td_alloc_list.empty())) {
-    // common pusch-TimeDomain list.
-    return bwp_row.ul_bwp_common->pusch_cfg_common.value().pusch_td_alloc_list;
-  }
-
-  // default A table case.
-  return pusch_default_time_allocations_default_A_table(
-      bwp_row.ul_bwp_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
-      bwp_row.ul_bwp_common->generic_params.scs);
 }
 
 dci_ul_rnti_config_type ue_cell_configuration::get_ul_rnti_config_type(search_space_id ss_id) const
