@@ -30,12 +30,15 @@ void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 class du_high_slot_handler final : public mac_cell_slot_handler
 {
 public:
-  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
+  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_, task_executor& tick_exec_) :
+    timers(timers_), mac(mac_), tick_exec(tick_exec_)
+  {
+  }
   void handle_slot_indication(slot_point sl_tx) override
   {
     // Step timers by one millisecond.
     if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
-      timers.tick();
+      tick_exec.execute([this]() { timers.tick(); });
     }
 
     // Handle slot indication in MAC & Scheduler.
@@ -45,6 +48,7 @@ public:
 private:
   timer_manager& timers;
   mac_interface& mac;
+  task_executor& tick_exec;
 };
 
 class scheduler_ue_metrics_null_notifier final : public scheduler_ue_metrics_notifier
@@ -94,7 +98,7 @@ du_high::du_high(const du_high_configuration& config_) :
   f1ap_paging_notifier.connect(mac->get_cell_paging_info_handler());
 
   // Cell slot handler.
-  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);
+  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, *cfg.du_mng_executor);
 
   // If test mode is enabled.
   if (cfg.test_cfg.test_ue.has_value()) {
