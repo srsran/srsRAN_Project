@@ -91,7 +91,7 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   //   defined in RFC 3095 [8] and RFC 4815 [9]) if drb-ContinueROHC is not configured in TS 38.331 [3];
   // - for UM DRBs and AM DRBs, reset the EHC protocol for uplink if drb-ContinueEHC-UL is not configured in
   //   TS 38.331 [3];
-  // TODO header compression not supported.
+  //   Header compression not supported yet (TODO).
 
   // - for UM DRBs and SRBs, set TX_NEXT to the initial value;
   // - for SRBs, discard all stored PDCP SDUs and PDCP PDUs;
@@ -109,6 +109,19 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg_)
   // - apply the integrity protection algorithm and key provided by upper layers during the PDCP entity re-
   //   establishment procedure;
   enable_security(sec_cfg_);
+
+  // - for UM DRBs, for each PDCP SDU already associated with a PDCP SN but for which a corresponding PDU has
+  //   not previously been submitted to lower layers, and;
+  // - for AM DRBs for Uu interface whose PDCP entities were suspended, from the first PDCP SDU for which the
+  //   successful delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, for each
+  //   PDCP SDU already associated with a PDCP SN:
+  //   - consider the PDCP SDUs as received from upper layer;
+  //   - perform transmission of the PDCP SDUs in ascending order of the COUNT value associated to the PDCP
+  //     SDU prior to the PDCP re-establishment without restarting the discardTimer, as specified in clause 5.2.1;
+  //
+  //  For UM DRBs, when SDUs are associated with a PDCP SN they are immediately pushed to the lower-layer.
+  //  As such, there is nothing to do here.
+  //  For AM DRBs, PDCP entity suspension is not supported yet (TODO).
 
   // - for AM DRBs whose PDCP entities were not suspended, from the first PDCP SDU for which the successful
   //   delivery of the corresponding PDCP Data PDU has not been confirmed by lower layers, perform retransmission
@@ -357,6 +370,10 @@ void pdcp_entity_tx::retransmit_all_pdus()
     byte_buffer header_buf = {};
     write_data_pdu_header(header_buf, hdr);
 
+    // Perform header compression if required
+    // (TODO)
+
+    // Perform integrity protection and ciphering
     byte_buffer protected_buf =
         apply_ciphering_and_integrity_protection(std::move(header_buf), info.second.sdu, info.second.count);
     write_data_pdu_to_lower_layers(info.first, std::move(protected_buf));
