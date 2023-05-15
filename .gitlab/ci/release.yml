@@ -1,0 +1,161 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "6"
+    file: .gitlab/ci-shared/setup/all.yml
+
+stages:
+  - private
+
+update agpl main:
+  stage: private
+  rules:
+    - if: $ON_TAG
+  interruptible: false
+  variables:
+    GIT_STRATEGY: none
+    BRANCH: agpl_main
+  image: ubuntu:22.04
+  before_script:
+    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
+    - git lfs install
+    - git config --global user.name "${CODEBOT_USERNAME}"
+    - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
+    # Steps
+    - |
+      remove_lfs_files() {
+        while read -r line
+        do
+          git rm --cached "$line"
+        done < <(git lfs ls-files | sed -r 's/^.{13}//')
+      }
+    - |
+      rm_deleted_by_them() {
+        # String to parse.
+        delete_name="deleted by them:"
+        delete_size_next=${#delete_name}+1
+        lines=$(git status)
+        while read -r line
+        do
+          status=${line:0:${#delete_name}}
+
+          if [[ "$status" == "$delete_name" ]]
+          then
+            path_name=${line:$delete_size_next:${#line}}
+            git rm "$path_name"
+          fi
+
+        done <<<"$lines"
+      }
+    - |
+      rm_deleted_by_us() {
+        # String to parse.
+        delete_name="deleted by us:"
+        delete_size_next=${#delete_name}+3
+        lines=$(git status)
+        while read -r line
+        do
+          status=${line:0:${#delete_name}}
+
+          if [[ "$status" == "$delete_name" ]]
+          then
+            path_name=${line:$delete_size_next:${#line}}
+            git rm "$path_name"
+          fi
+
+        done <<<"$lines"
+      }
+    - |
+      fix_conflicts_using_theirs() {
+        # String to parse.
+        conflict_name="both modified:"
+        conflict_size_next=${#conflict_name}+3
+        lines=$(git status)
+        while read -r line
+        do
+          status=${line:0:${#conflict_name}}
+
+          if [[ "$status" == "$conflict_name" ]]
+          then
+            path_name=${line:$conflict_size_next:${#line}}
+            echo "Resolving using theirs $path_name"
+            git checkout --theirs "$path_name"
+            git add "$path_name"
+          fi
+
+        done <<<"$lines"
+      }
+    - |
+      update_headers() {
+        # for actual source and header files
+        find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.h.in" \) ! -path "*/external/*" ! -name "rfnoc_test.cc" -exec perl -0777 -pi -e 's{/\*.*?\*/}{/*
+       *
+       * Copyright 2021-2023 Software Radio Systems Limited
+       *
+       * This file is part of srsRAN.
+       *
+       * srsRAN is free software: you can redistribute it and/or modify
+       * it under the terms of the GNU Affero General Public License as
+       * published by the Free Software Foundation, either version 3 of
+       * the License, or (at your option) any later version.
+       *
+       * srsRAN is distributed in the hope that it will be useful,
+       * but WITHOUT ANY WARRANTY; without even the implied warranty of
+       * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+       * GNU Affero General Public License for more details.
+       *
+       * A copy of the GNU Affero General Public License can be found in
+       * the LICENSE file in the top-level directory of this distribution
+       * and at http://www.gnu.org/licenses/.
+       *
+       */}s' {} \;
+
+        # for CMake/YML files
+        find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" \) ! -path "*/configs/*" ! -path "*/.gitlab/*"  ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e 's/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
+      # Copyright 2021-2023 Software Radio Systems Limited
+      #
+      # This file is part of srsRAN
+      #
+      # srsRAN is free software: you can redistribute it and\/or modify
+      # it under the terms of the GNU Affero General Public License as
+      # published by the Free Software Foundation, either version 3 of
+      # the License, or (at your option) any later version.
+      #
+      # srsRAN is distributed in the hope that it will be useful,
+      # but WITHOUT ANY WARRANTY; without even the implied warranty of
+      # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      # GNU Affero General Public License for more details.
+      #
+      # A copy of the GNU Affero General Public License can be found in
+      # the LICENSE file in the top-level directory of this distribution
+      # and at http:\/\/www.gnu.org\/licenses\/.
+      #/' {} \;
+      }
+  script:
+    - git clone --branch $BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
+    - cd /${CI_PROJECT_NAME}
+    - git merge $CI_COMMIT_SHA || (git status && rm_deleted_by_us && rm_deleted_by_them && fix_conflicts_using_theirs && git commit --no-edit)
+    - remove_lfs_files
+    - git commit -a --amend --no-edit
+    - update_headers
+    - git commit -a -m "Adding AGPL copyright to new files"
+    - git push origin $BRANCH
+
+generate testvector tar gz:
+  stage: private
+  rules:
+    - if: $ON_TAG
+  interruptible: false
+  image: ubuntu:22.04
+  script:
+    - find . -name "*.tar.gz" -exec tar -rvf phy_testvectors.tar.gz {} \;
+  artifacts:
+    paths:
+      - phy_testvectors.tar.gz
+    expire_in: "7 days"
