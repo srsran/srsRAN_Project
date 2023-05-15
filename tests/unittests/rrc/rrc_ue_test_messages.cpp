@@ -85,15 +85,19 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
 
 byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu()
 {
-  asn1::rrc_nr::rrc_reest_request_s rrc_reest_req;
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+
+  asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
+  auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
+  auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
   rrc_reest_req.rrc_reest_request.ue_id.c_rnti = 0;
   rrc_reest_req.rrc_reest_request.ue_id.pci    = 0;
-  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string("deadbeef");
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0);
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
+  rrc_reest_req.rrc_reest_request.spare.from_number(0);
 
-  byte_buffer   pdu{};
-  asn1::bit_ref bref{pdu};
-  srsran_assert(rrc_reest_req.pack(bref) == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+  srsran_assert(ul_ccch_msg.pack(bref) == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
 }
