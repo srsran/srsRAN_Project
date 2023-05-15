@@ -382,6 +382,7 @@ srs_config srsran::config_helpers::make_default_srs_config(const cell_config_bui
   // NOTE: C_SRS, B_SRS and B_hop are chosen to disable SRS frequency hopping and to monitor SRS over smallest
   // possible BW i.e. 4 RBs. See TS 38.211, Table 6.4.1.4.3-1.
   // This is done to cater to setups of all BWs until SRS is supported in scheduler.
+  // TODO: Support SRS in scheduler.
   res.freq_hop.c_srs = 0;
   res.freq_hop.b_srs = 0;
   res.freq_hop.b_hop = 0;
