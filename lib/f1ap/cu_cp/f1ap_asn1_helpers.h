@@ -12,10 +12,57 @@
 
 #include "f1ap_asn1_converters.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/lcid.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// \brief Convert the F1 Setup Response from common type to ASN.1.
+/// \param[out] asn1_response The F1 Setup Response ASN.1 struct to store the result.
+/// \param[in] msg The common type F1 Setup Response.
+inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&   asn1_response,
+                                        const cu_cp_f1_setup_response& response)
+{
+  // fill CU common info
+  if (response.gnb_cu_name.has_value()) {
+    asn1_response->gnb_cu_name_present = true;
+    asn1_response->gnb_cu_name->from_string(response.gnb_cu_name.value());
+  }
+  asn1_response->gnb_cu_rrc_version.value.latest_rrc_version.from_number(response.gnb_cu_rrc_version);
+
+  // activate all DU cells
+  if (response.cells_to_be_activ_list.size() > 0) {
+    asn1_response->cells_to_be_activ_list_present = true;
+    for (const auto& du_cell : response.cells_to_be_activ_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(plmn_string_to_bcd(du_cell.nr_cgi.plmn));
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci);
+
+      if (du_cell.nr_pci.has_value()) {
+        resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;
+        resp_cell->cells_to_be_activ_list_item().nr_pci         = du_cell.nr_pci.value();
+      }
+
+      asn1_response->cells_to_be_activ_list.value.push_back(resp_cell);
+    }
+  }
+}
+
+/// \brief Convert the F1 Setup Failure from common type to ASN.1.
+/// \param[out] asn1_failure The F1 Setup Failure ASN.1 struct to store the result.
+/// \param[in] msg The common type F1 Setup Failure.
+inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s&   asn1_failure,
+                                       const cu_cp_f1_setup_response& failure)
+{
+  if (failure.cause.has_value()) {
+    asn1_failure->cause.value = cause_to_f1ap_cause(failure.cause.value());
+  } else {
+    asn1_failure->cause.value.radio_network();
+  }
+
+  // TODO: Add optional values
+}
 
 /// \brief Convert the UE Context Modification Request from common type to ASN.1.
 /// \param[out] asn1_request The ASN.1 struct to store the result.

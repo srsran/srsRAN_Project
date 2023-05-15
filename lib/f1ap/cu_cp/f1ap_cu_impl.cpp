@@ -42,7 +42,7 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
   ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
-void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
+void f1ap_cu_impl::handle_f1_setup_response(const cu_cp_f1_setup_response& msg)
 {
   // Pack message into PDU
   f1ap_message f1ap_msg;
@@ -51,7 +51,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
 
     f1ap_msg.pdu.set_successful_outcome();
     f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
+    fill_asn1_f1_setup_response(f1ap_msg.pdu.successful_outcome().value.f1_setup_resp(), msg);
 
     // set values handled by F1
     f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = current_transaction_id;
@@ -62,7 +62,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
     logger.debug("Sending F1SetupFailure");
     f1ap_msg.pdu.set_unsuccessful_outcome();
     f1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
+    fill_asn1_f1_setup_failure(f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail(), msg);
     auto& setup_fail = f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
 
     // set values handled by F1

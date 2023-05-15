@@ -102,8 +102,8 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 
   // Action 3: Transmit F1SetupResponse message
   test_logger.info("TEST: Transmit F1SetupResponse message...");
-  f1_setup_response_message msg = {};
-  msg.success                   = true;
+  cu_cp_f1_setup_response msg = {};
+  msg.success                 = true;
   f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
@@ -129,8 +129,8 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 
   // Action 3: Transmit F1SetupFailure message
   test_logger.info("TEST: Transmit F1SetupFailure message...");
-  f1_setup_response_message msg = {};
-  msg.success                   = false;
+  cu_cp_f1_setup_response msg = {};
+  msg.success                 = false;
   f1ap->handle_f1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup failure

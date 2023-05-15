@@ -140,6 +140,25 @@ struct cu_cp_tai {
   uint32_t    tac;
 };
 
+struct cu_cp_cells_to_be_activ_list_item {
+  nr_cell_global_id_t nr_cgi;
+  optional<pci_t>     nr_pci;
+};
+
+struct cu_cp_f1_setup_response {
+  bool success = false;
+  // F1 Setup Response
+  optional<std::string>                          gnb_cu_name;
+  std::vector<cu_cp_cells_to_be_activ_list_item> cells_to_be_activ_list;
+  uint8_t                                        gnb_cu_rrc_version;
+  // TODO: Add optional fields
+
+  // F1 Setup Failure
+  optional<cause_t>            cause;
+  optional<crit_diagnostics_t> crit_diagnostics;
+  // TODO: Add optional fields
+};
+
 struct cu_cp_user_location_info_nr {
   nr_cell_global_id_t nr_cgi;
   cu_cp_tai           tai;

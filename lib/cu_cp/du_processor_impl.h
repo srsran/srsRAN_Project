@@ -120,7 +120,7 @@ private:
 
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
-  void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
+  void send_f1_setup_failure(cause_t cause);
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;

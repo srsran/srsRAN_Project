@@ -12,7 +12,6 @@
 #include "../lib/f1ap/common/asn1_helpers.h"
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
-#include "helpers/f1ap_asn1_helpers.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/ran/nr_cgi_helpers.h"
@@ -70,7 +69,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
   // Reject request without served cells
   if (not msg.request->gnb_du_served_cells_list_present) {
     logger.error("Not handling F1 setup without served cells");
-    send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+    send_f1_setup_failure(cause_t::radio_network);
     return;
   }
 
@@ -88,7 +87,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
       logger.error("Not handling F1 setup, maximum number of DU cells reached");
-      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      send_f1_setup_failure(cause_t::radio_network);
       return;
     }
 
@@ -96,19 +95,19 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
     du_cell.cgi = cgi_from_asn1(cell_item.served_cell_info.nr_cgi);
     if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
       logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      send_f1_setup_failure(cause_t::radio_network);
       return;
     }
     if (not cell_item.served_cell_info.five_gs_tac_present) {
       logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
-      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      send_f1_setup_failure(cause_t::radio_network);
       return;
     }
     du_cell.tac = cell_item.served_cell_info.five_gs_tac.to_number();
 
     if (not cell_item.gnb_du_sys_info_present) {
       logger.error("Not handling served cells without system information");
-      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      send_f1_setup_failure(cause_t::radio_network);
       return;
     }
 
@@ -154,17 +153,32 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 /// Sender for F1AP messages
 void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id)
 {
-  f1_setup_response_message response;
+  cu_cp_f1_setup_response response;
   response.success = true;
-  fill_asn1_f1_setup_response(response.response, transaction_id, cfg.name, cfg.rrc_version, cell_db);
+
+  // fill CU common info
+  response.gnb_cu_name        = cfg.name;
+  response.gnb_cu_rrc_version = cfg.rrc_version;
+
+  // activate all DU cells
+  for (const auto& du_cell_pair : cell_db) {
+    const auto& du_cell = du_cell_pair.second;
+
+    cu_cp_cells_to_be_activ_list_item resp_cell;
+    resp_cell.nr_cgi = du_cell.cgi;
+    resp_cell.nr_pci = du_cell.pci;
+
+    response.cells_to_be_activ_list.push_back(resp_cell);
+  }
+
   f1ap->handle_f1_setup_response(response);
 }
 
-void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
+void du_processor_impl::send_f1_setup_failure(cause_t cause)
 {
-  f1_setup_response_message response;
+  cu_cp_f1_setup_response response;
   response.success = false;
-  response.failure->cause->set(cause);
+  response.cause   = cause;
   f1ap->handle_f1_setup_response(response);
 }
 

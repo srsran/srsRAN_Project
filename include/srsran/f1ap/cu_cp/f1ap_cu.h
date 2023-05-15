@@ -48,12 +48,6 @@ public:
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
 };
 
-struct f1_setup_response_message {
-  asn1::f1ap::f1_setup_resp_s response;
-  asn1::f1ap::f1_setup_fail_s failure;
-  bool                        success = false;
-};
-
 struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
 };
@@ -65,9 +59,9 @@ public:
   virtual ~f1ap_connection_manager() = default;
 
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
-  /// \param[in] msg The f1_setup_response_message to transmit.
+  /// \param[in] msg The common type F1 Setup Response Message to transmit.
   /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1_setup_response(const f1_setup_response_message& msg) = 0;
+  virtual void handle_f1_setup_response(const cu_cp_f1_setup_response& msg) = 0;
 };
 
 struct f1ap_ue_context_release_command {
