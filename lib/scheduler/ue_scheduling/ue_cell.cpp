@@ -43,17 +43,9 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
+void ue_cell::set_latest_wb_cqi(unsigned wb_cqi)
 {
-  static const size_t cqi_payload_size = 4;
-  if (payload.size() < cqi_payload_size) {
-    return;
-  }
-  // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
-  // encoding.
-  ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
-                             (static_cast<unsigned>(payload.test(1)) << 2) +
-                             (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));
+  ue_metrics.latest_wb_cqi = wb_cqi;
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,

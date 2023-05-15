@@ -170,6 +170,25 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
   }
 }
 
+void ue_event_manager::handle_csi(ue_cell&                                                              ue_cc,
+                                  const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi_bits)
+{
+  static const size_t cqi_payload_size = 4;
+  if (csi_bits.size() < cqi_payload_size) {
+    return;
+  }
+  // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
+  // encoding.
+  unsigned wb_cqi = (static_cast<unsigned>(csi_bits.test(0)) << 3) + (static_cast<unsigned>(csi_bits.test(1)) << 2) +
+                    (static_cast<unsigned>(csi_bits.test(2)) << 1) + (static_cast<unsigned>(csi_bits.test(3)));
+
+  // Forward CSI bits to UE.
+  ue_cc.set_latest_wb_cqi(wb_cqi);
+
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), wb_cqi});
+}
+
 void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 {
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
@@ -217,7 +236,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       if (pdu.csi_part1.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
             ind.ucis[i].ue_index,
-            [csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
+            [this, csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { handle_csi(ue_cc, csi_1_bits); });
 
         metrics_handler.handle_csi_report(ind.ucis[i].ue_index, pdu.csi_part1);
       }
@@ -253,7 +272,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       if (pdu.csi_part1.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
             ind.ucis[i].ue_index,
-            [csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
+            [this, csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { handle_csi(ue_cc, csi_1_bits); });
 
         metrics_handler.handle_csi_report(ind.ucis[i].ue_index, pdu.csi_part1);
       }

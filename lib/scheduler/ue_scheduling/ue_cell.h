@@ -63,7 +63,7 @@ public:
 
   unsigned get_latest_wb_cqi() const { return ue_metrics.latest_wb_cqi; }
 
-  void set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
+  void set_latest_wb_cqi(unsigned wb_cqi);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
