@@ -157,7 +157,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} rb={} symb={} tbs={} mcs={} rv={} k1={}",
+                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} rb={} symb={} tbs={} mcs={} rv={} nrtx={} k1={}",
                    ue_dl_grant.context.ue_index,
                    ue_dl_grant.pdsch_cfg.rnti,
                    ue_dl_grant.pdsch_cfg.harq_id,
@@ -166,6 +166,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].tb_size_bytes,
                    ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
+                   ue_dl_grant.context.nof_retxs,
                    ue_dl_grant.context.k1);
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
       fmt::format_to(fmtbuf,
@@ -177,7 +178,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- PCCH: rb={}, symb={}, tbs={}, mcs={}, rv={}",
+                   "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}",
                    pg.pdsch_cfg.rbs,
                    pg.pdsch_cfg.symbols,
                    pg.pdsch_cfg.codewords[0].tb_size_bytes,
@@ -202,12 +203,13 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     }
     fmt::format_to(fmtbuf,
-                   "h_id={} rb={} symb={} tbs={} rv={} k2={}",
+                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} k2={}",
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.rbs,
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
+                   ul_info.context.nof_retxs,
                    ul_info.context.k2);
     if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,

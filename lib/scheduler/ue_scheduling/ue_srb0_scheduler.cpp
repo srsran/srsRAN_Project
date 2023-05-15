@@ -256,9 +256,10 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                          h_dl);
 
   // Fill PDSCH PDU.
-  msg.context.ue_index = u.ue_index;
-  msg.context.k1       = k1;
-  msg.context.ss_id    = pdcch.ctx.context.ss_id;
+  msg.context.ue_index  = u.ue_index;
+  msg.context.k1        = k1;
+  msg.context.ss_id     = pdcch.ctx.context.ss_id;
+  msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
   build_pdsch_f1_0_tc_rnti(
       msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_crbs, true);
 

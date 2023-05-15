@@ -255,10 +255,11 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Fill PDSCH PDU.
-  dl_msg_alloc& msg    = pdsch_alloc.result.dl.ue_grants.emplace_back();
-  msg.context.ue_index = u.ue_index;
-  msg.context.k1       = k1;
-  msg.context.ss_id    = ss_cfg.id;
+  dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.emplace_back();
+  msg.context.ue_index  = u.ue_index;
+  msg.context.k1        = k1;
+  msg.context.ss_id     = ss_cfg.id;
+  msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
@@ -501,10 +502,11 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Fill PUSCH.
-  ul_sched_info& msg   = pusch_alloc.result.ul.puschs.emplace_back();
-  msg.context.ue_index = u.ue_index;
-  msg.context.ss_id    = ss_cfg.id;
-  msg.context.k2       = pusch_td_cfg.k2;
+  ul_sched_info& msg    = pusch_alloc.result.ul.puschs.emplace_back();
+  msg.context.ue_index  = u.ue_index;
+  msg.context.ss_id     = ss_cfg.id;
+  msg.context.k2        = pusch_td_cfg.k2;
+  msg.context.nof_retxs = h_ul.tb().nof_retxs;
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       build_pusch_f0_0_tc_rnti(msg.pusch_cfg,
