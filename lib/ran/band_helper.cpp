@@ -1180,10 +1180,6 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
 {
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
-  if (scs_ssb == subcarrier_spacing::kHz15) {
-    srsran_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
-                  "Bands n34, n38 and n39 not currently supported with SSB 15kHz subcarrier spacing");
-  }
 
   optional<ssb_coreset0_freq_location> result;
 

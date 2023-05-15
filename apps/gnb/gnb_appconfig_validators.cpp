@@ -227,12 +227,6 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
     }
   }
 
-  // Check if the band is supported.
-  if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
-      (band == srsran::nr_band::n34 or band == srsran::nr_band::n38 or band == srsran::nr_band::n39)) {
-    fmt::print("Bands n34, 38 and 39 not currently supported with SCS 15kHz.\n");
-    return false;
-  }
   return true;
 }
 
