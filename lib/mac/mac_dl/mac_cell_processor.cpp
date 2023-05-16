@@ -244,22 +244,26 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     return;
   }
 
-  mac_dl_sched_result mac_dl_res{};
-  mac_dl_data_result  data_res;
-
   // Generate DL scheduling result for provided slot and cell.
   const sched_result& sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
   if (not sl_res.success) {
     logger.warning("Unable to compute scheduling result for slot={}, cell={}", sl_tx, cell_cfg.cell_index);
     if (sl_res.dl.nof_dl_symbols > 0) {
-      phy_cell.on_new_downlink_data(data_res);
+      mac_dl_sched_result mac_dl_res{};
+      mac_dl_res.slot = sl_tx;
+      phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
     }
     if (sl_res.ul.nof_ul_symbols > 0) {
-      phy_cell.on_new_uplink_scheduler_results({});
+      mac_ul_sched_result mac_ul_res{};
+      mac_ul_res.slot = sl_tx;
+      phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
     }
     phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
+
+  mac_dl_sched_result mac_dl_res{};
+  mac_dl_data_result  data_res{};
 
   mac_tracer << trace_event{"mac_sched", sched_tp};
 
