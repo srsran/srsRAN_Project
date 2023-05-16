@@ -115,7 +115,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
     mcs = expert_cfg.ul_mcs.start();
   } else {
     // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(ul_snr);
+    mcs = map_snr_to_mcs_ul(ul_snr, pusch_cfg.mcs_table);
     mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
   }
 

@@ -80,7 +80,7 @@ optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs
   return mcs;
 }
 
-sch_mcs_index srsran::map_snr_to_mcs_ul(double snr)
+sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
 {
   // The objective of this function is to find the maximum MCS that can be used for a given SNR. A possible approach to
   // this problem would be to get the iterator to the biggest element of the SNR vector not greater than the target SNR.
@@ -88,7 +88,9 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr)
   // the smallest element greater than the target SNR; (ii) we need to subtract 1 from the iterator returned by
   // std::upper_bound(), to obtain wanted MCS.
   const unsigned MAX_MCS = 28;
-  const unsigned MIN_MCS = 0;
+  // See TS 38.214, Table 5.1.3.1-2.
+  const unsigned MAX_MCS_QAM256 = 27;
+  const unsigned MIN_MCS        = 0;
 
   // Check of the SNR is lower than the minimum, or greater than the maximum. If so, return the min or max MCS.
   if (snr <= ul_snr_mcs_table.front()) {
@@ -97,7 +99,7 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr)
   // NOTE: The sign > is not sufficient, as, with an input snr == ul_snr_mcs_table.back(), the std::upper_bound()
   // below would return ul_snr_mcs_table.end(). To prevent this, we need the sign >= in the comparison.
   if (snr >= ul_snr_mcs_table.back()) {
-    return MAX_MCS;
+    return mcs_table == pusch_mcs_table::qam256 ? MAX_MCS_QAM256 : MAX_MCS;
   }
 
   auto it_ub = std::upper_bound(ul_snr_mcs_table.begin(), ul_snr_mcs_table.end(), snr);
