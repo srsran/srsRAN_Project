@@ -248,21 +248,27 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_dl_data_result  data_res;
 
   // Generate DL scheduling result for provided slot and cell.
-  const sched_result* sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
-  if (sl_res == nullptr) {
+  const sched_result& sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
+  if (not sl_res.success) {
     logger.warning("Unable to compute scheduling result for slot={}, cell={}", sl_tx, cell_cfg.cell_index);
-    phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
+    if (sl_res.dl.nof_dl_symbols > 0) {
+      phy_cell.on_new_downlink_data(data_res);
+    }
+    if (sl_res.ul.nof_ul_symbols > 0) {
+      phy_cell.on_new_uplink_scheduler_results({});
+    }
+    phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
 
   mac_tracer << trace_event{"mac_sched", sched_tp};
 
   // If it is a DL slot, process results.
-  if (sl_res->dl.nof_dl_symbols > 0) {
+  if (sl_res.dl.nof_dl_symbols > 0) {
     trace_point dl_tti_req_tp = mac_tracer.now();
 
     // Assemble MAC DL scheduling request that is going to be passed to the PHY.
-    assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
+    assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res.dl);
 
     // Send DL sched result to PHY.
     phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
@@ -270,11 +276,11 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     mac_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
 
     // Start assembling Slot Data Result.
-    if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty() or
-        not sl_res->dl.paging_grants.empty()) {
+    if (not sl_res.dl.ue_grants.empty() or not sl_res.dl.rar_grants.empty() or not sl_res.dl.bc.sibs.empty() or
+        not sl_res.dl.paging_grants.empty()) {
       trace_point tx_data_req_tp = mac_tracer.now();
 
-      assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
+      assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res.dl);
 
       // Send DL Data to PHY.
       phy_cell.on_new_downlink_data(data_res);
@@ -283,13 +289,13 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
     }
   }
 
-  if (sl_res->ul.nof_ul_symbols > 0) {
+  if (sl_res.ul.nof_ul_symbols > 0) {
     trace_point ul_tti_req_tp = mac_tracer.now();
 
     // Send UL sched result to PHY.
     mac_ul_sched_result mac_ul_res{};
     mac_ul_res.slot   = sl_tx;
-    mac_ul_res.ul_res = &sl_res->ul;
+    mac_ul_res.ul_res = &sl_res.ul;
     phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
     mac_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
@@ -303,7 +309,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   trace_point cleanup_tp = mac_tracer.now();
 
   // Update DL buffer state for the allocated logical channels.
-  update_logical_channel_dl_buffer_states(sl_res->dl);
+  update_logical_channel_dl_buffer_states(sl_res.dl);
 
   // Write PCAP
   write_tx_pdu_pcap(sl_tx, sl_res, data_res);
@@ -416,39 +422,41 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
 void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res)
 {
-  for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-    for (const dl_msg_tb_info& tb_info : grant.tb_list) {
-      for (const dl_msg_lc_info& lc_info : tb_info.lc_chs_to_sched) {
-        if (not lc_info.lcid.is_sdu()) {
-          continue;
+  if (dl_res.nof_dl_symbols > 0) {
+    for (const dl_msg_alloc& grant : dl_res.ue_grants) {
+      for (const dl_msg_tb_info& tb_info : grant.tb_list) {
+        for (const dl_msg_lc_info& lc_info : tb_info.lc_chs_to_sched) {
+          if (not lc_info.lcid.is_sdu()) {
+            continue;
+          }
+
+          // Fetch RLC Bearer.
+          mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
+          srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+
+          // Update DL buffer state for the allocated logical channel.
+          dl_buffer_state_indication_message bs{};
+          bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
+          bs.lcid     = lc_info.lcid.to_lcid();
+          bs.bs       = bearer->on_buffer_state_update();
+          sched_obj.handle_dl_buffer_state_indication(bs);
         }
-
-        // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
-        srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
-
-        // Update DL buffer state for the allocated logical channel.
-        dl_buffer_state_indication_message bs{};
-        bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
-        bs.lcid     = lc_info.lcid.to_lcid();
-        bs.bs       = bearer->on_buffer_state_update();
-        sched_obj.handle_dl_buffer_state_indication(bs);
       }
     }
   }
 }
 
 void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
-                                           const sched_result*       sl_res,
+                                           const sched_result&       sl_res,
                                            const mac_dl_data_result& dl_res)
 {
-  if (not pcap.is_write_enabled()) {
+  if (not pcap.is_write_enabled() or sl_res.dl.nof_dl_symbols == 0) {
     return;
   }
 
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
-    const dl_msg_alloc&               dl_alloc = sl_res->dl.ue_grants[i];
+    const dl_msg_alloc&               dl_alloc = sl_res.dl.ue_grants[i];
     if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
       srsran::mac_nr_context_info context = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
@@ -465,7 +473,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   }
   for (unsigned i = 0; i < dl_res.paging_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& pg_pdu   = dl_res.paging_pdus[i];
-    const dl_paging_allocation&       dl_alloc = sl_res->dl.paging_grants[i];
+    const dl_paging_allocation&       dl_alloc = sl_res.dl.paging_grants[i];
     srsran::mac_nr_context_info       context  = {};
     context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
     context.direction           = PCAP_DIRECTION_DOWNLINK;

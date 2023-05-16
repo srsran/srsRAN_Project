@@ -26,6 +26,7 @@ class dummy_sched : public mac_scheduler
 public:
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
   sched_configuration_notifier& notifier;
+  sched_result                  sched_res = {};
 
   explicit dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
 
@@ -47,7 +48,7 @@ public:
     notifier.on_ue_delete_response(ue_index);
   }
 
-  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
+  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return sched_res; }
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void                handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void                handle_crc_indication(const ul_crc_indication& crc) override {}

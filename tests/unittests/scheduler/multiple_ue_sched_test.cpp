@@ -114,7 +114,7 @@ protected:
     // Initialize.
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
-    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
   }
 
   void run_slot()
@@ -124,7 +124,7 @@ protected:
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, current_slot, *bench->sched_res);

@@ -91,9 +91,9 @@ public:
   void handle_uci_indication(const uci_indication& uci) override {}
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override {}
   void handle_paging_information(const sched_paging_information& pi) override {}
-  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
+  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
   {
-    return &next_sched_result;
+    return next_sched_result;
   }
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
 };

@@ -203,6 +203,7 @@ void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 
   // Initiate new slot in the same position.
   slot                     = new_slot;
+  result.success           = true;
   result.dl.nof_dl_symbols = cfg.get_nof_dl_symbol_per_slot(new_slot);
   result.ul.nof_ul_symbols = cfg.get_nof_ul_symbol_per_slot(new_slot);
 }

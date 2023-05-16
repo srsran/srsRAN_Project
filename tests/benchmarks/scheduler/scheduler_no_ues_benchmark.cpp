@@ -104,7 +104,7 @@ void benchmark_rach_scheduling()
       // Avoid slots with SIB1, otherwise there might not be space in PDCCH.
       sch->handle_rach_indication(rach_ind);
     }
-    const sched_result* res = sch->slot_indication(sl_tx, to_du_cell_index(0));
+    const sched_result* res = &sch->slot_indication(sl_tx, to_du_cell_index(0));
 
     // ack msg3s.
     if (not res->ul.puschs.empty()) {
