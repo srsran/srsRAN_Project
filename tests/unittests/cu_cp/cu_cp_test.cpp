@@ -491,6 +491,13 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(init_ul_rrc_msg);
 
+    // check that the UE Context Release Request was sent to the AMF
+    ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+    ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
+              asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
+    ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.type(),
+              asn1::ngap::cause_c::types_opts::options::radio_network);
+
     // Inject UL RRC message containing RRC Setup Complete
     f1ap_message ul_rrc_msg =
         generate_ul_rrc_message_transfer(cu_ue_id_2, du_ue_id_2, srb_id_t::srb1, generate_rrc_setup_complete());
@@ -498,7 +505,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg);
   }
 
-  // check that UE has been added as new UE
+  // check that UE has been added as new UE (old ue is not released, this is covered by ngap unittests)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 2U);
 
   // check that the Initial UE Message was sent to the AMF
