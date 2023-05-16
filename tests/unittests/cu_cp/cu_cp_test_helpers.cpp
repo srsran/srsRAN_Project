@@ -63,6 +63,7 @@ void cu_cp_test::attach_ue(gnb_du_ue_f1ap_id_t du_ue_id,
 void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            gnb_du_ue_f1ap_id_t du_ue_id,
                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                           pci_t               pci,
                                            rnti_t              crnti)
 {
   // Connect AMF by injecting a ng_setup_response
@@ -77,7 +78,7 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
   cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = generate_f1_setup_request(pci);
 
   // Pass message to CU-CP
   cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(f1setup_msg);

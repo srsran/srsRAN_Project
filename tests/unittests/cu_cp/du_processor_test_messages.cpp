@@ -20,13 +20,13 @@ using namespace srs_cu_cp;
 
 void srsran::srs_cu_cp::generate_valid_f1_setup_request(cu_cp_f1_setup_request& f1_setup_request)
 {
-  f1ap_message f1setup_msg = generate_f1_setup_request();
+  f1ap_message f1setup_msg = generate_f1_setup_request(0);
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
 void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f1_setup_request)
 {
-  f1ap_message f1setup_msg                                                              = generate_f1_setup_request();
+  f1ap_message f1setup_msg                                                              = generate_f1_setup_request(0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list->clear();
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
@@ -34,7 +34,7 @@ void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f
 
 void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(cu_cp_f1_setup_request& f1_setup_request)
 {
-  f1ap_message f1setup_msg  = generate_f1_setup_request();
+  f1ap_message f1setup_msg  = generate_f1_setup_request(0);
   auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   f1_setup_req->gnb_du_served_cells_list->clear();
 
