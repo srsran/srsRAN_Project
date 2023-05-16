@@ -101,6 +101,10 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
+  // Notifiy CU-CP about the RRC Reestablishment Request
+  cu_cp_notifier.on_rrc_reestablishment(
+      msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
+
   // Reject RRC Reestablishment by sending RRC Setup
   task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
                                                                    asn1::rrc_nr::establishment_cause_e::mt_access,
@@ -129,7 +133,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   // Get source PCell AS config
   security::sec_as_config source_as_config = {}; // TODO
   bool                    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-  logger.debug("Recevide RRC Restablishment. short_mac_valid={}", valid);
+  logger.debug("Received RRC Restablishment. short_mac_valid={}", valid);
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)

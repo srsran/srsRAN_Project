@@ -209,6 +209,11 @@ void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
+void cu_cp::handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index)
+{
+  // TODO: Handle RRC Reestablishment
+}
+
 // private
 
 /// Create DU object with valid index
@@ -233,13 +238,15 @@ du_index_t cu_cp::add_du()
                                                                    du_processor_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,
+                                                                   rrc_ue_cu_cp_notifier,
                                                                    du_processor_task_sched,
                                                                    ue_mng,
                                                                    *cfg.cu_cp_executor);
 
-  du_processor_ev_notifier.connect_cu_cp(*this);
+  du_processor_ev_notifier.connect_cu_cp(this->get_cu_cp_du_handler());
   rrc_ue_ngap_notifier.connect_ngap(ngap_entity->get_ngap_nas_message_handler(),
                                     ngap_entity->get_ngap_control_message_handler());
+  rrc_ue_cu_cp_notifier.connect_cu_cp(this->get_cu_cp_rrc_ue_interface());
   ngap_du_processor_ev_notifiers[du_index] = {};
   ngap_du_processor_ev_notifiers.at(du_index).connect_du_processor(du.get());
 

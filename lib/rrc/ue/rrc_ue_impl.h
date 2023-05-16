@@ -30,6 +30,7 @@ public:
   rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngap_ctrl_notif_,
+              rrc_ue_reestablishment_notifier&       cu_cp_notif_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
@@ -117,15 +118,16 @@ private:
                        const char*      cause_str,
                        bool             log_hex = true);
 
-  rrc_ue_context_t              context;
-  rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGAP
-  rrc_ue_control_notifier&      ngap_ctrl_notifier;    // Control message notifier to the NGAP
-  srb_notifiers_array           srbs;                  // set notifiers for all SRBs
-  byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
-  rrc_ue_task_scheduler&        task_sched;
-  bool&                         reject_users;
-  srslog::basic_logger&         logger;
+  rrc_ue_context_t                 context;
+  rrc_ue_du_processor_notifier&    du_processor_notifier; // notifier to the DU processor
+  rrc_ue_nas_notifier&             nas_notifier;          // PDU notifier to the NGAP
+  rrc_ue_control_notifier&         ngap_ctrl_notifier;    // Control message notifier to the NGAP
+  rrc_ue_reestablishment_notifier& cu_cp_notifier;        // notifier to the CU-CP
+  srb_notifiers_array              srbs;                  // set notifiers for all SRBs
+  byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
+  rrc_ue_task_scheduler&           task_sched;
+  bool&                            reject_users;
+  srslog::basic_logger&            logger;
 
   // RRC procedures handling
   std::unique_ptr<rrc_ue_event_manager> event_mng;

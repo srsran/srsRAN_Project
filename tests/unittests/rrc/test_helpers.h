@@ -118,6 +118,19 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
+class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+{
+public:
+  void on_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) override
+  {
+    logger.info(
+        "Received RRC Reestablishment from ueId={} with old_pci={} and old_c_rnti={}", ue_index, old_pci, old_c_rnti);
+  }
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
 public:
   dummy_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}

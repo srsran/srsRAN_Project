@@ -34,6 +34,7 @@ du_processor_test::du_processor_test()
                                          ngap_ctrl_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,
+                                         rrc_ue_cu_cp_notifier,
                                          *ue_task_sched,
                                          ue_mng,
                                          ctrl_worker);

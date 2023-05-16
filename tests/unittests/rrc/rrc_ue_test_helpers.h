@@ -50,6 +50,7 @@ protected:
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
+                                           rrc_ue_cu_cp_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -225,6 +226,7 @@ private:
 
   dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                       rrc_ue_ngap_notifier;
+  dummy_rrc_ue_cu_cp_adapter                      rrc_ue_cu_cp_notifier;
   timer_manager                                   timers;
   std::unique_ptr<dummy_rrc_pdu_notifier>         rrc_pdu_notifier;
   std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier;

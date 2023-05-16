@@ -259,6 +259,19 @@ public:
   virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
 };
 
+/// Interface to notify about RRC Reestablishment Requests.
+class rrc_ue_reestablishment_notifier
+{
+public:
+  virtual ~rrc_ue_reestablishment_notifier() = default;
+
+  /// \brief Notify about the reception of an RRC Reestablishment Request.
+  /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
+  /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  virtual void on_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) = 0;
+};
+
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,

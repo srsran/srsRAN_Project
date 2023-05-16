@@ -76,6 +76,9 @@ public:
   // Paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
+  // RRC UE handler
+  void handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) override;
+
   // cu_cp interface
   cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }
   cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
@@ -85,6 +88,7 @@ public:
   cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
   cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
   cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }
+  cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface() override { return *this; }
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.
@@ -170,6 +174,9 @@ private:
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;
   ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
+
+  // RRC UE to CU-CP adapter
+  rrc_ue_cu_cp_adapter rrc_ue_cu_cp_notifier;
 
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_notifier;

@@ -156,6 +156,19 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
+/// Interface for an RRC UE entity to communicate with the CU-CP.
+class cu_cp_rrc_ue_interface
+{
+public:
+  virtual ~cu_cp_rrc_ue_interface() = default;
+
+  /// \brief Handle the reception of an RRC Reestablishment Request.
+  /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
+  /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  virtual void handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) = 0;
+};
+
 class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_cu_up_handler,
@@ -163,7 +176,8 @@ class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_e1ap_handler,
                         public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_handler,
-                        public cu_cp_ngap_paging_handler
+                        public cu_cp_ngap_paging_handler,
+                        public cu_cp_rrc_ue_interface
 {
 public:
   virtual ~cu_cp_interface() = default;
@@ -176,6 +190,7 @@ public:
   virtual cu_cp_ng_interface&            get_cu_cp_ng_interface()            = 0;
   virtual cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() = 0;
   virtual cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler()     = 0;
+  virtual cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface()        = 0;
 
   virtual void start() = 0;
 };
