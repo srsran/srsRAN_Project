@@ -62,8 +62,7 @@ pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spac
 /// \param ss_cfg Search Space configuration.
 /// \param active_bwp_ul_common Active BWP UL common configuration.
 /// \param active_bwp_ul_ded Active BWP UL UE-dedicated configuration.
-/// \param dmrs_typeA_pos
-/// \return List of PUSCH time domain resources.
+/// \return A list of valid PUSCH time-domain allocation configurations to choose from.
 span<const pusch_time_domain_resource_allocation>
 get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_cfg,
                                   const bwp_uplink_common&          active_bwp_ul_common,
