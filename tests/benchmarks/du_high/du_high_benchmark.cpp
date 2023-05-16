@@ -168,14 +168,17 @@ struct du_high_single_cell_worker_manager {
     ul_worker.stop();
   }
 
-  task_worker              ctrl_worker{"CTRL", task_worker_queue_size};
-  task_worker              dl_worker{"DU-DL#0", task_worker_queue_size};
-  task_worker              ul_worker{"DU-UL#0", task_worker_queue_size};
-  task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     dl_exec{dl_worker};
-  task_worker_executor     ul_exec{ul_worker};
-  pcell_ue_executor_mapper ue_exec_mapper{&ul_exec};
-  cell_executor_mapper     cell_exec_mapper{std::initializer_list<task_executor*>{&dl_exec}};
+  task_worker                  ctrl_worker{"CTRL", task_worker_queue_size};
+  task_worker                  dl_worker{"DU-DL#0", task_worker_queue_size};
+  task_worker                  ul_worker{"DU-UL#0", task_worker_queue_size};
+  task_worker_executor         ctrl_exec{ctrl_worker};
+  task_worker_executor         dl_exec{dl_worker};
+  task_worker_executor         ul_exec{ul_worker};
+  du_high_executor_mapper_impl du_high_exec_mapper{
+      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&dl_exec}),
+      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ul_exec}),
+      ctrl_exec,
+      ctrl_exec};
 };
 
 /// \brief Emulator of the PHY, FAPI and UE from the perspective of the DU-high. This class should be able to provide
@@ -258,18 +261,16 @@ public:
   du_high_bench()
   {
     // Instantiate a DU-high object.
-    cfg.du_mng_executor = &workers.ctrl_exec;
-    cfg.cell_executors  = &workers.cell_exec_mapper;
-    cfg.ue_executors    = &workers.ue_exec_mapper;
-    cfg.f1ap_notifier   = &sim_cu_cp;
-    cfg.f1u_gw          = &sim_cu_up;
-    cfg.phy_adapter     = &sim_phy;
-    cfg.timers          = &timers;
-    cfg.cells           = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
-    cfg.qos             = config_helpers::make_default_du_qos_config_list();
-    cfg.pcap            = &pcap;
-    du_hi               = std::make_unique<du_high>(cfg);
+    cfg.exec_mapper   = &workers.du_high_exec_mapper;
+    cfg.f1ap_notifier = &sim_cu_cp;
+    cfg.f1u_gw        = &sim_cu_up;
+    cfg.phy_adapter   = &sim_phy;
+    cfg.timers        = &timers;
+    cfg.cells         = {config_helpers::make_default_du_cell_config()};
+    cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
+    cfg.qos           = config_helpers::make_default_du_qos_config_list();
+    cfg.pcap          = &pcap;
+    du_hi             = std::make_unique<du_high>(cfg);
 
     // Connect CU back to DU.
     sim_cu_cp.ctrl_exec        = &workers.ctrl_exec;

@@ -190,8 +190,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> radio_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  optional<pcell_ue_executor_mapper>                              ue_exec_mapper;
-  optional<cell_executor_mapper>                                  cell_exec_mapper;
+  std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
 private:
   std::unique_ptr<du_cell_task_worker>                               du_cell_worker;
@@ -310,8 +309,12 @@ private:
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
 
     // Executor mappers.
-    ue_exec_mapper.emplace(pcell_ue_executor_mapper{du_ue_exec.get()});
-    cell_exec_mapper.emplace(cell_executor_mapper({du_cell_exec.get()}, {du_slot_exec.get()}));
+    du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
+        std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{du_cell_exec.get()},
+                                               std::initializer_list<task_executor*>{du_slot_exec.get()}),
+        std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
+        *du_ctrl_exec,
+        *du_ctrl_exec);
   }
 };
 
@@ -745,9 +748,7 @@ int main(int argc, char** argv)
   phy_dummy phy(mac_adaptor->get_cell_result_notifier());
 
   srs_du::du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor               = workers.du_ctrl_exec.get();
-  du_hi_cfg.ue_executors                  = &*workers.ue_exec_mapper;
-  du_hi_cfg.cell_executors                = &*workers.cell_exec_mapper;
+  du_hi_cfg.exec_mapper                   = workers.du_high_exec_mapper.get();
   du_hi_cfg.f1ap_notifier                 = &f1ap_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;

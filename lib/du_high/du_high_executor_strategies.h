@@ -12,8 +12,7 @@
 
 #include "srsran/adt/circular_array.h"
 #include "srsran/adt/span.h"
-#include "srsran/du_high/du_high_cell_executor_mapper.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -114,6 +113,36 @@ private:
   /// \c cell_execs or point to a sync_task_executor adapter stored in \c blocking_slot_execs, depending on whether
   /// slot indication tasks are processed synchronously or asynchronously.
   std::vector<task_executor*> slot_execs;
+};
+
+/// \brief Task Executor Mapper for DU-high.
+class du_high_executor_mapper_impl final : public du_high_executor_mapper
+{
+public:
+  explicit du_high_executor_mapper_impl(std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_,
+                                        std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_,
+                                        task_executor&                                du_ctrl_exec_,
+                                        task_executor&                                timer_exec_) :
+    cell_mapper_ptr(std::move(cell_mapper_)),
+    ue_mapper_ptr(std::move(ue_mapper_)),
+    du_ctrl_exec(&du_ctrl_exec_),
+    timer_exec(&timer_exec_)
+  {
+  }
+
+  du_high_cell_executor_mapper& cell_mapper() override { return *cell_mapper_ptr; }
+
+  du_high_ue_executor_mapper& ue_mapper() override { return *ue_mapper_ptr; }
+
+  task_executor& du_control_executor() override { return *du_ctrl_exec; }
+
+  task_executor& du_timer_executor() override { return *timer_exec; }
+
+private:
+  std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
+  std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;
+  task_executor*                                du_ctrl_exec;
+  task_executor*                                timer_exec;
 };
 
 } // namespace srsran

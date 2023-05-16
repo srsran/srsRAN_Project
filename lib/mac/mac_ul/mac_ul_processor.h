@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "mac_ul_ue_manager.h"
 #include "pdu_rx_handler.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/support/async/execute_on.h"

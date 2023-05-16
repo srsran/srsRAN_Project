@@ -309,14 +309,17 @@ struct worker_manager {
     radio_worker.stop();
   }
 
-  task_worker              ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
-  task_worker              cell_workers{"DU-CELL#0", task_worker_queue_size};
-  task_worker              ue_workers{"UE#0", task_worker_queue_size};
-  task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     cell_execs{cell_workers};
-  task_worker_executor     ue_execs{ue_workers};
-  pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
-  cell_executor_mapper     cell_exec_mapper{std::initializer_list<task_executor*>{&cell_execs}};
+  task_worker                  ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
+  task_worker                  cell_workers{"DU-CELL#0", task_worker_queue_size};
+  task_worker                  ue_workers{"UE#0", task_worker_queue_size};
+  task_worker_executor         ctrl_exec{ctrl_worker};
+  task_worker_executor         cell_execs{cell_workers};
+  task_worker_executor         ue_execs{ue_workers};
+  du_high_executor_mapper_impl du_high_exec_mapper{
+      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_execs}),
+      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_execs}),
+      ctrl_exec,
+      ctrl_exec};
   // Downlink Lower PHY task executors.
   task_worker          lower_dl_task_worker{"low_dl", 1, os_thread_realtime_priority::max()};
   task_worker_executor lower_tx_task_executor{{lower_dl_task_worker}};
@@ -693,9 +696,7 @@ int main(int argc, char** argv)
   timer_manager             app_timers{256};
   std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
   du_high_configuration     du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor           = &workers.ctrl_exec;
-  du_hi_cfg.ue_executors              = &workers.ue_exec_mapper;
-  du_hi_cfg.cell_executors            = &workers.cell_exec_mapper;
+  du_hi_cfg.exec_mapper               = &workers.du_high_exec_mapper;
   du_hi_cfg.f1ap_notifier             = &f1ap_notifier;
   du_hi_cfg.phy_adapter               = &phy;
   du_hi_cfg.timers                    = &app_timers;
