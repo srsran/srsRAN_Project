@@ -147,7 +147,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    rar.grants.size());
     for (const rar_ul_grant& grant : rar.grants) {
       fmt::format_to(fmtbuf,
-                     "{}tc-rnti={:#x}: rapid={} ta={} resource={}",
+                     "{}tc-rnti={:#x}: rapid={} ta={} time_res={}",
                      (&grant == &rar.grants.front()) ? "" : ", ",
                      grant.temp_crnti,
                      grant.rapid,
