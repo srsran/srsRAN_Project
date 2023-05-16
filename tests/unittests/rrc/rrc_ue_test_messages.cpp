@@ -97,7 +97,8 @@ byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 
-  srsran_assert(ul_ccch_msg.pack(bref) == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+  const asn1::SRSASN_CODE ret = ul_ccch_msg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
 }
