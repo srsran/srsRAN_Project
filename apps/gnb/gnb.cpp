@@ -60,7 +60,6 @@
 #include "srsran/support/executors/multi_priority_task_worker.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
-#include <csignal>
 #include <unordered_map>
 
 using namespace srsran;
@@ -150,6 +149,7 @@ struct worker_manager {
   void stop()
   {
     du_cell_worker->stop();
+    gnb_ctrl_worker->stop();
     for (auto& worker : workers) {
       worker.second->stop();
     }
@@ -175,6 +175,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> cu_up_exec;
   std::unique_ptr<task_executor> gtpu_pdu_exec;
   std::unique_ptr<task_executor> du_ctrl_exec;
+  std::unique_ptr<task_executor> du_timer_exec;
   std::unique_ptr<task_executor> du_ue_exec;
   std::unique_ptr<task_executor> du_cell_exec;
   std::unique_ptr<task_executor> du_slot_exec;
@@ -193,9 +194,11 @@ struct worker_manager {
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
 private:
-  using du_cell_worker_type = multi_priority_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using du_cell_worker_type  = multi_priority_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using gnb_ctrl_worker_type = multi_priority_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
 
   std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
+  std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
 
@@ -222,9 +225,13 @@ private:
     static const uint32_t task_worker_queue_size = 2048;
 
     // Instantiate workers
-    create_worker("gnb_ctrl", task_worker_queue_size);
     create_worker("gnb_ue", 512);
-    du_cell_worker = std::make_unique<du_cell_worker_type>("du_cell",
+    gnb_ctrl_worker = std::make_unique<du_cell_worker_type>("gnb_ctrl",
+                                                            std::array<unsigned, 2>{64, task_worker_queue_size},
+                                                            std::chrono::microseconds{100},
+                                                            os_thread_realtime_priority::max() - 2,
+                                                            os_sched_affinity_bitmask{});
+    du_cell_worker  = std::make_unique<du_cell_worker_type>("du_cell",
                                                            std::array<unsigned, 2>{8, task_worker_queue_size},
                                                            std::chrono::microseconds{10},
                                                            os_thread_realtime_priority::max() - 2,
@@ -240,10 +247,11 @@ private:
     create_worker("radio", task_worker_queue_size);
 
     // Instantiate task executors
-    cu_cp_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    cu_cp_exec    = make_task_executor<1>(*gnb_ctrl_worker);
     cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
     gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-    du_ctrl_exec  = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    du_ctrl_exec  = make_task_executor<1>(*gnb_ctrl_worker);
+    du_timer_exec = make_task_executor<0>(*gnb_ctrl_worker);
     du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
     du_cell_exec  = make_task_executor<1>(*du_cell_worker);
     if (blocking_mode_active) {
@@ -319,7 +327,7 @@ private:
                                                std::initializer_list<task_executor*>{du_slot_exec.get()}),
         std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
         *du_ctrl_exec,
-        *du_ctrl_exec);
+        *du_timer_exec);
   }
 };
 
