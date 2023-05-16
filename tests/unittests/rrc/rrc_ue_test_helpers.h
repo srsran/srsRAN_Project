@@ -98,10 +98,10 @@ protected:
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
-  void receive_invalid_reestablishment_request()
+  void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
   {
     // inject RRC Reestablishment Request into UE object
-    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu());
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu(pci, c_rnti));
   }
 
   void receive_setup_complete()

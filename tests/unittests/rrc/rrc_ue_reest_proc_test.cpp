@@ -37,7 +37,7 @@ protected:
 TEST_F(rrc_ue_reest, when_invalid_reestablishment_request_received_then_rrc_setup_sent)
 {
   connect_amf();
-  receive_invalid_reestablishment_request();
+  receive_invalid_reestablishment_request(0, to_rnti(0x4601));
 
   // check if the RRC Reestablishment Request was generated
   ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);

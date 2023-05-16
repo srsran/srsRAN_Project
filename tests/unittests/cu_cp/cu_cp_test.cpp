@@ -485,7 +485,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 
     // Add invalid RRC Reestablishment Request to Initial UL RRC message
     init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container.value =
-        generate_invalid_rrc_reestablishment_request_pdu();
+        generate_invalid_rrc_reestablishment_request_pdu(pci, crnti);
 
     // Create Initial UL RRC message
     test_logger.info("Injecting Initial UL RRC message");

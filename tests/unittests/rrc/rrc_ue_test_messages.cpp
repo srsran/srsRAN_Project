@@ -83,7 +83,7 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   return args;
 }
 
-byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu()
+byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
@@ -91,8 +91,8 @@ byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(
   asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
   auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
-  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = 0;
-  rrc_reest_req.rrc_reest_request.ue_id.pci    = 0;
+  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
+  rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
   rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0);
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);

@@ -26,7 +26,7 @@ security::sec_128_key make_sec_128_key(std::string hex_str);
 cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_request();
 
 /// \brief Generate RRC Container with invalid RRC Reestablishment Request.
-byte_buffer generate_invalid_rrc_reestablishment_request_pdu();
+byte_buffer generate_invalid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti);
 
 } // namespace srs_cu_cp
 } // namespace srsran
