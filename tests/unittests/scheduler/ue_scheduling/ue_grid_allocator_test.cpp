@@ -120,16 +120,17 @@ TEST_F(ue_grid_allocator_tester,
 
   ue& u = add_ue(ue_creation_req);
 
+  const crb_interval crbs =
+      get_coreset_crbs(ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back());
+
   ue_pdsch_grant grant{
       .user           = &u,
       .cell_index     = to_du_cell_index(0),
       .h_id           = to_harq_id(0),
       .ss_id          = to_search_space_id(2),
       .time_res_index = 0,
-      .crbs           = {get_coreset_crbs(
-                   ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back())
-                             .start(),
-                         cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().stop()},
+      .crbs           = {crbs.start(),
+                         crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()},
       .dci_fmt        = dci_dl_format::f1_0,
       .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
