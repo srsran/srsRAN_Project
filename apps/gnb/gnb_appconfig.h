@@ -73,8 +73,8 @@ struct prach_appconfig {
   optional<unsigned> total_nof_ra_preambles;
 };
 
-/// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
-struct tdd_ul_dl_pattern_config {
+/// TDD configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
+struct tdd_ul_dl_appconfig {
   /// Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
   float dl_ul_tx_period = 5.0F;
   /// Values: {0,...,maxNrofSlots=80}.
@@ -85,12 +85,6 @@ struct tdd_ul_dl_pattern_config {
   unsigned nof_ul_slots = 3;
   /// Values: {0,...,maxNrofSymbols-1=13}.
   unsigned nof_ul_symbols = 0;
-};
-
-/// TDD configuration. See TS 38.331, \c TDD-UL-DL-ConfigCommon.
-struct tdd_ul_dl_config {
-  tdd_ul_dl_pattern_config           pattern1;
-  optional<tdd_ul_dl_pattern_config> pattern2;
 };
 
 /// PDCCH application configuration.
@@ -172,7 +166,7 @@ struct base_cell_appconfig {
   /// Amplitude control configuration.
   amplitude_control_appconfig amplitude_cfg;
   /// TDD slot configuration.
-  optional<tdd_ul_dl_config> tdd_pattern_cfg;
+  optional<tdd_ul_dl_appconfig> tdd_ul_dl_cfg;
 };
 
 /// Cell configuration

@@ -119,32 +119,18 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
 
     // TDD UL DL config.
-    if (not band_helper::is_paired_spectrum(param.band.value()) and
-        config.common_cell_cfg.tdd_pattern_cfg.has_value()) {
+    if (not band_helper::is_paired_spectrum(param.band.value()) and config.common_cell_cfg.tdd_ul_dl_cfg.has_value()) {
       if (not out_cell.tdd_ul_dl_cfg_common.has_value()) {
         report_error("TDD UL DL configuration is absent for TDD Cell with id={} and pci={}\n", cell_id, base_cell.pci);
       }
-      const auto& tdd_cfg = config.common_cell_cfg.tdd_pattern_cfg.value();
+      const auto& tdd_cfg = config.common_cell_cfg.tdd_ul_dl_cfg.value();
 
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots = (unsigned)std::round(
-          tdd_cfg.pattern1.dl_ul_tx_period * get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots   = tdd_cfg.pattern1.nof_dl_slots;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.pattern1.nof_dl_symbols;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.pattern1.nof_ul_slots;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.pattern1.nof_ul_symbols;
-
-      if (tdd_cfg.pattern2.has_value()) {
-        if (not out_cell.tdd_ul_dl_cfg_common.value().pattern2.has_value()) {
-          out_cell.tdd_ul_dl_cfg_common.value().pattern2.emplace();
-        }
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().dl_ul_tx_period_nof_slots =
-            (unsigned)std::round(tdd_cfg.pattern2->dl_ul_tx_period *
-                                 get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_slots   = tdd_cfg.pattern2->nof_dl_slots;
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_symbols = tdd_cfg.pattern2->nof_dl_symbols;
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_slots   = tdd_cfg.pattern2->nof_ul_slots;
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_symbols = tdd_cfg.pattern2->nof_ul_symbols;
-      }
+          tdd_cfg.dl_ul_tx_period * get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots   = tdd_cfg.nof_dl_slots;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.nof_dl_symbols;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.nof_ul_slots;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.nof_ul_symbols;
     }
 
     logger.info(
