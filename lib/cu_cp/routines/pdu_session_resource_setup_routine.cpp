@@ -560,6 +560,56 @@ void fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, const pdcp_confi
   }
 }
 
+void fill_e1ap_pdu_session_res_to_setup_list(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>& pdu_session_res_to_setup_list,
+    srslog::basic_logger&                                                    logger,
+    const up_config_update&                                                  next_config,
+    const cu_cp_pdu_session_resource_setup_request&                          setup_msg,
+    const ue_configuration&                                                  ue_cfg)
+{
+  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
+    const auto& session = setup_item.second;
+    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
+                  "Setup request doesn't contain config for PDU session id={}",
+                  session.id);
+    // Obtain PDU session config from original setup request.
+    const auto&                        pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
+    e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
+
+    e1ap_pdu_session_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
+    e1ap_pdu_session_item.pdu_session_type  = pdu_session_cfg.pdu_session_type;
+    e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
+    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
+
+    e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
+    e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
+
+    e1ap_pdu_session_item.pdu_session_inactivity_timer = ue_cfg.inactivity_timer;
+
+    for (const auto& drb_to_setup : session.drbs) {
+      e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
+      e1ap_drb_setup_item.drb_id               = drb_to_setup.first;
+      e1ap_drb_setup_item.drb_inactivity_timer = ue_cfg.inactivity_timer;
+      e1ap_drb_setup_item.sdap_cfg             = drb_to_setup.second.sdap_cfg;
+      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
+
+      e1ap_cell_group_info_item e1ap_cell_group_item;
+      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
+      e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
+
+      for (const auto& request_item : pdu_session_cfg.qos_flow_setup_request_items) {
+        e1ap_qos_flow_qos_param_item e1ap_qos_item;
+        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
+        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+      }
+
+      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
+    }
+
+    pdu_session_res_to_setup_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
+  }
+}
+
 void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_bearer_context_setup_request& e1ap_request)
 {
@@ -578,52 +628,9 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_request.ue_inactivity_timer = ue_cfg.inactivity_timer;
   }
 
-  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
-    const auto& session = setup_item.second;
-    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
-                  "Setup request doesn't contain config for PDU session id={}",
-                  session.id);
-    // Obtain PDU session config from original setup request.
-    const auto&                        pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
-    e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
-
-    e1ap_pdu_session_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
-    e1ap_pdu_session_item.pdu_session_type  = pdu_session_cfg.pdu_session_type;
-    e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
-    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
-
-    e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
-    e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
-
-    for (const auto& drb_to_setup : session.drbs) {
-      e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id   = drb_to_setup.first;
-      e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
-
-      e1ap_cell_group_info_item e1ap_cell_group_item;
-      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-      e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
-
-      for (const auto& request_item : pdu_session_cfg.qos_flow_setup_request_items) {
-        e1ap_qos_flow_qos_param_item e1ap_qos_item;
-        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
-      }
-
-      if (e1ap_request.activity_notif_level == "drb") {
-        e1ap_drb_setup_item.drb_inactivity_timer = ue_cfg.inactivity_timer;
-      }
-
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
-    }
-
-    if (e1ap_request.activity_notif_level == "pdu-session") {
-      e1ap_pdu_session_item.pdu_session_inactivity_timer = ue_cfg.inactivity_timer;
-    }
-
-    e1ap_request.pdu_session_res_to_setup_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
-  }
+  // Add new PDU sessions.
+  fill_e1ap_pdu_session_res_to_setup_list(
+      e1ap_request.pdu_session_res_to_setup_list, logger, next_config, setup_msg, ue_cfg);
 }
 
 // Helper to fill a Bearer Context Modification request if it is the initial E1AP message
@@ -638,48 +645,12 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
       e1ap_request.ng_ran_bearer_context_mod_request.emplace();
 
   // Add new PDU sessions.
-  for (const auto& setup_item : next_config.pdu_sessions_to_setup_list) {
-    const auto& session = setup_item.second;
-    srsran_assert(setup_msg.pdu_session_res_setup_items.contains(session.id),
-                  "Setup request doesn't contain config for PDU session id={}",
-                  session.id);
-    // Obtain PDU session config from original setup request.
-    const auto& pdu_session_cfg = setup_msg.pdu_session_res_setup_items[session.id];
-
-    // TODO: Add helper function to avoid duplicated code for this item.
-    e1ap_pdu_session_res_to_setup_mod_item setup_mod_item;
-    setup_mod_item.pdu_session_id    = pdu_session_cfg.pdu_session_id;
-    setup_mod_item.pdu_session_type  = pdu_session_cfg.pdu_session_type;
-    setup_mod_item.snssai            = pdu_session_cfg.s_nssai;
-    setup_mod_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
-
-    setup_mod_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
-    setup_mod_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
-
-    // Add DRBs for this PDU session.
-    for (const auto& drb_to_setup : session.drbs) {
-      e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item;
-      drb_to_setup_mod_item.drb_id   = drb_to_setup.first;
-      drb_to_setup_mod_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
-
-      fill_e1ap_drb_pdcp_config(drb_to_setup_mod_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
-
-      e1ap_cell_group_info_item e1ap_cell_group_item;
-      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-      drb_to_setup_mod_item.cell_group_info.push_back(e1ap_cell_group_item);
-
-      // Setup QoS flows
-      for (const auto& qos_flow_to_setup : pdu_session_cfg.qos_flow_setup_request_items) {
-        e1ap_qos_flow_qos_param_item e1ap_qos_item;
-        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_to_setup);
-        drb_to_setup_mod_item.flow_map_info.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
-      }
-
-      setup_mod_item.drb_to_setup_mod_list_ng_ran.emplace(drb_to_setup_mod_item.drb_id, drb_to_setup_mod_item);
-    }
-
-    e1ap_bearer_context_mod.pdu_session_res_to_setup_mod_list.emplace(session.id, setup_mod_item);
-  }
+  fill_e1ap_pdu_session_res_to_setup_list(
+      e1ap_request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list,
+      logger,
+      next_config,
+      setup_msg,
+      ue_cfg);
 
   // Remove PDU sessions.
   for (const auto& pdu_session_id : next_config.pdu_sessions_to_remove_list) {

@@ -576,7 +576,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
                                res_to_setup_mod_item.security_ind.maximum_ipdatarate.value());
         }
 
-        for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran) {
+        for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_list_ng_ran) {
           asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;
           asn1_drb_to_setup_mod_item.drb_id = drb_id_to_uint(drb_to_setup_mod_item.drb_id);
 
@@ -610,7 +610,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           }
 
           // qos flow_map_info
-          for (const auto& qos_flow_info_item : drb_to_setup_mod_item.flow_map_info) {
+          for (const auto& qos_flow_info_item : drb_to_setup_mod_item.qos_flow_info_to_be_setup) {
             asn1::e1ap::qos_flow_qos_param_item_s asn1_qos_flow_info_item;
             fill_asn1_qos_flow_info_item(asn1_qos_flow_info_item, qos_flow_info_item);
             asn1_drb_to_setup_mod_item.flow_map_info.push_back(asn1_qos_flow_info_item);
