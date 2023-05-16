@@ -73,10 +73,11 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // If there are skipped slots, handle them. Otherwise, the cell grid and cached results are not correctly cleared.
   if (SRSRAN_LIKELY(res_grid.slot_tx().valid())) {
     while (SRSRAN_UNLIKELY(res_grid.slot_tx() + 1 != sl_tx)) {
-      logger.info("Status: Detected skipped slot={}.", res_grid.slot_tx() + 1);
-      res_grid.slot_indication(res_grid.slot_tx() + 1);
-      pdcch_sch.slot_indication(res_grid.slot_tx() + 1);
-      pucch_alloc.slot_indication(res_grid.slot_tx() + 1);
+      slot_point skipped_slot = res_grid.slot_tx() + 1;
+      logger.info("Status: Detected skipped slot={}.", skipped_slot);
+      res_grid.slot_indication(skipped_slot);
+      pdcch_sch.slot_indication(skipped_slot);
+      pucch_alloc.slot_indication(skipped_slot);
     }
   }
 
