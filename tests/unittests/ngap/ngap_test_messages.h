@@ -116,6 +116,13 @@ ngap_message generate_invalid_initial_context_setup_request_message(amf_ue_id_t 
 ngap_message generate_invalid_initial_context_setup_request_message_with_pdu_session(amf_ue_id_t amf_ue_id,
                                                                                      ran_ue_id_t ran_ue_id);
 
+/// \brief Generate an valid dummy UE Context Release Command Message with AMF UE NGAP ID.
+ngap_message generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t amf_ue_id);
+
+/// \brief Generate an valid dummy UE Context Release Command Message with UE NGAP ID pair.
+ngap_message generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_ue_id_t amf_ue_id,
+                                                                            ran_ue_id_t ran_ue_id);
+
 /// \brief Generate a dummy PDU Session Resource Setup Request base.
 ngap_message generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 

@@ -227,6 +227,39 @@ srsran::srs_cu_cp::generate_valid_initial_context_setup_request_message_with_pdu
   return ngap_msg;
 }
 
+ngap_message srsran::srs_cu_cp::generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t amf_ue_id)
+{
+  ngap_message ngap_msg = {};
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+
+  auto& ue_context_release_cmd = ngap_msg.pdu.init_msg().value.ue_context_release_cmd();
+  ue_context_release_cmd->ue_ngap_ids.value.set_amf_ue_ngap_id() = amf_ue_id_to_uint(amf_ue_id);
+  auto& cause = ue_context_release_cmd->cause.value.set_radio_network();
+  cause       = asn1::ngap::cause_radio_network_opts::options::radio_conn_with_ue_lost;
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_ue_id_t amf_ue_id,
+                                                                                               ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = {};
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+
+  auto& ue_context_release_cmd = ngap_msg.pdu.init_msg().value.ue_context_release_cmd();
+  auto& ue_id_pair             = ue_context_release_cmd->ue_ngap_ids.value.set_ue_ngap_id_pair();
+  ue_id_pair.amf_ue_ngap_id    = amf_ue_id_to_uint(amf_ue_id);
+  ue_id_pair.ran_ue_ngap_id    = ran_ue_id_to_uint(ran_ue_id);
+  auto& cause                  = ue_context_release_cmd->cause.value.set_radio_network();
+  cause                        = asn1::ngap::cause_radio_network_opts::options::radio_conn_with_ue_lost;
+
+  return ngap_msg;
+}
+
 ngap_message srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
                                                                                        ran_ue_id_t ran_ue_id)
 {
