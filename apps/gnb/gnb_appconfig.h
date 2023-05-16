@@ -114,7 +114,7 @@ struct pdsch_appconfig {
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
-  unsigned max_consecutive_kos = 1000;
+  unsigned max_consecutive_kos = 100;
 };
 
 /// PUSCH application configuration.
@@ -126,7 +126,7 @@ struct pusch_appconfig {
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
   /// Maximum number of consecutive UL KOs before an RLF is reported.
-  unsigned max_consecutive_kos = 1000;
+  unsigned max_consecutive_kos = 100;
 };
 
 /// Amplitude control application configuration.

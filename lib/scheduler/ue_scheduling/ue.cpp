@@ -41,23 +41,6 @@ void ue::slot_indication(slot_point sl_tx)
     if (ue_du_cells[i] != nullptr) {
       // Clear old HARQs.
       ue_du_cells[i]->harqs.slot_indication(sl_tx);
-
-      // Check if the UE has had too many KOs. If so, force a BSR=0.
-      if (ue_du_cells[i]->get_metrics().consecutive_pusch_kos >= expert_cfg.max_consecutive_pusch_kos) {
-        ue_du_cells[i]->get_metrics().consecutive_pusch_kos = 0;
-        ul_bsr_indication_message bsr{};
-        bsr.ue_index   = ue_index;
-        bsr.crnti      = crnti;
-        bsr.type       = bsr_format::LONG_BSR;
-        bsr.cell_index = ue_du_cells[i]->cell_index;
-        bsr.reported_lcgs.resize(MAX_NOF_LCGS);
-        for (unsigned j = 0; j != bsr.reported_lcgs.size(); ++j) {
-          bsr.reported_lcgs[j].lcg_id    = uint_to_lcg_id(j);
-          bsr.reported_lcgs[j].nof_bytes = 0;
-        }
-        ul_lc_ch_mgr.handle_bsr_indication(bsr);
-        logger.warning("ue={} rnti={:#x}: Forcing BSR=0. Cause: Too many consecutive PUSCH KOs", ue_index, crnti);
-      }
     }
   }
 }

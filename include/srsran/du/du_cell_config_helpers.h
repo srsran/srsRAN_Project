@@ -52,7 +52,6 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.max_nof_harq_retxs = 4;
   // Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
   cfg.ue.max_msg4_mcs                     = 7;
-  cfg.ue.max_consecutive_pusch_kos        = 128;
   cfg.ue.initial_ul_sinr                  = 5;
   cfg.ue.enable_csi_rs_pdsch_multiplexing = true;
 

@@ -32,8 +32,6 @@ struct scheduler_ue_expert_config {
   unsigned                      max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
-  /// Maximum consecutive PUSCH KOs, before scheduler de-prioritizes UE.
-  unsigned max_consecutive_pusch_kos;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
   double initial_ul_sinr;
   /// Enable multiplexing of CSI-RS and PDSCH.
