@@ -49,7 +49,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   // Create layers
   ngap_entity = create_ngap(
       cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
-  ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager());
+  ngap_adapter.connect_ngap(ngap_entity->get_ngap_connection_manager(),
+                            ngap_entity->get_ngap_control_message_handler());
   du_processor_ngap_notifier.connect_ngap(ngap_entity->get_ngap_control_message_handler());
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
@@ -212,6 +213,13 @@ void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
 void cu_cp::handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index)
 {
   // TODO: Handle RRC Reestablishment
+
+  // Release the old UE
+  cu_cp_ue_context_release_request release_req;
+  release_req.ue_index = ue_mng.get_ue_index(old_pci, old_c_rnti);
+  release_req.cause    = cause_t::radio_network;
+
+  ngap_adapter.on_ue_context_release_request(release_req);
 }
 
 // private
