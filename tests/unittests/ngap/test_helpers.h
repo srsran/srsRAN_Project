@@ -107,6 +107,8 @@ public:
   void             set_ue_config(ue_configuration ue_config_) { ue_config = ue_config_; }
   ue_configuration get_ue_config() override { return ue_config; }
 
+  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override { return ue_index_t::invalid; }
+
   ngap_ue* add_ue(ue_index_t                          ue_index,
                   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
                   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,

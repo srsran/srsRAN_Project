@@ -15,6 +15,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/ran/nr_cgi_helpers.h"
+#include "srsran/ran/pci_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -98,6 +99,11 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
     }
 
     du_cell.pci = served_cell.served_cell_info.nr_pci;
+    if (not srsran::config_helpers::is_valid(du_cell.pci)) {
+      logger.error("Not handling F1 setup, invalid PCI for cell {}", du_cell.pci);
+      send_f1_setup_failure(cause_t::radio_network);
+      return;
+    }
 
     if (not served_cell.served_cell_info.five_gs_tac.has_value()) {
       logger.error("Not handling F1 setup, missing TAC for cell {}", du_cell.cell_index);
@@ -208,7 +214,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_ue(context.du_index, msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(context.du_index, cell_db.at(pcell_index).pci, msg.c_rnti);
   if (ue == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;

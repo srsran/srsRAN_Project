@@ -54,7 +54,7 @@ public:
   f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
 
-  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(); };
+  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(context.du_index); };
 
   // du_processor_f1ap_interface
   ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;

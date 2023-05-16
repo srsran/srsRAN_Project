@@ -21,7 +21,10 @@ namespace srs_cu_cp {
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
-  cu_cp_ue(const ue_index_t ue_index_, const rnti_t c_rnti_) : ue_index(ue_index_), c_rnti(c_rnti_) {}
+  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const rnti_t c_rnti_) :
+    ue_index(ue_index_), pci(pci_), c_rnti(c_rnti_)
+  {
+  }
 
   // generic_ue
 
@@ -38,6 +41,9 @@ public:
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override { return *rrc_ue_notifier; }
+
+  /// \brief Get the PCI of the UE.
+  pci_t get_pci() override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
   rnti_t get_c_rnti() override { return c_rnti; }
@@ -128,6 +134,7 @@ private:
 
   // du ue context
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
+  pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = INVALID_RNTI;
 
   std::map<srb_id_t, cu_srb_context>            srbs;
@@ -152,6 +159,11 @@ public:
 
   // common
 
+  /// \brief Get the UE index of the UE.
+  /// \param[in] pci The PCI of the cell the UE is/was connected to.
+  /// \param[in] c_rnti The RNTI of the UE.
+  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override;
+
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   ue_configuration get_ue_config() override { return ue_config; }
@@ -161,9 +173,10 @@ public:
   /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
   /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
   /// \param[in] du_index Index of the DU.
+  /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(du_index_t du_index, rnti_t rnti) override;
+  du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) override;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
@@ -173,15 +186,6 @@ public:
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
   du_ue* find_du_ue(ue_index_t ue_index) override;
-
-  /// \brief Find the index the DU UE with the given RNTI.
-  /// \param[in] rnti RNTI of the UE to be found.
-  /// \return Index of the DU UE if found, invalid index otherwise.
-  ue_index_t get_ue_index(rnti_t rnti) override;
-
-  /// \brief Get the number of UEs connected to DUs.
-  /// \return Number of UEs.
-  size_t get_nof_du_ues() override { return rnti_to_ue_index.size(); }
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
@@ -265,9 +269,9 @@ private:
   std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 
   // ue index lookups
-  std::unordered_map<rnti_t, ue_index_t>      rnti_to_ue_index;      // ue_indexes indexed by rntis
-  std::unordered_map<ran_ue_id_t, ue_index_t> ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
-  std::unordered_map<amf_ue_id_t, ue_index_t> amf_ue_id_to_ue_index; // ue_indexes indexed by amf_ue_ids
+  std::map<std::tuple<pci_t, rnti_t>, ue_index_t> pci_rnti_to_ue_index;  // ue_indexes indexed by pci and rnti
+  std::unordered_map<ran_ue_id_t, ue_index_t>     ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
+  std::unordered_map<amf_ue_id_t, ue_index_t>     amf_ue_id_to_ue_index; // ue_indexes indexed by amf_ue_ids
 };
 
 } // namespace srs_cu_cp

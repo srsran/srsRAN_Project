@@ -16,6 +16,19 @@ using namespace srs_cu_cp;
 
 ue_manager::ue_manager(const ue_configuration& ue_config_) : ue_config(ue_config_) {}
 
+// generic_ue_manager
+
+ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t c_rnti)
+{
+  auto it = pci_rnti_to_ue_index.find(std::make_tuple(pci, c_rnti));
+  if (it == pci_rnti_to_ue_index.end()) {
+    logger.debug("Ue index for pci={} and c-rnti={} not found.", pci, c_rnti);
+    return ue_index_t::invalid;
+  }
+
+  return it->second;
+}
+
 // du_processor_ue_manager
 
 du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
@@ -26,19 +39,14 @@ du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
   return nullptr;
 }
 
-ue_index_t ue_manager::get_ue_index(rnti_t rnti)
+du_ue* ue_manager::add_ue(du_index_t du_index, pci_t pci, rnti_t rnti)
 {
-  auto it = rnti_to_ue_index.find(rnti);
-  if (it == rnti_to_ue_index.end()) {
-    logger.debug("UE index for rnti={} not found", rnti);
-    return ue_index_t::invalid;
+  // check if PCI is valid
+  if (pci == INVALID_PCI) {
+    logger.error("Invalid pci={}", pci);
+    return nullptr;
   }
 
-  return it->second;
-}
-
-du_ue* ue_manager::add_ue(du_index_t du_index, rnti_t rnti)
-{
   // check if RNTI is valid
   if (rnti == INVALID_RNTI) {
     logger.error("Invalid rnti={}", rnti);
@@ -46,8 +54,8 @@ du_ue* ue_manager::add_ue(du_index_t du_index, rnti_t rnti)
   }
 
   // check if the UE is already present
-  if (get_ue_index(rnti) != ue_index_t::invalid) {
-    logger.error("UE with rnti={} already exists", rnti);
+  if (get_ue_index(pci, rnti) != ue_index_t::invalid) {
+    logger.error("UE with pci={} and rnti={} already exists", pci, rnti);
     return nullptr;
   }
 
@@ -58,15 +66,16 @@ du_ue* ue_manager::add_ue(du_index_t du_index, rnti_t rnti)
   }
 
   // Create UE object
-  ues.emplace(std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, rnti));
+  ues.emplace(
+      std::piecewise_construct, std::forward_as_tuple(new_ue_index), std::forward_as_tuple(new_ue_index, pci, rnti));
 
   // Add RNTI to lookup
-  rnti_to_ue_index.emplace(rnti, new_ue_index);
+  pci_rnti_to_ue_index.emplace(std::make_tuple(pci, rnti), new_ue_index);
 
   auto& ue         = ues.at(new_ue_index);
   ue.du_ue_created = true;
 
-  logger.debug("Added new UE with ueId={} and rnti={}", new_ue_index, rnti);
+  logger.debug("Added new UE with ueId={} pci={} and rnti={}", new_ue_index, pci, rnti);
 
   return &ue;
 }
@@ -74,7 +83,7 @@ du_ue* ue_manager::add_ue(du_index_t du_index, rnti_t rnti)
 void ue_manager::remove_du_ue(ue_index_t ue_index)
 {
   if (ue_index == ue_index_t::invalid) {
-    logger.error("Invalid ue_index={}", ue_index);
+    logger.error("Invalid ueId={}", ue_index);
     return;
   }
 
@@ -86,9 +95,12 @@ void ue_manager::remove_du_ue(ue_index_t ue_index)
   }
 
   // remove UE from lookups
-  rnti_t c_rnti = ues.at(ue_index).get_c_rnti();
-  if (c_rnti != rnti_t::INVALID_RNTI) {
-    rnti_to_ue_index.erase(c_rnti);
+  pci_t pci = ues.at(ue_index).get_pci();
+  if (pci != INVALID_PCI) {
+    rnti_t c_rnti = ues.at(ue_index).get_c_rnti();
+    if (c_rnti != rnti_t::INVALID_RNTI) {
+      pci_rnti_to_ue_index.erase(std::make_tuple(pci, c_rnti));
+    }
   }
 
   if (!ues.at(ue_index).ngap_ue_created) {
