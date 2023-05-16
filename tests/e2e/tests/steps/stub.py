@@ -44,6 +44,25 @@ def start_and_attach(
     """
     Start stubs & wait until attach
     """
+    start_network(ue_array, gnb, epc, gnb_startup_timeout, epc_startup_timeout, gnb_pre_cmd, gnb_post_cmd)
+    logging.info("GNB [%s] started", id(gnb))
+
+    return ue_start_and_attach(ue_array, gnb, epc, ue_startup_timeout=ue_startup_timeout, attach_timeout=attach_timeout)
+
+
+# pylint: disable=too-many-arguments,too-many-locals
+def start_network(
+    ue_array: Sequence[UEStub],
+    gnb: GNBStub,
+    epc: EPCStub,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    epc_startup_timeout: int = EPC_STARTUP_TIMEOUT,
+    gnb_pre_cmd: str = "",
+    gnb_post_cmd: str = "",
+):
+    """
+    Start Network (EPC + gNB)
+    """
 
     ue_def_for_gnb = UEDefinition()
     for ue_stub in ue_array:
@@ -69,8 +88,6 @@ def start_and_attach(
         )
     )
     logging.info("GNB [%s] started", id(gnb))
-
-    return ue_start_and_attach(ue_array, gnb, epc, ue_startup_timeout=ue_startup_timeout, attach_timeout=attach_timeout)
 
 
 def ue_start_and_attach(
@@ -112,6 +129,15 @@ def ue_start_and_attach(
         )
 
     return ue_attach_info_dict
+
+
+def ue_stop(ue_array: Sequence[UEStub]):
+    """
+    Stop an array of UEs to detach from already running gnb and epc
+    """
+    for ue_stub in ue_array:
+        # ue_stub.Stop()
+        logging.info("UE [%s] stopped", id(ue_stub))
 
 
 def ping(
