@@ -36,6 +36,7 @@ stages:
   - e2e
   - documentation
   - private
+  - public
 
 variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
