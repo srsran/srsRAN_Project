@@ -53,6 +53,11 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 {
 }
 
+fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(slot_point slot_) :
+  slot(slot_), dl_processor(dummy_dl_processor)
+{
+}
+
 fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(
     downlink_processor_pool& dl_processor_pool,
     resource_grid_pool&      rg_pool,
@@ -225,6 +230,10 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
                    msg.slot);
     return;
   }
+
+  // Configure the slot controller to manage the downlink processor and resource grid for this downlink slot.
+  current_slot_controller =
+      slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, current_slot_controller.get_slot(), sector_id);
 
   const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(
       msg, dl_pdu_validator, logger, scs_common, carrier_cfg.dl_grid_size[to_numerology_value(scs_common)]);
@@ -458,7 +467,11 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
-  current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, slot, sector_id);
+  // On new slot, create a controller that only manages the slot. In case that a DL_TTI.request is received, a new slot
+  // controller will be created and will be responsible for managing the downlink processor and resource grid for the
+  // downlink slot. In case that an UL_TTI.request is received, the slot controller will only manage the slot, giving
+  // access to the current slot.
+  current_slot_controller = slot_based_upper_phy_controller(slot);
   pdsch_pdu_repository.clear();
   ul_pdu_repository.clear_slot(slot);
 }
