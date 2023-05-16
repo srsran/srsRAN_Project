@@ -47,10 +47,13 @@ TEST_F(ue_manager_test, when_rnti_valid_then_ue_added)
   // check that the UE index is valid
   ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
 
+  // check that the PCI has been set
+  ASSERT_EQ(ue->get_pci(), MIN_PCI);
+
   // check that the RNTI has been set
   ASSERT_EQ(ue->get_c_rnti(), rnti);
 
-  // check that the lookup by RNTI works
+  // check that the lookup by PCI and RNTI works
   ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_pci(), ue->get_c_rnti()));
 
   // check that the number of DU UEs is 1
@@ -151,10 +154,13 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
     // check that the UE index is valid
     ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
 
+    // check that the PCI has been set
+    ASSERT_EQ(ue->get_pci(), MIN_PCI);
+
     // check that the RNTI has been set
     ASSERT_EQ(ue->get_c_rnti(), rnti);
 
-    // check that the lookup by RNTI works
+    // check that the lookup by PCI and  RNTI works
     ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_pci(), ue->get_c_rnti()));
 
     // check that the number of DU UEs is increased
@@ -189,10 +195,13 @@ TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
     // check that the UE index is valid
     ASSERT_NE(ue->get_ue_index(), ue_index_t::invalid);
 
+    // check that the PCI has been set
+    ASSERT_EQ(ue->get_pci(), MIN_PCI);
+
     // check that the RNTI has been set
     ASSERT_EQ(ue->get_c_rnti(), rnti);
 
-    // check that the lookup by RNTI works
+    // check that the lookup by PCI and RNTI works
     ASSERT_EQ(ue->get_ue_index(), ue_mng.get_ue_index(ue->get_pci(), ue->get_c_rnti()));
 
     // check that the number of DU UEs is increased
