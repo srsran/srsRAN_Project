@@ -236,16 +236,16 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
-  mac_dl_sched_result mac_dl_res{};
-  mac_dl_data_result  data_res;
-
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());
 
   if (state != cell_state::active) {
-    phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
+    phy_cell.on_cell_results_completion(sl_tx);
     return;
   }
+
+  mac_dl_sched_result mac_dl_res{};
+  mac_dl_data_result  data_res;
 
   // Generate DL scheduling result for provided slot and cell.
   const sched_result* sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
