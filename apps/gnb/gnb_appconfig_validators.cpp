@@ -165,7 +165,7 @@ static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
-  if (config.pci > 1007) {
+  if (config.pci >= INVALID_PCI) {
     fmt::print("Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
     return false;
   }
