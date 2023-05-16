@@ -119,10 +119,10 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
 
   // Get packed varShortMAC-Input
   var_short_mac_input_s var_short_mac_input = {};
-  var_short_mac_input.source_pci            = {}; // TODO: fill in with source PCI
-  var_short_mac_input.target_cell_id        = {}; // TODO: fill in with target CellID
-  var_short_mac_input.source_c_rnti         = {}; // TODO: fill in with target Source C-RNTI
-  byte_buffer   var_short_mac_input_packed  = {};
+  var_short_mac_input.source_pci            = msg.rrc_reest_request.ue_id.pci;
+  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
+  var_short_mac_input.source_c_rnti        = msg.rrc_reest_request.ue_id.c_rnti;
+  byte_buffer   var_short_mac_input_packed = {};
   asn1::bit_ref bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
