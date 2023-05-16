@@ -50,7 +50,7 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
       asn1_dynamic_5qi.max_data_burst_volume_present = true;
       asn1_dynamic_5qi.max_data_burst_volume         = dynamic_5qi.max_data_burst_volume.value();
     }
-  } else /* non dynamic 5qi */ {
+  } else if (qos_flow_level_params.qos_characteristics.non_dyn_5qi.has_value()) /* non dynamic 5qi */ {
     auto& non_dynamic_5qi = qos_flow_level_params.qos_characteristics.non_dyn_5qi.value();
     asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
     auto& asn1_non_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
@@ -69,6 +69,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
       asn1_non_dynamic_5qi.max_data_burst_volume_present = true;
       asn1_non_dynamic_5qi.max_data_burst_volume         = non_dynamic_5qi.max_data_burst_volume.value();
     }
+  } else {
+    srsran_assertion_failure("Neither non-dynamic nor dynamic 5QI value is set.");
   }
 
   // ng ran alloc retention prio
