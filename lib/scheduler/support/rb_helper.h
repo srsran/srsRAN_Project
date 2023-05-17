@@ -95,7 +95,7 @@ inline constexpr crb_interval get_dl_alloc_crb_limits(const bwp_downlink_common&
   // CORESET#0 size.
   if (init_bwp_dl.pdcch_common.coreset0.has_value()) {
     crb_interval cs0_crbs = init_bwp_dl.pdcch_common.coreset0->coreset0_crbs();
-    crbs                  = {crbs.start(), cs0_crbs.start() + cs0_crbs.length()};
+    crbs                  = {crbs.start(), crbs.start() + cs0_crbs.length()};
   }
   return crbs;
 }
