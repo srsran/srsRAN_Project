@@ -90,9 +90,10 @@ cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setu
   return response;
 }
 
-void process_successful_outcome(slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                                                pdu_session_resource_setup_list,
-                                const pdu_session_setup_result& result)
+void process_successful_pdu_resource_setup_mod_outcome(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
+                                    pdu_session_resource_setup_list,
+    const pdu_session_setup_result& result)
 {
   e1ap_pdu_session_resource_setup_modification_item res_setup_item;
   res_setup_item.pdu_session_id    = result.pdu_session_id;
@@ -152,7 +153,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
     pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
     if (result.success) {
-      process_successful_outcome(response.pdu_session_resource_setup_list, result);
+      process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
     } else {
       e1ap_pdu_session_resource_failed_item res_failed_item;
 
@@ -191,7 +192,7 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
       logger.debug("Setup/Modification of PDU session id {}", pdu_session_item.pdu_session_id);
       pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session_item);
       if (result.success) {
-        process_successful_outcome(response.pdu_session_resource_setup_list, result);
+        process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
       }
     }
 
