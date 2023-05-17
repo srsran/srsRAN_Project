@@ -15,6 +15,7 @@ set(SOURCES
     common/e2_impl.cpp
     common/e2_subscriber_impl.cpp
     common/e2sm_kpm_impl.cpp
+    common/e2sm_kpm_asn1_packer.cpp
  )
 
 add_library(srsran_e2 STATIC ${SOURCES})

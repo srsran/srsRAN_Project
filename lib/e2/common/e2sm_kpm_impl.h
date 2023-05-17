@@ -22,7 +22,7 @@ class e2sm_kpm_impl : public e2sm_interface
 public:
   // constructor takes logger as argument
   e2sm_kpm_impl(srslog::basic_logger&    logger_,
-                e2sm_kpm_handler&        e2sm_packer_,
+                e2sm_handler&            e2sm_packer_,
                 e2_du_metrics_interface& du_metrics_interface_);
 
   srsran::byte_buffer handle_action(const srsran::byte_buffer& action_definition) override;
@@ -37,6 +37,6 @@ public:
   srslog::basic_logger&    logger;
   e2_sm_kpm_ind_hdr_s      ric_ind_header;
   e2_sm_kpm_ind_msg_s      ric_ind_message;
-  e2sm_kpm_handler&        e2sm_packer;
+  e2sm_handler&            e2sm_packer;
   e2_du_metrics_interface& du_metrics_interface;
 };

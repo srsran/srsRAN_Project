@@ -4,7 +4,7 @@
 using namespace asn1::e2ap;
 
 e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
-                             e2sm_kpm_handler&        e2sm_packer_,
+                             e2sm_handler&            e2sm_packer_,
                              e2_du_metrics_interface& du_metrics_interface_) :
   logger(logger_), e2sm_packer(e2sm_packer_), du_metrics_interface(du_metrics_interface_)
 {

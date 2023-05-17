@@ -23,7 +23,7 @@ namespace srsran {
 class e2_subscriber_impl : public e2_subscriber
 {
 public:
-  explicit e2_subscriber_impl(e2sm_kpm_handler&        e2sm_kpm,
+  explicit e2_subscriber_impl(e2sm_handler&            e2sm_packer_,
                               e2_message_notifier&     notif_,
                               e2_du_metrics_interface& du_metrics_interface_);
   virtual ~e2_subscriber_impl() = default;
@@ -51,7 +51,7 @@ public:
 
 private:
   std::map<int, e2_subscription_t> subscriptions;
-  e2sm_kpm_handler&                e2sm_handler;
+  e2sm_handler&                    e2sm_packer;
   e2_message_notifier&             notif;
   e2_du_metrics_interface&         du_metrics_interface;
   srslog::basic_logger&            logger;
