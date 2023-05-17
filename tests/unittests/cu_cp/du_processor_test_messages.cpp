@@ -66,6 +66,8 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
   cu_cp_pdu_session_resource_setup_request req;
   req.ue_index = uint_to_ue_index(0);
 
+  req.ue_aggregate_maximum_bit_rate_dl = 1000;
+
   for (unsigned i = 0; i < num_pdu_sessions; ++i) {
     pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(i + 1);
 
