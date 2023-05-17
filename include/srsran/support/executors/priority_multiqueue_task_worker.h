@@ -17,8 +17,18 @@
 
 namespace srsran {
 
-/// \brief Different types of task queues supported in multi_priority_task_worker.
+/// \brief Different types of task queues supported by priority_multiqueue_task_worker.
 enum class task_queue_policy { spsc, blocking };
+
+/// \brief Task queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the
+/// priority, the lower its integer value representation.
+enum class task_queue_priority : size_t { max = 0, min = std::numeric_limits<size_t>::max() };
+
+/// Reduce priority by \c dec amount.
+constexpr task_queue_priority operator-(task_queue_priority lhs, size_t dec)
+{
+  return (task_queue_priority)((size_t)lhs + dec);
+}
 
 namespace detail {
 
@@ -120,22 +130,34 @@ constexpr bool any_of(std::tuple<Elements...>& t, Pred&& pred)
 
 } // namespace detail
 
-/// \brief Task worker that can handle tasks with different priorities.
+/// \brief Task worker that can handle tasks with different priorities. Each priority level gets associated a separate
+/// task queue with queueing policy defined by \c task_queue_policy. The task worker will pop tasks starting from the
+/// highest priority queue and will continue to the next priority level if the current queue is empty. If there are no
+/// tasks in any of the queues, the task worker will wait for \c wait_for_task_sleep before checking for new tasks.
+///
+/// \tparam QueuePolicies Queue policies for each priority level. The number of policies must match the number of
+/// supported priority levels.
 template <task_queue_policy... QueuePolicies>
-class multi_priority_task_worker
+class priority_multiqueue_task_worker
 {
 public:
-  multi_priority_task_worker(std::string                                           thread_name,
-                             const std::array<unsigned, sizeof...(QueuePolicies)>& task_queue_sizes,
-                             std::chrono::microseconds                             wait_for_task_sleep_,
-                             os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
-                             const os_sched_affinity_bitmask& mask = {}) :
+  /// \brief Construct a new priority multiqueue task worker object.
+  /// \param thread_name The name of the thread used by the task worker.
+  /// \param task_queue_sizes The sizes of the task queues for each priority level.
+  /// \param wait_for_task_sleep_ The amount of time to suspend the thread, when no tasks are pending.
+  /// \param prio task worker OS thread priority level.
+  /// \param mask thread OS affinity bitmask.
+  priority_multiqueue_task_worker(std::string                                           thread_name,
+                                  const std::array<unsigned, sizeof...(QueuePolicies)>& task_queue_sizes,
+                                  std::chrono::microseconds                             wait_for_task_sleep_,
+                                  os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
+                                  const os_sched_affinity_bitmask& mask = {}) :
     wait_for_task_sleep(wait_for_task_sleep_),
     task_queues(detail::as_tuple(task_queue_sizes)),
     t_handle(thread_name, prio, mask, [this]() { run_pop_task_loop(); })
   {
   }
-  ~multi_priority_task_worker() { stop(); }
+  ~priority_multiqueue_task_worker() { stop(); }
 
   /// Stop task worker, if running.
   void stop()
@@ -147,17 +169,17 @@ public:
   }
 
   /// \brief Push task to task queue with priority level \c Priority (lower integer represents a higher priority).
-  template <size_t Priority>
+  template <task_queue_priority Priority>
   SRSRAN_NODISCARD bool push_task(unique_task task)
   {
-    return std::get<Priority>(task_queues).push(task);
+    return std::get<task_queue_priority_to_index(Priority)>(task_queues).push(task);
   }
 
-  /// \brief Get specified priority task capacity.
-  template <size_t Priority>
+  /// \brief Get specified priority task queue capacity.
+  template <task_queue_priority Priority>
   SRSRAN_NODISCARD size_t queue_capacity() const
   {
-    return std::get<Priority>(task_queues).capacity();
+    return std::get<task_queue_priority_to_index(Priority)>(task_queues).capacity();
   }
 
   /// Get worker thread id.
@@ -181,6 +203,11 @@ private:
     srslog::fetch_basic_logger("ALL").info("Task worker \"{}\" finished.", this_thread_name());
   }
 
+  static constexpr size_t task_queue_priority_to_index(task_queue_priority prio)
+  {
+    return static_cast<size_t>(prio) < nof_priority_levels() ? static_cast<size_t>(prio) : nof_priority_levels() - 1;
+  }
+
   // Time that thread spends sleeping when there are no pending tasks.
   const std::chrono::microseconds wait_for_task_sleep;
 
@@ -194,13 +221,13 @@ private:
   unique_thread t_handle;
 };
 
-/// \brief Task executor with \c Priority (lower is higher) for \c multi_priority_task_worker.
-template <size_t Priority, task_queue_policy... QueuePolicies>
+/// \brief Task executor with \c Priority (lower is higher) for \c priority_multiqueue_task_worker.
+template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
 class priority_task_worker_executor : public task_executor
 {
 public:
-  priority_task_worker_executor(multi_priority_task_worker<QueuePolicies...>& worker_,
-                                bool                                          report_on_push_failure = true) :
+  priority_task_worker_executor(priority_multiqueue_task_worker<QueuePolicies...>& worker_,
+                                bool                                               report_on_push_failure = true) :
     worker(&worker_), report_on_failure(report_on_push_failure)
   {
   }
@@ -231,21 +258,22 @@ public:
   }
 
 private:
-  multi_priority_task_worker<QueuePolicies...>* worker            = nullptr;
-  bool                                          report_on_failure = true;
+  priority_multiqueue_task_worker<QueuePolicies...>* worker            = nullptr;
+  bool                                               report_on_failure = true;
 };
 
-/// \brief Create task executor with \c Priority (lower is higher) for \c multi_priority_task_worker.
-template <size_t Priority, task_queue_policy... QueuePolicies>
+/// \brief Create task executor with \c Priority for \c priority_multiqueue_task_worker.
+template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
 priority_task_worker_executor<Priority, QueuePolicies...>
-make_priority_task_worker_executor(multi_priority_task_worker<QueuePolicies...>& worker)
+make_priority_task_worker_executor(priority_multiqueue_task_worker<QueuePolicies...>& worker)
 {
   return priority_task_worker_executor<Priority, QueuePolicies...>(worker);
 }
 
-/// \brief Create general task executor with \c Priority (lower is higher) for \c multi_priority_task_worker.
-template <size_t Priority, task_queue_policy... QueuePolicies>
-std::unique_ptr<task_executor> make_task_executor(multi_priority_task_worker<QueuePolicies...>& worker)
+/// \brief Create general task executor pointer with \c Priority for \c priority_multiqueue_task_worker.
+template <task_queue_priority Priority, task_queue_policy... QueuePolicies>
+std::unique_ptr<task_executor>
+make_priority_task_executor_ptr(priority_multiqueue_task_worker<QueuePolicies...>& worker)
 {
   return std::make_unique<priority_task_worker_executor<Priority, QueuePolicies...>>(worker);
 }

@@ -57,7 +57,7 @@
 #include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/radio/radio_factory.h"
-#include "srsran/support/executors/multi_priority_task_worker.h"
+#include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
 #include <unordered_map>
@@ -194,8 +194,8 @@ struct worker_manager {
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
 private:
-  using du_cell_worker_type  = multi_priority_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
-  using gnb_ctrl_worker_type = multi_priority_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
 
   std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
   std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
@@ -247,15 +247,15 @@ private:
     create_worker("radio", task_worker_queue_size);
 
     // Instantiate task executors
-    cu_cp_exec    = make_task_executor<1>(*gnb_ctrl_worker);
+    cu_cp_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
     cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
     gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-    du_ctrl_exec  = make_task_executor<1>(*gnb_ctrl_worker);
-    du_timer_exec = make_task_executor<0>(*gnb_ctrl_worker);
+    du_ctrl_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    du_timer_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
     du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_cell_exec  = make_task_executor<1>(*du_cell_worker);
+    du_cell_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
     if (blocking_mode_active) {
-      du_slot_exec            = make_sync_executor(make_priority_task_worker_executor<0>(*du_cell_worker));
+      du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
       task_worker& phy_worker = *workers.at("phy_worker");
       lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
       lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
@@ -267,7 +267,7 @@ private:
       upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
       upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
     } else {
-      du_slot_exec     = make_task_executor<0>(*du_cell_worker);
+      du_slot_exec     = make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
       lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
       upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_phy_dl"));
       upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
