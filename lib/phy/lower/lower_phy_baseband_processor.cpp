@@ -55,6 +55,8 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
 
 void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time)
 {
+  last_rx_timestamp = init_time;
+
   rx_state.start();
   rx_executor.execute([this]() { ul_process(); });
 
