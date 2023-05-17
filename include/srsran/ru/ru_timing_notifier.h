@@ -14,10 +14,11 @@
 
 namespace srsran {
 
-/// Radio Unit timing notifier interface.
+/// Radio unit interface to notify timing related events.
 class ru_timing_notifier
 {
 public:
+  /// Default destructor.
   virtual ~ru_timing_notifier() = default;
 
   /// \brief Notifies a new TTI boundary event.
