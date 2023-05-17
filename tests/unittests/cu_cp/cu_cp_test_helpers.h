@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/cu_cp.h"
+#include "lib/cu_cp/cu_cp_impl.h"
 #include "test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"

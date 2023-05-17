@@ -8,7 +8,7 @@
  *
  */
 
-#include "cu_cp.h"
+#include "cu_cp_impl.h"
 #include "routines/initial_cu_cp_setup_routine.h"
 #include "srsran/cu_cp/cu_up_processor_factory.h"
 #include "srsran/cu_cp/du_processor_factory.h"
