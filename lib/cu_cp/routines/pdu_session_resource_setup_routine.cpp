@@ -583,14 +583,13 @@ void fill_e1ap_pdu_session_res_to_setup_list(
 
     e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
     e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
-
-    e1ap_pdu_session_item.pdu_session_inactivity_timer = ue_cfg.inactivity_timer;
+    // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
 
     for (const auto& drb_to_setup : session.drbs) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id               = drb_to_setup.first;
-      e1ap_drb_setup_item.drb_inactivity_timer = ue_cfg.inactivity_timer;
-      e1ap_drb_setup_item.sdap_cfg             = drb_to_setup.second.sdap_cfg;
+      e1ap_drb_setup_item.drb_id = drb_to_setup.first;
+      // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
+      e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
       fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
 
       e1ap_cell_group_info_item e1ap_cell_group_item;
