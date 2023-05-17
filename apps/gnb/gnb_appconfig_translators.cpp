@@ -99,21 +99,21 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       coreset_configuration&      cs_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
-      ss_cfg.type                        = search_space_configuration::type_t::common;
-      ss_cfg.common.f0_0_and_f1_0        = true;
-      ss_cfg.nof_candidates              = {
-                       0,
-                       0,
-                       std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                       0,
-                       0};
-
-      freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-      const unsigned       coreset_nof_resources = nof_crbs / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+      freq_resource_bitmap        freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+      const unsigned              coreset_nof_resources = nof_crbs / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
       // Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of UE decoding the DCI in CSS
       // rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
       freq_resources.fill(1, coreset_nof_resources, true);
       cs_cfg.set_freq_domain_resources(freq_resources);
+
+      ss_cfg.type                 = search_space_configuration::type_t::common;
+      ss_cfg.common.f0_0_and_f1_0 = true;
+      ss_cfg.nof_candidates       = {
+                0,
+                0,
+                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+                0,
+                0};
     }
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
