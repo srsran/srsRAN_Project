@@ -112,6 +112,11 @@ public:
       e1ap_drb_setup_item_ng_ran drb_item;
       drb_item.drb_id = drb_id;
 
+      // add a QoS flow
+      e1ap_qos_flow_item qos_item;
+      qos_item.qos_flow_id = uint_to_qos_flow_id(psi); // Note: use the PSI again as QoS flow ID
+      drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
+
       // add one UP transport item
       e1ap_up_params_item up_item;
       drb_item.ul_up_transport_params.push_back(up_item);
@@ -253,6 +258,9 @@ public:
   {
     logger.info("Received a new UE context modification request");
 
+    // store request so it can be verified in the test code
+    make_partial_copy(ue_context_modifcation_request, request);
+
     return launch_async([res = cu_cp_ue_context_modification_response{},
                          this](coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -280,10 +288,21 @@ public:
     });
   }
 
+  const cu_cp_ue_context_modification_request& get_ctxt_mod_request() { return ue_context_modifcation_request; }
+
 private:
+  void make_partial_copy(cu_cp_ue_context_modification_request&       target,
+                         const cu_cp_ue_context_modification_request& source)
+  {
+    // only copy fields that are actually checked in unit tests
+    target.drbs_to_be_setup_mod_list = source.drbs_to_be_setup_mod_list;
+  }
+
   srslog::basic_logger& logger                   = srslog::fetch_basic_logger("TEST");
   bool                  ue_context_setup_outcome = false;
   ue_context_outcome_t  ue_context_modification_outcome;
+
+  cu_cp_ue_context_modification_request ue_context_modifcation_request;
 };
 
 struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {

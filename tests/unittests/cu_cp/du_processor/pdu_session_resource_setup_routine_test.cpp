@@ -444,7 +444,10 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     is_valid_e1ap_message(
         variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
 
-    // TODO: Verify content of UE context modification which should include the setup of DRB2.
+    // Verify content of UE context modification which should include the setup of DRB2.
+    const auto& ue_ctxt_mod_req = f1ap_ue_ctxt_notifier.get_ctxt_mod_request();
+    ASSERT_EQ(ue_ctxt_mod_req.drbs_to_be_setup_mod_list.size(), 1);
+    ASSERT_EQ(ue_ctxt_mod_req.drbs_to_be_setup_mod_list.begin()->drb_id, uint_to_drb_id(2));
 
     // Verify content of second bearer modification request.
     ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());

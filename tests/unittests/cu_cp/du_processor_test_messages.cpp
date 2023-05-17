@@ -85,7 +85,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
 
     for (unsigned k = 0; k < num_qos_flows; ++k) {
       qos_flow_setup_request_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(k + 1);
+      qos_item.qos_flow_id = uint_to_qos_flow_id(i + k + 1);
 
       non_dyn_5qi_descriptor_t non_dyn_5qi;
       non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
