@@ -24,6 +24,7 @@ class e2_subscriber_impl : public e2_subscriber
 {
 public:
   explicit e2_subscriber_impl(e2sm_handler&            e2sm_packer_,
+                              e2sm_interface&          e2sm_,
                               e2_message_notifier&     notif_,
                               e2_du_metrics_interface& du_metrics_interface_);
   virtual ~e2_subscriber_impl() = default;
@@ -40,18 +41,24 @@ public:
   int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override;
 
   /// \brief checks whether the given action is supported.
-  /// \param[in] action The action to check.
+  /// \param[in] action The action definition to check.
+  /// \param[in] ric_instance_id associated with the subscription.
+  /// \param[in] ric_action_id associated with the action.
   /// \return true if the action is supported, false otherwise.
-  bool action_supported(ric_action_t action);
+  bool action_supported(const srsran::byte_buffer& action_definition, uint32_t ric_instance_id, uint16_t ric_action_id);
 
   /// \brief  Gets the subscription outcome based on the subscription.
   /// \param[out] outcome The subscription response message.
   /// \param[in] subscription  The subscription to use.
-  void get_subscription_result(e2_subscribe_reponse_message& outcome, e2_subscription_t& subscription);
+  /// \param[in] actions The actions that have been requested.
+  void get_subscription_result(e2_subscribe_reponse_message&         outcome,
+                               e2_subscription_t&                    subscription,
+                               const ri_cactions_to_be_setup_list_l& actions);
 
 private:
   std::map<int, e2_subscription_t> subscriptions;
   e2sm_handler&                    e2sm_packer;
+  e2sm_interface&                  e2sm_iface;
   e2_message_notifier&             notif;
   e2_du_metrics_interface&         du_metrics_interface;
   srslog::basic_logger&            logger;

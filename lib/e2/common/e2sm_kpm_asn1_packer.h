@@ -21,8 +21,6 @@ namespace srsran {
 class e2sm_kpm_asn1_packer : public e2sm_handler
 {
 public:
-  explicit e2sm_kpm_asn1_packer(e2sm_handler& e2sm_kpm);
-
   /// Receive populated ASN1 struct that needs to be unpacked and forwarded.
   e2_sm_kpm_action_definition_s
   handle_packed_e2sm_kpm_action_definition(const srsran::byte_buffer& action_definition) override;

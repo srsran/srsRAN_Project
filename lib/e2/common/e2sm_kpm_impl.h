@@ -27,6 +27,9 @@ public:
 
   srsran::byte_buffer handle_action(const srsran::byte_buffer& action_definition) override;
 
+  srsran::byte_buffer get_indication_header(uint32_t action_id) override;
+
+private:
   void process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def);
 
   bool check_measurement_name(meas_type_c meas_type, const char* meas);

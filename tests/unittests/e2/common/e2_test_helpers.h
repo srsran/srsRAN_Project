@@ -12,6 +12,7 @@
 
 #include "lib/e2/common/e2_subscriber_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
+#include "lib/e2/common/e2sm_kpm_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
@@ -246,6 +247,7 @@ protected:
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
+  std::unique_ptr<e2sm_interface>                     e2sm_iface;
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
   std::unique_ptr<e2_subscriber>                      subscriber;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
@@ -289,7 +291,8 @@ class e2_test_subscriber : public e2_test_base
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
     e2sm_packer  = std::make_unique<dummy_e2sm_handler>();
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_packer, *msg_notifier, *du_metrics);
+    e2sm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
+    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_packer, *e2sm_iface, *msg_notifier, *du_metrics);
     e2           = create_e2(factory, *msg_notifier, *subscriber);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);

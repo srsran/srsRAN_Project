@@ -23,11 +23,11 @@ namespace srsran {
 class e2_indication_procedure
 {
 public:
-  e2_indication_procedure(e2_message_notifier&     notif_,
-                          e2_event_manager&        ev_mng_,
-                          e2_subscription_info_t   subscription_info_,
-                          e2_du_metrics_interface& du_metrics_interface_,
-                          srslog::basic_logger&    logger_);
+  e2_indication_procedure(e2_message_notifier&    notif_,
+                          e2sm_interface&         e2sm_,
+                          e2_event_manager&       ev_mng_,
+                          e2_subscription_info_t& subscription_info_,
+                          srslog::basic_logger&   logger_);
 
   void operator()(coro_context<eager_async_task<void>>& ctx);
 
@@ -36,12 +36,7 @@ private:
   void send_e2_indication(e2_indication_message& e2_ind);
 
   /// Checks whether the indication procedure should be ended.
-  bool end_incidation_procedure();
-
-  void handle_action(e2_indication_message& e2_ind, asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def);
-
-  void handle_action_definition_format3(e2_indication_message&                                e2_ind,
-                                        asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def);
+  bool send_incidation_procedure();
 
   /// Creates procedure result to send back to procedure caller.
   e2_indication_message create_e2_indication_result();
@@ -49,9 +44,9 @@ private:
   bool                               check_measurement_name(meas_type_c meas_type, const char* meas);
   e2_message_notifier&               notifier;
   e2_event_manager&                  ev_mng;
+  e2sm_interface&                    e2sm;
+  e2_subscription_info_t&            subscription;
   srslog::basic_logger&              logger;
-  e2_du_metrics_interface&           du_metrics_interface;
-  e2_subscription_info_t             subscription;
   std::vector<e2_indication_message> e2_ind_vec = {};
   e2_sm_kpm_ind_hdr_s                ric_ind_header;
   e2_sm_kpm_ind_msg_s                ric_ind_message;

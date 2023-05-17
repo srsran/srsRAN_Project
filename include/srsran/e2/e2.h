@@ -57,10 +57,10 @@ struct e2_indication_message {
   asn1::e2ap::ri_cind_s        indication;
 };
 
-typedef struct {
-  asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_definition;
-  uint16_t                                      ric_action_id;
-} ric_action_t;
+struct ric_action_t {
+  srsran::byte_buffer action_definition;
+  uint16_t            ric_action_id;
+};
 
 // here we define a subscription struct
 typedef struct {
@@ -143,6 +143,7 @@ class e2sm_interface
 public:
   virtual ~e2sm_interface()                                                               = default;
   virtual srsran::byte_buffer handle_action(const srsran::byte_buffer& action_definition) = 0;
+  virtual srsran::byte_buffer get_indication_header(uint32_t action_id)                   = 0;
 };
 
 /// Combined entry point for E2 handling.

@@ -22,6 +22,22 @@ srsran::byte_buffer e2sm_kpm_impl::handle_action(const srsran::byte_buffer& acti
   return ind_msg_bytes;
 }
 
+srsran::byte_buffer e2sm_kpm_impl::get_indication_header(uint32_t action_id)
+{
+  // TODO populate and store for each action id.
+  byte_buffer ind_hdr_bytes;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().vendor_name_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_name_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_type_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().file_formatversion_present = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(0);
+  asn1::bit_ref bref_ind_hdr(ind_hdr_bytes);
+  if (ric_ind_header.pack(bref_ind_hdr) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack RIC Indication header");
+  };
+  return ind_hdr_bytes;
+}
+
 bool e2sm_kpm_impl::check_measurement_name(meas_type_c meas_type, const char* meas)
 {
   if (strcmp(meas_type.meas_name().to_string().c_str(), meas) == 0) {
