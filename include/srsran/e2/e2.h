@@ -138,6 +138,13 @@ public:
   handle_packed_event_trigger_definition(const srsran::byte_buffer& buf) = 0;
 };
 
+class e2sm_interface
+{
+public:
+  virtual ~e2sm_interface()                                                               = default;
+  virtual srsran::byte_buffer handle_action(const srsran::byte_buffer& action_definition) = 0;
+};
+
 /// Combined entry point for E2 handling.
 class e2_interface : public e2_message_handler, public e2_event_handler, public e2_connection_manager
 {
