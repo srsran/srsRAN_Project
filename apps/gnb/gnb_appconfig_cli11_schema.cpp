@@ -988,7 +988,8 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       subapp.parse_from_stream(ss);
     }
   };
-  app.add_option_function<std::vector<std::string>>("--qos", qos_lambda, "qos");
+  app.add_option_function<std::vector<std::string>>(
+      "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 
   // Expert PHY section.
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();
