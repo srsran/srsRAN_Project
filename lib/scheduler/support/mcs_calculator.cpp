@@ -9,6 +9,7 @@
  */
 
 #include "mcs_calculator.h"
+#include "srsran/adt/span.h"
 
 using namespace srsran;
 
@@ -58,6 +59,20 @@ static const std::array<double, 29> ul_snr_mcs_table = {
     // clang-format on
 };
 
+// TODO: Compute correct values based on 256QAM MCS table in TS 38.214, Table 5.1.3.1-2.
+// This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
+// table is the minimum SNR for MCS index n.
+static const std::array<double, 28> ul_snr_256qam_mcs_table = {
+    // clang-format off
+    /* MCS 0      1        2        3        4       5        6         7        8        9  */
+     -4.0998, -3.0500, -2.1125, -1.8625, -0.0500,  0.98266,  1.6250,  2.5425,  3.4175,  4.3548,
+    /* MCS 10    11       12       13       14      15       16        17       18       19  */
+      5.3695,  5.8250,  6.6375,  7.6375,  8.5875,   9.4000, 10.1540, 10.9070,  11.1250, 12.0625,
+    /* MCS 20    21       22       23       24      25       26        27 */
+     13.0250, 13.8375, 14.7160, 15.6525, 16.3725,  17.1450,  17.9175, 18.7425
+    // clang-format on
+};
+
 optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
 {
   optional<sch_mcs_index> mcs;
@@ -87,10 +102,11 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
   // Instead, we do the following: (i) we rely on the built-in function std::upper_bound(), which returns an iterator to
   // the smallest element greater than the target SNR; (ii) we need to subtract 1 from the iterator returned by
   // std::upper_bound(), to obtain wanted MCS.
-  const unsigned MAX_MCS = 28;
-  // See TS 38.214, Table 5.1.3.1-2.
-  const unsigned MAX_MCS_QAM256 = 27;
-  const unsigned MIN_MCS        = 0;
+  span<const double> selected_mcs_table = ul_snr_mcs_table;
+  if (mcs_table == pusch_mcs_table::qam256) {
+    selected_mcs_table = ul_snr_256qam_mcs_table;
+  }
+  const unsigned MIN_MCS = 0;
 
   // Check of the SNR is lower than the minimum, or greater than the maximum. If so, return the min or max MCS.
   if (snr <= ul_snr_mcs_table.front()) {
@@ -99,7 +115,7 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
   // NOTE: The sign > is not sufficient, as, with an input snr == ul_snr_mcs_table.back(), the std::upper_bound()
   // below would return ul_snr_mcs_table.end(). To prevent this, we need the sign >= in the comparison.
   if (snr >= ul_snr_mcs_table.back()) {
-    return mcs_table == pusch_mcs_table::qam256 ? MAX_MCS_QAM256 : MAX_MCS;
+    return selected_mcs_table.size() - 1;
   }
 
   auto it_ub = std::upper_bound(ul_snr_mcs_table.begin(), ul_snr_mcs_table.end(), snr);
