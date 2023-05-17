@@ -244,6 +244,11 @@ public:
   /// \param[in] amf_ue_id The AMF UE ID for the UE.
   void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) override;
 
+  /// \brief Transfer the NGAP UE context to a new UE e.g. in case of a reestablishment.
+  /// \param[in] new_ue_index The index of the new UE.
+  /// \param[in] old_ue_index The index of the old UE.
+  void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
+
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
@@ -253,10 +258,15 @@ private:
   /// \return The RAN UE ID.
   ran_ue_id_t get_next_ran_ue_id();
 
-  /// \brief Find the RAN UE ID by a given UE NGAP ID.
-  /// \param[in] ue_index The UE NGAP ID used to find the RAN UE ID.
+  /// \brief Find the RAN UE ID by a given UE index.
+  /// \param[in] ue_index The UE index used to find the RAN UE ID.
   /// \return The RAN UE ID.
   ran_ue_id_t find_ran_ue_id(ue_index_t ue_index);
+
+  /// \brief Find the AMF UE ID by a given UE index.
+  /// \param[in] ue_index The UE index used to find the AMF UE ID.
+  /// \return The AMF UE ID.
+  amf_ue_id_t find_amf_ue_id(ue_index_t ue_index);
 
   void clear_ue()
   {

@@ -187,6 +187,11 @@ public:
   /// \param[in] ue_index Index of the UE.
   /// \param[in] amf_ue_id The AMF UE ID for the UE.
   virtual void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) = 0;
+
+  /// \brief Transfer the NGAP UE context to a new UE e.g. in case of a reestablishment.
+  /// \param[in] new_ue_index The index of the new UE.
+  /// \param[in] old_ue_index The index of the old UE.
+  virtual void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
 };
 
 } // namespace srs_cu_cp

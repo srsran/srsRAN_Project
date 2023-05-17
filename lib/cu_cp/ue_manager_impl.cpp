@@ -20,13 +20,11 @@ ue_manager::ue_manager(const ue_configuration& ue_config_) : ue_config(ue_config
 
 ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t c_rnti)
 {
-  auto it = pci_rnti_to_ue_index.find(std::make_tuple(pci, c_rnti));
-  if (it == pci_rnti_to_ue_index.end()) {
-    logger.debug("Ue index for pci={} and c-rnti={} not found.", pci, c_rnti);
-    return ue_index_t::invalid;
+  if (pci_rnti_to_ue_index.find(std::make_tuple(pci, c_rnti)) != pci_rnti_to_ue_index.end()) {
+    return pci_rnti_to_ue_index.at(std::make_tuple(pci, c_rnti));
   }
-
-  return it->second;
+  logger.debug("Ue index for pci={} and c-rnti={} not found.", pci, c_rnti);
+  return ue_index_t::invalid;
 }
 
 // du_processor_ue_manager
@@ -235,6 +233,34 @@ void ue_manager::set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id)
   amf_ue_id_to_ue_index.emplace(amf_ue_id, ue_index);
 }
 
+void ue_manager::transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index)
+{
+  // Update ue index at lookups
+  ran_ue_id_to_ue_index.at(find_ran_ue_id(old_ue_index)) = new_ue_index;
+  amf_ue_id_to_ue_index.at(find_amf_ue_id(old_ue_index)) = new_ue_index;
+
+  // transfer UE NGAP IDs to new UE
+  auto& old_ue = ues.at(old_ue_index);
+  auto& new_ue = ues.at(new_ue_index);
+  new_ue.set_ran_ue_id(old_ue.get_ran_ue_id());
+  new_ue.set_amf_ue_id(old_ue.get_amf_ue_id());
+
+  // transfer aggregate maximum bit rate dl
+  new_ue.set_aggregate_maximum_bit_rate_dl(old_ue.get_aggregate_maximum_bit_rate_dl());
+
+  logger.debug(
+      "Transferred NGAP UE context from ueId={} (ran_ue_id={} amf_ue_id={}) to ueId={} (ran_ue_id={} amf_ue_id={})",
+      old_ue_index,
+      old_ue.get_ran_ue_id(),
+      old_ue.get_amf_ue_id(),
+      new_ue_index,
+      new_ue.get_ran_ue_id(),
+      new_ue.get_amf_ue_id());
+
+  // Remove old ue
+  ues.erase(old_ue_index);
+}
+
 // private functions
 
 ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)
@@ -266,13 +292,22 @@ ran_ue_id_t ue_manager::get_next_ran_ue_id()
 
 ran_ue_id_t ue_manager::find_ran_ue_id(ue_index_t ue_index)
 {
-  unsigned ran_ue_id_uint = ran_ue_id_to_uint(ran_ue_id_t::min);
   for (auto const& it : ran_ue_id_to_ue_index) {
     if (it.second == ue_index) {
-      return uint_to_ran_ue_id(ran_ue_id_uint);
+      return it.first;
     }
-    ran_ue_id_uint++;
   }
   logger.error("RAN UE ID for ue_index={} not found", ue_index);
   return ran_ue_id_t::invalid;
+}
+
+amf_ue_id_t ue_manager::find_amf_ue_id(ue_index_t ue_index)
+{
+  for (auto const& it : amf_ue_id_to_ue_index) {
+    if (it.second == ue_index) {
+      return it.first;
+    }
+  }
+  logger.error("AMF UE ID for ue_index={} not found", ue_index);
+  return amf_ue_id_t::invalid;
 }
