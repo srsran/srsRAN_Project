@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/error_handling.h"
@@ -241,6 +242,16 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--rv_sequence", pdsch_params.rv_sequence, "RV sequence for PUSCH. (e.g. [0 2 3 1]")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3}));
+  app.add_option_function<std::string>(
+         "--mcs_table",
+         [&pdsch_params](const std::string& value) {
+           if (value == "qam256") {
+             pdsch_params.mcs_table = pdsch_mcs_table::qam256;
+           }
+         },
+         "MCS table to use PDSCH")
+      ->default_str("qam64")
+      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -258,6 +269,16 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
   app.add_option("--rv_sequence", pusch_params.rv_sequence, "RV sequence for PUSCH. (e.g. [0 2 3 1]")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3}));
+  app.add_option_function<std::string>(
+         "--mcs_table",
+         [&pusch_params](const std::string& value) {
+           if (value == "qam256") {
+             pusch_params.mcs_table = pusch_mcs_table::qam256;
+           }
+         },
+         "MCS table to use PUSCH")
+      ->default_str("qam64")
+      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)

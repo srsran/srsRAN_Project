@@ -16,6 +16,8 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
@@ -117,6 +119,8 @@ struct pdsch_appconfig {
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
+  /// MCS table to use for PDSCH
+  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
 };
 
 /// PUSCH application configuration.
@@ -131,6 +135,8 @@ struct pusch_appconfig {
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0};
+  /// MCS table to use for PUSCH
+  pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
 };
 
 /// Amplitude control application configuration.
