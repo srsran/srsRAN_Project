@@ -24,7 +24,6 @@ update agpl main:
   image: ubuntu:22.04
   before_script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
-    - git lfs install
     - git config --global user.name "${CODEBOT_USERNAME}"
     - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
   script:
