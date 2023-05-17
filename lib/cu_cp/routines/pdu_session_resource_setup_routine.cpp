@@ -63,6 +63,18 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
     transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = e1ap_item.ng_dl_up_tnl_info;
 
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+      // Catch implementation limitations.
+      if (!e1ap_drb_item.flow_failed_list.empty()) {
+        logger.warning("Non-empty QoS flow failed list not supported");
+        return false;
+      }
+
+      // verify only a single UL transport info item is present.
+      if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
+        logger.error("Multiple UL UP transport items not supported");
+        return false;
+      }
+
       // TODO: add DRB verification
 
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
@@ -78,17 +90,6 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
         cu_cp_associated_qos_flow qos_flow;
         qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
         transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(e1ap_flow.qos_flow_id, qos_flow);
-      }
-      // Catch implementation limitations.
-      if (!e1ap_drb_item.flow_failed_list.empty()) {
-        logger.warning("Non-empty QoS flow failed list not supported");
-        return false;
-      }
-
-      // verify only a single UL transport info item is present.
-      if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
-        logger.error("Multiple UL UP transport items not supported");
-        return false;
       }
 
       // Fill UE context modification for DU
