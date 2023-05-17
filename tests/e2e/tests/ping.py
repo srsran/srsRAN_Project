@@ -23,7 +23,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_and_attach
+from .steps.stub import ping, start_network, ue_start_and_attach, ue_stop
 
 
 @mark.parametrize(
@@ -62,6 +62,51 @@ def test_android(
         time_alignment_calibration="auto",
         log_search=False,
         always_download_artifacts=True,
+    )
+
+
+@mark.parametrize(
+    "reattach_count",
+    (param(2, id="reattach:%s", marks=mark.reattach),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        # param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_android_reattach(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    reattach_count: int,
+):
+    """
+    Android Pings with reattach
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1,),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        log_search=False,
+        always_download_artifacts=True,
+        reattach_count=reattach_count,
     )
 
 
@@ -254,6 +299,7 @@ def _ping(
     log_search: bool,
     always_download_artifacts: bool = False,
     ping_count: int = 10,
+    reattach_count: int = 0,
     pre_command: str = "",
     post_command: str = "",
 ):
@@ -275,5 +321,12 @@ def _ping(
         log_search=log_search,
     )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+    start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
     ping(ue_attach_info_dict, epc, ping_count)
+    # reattach and repeat if requested
+    for _ in range(reattach_count):
+        ue_stop(ue_array)
+        ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
+        ping(ue_attach_info_dict, epc, ping_count)
+    # final stop will be triggered by teardown

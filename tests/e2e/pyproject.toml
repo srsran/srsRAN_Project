@@ -29,6 +29,7 @@ markers = [
   "zmq_valgrind",
   "rf_b200",
   "rf_not_crash",
+  "reattach",
   "test",
 ]
 minversion = "6.0"

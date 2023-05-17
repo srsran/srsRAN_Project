@@ -136,8 +136,8 @@ def ue_stop(ue_array: Sequence[UEStub]):
     Stop an array of UEs to detach from already running gnb and epc
     """
     for ue_stub in ue_array:
-        # ue_stub.Stop()
-        logging.info("UE [%s] stopped", id(ue_stub))
+        return_code = ue_stub.Stop(Empty()).value
+        logging.info("UE [%s] stopped with return code %d", id(ue_stub), return_code)
 
 
 def ping(
