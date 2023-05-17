@@ -79,7 +79,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
 class dummy_mac_scheduler : public mac_scheduler
 {
 public:
-  sched_result next_sched_result;
+  sched_result next_sched_result = {};
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_rach_indication(const rach_indication_message& msg) override {}
