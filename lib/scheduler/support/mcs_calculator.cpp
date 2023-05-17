@@ -109,18 +109,18 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
   const unsigned MIN_MCS = 0;
 
   // Check of the SNR is lower than the minimum, or greater than the maximum. If so, return the min or max MCS.
-  if (snr <= ul_snr_mcs_table.front()) {
+  if (snr <= selected_mcs_table.front()) {
     return MIN_MCS;
   }
   // NOTE: The sign > is not sufficient, as, with an input snr == ul_snr_mcs_table.back(), the std::upper_bound()
   // below would return ul_snr_mcs_table.end(). To prevent this, we need the sign >= in the comparison.
-  if (snr >= ul_snr_mcs_table.back()) {
+  if (snr >= selected_mcs_table.back()) {
     return selected_mcs_table.size() - 1;
   }
 
-  auto it_ub = std::upper_bound(ul_snr_mcs_table.begin(), ul_snr_mcs_table.end(), snr);
+  auto it_ub = std::upper_bound(selected_mcs_table.begin(), selected_mcs_table.end(), snr);
 
   // NOTE: By design, it_ub > ul_snr_mcs_table.begin(). All SNR values such it_ub == ul_snr_mcs_table.begin() are
   // handled above, in the "if (snr <= ul_snr_mcs_table.front())" statement above.
-  return it_ub - ul_snr_mcs_table.begin() - 1;
+  return it_ub - selected_mcs_table.begin() - 1;
 }
