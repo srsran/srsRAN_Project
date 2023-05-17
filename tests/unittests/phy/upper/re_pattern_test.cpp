@@ -7,15 +7,14 @@
  * the distribution.
  *
  */
+#if defined(__GNUC__) && (__GNUC__ > 10) && (__GNUC__ < 14) && defined(__OPTIMIZE__)
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma message "GCC versions greater than 10 give a likely false array-bounds alarm."
+#endif // defined(__GNUC__) && defined(__GNUC_MINOR__)
 
 #include "srsran/phy/upper/re_pattern.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/support/srsran_test.h"
-
-#if defined(__GNUC__) && (__GNUC__ == 12) && defined(__OPTIMIZE__)
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#pragma message "GCC 12 gives a likely false array-bounds alarm."
-#endif // defined(__GNUC__) && defined(__GNUC_MINOR__)
 
 using namespace srsran;
 
