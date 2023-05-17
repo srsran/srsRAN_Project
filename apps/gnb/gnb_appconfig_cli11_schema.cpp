@@ -550,7 +550,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_rf_driver_args(*rf_driver_subcmd, gnb_cfg.rf_driver_cfg);
 
   // Common cell parameters.
-  CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Cell configuration")->configurable();
+  CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
   common_cell_subcmd->parse_complete_callback([&gnb_cfg]() {
@@ -581,7 +581,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
           subapp.parse_from_stream(ss);
         }
       },
-      "cells");
+      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 
   // QoS parameters.
   auto qos_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
