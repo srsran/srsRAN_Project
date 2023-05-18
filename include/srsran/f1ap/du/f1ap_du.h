@@ -12,37 +12,24 @@
 
 #include "f1ap_du_ue_config.h"
 #include "f1c_bearer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"
+#include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
-
-struct f1ap_rx_pdu {
-  du_ue_index_t           ue_index = INVALID_DU_UE_INDEX;
-  lcid_t                  lcid     = INVALID_LCID;
-  byte_buffer_slice_chain pdu;
-};
-
-struct f1ap_initial_ul_rrc_msg {
-  asn1::f1ap::init_ul_rrc_msg_transfer_s init_msg;
-};
-
-struct f1ap_ul_rrc_msg {
-  asn1::f1ap::ul_rrc_msg_transfer_s ul_msg;
-};
 
 struct f1ap_rrc_delivery_report_msg {
   du_cell_index_t cell_index          = INVALID_DU_CELL_INDEX;
@@ -70,16 +57,29 @@ struct du_setup_params {
   std::string gnb_du_name;
 };
 
+/// \brief Served cell configuration that will be passed to CU-CP.
+struct f1_cell_setup_params {
+  nr_cell_global_id_t             nr_cgi;
+  pci_t                           pci;
+  uint32_t                        tac;
+  duplex_mode                     duplx_mode;
+  carrier_configuration           dl_carrier;
+  optional<carrier_configuration> ul_carrier;
+  byte_buffer                     packed_mib;
+  byte_buffer                     packed_sib1;
+};
+
+/// \brief Message that initiates a F1 Setup procedure.
 struct f1_setup_request_message {
-  asn1::f1ap::f1_setup_request_s msg;
-  unsigned                       max_setup_retries = 5;
-  /// Vector element index corresponds to DU Cell Index.
-  std::vector<nr_cell_global_id_t> du_cell_index_to_nr_cgi_lookup;
+  uint64_t                          gnb_du_id;
+  std::string                       gnb_du_name;
+  uint8_t                           rrc_version;
+  std::vector<f1_cell_setup_params> served_cells;
+  unsigned                          max_setup_retries = 5;
 };
 
 struct f1_setup_response_message {
-  asn1::f1ap::f1_setup_resp_s msg;
-  bool                        success = false;
+  bool success = false;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.

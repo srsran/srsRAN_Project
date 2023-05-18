@@ -543,45 +543,37 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_con
   return buf;
 }
 
-void srsran::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
-                                                const du_setup_params&          setup_params,
-                                                span<const du_cell_config*>     cells_to_add,
-                                                std::vector<std::string>*       cell_json_strs)
+void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            req,
+                                           const du_manager_params::ran_params& ran_params,
+                                           std::vector<std::string>*            sib1_jsons)
 {
-  byte_buffer buf;
-  // TODO: Add other inputs and set values accordingly
+  req.gnb_du_id   = ran_params.gnb_du_id;
+  req.gnb_du_name = ran_params.gnb_du_name;
+  req.rrc_version = ran_params.rrc_version;
 
-  request->gnb_du_id.value = setup_params.gnb_du_id;
-  request->gnb_du_name.value.from_string(setup_params.gnb_du_name);
-  request->gnb_du_rrc_version.value.latest_rrc_version.from_number(setup_params.rrc_version);
+  req.served_cells.resize(ran_params.cells.size());
 
-  request->gnb_du_served_cells_list_present = true;
-  for (const du_cell_config* cell_cfg : cells_to_add) {
-    // Add Cell in list of served cells.
-    request->gnb_du_served_cells_list->push_back({});
-    request->gnb_du_served_cells_list->back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
-    asn1::f1ap::gnb_du_served_cells_item_s& f1ap_cell =
-        request->gnb_du_served_cells_list->back()->gnb_du_served_cells_item();
+  for (unsigned i = 0; i != ran_params.cells.size(); ++i) {
+    const du_cell_config& cell_cfg  = ran_params.cells[i];
+    f1_cell_setup_params& serv_cell = req.served_cells[i];
 
-    // Fill Served Cell Information.
-    f1ap_cell.served_cell_info.nr_pci = cell_cfg->pci;
-    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->nr_cgi.plmn));
-    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->nr_cgi.nci);
-    f1ap_cell.served_cell_info.five_gs_tac_present = true;
-    f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
-
-    // Add System Information related to the cell.
-    f1ap_cell.gnb_du_sys_info_present = true;
-    buf                               = make_asn1_rrc_cell_mib_buffer(*cell_cfg);
-    f1ap_cell.gnb_du_sys_info.mib_msg = std::move(buf);
-
-    // Enable json conversion if argument is present.
-    std::string* js_str = nullptr;
-    if (cell_json_strs != nullptr) {
-      cell_json_strs->emplace_back();
-      js_str = &cell_json_strs->back();
+    // Fill serving cell info.
+    serv_cell.nr_cgi     = cell_cfg.nr_cgi;
+    serv_cell.pci        = cell_cfg.pci;
+    serv_cell.tac        = cell_cfg.tac;
+    serv_cell.duplx_mode = cell_cfg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD;
+    serv_cell.dl_carrier = cell_cfg.dl_carrier;
+    if (serv_cell.duplx_mode == duplex_mode::FDD) {
+      serv_cell.ul_carrier = cell_cfg.ul_carrier;
     }
-    buf                                = make_asn1_rrc_cell_sib1_buffer(*cell_cfg, js_str);
-    f1ap_cell.gnb_du_sys_info.sib1_msg = std::move(buf);
+
+    // Pack RRC ASN.1 Serving Cell system info.
+    serv_cell.packed_mib = make_asn1_rrc_cell_mib_buffer(cell_cfg);
+    std::string js_str;
+    serv_cell.packed_sib1 = make_asn1_rrc_cell_sib1_buffer(cell_cfg, sib1_jsons != nullptr ? &js_str : nullptr);
+
+    if (sib1_jsons != nullptr) {
+      sib1_jsons->push_back(js_str);
+    }
   }
 }

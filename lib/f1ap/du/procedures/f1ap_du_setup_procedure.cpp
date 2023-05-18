@@ -11,6 +11,7 @@
 #include "f1ap_du_setup_procedure.h"
 #include "../f1ap_du_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
@@ -68,11 +69,51 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   // set F1AP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  msg.pdu.init_msg().value.f1_setup_request() = request.msg;
+  f1_setup_request_s& setup_req = msg.pdu.init_msg().value.f1_setup_request();
 
-  // set values handled by F1
-  auto& setup_req                 = msg.pdu.init_msg().value.f1_setup_request();
   setup_req->transaction_id.value = transaction.id();
+
+  // DU-global parameters.
+  setup_req->gnb_du_id->value    = request.gnb_du_id;
+  setup_req->gnb_du_name_present = not request.gnb_du_name.empty();
+  if (setup_req->gnb_du_name_present) {
+    setup_req->gnb_du_name.value.from_string(request.gnb_du_name);
+  }
+  setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(request.rrc_version);
+
+  setup_req->gnb_du_served_cells_list_present = true;
+  setup_req->gnb_du_served_cells_list.value.resize(request.served_cells.size());
+  for (unsigned i = 0; i != request.served_cells.size(); ++i) {
+    const auto& cell_cfg = request.served_cells[i];
+    setup_req->gnb_du_served_cells_list.value[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
+    gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
+
+    // Fill Served Cell Information.
+    f1ap_cell.served_cell_info.nr_pci = cell_cfg.pci;
+    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
+    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci);
+    f1ap_cell.served_cell_info.five_gs_tac_present = true;
+    f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);
+    if (cell_cfg.duplx_mode == duplex_mode::TDD) {
+      tdd_info_s& tdd           = f1ap_cell.served_cell_info.nr_mode_info.set_tdd();
+      tdd.nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
+      tdd.nr_freq_info.freq_band_list_nr.resize(1);
+      tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
+    } else {
+      fdd_info_s& fdd              = f1ap_cell.served_cell_info.nr_mode_info.set_fdd();
+      fdd.dl_nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
+      fdd.dl_nr_freq_info.freq_band_list_nr.resize(1);
+      fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
+      fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn;
+      fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
+      fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
+    }
+
+    // Add System Information related to the cell.
+    f1ap_cell.gnb_du_sys_info_present  = true;
+    f1ap_cell.gnb_du_sys_info.mib_msg  = cell_cfg.packed_mib.copy();
+    f1ap_cell.gnb_du_sys_info.sib1_msg = cell_cfg.packed_sib1.copy();
+  }
 
   // send request
   cu_notifier.on_new_message(msg);
@@ -110,27 +151,23 @@ bool f1ap_du_setup_procedure::retry_required()
 
 f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 {
-  const f1ap_outcome&       cu_pdu_response = transaction.result();
-  f1_setup_response_message res{};
+  const f1ap_outcome& cu_pdu_response = transaction.result();
 
+  f1_setup_response_message res{};
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
 
     // Update F1 DU Context (taking values from request).
-    du_ctxt.gnb_du_id   = request.msg->gnb_du_id->value;
-    du_ctxt.gnb_du_name = request.msg->gnb_du_name->to_string();
-    du_ctxt.served_cells.resize(request.msg->gnb_du_served_cells_list.value.size());
+    du_ctxt.gnb_du_id   = request.gnb_du_id;
+    du_ctxt.gnb_du_name = request.gnb_du_name;
+    du_ctxt.served_cells.resize(request.served_cells.size());
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
-      du_ctxt.served_cells[i] = request.msg->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
-    }
-    for (const auto& cgi : request.du_cell_index_to_nr_cgi_lookup) {
-      du_ctxt.du_cell_index_to_nr_cgi_lookup.push_back(cgi);
+      du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].nr_cgi;
     }
 
-  } else if (cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value !=
-                                                f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+  } else if (cu_pdu_response.has_value() and cu_pdu_response.error().value.type().value !=
+                                                 f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
     logger.error("Received PDU with unexpected PDU type {}", cu_pdu_response.value().value.type().to_string());
     res.success = false;
   } else {
