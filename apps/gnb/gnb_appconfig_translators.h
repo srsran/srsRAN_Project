@@ -21,6 +21,7 @@
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/radio/radio_configuration.h"
+#include "srsran/ru/ru_config.h"
 #include <map>
 #include <vector>
 
@@ -49,11 +50,7 @@ scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& co
 /// Converts and returns the given gnb application configuration to an upper PHY configuration.
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application configuration to a lower PHY configuration.
-lower_phy_configuration generate_ru_config(const gnb_appconfig& config);
-
-/// Converts and returns the given gnb application configuration to a radio configuration and validates it.
-radio_configuration::radio generate_radio_config(const gnb_appconfig&                  config,
-                                                 const radio_configuration::validator& validator);
+/// Converts and returns the given gnb application configuration to a Radio Unit configuration.
+ru_config generate_ru_config(const gnb_appconfig& config);
 
 } // namespace srsran

@@ -8,16 +8,19 @@
  *
  */
 
-#include "phy_factory.h"
-#include "gnb_appconfig.h"
-#include "gnb_appconfig_translators.h"
+#pragma once
+
+#include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/lower/lower_phy_factory.h"
-#include "srsran/phy/upper/upper_phy_factories.h"
+#include <memory>
 
-using namespace srsran;
+namespace srsran {
 
-inline std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config,
-                                                           unsigned                 max_nof_prach_concurrent_requests)
+struct lower_phy_configuration;
+class task_executor;
+
+/// Helper class that creates the lower PHY usding the given configuration.
+std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config, unsigned max_nof_prach_concurrent_requests)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.
@@ -80,39 +83,4 @@ inline std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configurati
   return lphy_factory->create(config);
 }
 
-std::unique_ptr<upper_phy> srsran::create_upper_phy(const gnb_appconfig&                  params,
-                                                    upper_phy_rg_gateway*                 rg_gateway,
-                                                    task_executor*                        dl_executor,
-                                                    task_executor*                        pucch_executor,
-                                                    task_executor*                        pusch_executor,
-                                                    task_executor*                        prach_executor,
-                                                    upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
-{
-  downlink_processor_factory_sw_config dl_proc_config;
-  dl_proc_config.ldpc_encoder_type   = "auto";
-  dl_proc_config.crc_calculator_type = "auto";
-
-  // Create downlink processor factory.
-  std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);
-  report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
-
-  // Create upper PHY factory.
-  std::unique_ptr<upper_phy_factory> upper_phy_factory = create_upper_phy_factory(dl_proc_factory);
-  report_fatal_error_if_not(upper_phy_factory, "Invalid upper PHY factory.");
-
-  std::vector<upper_phy_config> config = generate_du_low_config(params);
-
-  // Fill the rest with the parameters.
-  upper_phy_config& cfg          = config.front();
-  cfg.rg_gateway                 = rg_gateway;
-  cfg.dl_executor                = dl_executor;
-  cfg.pucch_executor             = pucch_executor;
-  cfg.pusch_executor             = pusch_executor;
-  cfg.prach_executor             = prach_executor;
-  cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
-  cfg.crc_calculator_type        = "auto";
-  cfg.ldpc_rate_dematcher_type   = "auto";
-  cfg.ldpc_decoder_type          = "auto";
-
-  return upper_phy_factory->create(cfg);
-}
+} // namespace srsran

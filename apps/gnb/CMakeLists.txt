@@ -19,6 +19,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 phy_factory.cpp
                 helpers/metrics_plotter_stdout.cpp
                 helpers/gnb_console_helper.cpp
+                adapters/ru_adapters.cpp
                 )
 
         install(TARGETS gnb
@@ -36,6 +37,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 mac_fapi_adaptor_factory
                 phy_fapi_adaptor_factory
                 srsran_fapi
+                srsran_ru_generic
                 srsran_phy_support
                 srsran_lower_phy
                 srsran_upper_phy

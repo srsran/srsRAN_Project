@@ -291,10 +291,9 @@ std::map<five_qi_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appc
   return out_cfg;
 }
 
-lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
+/// Fills the given low PHY configuration from the given gnb configuration.
+static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_appconfig& config)
 {
-  lower_phy_configuration out_cfg;
-
   {
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
@@ -364,8 +363,6 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
   if (!is_valid_lower_phy_config(out_cfg)) {
     report_error("Invalid lower PHY configuration.\n");
   }
-
-  return out_cfg;
 }
 
 /// Slice the given string by the ',' limiter, and returns a vector with each position containing one slice of the
@@ -412,11 +409,8 @@ static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset
   return (center_freq_Hz + freq_offset_Hz) * (1.0 + calibration_ppm * 1e-6);
 }
 
-radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&                  config,
-                                                         const radio_configuration::validator& validator)
+static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb_appconfig& config)
 {
-  radio_configuration::radio out_cfg = {};
-
   out_cfg.args             = config.rf_driver_cfg.device_arguments;
   out_cfg.log_level        = config.log_cfg.radio_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
@@ -503,10 +497,15 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
     }
     out_cfg.rx_streams.emplace_back(rx_stream_config);
   }
+}
 
-  if (!validator.is_configuration_valid(out_cfg)) {
-    report_error("Invalid radio configuration.\n");
-  }
+ru_config srsran::generate_ru_config(const gnb_appconfig& config)
+{
+  ru_config out_cfg;
+
+  generate_low_phy_config(out_cfg.lower_phy_config, config);
+  generate_radio_config(out_cfg.radio_cfg, config);
+  out_cfg.device_driver = config.rf_driver_cfg.device_driver;
 
   return out_cfg;
 }

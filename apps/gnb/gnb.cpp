@@ -38,6 +38,7 @@
 
 #include "helpers/gnb_console_helper.h"
 
+#include "adapters/ru_adapters.h"
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
@@ -49,15 +50,11 @@
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
-#include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
-#include "srsran/phy/adapters/phy_timing_adapter.h"
-#include "srsran/phy/lower/lower_phy_controller.h"
-#include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
-#include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/priority_multiqueue_task_worker.h"
+#include "srsran/ru/ru_controller.h"
+#include "srsran/ru/ru_factory.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
 #include <unordered_map>
@@ -333,32 +330,6 @@ private:
 
 } // namespace
 
-static lower_phy_configuration create_lower_phy_configuration(baseband_gateway*             bb_gateway,
-                                                              lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                              lower_phy_timing_notifier*    timing_notifier,
-                                                              lower_phy_error_notifier*     error_notifier,
-                                                              task_executor&                tx_executor,
-                                                              task_executor&                rx_executor,
-                                                              task_executor&                dl_executor,
-                                                              task_executor&                ul_executor,
-                                                              task_executor&                prach_executor,
-                                                              const gnb_appconfig&          app_cfg)
-{
-  lower_phy_configuration phy_config = generate_ru_config(app_cfg);
-
-  phy_config.bb_gateway           = bb_gateway;
-  phy_config.error_notifier       = error_notifier;
-  phy_config.rx_symbol_notifier   = rx_symbol_notifier;
-  phy_config.timing_notifier      = timing_notifier;
-  phy_config.tx_task_executor     = &tx_executor;
-  phy_config.rx_task_executor     = &rx_executor;
-  phy_config.dl_task_executor     = &dl_executor;
-  phy_config.ul_task_executor     = &ul_executor;
-  phy_config.prach_async_executor = &prach_executor;
-
-  return phy_config;
-}
-
 static void local_signal_handler()
 {
   is_running = false;
@@ -417,19 +388,6 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
   fapi_config.num_rx_ant = config.common_cell_cfg.nof_antennas_ul;
 
   return fapi_config;
-}
-
-static std::unique_ptr<radio_session>
-build_radio(task_executor& executor, radio_notification_handler& radio_handler, const gnb_appconfig& config)
-{
-  std::unique_ptr<radio_factory> factory = create_radio_factory(config.rf_driver_cfg.device_driver);
-  if (!factory) {
-    return nullptr;
-  }
-
-  // Create radio configuration. Assume 1 sector per stream.
-  radio_configuration::radio radio_config = generate_radio_config(config, factory->get_configuration_validator());
-  return factory->create(radio_config, executor, radio_handler);
 }
 
 int main(int argc, char** argv)
@@ -636,7 +594,7 @@ int main(int argc, char** argv)
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
+      gnb_cfg.amf_cfg.bind_addr;                              // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -665,57 +623,46 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  std::unique_ptr<radio_notification_handler> radio_event_logger;
-  if (rf_logger.warning.enabled()) {
-    radio_event_logger = std::make_unique<radio_notification_handler_logger>(nullptr, rf_logger);
-  }
+  auto ru_fact = create_ru_factory();
+  report_fatal_error_if_not(ru_fact, "Unable to create Radio Unit factory.");
+  ru_config ru_cfg = generate_ru_config(gnb_cfg);
 
-  // Create radio.
-  radio_notification_handler_counter radio_event_counter(std::move(radio_event_logger));
-  auto                               radio = build_radio(*workers.radio_exec, radio_event_counter, gnb_cfg);
-  if (radio == nullptr) {
-    report_error("Unable to create radio session.\n");
-  }
-  gnb_logger.info("Radio driver '{}' created successfully", gnb_cfg.rf_driver_cfg.device_driver);
+  // Fill the executors.
+  ru_cfg.rf_logger                             = &rf_logger;
+  ru_cfg.radio_exec                            = workers.radio_exec.get();
+  ru_cfg.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
+  ru_cfg.lower_phy_config.rx_task_executor     = workers.lower_phy_rx_exec.get();
+  ru_cfg.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
+  ru_cfg.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
+  ru_cfg.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
 
-  // Create lower and upper PHY adapters.
-  phy_error_adapter             phy_err_printer("info");
-  phy_rx_symbol_adapter         phy_rx_adapter;
-  phy_rg_gateway_adapter        rg_gateway_adapter;
-  phy_timing_adapter            phy_time_adapter;
-  phy_rx_symbol_request_adapter phy_rx_symbol_req_adapter;
+  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
+  upper_ru_ul_request_adapter ru_ul_request_adapt;
+  upper_ru_ul_adapter         ru_ul_adapt;
+  upper_ru_timing_adapter     ru_timing_adapt;
 
-  // Create lower PHY.
-  lower_phy_configuration   lower_phy_config = create_lower_phy_configuration(&radio->get_baseband_gateway(),
-                                                                            &phy_rx_adapter,
-                                                                            &phy_time_adapter,
-                                                                            &phy_err_printer,
-                                                                            *workers.lower_phy_tx_exec,
-                                                                            *workers.lower_phy_rx_exec,
-                                                                            *workers.lower_phy_dl_exec,
-                                                                            *workers.lower_phy_ul_exec,
-                                                                            *workers.lower_prach_exec,
-                                                                            gnb_cfg);
-  static constexpr unsigned max_nof_prach_concurrent_requests = 11;
-  auto                      lower = create_lower_phy(lower_phy_config, max_nof_prach_concurrent_requests);
-  report_fatal_error_if_not(lower, "Unable to create lower PHY.");
-  gnb_logger.info("Lower PHY created successfully");
+  ru_cfg.timing_notifier = &ru_timing_adapt;
+  ru_cfg.symbol_notifier = &ru_ul_adapt;
+
+  auto ru_object = ru_fact->create(ru_cfg);
+  report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
+  gnb_logger.info("Radio Unit created successfully");
+  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
+  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
   auto upper = create_upper_phy(gnb_cfg,
-                                &rg_gateway_adapter,
+                                &ru_dl_rg_adapt,
                                 workers.upper_dl_exec.get(),
                                 workers.upper_pucch_exec.get(),
                                 workers.upper_pusch_exec.get(),
                                 workers.upper_prach_exec.get(),
-                                &phy_rx_symbol_req_adapter);
+                                &ru_ul_request_adapt);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");
 
   // Make connections between upper and lower PHYs.
-  phy_rx_adapter.connect(&upper->get_rx_symbol_handler());
-  phy_time_adapter.connect(&upper->get_timing_handler());
-  rg_gateway_adapter.connect(&lower->get_rg_handler());
-  phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
+  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
+  ru_timing_adapt.connect(upper->get_timing_handler());
 
   // Create FAPI adaptors.
   std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
@@ -815,30 +762,21 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
-  // Calculate starting time from the radio current time plus one hundred milliseconds and rounded to the next subframe.
-  double                     delay_s      = 0.1;
-  baseband_gateway_timestamp current_time = radio->read_current_time();
-  baseband_gateway_timestamp start_time =
-      current_time + static_cast<uint64_t>(delay_s * gnb_cfg.rf_driver_cfg.srate_MHz * 1e6);
-  start_time = divide_ceil(start_time, static_cast<uint64_t>(gnb_cfg.rf_driver_cfg.srate_MHz * 1e3)) *
-               static_cast<uint64_t>(gnb_cfg.rf_driver_cfg.srate_MHz * 1e3);
-
   // Start processing.
-  gnb_logger.info("Starting lower PHY...");
-  radio->start(start_time);
-  lower->get_controller().start(start_time);
-  gnb_logger.info("Lower PHY started successfully");
+  gnb_logger.info("Starting Radio Unit...");
+  ru_object->get_controller().start();
+  gnb_logger.info("Radio Unit started successfully");
 
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
 
-  unsigned count = 0;
+  //  unsigned count = 0;
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if ((++count) == 10) {
-      radio_event_counter.print();
-      count = 0;
-    }
+    //    if ((++count) == 10) {
+    //      radio_event_counter.print();
+    //      count = 0;
+    //    }
   }
 
   console.on_app_stopping();
@@ -848,13 +786,9 @@ int main(int argc, char** argv)
   f1ap_p->close();
   mac_p->close();
 
-  gnb_logger.info("Stopping radio...");
-  radio->stop();
-  gnb_logger.info("Radio notify_stop successfully");
-
-  gnb_logger.info("Stopping lower PHY...");
-  lower->get_controller().stop();
-  gnb_logger.info("Lower PHY notify_stop successfully");
+  gnb_logger.info("Stopping Radio Unit...");
+  ru_object->get_controller().stop();
+  gnb_logger.info("Radio Unit notify_stop successfully");
 
   gnb_logger.info("Closing DU-high...");
   du_obj.stop();
