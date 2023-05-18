@@ -20,6 +20,8 @@
 
 namespace srsran {
 
+/// \brief Options for the number of Initial Cyclic Shifts that can be set for PUCCH Format 1.
+///
 /// Defines the number of different Initial Cyclic Shifts that can be used for PUCCH Format 1, as per \c PUCCH-format1,
 /// in \c PUCCH-Config, TS 38.331. We assume the CS are evenly distributed, which means we can only have a divisor of 12
 /// possible cyclic shifts.
@@ -53,6 +55,7 @@ struct pucch_f2_params {
   bool intraslot_freq_hopping{false};
 };
 
+/// \brief Parameters for PUCCH configuration.
 /// Defines the parameters that are used for the PUCCH configuration builder. These parameters are used to define the
 /// PUCCH resources per cell and per UE, as well as the PUCCH format-specific parameters.
 struct pucch_builder_params {
