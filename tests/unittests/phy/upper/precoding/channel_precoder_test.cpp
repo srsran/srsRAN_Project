@@ -1,0 +1,446 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/precoding/precoding_factories.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
+#include "srsran/srsvec/zero.h"
+#include "fmt/ostream.h"
+#include <gtest/gtest.h>
+#include <random>
+
+using namespace srsran;
+
+// Pseudo-random number generator.
+static std::mt19937 rgen;
+
+using MultiplePRGParams = std::tuple<
+    // Number of RB.
+    unsigned,
+    // Number of antenna ports.
+    unsigned,
+    // PRG size in number of RB.
+    unsigned>;
+
+namespace srsran {
+
+static float ASSERT_MAX_ERROR = 1e-6;
+
+static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
+static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
+{
+  return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [](cf_t lhs_val, cf_t rhs_val) {
+    return (std::abs(lhs_val - rhs_val) < ASSERT_MAX_ERROR);
+  });
+}
+
+} // namespace srsran
+
+namespace {
+class PrecodingFixture : public ::testing::TestWithParam<MultiplePRGParams>
+{
+protected:
+  static std::shared_ptr<channel_precoder_factory> precoder_factory;
+  static std::unique_ptr<channel_precoder>         precoder;
+
+  static void SetUpTestSuite()
+  {
+    // Create channel precoder factory.
+    if (!precoder_factory) {
+      precoder_factory = create_channel_precoder_factory();
+      ASSERT_NE(precoder_factory, nullptr) << "Cannot create channel precoder factory";
+    }
+  }
+
+  void SetUp() override
+  {
+    ASSERT_NE(precoder_factory, nullptr) << "Cannot create channel precoder factory";
+
+    // Create channel precoder.
+    precoder = precoder_factory->create();
+    ASSERT_NE(precoder, nullptr) << "Cannot create channel precoder";
+  }
+
+  // Generates and returns random RE values, as many as the specified number of layers and RE.
+  const re_buffer& generate_random_data(unsigned nof_layers, unsigned nof_re)
+  {
+    // Resize buffer.
+    random_data.resize(nof_layers, nof_re);
+
+    // Fill buffer with random values.
+    for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+      for (cf_t& val : random_data.get_slice(i_layer)) {
+        val = {data_dist(rgen), data_dist(rgen)};
+      }
+    }
+
+    return random_data;
+  }
+
+  // Generates the golden RE sequence, with the dimensions specified by the input buffer and precoding configuration.
+  const re_buffer& generate_golden(const re_buffer& input, const precoding_configuration& configuration)
+  {
+    // Get dimensions.
+    unsigned nof_re     = input.get_nof_re();
+    unsigned nof_layers = configuration.get_nof_layers();
+    unsigned nof_ports  = configuration.get_nof_ports();
+    unsigned nof_prg    = configuration.get_nof_prg();
+    unsigned nof_re_prg = configuration.get_prg_size() * NRE;
+
+    // Resize buffer.
+    golden_data.resize(nof_ports, nof_re);
+
+    EXPECT_EQ(nof_layers, input.get_nof_slices()) << "Input and precoding matrix number of layers don't match.";
+
+    unsigned prg_re_offset = 0;
+    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
+      // Number of data RE that belong to the current PRG.
+      unsigned re_count = std::min(nof_re_prg, nof_re - prg_re_offset);
+
+      // View over the input data for a single PRG.
+      re_buffer_reader_view input_prg(input, prg_re_offset, re_count);
+
+      // View over the golden sequence for a single PRG.
+      re_buffer_writer_view golden_prg(golden_data, prg_re_offset, re_count);
+
+      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+        // View over the golden sequence for a single PRG and antenna port.
+        span<cf_t> golden_re_port = golden_prg.get_slice(i_port);
+
+        // Set the output REs to zero.
+        srsvec::zero(golden_re_port);
+
+        for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+          // View over the input data for a single PRG and layer.
+          span<const cf_t> input_re_layer = input_prg.get_slice(i_layer);
+
+          for (unsigned i_re = 0; i_re != re_count; ++i_re) {
+            // Accumulate the contributions of all layers, scaled by each respective precoding weight.
+            golden_re_port[i_re] += configuration.get_coefficient(i_layer, i_port, i_prg) * input_re_layer[i_re];
+          }
+        }
+      }
+
+      // Advance buffers.
+      prg_re_offset += re_count;
+    }
+
+    EXPECT_EQ(nof_re, prg_re_offset)
+        << "The number of RE of the golden sequence does not match the number of input RE.";
+
+    return golden_data;
+  }
+
+  // Generates a precoding configuration with the specified dimensions and random precoding coefficients.
+  precoding_configuration
+  generate_random_precoding(unsigned nof_layers, unsigned nof_ports, unsigned nof_prg, unsigned prg_size)
+  {
+    // Create configuration.
+    precoding_configuration config(nof_layers, nof_ports, nof_prg, prg_size);
+
+    // Fill the precoding matrices with random values.
+    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
+      precoding_configuration::weight_matrix& weights = config.get_prg_coefficients(i_prg);
+      for (cf_t& weight : weights.get_view<static_cast<unsigned>(precoding_configuration::dims::prg)>({})) {
+        weight = {weight_dist(rgen), weight_dist(rgen)};
+      }
+    }
+
+    return config;
+  }
+
+private:
+  // Buffer for holding randomly generated data.
+  static_re_buffer<precoding_constants::MAX_NOF_LAYERS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> random_data;
+
+  // Buffer for holding the golden sequence.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> golden_data;
+
+  // Uniform distribution to generate data samples.
+  std::uniform_real_distribution<float> data_dist{-10.0, +10.0};
+
+  // Uniform distribution to generate precoding weights.
+  std::uniform_real_distribution<float> weight_dist{-1, +1};
+};
+
+std::shared_ptr<channel_precoder_factory> PrecodingFixture::precoder_factory = nullptr;
+std::unique_ptr<channel_precoder>         PrecodingFixture::precoder         = nullptr;
+
+// Tests a wideband single port precoding configuration, generated by the function make_single_port.
+TEST_F(PrecodingFixture, WidebandSinglePort)
+{
+  constexpr unsigned nof_layers = 1;
+  constexpr unsigned nof_ports  = 1;
+
+  // Create a single port precoding configuration.
+  precoding_configuration precoding_config = make_single_port();
+
+  // Number of resource elements per layer.
+  unsigned nof_re = precoding_config.get_nof_prg() * precoding_config.get_prg_size() * NRE;
+
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer(nof_ports,
+                                                                                                           nof_re);
+  // Generate random RE arranged by layers.
+  const re_buffer& input_data = generate_random_data(nof_layers, nof_re);
+
+  // Generate the golden precoded data.
+  const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+  // View over the input RE belonging to a single PRG.
+  re_buffer_reader_view prg_data(input_data, 0, nof_re);
+
+  // View over the output RE belonging to a single PRG.
+  re_buffer_writer_view precoded_data(precoding_buffer, 0, nof_re);
+
+  // Apply precoding. There is only one PRG, since the precoding configuration is wideband.
+  precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(0));
+
+  // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+  ASSERT_EQ(span<const cf_t>(golden.get_slice(0)), span<const cf_t>(precoding_buffer.get_slice(0)));
+}
+
+// Tests a wideband, one layer to one antenna port configuration, generated by the function
+// make_wideband_one_layer_one_port.
+TEST_F(PrecodingFixture, WidebandOneLayerToOnePort)
+{
+  constexpr unsigned nof_layers = 1;
+
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer;
+
+  for (unsigned nof_ports = 1; nof_ports <= precoding_constants::MAX_NOF_PORTS; ++nof_ports) {
+    // The precoding configuration maps a single layer to one of the antenna ports, selected randomly.
+    std::uniform_int_distribution<unsigned> selected_port_dist{0, nof_ports - 1};
+
+    // Create a single port precoding configuration.
+    precoding_configuration precoding_config = make_wideband_one_layer_one_port(nof_ports, selected_port_dist(rgen));
+
+    // Number of resource elements per layer.
+    unsigned nof_re = precoding_config.get_nof_prg() * precoding_config.get_prg_size() * NRE;
+
+    // Resize the output buffer.
+    precoding_buffer.resize(nof_ports, nof_re);
+
+    // Generate random RE arranged by layers.
+    const re_buffer& input_data = generate_random_data(nof_layers, nof_re);
+
+    // Generate the golden precoded data.
+    const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+    // View over the input RE belonging to a single PRG.
+    re_buffer_reader_view prg_data(input_data, 0, nof_re);
+
+    // View over the output RE belonging to a single PRG.
+    re_buffer_writer_view precoded_data(precoding_buffer, 0, nof_re);
+
+    // Apply precoding. There is only one PRG, since the precoding configuration is wideband.
+    precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(0));
+
+    // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+    }
+  }
+}
+// Tests a wideband, identity matrix precoding configuration, generated by the function make_wideband_identity.
+TEST_F(PrecodingFixture, WidebandIdentity)
+{
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer;
+
+  for (unsigned nof_streams = 1; nof_streams <= precoding_constants::MAX_NOF_LAYERS; ++nof_streams) {
+    // Create a precoding configuration with precoding weights forming an identity matrix.
+    precoding_configuration precoding_config = make_wideband_identity(nof_streams);
+
+    // Number of resource elements per layer.
+    unsigned nof_re = precoding_config.get_nof_prg() * precoding_config.get_prg_size() * NRE;
+
+    // Resize the output buffer.
+    precoding_buffer.resize(nof_streams, nof_re);
+
+    // Generate random RE arranged by layers.
+    const re_buffer& input_data = generate_random_data(nof_streams, nof_re);
+
+    // Generate the golden precoded data.
+    const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+    // View over the input RE belonging to a single PRG.
+    re_buffer_reader_view prg_data(input_data, 0, nof_re);
+
+    // View over the output RE belonging to a single PRG.
+    re_buffer_writer_view precoded_data(precoding_buffer, 0, nof_re);
+
+    // Apply precoding. There is only one PRG, since the precoding configuration is wideband.
+    precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(0));
+
+    // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+    for (unsigned i_port = 0; i_port != nof_streams; ++i_port) {
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+    }
+  }
+}
+
+// Tests a wideband, one layer to two antenna ports configuration, generated by the function
+// make_wideband_one_layer_two_ports.
+TEST_F(PrecodingFixture, WidebandOneLayerTwoPorts)
+{
+  constexpr unsigned nof_layers = 1;
+  constexpr unsigned nof_ports  = 2;
+
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer;
+
+  for (unsigned codebook_index = 0, nof_cb_index = 4; codebook_index != nof_cb_index; ++codebook_index) {
+    // Create a single layer to two ports precoding configuration.
+    precoding_configuration precoding_config = make_wideband_one_layer_two_ports(codebook_index);
+
+    // Number of resource elements per layer.
+    unsigned nof_re = precoding_config.get_nof_prg() * precoding_config.get_prg_size() * NRE;
+
+    // Resize the output buffer.
+    precoding_buffer.resize(nof_ports, nof_re);
+
+    // Generate random RE arranged by layers.
+    const re_buffer& input_data = generate_random_data(nof_layers, nof_re);
+
+    // Generate the golden precoded data.
+    const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+    // View over the input RE belonging to a single PRG.
+    re_buffer_reader_view prg_data(input_data, 0, nof_re);
+
+    // View over the output RE belonging to a single PRG.
+    re_buffer_writer_view precoded_data(precoding_buffer, 0, nof_re);
+
+    // Apply precoding. There is only one PRG, since the precoding configuration is wideband.
+    precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(0));
+
+    // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+    }
+  }
+}
+
+// Tests a wideband, two layers to two antenna ports configuration, generated by the function
+// make_wideband_two_layer_two_ports.
+TEST_F(PrecodingFixture, WidebandTwoLayerTwoPorts)
+{
+  constexpr unsigned nof_layers = 2;
+  constexpr unsigned nof_ports  = 2;
+
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer;
+
+  for (unsigned codebook_index = 0, nof_cb_index = 2; codebook_index != nof_cb_index; ++codebook_index) {
+    // Create a single layer to two ports precoding configuration.
+    precoding_configuration precoding_config = make_wideband_two_layer_two_ports(codebook_index);
+
+    // Number of resource elements per layer.
+    unsigned nof_re = precoding_config.get_nof_prg() * precoding_config.get_prg_size() * NRE;
+
+    // Resize the output buffer.
+    precoding_buffer.resize(nof_ports, nof_re);
+
+    // Generate random RE arranged by layers.
+    const re_buffer& input_data = generate_random_data(nof_layers, nof_re);
+
+    // Generate the golden precoded data.
+    const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+    // View over the input RE belonging to a single PRG.
+    re_buffer_reader_view prg_data(input_data, 0, nof_re);
+
+    // View over the output RE belonging to a single PRG.
+    re_buffer_writer_view precoded_data(precoding_buffer, 0, nof_re);
+
+    // Apply precoding. There is only one PRG, since the precoding configuration is wideband.
+    precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(0));
+
+    // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+    }
+  }
+}
+
+// Tests a precoding configuration with parametrized dimensions and random weights.
+TEST_P(PrecodingFixture, MultiplePrg)
+{
+  const MultiplePRGParams& test_case = GetParam();
+
+  unsigned nof_rb    = std::get<0>(test_case);
+  unsigned nof_ports = std::get<1>(test_case);
+  unsigned prg_size  = std::get<2>(test_case);
+
+  // Number of resource elements per layer.
+  unsigned nof_re = nof_rb * NRE;
+
+  // Buffer to hold the precoded RE.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, NRE * MAX_RB * MAX_NSYMB_PER_SLOT> precoding_buffer(nof_ports,
+                                                                                                           nof_re);
+  for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
+    // Generate random RE arranged by layers.
+    const re_buffer& input_data = generate_random_data(nof_layers, nof_re);
+
+    // Number of RE that fit in a PRG.
+    unsigned nof_re_prg = prg_size * NRE;
+
+    // Number of PRG that the data spans.
+    unsigned nof_prg = divide_ceil(nof_re, nof_re_prg);
+
+    // Create a random precoding configuration
+    precoding_configuration precoding_config = generate_random_precoding(nof_layers, nof_ports, nof_prg, prg_size);
+
+    // Generate the golden precoded data.
+    const re_buffer& golden = generate_golden(input_data, precoding_config);
+
+    for (unsigned i_prg = 0, re_offset = 0; i_prg != nof_prg; ++i_prg) {
+      // Number of RE to process on this iteration.
+      unsigned re_count = std::min(nof_re_prg, nof_re - re_offset);
+
+      // View over the input RE belonging to a single PRG.
+      re_buffer_reader_view prg_data(input_data, re_offset, re_count);
+
+      // View over the output RE belonging to a single PRG.
+      re_buffer_writer_view precoded_data(precoding_buffer, re_offset, re_count);
+
+      // Apply precoding.
+      precoder->apply_precoding(precoded_data, prg_data, precoding_config.get_prg_coefficients(i_prg));
+
+      // Advance buffer views.
+      re_offset += re_count;
+    }
+
+    // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
+    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+      ASSERT_EQ(span<const cf_t>(golden.get_slice(i_port)), span<const cf_t>(precoding_buffer.get_slice(i_port)));
+    }
+  }
+}
+
+// Creates test suite that combines all DCI size parameters required for fallback DCI formats.
+INSTANTIATE_TEST_SUITE_P(MultiplePrg,
+                         PrecodingFixture,
+                         ::testing::Combine(
+                             // Number of RB.
+                             ::testing::Values(13, 51, MAX_RB),
+                             // Number of antenna ports.
+                             ::testing::Values(1, 2, 4),
+                             // PRG size in number of RB.
+                             ::testing::Values(4, 13, 52, MAX_RB)));
+} // namespace

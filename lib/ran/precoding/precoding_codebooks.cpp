@@ -40,7 +40,7 @@ precoding_configuration srsran::make_wideband_one_layer_one_port(unsigned nof_po
 
 precoding_configuration srsran::make_wideband_identity(unsigned nof_streams)
 {
-  static constexpr interval<unsigned, true> nof_streams_range(1, precoder_constants::MAX_NOF_LAYERS);
+  static constexpr interval<unsigned, true> nof_streams_range(1, precoding_constants::MAX_NOF_LAYERS);
 
   srsran_assert(nof_streams_range.contains(nof_streams),
                 "The number of streams (i.e., {}) is out of the valid range {}.",
@@ -53,8 +53,8 @@ precoding_configuration srsran::make_wideband_identity(unsigned nof_streams)
   cf_t normalised_weight = 1.0F / std::sqrt(static_cast<float>(nof_streams));
 
   // Set weights per port.
-  for (unsigned i_layer = 0; i_layer != 2; ++i_layer) {
-    for (unsigned i_port = 0; i_port != 2; ++i_port) {
+  for (unsigned i_layer = 0; i_layer != nof_streams; ++i_layer) {
+    for (unsigned i_port = 0; i_port != nof_streams; ++i_port) {
       cf_t weight = (i_layer == i_port) ? normalised_weight : 0.0F;
       result.set_coefficient(weight, i_layer, i_port, 0);
     }

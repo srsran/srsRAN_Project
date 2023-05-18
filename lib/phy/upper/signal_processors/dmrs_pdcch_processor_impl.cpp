@@ -77,7 +77,7 @@ void dmrs_pdcch_processor_impl::map(resource_grid_mapper& mapper, const dmrs_pdc
        i_symbol != i_symbol_end;
        ++i_symbol, i_re += nof_dmrs_symbol) {
     // Get view for the current symbol.
-    span<cf_t> sequence = d_pdcch.get_layer(0).subspan(i_re, nof_dmrs_symbol);
+    span<cf_t> sequence = d_pdcch.get_slice(0).subspan(i_re, nof_dmrs_symbol);
 
     // Generate sequence.
     sequence_generation(sequence, i_symbol, config);

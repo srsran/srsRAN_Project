@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-namespace precoder_constants {
+namespace precoding_constants {
 
 /// Minimum precoding PRG size.
 static constexpr unsigned MIN_PRG_SIZE = 4;
@@ -28,6 +28,6 @@ static constexpr unsigned MAX_NOF_LAYERS = 8;
 /// Maximum number of ports supported by the precoder.
 static constexpr unsigned MAX_NOF_PORTS = 16;
 
-} // namespace precoder_constants
+} // namespace precoding_constants
 
 } // namespace srsran

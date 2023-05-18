@@ -73,7 +73,7 @@ void pdcch_modulator_impl::modulate(resource_grid_mapper&            mapper,
 
   // Apply modulation mapping.
   static_re_buffer<1, MAX_RE> d_pdcch(1, data.size() / 2);
-  modulate(d_pdcch.get_layer(0), b_hat, config.scaling);
+  modulate(d_pdcch.get_slice(0), b_hat, config.scaling);
 
   // Map to resource elements.
   map(mapper, d_pdcch, config);

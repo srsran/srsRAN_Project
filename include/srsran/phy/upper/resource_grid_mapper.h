@@ -34,9 +34,9 @@ public:
   /// \param[in] precoding  Precoding configuration.
   void map(const re_buffer& input, const re_pattern_list& pattern, const precoding_configuration& precoding)
   {
-    srsran_assert(input.get_nof_layers() == precoding.get_nof_layers(),
+    srsran_assert(input.get_nof_slices() == precoding.get_nof_layers(),
                   "The input number of layers (i.e., {}) and the precoding number of layers (i.e., {}) are different.",
-                  input.get_nof_layers(),
+                  input.get_nof_slices(),
                   precoding.get_nof_layers());
 
     unsigned nof_layers = precoding.get_nof_layers();
@@ -64,7 +64,7 @@ public:
       // Map each layer to a port.
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
         for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
-          span<const cf_t> layer_data = input.get_layer(i_layer);
+          span<const cf_t> layer_data = input.get_slice(i_layer);
           grid.put(i_layer, i_symbol, 0, symbol_re_mask, layer_data.subspan(i_re, nof_re));
         }
       }
