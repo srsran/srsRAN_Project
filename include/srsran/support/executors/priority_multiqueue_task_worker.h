@@ -42,7 +42,7 @@ struct TaskQueueWrapper {
     // do nothing.
   }
 
-  bool push(unique_task& task) { return queue.try_push(std::move(task)); }
+  bool push(unique_task task) { return queue.try_push(std::move(task)); }
 
   bool pop_and_run()
   {
@@ -68,7 +68,7 @@ struct TaskQueueWrapper<task_queue_policy::blocking> {
 
   void stop() { queue.stop(); }
 
-  bool push(unique_task& task) { return queue.try_push(std::move(task)).has_value(); }
+  bool push(unique_task task) { return queue.try_push(std::move(task)).has_value(); }
 
   bool pop_and_run()
   {
@@ -87,25 +87,25 @@ private:
 };
 
 template <size_t N, size_t... Is>
-auto as_tuple(const std::array<unsigned, N>& arr, std::index_sequence<Is...> /*unused*/)
+constexpr auto as_tuple(const std::array<unsigned, N>& arr, std::index_sequence<Is...> /*unused*/)
 {
   return std::make_tuple(arr[Is]...);
 }
 
 template <size_t N>
-auto as_tuple(const std::array<unsigned, N>& arr)
+constexpr auto as_tuple(const std::array<unsigned, N>& arr)
 {
   return as_tuple(arr, std::make_index_sequence<N>{});
 }
 
 template <typename T, typename F, size_t... Is>
-void for_each_impl(T&& t, const F& f, std::index_sequence<Is...>)
+constexpr void for_each_impl(T&& t, const F& f, std::index_sequence<Is...>)
 {
   (void)std::initializer_list<int>{(f(std::get<Is>(t)), 0)...};
 }
 
 template <typename T, typename F>
-void for_each(T&& t, const F& f)
+constexpr void for_each(T&& t, const F& f)
 {
   for_each_impl(t, f, std::make_index_sequence<std::tuple_size<std::decay_t<T>>::value>{});
 }
@@ -172,7 +172,7 @@ public:
   template <task_queue_priority Priority>
   SRSRAN_NODISCARD bool push_task(unique_task task)
   {
-    return std::get<task_queue_priority_to_index(Priority)>(task_queues).push(task);
+    return std::get<task_queue_priority_to_index(Priority)>(task_queues).push(std::move(task));
   }
 
   /// \brief Get specified priority task queue capacity.
