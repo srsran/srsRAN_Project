@@ -13,17 +13,13 @@
 #include "f1ap_du_ue_config.h"
 #include "f1c_bearer.h"
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"
-#include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
@@ -48,71 +44,13 @@ public:
   virtual void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) = 0;
 };
 
-struct du_setup_params {
-  // mandatory
-  uint64_t gnb_du_id;
-  uint8_t  rrc_version;
-
-  // optional
-  std::string gnb_du_name;
-};
-
-/// \brief Served cell configuration that will be passed to CU-CP.
-struct f1_cell_setup_params {
-  nr_cell_global_id_t             nr_cgi;
-  pci_t                           pci;
-  uint32_t                        tac;
-  duplex_mode                     duplx_mode;
-  carrier_configuration           dl_carrier;
-  optional<carrier_configuration> ul_carrier;
-  byte_buffer                     packed_mib;
-  byte_buffer                     packed_sib1;
-};
-
-/// \brief Message that initiates a F1 Setup procedure.
-struct f1_setup_request_message {
-  uint64_t                          gnb_du_id;
-  std::string                       gnb_du_name;
-  uint8_t                           rrc_version;
-  std::vector<f1_cell_setup_params> served_cells;
-  unsigned                          max_setup_retries = 5;
-};
-
-struct f1_setup_response_message {
+struct f1ap_ue_context_modification_confirm {
   bool success = false;
 };
 
-/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
-class f1ap_connection_manager
-{
-public:
-  virtual ~f1ap_connection_manager() = default;
+struct f1ap_ue_inactivity_notification_message {};
 
-  /// \brief Initiates the F1 Setup procedure as per TS 38.473, Section 8.2.3.
-  /// \param[in] request The F1SetupRequest message to transmit.
-  /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a
-  /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3
-  /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
-  virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
-};
-
-struct f1ap_ue_context_modification_required_message {
-  asn1::f1ap::ue_context_mod_required_s msg;
-};
-
-struct f1ap_ue_context_modification_response_message {
-  asn1::f1ap::ue_context_mod_confirm_s confirm;
-  asn1::f1ap::ue_context_mod_refuse_s  refuse;
-  bool                                 success = false;
-};
-
-struct f1ap_ue_inactivity_notification_message {
-  asn1::f1ap::ue_inactivity_notif_s msg;
-};
-
-struct f1ap_notify_message {
-  asn1::f1ap::notify_s msg;
-};
+struct f1ap_notify_message {};
 
 struct f1ap_ue_delete_request {
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
@@ -138,10 +76,10 @@ public:
 
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
-  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in
+  /// \return Returns a f1ap_ue_context_modification_confirm struct with the success member set to 'true' in
   /// case of a successful outcome, 'false' otherwise.
-  virtual async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) = 0;
+  virtual async_task<f1ap_ue_context_modification_confirm>
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) = 0;
 
   /// \brief Indicate an UE activity event as per TS 38.473 section 8.3.6
   /// \param[in] msg The UE Inactivity Nofication message to transmit.

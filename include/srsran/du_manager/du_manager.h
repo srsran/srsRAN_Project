@@ -2,7 +2,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"

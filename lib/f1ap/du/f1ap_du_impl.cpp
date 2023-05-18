@@ -205,26 +205,24 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
   ue->f1ap_msg_notifier.on_new_message(msg);
 }
 
-async_task<f1ap_ue_context_modification_response_message>
-f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg)
+async_task<f1ap_ue_context_modification_confirm>
+f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg)
 {
   // TODO: add procedure implementation
 
   f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_resp;
 
-  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_response_message{}, msg](
-                          coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx) mutable {
+  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_confirm{}, msg](
+                          coro_context<async_task<f1ap_ue_context_modification_confirm>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
 
     if (ue_ctxt_mod_resp.has_value()) {
       logger.debug("Received PDU with successful outcome");
-      res.confirm = *ue_ctxt_mod_resp.value();
       res.success = true;
     } else {
       logger.debug("Received PDU with unsuccessful outcome");
-      res.refuse  = *ue_ctxt_mod_resp.error();
       res.success = false;
     }
 

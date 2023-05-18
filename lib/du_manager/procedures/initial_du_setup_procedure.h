@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include "srsran/f1ap/du/f1ap_du.h"
-#include "srsran/support/async/async_task.h"
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 
 namespace srsran {
 namespace srs_du {

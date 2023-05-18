@@ -72,5 +72,8 @@ struct f1ap_ue_context_release_request {
   rlf_cause     cause;
 };
 
+/// \brief Request Command for F1AP UE CONTEXT Modification Required.
+struct f1ap_ue_context_modification_required {};
+
 } // namespace srs_du
 } // namespace srsran

@@ -96,14 +96,14 @@ public:
 
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
-  wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
-  optional<f1ap_ue_creation_request>                                      last_ue_create;
-  f1ap_ue_creation_response                                               next_ue_create_response;
-  optional<f1ap_ue_configuration_request>                                 last_ue_config;
-  f1ap_ue_configuration_response                                          next_ue_config_response;
-  optional<du_ue_index_t>                                                 last_ue_deleted;
-  optional<f1ap_ue_context_release_request>                               last_ue_release_req;
-  wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
+  wait_manual_event_tester<f1_setup_response_message>            wait_f1_setup;
+  optional<f1ap_ue_creation_request>                             last_ue_create;
+  f1ap_ue_creation_response                                      next_ue_create_response;
+  optional<f1ap_ue_configuration_request>                        last_ue_config;
+  f1ap_ue_configuration_response                                 next_ue_config_response;
+  optional<du_ue_index_t>                                        last_ue_deleted;
+  optional<f1ap_ue_context_release_request>                      last_ue_release_req;
+  wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
 
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
@@ -130,8 +130,8 @@ public:
     last_ue_release_req = msg;
   }
 
-  async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override
+  async_task<f1ap_ue_context_modification_confirm>
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) override
   {
     return wait_ue_mod.launch();
   }
