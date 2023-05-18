@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-/// Radio unit interface to notify timing related events.
+/// Radio Unit interface to notify timing related events.
 class ru_timing_notifier
 {
 public:

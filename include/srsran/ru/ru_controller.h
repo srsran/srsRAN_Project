@@ -12,12 +12,12 @@
 
 namespace srsran {
 
-/// \brief Radio unit - control interface.
+/// \brief Radio Unit - control interface.
 ///
-/// Provides a start and stop methods.
+/// Allows starting and stopping the Radio Unit.
 ///
-/// \remark The methods start() and stop() must be called in order and only once, otherwise it will result in undefined
-/// behaviour.
+/// \remark The methods \c start() and \c stop() must be called in order and only once; other uses will result in
+/// undefined behavior.
 class ru_controller
 {
 public:
@@ -27,9 +27,9 @@ public:
   /// \brief Starts the Radio Unit operation.
   virtual void start() = 0;
 
-  /// \brief Stops the Radio unit operation.
+  /// \brief Stops the Radio Unit operation.
   ///
-  /// Requests the Radio unit to stop and it waits that all asynchronous execution is finished before returning.
+  /// Waits for all asynchronous processes to be over before returning.
   virtual void stop() = 0;
 };
 

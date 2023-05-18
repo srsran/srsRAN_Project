@@ -19,8 +19,8 @@ namespace srsran {
 ///
 /// Provides a start and stop methods.
 ///
-/// \remark The methods start() and stop() must be called in order and only once, otherwise it will result in undefined
-/// behaviour.
+/// \remark The methods \c start() and \c stop() must be called in order and only once; other uses will result in
+/// undefined behavior.
 class lower_phy_controller
 {
 public:
@@ -37,8 +37,7 @@ public:
 
   /// \brief Stops the lower physical layer operation.
   ///
-  /// Requests the lower physical layer to stop and it waits that all asynchronous execution is finished before
-  /// returning.
+  /// Waits for all asynchronous processes to be over before returning.
   virtual void stop() = 0;
 };
 
