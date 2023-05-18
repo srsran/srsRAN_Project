@@ -19,7 +19,7 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
 {
   std::vector<sched_grid_resource> pucch_guardbands{};
 
-  auto list_contain_resource = [&pucch_guardbands](const sched_grid_resource& res) {
+  auto list_contains_resource = [&pucch_guardbands](const sched_grid_resource& res) {
     return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) != pucch_guardbands.end();
   };
 
@@ -64,10 +64,10 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
       }
     }
 
-    if (not res_0.is_empty() and not list_contain_resource(res_0)) {
+    if (not res_0.is_empty() and not list_contains_resource(res_0)) {
       pucch_guardbands.emplace_back(res_0);
     }
-    if (not res_1.is_empty() and not list_contain_resource(res_1)) {
+    if (not res_1.is_empty() and not list_contains_resource(res_1)) {
       pucch_guardbands.emplace_back(res_1);
     }
   }

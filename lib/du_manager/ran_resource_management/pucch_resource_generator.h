@@ -17,39 +17,6 @@
 namespace srsran {
 namespace srs_du {
 
-/// Defines the number of different Initial Cyclic Shifts that can be used for PUCCH Format 1, as per \c PUCCH-format1,
-/// in \c PUCCH-Config, TS 38.331. We assume the CS are evenly distributed, which means we can only have a divisor of 12
-/// possible cyclic shifts.
-enum class nof_cyclic_shifts { no_cyclic_shift = 1, two = 2, three = 3, four = 4, six = 6, twelve = 12 };
-
-inline unsigned format1_cp_step_to_uint(nof_cyclic_shifts opt)
-{
-  return static_cast<unsigned>(opt);
-}
-
-/// Collects the parameters for PUCCH Format 1 that can be configured.
-struct pucch_f1_params {
-  /// Number of possible Initial Cyclic Shifts, equally spaced within the range {0,...,11}, as per \c PUCCH-format1, in
-  /// \c PUCCH-Config, TS 38.331.
-  nof_cyclic_shifts nof_cyc_shifts{nof_cyclic_shifts::no_cyclic_shift};
-  /// Indicates whether OCCs (as per \c PUCCH-format1, in \c PUCCH-Config, TS 38.331) are supported.
-  bool                             occ_supported{false};
-  bounded_integer<unsigned, 4, 14> nof_symbols{14};
-  bool                             intraslot_freq_hopping{false};
-};
-
-/// Collects the parameters for PUCCH Format 2 that can be configured.
-struct pucch_f2_params {
-  bounded_integer<unsigned, 1, 2> nof_symbols{1};
-  unsigned                        max_nof_rbs{1};
-  /// Maximum payload in bits that can be carried by PUCCH Format 2. When this field is set, \c max_nof_rbs is ignored
-  /// and the maximum number of RBs is computed according to \ref get_pucch_format2_max_nof_prbs.
-  optional<unsigned>  max_payload_bits;
-  max_pucch_code_rate max_code_rate{max_pucch_code_rate::dot_25};
-  /// For intraslot-freq-hopping, \c nof_symbols must be set to 2.
-  bool intraslot_freq_hopping{false};
-};
-
 /// Parameters for the generated PUCCH resource.
 struct cell_pucch_resource {
   /// Identifies the PUCCH resources within the cell's list.
@@ -76,9 +43,8 @@ struct cell_pucch_resource {
 /// \remark The function returns an empty list in the following cases: (i) If the given number of RBs is not enough to
 /// allocate at least 1 resource. (ii) If the RBs occupancy is larger than the BWP size. (iii) If F2 intra-slot
 /// frequency hopping is enabled with only 1 symbol.
-std::vector<cell_pucch_resource> generate_pucch_res_list_given_rbs(unsigned max_pucch_f1_rbs,
-                                                                   unsigned max_pucch_f2_rbs,
-
+std::vector<cell_pucch_resource> generate_pucch_res_list_given_rbs(unsigned        max_pucch_f1_rbs,
+                                                                   unsigned        max_pucch_f2_rbs,
                                                                    pucch_f1_params f1_params,
                                                                    pucch_f2_params f2_params,
                                                                    unsigned        bwp_size_rbs);

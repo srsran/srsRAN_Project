@@ -8,6 +8,9 @@
  *
  */
 
+/// \file Defines the parameters that define the PUCCH struct and enums. These parameters are derived from the related
+/// ones given in TS 38.331, \c PUCCH-Config.
+
 #pragma once
 
 #include "pucch_mapping.h"
