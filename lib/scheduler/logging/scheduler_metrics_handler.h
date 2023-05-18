@@ -33,13 +33,15 @@ public:
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index);
 
-  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu);
+  /// \brief Register CRC indication.
+  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Register CSI report (CQI) metric.
   void handle_csi_report(du_ue_index_t                                                         ue_index,
                          const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi);
 
-  void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack);
+  /// \brief Register HARQ-ACK UCI indication.
+  void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
   /// \brief Register PUCCH SINR.
   void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);

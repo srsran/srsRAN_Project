@@ -139,7 +139,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
               crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
 
           // Notify metrics handler.
-          metrics_handler.handle_crc_indication(crc);
+          metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
         });
   }
 }
@@ -152,19 +152,14 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
     const mac_harq_ack_report_status ack_value = harq_bits[dai];
     const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, dai);
     if (h_dl != nullptr) {
+      const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
       // Log Event.
-      ev_logger.enqueue(
-          scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
-                                                 ue_cc.rnti(),
-                                                 ue_cc.cell_index,
-                                                 uci_sl,
-                                                 h_dl->id,
-                                                 ack_value,
-                                                 units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
+      ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, ack_value, tbs});
 
       if (ack_value != mac_harq_ack_report_status::dtx) {
         // Notify metric.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack);
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack, tbs);
       }
     }
   }
