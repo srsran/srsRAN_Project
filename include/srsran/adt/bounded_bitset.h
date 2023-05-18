@@ -857,6 +857,46 @@ public:
     buffer[0] = v;
   }
 
+  /// \brief Converts the bitset to an array of packed bits.
+  template <typename UnsignedInteger>
+  size_t to_packed_bits(span<UnsignedInteger> packed_bits)
+  {
+    static_assert(sizeof(UnsignedInteger) <= sizeof(word_t), "ERROR: provided array type is too large");
+    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    static constexpr size_t steps_per_word      = sizeof(word_t) / sizeof(UnsignedInteger);
+    static constexpr size_t bits_per_integer    = sizeof(UnsignedInteger) * 8U;
+    static constexpr word_t integer_mask        = mask_lsb_ones<word_t>(bits_per_integer);
+    const unsigned          last_word_steps     = divide_ceil(size() % bits_per_word, bits_per_integer);
+    const unsigned          nof_words           = nof_words_();
+    const unsigned          nof_integers_packed = (nof_words - 1) * steps_per_word + last_word_steps;
+    srsran_assert(
+        packed_bits.size() >= nof_integers_packed, "ERROR: provided array size='{}' is too small", packed_bits.size());
+
+    size_t count = 0;
+    if (not LowestInfoBitIsLSB) {
+      for (unsigned i = 0; i != nof_words; ++i) {
+        unsigned nof_steps = i == nof_words - 1 ? last_word_steps : steps_per_word;
+        for (unsigned j = 0; j != nof_steps; ++j) {
+          packed_bits[count++] = (buffer[i] >> (j * steps_per_word)) & integer_mask;
+        }
+      }
+    } else {
+      for (unsigned i = 0; i != nof_words; ++i) {
+        word_t   w         = buffer[nof_words - i - 1];
+        unsigned nof_steps = steps_per_word;
+        if (i == nof_words - 1) {
+          w <<= (bits_per_word - (size() % bits_per_word));
+          nof_steps = last_word_steps;
+        }
+        for (unsigned j = 0; j != nof_steps; ++j) {
+          packed_bits[count++] = (w >> (bits_per_word - (j + 1) * bits_per_integer)) & integer_mask;
+        }
+      }
+    }
+
+    return nof_integers_packed;
+  }
+
 private:
   template <size_t N2, bool reversed2>
   friend class bounded_bitset;
@@ -1003,17 +1043,17 @@ private:
     return -1;
   }
 
-  /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided callback
-  /// returns true.
-  /// This helper function iterates through the bounded_bitset on a word-by-word basis. Note that operations over words
-  /// are generally faster than operations over individual bits.
-  /// For each iterated word, a mask of the selected bits is computed (which depends on the provided "start" and
-  /// "stop" bit indexes), and the provided callback is invoked. The callback receives as arguments the word index
-  /// and the selected-bit mask. If the callback returns true, the iteration stops and the function returns true.
+  /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided
+  /// callback returns true. This helper function iterates through the bounded_bitset on a word-by-word basis. Note
+  /// that operations over words are generally faster than operations over individual bits. For each iterated word, a
+  /// mask of the selected bits is computed (which depends on the provided "start" and "stop" bit indexes), and the
+  /// provided callback is invoked. The callback receives as arguments the word index and the selected-bit mask. If
+  /// the callback returns true, the iteration stops and the function returns true.
   ///
   /// \param start first bit index of the bounded_bitset.
   /// \param stop end bit index of the bounded_bitset.
-  /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
+  /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the
+  /// bitset.
   ///          When this callback returns true, the iteration is notify_stop.
   /// \return true if the provided callback returns true for a given word. False otherwise.
   template <typename C>
@@ -1201,7 +1241,6 @@ inline bounded_bitset<N2, LowestInfoBitIsLSB> fold_and_accumulate(const bounded_
 } // namespace srsran
 
 namespace fmt {
-
 /// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsLSB>
 template <size_t N, bool LowestInfoBitIsLSB>
 struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsLSB>> {

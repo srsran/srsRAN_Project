@@ -152,7 +152,8 @@ template <typename BoundedBitset>
 class bounded_bitset_tester : public ::testing::Test
 {
 protected:
-  using bitset_type = BoundedBitset;
+  using bitset_type         = BoundedBitset;
+  using reverse_bitset_type = bounded_bitset<bitset_type::max_size(), not bitset_type::bit_order()>;
 
   static constexpr unsigned max_size() { return bitset_type::max_size(); }
 
@@ -789,4 +790,36 @@ TEST(BoundedBitset, for_each)
   output.resize(0);
   mask.for_each(0, 9, [&output, &values](int n) { output.emplace_back(values[n]); });
   ASSERT_EQ(output, std::vector<int>({2, 4, 6, 8}));
+}
+
+TEST(bounded_bitset_test, to_packed_bits_one_byte)
+{
+  bounded_bitset<10>       bitset{true, true, false, false, true};
+  bounded_bitset<10, true> bitset_rev{true, true, false, false, true};
+
+  std::array<uint8_t, 1> packed_bits = {};
+  ASSERT_EQ(bitset.to_packed_bits(span<uint8_t>{packed_bits}), 1);
+  ASSERT_EQ(packed_bits[0], 0b00010011);
+  ASSERT_EQ(bitset_rev.to_packed_bits(span<uint8_t>{packed_bits}), 1);
+  ASSERT_EQ(packed_bits[0], 0b11001000);
+}
+
+TEST(bounded_bitset_test, to_packed_bits_two_byte)
+{
+  bounded_bitset<20>       bitset(15);
+  bounded_bitset<20, true> bitset_rev(15);
+  bitset.set(0);
+  bitset.set(1);
+  bitset.set(9);
+  bitset_rev.set(0);
+  bitset_rev.set(1);
+  bitset_rev.set(9);
+
+  std::array<uint8_t, 3> packed_bits = {}, packed_bits2 = {};
+  ASSERT_EQ(bitset.to_packed_bits(span<uint8_t>{packed_bits}), 2);
+  std::array<uint8_t, 2> expected_packed_bits = {0b00000011, 0b00000010};
+  ASSERT_TRUE(std::equal(expected_packed_bits.begin(), expected_packed_bits.end(), packed_bits.begin()));
+  ASSERT_EQ(bitset_rev.to_packed_bits(span<uint8_t>{packed_bits2}), 2);
+  std::array<uint8_t, 2> expected_packed_bits2 = {0b11000000, 0b01000000};
+  ASSERT_TRUE(std::equal(expected_packed_bits2.begin(), expected_packed_bits2.end(), packed_bits2.begin()));
 }
