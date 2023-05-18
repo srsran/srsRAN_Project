@@ -19,8 +19,8 @@ class ru_uplink_plane_handler;
 /// \brief Radio Unit interface.
 ///
 /// The Radio Unit interface provides downlink and uplink functionality through the uplink and downlink planes, allowing
-/// data transmission and reception using a radio. It also notifies timing events using the \r ru_timing_notifier. Only
-/// a single Radio Unit interface should be used when operating with multiple sectors.
+/// data transmission and reception using a radio. It also notifies timing events using the \ref ru_timing_notifier.
+/// Only a single Radio Unit interface should be used when operating with multiple sectors.
 class radio_unit
 {
 public:
