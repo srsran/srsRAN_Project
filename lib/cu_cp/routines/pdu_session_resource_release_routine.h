@@ -40,8 +40,6 @@ private:
 
   const cu_cp_pdu_session_resource_release_command release_cmd;
 
-  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
-
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU
   up_resource_manager&                   rrc_ue_up_resource_manager; // to get RRC DRB config
