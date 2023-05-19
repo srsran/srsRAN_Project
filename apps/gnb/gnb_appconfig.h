@@ -71,8 +71,9 @@ struct prach_appconfig {
   unsigned max_msg3_harq_retx    = 4;
   /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
   optional<unsigned> total_nof_ra_preambles;
-  /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. Possible
-  /// values: {0,...,MAX_NOF_PRB - 1}.
+  /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
+  /// with the PUCCH, the user should leave some guardband between the PUCCH CRBs and the PRACH PRBs.
+  /// Possible values: {0,...,MAX_NOF_PRB - 1}.
   unsigned prach_frequency_start = 6;
 };
 
