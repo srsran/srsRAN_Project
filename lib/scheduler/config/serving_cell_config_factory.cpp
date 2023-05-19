@@ -53,7 +53,7 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
 carrier_configuration
 srsran::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
-  carrier_configuration cfg;
+  carrier_configuration cfg{};
   cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn                                  = params.dl_arfcn;
   cfg.nof_ant                                = 1;
@@ -88,9 +88,10 @@ coreset_configuration srsran::config_helpers::make_default_coreset_config(const 
   const unsigned       coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
   freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
-  nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  const nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   // Number of symbols equal to max(CORESET#0, 2).
-  pdcch_type0_css_coreset_description desc =
+  const pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
   cfg.duration             = std::max(2U, static_cast<unsigned>(desc.nof_symb_coreset));
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
@@ -105,13 +106,13 @@ coreset_configuration srsran::config_helpers::make_default_coreset0_config(const
   cfg.id = to_coreset_id(0);
   const nr_band band =
       params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
-  pdcch_type0_css_coreset_description desc =
+  const pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
-  cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
-  int rb_start = params.scs_common == subcarrier_spacing::kHz15
-                     ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
-                     : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
+  cfg.duration       = static_cast<unsigned>(desc.nof_symb_coreset);
+  const int rb_start = params.scs_common == subcarrier_spacing::kHz15
+                           ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
+                           : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
   if (rb_start < 0) {
     report_error("Coreset#0 CRB starts before pointA.\n");
   }
@@ -183,7 +184,7 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
 
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz,
       params.scs_common,
       params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
@@ -217,7 +218,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
-  uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
+  const uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
   // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
 
   const frequency_range freq_range =
@@ -225,9 +226,9 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   const duplex_mode duplex = band_helper::get_duplex_mode(
       params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
 
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
 
-  double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
+  const double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), nof_crbs, params.scs_common);
   // absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
   // Section 4.4.4.2.
@@ -268,7 +269,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   auto to_pusch_td_list = [](const std::initializer_list<unsigned>& k2s) {
     std::vector<pusch_time_domain_resource_allocation> vec;
     vec.reserve(k2s.size());
-    for (unsigned k2 : k2s) {
+    for (const unsigned k2 : k2s) {
       vec.push_back(pusch_time_domain_resource_allocation{
           .k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}});
     }
@@ -426,7 +427,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_res_set_1.pucch_res_id_list.emplace_back(7);
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
 
-  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
+  const unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz,
       params.scs_common,
       params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
@@ -434,10 +435,8 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id = 0, .starting_prb = nof_rbs - 1, .format = pucch_format::FORMAT_1};
-  res_basic.format_1.initial_cyclic_shift = 0;
-  res_basic.format_1.nof_symbols          = 14;
-  res_basic.format_1.starting_sym_idx     = 0;
-  res_basic.format_1.time_domain_occ      = 0;
+  res_basic.format_params.emplace<pucch_format_1_cfg>(
+      pucch_format_1_cfg{.initial_cyclic_shift = 0, .nof_symbols = 14, .starting_sym_idx = 0, .time_domain_occ = 0});
   pucch_cfg.pucch_res_list.push_back(res_basic);
   // >>> PUCCH resource 1.
   pucch_cfg.pucch_res_list.push_back(res_basic);
@@ -453,43 +452,42 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
   pucch_resource res_basic_f2{.starting_prb = 2, .format = pucch_format::FORMAT_2};
-  res_basic_f2.res_id                    = 3;
-  res_basic_f2.format_2.nof_prbs         = 1;
-  res_basic_f2.format_2.nof_symbols      = 2;
-  res_basic_f2.format_2.starting_sym_idx = 0;
+  res_basic_f2.res_id = 3;
+  res_basic_f2.format_params.emplace<pucch_format_2_3_cfg>(
+      pucch_format_2_3_cfg{.nof_prbs = 1, .nof_symbols = 2, .starting_sym_idx = 0});
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   // >>> PUCCH resource 4.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res4           = pucch_cfg.pucch_res_list.back();
-  res4.res_id                    = 4;
-  res4.format_2.starting_sym_idx = 2;
+  pucch_resource& res4                                                   = pucch_cfg.pucch_res_list.back();
+  res4.res_id                                                            = 4;
+  variant_get<pucch_format_2_3_cfg>(res4.format_params).starting_sym_idx = 2;
   // >>> PUCCH resource 5.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res5           = pucch_cfg.pucch_res_list.back();
-  res5.res_id                    = 5;
-  res5.format_2.starting_sym_idx = 4;
+  pucch_resource& res5                                                   = pucch_cfg.pucch_res_list.back();
+  res5.res_id                                                            = 5;
+  variant_get<pucch_format_2_3_cfg>(res5.format_params).starting_sym_idx = 4;
   // >>> PUCCH resource 6.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res6           = pucch_cfg.pucch_res_list.back();
-  res6.res_id                    = 6;
-  res6.format_2.starting_sym_idx = 6;
+  pucch_resource& res6                                                   = pucch_cfg.pucch_res_list.back();
+  res6.res_id                                                            = 6;
+  variant_get<pucch_format_2_3_cfg>(res6.format_params).starting_sym_idx = 6;
   // >>> PUCCH resource 7.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res7           = pucch_cfg.pucch_res_list.back();
-  res7.res_id                    = 7;
-  res7.format_2.starting_sym_idx = 8;
+  pucch_resource& res7                                                   = pucch_cfg.pucch_res_list.back();
+  res7.res_id                                                            = 7;
+  variant_get<pucch_format_2_3_cfg>(res7.format_params).starting_sym_idx = 8;
   // >>> PUCCH resource 8.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
-  res8.res_id                    = 8;
-  res8.format_2.starting_sym_idx = 10;
+  pucch_resource& res8                                                   = pucch_cfg.pucch_res_list.back();
+  res8.res_id                                                            = 8;
+  variant_get<pucch_format_2_3_cfg>(res8.format_params).starting_sym_idx = 10;
 
   // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
-  res9.res_id                    = 9;
-  res9.format_2.starting_sym_idx = 12;
+  pucch_resource& res9                                                   = pucch_cfg.pucch_res_list.back();
+  res9.res_id                                                            = 9;
+  variant_get<pucch_format_2_3_cfg>(res9.format_params).starting_sym_idx = 12;
 
   // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.
@@ -508,7 +506,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >>> SR Resources.
   // Use 40msec SR period by default.
-  unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  const unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
   pucch_cfg.sr_res_list.push_back(
       scheduling_request_resource_config{.sr_res_id    = 1,
                                          .sr_id        = uint_to_sched_req_id(0),
@@ -564,7 +562,7 @@ nzp_csi_rs_resource_set srsran::config_helpers::make_default_nzp_csi_rs_resource
 /// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.
 static csi_resource_periodicity get_max_csi_rs_period(const cell_config_builder_params& params)
 {
-  csi_resource_periodicity max_csi_period =
+  const csi_resource_periodicity max_csi_period =
       static_cast<csi_resource_periodicity>(std::min(80U * get_nof_slots_per_subframe(params.scs_common), 640U));
   return max_csi_period;
 }

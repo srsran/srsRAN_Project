@@ -63,6 +63,17 @@ error_type<std::string> srsran::config_validators::validate_pucch_cfg(const sche
     }
   }
 
+  // Verify each resource format matches the corresponding parameters.
+  for (auto res : pucch_cfg.pucch_res_list) {
+    const bool format_match_format_params =
+        (res.format == pucch_format::FORMAT_0 and variant_holds_alternative<pucch_format_0_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_1 and variant_holds_alternative<pucch_format_1_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_2 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_3 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_4 and variant_holds_alternative<pucch_format_4_cfg>(res.format_params));
+    VERIFY(format_match_format_params, "PUCCH res id {} format does not match the PUCCH format parameters", res.res_id);
+  }
+
   // Check PUCCH Formats for each PUCCH Resource Set.
   for (auto res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
     VERIFY(pucch_cfg.pucch_res_list[res_idx].format == pucch_format::FORMAT_1,

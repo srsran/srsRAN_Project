@@ -27,41 +27,22 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
     sched_grid_resource res_0, res_1;
     res_0.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + 1);
 
+    srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
+                      variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
+                  "Only PUCCH format 1 currently supported");
+    const unsigned starting_sym = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+                                      ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).starting_sym_idx
+                                      : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).starting_sym_idx;
+    const unsigned nof_symbols  = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
+                                      ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).nof_symbols
+                                      : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).nof_symbols;
+
     if (pucch_res.second_hop_prb.has_value()) {
       res_1.prbs.set(pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + 1);
-      switch (pucch_res.format) {
-        case pucch_format::FORMAT_1: {
-          res_0.symbols.set(pucch_res.format_1.starting_sym_idx,
-                            pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols / 2);
-          res_1.symbols.set(pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols / 2,
-                            pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols);
-          break;
-        }
-        case pucch_format::FORMAT_2: {
-          res_0.symbols.set(pucch_res.format_2.starting_sym_idx,
-                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols / 2);
-          res_1.symbols.set(pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols / 2,
-                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols);
-          break;
-        }
-        default:
-          report_error("Only PUCCH format 1 currently supported\n");
-      }
+      res_0.symbols.set(starting_sym, starting_sym + nof_symbols / 2);
+      res_1.symbols.set(starting_sym + nof_symbols / 2, starting_sym + nof_symbols);
     } else {
-      switch (pucch_res.format) {
-        case pucch_format::FORMAT_1: {
-          res_0.symbols.set(pucch_res.format_1.starting_sym_idx,
-                            pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols);
-          break;
-        }
-        case pucch_format::FORMAT_2: {
-          res_0.symbols.set(pucch_res.format_2.starting_sym_idx,
-                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols);
-          break;
-        }
-        default:
-          report_error("Only PUCCH format 1 currently supported\n");
-      }
+      res_0.symbols.set(starting_sym, starting_sym + nof_symbols);
     }
 
     if (not res_0.is_empty() and not list_contains_resource(res_0)) {

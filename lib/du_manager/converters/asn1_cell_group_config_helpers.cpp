@@ -603,41 +603,46 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
   pucch_res.pucch_res_id                = cfg.res_id;
   pucch_res.start_prb                   = cfg.starting_prb;
   pucch_res.intra_slot_freq_hop_present = cfg.second_hop_prb.has_value();
+  pucch_res.second_hop_prb_present      = cfg.second_hop_prb.has_value();
   if (cfg.second_hop_prb.has_value()) {
-    pucch_res.second_hop_prb_present = true;
-    pucch_res.second_hop_prb         = cfg.second_hop_prb.value();
+    pucch_res.second_hop_prb = cfg.second_hop_prb.value();
   }
   switch (cfg.format) {
     case pucch_format::FORMAT_0: {
-      auto& format0             = pucch_res.format.set_format0();
-      format0.init_cyclic_shift = cfg.format_0.initial_cyclic_shift;
-      format0.nrof_symbols      = cfg.format_0.nof_symbols;
-      format0.start_symbol_idx  = cfg.format_0.starting_sym_idx;
+      const auto& f0            = variant_get<pucch_format_0_cfg>(cfg.format_params);
+      auto&       format0       = pucch_res.format.set_format0();
+      format0.init_cyclic_shift = f0.initial_cyclic_shift;
+      format0.nrof_symbols      = f0.nof_symbols;
+      format0.start_symbol_idx  = f0.starting_sym_idx;
     } break;
     case pucch_format::FORMAT_1: {
-      auto& format1             = pucch_res.format.set_format1();
-      format1.init_cyclic_shift = cfg.format_1.initial_cyclic_shift;
-      format1.nrof_symbols      = cfg.format_1.nof_symbols;
-      format1.start_symbol_idx  = cfg.format_1.starting_sym_idx;
-      format1.time_domain_occ   = cfg.format_1.time_domain_occ;
+      const auto& f1            = variant_get<pucch_format_1_cfg>(cfg.format_params);
+      auto&       format1       = pucch_res.format.set_format1();
+      format1.init_cyclic_shift = f1.initial_cyclic_shift;
+      format1.nrof_symbols      = f1.nof_symbols;
+      format1.start_symbol_idx  = f1.starting_sym_idx;
+      format1.time_domain_occ   = f1.time_domain_occ;
     } break;
     case pucch_format::FORMAT_2: {
-      auto& format2            = pucch_res.format.set_format2();
-      format2.start_symbol_idx = cfg.format_2.starting_sym_idx;
-      format2.nrof_symbols     = cfg.format_2.nof_symbols;
-      format2.nrof_prbs        = cfg.format_2.nof_prbs;
+      const auto& f2           = variant_get<pucch_format_2_3_cfg>(cfg.format_params);
+      auto&       format2      = pucch_res.format.set_format2();
+      format2.start_symbol_idx = f2.starting_sym_idx;
+      format2.nrof_symbols     = f2.nof_symbols;
+      format2.nrof_prbs        = f2.nof_prbs;
     } break;
     case pucch_format::FORMAT_3: {
-      auto& format3            = pucch_res.format.set_format3();
-      format3.start_symbol_idx = cfg.format_3.starting_sym_idx;
-      format3.nrof_symbols     = cfg.format_3.nof_symbols;
-      format3.nrof_prbs        = cfg.format_3.nof_prbs;
+      const auto& f3           = variant_get<pucch_format_2_3_cfg>(cfg.format_params);
+      auto&       format3      = pucch_res.format.set_format3();
+      format3.start_symbol_idx = f3.starting_sym_idx;
+      format3.nrof_symbols     = f3.nof_symbols;
+      format3.nrof_prbs        = f3.nof_prbs;
     } break;
     case pucch_format::FORMAT_4: {
-      auto& format4            = pucch_res.format.set_format4();
-      format4.start_symbol_idx = cfg.format_4.starting_sym_idx;
-      format4.nrof_symbols     = cfg.format_4.nof_symbols;
-      switch (cfg.format_4.occ_index) {
+      const auto& f4           = variant_get<pucch_format_4_cfg>(cfg.format_params);
+      auto&       format4      = pucch_res.format.set_format4();
+      format4.start_symbol_idx = f4.starting_sym_idx;
+      format4.nrof_symbols     = f4.nof_symbols;
+      switch (f4.occ_index) {
         case pucch_f4_occ_idx::n0:
           format4.occ_idx = pucch_format4_s::occ_idx_opts::n0;
           break;
@@ -651,9 +656,9 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
           format4.occ_idx = pucch_format4_s::occ_idx_opts::n3;
           break;
         default:
-          srsran_assertion_failure("Invalid PUCCH Format 4 index={}", cfg.format_4.occ_index);
+          srsran_assertion_failure("Invalid PUCCH Format 4 index={}", f4.occ_index);
       }
-      switch (cfg.format_4.occ_length) {
+      switch (f4.occ_length) {
         case pucch_f4_occ_len::n2:
           format4.occ_len = pucch_format4_s::occ_len_opts::n2;
           break;
@@ -661,7 +666,7 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
           format4.occ_len = pucch_format4_s::occ_len_opts::n4;
           break;
         default:
-          srsran_assertion_failure("Invalid PUCCH Format 4 length={}", cfg.format_4.occ_length);
+          srsran_assertion_failure("Invalid PUCCH Format 4 length={}", f4.occ_length);
       }
     } break;
     default:
