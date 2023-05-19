@@ -164,6 +164,9 @@ struct bitset_builtin_helper<unsigned long long> {
 
 #endif
 
+/// \brief Knuth's swap of upper and lower sections of a bitset.
+/// \param m Mask of bits to swap.
+/// \param k shift amount.
 template <typename T, T m, int k>
 T swapbits(T p)
 {
@@ -171,7 +174,10 @@ T swapbits(T p)
   return p ^ q ^ (q << k);
 }
 
-/// \brief Reverse bit order in an uint64 number. E.g. 0x0000000000000001 -> 0x8000000000000000.
+/// \brief Knuth's 64-bit reverse. E.g. 0x0000000000000001 -> 0x8000000000000000.
+/// For more information see: https://matthewarcus.wordpress.com/2012/11/18/reversing-a-64-bit-word/
+/// \param n Number to reverse.
+/// \return Reversed number.
 inline uint64_t bit_reverse(uint64_t n)
 {
   static const uint64_t m0 = 0x5555555555555555LLU;
@@ -235,17 +241,17 @@ int count_ones(Integer value)
 /// Depending on the passed \c LowestInfoBitIsMSB template argument, this class can represent the bits of the bitset in
 /// different orders. E.g.
 ///
-/// bounded_bitset<4, false> a{4}; // LSB is Lowest Information Bit (bit 0).
+/// bounded_bitset<6, false> a(5); // Bitset of 5 bits. LSB is Lowest Information Bit (bit 0).
 /// a.set(0);
-/// assert(a.to_uint64() == 0b0001);
-/// bounded_bitset<4, true> b{4}; // MSB is Lowest Information Bit (bit 0).
-/// b.set(0);
+/// assert(a.to_uint64() == 0b1);
+/// bounded_bitset<6, true> b(5); // Bitset of 5 bits. MSB is Lowest Information Bit (bit 0).
+/// b.set(1);
 /// assert(a.to_uint64() == 0b1000);
 ///
 /// The \c LowestInfoBitIsMSB template argument also affects the default string representation of the bitset. E.g.
-/// fmt::print("{:b}", a); // prints "0001".
+/// fmt::print("{:b}", a); // prints "00001".
 /// fmt::print("{:x}", a); // prints "1".
-/// fmt::print("{:b}", b); // prints "1000".
+/// fmt::print("{:b}", b); // prints "01000".
 /// fmt::print("{:x}", b); // prints "8".
 ///
 /// \tparam N Upper bound for bitset size in number of bits.
@@ -279,7 +285,6 @@ public:
   {
     resize(end - begin);
     std::for_each(begin, end, [this, n = 0](bool value) mutable {
-      assert_within_bounds_(n, true);
       if (value) {
         set_(n);
       } else {
@@ -859,7 +864,12 @@ public:
     buffer[0] = v;
   }
 
-  /// \brief Converts the bitset to an array of packed bits.
+  /// \brief Converts the bitset to an array of packed bits. Each element of the resulting array will contain a bitmap.
+  /// The LowInfoBitIsMSB template parameter defines the order of bits in the resulting array.
+  /// \tparam UnsignedInteger Value type of the array where packed bits will be stored. It must be an unsigned integer.
+  /// \param[in] packed_bits Array where packed bits will be stored. The array size must be equal or larger than the
+  /// bitset size (in bits) divided by \c sizeof(UnsignedInteger) * 8U (the number of bits per integer).
+  /// \return Returns the number of positions of \c packed_bits that were written during the function call.
   template <typename UnsignedInteger>
   size_t to_packed_bits(span<UnsignedInteger> packed_bits)
   {
@@ -897,6 +907,28 @@ public:
     }
 
     return nof_integers_packed;
+  }
+
+  /// \brief Converts the bitset to an array of unpacked bits, i.e. an array where each element represents a single
+  /// boolean. The order of bits in the resulting array matches the bit information order in the bitset and the template
+  /// parameter \c LowInfoBitIsMSB has no effect. That means that \c unpacked_bits[i] will be equal to \c
+  /// bitset.test(i).
+  ///
+  /// \tparam UnsignedInteger Value type of the array where packed bits will be stored. It must be an
+  /// unsigned integer. \param[in] unpacked_bits Array where the unpacked bits will be stored. The array size must be
+  /// equal or larger than the bitset size (in bits). \return Returns the number of bits packed.
+  template <typename UnsignedInteger>
+  void to_unpacked_bits(span<UnsignedInteger> unpacked_bits)
+  {
+    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    srsran_assert(size() == unpacked_bits.size(),
+                  "ERROR: provided array size='{}' does not match bitset size='{}'",
+                  unpacked_bits.size(),
+                  size());
+
+    for (unsigned i = 0, ie = size(); i != ie; ++i) {
+      unpacked_bits[i] = test(i);
+    }
   }
 
 private:
