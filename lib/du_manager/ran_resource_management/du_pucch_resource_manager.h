@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell_group_config.h"
+#include "pucch_resource_generator.h"
 
 namespace srsran {
 namespace srs_du {
@@ -37,6 +38,8 @@ public:
 private:
   const pucch_config                default_pucch_cfg;
   const optional<csi_report_config> default_csi_report_cfg;
+  // Parameters for PUCCH configuration passed by the user.
+  const optional<pucch_builder_params> user_defined_pucch_cfg;
 
   struct cell_resource_context {
     /// \brief Pool of PUCCH SR offsets currently available to be allocated to UEs. Each element is represented by a
@@ -44,6 +47,8 @@ private:
     std::vector<std::pair<unsigned, unsigned>> sr_offset_free_list;
     /// Pool of PUCCH CSI offsets currently available to be allocated to UEs.
     std::vector<unsigned> csi_offset_free_list;
+    /// List of PUCCH resources configured in the cell.
+    std::vector<pucch_resource> cell_pucch_res_list;
   };
 
   /// Resources for the different cells of the DU.

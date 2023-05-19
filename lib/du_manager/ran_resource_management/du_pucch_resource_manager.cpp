@@ -22,6 +22,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
     }
     return nullopt;
   }()),
+  user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   cells(cell_cfg_list_.size())
 {
   srsran_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
@@ -65,6 +66,22 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
       }
       cell.csi_offset_free_list.push_back(offset);
     }
+
+    // Generate the cell PUCCH resource list if the user has set the corresponding parameters.
+    if (user_defined_pucch_cfg.has_value()) {
+      // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
+      const unsigned bwp_size            = cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+      const unsigned nof_pucch_f2_res_f1 = 1U;
+      cell.cell_pucch_res_list           = srs_du::generate_pucch_res_list_given_number(
+          user_defined_pucch_cfg.value().nof_ue_pucch_f1_res_harq.to_uint() +
+              user_defined_pucch_cfg.value().nof_sr_resources.to_uint(),
+          user_defined_pucch_cfg.value().nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
+          user_defined_pucch_cfg.value().f1_params,
+          user_defined_pucch_cfg.value().f2_params,
+          bwp_size);
+
+      srsran_assert(not cell.cell_pucch_res_list.empty(), "Cell PUCCH resource list cannot be empty");
+    }
   }
 }
 
@@ -72,10 +89,22 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 {
   // Allocation of SR PUCCH offset.
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg = default_pucch_cfg;
-  auto&    target_pucch_cfg = *cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg;
-  auto&    sr_res_list      = target_pucch_cfg.sr_res_list;
-  auto&    free_sr_list     = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list;
-  unsigned i                = 0;
+  pucch_config& target_pucch_cfg = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
+
+  // Build the PUCCH resource list. This overwrites the default list.
+  if (user_defined_pucch_cfg.has_value() and
+      ue_pucch_config_builder(target_pucch_cfg,
+                              cells[0].cell_pucch_res_list,
+                              user_defined_pucch_cfg.value().nof_ue_pucch_f1_res_harq.to_uint(),
+                              user_defined_pucch_cfg.value().nof_ue_pucch_f2_res_harq.to_uint(),
+                              user_defined_pucch_cfg.value().nof_sr_resources.to_uint())) {
+    srsran_assertion_failure(
+        "The requested PUCCH resource list could not be built; the deafult config will be used instead");
+  }
+
+  auto&    sr_res_list  = target_pucch_cfg.sr_res_list;
+  auto&    free_sr_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list;
+  unsigned i            = 0;
   for (; i != sr_res_list.size(); ++i) {
     if (free_sr_list.empty()) {
       break;

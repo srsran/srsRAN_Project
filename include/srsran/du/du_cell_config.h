@@ -57,35 +57,19 @@ struct pucch_f2_params {
 
 /// \brief Parameters for PUCCH configuration.
 /// Defines the parameters that are used for the PUCCH configuration builder. These parameters are used to define the
-/// PUCCH resources per cell and per UE, as well as the PUCCH format-specific parameters.
+/// number PUCCH resources, as well as the PUCCH format-specific parameters.
 struct pucch_builder_params {
-  struct nof_pucch_resources {
-    unsigned nof_f1;
-    unsigned nof_f2;
-  };
-  struct max_nof_pucch_rbs {
-    unsigned max_f1_rbs;
-    unsigned max_f2_rbs;
-  };
-
-  /// Cell parameters.
-  /// Defines the total number of resources (including SR and CSI) that will be generated as part of the cell resource
-  /// list. If \ref max_pucch_rbs is set, nof_cell_resources is ignored.
-  nof_pucch_resources nof_cell_resources;
-  /// Defines the total number of RBs that will be used for PUCCH resources (including SR and CSI). If this is set, then
-  /// the \ref nof_cell_resources is ignored.
-  optional<max_nof_pucch_rbs> max_pucch_rbs;
-  /// Defines how many PUCCH F1 resources should be dedicated for SR at cell level.
-  unsigned nof_sr_resources;
-
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f1_res_harq;
   bounded_integer<unsigned, 1, 8> nof_ue_pucch_f2_res_harq;
+  /// Defines how many PUCCH F1 resources should be dedicated for SR at cell level; each UE will be allocated 1 resource
+  /// for SR.
+  bounded_integer<unsigned, 1, 4> nof_sr_resources;
 
   /// PUCCH Format specific parameters.
   pucch_f1_params f1_params;
-  pucch_f1_params f2_params;
+  pucch_f2_params f2_params;
 };
 
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
@@ -127,7 +111,7 @@ struct du_cell_config {
   serving_cell_config ue_ded_serv_cell_cfg;
 
   /// Parameters for PUCCH-Config generation.
-  pucch_builder_params pucch_cfg;
+  optional<pucch_builder_params> pucch_cfg;
 };
 
 } // namespace srsran

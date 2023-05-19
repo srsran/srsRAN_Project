@@ -83,7 +83,7 @@ public:
   }
 
   // Allocate the resource on the grid.
-  void add_resource(const cell_pucch_resource& res)
+  void add_resource(const pucch_resource& res)
   {
     if (res.format == pucch_format::FORMAT_1) {
       srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(res.format_params), "Expected PUCCH Format 1");
@@ -165,7 +165,7 @@ public:
   }
 
   // Verify if the given resource collides in the grid with the previously allocated resources.
-  bool verify_collision(const cell_pucch_resource& res) const
+  bool verify_collision(const pucch_resource& res) const
   {
     if (res.format == pucch_format::FORMAT_1) {
       srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(res.format_params), "Expected PUCCH Format 1");
@@ -334,7 +334,7 @@ TEST_F(test_pucch_res_generator, test_validator_too_many_resources)
                             .max_code_rate          = max_pucch_code_rate::dot_25,
                             .intraslot_freq_hopping = false};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to the many resources requested, the function cannot accommodate the request and returns an empty list.
@@ -353,7 +353,7 @@ TEST_F(test_pucch_res_generator, test_validator_f2_1_symbol_with_freq_hop)
   pucch_f2_params params_f2{
       .nof_symbols = 1, .max_nof_rbs = 2, .max_code_rate = max_pucch_code_rate::dot_25, .intraslot_freq_hopping = true};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to requested intraslot_freq_hopping with 1 symbol, the function returns an empty list.
@@ -387,7 +387,7 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
                             .max_code_rate          = GetParam().max_code_rate,
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);
@@ -511,7 +511,7 @@ TEST_P(test_pucch_res_generator_max_nof_rbs, test_pucch_res_given_max_rbs)
                             .max_code_rate          = GetParam().max_code_rate,
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_rbs(max_nof_rbs_f1, max_nof_rbs_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);

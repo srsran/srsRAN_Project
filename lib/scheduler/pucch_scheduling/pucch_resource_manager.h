@@ -23,7 +23,17 @@ struct pucch_harq_resource_alloc_record {
   unsigned pucch_res_indicator;
 };
 
-/// Class that is in charge of providing the scheduler an available PUCCH resource to be used, either for HARQ or SR.
+/// \brief Class that manages the cell allocation of PUCCH resources across UEs.
+/// The correct functioning of pucch_resource_manager is based on the following assumptions:
+/// (i)   Each UE has max 8 PUCCH F1 and max 8 PUCCH F2 dedicated to HARQ-ACK reporting.
+/// (ii)  The cell PUCCH list has max \ref MAX_SR_PUCCH_RESOURCES PUCCH F1 dedicated to SR reporting; each UE is
+/// assigned only 1 of these PUCCH F1 resources for SR.
+/// (iii) The cell PUCCH list has max 1 PUCCH F2 dedicated to CSI reporting; each UE use the same CSI resource.
+/// (iv)  All UEs use the same cell resources.
+/// (v)   Indexing of the PUCCH F1 and PUCCH F2 resources for HARQ-ACK reporting must be contiguous within the F1 group
+/// and with F2 group. However, the last PUCCH F1 group resource's and the first PUCCH F2 group resource's indices need
+/// not be contiguous. E.g., PUCCH F1 indices (for HARQ-ACK reporting) = {0, ..., 7}, and PUCCH F2 indices (for
+/// HARQ-ACK reporting) = {10, ..., 17}.
 class pucch_resource_manager
 {
 public:
