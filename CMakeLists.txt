@@ -56,9 +56,13 @@ option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              ON)
+
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
+
+# Set maximum time to wait for a clean exit. 
+set(EXIT_TIMEOUT "AUTO" CACHE STRING "Timer to wait for a clean exit")
 
 if (ENABLE_WERROR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
@@ -140,6 +144,11 @@ if(NOT ASSERT_LEVEL STREQUAL "MINIMAL")
     else()
         message(STATUS "Assertion level set to NORMAL")
     endif()
+endif()
+
+if(NOT EXIT_TIMEOUT STREQUAL "AUTO")
+    message(STATUS "Manually set exit timeout. timeout=${EXIT_TIMEOUT}s")
+    add_compile_definitions(TERM_TIMEOUT_S=${EXIT_TIMEOUT})
 endif()
 
 ########################################################################
