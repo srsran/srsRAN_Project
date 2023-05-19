@@ -310,6 +310,10 @@ struct pcap_appconfig {
     bool        enabled  = false;
   } e1ap;
   struct {
+    std::string filename = "/tmp/gnb_f1ap.pcap";
+    bool        enabled  = false;
+  } f1ap;
+  struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;
   } mac;

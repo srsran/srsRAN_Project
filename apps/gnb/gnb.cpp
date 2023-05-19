@@ -578,6 +578,10 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.e1ap.enabled) {
     e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename.c_str());
   }
+  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP");
+  if (gnb_cfg.pcap_cfg.f1ap.enabled) {
+    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename.c_str());
+  }
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
@@ -585,7 +589,7 @@ int main(int argc, char** argv)
 
   worker_manager workers{gnb_cfg};
 
-  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
+  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1", *f1ap_p), f1ap_du_to_cu_adapter("DU-F1", *f1ap_p);
   e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
@@ -834,6 +838,7 @@ int main(int argc, char** argv)
 
   ngap_p->close();
   e1ap_p->close();
+  f1ap_p->close();
   mac_p->close();
 
   gnb_logger.info("Stopping radio...");
