@@ -37,6 +37,7 @@ variables:
       - warning
       - error
     value: "info"
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.6
 
 .prepare_test:
   before_script:
@@ -51,7 +52,7 @@ variables:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.5
+    name: $RETINA_LAUNCHER_IMAGE
     entrypoint: ["/bin/sh", "-c"]
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
@@ -206,3 +207,24 @@ android:
   needs:
     - job: "smoke release update cache"
       artifacts: true
+
+################################################################################
+# Garbage collector
+################################################################################
+
+.demolition:
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: always
+  image: $RETINA_LAUNCHER_IMAGE
+  script:
+    - |
+      retina-garbage-collector --mode demolition
+
+setup:
+  stage: .pre
+  extends: .demolition
+
+post:
+  stage: .post
+  extends: .demolition
