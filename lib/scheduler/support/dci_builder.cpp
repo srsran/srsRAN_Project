@@ -629,7 +629,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
 
   // PUSCH resources.
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
-  const unsigned     N_ul_bwp_rb = (ss_info.cfg->type == srsran::search_space_configuration::type_t::common)
+  const unsigned     N_ul_bwp_rb = (ss_info.cfg->type == search_space_configuration::type_t::common)
                                        ? init_ul_bwp.generic_params.crbs.length()
                                        : active_ul_bwp.crbs.length();
   const vrb_interval vrbs        = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
@@ -649,7 +649,6 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
 void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                                    const ue_cell_configuration& ue_cell_cfg,
                                    bool                         is_ue_configured_multiple_serving_cells,
-                                   bwp_id_t                     active_bwp_id,
                                    search_space_id              ss_id,
                                    const prb_interval&          prbs,
                                    unsigned                     time_resource,
@@ -661,14 +660,14 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
                 "SearchSpace must be of type UE-Specific SearchSpace");
 
-  const bwp_configuration& active_ul_bwp = ue_cell_cfg.bwp(active_bwp_id).ul_common->generic_params;
+  const bwp_configuration& active_ul_bwp = ss_info.bwp->ul_common->generic_params;
 
   dci.type                    = dci_ul_rnti_config_type::c_rnti_f0_1;
   dci.c_rnti_f0_1             = {};
   dci_0_1_configuration& f0_1 = dci.c_rnti_f0_1;
 
   const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
+      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);

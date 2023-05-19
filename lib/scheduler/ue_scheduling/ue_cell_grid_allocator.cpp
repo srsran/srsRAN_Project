@@ -277,7 +277,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               mcs_tbs_info.value().tbs,
                               u.crnti,
                               ue_cell_cfg,
-                              ss_cfg,
+                              grant.ss_id,
                               pdcch->dci.c_rnti_f1_0,
                               grant.crbs,
                               h_dl.tb(0).nof_retxs == 0);
@@ -288,8 +288,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               mcs_tbs_info.value(),
                               u.crnti,
                               ue_cell_cfg,
-                              ue_cc->active_bwp_id(),
-                              ss_cfg,
+                              grant.ss_id,
                               pdcch->dci.c_rnti_f1_1,
                               grant.crbs,
                               h_dl);
@@ -509,7 +508,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       build_dci_f0_1_c_rnti(pdcch->dci,
                             ue_cell_cfg,
                             u.nof_cells() > 1,
-                            ue_cc->active_bwp_id(),
                             grant.ss_id,
                             crb_to_prb(bwp_lims, grant.crbs),
                             grant.time_res_index,
@@ -555,7 +553,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               pusch_cfg,
                               mcs_tbs_info.value(),
                               ue_cell_cfg,
-                              ue_cc->active_bwp_id(),
+                              ss_cfg.id,
                               pdcch->dci.c_rnti_f0_1,
                               grant.crbs,
                               h_ul);

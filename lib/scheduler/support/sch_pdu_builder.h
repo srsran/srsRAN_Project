@@ -127,22 +127,21 @@ void build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                              unsigned                            tbs_bytes,
                              rnti_t                              rnti,
                              const ue_cell_configuration&        ue_cell_cfg,
-                             const search_space_configuration&   ss_cfg,
+                             search_space_id                     ss_id,
                              const dci_1_0_c_rnti_configuration& dci_cfg,
                              const crb_interval&                 crbs,
                              bool                                is_new_data);
 
 /// \brief Builds PDSCH PDU for DCI format 1_1, scrambled by C-RNTI.
-void build_pdsch_f1_1_c_rnti(pdsch_information&                pdsch,
-                             const pdsch_config_params&        pdsch_cfg,
-                             sch_mcs_tbs                       mcs_tbs_info,
-                             rnti_t                            rnti,
-                             const ue_cell_configuration&      ue_cell_cfg,
-                             bwp_id_t                          active_bwp_id,
-                             const search_space_configuration& ss_cfg,
-                             const dci_1_1_configuration&      dci_cfg,
-                             const crb_interval&               crbs,
-                             const dl_harq_process&            h_dl);
+void build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
+                             const pdsch_config_params&   pdsch_cfg,
+                             sch_mcs_tbs                  mcs_tbs_info,
+                             rnti_t                       rnti,
+                             const ue_cell_configuration& ue_cell_cfg,
+                             search_space_id              ss_id,
+                             const dci_1_1_configuration& dci_cfg,
+                             const crb_interval&          crbs,
+                             const dl_harq_process&       h_dl);
 
 /// \brief Builds PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
@@ -171,7 +170,7 @@ void build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                              const pusch_config_params&   pusch_cfg,
                              sch_mcs_tbs                  mcs_tbs_info,
                              const ue_cell_configuration& ue_cell_cfg,
-                             bwp_id_t                     active_bwp_id,
+                             search_space_id              ss_id,
                              const dci_0_1_configuration& dci_cfg,
                              const crb_interval&          crbs,
                              const ul_harq_process&       h_ul);
