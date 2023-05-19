@@ -344,10 +344,21 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
   const search_space_configuration&            ss_cfg       = *ss_info->cfg;
   const bwp_uplink_common&                     bwp_ul_cmn   = *ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common;
-  const dci_ul_rnti_config_type                dci_type     = ss_info->get_crnti_ul_dci_format();
+  dci_ul_rnti_config_type                      dci_type     = ss_info->get_crnti_ul_dci_format();
   const bwp_configuration                      bwp_lims     = ue_cc->alloc_type1_bwp_limits(dci_type, ss_cfg.type);
   const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
   const pusch_time_domain_resource_allocation& pusch_td_cfg = ss_info->pusch_time_domain_list[grant.time_res_index];
+
+  // In case of retx, verify whether DCI format match the DCI format supported by SearchSpace.
+  if (not h_ul.empty()) {
+    if (h_ul.last_tx_params().dci_cfg_type != dci_type) {
+      logger.info("Failed to allocate PUSCH. Cause: DCI format={} in HARQ retx is not supported in SearchSpace {}.",
+                  dci_ul_rnti_config_format(h_ul.last_tx_params().dci_cfg_type),
+                  grant.ss_id);
+      return false;
+    }
+    dci_type = h_ul.last_tx_params().dci_cfg_type;
+  }
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -474,6 +485,15 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Fill UL PDCCH DCI.
   switch (dci_type) {
+    case dci_ul_rnti_config_type::tc_rnti_f0_0:
+      build_dci_f0_0_tc_rnti(pdcch->dci,
+                             *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common,
+                             ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common->generic_params,
+                             grant.crbs,
+                             grant.time_res_index,
+                             mcs_tbs_info.value().mcs,
+                             h_ul);
+      break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_dci_f0_0_c_rnti(pdcch->dci,
                             ue_cell_cfg,
