@@ -191,6 +191,14 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
   f1ap_du_ue* ue = ues.find(request.ue_index);
   srsran_assert(ue != nullptr, "Attempt to initiate UE Context Release Request for non-existent UE.");
 
+  if (ue->context.marked_for_release) {
+    // UE context is already being released. Ignore the request.
+    logger.info(
+        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
+        request.ue_index);
+    return;
+  }
+
   f1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
   auto& rel_req = msg.pdu.init_msg().value.ue_context_release_request();
