@@ -13,21 +13,17 @@
 #include "fapi_factory.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
-#include "radio_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
-#include "srsran/phy/adapters/phy_error_adapter.h"
-#include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
-#include "srsran/phy/adapters/phy_timing_adapter.h"
-#include "srsran/phy/lower/lower_phy_controller.h"
-#include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
+#include "srsran/ru/ru_adapters.h"
+#include "srsran/ru/ru_controller.h"
+#include "srsran/ru/ru_generic_configuration.h"
+#include "srsran/ru/ru_generic_factory.h"
 #include <atomic>
 #include <csignal>
 #include <getopt.h>
@@ -121,6 +117,8 @@ static const std::vector<configuration_profile> profiles = {
        offset_to_pointA           = 40;
        band                       = nr_band::n7;
        otw_format                 = radio_configuration::over_the_wire_format::DEFAULT;
+       clock_src.clock            = radio_configuration::clock_sources::source::DEFAULT;
+       clock_src.sync             = radio_configuration::clock_sources::source::DEFAULT;
        tx_channel_args.emplace_back(tx_address);
        rx_channel_args.emplace_back(rx_address);
      }},
@@ -343,37 +341,28 @@ struct worker_manager {
 
 } // namespace
 
-static lower_phy_configuration create_lower_phy_configuration(baseband_gateway*             bb_gateway,
-                                                              lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                              lower_phy_timing_notifier*    timing_notifier,
-                                                              lower_phy_error_notifier*     error_notifier,
-                                                              task_executor&                lower_tx_executor,
-                                                              task_executor&                lower_rx_executor,
-                                                              task_executor&                lower_dl_executor,
-                                                              task_executor&                lower_ul_executor,
-                                                              task_executor&                prach_executor)
+static lower_phy_configuration create_lower_phy_configuration()
 {
   lower_phy_configuration phy_config;
 
   phy_config.scs                        = scs;
   phy_config.cp                         = cp;
   phy_config.dft_window_offset          = 0.5F;
-  phy_config.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(scs);
+  phy_config.max_processing_delay_slots = 2;
 
   phy_config.srate = srate;
 
-  phy_config.ta_offset                  = ta_offset;
+  phy_config.ta_offset                  = band_helper::get_ta_offset(band);
   phy_config.time_alignment_calibration = time_alignmemt_calibration;
 
-  phy_config.bb_gateway           = bb_gateway;
-  phy_config.error_notifier       = error_notifier;
-  phy_config.rx_symbol_notifier   = rx_symbol_notifier;
-  phy_config.timing_notifier      = timing_notifier;
-  phy_config.tx_task_executor     = &lower_tx_executor;
-  phy_config.rx_task_executor     = &lower_rx_executor;
-  phy_config.dl_task_executor     = &lower_dl_executor;
-  phy_config.ul_task_executor     = &lower_ul_executor;
-  phy_config.prach_async_executor = &prach_executor;
+  // Select buffer size policy.
+  if (driver_name == "zmq") {
+    phy_config.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+    phy_config.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+  } else {
+    phy_config.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::slot;
+    phy_config.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
+  }
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
@@ -526,24 +515,58 @@ static fapi::carrier_config generate_carrier_config_tlv()
   return fapi_config;
 }
 
-static std::unique_ptr<radio_session> build_radio(task_executor& executor, radio_notification_handler& radio_handler)
+static radio_configuration::radio generate_radio_config()
 {
-  radio_params params;
+  radio_configuration::radio out_cfg;
 
-  params.device_args     = device_arguments;
-  params.log_level       = log_level;
-  params.srate           = srate;
-  params.otw_format      = otw_format;
-  params.nof_sectors     = 1;
-  params.nof_ports       = 1;
-  params.dl_frequency_hz = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  params.tx_gain         = tx_gain;
-  params.tx_channel_args = tx_channel_args;
-  params.ul_frequency_hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, {}));
-  params.rx_gain         = rx_gain;
-  params.rx_channel_args = rx_channel_args;
+  out_cfg.args             = device_arguments;
+  out_cfg.args             = "tx_port=" + tx_address + ",rx_port=" + rx_address;
+  out_cfg.log_level        = log_level;
+  out_cfg.sampling_rate_hz = srate.to_Hz();
+  out_cfg.otw_format       = otw_format;
+  out_cfg.clock            = clock_src;
 
-  return create_radio(driver_name, params, executor, radio_handler);
+  const unsigned nof_ports = 1;
+  // For each sector...
+  for (unsigned sector_id = 0; sector_id != 1; ++sector_id) {
+    // Each cell is mapped to a different stream.
+    radio_configuration::stream tx_stream_config;
+    radio_configuration::stream rx_stream_config;
+
+    // Deduce center frequencies.
+    double center_tx_freq_cal_Hz = band_helper::nr_arfcn_to_freq(dl_arfcn);
+    double center_rx_freq_cal_Hz =
+        band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, band));
+
+    // For each port in the cell...
+    for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
+      // Create channel configuration and append it to the previous ones.
+      radio_configuration::channel tx_ch_config = {};
+      tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
+      tx_ch_config.freq.lo_frequency_hz         = 0.0;
+      tx_ch_config.gain_dB                      = tx_gain;
+
+      // Add the tx ports.
+      if (driver_name == "zmq") {
+        tx_ch_config.args = tx_channel_args[sector_id * nof_ports + port_id];
+      }
+      tx_stream_config.channels.emplace_back(tx_ch_config);
+
+      radio_configuration::channel rx_ch_config = {};
+      rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
+      rx_ch_config.freq.lo_frequency_hz         = 0.0;
+      rx_ch_config.gain_dB                      = rx_gain;
+
+      if (driver_name == "zmq") {
+        rx_ch_config.args = rx_channel_args[sector_id * nof_ports + port_id];
+      }
+      rx_stream_config.channels.emplace_back(rx_ch_config);
+    }
+    out_cfg.tx_streams.emplace_back(tx_stream_config);
+    out_cfg.rx_streams.emplace_back(rx_stream_config);
+  }
+
+  return out_cfg;
 }
 
 static void fill_cell_prach_cfg(du_cell_config& cell_cfg)
@@ -555,6 +578,29 @@ static void fill_cell_prach_cfg(du_cell_config& cell_cfg)
   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config =
       zero_correlation_zone;
   cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index = prach_root_sequence_index;
+}
+
+static ru_generic_configuration build_ru_config(srslog::basic_logger&               rf_logger,
+                                                ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                ru_timing_notifier&                 timing_notifier,
+                                                worker_manager&                     workers)
+{
+  ru_generic_configuration config;
+
+  config.radio_cfg                             = generate_radio_config();
+  config.device_driver                         = driver_name;
+  config.rf_logger                             = &rf_logger;
+  config.lower_phy_config                      = create_lower_phy_configuration();
+  config.timing_notifier                       = &timing_notifier;
+  config.symbol_notifier                       = &symbol_notifier;
+  config.radio_exec                            = &workers.radio_executor;
+  config.lower_phy_config.tx_task_executor     = &workers.lower_tx_task_executor;
+  config.lower_phy_config.rx_task_executor     = &workers.lower_rx_task_executor;
+  config.lower_phy_config.dl_task_executor     = &workers.lower_dl_task_executor;
+  config.lower_phy_config.ul_task_executor     = &workers.lower_ul_task_executor;
+  config.lower_phy_config.prach_async_executor = &workers.lower_prach_executor;
+
+  return config;
 }
 
 int main(int argc, char** argv)
@@ -585,32 +631,20 @@ int main(int argc, char** argv)
 
   worker_manager workers;
 
-  // Create radio.
-  radio_notification_handler_printer radio_event_printer;
-  auto                               radio = build_radio(workers.radio_executor, radio_event_printer);
-  report_fatal_error_if_not(radio, "Unable to create radio session.");
-  du_logger.info("Radio driver '{}' created successfully", driver_name);
+  upper_ru_ul_adapter     ru_ul_adapt;
+  upper_ru_timing_adapter ru_timing_adapt;
 
-  // Create lower and upper PHY adapters.
-  phy_error_adapter             phy_err_printer(log_level);
-  phy_rx_symbol_adapter         phy_rx_adapter;
-  phy_rg_gateway_adapter        rg_gateway_adapter;
-  phy_timing_adapter            phy_time_adapter;
-  phy_rx_symbol_request_adapter phy_rx_symbol_req_adapter;
+  ru_generic_configuration ru_cfg =
+      build_ru_config(srslog::fetch_basic_logger("Radio", true), ru_ul_adapt, ru_timing_adapt, workers);
 
-  // Create lower PHY.
-  lower_phy_configuration lower_phy_config = create_lower_phy_configuration(&radio->get_baseband_gateway(),
-                                                                            &phy_rx_adapter,
-                                                                            &phy_time_adapter,
-                                                                            &phy_err_printer,
-                                                                            workers.lower_tx_task_executor,
-                                                                            workers.lower_rx_task_executor,
-                                                                            workers.lower_dl_task_executor,
-                                                                            workers.lower_ul_task_executor,
-                                                                            workers.lower_prach_executor);
-  auto                    lower            = create_lower_phy(lower_phy_config, max_nof_concurrent_requests);
-  report_fatal_error_if_not(lower, "Unable to create lower PHY.");
-  du_logger.info("Lower PHY created successfully");
+  auto ru_object = create_generic_ru(ru_cfg);
+  report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
+  du_logger.info("Radio Unit created successfully");
+
+  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
+  upper_ru_ul_request_adapter ru_ul_request_adapt;
+  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
+  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
   // Create upper PHY.
   upper_phy_params upper_params;
@@ -618,19 +652,14 @@ int main(int argc, char** argv)
   upper_params.channel_bw_mhz = channel_bw_mhz;
   upper_params.scs            = scs;
 
-  auto upper = create_upper_phy(upper_params,
-                                &rg_gateway_adapter,
-                                &workers.upper_dl_executor,
-                                &workers.upper_ul_executor,
-                                &phy_rx_symbol_req_adapter);
+  auto upper = create_upper_phy(
+      upper_params, &ru_dl_rg_adapt, &workers.upper_dl_executor, &workers.upper_ul_executor, &ru_ul_request_adapt);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   du_logger.info("Upper PHY created successfully");
 
-  // Make connections between upper and lower PHYs.
-  phy_rx_adapter.connect(&upper->get_rx_symbol_handler());
-  phy_time_adapter.connect(&upper->get_timing_handler());
-  rg_gateway_adapter.connect(&lower->get_rg_handler());
-  phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
+  // Make connections between upper and RU.
+  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
+  ru_timing_adapt.connect(upper->get_timing_handler());
 
   // Create FAPI adaptors.
   const unsigned sector_id   = 0;
@@ -736,24 +765,18 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
-  // Calculate starting time.
-  double                     delay_s      = 0.1;
-  baseband_gateway_timestamp current_time = radio->read_current_time();
-  baseband_gateway_timestamp start_time   = current_time + static_cast<uint64_t>(delay_s * srate.to_Hz<double>());
-
   // Start processing.
-  du_logger.info("Starting lower PHY...");
-  radio->start(start_time);
-  lower->get_controller().start(start_time);
-  du_logger.info("Lower PHY started successfully");
+  du_logger.info("Starting Radio Unit...");
+  ru_object->get_controller().start();
+  du_logger.info("Radio Unit started successfully");
 
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  du_logger.info("Stopping lower PHY...");
-  lower->get_controller().stop();
-  du_logger.info("Lower PHY notify_stop successfully");
+  du_logger.info("Stopping Radio Unit...");
+  ru_object->get_controller().stop();
+  du_logger.info("Radio Unit notify_stop successfully");
 
   du_logger.info("Stopping executors...");
   workers.stop();

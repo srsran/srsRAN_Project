@@ -15,14 +15,14 @@
 
 namespace srsran {
 
-/// Implements a generic lower physical layer to Radio Unit timing adaptor.
-class ru_timing_adaptor : public lower_phy_timing_notifier
+/// Implements a generic lower physical layer to Radio Unit timing adapter.
+class ru_timing_adapter : public lower_phy_timing_notifier
 {
 private:
   ru_timing_notifier& timing_handler;
 
 public:
-  explicit ru_timing_adaptor(ru_timing_notifier& timing_handler_) : timing_handler(timing_handler_) {}
+  explicit ru_timing_adapter(ru_timing_notifier& timing_handler_) : timing_handler(timing_handler_) {}
 
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override

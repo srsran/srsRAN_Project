@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "adaptors/ru_timing_adaptor.h"
-#include "adaptors/rx_symbol_adaptor.h"
+#include "adapters/ru_timing_adapter.h"
+#include "adapters/rx_symbol_adapter.h"
 #include "ru_controller_generic_impl.h"
 #include "ru_downlink_handler_generic_impl.h"
 #include "ru_radio_notifier_sample.h"
@@ -32,10 +32,10 @@ struct ru_generic_impl_config {
   std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
   /// PHY error printer.
   std::unique_ptr<phy_error_adapter> phy_err_printer;
-  /// Radio Unit received symbol adaptor.
-  std::unique_ptr<ru_rx_symbol_adaptor> ru_rx_adaptor;
-  /// Radio Unit timing adaptor.
-  std::unique_ptr<ru_timing_adaptor> ru_time_adaptor;
+  /// Radio Unit received symbol adapter.
+  std::unique_ptr<ru_rx_symbol_adapter> ru_rx_adapter;
+  /// Radio Unit timing adapter.
+  std::unique_ptr<ru_timing_adapter> ru_time_adapter;
   /// Radio session instance.
   std::unique_ptr<radio_session> radio;
   /// Lower PHY instance.
@@ -60,8 +60,8 @@ public:
 private:
   std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
   std::unique_ptr<phy_error_adapter>                     phy_err_printer;
-  std::unique_ptr<ru_rx_symbol_adaptor>                  ru_rx_adaptor;
-  std::unique_ptr<ru_timing_adaptor>                     ru_time_adaptor;
+  std::unique_ptr<ru_rx_symbol_adapter>                  ru_rx_adapter;
+  std::unique_ptr<ru_timing_adapter>                     ru_time_adapter;
   std::unique_ptr<radio_session>                         radio;
   std::unique_ptr<lower_phy>                             low_phy;
   ru_controller_generic_impl                             ru_ctrl;

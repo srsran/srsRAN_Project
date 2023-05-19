@@ -19,8 +19,9 @@ namespace srsran {
 struct lower_phy_configuration;
 class task_executor;
 
-/// Helper class that creates the lower PHY usding the given configuration.
-std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config, unsigned max_nof_prach_concurrent_requests)
+/// Helper class that creates the lower PHY factory using the given configuration.
+std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
+                                                            unsigned                 max_nof_prach_concurrent_requests)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.
@@ -75,12 +76,7 @@ std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config, uns
       create_uplink_processor_factory_sw(prach_proc_factory, puxch_proc_factory);
   report_fatal_error_if_not(uplink_proc_factory, "Failed to create uplink processor factory.");
 
-  // Create Lower PHY factory.
-  std::shared_ptr<lower_phy_factory> lphy_factory =
-      create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
-  report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
-
-  return lphy_factory->create(config);
+  return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
 } // namespace srsran

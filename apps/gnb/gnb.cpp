@@ -38,7 +38,6 @@
 
 #include "helpers/gnb_console_helper.h"
 
-#include "adapters/ru_adapters.h"
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
@@ -52,9 +51,10 @@
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
-#include "srsran/support/executors/priority_multiqueue_task_worker.h"
+#include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
-#include "srsran/ru/ru_factory.h"
+#include "srsran/ru/ru_generic_factory.h"
+#include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
 #include <unordered_map>
@@ -390,6 +390,24 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
   return fapi_config;
 }
 
+/// Resolves the Radio Unit dependencies and adds them to the configuration.
+static void resolve_ru_dependencies(ru_generic_configuration&           config,
+                                    srslog::basic_logger&               rf_logger,
+                                    worker_manager&                     workers,
+                                    ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                    ru_timing_notifier&                 timing_notifier)
+{
+  config.rf_logger                             = &rf_logger;
+  config.radio_exec                            = workers.radio_exec.get();
+  config.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
+  config.lower_phy_config.rx_task_executor     = workers.lower_phy_rx_exec.get();
+  config.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
+  config.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
+  config.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
+  config.timing_notifier                       = &timing_notifier;
+  config.symbol_notifier                       = &symbol_notifier;
+}
+
 int main(int argc, char** argv)
 {
   // Set signal handler.
@@ -623,33 +641,24 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  auto ru_fact = create_ru_factory();
-  report_fatal_error_if_not(ru_fact, "Unable to create Radio Unit factory.");
-  ru_config ru_cfg = generate_ru_config(gnb_cfg);
+  // Radio Unit instantiation block.
+  ru_generic_configuration ru_cfg = generate_ru_config(gnb_cfg);
 
-  // Fill the executors.
-  ru_cfg.rf_logger                             = &rf_logger;
-  ru_cfg.radio_exec                            = workers.radio_exec.get();
-  ru_cfg.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
-  ru_cfg.lower_phy_config.rx_task_executor     = workers.lower_phy_rx_exec.get();
-  ru_cfg.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
-  ru_cfg.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
-  ru_cfg.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
+  upper_ru_ul_adapter     ru_ul_adapt;
+  upper_ru_timing_adapter ru_timing_adapt;
+
+  resolve_ru_dependencies(ru_cfg, rf_logger, workers, ru_ul_adapt, ru_timing_adapt);
+
+  auto ru_object = create_generic_ru(ru_cfg);
+  report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
+  gnb_logger.info("Radio Unit created successfully");
 
   upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
   upper_ru_ul_request_adapter ru_ul_request_adapt;
-  upper_ru_ul_adapter         ru_ul_adapt;
-  upper_ru_timing_adapter     ru_timing_adapt;
-
-  ru_cfg.timing_notifier = &ru_timing_adapt;
-  ru_cfg.symbol_notifier = &ru_ul_adapt;
-
-  auto ru_object = ru_fact->create(ru_cfg);
-  report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
-  gnb_logger.info("Radio Unit created successfully");
   ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
+  // Upper PHY instantiation block.
   auto upper = create_upper_phy(gnb_cfg,
                                 &ru_dl_rg_adapt,
                                 workers.upper_dl_exec.get(),
@@ -660,7 +669,7 @@ int main(int argc, char** argv)
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");
 
-  // Make connections between upper and lower PHYs.
+  // Make connections between upper and RU.
   ru_ul_adapt.connect(upper->get_rx_symbol_handler());
   ru_timing_adapt.connect(upper->get_timing_handler());
 

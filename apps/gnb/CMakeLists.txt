@@ -19,7 +19,6 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 phy_factory.cpp
                 helpers/metrics_plotter_stdout.cpp
                 helpers/gnb_console_helper.cpp
-                adapters/ru_adapters.cpp
                 )
 
         install(TARGETS gnb

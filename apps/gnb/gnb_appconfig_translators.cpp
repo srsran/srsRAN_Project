@@ -114,11 +114,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-                0,
-                0,
-                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                0,
-                0};
+          0,
+          0,
+          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+          0,
+          0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -499,9 +499,9 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
   }
 }
 
-ru_config srsran::generate_ru_config(const gnb_appconfig& config)
+ru_generic_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 {
-  ru_config out_cfg;
+  ru_generic_configuration out_cfg;
 
   generate_low_phy_config(out_cfg.lower_phy_config, config);
   generate_radio_config(out_cfg.radio_cfg, config);

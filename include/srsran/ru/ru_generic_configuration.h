@@ -18,8 +18,8 @@
 
 namespace srsran {
 
-/// Radio Unit configuration.
-struct ru_config {
+/// Radio Unit generic configuration.
+struct ru_generic_configuration {
   /// Maximum number of PRACH concurrent requests.
   unsigned max_nof_prach_concurrent_requests = 11;
   /// Device driver.

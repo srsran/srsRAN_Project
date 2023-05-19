@@ -16,14 +16,14 @@
 
 namespace srsran {
 
-/// Implements a generic lower physical layer to Radio Unit receive symbol adaptor.
-class ru_rx_symbol_adaptor : public lower_phy_rx_symbol_notifier
+/// Implements a generic lower physical layer to Radio Unit receive symbol adapter.
+class ru_rx_symbol_adapter : public lower_phy_rx_symbol_notifier
 {
 private:
   ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler;
 
 public:
-  explicit ru_rx_symbol_adaptor(ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler_) :
+  explicit ru_rx_symbol_adapter(ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler_) :
     rx_symbol_handler(rx_symbol_handler_)
   {
   }
