@@ -73,11 +73,15 @@ async_task<void> ue_deletion_procedure::disconnect_drbs()
 
   return dispatch_and_resume_on(
       du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
+        // > Disconnect DRBs.
         for (auto& drb_pair : ue->bearers.drbs()) {
           du_ue_drb& drb = *drb_pair.second;
+          drb.disconnect();
+        }
 
-          // > Disconnect DRBs from F1-U and remove F1-U bearer.
-          drb.disconnect_rx();
+        // > Disconnect SRBs.
+        for (du_ue_srb& srb : ue->bearers.srbs()) {
+          srb.disconnect();
         }
       });
 }

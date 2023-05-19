@@ -85,15 +85,13 @@ async_task<void> du_ue_manager::stop()
       }
 
       for (auto& srb : (*ue_it)->bearers.srbs()) {
-        srb.connector.mac_rx_sdu_notifier.disconnect();
-        srb.connector.rlc_rx_sdu_notif.disconnect();
-        srb.connector.f1c_rx_sdu_notif.disconnect();
+        srb.disconnect();
       }
 
       for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
 
-        drb.disconnect_rx();
+        drb.disconnect();
       }
     }
 

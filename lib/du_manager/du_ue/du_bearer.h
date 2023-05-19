@@ -41,6 +41,9 @@ struct du_srb_connector {
                f1c_bearer&                         f1_bearer,
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);
+
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief Connector of the MAC, RLC and F1 for a given DU UE DRB bearer.
@@ -61,8 +64,8 @@ struct du_drb_connector {
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);
 
-  /// \brief Disconnect DRB from MAC Rx and F1-U Rx ports.
-  void disconnect_rx();
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief SRB instance in DU manager. It contains SRB configuration information, RLC entity and adapters between
@@ -74,6 +77,9 @@ struct du_ue_srb {
   du_srb_connector            connector;
 
   lcid_t lcid() const { return srb_id_to_lcid(srb_id); }
+
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
@@ -89,8 +95,8 @@ struct du_ue_drb {
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
 
-  /// \brief Disconnect DRB from MAC Rx and F1-U Rx ports.
-  void disconnect_rx();
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief Creates a DRB instance.

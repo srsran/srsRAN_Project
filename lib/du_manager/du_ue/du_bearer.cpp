@@ -41,6 +41,22 @@ void du_srb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
+void du_srb_connector::disconnect()
+{
+  // Disconnect F1AP <-> RLC interface.
+  f1c_rx_sdu_notif.disconnect();
+  rlc_rx_sdu_notif.disconnect();
+
+  // Disconnect MAC <-> RLC interface.
+  mac_rx_sdu_notifier.disconnect();
+  rlc_tx_buffer_state_notif.disconnect();
+}
+
+void du_ue_srb::disconnect()
+{
+  connector.disconnect();
+}
+
 void du_drb_connector::connect(du_ue_index_t                       ue_index,
                                drb_id_t                            drb_id,
                                lcid_t                              lcid,
@@ -67,19 +83,20 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
-void du_drb_connector::disconnect_rx()
+void du_drb_connector::disconnect()
 {
   // Disconnect F1-U <-> RLC interface.
   rlc_rx_sdu_notif.disconnect();
   f1u_rx_sdu_notif.disconnect();
 
-  // Disconnect MAC -> RLC interface.
+  // Disconnect MAC <-> RLC interface.
   mac_rx_sdu_notifier.disconnect();
+  rlc_tx_buffer_state_notif.disconnect();
 }
 
-void du_ue_drb::disconnect_rx()
+void du_ue_drb::disconnect()
 {
-  connector.disconnect_rx();
+  connector.disconnect();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
