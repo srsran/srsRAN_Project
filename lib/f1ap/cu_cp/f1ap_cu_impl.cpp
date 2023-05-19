@@ -324,6 +324,14 @@ void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_contex
 {
   f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value)];
 
+  if (ue_ctxt.marked_for_release) {
+    // UE context is already being released. Ignore the request.
+    logger.info(
+        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
+        ue_ctxt.ue_index);
+    return;
+  }
+
   f1ap_ue_context_release_request req;
   req.ue_index = ue_ctxt.ue_index;
   req.cause    = f1ap_cause_to_cause(msg->cause.value);
