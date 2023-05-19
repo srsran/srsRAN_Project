@@ -366,7 +366,7 @@ int main(int argc, char** argv)
   // Set DU-high logging.
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::warning);
