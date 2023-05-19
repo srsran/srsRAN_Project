@@ -1035,8 +1035,9 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   // exceed the code rate.
 
   existing_f2_grant.resources.prbs.set(res_cfg->starting_prb, res_cfg->starting_prb + nof_prbs);
-  if (res_cfg->intraslot_freq_hopping) {
-    existing_f2_grant.resources.second_hop_prbs.set(res_cfg->second_hop_prb, res_cfg->second_hop_prb + nof_prbs);
+  if (res_cfg->second_hop_prb.has_value()) {
+    existing_f2_grant.resources.second_hop_prbs.set(res_cfg->second_hop_prb.value(),
+                                                    res_cfg->second_hop_prb.value() + nof_prbs);
   }
 
   logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
@@ -1061,9 +1062,9 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
   pucch_grant.resources.symbols.set(pucch_ded_res_cfg.format_1.starting_sym_idx,
                                     pucch_ded_res_cfg.format_1.starting_sym_idx +
                                         pucch_ded_res_cfg.format_1.nof_symbols);
-  if (pucch_ded_res_cfg.intraslot_freq_hopping) {
-    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb,
-                                              pucch_ded_res_cfg.second_hop_prb + PUCCH_FORMAT_1_NOF_PRBS);
+  if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
+    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),
+                                              pucch_ded_res_cfg.second_hop_prb.value() + PUCCH_FORMAT_1_NOF_PRBS);
   }
   // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
   pucch_grant.format_1.group_hopping = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
@@ -1100,9 +1101,9 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
   pucch_grant.resources.symbols.set(pucch_ded_res_cfg.format_1.starting_sym_idx,
                                     pucch_ded_res_cfg.format_1.starting_sym_idx +
                                         pucch_ded_res_cfg.format_1.nof_symbols);
-  if (pucch_ded_res_cfg.intraslot_freq_hopping) {
-    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb,
-                                              pucch_ded_res_cfg.second_hop_prb + nof_prbs);
+  if (pucch_ded_res_cfg.second_hop_prb.has_value()) {
+    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb.value(),
+                                              pucch_ded_res_cfg.second_hop_prb.value() + nof_prbs);
   }
 
   pucch_grant.format_2.sr_bits           = sr_bits;

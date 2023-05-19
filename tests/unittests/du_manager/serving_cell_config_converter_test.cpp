@@ -408,11 +408,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id                 = 12,
-                           .starting_prb           = 40,
-                           .second_hop_prb         = 50,
-                           .intraslot_freq_hopping = true,
-                           .format                 = pucch_format::FORMAT_3};
+  pucch_resource res_basic{.res_id = 12, .starting_prb = 40, .second_hop_prb = 50, .format = pucch_format::FORMAT_3};
   res_basic.format                    = pucch_format::FORMAT_2;
   res_basic.format_3.nof_symbols      = 1;
   res_basic.format_4.starting_sym_idx = 13;

@@ -433,11 +433,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
-  pucch_resource res_basic{.res_id                 = 0,
-                           .starting_prb           = nof_rbs - 1,
-                           .second_hop_prb         = 0,
-                           .intraslot_freq_hopping = false,
-                           .format                 = pucch_format::FORMAT_1};
+  pucch_resource res_basic{.res_id = 0, .starting_prb = nof_rbs - 1, .format = pucch_format::FORMAT_1};
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
   res_basic.format_1.starting_sym_idx     = 0;
@@ -456,8 +452,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
-  pucch_resource res_basic_f2{
-      .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
+  pucch_resource res_basic_f2{.starting_prb = 2, .format = pucch_format::FORMAT_2};
   res_basic_f2.res_id                    = 3;
   res_basic_f2.format_2.nof_prbs         = 1;
   res_basic_f2.format_2.nof_symbols      = 2;

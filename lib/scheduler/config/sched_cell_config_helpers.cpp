@@ -27,8 +27,8 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
     sched_grid_resource res_0, res_1;
     res_0.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + 1);
 
-    if (pucch_res.intraslot_freq_hopping) {
-      res_1.prbs.set(pucch_res.second_hop_prb, pucch_res.second_hop_prb + 1);
+    if (pucch_res.second_hop_prb.has_value()) {
+      res_1.prbs.set(pucch_res.second_hop_prb.value(), pucch_res.second_hop_prb.value() + 1);
       switch (pucch_res.format) {
         case pucch_format::FORMAT_1: {
           res_0.symbols.set(pucch_res.format_1.starting_sym_idx,

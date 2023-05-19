@@ -148,11 +148,10 @@ struct pucch_format_4_cfg {
 
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  unsigned     res_id;
-  unsigned     starting_prb;
-  unsigned     second_hop_prb;
-  bool         intraslot_freq_hopping;
-  pucch_format format;
+  unsigned           res_id;
+  unsigned           starting_prb;
+  optional<unsigned> second_hop_prb;
+  pucch_format       format;
   union {
     pucch_format_0_cfg   format_0;
     pucch_format_1_cfg   format_1;
@@ -164,8 +163,8 @@ struct pucch_resource {
   bool operator==(const pucch_resource& rhs) const
   {
     return res_id == rhs.res_id && starting_prb == rhs.starting_prb && second_hop_prb == rhs.second_hop_prb &&
-           intraslot_freq_hopping == rhs.intraslot_freq_hopping && format == rhs.format && format_0 == rhs.format_0 &&
-           format_1 == rhs.format_1 && format_2 == rhs.format_2 && format_3 == rhs.format_3 && format_4 == rhs.format_4;
+           format == rhs.format && format_0 == rhs.format_0 && format_1 == rhs.format_1 && format_2 == rhs.format_2 &&
+           format_3 == rhs.format_3 && format_4 == rhs.format_4;
   }
   bool operator!=(const pucch_resource& rhs) const { return !(rhs == *this); }
 };

@@ -139,11 +139,7 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
-  pucch_resource res_basic{.res_id                 = 0,
-                           .starting_prb           = nof_rbs - 1,
-                           .second_hop_prb         = 0,
-                           .intraslot_freq_hopping = false,
-                           .format                 = pucch_format::FORMAT_1};
+  pucch_resource res_basic{.res_id = 0, .starting_prb = nof_rbs - 1, .format = pucch_format::FORMAT_1};
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
   res_basic.format_1.starting_sym_idx     = 0;
@@ -154,18 +150,17 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
   res1.starting_prb    = 1;
-  res1.second_hop_prb  = nof_rbs - res1.starting_prb - 1;
+  res1.second_hop_prb.emplace(nof_rbs - res1.starting_prb - 1);
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = 2;
-  res2.second_hop_prb  = 1;
-  res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
+  res2.second_hop_prb.emplace(1);
+  res2.starting_prb = nof_rbs - res2.second_hop_prb.value() - 1;
 
   // PUCCH resource format 2, for HARQ-ACK and CSI.
   // >>> PUCCH resource 3.
-  pucch_resource res_basic_f2{
-      .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
+  pucch_resource res_basic_f2{.starting_prb = 2, .format = pucch_format::FORMAT_2};
   res_basic_f2.res_id                    = 3;
   res_basic_f2.format_2.nof_prbs         = 1;
   res_basic_f2.format_2.nof_symbols      = 2;
