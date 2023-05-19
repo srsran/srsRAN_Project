@@ -17,10 +17,12 @@
 #include "srsran/phy/upper/precoding/channel_precoder.h"
 
 namespace srsran {
+
 /// Factory that builds channel precoder objects.
 class channel_precoder_factory
 {
 public:
+  /// Default destructor.
   virtual ~channel_precoder_factory() = default;
 
   /// Creates and returns a channel precoder object.
@@ -29,4 +31,5 @@ public:
 
 /// Creates and returns a channel precoder factory.
 std::shared_ptr<channel_precoder_factory> create_channel_precoder_factory();
+
 } // namespace srsran

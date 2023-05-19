@@ -9,6 +9,8 @@
  */
 
 #pragma once
+
+#include "precoding_weight_matrix.h"
 #include "srsran/adt/complex.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tensor.h"
@@ -26,106 +28,79 @@ namespace srsran {
 class precoding_configuration
 {
 public:
-  /// Precoding coefficient dimensions.
-  enum class dims : unsigned { layer = 0, port, prg };
-
-  /// Precoding weight matrix, indexed by layer and antenna port.
-  using weight_matrix = tensor<static_cast<unsigned>(dims::prg), cf_t, dims>;
-
   /// Default constructor - constructs a precoder configuration with no coefficients.
   precoding_configuration() = default;
 
-  /// \brief Constructs a weight matrix with the desired number of layers and ports.
-  /// \param[in] nof_layers_ Number of layers.
-  /// \param[in] nof_ports_  Number of ports.
-  /// \param[in] nof_prg_    Number of PRGs.
+  /// \brief Constructs a weight matrix with the desired number of layers, ports and PRGs.
+  /// \param[in] nof_layers Number of layers.
+  /// \param[in] nof_ports  Number of ports.
+  /// \param[in] nof_prg    Number of PRGs.
   /// \param[in] prg_size_  Number of PRB that comprise a PRG.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
   /// \remark An assertion is triggered if the number of PRGs exceeds \ref precoding_constants::MAX_NOF_PRG.
   /// \remark An assertion is triggered if the PRG size is lesser than \ref precoding_constants::MIN_PRG_SIZE.
-  precoding_configuration(unsigned nof_layers_, unsigned nof_ports_, unsigned nof_prg_, unsigned prg_size_)
+  precoding_configuration(unsigned nof_layers, unsigned nof_ports, unsigned nof_prg, unsigned prg_size_)
   {
-    resize(nof_layers_, nof_ports_, nof_prg_, prg_size_);
+    resize(nof_layers, nof_ports, nof_prg, prg_size_);
   }
 
   /// \brief Copy constructor.
   /// \param[in] other Precoding configuration to copy.
   precoding_configuration(const precoding_configuration& other)
   {
-    // Resize the precoding weight list and the weight matrices.
     resize(other.get_nof_layers(), other.get_nof_ports(), other.get_nof_prg(), other.get_prg_size());
-
-    // Copy each precoding matrix.
-    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
-      srsvec::copy(weights_list[i_prg].get_data(), other.weights_list[i_prg].get_data());
-    }
+    srsvec::copy(coefficients.get_data(), other.coefficients.get_data());
   }
 
-  /// Overload assigment operator.
+  /// \brief Overload assigment operator.
+  /// \param[in] other Precoding configuration to copy.
   precoding_configuration& operator=(const precoding_configuration& other)
   {
-    // Resize the precoding weight list and the weight matrices.
     resize(other.get_nof_layers(), other.get_nof_ports(), other.get_nof_prg(), other.get_prg_size());
-
-    // Copy each precoding matrix.
-    for (unsigned i_prg = 0; i_prg != nof_prg; ++i_prg) {
-      srsvec::copy(weights_list[i_prg].get_data(), other.weights_list[i_prg].get_data());
-    }
+    srsvec::copy(coefficients.get_data(), other.coefficients.get_data());
     return *this;
   }
 
-  /// \brief Resizes the number of coefficients to a desired number of layers, ports and PRGs
-  /// \param[in] nof_layers_ Number of layers.
-  /// \param[in] nof_ports_  Number of ports.
-  /// \param[in] nof_prg_    Number of PRGs.
+  /// \brief Resizes the number of coefficients to a desired number of layers, ports and PRGs.
+  /// \param[in] nof_layers Number of layers.
+  /// \param[in] nof_ports  Number of ports.
+  /// \param[in] nof_prg    Number of PRGs.
   /// \param[in] prg_size_  Number of PRB that comprise a PRG.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
   /// \remark An assertion is triggered if the number of PRGs exceeds \ref precoding_constants::MAX_NOF_PRG.
   /// \remark An assertion is triggered if the PRG size is lesser than \ref precoding_constants::MIN_PRG_SIZE.
-  void resize(unsigned nof_layers_, unsigned nof_ports_, unsigned nof_prg_, unsigned prg_size_)
+  void resize(unsigned nof_layers, unsigned nof_ports, unsigned nof_prg, unsigned prg_size_)
   {
-    srsran_assert(nof_layers_ <= precoding_constants::MAX_NOF_LAYERS,
+    srsran_assert(nof_layers <= precoding_constants::MAX_NOF_LAYERS,
                   "The number of layers (i.e., {}) exceeds the maximum (i.e., {}).",
-                  nof_layers_,
+                  nof_layers,
                   precoding_constants::MAX_NOF_LAYERS);
-    srsran_assert(nof_ports_ <= precoding_constants::MAX_NOF_PORTS,
+    srsran_assert(nof_ports <= precoding_constants::MAX_NOF_PORTS,
                   "The number of ports (i.e., {}) exceeds the maximum (i.e., {}).",
-                  nof_ports_,
+                  nof_ports,
                   precoding_constants::MAX_NOF_PORTS);
-    srsran_assert(nof_prg_ <= precoding_constants::MAX_NOF_PRG,
+    srsran_assert(nof_prg <= precoding_constants::MAX_NOF_PRG,
                   "The number of PRG (i.e., {}) exceeds the maximum (i.e., {}).",
-                  nof_prg_,
+                  nof_prg,
                   precoding_constants::MAX_NOF_PRG);
     srsran_assert(prg_size_ >= precoding_constants::MIN_PRG_SIZE,
                   "The PRG size (i.e., {}) is lesser than the minimum (i.e., {}).",
                   prg_size_,
                   precoding_constants::MIN_PRG_SIZE);
-
-    // Update the dimensions.
-    prg_size   = prg_size_;
-    nof_layers = nof_layers_;
-    nof_ports  = nof_ports_;
-    nof_prg    = nof_prg_;
-
-    // Resize the list of precoding weights.
-    weights_list.resize(nof_prg);
-
-    // Resize each precoding weight matrix.
-    for (weight_matrix& weights : weights_list) {
-      weights.resize({nof_layers, nof_ports});
-    }
+    coefficients.resize({nof_layers, nof_ports, nof_prg});
+    prg_size = prg_size_;
   }
 
   /// Gets the current number of layers.
-  unsigned get_nof_layers() const { return nof_layers; }
+  unsigned get_nof_layers() const { return coefficients.get_dimension_size(dims::layer); }
 
   /// Gets the current number of ports.
-  unsigned get_nof_ports() const { return nof_ports; }
+  unsigned get_nof_ports() const { return coefficients.get_dimension_size(dims::port); }
 
   /// Gets the current number of PRG.
-  unsigned get_nof_prg() const { return nof_prg; }
+  unsigned get_nof_prg() const { return coefficients.get_dimension_size(dims::prg); }
 
   /// Gets the current PRG size.
   unsigned get_prg_size() const { return prg_size; }
@@ -152,7 +127,7 @@ public:
                   "The PRG identifier (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_prg,
                   get_nof_prg() - 1);
-    weights_list[i_prg][{i_layer, i_port}] = coefficient;
+    coefficients[{i_layer, i_port, i_prg}] = coefficient;
   }
 
   /// \brief Gets a specific coefficient for a given layer, port and PRG.
@@ -177,57 +152,38 @@ public:
                   "The PRG identifier (i.e., {}) exceeds the maximum (i.e., {}).",
                   i_prg,
                   get_nof_prg() - 1);
-    return weights_list[i_prg][{i_layer, i_port}];
+    return coefficients[{i_layer, i_port, i_prg}];
   }
 
-  /// \brief Gets a read-only view of the precoding weight matrix for a given PRG.
+  /// \brief Gets the precoding weights for a given PRG.
   ///
   /// \param[in] i_prg PRG identifier.
   /// \return The corresponding precoding weight matrix.
   /// \remark An assertion is triggered if the PRG identifier is greater than or equal to get_nof_prg().
-  const weight_matrix& get_prg_coefficients(unsigned i_prg) const
+  precoding_weight_matrix get_prg_coefficients(unsigned i_prg) const
   {
     srsran_assert((i_prg < get_nof_prg()),
                   "The requested PRG, i.e., {}, must be smaller than the number of PRG, i.e., {}.",
                   i_prg,
                   get_nof_prg());
 
-    return weights_list[i_prg];
-  }
-
-  /// \brief Gets a read-write view of the precoding weight matrix for a given PRG.
-  ///
-  /// \param[in] i_prg PRG identifier.
-  /// \return The corresponding precoding weight matrix.
-  /// \remark An assertion is triggered if the PRG identifier is greater than or equal to get_nof_prg().
-  weight_matrix& get_prg_coefficients(unsigned i_prg)
-  {
-    srsran_assert((i_prg < get_nof_prg()),
-                  "The requested PRG, i.e., {}, must be smaller than the number of PRG, i.e., {}.",
-                  i_prg,
-                  get_nof_prg());
-
-    return weights_list[i_prg];
+    return precoding_weight_matrix(
+        coefficients.get_view<static_cast<unsigned>(dims::prg)>({i_prg}), get_nof_layers(), get_nof_ports());
   }
 
 private:
-  /// Precoding weight matrix using static memory allocation.
-  using static_weight_matrix = static_tensor<static_cast<unsigned>(dims::prg),
-                                             cf_t,
-                                             precoding_constants::MAX_NOF_LAYERS * precoding_constants::MAX_NOF_PORTS,
-                                             dims>;
+  /// Internal tensor dimensions.
+  enum class dims : unsigned { layer = 0, port, prg, all };
 
   /// Number of physical resource blocks per PRG.
   unsigned prg_size = 0;
-  /// Number of PRGs.
-  unsigned nof_prg = 0;
-  /// Number of layers.
-  unsigned nof_layers = 0;
-  /// Number of antenna ports.
-  unsigned nof_ports = 0;
-
   /// Internal data storage.
-  static_vector<static_weight_matrix, precoding_constants::MAX_NOF_PRG> weights_list;
+  static_tensor<static_cast<unsigned>(dims::all),
+                cf_t,
+                precoding_constants::MAX_NOF_LAYERS * precoding_constants::MAX_NOF_PORTS *
+                    precoding_constants::MAX_NOF_PRG,
+                dims>
+      coefficients;
 };
 
 /// \brief Overload equal to operator.

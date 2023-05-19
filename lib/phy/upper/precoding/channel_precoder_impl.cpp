@@ -12,9 +12,9 @@
 
 using namespace srsran;
 
-void channel_precoder_impl::apply_precoding(re_buffer_writer_view&                        output,
-                                            const re_buffer_reader_view&                  input,
-                                            const precoding_configuration::weight_matrix& precoding)
+void channel_precoder_impl::apply_precoding(re_buffer_writer&              output,
+                                            const re_buffer_reader&        input,
+                                            const precoding_weight_matrix& precoding)
 {
   // Number of RE in a single slice, i.e., port or layer.
   unsigned nof_re_slice = output.get_nof_re();
@@ -32,25 +32,25 @@ void channel_precoder_impl::apply_precoding(re_buffer_writer_view&              
                 nof_tx_ports,
                 nof_layers);
 
-  srsran_assert(nof_tx_ports == precoding.get_dimension_size(weight_dims::port),
+  srsran_assert(nof_tx_ports == precoding.get_nof_ports(),
                 "The number on TX ports on the output buffer, i.e., {}, does not match the number of ports of the "
                 "precoding matrix, i.e., {}.",
                 nof_tx_ports,
-                precoding.get_dimension_size(weight_dims::port));
+                precoding.get_nof_ports());
 
-  srsran_assert(nof_layers == precoding.get_dimension_size(weight_dims::layer),
+  srsran_assert(nof_layers == precoding.get_nof_layers(),
                 "The number on layers on the input buffer, i.e., {}, does not match the number of layers of the "
                 "precoding matrix, i.e., {}.",
                 nof_layers,
-                precoding.get_dimension_size(weight_dims::layer));
+                precoding.get_nof_layers());
 
   for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
     // View of the output RE for a single antenna port.
     span<cf_t> port_re_view = output.get_slice(i_port);
 
     // View of the precoding weights applicable to a single antenna port, i.e., the coefficients applied to each
-    // layer for the atenna port.
-    span<const cf_t> port_weights_view = precoding.get_view<static_cast<unsigned>(weight_dims::port)>({i_port});
+    // layer for the antenna port.
+    span<const cf_t> port_weights_view = precoding.get_port_coefficients(i_port);
 
     // View of the input RE for the first layer.
     span<const cf_t> layer_re_view = input.get_slice(0);
@@ -69,5 +69,3 @@ void channel_precoder_impl::apply_precoding(re_buffer_writer_view&              
     }
   }
 }
-
-using namespace srsran;

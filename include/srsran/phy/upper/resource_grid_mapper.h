@@ -32,7 +32,7 @@ public:
   /// \param[in] input      Input data.
   /// \param[in] pattern    Data allocation pattern in the resource grid.
   /// \param[in] precoding  Precoding configuration.
-  void map(const re_buffer& input, const re_pattern_list& pattern, const precoding_configuration& precoding)
+  void map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding)
   {
     srsran_assert(input.get_nof_slices() == precoding.get_nof_layers(),
                   "The input number of layers (i.e., {}) and the precoding number of layers (i.e., {}) are different.",

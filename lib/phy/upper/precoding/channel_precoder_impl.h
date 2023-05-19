@@ -21,16 +21,13 @@ namespace srsran {
 class channel_precoder_impl : public channel_precoder
 {
 public:
-  /// Dimensions of the precoding matrix.
-  using weight_dims = precoding_configuration::dims;
-
   /// Default constructor.
   explicit channel_precoder_impl() = default;
 
   // See interface for documentation.
-  void apply_precoding(re_buffer_writer_view&                        output,
-                       const re_buffer_reader_view&                  input,
-                       const precoding_configuration::weight_matrix& precoding) override;
+  void apply_precoding(re_buffer_writer&              output,
+                       const re_buffer_reader&        input,
+                       const precoding_weight_matrix& precoding) override;
 };
 
 } // namespace srsran

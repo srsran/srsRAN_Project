@@ -12,81 +12,75 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/tensor.h"
 
+/// \file
+/// \brief Interfaces and implementations of a Resource Element buffer.
+///
+/// The RE buffer stores a number of resource elements for a given amount of slices. A slice can either be a transmit
+/// layer or an antenna port, depending on the context.
+
 namespace srsran {
 
 namespace detail {
-/// Base functions of all RE buffer interfaces.
-class re_buffer_base
+
+/// Interface for accessing the dimension sizes of a Resource Element buffer.
+class re_buffer_dimensions
 {
 public:
   /// Default destructor.
-  virtual ~re_buffer_base() = default;
+  virtual ~re_buffer_dimensions() = default;
 
   /// Gets the current number of slices.
   virtual unsigned get_nof_slices() const = 0;
 
   /// Gets the current number of Resource Elements.
   virtual unsigned get_nof_re() const = 0;
-
-  /// Internal tensor dimensions.
-  enum class dims : unsigned { re = 0, slice = 1, all = 2 };
 };
 
 } // namespace detail
 
-/// \brief Resource element buffer.
-///
-/// It stores a number of resource elements for a given amount of slices. A slice can either be a transmit layer or an
-/// antenna port, depending on the context.
-class re_buffer : public detail::re_buffer_base
+/// Resource Element buffer read-only interface.
+class re_buffer_reader : public detail::re_buffer_dimensions
 {
 public:
-  /// Default destructor.
-  virtual ~re_buffer() = default;
-
   /// \brief Gets a read-only view of a specific slice.
   /// \param[in] i_slice     Slice identifier.
   /// \remark An assertion is triggered if the slice identifier is greater than or equal to get_nof_slices().
   /// \return A read-only view of the specified slice.
   virtual span<const cf_t> get_slice(unsigned i_slice) const = 0;
+};
 
+/// Resource Element buffer read-write interface.
+class re_buffer_writer : public detail::re_buffer_dimensions
+{
+public:
   /// \brief Gets a read-write view of a specific slice.
   /// \param[in] i_slice     Slice identifier.
   /// \remark An assertion is triggered if the slice identifier is greater than or equal to get_nof_slices().
   /// \return A read-write view of the specified slice.
   virtual span<cf_t> get_slice(unsigned i_slice) = 0;
-
-  /// Gets a read-write view of the internal data.
-  virtual tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() = 0;
-
-  /// Gets a read-only view of the internal data.
-  virtual const tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() const = 0;
 };
 
-/// Implements a read-only resource element buffer view.
-class re_buffer_reader_view : public detail::re_buffer_base
+/// Implements a resource element buffer reader view, with read-only access methods.
+class re_buffer_reader_view : public re_buffer_reader
 {
 public:
-  /// Forbid default constructor;
-  re_buffer_reader_view() = delete;
-
   /// \brief Constructs a resource element buffer view that gives access to a subspan of the REs for all slices.
   ///
   /// \param[in] buffer RE buffer accessed by the view.
   /// \param[in] offset Offset in number of RE. It determines the start of the RE view across each slice.
   /// \param[in] count Count in number of RE. It determines the number of RE spanned by the view across each slice.
-  re_buffer_reader_view(const re_buffer& buffer, unsigned offset, unsigned count) :
-    view_offset(offset), view_count(count), data(buffer.get_data())
+  re_buffer_reader_view(const re_buffer_reader& buffer, unsigned offset, unsigned count) :
+    view_offset(offset), view_count(count), data(buffer)
   {
-    srsran_assert((data.get_dimension_size(dims::re) >= offset + count),
-                  "A view over REs [{}, {}) exceeds the RE tensor dimension size, i.e., {}.",
+    srsran_assert((buffer.get_nof_re() >= offset + count),
+                  "A view over REs [{}, {}) exceeds the RE dimension size, i.e., {}.",
                   offset,
                   offset + count,
-                  data.get_dimension_size(dims::re));
+                  buffer.get_nof_re());
   }
 
   // See interface for documentation.
-  unsigned get_nof_slices() const override { return data.get_dimension_size(dims::slice); }
+  unsigned get_nof_slices() const override { return data.get_nof_slices(); }
 
   // See interface for documentation.
   unsigned get_nof_re() const override { return view_count; }
@@ -98,9 +92,9 @@ public:
   ///
   /// \param[in] i_slice     Slice identifier.
   /// \return A read-only view of the specified slice.
-  span<const cf_t> get_slice(unsigned i_slice) const
+  span<const cf_t> get_slice(unsigned i_slice) const override
   {
-    return data.get_view<1>({i_slice}).subspan(view_offset, view_count);
+    return data.get_slice(i_slice).subspan(view_offset, view_count);
   }
 
 private:
@@ -108,37 +102,29 @@ private:
   unsigned view_offset;
   /// Number of Resource Elements per slice included in the view.
   unsigned view_count;
+
   /// Internal data storage.
-  const tensor<static_cast<unsigned>(dims::all), cf_t, dims>& data;
+  const re_buffer_reader& data;
 };
 
-/// Implements a read-write resource element buffer view.
-class re_buffer_writer_view : public detail::re_buffer_base
+/// Implements a resource element buffer writer view, with read-write access methods.
+class re_buffer_writer_view : public re_buffer_writer
 {
 public:
-  /// Forbid default constructor;
-  re_buffer_writer_view() = delete;
-
   /// \brief Constructs a resource element buffer view that gives access to a subspan of the REs for all slices.
   ///
   /// \param[in] buffer RE buffer accessed by the view.
   /// \param[in] offset Offset in number of RE. It determines the start of the RE view across each slice.
   /// \param[in] count Count in number of RE. It determines the number of RE spanned by the view across each slice.
-  re_buffer_writer_view(re_buffer& buffer, unsigned offset, unsigned count) :
-    view_offset(offset), view_count(count), data(buffer.get_data())
+  re_buffer_writer_view(re_buffer_writer& buffer, unsigned offset, unsigned count) :
+    view_offset(offset), view_count(count), data(buffer)
   {
-    srsran_assert((data.get_dimension_size(dims::re) >= offset + count),
-                  "A view over REs [{}, {}) exceeds the RE tensor dimension size, i.e., {}.",
+    srsran_assert((buffer.get_nof_re() >= offset + count),
+                  "A view over REs [{}, {}) exceeds the RE dimension size, i.e., {}.",
                   offset,
                   offset + count,
-                  data.get_dimension_size(dims::re));
+                  buffer.get_nof_re());
   }
-
-  // See interface for documentation.
-  unsigned get_nof_slices() const override { return data.get_dimension_size(dims::slice); }
-
-  // See interface for documentation.
-  unsigned get_nof_re() const override { return view_count; }
 
   /// \brief Gets a read-write view of a specific slice.
   ///
@@ -147,19 +133,26 @@ public:
   ///
   /// \param[in] i_slice     Slice identifier.
   /// \return A read-write view of the specified slice.
-  span<cf_t> get_slice(unsigned i_slice) { return data.get_view<1>({i_slice}).subspan(view_offset, view_count); }
+  span<cf_t> get_slice(unsigned i_slice) override { return data.get_slice(i_slice).subspan(view_offset, view_count); }
+
+  // See interface for documentation.
+  unsigned get_nof_slices() const override { return data.get_nof_slices(); }
+
+  // See interface for documentation.
+  unsigned get_nof_re() const override { return view_count; }
 
 private:
   /// Offset of the view across the Resource Elements.
   unsigned view_offset;
   /// Number of Resource Elements per slice included in the view.
   unsigned view_count;
+
   /// Internal data storage.
-  tensor<static_cast<unsigned>(dims::all), cf_t, dims>& data;
+  re_buffer_writer& data;
 };
 
 /// Implements a dynamic resource element buffer.
-class dynamic_re_buffer : public re_buffer
+class dynamic_re_buffer : public re_buffer_reader, public re_buffer_writer
 {
 public:
   /// \brief Constructs a resource element buffer for a given maximum number of slices and resource elements.
@@ -200,13 +193,10 @@ public:
   // See interface for documentation.
   span<const cf_t> get_slice(unsigned i_slice) const override { return data.get_view<1>({i_slice}); }
 
-  // See interface for documentation.
-  tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() override { return data; }
-
-  // See interface for documentation.
-  const tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() const override { return data; }
-
 private:
+  /// Internal tensor dimensions.
+  enum class dims : unsigned { re = 0, slice = 1, all = 2 };
+
   /// Maximum number of slices.
   unsigned max_nof_slices;
   /// Maximum number of resource elements.
@@ -218,7 +208,7 @@ private:
 
 /// Implements a static resource element buffer.
 template <unsigned MaxNofSlices, unsigned MaxNofRe>
-class static_re_buffer : public re_buffer
+class static_re_buffer : public re_buffer_reader, public re_buffer_writer
 {
 public:
   /// Default constructor - creates an empty resource element buffer.
@@ -261,13 +251,10 @@ public:
   // See interface for documentation.
   span<const cf_t> get_slice(unsigned i_slice) const override { return data.get_view({i_slice}); }
 
-  // See interface for documentation.
-  tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() override { return data; }
-
-  // See interface for documentation.
-  const tensor<static_cast<unsigned>(dims::all), cf_t, dims>& get_data() const override { return data; }
-
 private:
+  /// Internal tensor dimensions.
+  enum class dims : unsigned { re = 0, slice = 1, all = 2 };
+
   /// Internal data storage.
   static_tensor<static_cast<unsigned>(dims::all), cf_t, MaxNofSlices * MaxNofRe, dims> data;
 };

@@ -29,10 +29,10 @@ public:
   ///
   /// \param[out] output   Output symbols, indexed by RE and antenna port.
   /// \param[in] input     Input symbols, indexed by RE and transmit layer.
-  /// \param[in] precoding Precoding weights arranged in matrix form, indexed by transmit layer and antenna port.
-  virtual void apply_precoding(re_buffer_writer_view&                        output,
-                               const re_buffer_reader_view&                  input,
-                               const precoding_configuration::weight_matrix& precoding) = 0;
+  /// \param[in] precoding Precoding coefficients arranged in matrix form, indexed by transmit layer and antenna port.
+  virtual void apply_precoding(re_buffer_writer&              output,
+                               const re_buffer_reader&        input,
+                               const precoding_weight_matrix& precoding) = 0;
 };
 
 } // namespace srsran
