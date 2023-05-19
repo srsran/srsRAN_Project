@@ -29,7 +29,7 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
 
     srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params) or
                       variant_holds_alternative<pucch_format_2_3_cfg>(pucch_res.format_params),
-                  "Only PUCCH format 1 currently supported");
+                  "Only PUCCH format 1 and 2 are currently supported");
     const unsigned starting_sym = variant_holds_alternative<pucch_format_1_cfg>(pucch_res.format_params)
                                       ? variant_get<pucch_format_1_cfg>(pucch_res.format_params).starting_sym_idx
                                       : variant_get<pucch_format_2_3_cfg>(pucch_res.format_params).starting_sym_idx;
