@@ -136,6 +136,37 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
   return cmd;
 };
 
+cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification()
+{
+  cu_cp_pdu_session_resource_modify_request request;
+  request.ue_index = uint_to_ue_index(0);
+
+  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+
+  qos_flow_add_or_mod_item qos_item;
+  qos_item.qos_flow_id = uint_to_qos_flow_id(1);
+
+#if 0
+  {
+    non_dyn_5qi_descriptor_t non_dyn_5qi;
+    non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
+    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  }
+#endif
+
+  cu_cp_pdu_session_res_modify_request_transfer transfer;
+  transfer.qos_flow_add_or_modify_request_list.emplace(qos_item.qos_flow_id, qos_item);
+
+  modify_item.transfer = transfer;
+  request.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id, modify_item);
+
+  return request;
+}
+
 e1ap_bearer_context_setup_response
 srsran::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)

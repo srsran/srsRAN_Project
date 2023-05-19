@@ -20,14 +20,6 @@ using namespace srs_cu_cp;
 
 /// Note: Check if UE ID is valid is done by caller. Injection of invalid ue_index results in assertion.
 
-// Helper function to verify that two lists are identical.
-template <typename T>
-void VERIFY_EQUAL(const T& result, const T& expected)
-{
-  ASSERT_EQ(result.size(), expected.size());
-  ASSERT_TRUE(std::equal(result.begin(), result.end(), expected.begin()));
-}
-
 class pdu_session_resource_setup_test : public pdu_session_resource_routine_test
 {
 protected:

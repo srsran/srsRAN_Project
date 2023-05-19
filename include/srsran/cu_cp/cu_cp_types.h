@@ -341,6 +341,49 @@ struct cu_cp_pdu_session_resource_release_response {
   optional<crit_diagnostics_t>          crit_diagnostics;
 };
 
+// Note: Almost the same as qos_flow_setup_request_item but with optional QoS flow params.
+struct qos_flow_add_or_mod_item {
+  qos_flow_id_t                             qos_flow_id = qos_flow_id_t::invalid;
+  optional<cu_cp_qos_flow_level_qos_params> qos_flow_level_qos_params;
+};
+
+struct cu_cp_pdu_session_res_modify_request_transfer {
+  // All IEs are optional
+  // id-PDUSessionAggregateMaximumBitRate
+  // id-UL-NGU-UP-TNLModifyList
+  // id-NetworkInstance
+  // id-QosFlowAddOrModifyRequestList
+  slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_item> qos_flow_add_or_modify_request_list;
+  // id-QosFlowToReleaseList
+  // id-AdditionalUL-NGU-UP-TNLInformation
+  // id-CommonNetworkInstance
+  // id-AdditionalRedundantUL-NGU-UP-TNLInformation
+  // id-RedundantCommonNetworkInstance
+};
+
+struct cu_cp_pdu_session_res_modify_item_mod_req {
+  pdu_session_id_t                              pdu_session_id;
+  byte_buffer                                   nas_pdu;
+  cu_cp_pdu_session_res_modify_request_transfer transfer;
+};
+
+struct cu_cp_pdu_session_resource_modify_request {
+  ue_index_t                                                                     ue_index = ue_index_t::invalid;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req> pdu_session_res_modify_items;
+};
+
+struct cu_cp_pdu_session_resource_failed_to_modify_item {
+  pdu_session_id_t pdu_session_id;
+};
+
+struct cu_cp_pdu_session_resource_modify_response {
+  ue_index_t                                                    ue_index = ue_index_t::invalid;
+  std::vector<cu_cp_pdu_session_resource_failed_to_modify_item> pdu_session_res_failed_to_modify_list;
+  // id-PDUSessionResourceModifyListModRes
+  // id-UserLocationInformation
+  // id-CriticalityDiagnostics
+};
+
 struct cu_cp_drx_cycle {
   uint16_t           long_drx_cycle_len;
   optional<uint16_t> short_drx_cycle_len;
