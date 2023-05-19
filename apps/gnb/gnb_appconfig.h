@@ -119,14 +119,16 @@ struct pdsch_appconfig {
 
 /// PUSCH application configuration.
 struct pusch_appconfig {
-  /// Minimum modulation and coding scheme index for C-RNTI PUSCH allocations. Note that setting a high minimum MCS
-  /// may lead to a high BLER if the SINR is low.
+  /// \brief Minimum modulation and coding scheme index for C-RNTI PUSCH allocations. Note that setting a high minimum
+  /// MCS may lead to a high BLER if the SINR is low.
   unsigned min_ue_mcs = 0;
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
   /// Maximum number of consecutive UL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
+  /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
+  std::vector<unsigned> rv_sequence = {0};
 };
 
 /// Amplitude control application configuration.

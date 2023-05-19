@@ -74,6 +74,12 @@ public:
                                   unsigned                                     pending_bytes,
                                   dci_ul_rnti_config_type                      type) const;
 
+
+  uint8_t get_pusch_rv(const ul_harq_process& h_ul) const
+  {
+    return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];
+  }
+
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 

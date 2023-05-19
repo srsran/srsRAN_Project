@@ -88,6 +88,7 @@ void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                             const crb_interval&        crbs,
                             unsigned                   time_resource,
                             sch_mcs_index              mcs_index,
+                            uint8_t                    rv,
                             const ul_harq_process&     h_ul);
 
 /// Builds DCI f0_0 for C-RNTI.
@@ -97,6 +98,7 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
                            const crb_interval&          crbs,
                            unsigned                     time_resource,
                            sch_mcs_index                mcs_index,
+                           uint8_t                      rv,
                            const ul_harq_process&       h_ul);
 
 /// Builds DCI f0_1 for C-RNTI.
@@ -106,6 +108,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                            const crb_interval&          crbs,
                            unsigned                     time_resource,
                            sch_mcs_index                mcs_index,
+                           uint8_t                      rv,
                            const ul_harq_process&       h_ul,
                            unsigned                     total_dai);
 

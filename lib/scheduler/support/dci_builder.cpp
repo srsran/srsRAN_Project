@@ -283,6 +283,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                                     const crb_interval&        crbs,
                                     unsigned                   time_resource,
                                     sch_mcs_index              mcs_index,
+                                    uint8_t                    rv,
                                     const ul_harq_process&     h_ul)
 {
   // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
@@ -319,7 +320,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   f0_0.modulation_coding_scheme = mcs_index.to_uint();
 
   // HARQ params.
-  f0_0.redundancy_version = get_redundancy_version(h_ul.tb().nof_retxs);
+  f0_0.redundancy_version = rv;
 }
 
 void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
@@ -328,6 +329,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
                                    const crb_interval&          crbs,
                                    unsigned                     time_resource,
                                    sch_mcs_index                mcs_index,
+                                   uint8_t                      rv,
                                    const ul_harq_process&       h_ul)
 {
   const search_space_info& ss_info       = ue_cell_cfg.search_space(ss_id);
@@ -368,7 +370,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
   // HARQ params.
   f0_0.harq_process_number = h_ul.id;
   f0_0.new_data_indicator  = h_ul.tb().ndi;
-  f0_0.redundancy_version  = get_redundancy_version(h_ul.tb().nof_retxs);
+  f0_0.redundancy_version  = rv;
 }
 
 void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
@@ -377,6 +379,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                                    const crb_interval&          crbs,
                                    unsigned                     time_resource,
                                    sch_mcs_index                mcs_index,
+                                   uint8_t                      rv,
                                    const ul_harq_process&       h_ul,
                                    unsigned                     dai)
 {
@@ -414,7 +417,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   // HARQ params.
   f0_1.harq_process_number = h_ul.id;
   f0_1.new_data_indicator  = h_ul.tb().ndi;
-  f0_1.redundancy_version  = get_redundancy_version(h_ul.tb().nof_retxs);
+  f0_1.redundancy_version  = rv;
 
   // TODO: Set values for -
   //  - srs_resource_indicator

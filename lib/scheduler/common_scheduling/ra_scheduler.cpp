@@ -157,12 +157,14 @@ void ra_scheduler::precompute_msg3_pdus()
                                                 nof_layers});
 
     // Generate DCI and PUSCH PDUs.
+    static constexpr uint8_t msg3_rv = 0;
     build_dci_f0_0_tc_rnti(msg3_data[i].dci,
                            cell_cfg.dl_cfg_common.init_dl_bwp,
                            cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
                            crb_interval{0, prbs_tbs.nof_prbs},
                            i,
                            sched_cfg.msg3_mcs_index,
+                           msg3_rv,
                            dummy_h_ul);
 
     // Note: RNTI will be overwritten later.
@@ -656,12 +658,14 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
     msg3_ctx.harq.new_retx(pusch_alloc.slot);
 
     // Fill DCI.
+    static constexpr uint8_t msg3_rv = 0;
     build_dci_f0_0_tc_rnti(pdcch->dci,
                            cell_cfg.dl_cfg_common.init_dl_bwp,
                            cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
                            grant.crbs,
                            pusch_td_res_index,
                            msg3_ctx.harq.last_tx_params().mcs,
+                           msg3_rv,
                            msg3_ctx.harq);
 
     // Fill PUSCH.

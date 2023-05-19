@@ -40,6 +40,16 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
                config.max_ue_mcs);
     return false;
   }
+
+  if (config.rv_sequence.empty()) {
+    fmt::print("Invalid RV sequence. The RV sequence cannot be empty.\n");
+    return false;
+  }
+  if (config.rv_sequence[0] != 0) {
+    fmt::print("Invalid RV sequence. The first RV must be 0.\n");
+    return false;
+  }
+
   return true;
 }
 
