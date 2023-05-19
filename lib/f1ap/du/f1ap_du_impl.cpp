@@ -212,7 +212,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 
   f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_resp;
 
-  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_confirm{}, msg](
+  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_confirm{}](
                           coro_context<async_task<f1ap_ue_context_modification_confirm>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
