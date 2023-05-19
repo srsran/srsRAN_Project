@@ -44,7 +44,7 @@ target_include_directories(du_manager_ue_creation_test PRIVATE ${CMAKE_SOURCE_DI
 target_link_libraries(du_manager_ue_creation_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_manager_ue_creation_test)
 
-add_executable(du_ue_config_test procedures/ue_configuration_test.cpp)
+add_executable(du_ue_config_test procedures/ue_configuration_test.cpp procedures/ue_deletion_test.cpp)
 target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ue_config_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ue_config_test)

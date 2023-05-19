@@ -230,6 +230,7 @@ public:
   optional<mac_ue_create_request_message>                           last_ue_create_msg{};
   optional<mac_ue_reconfiguration_request_message>                  last_ue_reconf_msg{};
   optional<mac_ue_delete_request_message>                           last_ue_delete_msg{};
+  optional<mac_dl_buffer_state_indication_message>                  last_dl_bs;
   byte_buffer                                                       last_pushed_ul_ccch_msg;
   wait_manual_event_tester<mac_ue_create_response_message>          wait_ue_create;
   wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
@@ -260,7 +261,10 @@ public:
     last_pushed_ul_ccch_msg = std::move(pdu);
   }
 
-  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override
+  {
+    last_dl_bs = dl_bs;
+  }
 
   void handle_paging_information(const paging_information& msg) override {}
 };
@@ -300,26 +304,7 @@ f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index
 class du_manager_test_bench
 {
 public:
-  du_manager_test_bench(span<const du_cell_config> cells) :
-    du_cells(cells.begin(), cells.end()),
-    worker(128),
-    du_mng_exec(worker),
-    ue_exec_mapper(worker),
-    cell_exec_mapper(worker),
-    params{{"srsgnb", 1, 1, du_cells},
-           {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
-           {f1ap, f1ap},
-           {f1u_gw},
-           {mac, f1ap, f1ap},
-           {mac, mac}},
-    logger(srslog::fetch_basic_logger("DU-MNG"))
-  {
-    logger.set_level(srslog::basic_levels::debug);
-
-    srslog::init();
-
-    params.ran.qos = config_helpers::make_default_du_qos_config_list();
-  }
+  du_manager_test_bench(span<const du_cell_config> cells);
 
   std::vector<du_cell_config>            du_cells;
   timer_manager                          timers;
