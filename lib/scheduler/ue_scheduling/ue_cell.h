@@ -75,6 +75,10 @@ public:
                                   dci_ul_rnti_config_type                      type) const;
 
 
+  uint8_t get_pdsch_rv(const dl_harq_process& h_dl) const
+  {
+    return expert_cfg.pdsch_rv_sequence[h_dl.tb(0).nof_retxs % expert_cfg.pdsch_rv_sequence.size()];
+  }
   uint8_t get_pusch_rv(const ul_harq_process& h_ul) const
   {
     return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];

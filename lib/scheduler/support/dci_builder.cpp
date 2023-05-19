@@ -120,6 +120,7 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
                                     unsigned                   k1,
                                     unsigned                   pucch_res_indicator,
                                     sch_mcs_index              mcs_index,
+                                    uint8_t                    rv,
                                     const dl_harq_process&     h_dl)
 {
   static constexpr unsigned tb_idx = 0;
@@ -150,7 +151,7 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
   // HARQ params.
   f1_0.harq_process_number = h_dl.id;
   f1_0.new_data_indicator  = h_dl.tb(tb_idx).ndi;
-  f1_0.redundancy_version  = get_redundancy_version(h_dl.tb(tb_idx).nof_retxs);
+  f1_0.redundancy_version  = rv;
 }
 
 void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
@@ -162,6 +163,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                                    unsigned                     pucch_res_indicator,
                                    unsigned                     dai,
                                    sch_mcs_index                mcs_index,
+                                   uint8_t                      rv,
                                    const dl_harq_process&       h_dl)
 {
   const search_space_info&     ss_info           = ue_cell_cfg.search_space(ss_id);
@@ -206,7 +208,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   // HARQ params.
   f1_0.harq_process_number = h_dl.id;
   f1_0.new_data_indicator  = h_dl.tb(0).ndi;
-  f1_0.redundancy_version  = get_redundancy_version(h_dl.tb(0).nof_retxs);
+  f1_0.redundancy_version  = rv;
 }
 
 void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
@@ -218,6 +220,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                                    unsigned                     pucch_res_indicator,
                                    unsigned                     dai,
                                    sch_mcs_index                tb1_mcs_index,
+                                   uint8_t                      rv,
                                    const dl_harq_process&       h_dl)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
@@ -274,7 +277,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   // HARQ params.
   f1_1.harq_process_number    = h_dl.id;
   f1_1.tb1_new_data_indicator = h_dl.tb(0).ndi;
-  f1_1.tb1_redundancy_version = get_redundancy_version(h_dl.tb(0).nof_retxs);
+  f1_1.tb1_redundancy_version = rv;
 }
 
 void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,

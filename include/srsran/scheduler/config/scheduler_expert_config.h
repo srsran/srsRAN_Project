@@ -26,6 +26,8 @@ namespace srsran {
 struct scheduler_ue_expert_config {
   /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> dl_mcs;
+  /// Sequence of redundancy versions used for PDSCH scheduling. Possible values: {0, 1, 2, 3}.
+  std::vector<uint8_t> pdsch_rv_sequence;
   /// Range of allowed MCS indices for UL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> ul_mcs;
   /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.

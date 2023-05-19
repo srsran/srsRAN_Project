@@ -238,6 +238,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  pdsch_params.max_consecutive_kos,
                  "Maximum number of HARQ-ACK consecutive KOs before an Radio Link Failure is reported")
       ->capture_default_str();
+  app.add_option("--rv_sequence", pdsch_params.rv_sequence, "RV sequence for PUSCH. (e.g. [0 2 3 1]")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1, 2, 3}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -252,7 +255,7 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
                  pusch_params.max_consecutive_kos,
                  "Maximum number of CRC consecutive KOs before an Radio Link Failure is reported")
       ->capture_default_str();
-  app.add_option("--rv_sequence", pusch_params.rv_sequence, "RV sequence for PUSCH. (e.g. [0 3 2 1]")
+  app.add_option("--rv_sequence", pusch_params.rv_sequence, "RV sequence for PUSCH. (e.g. [0 2 3 1]")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3}));
 }

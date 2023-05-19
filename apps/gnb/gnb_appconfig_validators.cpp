@@ -19,6 +19,19 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
   return true;
 }
 
+static bool validate_rv_sequence(span<const unsigned> rv_sequence)
+{
+  if (rv_sequence.empty()) {
+    fmt::print("Invalid RV sequence. The RV sequence cannot be empty.\n");
+    return false;
+  }
+  if (rv_sequence[0] != 0) {
+    fmt::print("Invalid RV sequence. The first RV must be 0.\n");
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
 {
@@ -28,6 +41,11 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
                config.max_ue_mcs);
     return false;
   }
+
+  if (not validate_rv_sequence(config.rv_sequence)) {
+    return false;
+  }
+
   return true;
 }
 
@@ -41,12 +59,7 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
     return false;
   }
 
-  if (config.rv_sequence.empty()) {
-    fmt::print("Invalid RV sequence. The RV sequence cannot be empty.\n");
-    return false;
-  }
-  if (config.rv_sequence[0] != 0) {
-    fmt::print("Invalid RV sequence. The first RV must be 0.\n");
+  if (not validate_rv_sequence(config.rv_sequence)) {
     return false;
   }
 

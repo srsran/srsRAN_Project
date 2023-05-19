@@ -115,6 +115,8 @@ struct pdsch_appconfig {
   unsigned nof_harqs = 16;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
+  /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
+  std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
 };
 
 /// PUSCH application configuration.

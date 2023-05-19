@@ -18,13 +18,6 @@
 
 namespace srsran {
 
-/// Get redundancy version.
-inline unsigned get_redundancy_version(unsigned nof_retxs)
-{
-  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
-  return rv_idx[nof_retxs % rv_idx.size()];
-}
-
 /// Builds DCI f1_0 for SI-RNTI used in SIBs.
 void build_dci_f1_0_si_rnti(dci_dl_info&               dci,
                             const bwp_downlink_common& init_dl_bwp,
@@ -55,6 +48,7 @@ void build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
                             unsigned                   k1,
                             unsigned                   pucch_res_indicator,
                             sch_mcs_index              mcs_index,
+                            uint8_t                    rv,
                             const dl_harq_process&     h_dl);
 
 /// Builds DCI f1_0 for C-RNTI.
@@ -67,6 +61,7 @@ void build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
                            unsigned                     pucch_res_indicator,
                            unsigned                     dai,
                            sch_mcs_index                mcs_index,
+                           uint8_t                      rv,
                            const dl_harq_process&       h_dl);
 
 /// Builds DCI f1_1 for C-RNTI.
@@ -79,6 +74,7 @@ void build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                            unsigned                     pucch_res_indicator,
                            unsigned                     dai,
                            sch_mcs_index                tb1_mcs_index,
+                           uint8_t                      rv,
                            const dl_harq_process&       h_dl);
 
 /// Builds DCI f0_0 for TC-RNTI, used in Msg3 retxs.

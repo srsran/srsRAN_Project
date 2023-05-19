@@ -245,6 +245,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs, srb0_dai);
 
   // Fill DL PDCCH DCI.
+  static const uint8_t msg4_rv = 0;
   build_dci_f1_0_tc_rnti(pdcch.dci,
                          cell_cfg.dl_cfg_common.init_dl_bwp,
                          ue_grant_crbs,
@@ -252,6 +253,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                          k1,
                          pucch.pucch_res_indicator,
                          mcs_idx,
+                         msg4_rv,
                          h_dl);
 
   // Fill PDSCH PDU.

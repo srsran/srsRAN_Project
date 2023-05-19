@@ -208,6 +208,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Fill DL PDCCH DCI PDU.
+  uint8_t rv = ue_cc->get_pdsch_rv(h_dl);
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(pdcch->dci,
@@ -217,6 +218,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                              k1,
                              uci.pucch_grant.pucch_res_indicator,
                              mcs_tbs_info.value().mcs,
+                             rv,
                              h_dl);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
@@ -229,6 +231,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             uci.pucch_grant.pucch_res_indicator,
                             uci.dai,
                             mcs_tbs_info.value().mcs,
+                            rv,
                             h_dl);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
@@ -241,6 +244,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             uci.pucch_grant.pucch_res_indicator,
                             uci.dai,
                             mcs_tbs_info.value().mcs,
+                            rv,
                             h_dl);
       break;
     default:
