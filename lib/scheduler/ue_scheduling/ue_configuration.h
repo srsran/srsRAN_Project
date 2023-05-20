@@ -40,6 +40,7 @@ struct search_space_info {
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list;
   dci_size_config                                   dci_sz_cfg;
+  dci_sizes                                         dci_sz;
 
   /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
   /// \return DL DCI format.

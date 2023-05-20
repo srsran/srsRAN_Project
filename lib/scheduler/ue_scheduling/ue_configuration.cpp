@@ -71,6 +71,9 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   // Compute DCI sizes
   for (search_space_info& ss : search_spaces) {
     ss.dci_sz_cfg = get_dci_size_config(*this, false, ss.cfg->id);
+    srsran_assert(validate_dci_size_config(ss.dci_sz_cfg),
+                  "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
+    ss.dci_sz = get_dci_sizes(ss.dci_sz_cfg);
   }
 }
 
