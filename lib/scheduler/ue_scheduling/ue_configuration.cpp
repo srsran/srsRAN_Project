@@ -1,5 +1,6 @@
 
 #include "ue_configuration.h"
+#include "../support/dci_builder.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 
@@ -66,6 +67,11 @@ void ue_cell_configuration::reconfigure(const serving_cell_config& cell_cfg_ded_
   if (cell_cfg_ded.ul_config.has_value()) {
     configure_bwp_ded_cfg(to_bwp_id(0), cell_cfg_ded.ul_config->init_ul_bwp);
   }
+
+  // Compute DCI sizes
+  for (search_space_info& ss : search_spaces) {
+    ss.dci_sz_cfg = get_dci_size_config(*this, false, ss.cfg->id);
+  }
 }
 
 void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common)
@@ -85,16 +91,16 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
   }
 
   // Compute SearchSpace-Id lookup tables.
-  for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
-    search_spaces.emplace(ss.id);
-    search_spaces[ss.id].cfg                    = &ss;
-    search_spaces[ss.id].coreset                = &*coresets[ss.cs_id];
-    search_spaces[ss.id].bwp                    = &bwp_table[bwpid];
-    search_spaces[ss.id].pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
-        ss, *search_spaces[ss.id].bwp->dl_common, nullptr, cell_cfg_common.dmrs_typeA_pos);
-  }
-  for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
-    bwp_table[bwpid].search_spaces.emplace(ss.id, &search_spaces[ss.id]);
+  for (const search_space_configuration& ss_cfg : bwp_dl_common.pdcch_common.search_spaces) {
+    search_spaces.emplace(ss_cfg.id);
+    search_space_info& ss = search_spaces[ss_cfg.id];
+    bwp_table[bwpid].search_spaces.emplace(ss_cfg.id, &ss);
+
+    ss.cfg     = &ss_cfg;
+    ss.coreset = &*coresets[ss_cfg.cs_id];
+    ss.bwp     = &bwp_table[bwpid];
+    ss.pdsch_time_domain_list =
+        get_c_rnti_pdsch_time_domain_list(ss_cfg, *ss.bwp->dl_common, nullptr, cell_cfg_common.dmrs_typeA_pos);
   }
 }
 
@@ -128,16 +134,16 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
   }
 
   // Compute SearchSpace-Id lookup tables.
-  for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
-    search_spaces.emplace(ss.id);
-    search_spaces[ss.id].cfg                    = &ss;
-    search_spaces[ss.id].coreset                = coresets[ss.cs_id];
-    search_spaces[ss.id].bwp                    = &bwp_table[bwpid];
-    search_spaces[ss.id].pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
-        ss, *bwp_table[bwpid].dl_common, bwp_table[bwpid].dl_ded, cell_cfg_common.dmrs_typeA_pos);
-  }
-  for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
-    bwp_table[bwpid].search_spaces.emplace(ss.id, &search_spaces[ss.id]);
+  for (const search_space_configuration& ss_cfg : bwp_dl_ded.pdcch_cfg->search_spaces) {
+    search_spaces.emplace(ss_cfg.id);
+    search_space_info& ss = search_spaces[ss_cfg.id];
+    bwp_table[bwpid].search_spaces.emplace(ss_cfg.id, &ss);
+
+    ss.cfg                    = &ss_cfg;
+    ss.coreset                = coresets[ss_cfg.cs_id];
+    ss.bwp                    = &bwp_table[bwpid];
+    ss.pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
+        ss_cfg, *bwp_table[bwpid].dl_common, bwp_table[bwpid].dl_ded, cell_cfg_common.dmrs_typeA_pos);
   }
 }
 

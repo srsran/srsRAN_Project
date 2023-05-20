@@ -62,13 +62,11 @@ static bool is_dci_format_monitored_in_ue_ss(const ue_cell_configuration& ue_cel
 /// \param[in] ue_cell_cfg UE cell configuration.
 /// \param[in] is_ue_configured_multiple_serving_cells Flag indicating whether UE is configured with more than 1 serving
 /// cell.
-/// \param[in] active_bwp_id Active BWP Id.
 /// \param[in] ss_id SearchSpace Id.
 /// \return Return the DCI size configuration.
-static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_cfg,
-                                           bool                         is_ue_configured_multiple_serving_cells,
-                                           bwp_id_t                     active_bwp_id,
-                                           search_space_id              ss_id)
+dci_size_config srsran::get_dci_size_config(const ue_cell_configuration& ue_cell_cfg,
+                                            bool                         is_ue_configured_multiple_serving_cells,
+                                            search_space_id              ss_id)
 {
   const search_space_info&            ss_info                    = ue_cell_cfg.search_space(ss_id);
   const bwp_info&                     init_bwp                   = ue_cell_cfg.bwp(to_bwp_id(0));
@@ -85,8 +83,8 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   const auto&                         opt_pdsch_serving_cell_cfg = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg;
 
   dci_size_config dci_sz_cfg = dci_size_config{
-      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp_id, true),
-      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp_id, false),
+      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.bwp_id, true),
+      is_dci_format_monitored_in_ue_ss(ue_cell_cfg, active_bwp.bwp_id, false),
       init_dl_bwp.generic_params.crbs.length(),
       active_dl_bwp.crbs.length(),
       init_ul_bwp.generic_params.crbs.length(),
@@ -453,8 +451,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
 
-  const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
+  const dci_size_config dci_sz_cfg = get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_0 (C-RNTI)");
 
   // Compute DCI size.
@@ -514,8 +511,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
       ra_frequency_type1_configuration{active_dl_bwp.crbs.length(), prbs.start(), prbs.length()});
   f1_1.time_resource = time_resource;
 
-  const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
+  const dci_size_config dci_sz_cfg = get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 1_1 (C-RNTI)");
 
   // Compute DCI size.
@@ -618,8 +614,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                 dci,
   f0_0.ul_sul_indicator       = {};
 
   // PDCCH params.
-  const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, active_bwp_id, ss_id);
+  const dci_size_config dci_sz_cfg = get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_0 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);
@@ -666,8 +661,7 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
   dci.c_rnti_f0_1             = {};
   dci_0_1_configuration& f0_1 = dci.c_rnti_f0_1;
 
-  const dci_size_config dci_sz_cfg =
-      get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_info.bwp->bwp_id, ss_id);
+  const dci_size_config dci_sz_cfg = get_dci_size_config(ue_cell_cfg, is_ue_configured_multiple_serving_cells, ss_id);
   srsran_assert(validate_dci_size_config(dci_sz_cfg), "Invalid DCI size configuration for DCI Format 0_1 (C-RNTI)");
 
   dci_sizes dci_sz  = get_dci_sizes(dci_sz_cfg);

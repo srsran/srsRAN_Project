@@ -25,6 +25,16 @@ inline unsigned get_redundancy_version(unsigned nof_retxs)
   return rv_idx[nof_retxs % rv_idx.size()];
 }
 
+/// \brief Fetches DCI size configurations required to compute DCI size.
+/// \param[in] ue_cell_cfg UE cell configuration.
+/// \param[in] is_ue_configured_multiple_serving_cells Flag indicating whether UE is configured with more than 1 serving
+/// cell.
+/// \param[in] ss_id SearchSpace Id.
+/// \return Return the DCI size configuration.
+dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_cfg,
+                                    bool                         is_ue_configured_multiple_serving_cells,
+                                    search_space_id              ss_id);
+
 /// Builds DCI f1_0 for SI-RNTI used in SIBs.
 void build_dci_f1_0_si_rnti(dci_dl_info&               dci,
                             const bwp_downlink_common& init_dl_bwp,
