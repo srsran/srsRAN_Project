@@ -227,7 +227,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
                             ue_cell_cfg,
-                            u.nof_cells() > 1,
                             grant.ss_id,
                             grant.crbs,
                             grant.time_res_index,
@@ -240,7 +239,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     case dci_dl_rnti_config_type::c_rnti_f1_1:
       build_dci_f1_1_c_rnti(pdcch->dci,
                             ue_cell_cfg,
-                            u.nof_cells() > 1,
                             grant.ss_id,
                             crb_to_prb(bwp_cfg, grant.crbs),
                             grant.time_res_index,
@@ -494,26 +492,12 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                              h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      build_dci_f0_0_c_rnti(pdcch->dci,
-                            ue_cell_cfg,
-                            u.nof_cells() > 1,
-                            ue_cc->active_bwp_id(),
-                            grant.ss_id,
-                            grant.crbs,
-                            grant.time_res_index,
-                            mcs_tbs_info.value().mcs,
-                            h_ul);
+      build_dci_f0_0_c_rnti(
+          pdcch->dci, ue_cell_cfg, grant.ss_id, grant.crbs, grant.time_res_index, mcs_tbs_info.value().mcs, h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      build_dci_f0_1_c_rnti(pdcch->dci,
-                            ue_cell_cfg,
-                            u.nof_cells() > 1,
-                            grant.ss_id,
-                            crb_to_prb(bwp_lims, grant.crbs),
-                            grant.time_res_index,
-                            mcs_tbs_info.value().mcs,
-                            h_ul,
-                            dai);
+      build_dci_f0_1_c_rnti(
+          pdcch->dci, ue_cell_cfg, grant.ss_id, grant.crbs, grant.time_res_index, mcs_tbs_info.value().mcs, h_ul, dai);
       break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");

@@ -20,7 +20,7 @@ namespace srsran {
 
 struct search_space_info;
 
-/// \brief Grouping of information associated with a given BWP.
+/// \brief Grouping of common and UE-dedicated information associated with a given BWP.
 struct bwp_info {
   bwp_id_t                      bwp_id;
   const bwp_downlink_common*    dl_common = nullptr;
@@ -32,7 +32,7 @@ struct bwp_info {
   slotted_id_table<search_space_id, const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
 };
 
-/// \brief Grouping of information associated with a given search space.
+/// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
   const search_space_configuration*                 cfg     = nullptr;
   const coreset_configuration*                      coreset = nullptr;
@@ -65,7 +65,9 @@ struct search_space_info {
 class ue_cell_configuration
 {
 public:
-  ue_cell_configuration(const cell_configuration& cell_cfg_common_, const serving_cell_config& serv_cell_cfg_);
+  ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
+                        const serving_cell_config& serv_cell_cfg_,
+                        bool                       multi_cells_configured = false);
   ue_cell_configuration(const ue_cell_configuration&)            = delete;
   ue_cell_configuration(ue_cell_configuration&&)                 = delete;
   ue_cell_configuration& operator=(const ue_cell_configuration&) = delete;
@@ -114,6 +116,7 @@ private:
 
   /// Dedicated cell configuration.
   serving_cell_config cell_cfg_ded;
+  bool                multi_cells_configured;
 
   /// Lookup table for BWP params indexed by BWP-Id.
   std::array<bwp_info, MAX_NOF_BWPS> bwp_table = {};
