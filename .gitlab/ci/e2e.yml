@@ -213,6 +213,8 @@ android:
 ################################################################################
 
 .demolition:
+  extends:
+    - .prepare_test
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: always
@@ -221,10 +223,10 @@ android:
     - |
       retina-garbage-collector --mode demolition
 
-setup:
+retina setup:
   stage: .pre
   extends: .demolition
 
-post:
+retina post:
   stage: .post
   extends: .demolition
