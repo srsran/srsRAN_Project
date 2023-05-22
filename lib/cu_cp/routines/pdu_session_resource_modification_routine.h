@@ -34,11 +34,14 @@ public:
 
 private:
   void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
+  void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
   bool valid_5qi(const qos_flow_setup_request_item& flow);
 
   cu_cp_pdu_session_resource_modify_response generate_pdu_session_resource_modify_response(bool success);
 
   const cu_cp_pdu_session_resource_modify_request modify_request; // the original request
+
+  up_config_update next_config;
 
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
   du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU

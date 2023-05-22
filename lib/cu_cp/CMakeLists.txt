@@ -21,6 +21,7 @@ set(SOURCES
       routine_managers/du_processor_routine_manager.cpp
       routines/initial_cu_cp_setup_routine.cpp
       routines/initial_cu_up_processor_setup_routine.cpp
+      routines/pdu_session_routine_helpers.cpp
       routines/pdu_session_resource_setup_routine.cpp
       routines/pdu_session_resource_release_routine.cpp
       routines/pdu_session_resource_modification_routine.cpp
