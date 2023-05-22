@@ -44,6 +44,28 @@ protected:
 
   const cu_cp_pdu_session_resource_modify_response& result() { return t.get(); }
 
+  // Preamble to setup a initial PDU session.
+  void setup_pdu_session()
+  {
+    // Set expected results for sub-procedures.
+    e1ap_ctrl_notifier.set_first_message_outcome({true, {1}, {}});
+    f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome({true});
+    e1ap_ctrl_notifier.set_second_message_outcome({true});
+    rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
+
+    // Run setup procedure.
+    cu_cp_pdu_session_resource_setup_request              request = generate_pdu_session_resource_setup();
+    async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
+        routine_mng->start_pdu_session_resource_setup_routine(
+            request, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+    lazy_task_launcher<cu_cp_pdu_session_resource_setup_response> setup_launcher(setup_task);
+
+    // Verify successful outcome.
+    ASSERT_TRUE(setup_task.ready());
+    ASSERT_EQ(setup_task.get().pdu_session_res_setup_response_items.size(), 1);
+    ASSERT_EQ(setup_task.get().pdu_session_res_failed_to_setup_items.size(), 0);
+  }
+
 private:
   async_task<cu_cp_pdu_session_resource_modify_response>                   t;
   optional<lazy_task_launcher<cu_cp_pdu_session_resource_modify_response>> t_launcher;
@@ -56,6 +78,24 @@ TEST_F(pdu_session_resource_modification_test,
   cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
 
   // Start modification routine (without setting any results).
+  start_procedure(request);
+
+  // PDU session resource modification for session 1 failed.
+  ASSERT_TRUE(procedure_ready());
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.size(), 1);
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+}
+
+TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_failed_then_pdu_session_modification_fails)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Set expected results for sub-procedures.
+  set_expected_results({false}, {}, {}, false);
+
+  // Start modification routine.
+  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
   start_procedure(request);
 
   // PDU session resource modification for session 1 failed.
