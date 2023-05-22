@@ -369,7 +369,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
-  logger.info("Sending UeContextReleaseComplete");
+  logger.info("ue={} Sending UeContextReleaseComplete", ue_index);
   ngap_notifier.on_new_message(ngap_msg);
 }
 
@@ -471,7 +471,7 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   //     asn1::ngap::cause_radio_network_opts::options::user_inactivity;
 
   // Forward message to AMF
-  logger.info("Sending UeContextReleaseRequest");
+  logger.info("ue={} Sending UeContextReleaseRequest", msg.ue_index);
   ngap_notifier.on_new_message(ngap_msg);
 }
 

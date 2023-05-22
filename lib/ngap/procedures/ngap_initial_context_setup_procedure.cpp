@@ -38,7 +38,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("Initial Context Setup Procedure started");
+  logger.debug("ue={} Initial Context Setup Procedure started", ue_index);
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(
@@ -73,7 +73,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     // Remove UE
     ue_manager.remove_ngap_ue(ue_index);
 
-    logger.debug("Initial Context Setup Procedure finished");
+    logger.debug("ue={} Initial Context Setup Procedure failed", ue_index);
     CORO_EARLY_RETURN();
   }
 
@@ -119,7 +119,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
   send_initial_context_setup_response(resp_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
-  logger.debug("Initial Context Setup Procedure finished");
+  logger.debug("ue={} Initial Context Setup Procedure finished", ue_index);
   CORO_RETURN();
 }
 
@@ -138,7 +138,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
 
-  logger.info("Sending InitialContextSetupResponse");
+  logger.info("ue={} Sending InitialContextSetupResponse", ue_index);
   amf_notifier.on_new_message(ngap_msg);
 }
 
@@ -158,6 +158,6 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
   // Fill PDU Session Resource Failed to Setup List
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);
 
-  logger.info("Sending InitialContextSetupFailure");
+  logger.info("ue={} Sending InitialContextSetupFailure", ue_index);
   amf_notifier.on_new_message(ngap_msg);
 }
