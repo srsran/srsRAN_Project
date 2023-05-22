@@ -13,8 +13,53 @@
 using namespace srsran;
 using namespace srs_du;
 
+static std::vector<pucch_resource> build_default_pucch_res_list(const pucch_builder_params& ue_def_pucch_params,
+                                                                unsigned                    bwp_size)
+{
+  // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
+  const unsigned nof_pucch_f2_res_f1 = 1U;
+  return srs_du::generate_pucch_res_list_given_number(
+      ue_def_pucch_params.nof_ue_pucch_f1_res_harq.to_uint() + ue_def_pucch_params.nof_sr_resources.to_uint(),
+      ue_def_pucch_params.nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
+      ue_def_pucch_params.f1_params,
+      ue_def_pucch_params.f2_params,
+      bwp_size);
+}
+
+static pucch_config build_default_pucch_cfg(const pucch_config&                pucch_cfg,
+                                            const pucch_builder_params&        user_params,
+                                            const std::vector<pucch_resource>& res_list)
+{
+  // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
+  srsran_assert(not res_list.empty(), "Cell PUCCH resource list cannot be empty");
+
+  pucch_config target_pucch_cfg = pucch_cfg;
+
+  // Build the PUCCH resource list. This overwrites the default list.
+  if (not ue_pucch_config_builder(target_pucch_cfg,
+                                  res_list,
+                                  user_params.nof_ue_pucch_f1_res_harq.to_uint(),
+                                  user_params.nof_ue_pucch_f2_res_harq.to_uint(),
+                                  user_params.nof_sr_resources.to_uint())) {
+    srsran_assertion_failure(
+        "The requested PUCCH resource list could not be built; the default config will be used instead");
+    // TODO: check if we should return a false or to let the allocation continue with default config.
+  }
+
+  target_pucch_cfg.format_2_common_param.value().max_c_rate = user_params.f2_params.max_code_rate;
+
+  return target_pucch_cfg;
+}
+
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
-  default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()),
+  user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
+  default_pucch_res_list(
+      build_default_pucch_res_list(cell_cfg_list_[0].pucch_cfg,
+                                   cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length())),
+  default_pucch_cfg(
+      build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
+                              user_defined_pucch_cfg,
+                              default_pucch_res_list)),
   default_csi_report_cfg([&cell_cfg_list_]() -> optional<csi_report_config> {
     const auto& csi_meas = cell_cfg_list_[0].ue_ded_serv_cell_cfg.csi_meas_cfg;
     if (csi_meas.has_value() and not csi_meas->csi_report_cfg_list.empty()) {
@@ -22,10 +67,25 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
     }
     return nullopt;
   }()),
-  user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
   cells(cell_cfg_list_.size())
 {
   srsran_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
+
+  printf("F1- HARQ %d\n", user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint());
+  printf("F1- SR %d\n", user_defined_pucch_cfg.nof_sr_resources.to_uint());
+  printf("F2- HARQ %d\n", user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint());
+  printf("F1- OCC %s\n", user_defined_pucch_cfg.f1_params.occ_supported ? "true" : "false");
+  printf("F1- intra freq. hopping %s\n", user_defined_pucch_cfg.f1_params.intraslot_freq_hopping ? "true" : "false");
+  printf("F1- nof symbols %d\n", user_defined_pucch_cfg.f1_params.nof_symbols.to_uint());
+  printf("F1- nof CS %d\n", static_cast<unsigned>(user_defined_pucch_cfg.f1_params.nof_cyc_shifts));
+  printf("F2- intra freq. hopping %s\n", user_defined_pucch_cfg.f2_params.intraslot_freq_hopping ? "true" : "false");
+  printf("F2- nof PRBs %d\n", user_defined_pucch_cfg.f2_params.max_nof_rbs);
+  printf("F2- nof symbols %d\n", user_defined_pucch_cfg.f2_params.nof_symbols.to_uint());
+  printf("F2- max code rate %f\n", to_max_code_rate_float(user_defined_pucch_cfg.f2_params.max_code_rate));
+  printf("F2- Max paylaod %s\n",
+         user_defined_pucch_cfg.f2_params.max_payload_bits.has_value()
+             ? std::to_string(user_defined_pucch_cfg.f2_params.max_payload_bits.value()).c_str()
+             : "No payload specified");
 
   // Compute fundamental SR period.
   // TODO: Handle more than one SR period.
@@ -51,8 +111,12 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
           continue;
         }
       }
-      cell.sr_offset_free_list.emplace_back(default_pucch_cfg.sr_res_list[0].pucch_res_id - 1, offset);
-      cell.sr_offset_free_list.emplace_back(default_pucch_cfg.sr_res_list[0].pucch_res_id, offset);
+      // Set up the pucch_res_id for the resource used for SR.
+      for (unsigned n_sr_res = 0; n_sr_res < user_defined_pucch_cfg.nof_sr_resources.to_uint(); ++n_sr_res) {
+        const unsigned pucch_res_id_for_sr = user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+                                             user_defined_pucch_cfg.nof_sr_resources.to_uint() - 1U - n_sr_res;
+        cell.sr_offset_free_list.emplace_back(pucch_res_id_for_sr, offset);
+      }
     }
 
     for (unsigned offset = 0; offset != csi_period; ++offset) {
@@ -66,22 +130,6 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
       }
       cell.csi_offset_free_list.push_back(offset);
     }
-
-    // Generate the cell PUCCH resource list if the user has set the corresponding parameters.
-    if (user_defined_pucch_cfg.has_value()) {
-      // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-      const unsigned bwp_size            = cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-      const unsigned nof_pucch_f2_res_f1 = 1U;
-      cell.cell_pucch_res_list           = srs_du::generate_pucch_res_list_given_number(
-          user_defined_pucch_cfg.value().nof_ue_pucch_f1_res_harq.to_uint() +
-              user_defined_pucch_cfg.value().nof_sr_resources.to_uint(),
-          user_defined_pucch_cfg.value().nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
-          user_defined_pucch_cfg.value().f1_params,
-          user_defined_pucch_cfg.value().f2_params,
-          bwp_size);
-
-      srsran_assert(not cell.cell_pucch_res_list.empty(), "Cell PUCCH resource list cannot be empty");
-    }
   }
 }
 
@@ -90,17 +138,6 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   // Allocation of SR PUCCH offset.
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg = default_pucch_cfg;
   pucch_config& target_pucch_cfg = cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value();
-
-  // Build the PUCCH resource list. This overwrites the default list.
-  if (user_defined_pucch_cfg.has_value() and
-      ue_pucch_config_builder(target_pucch_cfg,
-                              cells[0].cell_pucch_res_list,
-                              user_defined_pucch_cfg.value().nof_ue_pucch_f1_res_harq.to_uint(),
-                              user_defined_pucch_cfg.value().nof_ue_pucch_f2_res_harq.to_uint(),
-                              user_defined_pucch_cfg.value().nof_sr_resources.to_uint())) {
-    srsran_assertion_failure(
-        "The requested PUCCH resource list could not be built; the deafult config will be used instead");
-  }
 
   auto&    sr_res_list  = target_pucch_cfg.sr_res_list;
   auto&    free_sr_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list;
@@ -124,6 +161,10 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
     auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
+
+    // Update the CSI report with the correct PUCCH_res_id.
+    target_csi_cfg.pucch_csi_res_list.front().pucch_res_id = default_pucch_cfg.pucch_res_list.size() - 1U;
+
     auto& free_csi_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list;
     if (free_csi_list.empty()) {
       // Allocation failed.

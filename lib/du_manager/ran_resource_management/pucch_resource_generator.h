@@ -71,8 +71,8 @@ std::vector<pucch_resource> generate_pucch_res_list_given_number(unsigned       
 /// \brief Generates the list of PUCCH resources for a given UE.
 ///
 /// This function generates the list of PUCCH F1 and F2 resources for a given UE, including the resources for HARQ-ACK
-/// reporting, SR and CSI. It also updates the PUCCH resource set accordingly. This function overwrites the default \c
-/// pucch_config passed as a input function.
+/// reporting, SR and CSI. It also updates the PUCCH resource sets accordingly. This function overwrites the default
+/// \c pucch_config passed as a input function.
 /// The returned UE PUCCH resource list contains:
 /// - nof_ue_pucch_f1_res_harq PUCCH F1 resources for HARQ-ACK.
 /// - nof_ue_pucch_f2_res_harq PUCCH F2 resources for HARQ-ACK.

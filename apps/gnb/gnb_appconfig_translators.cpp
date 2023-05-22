@@ -60,7 +60,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
 
-    unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     static const uint8_t                              ss0_idx      = 0;
@@ -157,6 +157,24 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.nof_dl_symbols;
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.nof_ul_slots;
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.nof_ul_symbols;
+    }
+
+    // Parameters for PUCCH-Config.
+    pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;
+    const pucch_appconfig& user_pucch_cfg         = base_cell.pucch_cfg;
+    du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_pucch_f1_res_harq;
+    du_pucch_cfg.nof_ue_pucch_f2_res_harq         = user_pucch_cfg.nof_pucch_f2_res_harq;
+    du_pucch_cfg.nof_sr_resources                 = user_pucch_cfg.nof_sr_resources;
+    du_pucch_cfg.f1_params.nof_symbols            = user_pucch_cfg.f1_nof_symbols;
+    du_pucch_cfg.f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
+    du_pucch_cfg.f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
+    du_pucch_cfg.f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
+    du_pucch_cfg.f2_params.nof_symbols            = user_pucch_cfg.f2_nof_symbols;
+    du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
+    du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
+    du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
+    if (user_pucch_cfg.max_payload_bits > 0) {
+      du_pucch_cfg.f2_params.max_payload_bits.emplace(static_cast<unsigned>(user_pucch_cfg.max_payload_bits));
     }
 
     logger.info(
@@ -350,7 +368,7 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
     // Get lower PHY system time throttling.
     out_cfg.system_time_throttling = config.expert_phy_cfg.lphy_dl_throttling;
 
-    unsigned bandwidth_sc =
+    const unsigned bandwidth_sc =
         NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.common_cell_cfg.channel_bw_mhz,
                                                                 config.common_cell_cfg.common_scs,
                                                                 frequency_range::FR1);
@@ -455,8 +473,8 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
     radio_configuration::stream rx_stream_config;
 
     // Deduce center frequencies.
-    double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
-    double cell_rx_freq_Hz =
+    const double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+    const double cell_rx_freq_Hz =
         band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn, cell.band));
 
     // Correct actual RF center frequencies considering offset and PPM calibration.
@@ -624,28 +642,28 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     upper_phy_config           cfg;
 
     // Get bandwidth in PRB.
-    unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+    const unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
     // Build the biggest CORESET possible assuming a duration of 2 symbols and the maximum channel bandwidth.
     coreset_configuration coreset;
     coreset.id       = to_coreset_id(1);
     coreset.duration = 2;
     coreset.set_freq_domain_resources(~freq_resource_bitmap(bw_rb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE));
     // Calculate the maximum number of users assuming the CORESET above.
-    unsigned max_nof_users_slot = coreset.get_nof_cces();
+    const unsigned max_nof_users_slot = coreset.get_nof_cces();
     // Assume a maximum of 16 HARQ processes.
-    unsigned max_harq_process = 16;
+    const unsigned max_harq_process = 16;
     // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
     // maximum number of HARQ processes.
-    unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
+    const unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
     // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot.
-    unsigned max_nof_pusch_cb_slot =
+    const unsigned max_nof_pusch_cb_slot =
         (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
         ldpc::MAX_MESSAGE_SIZE;
     // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number of
     // codeblocks per slot.
-    unsigned max_nof_codeblocks = max_harq_process * max_nof_pusch_cb_slot;
+    const unsigned max_nof_codeblocks = max_harq_process * max_nof_pusch_cb_slot;
     // Deduce the number of slots per subframe.
-    unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+    const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
 
     static constexpr unsigned dl_pipeline_depth    = 8;
     static constexpr unsigned ul_pipeline_depth    = 8;
@@ -657,7 +675,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     if (cell.band.has_value()) {
       band = config.common_cell_cfg.band.value();
     }
-    duplex_mode duplex = band_helper::get_duplex_mode(band);
+    const duplex_mode duplex = band_helper::get_duplex_mode(band);
 
     const prach_configuration prach_cfg =
         prach_configuration_get(frequency_range::FR1, duplex, cell.prach_cfg.prach_config_index);
@@ -739,7 +757,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   // Logging and tracing.
   out_cfg.log_broadcast_messages = config.log_cfg.broadcast_enabled;
 
-  error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
+  const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
     report_error("Invalid scheduler expert configuration detected.\n");
   }

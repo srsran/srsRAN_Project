@@ -258,6 +258,71 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
 }
 
+static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
+{
+  app.add_option("--f1_nof_res_harq", pucch_params.nof_pucch_f1_res_harq, "Number of PUCCH F1 resources for HARQ")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 8));
+  app.add_option("--f1_nof_res_sr", pucch_params.nof_sr_resources, "Number of PUCCH F1 resources for SR")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 8));
+  app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 8));
+  app.add_option("--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1.")->capture_default_str();
+  app.add_option("--f1_nof_cyclic_shifts", pucch_params.nof_cyclic_shift, "Number of symbols for PUCCH F1 resources")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 2, 3, 4, 6, 12}));
+  app.add_option("--f1_intraslot_freq_hop",
+                 pucch_params.f1_intraslot_freq_hopping,
+                 "Enable intra-slot frequency hopping for PUCCH F1.")
+      ->capture_default_str();
+  app.add_option("--f2_nof_res_harq", pucch_params.nof_pucch_f2_res_harq, "Number of PUCCH F2 resources for HARQ")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 8));
+  app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
+  app.add_option("--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--f2_max_payload", pucch_params.max_payload_bits, "Max number payload bits for PUCCH F2 resources")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 11));
+  app.add_option_function<std::string>(
+         "--f2_max_code_rate",
+         [&pucch_params](const std::string& value) {
+           if (value == "dot08") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_08;
+           } else if (value == "dot15") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_15;
+           } else if (value == "dot25") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_25;
+           } else if (value == "dot35") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_35;
+           } else if (value == "dot45") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_45;
+           } else if (value == "dot60") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_60;
+           } else if (value == "dot80") {
+             pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
+           }
+         },
+         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}.")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "dot08") || (value == "dot15") || (value == "dot25") || (value == "dot35") ||
+            (value == "dot45") || (value == "dot60") || (value == "dot80")) {
+          return "";
+        }
+
+        return "Invalid PUCCH F2 max code rate. \n"
+               "Valid profiles are: dot08, dot15, dot25, dot35, dot45, dot60, dot80.";
+      });
+  app.add_option("--f2_intraslot_freq_hop",
+                 pucch_params.f2_intraslot_freq_hopping,
+                 "Enable intra-slot frequency hopping for PUCCH F2.");
+}
+
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
   app.add_option("--prach_config_index", prach_params.prach_config_index, "PRACH configuration index")
@@ -389,6 +454,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // PUSCH configuration.
   CLI::App* pusch_subcmd = app.add_subcommand("pusch", "PUSCH parameters");
   configure_cli11_pusch_args(*pusch_subcmd, cell_params.pusch_cfg);
+
+  // PUSCH configuration.
+  CLI::App* pucch_subcmd = app.add_subcommand("pucch", "PUCCH parameters");
+  configure_cli11_pucch_args(*pucch_subcmd, cell_params.pucch_cfg);
 
   // PRACH configuration.
   CLI::App* prach_subcmd = app.add_subcommand("prach", "PRACH parameters");

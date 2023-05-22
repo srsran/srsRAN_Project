@@ -57,7 +57,7 @@ struct pucch_f2_params {
 
 /// \brief Parameters for PUCCH configuration.
 /// Defines the parameters that are used for the PUCCH configuration builder. These parameters are used to define the
-/// number PUCCH resources, as well as the PUCCH format-specific parameters.
+/// number of PUCCH resources, as well as the PUCCH format-specific parameters.
 struct pucch_builder_params {
   /// UE specific parameters. Use to set the number of resources per UE for HARQ-ACK reporting (not including SR/CSI
   /// dedicated resources). NOTE: by default, each UE is assigned 1 SR and 1 CSI resource.
@@ -111,7 +111,7 @@ struct du_cell_config {
   serving_cell_config ue_ded_serv_cell_cfg;
 
   /// Parameters for PUCCH-Config generation.
-  optional<pucch_builder_params> pucch_cfg;
+  pucch_builder_params pucch_cfg;
 };
 
 } // namespace srsran

@@ -587,6 +587,8 @@ bool srsran::srs_du::ue_pucch_config_builder(
     }
   }
 
+  //
+
   // Add F2 for HARQ and CSI.
   for (unsigned ue_f2_cnt = 0; ue_f2_cnt < tot_ue_f2_res; ++ue_f2_cnt) {
     const auto&    cell_res        = res_list[first_f2_cell_res_idx + ue_f2_cnt];
