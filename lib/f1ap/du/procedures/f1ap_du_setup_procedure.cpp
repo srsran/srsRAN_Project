@@ -88,6 +88,9 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     setup_req->gnb_du_served_cells_list.value[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
     gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
 
+    // Fill Served PLMNs (TODO)
+    f1ap_cell.served_cell_info.served_plmns.resize(1);
+
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg.pci;
     f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
@@ -107,6 +110,10 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
       fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn;
       fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
+      fdd.dl_tx_bw.nr_scs                                       = asn1::f1ap::nr_scs_opts::scs30; // TODO fill.
+      fdd.dl_tx_bw.nr_nrb                                       = asn1::f1ap::nr_nrb_opts::nrb51; // TODO fill.
+      fdd.ul_tx_bw.nr_scs                                       = asn1::f1ap::nr_scs_opts::scs30; // TODO fill.
+      fdd.ul_tx_bw.nr_nrb                                       = asn1::f1ap::nr_nrb_opts::nrb51; // TODO fill.
     }
 
     // Add System Information related to the cell.

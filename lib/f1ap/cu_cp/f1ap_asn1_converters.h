@@ -192,6 +192,17 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
 
   auto& asn1_drb_info = choice_ext.value().drb_info();
 
+  // flows mapped to DRB
+  asn1_drb_info.flows_mapped_to_drb_list.resize(1);
+  auto& asn1_flows_mapped_to_drb = asn1_drb_info.flows_mapped_to_drb_list[0];
+
+  asn1_flows_mapped_to_drb.qos_flow_id = 0;
+  asn1_flows_mapped_to_drb.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
+  asn1_flows_mapped_to_drb.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap =
+      asn1::f1ap::pre_emption_cap_opts::shall_not_trigger_pre_emption;
+  asn1_flows_mapped_to_drb.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability =
+      asn1::f1ap::pre_emption_vulnerability_opts::not_pre_emptable;
+
   // drb qos
   // qos characteristics
   asn1_drb_info.drb_qos.qos_characteristics = qos_characteristics_to_f1ap_asn1(qos_info.drb_qos.qos_characteristics);
