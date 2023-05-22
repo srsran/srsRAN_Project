@@ -176,3 +176,106 @@ void srsran::srs_cu_cp::update_failed_list(
     ngap_failed_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
+
+bool srsran::srs_cu_cp::update_modify_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>&       ngap_response_list,
+    cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
+                            e1ap_pdu_session_resource_modify_list,
+    const up_config_update& next_config,
+    srslog::basic_logger&   logger)
+{
+  for (const auto& e1ap_item : e1ap_pdu_session_resource_modify_list) {
+    // Sanity check - make sure this session ID is present in the original modify message.
+    if (ngap_modify_list.contains(e1ap_item.pdu_session_id) == false) {
+      logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
+                   e1ap_item.pdu_session_id);
+      return false;
+    }
+    // Also check if PDU session is included in expected next configuration.
+    if (next_config.pdu_sessions_to_setup_list.find(e1ap_item.pdu_session_id) ==
+        next_config.pdu_sessions_to_setup_list.end()) {
+      logger.error("Didn't expect setup for PDU session {}", e1ap_item.pdu_session_id);
+      return false;
+    }
+
+    cu_cp_pdu_session_res_setup_response_item item;
+    item.pdu_session_id = e1ap_item.pdu_session_id;
+
+    auto& transfer = item.pdu_session_resource_setup_response_transfer;
+
+    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+      // Catch implementation limitations.
+      if (!e1ap_drb_item.flow_failed_list.empty()) {
+        logger.warning("Non-empty QoS flow failed list not supported");
+        return false;
+      }
+
+      // verify only a single UL transport info item is present.
+      if (e1ap_drb_item.ul_up_transport_params.size() != 1) {
+        logger.error("Multiple UL UP transport items not supported");
+        return false;
+      }
+
+      // TODO: add DRB verification
+
+      for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+        // Verify the QoS flow ID is present in original setup message.
+        if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
+                e1ap_flow.qos_flow_id) == false) {
+          logger.error("PDU Session Resource setup request doesn't include setup for QoS flow {} in PDU session {}",
+                       e1ap_flow.qos_flow_id,
+                       e1ap_item.pdu_session_id);
+          return false;
+        }
+
+        cu_cp_associated_qos_flow qos_flow;
+        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+        transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(e1ap_flow.qos_flow_id, qos_flow);
+      }
+
+      // Fill UE context modification for DU
+      {
+        cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+        drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+
+        // Add qos info
+        for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
+              ngap_modify_list[e1ap_item.pdu_session_id]
+                  .transfer.qos_flow_add_or_modify_request_list[e1ap_flow.qos_flow_id]
+                  .qos_flow_level_qos_params.qos_characteristics;
+
+          non_dyn_5qi_descriptor_t non_dyn_5qi;
+          non_dyn_5qi.five_qi = ngap_modify_list[e1ap_item.pdu_session_id]
+                                    .transfer.qos_flow_add_or_modify_request_list[e1ap_flow.qos_flow_id]
+                                    .qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value()
+                                    .five_qi;
+
+          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+        }
+
+        // Add up tnl info
+        for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
+          drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+        }
+
+        // Add rlc mode
+        drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+
+        ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
+      }
+    }
+
+    // Fail on any DRB that fails to be setup
+    if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
+      logger.error("Non-empty DRB failed list not supported");
+      return false;
+    }
+
+    ngap_response_list.emplace(item.pdu_session_id, item);
+  }
+
+  return true;
+}

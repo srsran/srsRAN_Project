@@ -368,11 +368,8 @@ struct cu_cp_pdu_session_resource_modify_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req> pdu_session_res_modify_items;
 };
 
-struct cu_cp_pdu_session_resource_failed_to_modify_item {
-  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
-};
-
-using cu_cp_pdu_session_res_modify_response_item = cu_cp_pdu_session_res_setup_response_item;
+using cu_cp_pdu_session_res_modify_response_item       = cu_cp_pdu_session_res_setup_response_item;
+using cu_cp_pdu_session_resource_failed_to_modify_item = cu_cp_pdu_session_res_setup_failed_item;
 
 struct cu_cp_pdu_session_resource_modify_response {
   ue_index_t ue_index = ue_index_t::invalid;

@@ -95,6 +95,31 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
   }
 }
 
+// \brief Helper function to amend the final PDU session resource modify response.
+bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                               cu_cp_ue_context_modification_request&           ue_context_mod_request,
+                               const cu_cp_pdu_session_resource_modify_request  modify_request,
+                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+                               const up_config_update&                          next_config,
+                               srslog::basic_logger&                            logger)
+{
+  // Traverse modify list
+  if (update_modify_list(response_msg.pdu_session_res_modify_list,
+                         ue_context_mod_request,
+                         modify_request.pdu_session_res_modify_items,
+                         bearer_context_modification_response.pdu_session_resource_modified_list,
+                         next_config,
+                         logger) == false) {
+    return false;
+  }
+
+  // Traverse failed list
+  update_failed_list(response_msg.pdu_session_res_failed_to_modify_list,
+                     bearer_context_modification_response.pdu_session_resource_failed_list);
+
+  return bearer_context_modification_response.success;
+}
+
 void pdu_session_resource_modification_routine::operator()(
     coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx)
 {
@@ -132,7 +157,6 @@ void pdu_session_resource_modification_routine::operator()(
     CORO_AWAIT_VALUE(bearer_context_modification_response,
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
 
-#if 0
     // Handle BearerContextModificationResponse and fill subsequent UE context modification
     if (handle_procedure_response(response_msg,
                                   ue_context_mod_request,
@@ -140,10 +164,9 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", modify_request.ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
-#endif
   }
 
   // we are done
