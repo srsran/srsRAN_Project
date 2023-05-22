@@ -22,8 +22,9 @@ bool is_valid(const cu_cp_pdu_session_resource_setup_request& pdu, const up_cont
 bool is_valid(const cu_cp_pdu_session_resource_modify_request& pdu, const up_context& context);
 
 /// @brief Perform sanity check on requested QoS flow configuration.
-five_qi_t
-get_five_qi(const qos_flow_add_or_mod_item& qos_flow, const up_resource_manager_cfg& cfg, srslog::basic_logger& logger);
+five_qi_t get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
+                      const up_resource_manager_cfg&  cfg,
+                      const srslog::basic_logger&     logger);
 
 /// \brief Functions to calculate a configuration update based on the active config and an incoming PDU session
 /// setup/modfication request. No configuration state is altered.
@@ -33,14 +34,14 @@ get_five_qi(const qos_flow_add_or_mod_item& qos_flow, const up_resource_manager_
 up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
                                   const up_context&                               context,
                                   const up_resource_manager_cfg&                  cfg,
-                                  srslog::basic_logger&                           logger);
+                                  const srslog::basic_logger&                     logger);
 up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu,
                                   const up_context&                                context,
                                   const up_resource_manager_cfg&                   cfg,
-                                  srslog::basic_logger&                            logger);
+                                  const srslog::basic_logger&                      logger);
 
 // \brief Allocates a new DRB ID and returns it.
-drb_id_t allocate_drb_id(const up_context& context, srslog::basic_logger& logger);
+drb_id_t allocate_drb_id(const up_context& context, const srslog::basic_logger& logger);
 
 // \brief Returns valid RRC PDCP config for a given FiveQI
 pdcp_config   set_rrc_pdcp_config(five_qi_t five_qi, const up_resource_manager_cfg& cfg);

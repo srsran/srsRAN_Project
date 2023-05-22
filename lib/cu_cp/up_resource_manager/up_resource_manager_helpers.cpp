@@ -13,7 +13,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_context& context, srslog::basic_logger& logger)
+drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_context& context, const srslog::basic_logger& logger)
 {
   if (context.drb_map.size() >= MAX_NOF_DRBS) {
     logger.error("No more DRBs available");
@@ -63,7 +63,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context&            session_context,
                            const qos_flow_setup_request_item& qos_flow,
                            const up_context&                  context,
                            const up_resource_manager_cfg&     cfg,
-                           srslog::basic_logger&              logger)
+                           const srslog::basic_logger&        logger)
 {
   five_qi_t five_qi = get_five_qi(qos_flow, cfg, logger);
   srsran_assert(five_qi != five_qi_t::invalid, "5QI cannot be invalid.");
@@ -104,7 +104,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context&            session_context,
 up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
                                                      const up_context&                               context,
                                                      const up_resource_manager_cfg&                  cfg,
-                                                     srslog::basic_logger&                           logger)
+                                                     const srslog::basic_logger&                     logger)
 {
   up_config_update config;
 
@@ -133,7 +133,7 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
 /// \brief Determines the 5QI to use for QoS flow.
 five_qi_t srsran::srs_cu_cp::get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
                                          const up_resource_manager_cfg&  cfg,
-                                         srslog::basic_logger&           logger)
+                                         const srslog::basic_logger&     logger)
 {
   five_qi_t   five_qi    = five_qi_t::invalid;
   const auto& qos_params = qos_flow.qos_flow_level_qos_params;
@@ -164,7 +164,7 @@ five_qi_t srsran::srs_cu_cp::get_five_qi(const qos_flow_add_or_mod_item& qos_flo
 up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu,
                                                      const up_context&                                context,
                                                      const up_resource_manager_cfg&                   cfg,
-                                                     srslog::basic_logger&                            logger)
+                                                     const srslog::basic_logger&                      logger)
 {
   up_config_update config;
   config.initial_context_creation = false;
