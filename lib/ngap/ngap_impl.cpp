@@ -261,7 +261,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest", ue_index);
+    logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   request->ran_ue_ngap_id.value,
+                   request->amf_ue_ngap_id.value);
     return;
   }
 
@@ -295,7 +298,10 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id.value));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand", ue_index);
+    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   command->ran_ue_ngap_id.value,
+                   command->amf_ue_ngap_id.value);
     return;
   }
 
@@ -335,7 +341,7 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message
-    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand", ue_index);
+    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand (amf_ue_id={})", ue_index, amf_ue_id);
     return;
   }
 
