@@ -231,15 +231,15 @@ public:
     cap_        = new_size > new_cap ? new_size : new_cap;
     if (cap_ > 0) {
       data_ = new T[cap_];
-      if (old_data != NULL) {
+      if (old_data != nullptr) {
         srsran_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
-        std::copy(&old_data[0], &old_data[size_], data_);
+        std::copy(old_data, old_data + size_, data_);
       }
     } else {
-      data_ = NULL;
+      data_ = nullptr;
     }
     size_ = new_size;
-    if (old_data != NULL) {
+    if (old_data != nullptr) {
       delete[] old_data;
     }
   }
