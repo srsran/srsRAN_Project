@@ -9,11 +9,10 @@
  */
 
 #include "ue_srb0_scheduler.h"
-#include "../support/config_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
-#include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
 
 using namespace srsran;
@@ -134,7 +133,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
 
   prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
       initial_active_dl_bwp.scs,
-      rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
+      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
       pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
   crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());

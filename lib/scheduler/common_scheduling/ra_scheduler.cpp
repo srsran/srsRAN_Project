@@ -14,6 +14,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
 #include "../support/tbs_calculator.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
@@ -77,8 +78,8 @@ ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
   ev_logger(ev_logger_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   ra_crb_lims(
-      rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp,
-                                                cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
+      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp,
+                                             cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)),
   prach_format_is_long(is_long_preamble(
       prach_configuration_get(band_helper::get_freq_range(cell_cfg.band),
                               band_helper::get_duplex_mode(cell_cfg.band),

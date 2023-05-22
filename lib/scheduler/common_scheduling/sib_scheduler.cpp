@@ -9,10 +9,10 @@
  */
 
 #include "sib_scheduler.h"
-#include "../support/config_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
+#include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
@@ -114,10 +114,12 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
   {
+    const crb_interval crb_lims =
+        pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0));
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-        rb_helper::get_dl_alloc_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0)),
+        crb_lims,
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
     sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {

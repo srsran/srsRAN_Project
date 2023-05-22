@@ -108,11 +108,6 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
-    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
-      // DL needs to be active for PDCCH in this slot.
-      continue;
-    }
-
     // Search available HARQ.
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
@@ -226,13 +221,7 @@ static bool alloc_ul_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell&            ue_cc           = u.get_cell(to_ue_cell_index(i));
     const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
-    if (not cell_cfg_common.is_dl_enabled(res_grid.get_pdcch_slot())) {
-      // DL needs to be active for PDCCH in this slot.
-      continue;
-    }
-
-    const ul_harq_process* h = nullptr;
-    h                        = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
+    const ul_harq_process*    h = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
     if (h == nullptr) {
       // No HARQs available.
       if (not is_retx) {
@@ -247,36 +236,23 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      // The existence of the Coreset has been verified by the validator.
-      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
-      // Ensure the symbols where the PDCCH gets allocated are all DL.
-      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
-          cell_cfg_common.get_nof_dl_symbol_per_slot(res_grid.get_pdcch_slot())) {
-        continue;
-      }
-
-      const search_space_info&                                ss         = ue_cc.cfg().search_space(ss_cfg->id);
-      const span<const pusch_time_domain_resource_allocation> pusch_list = ss.pusch_time_domain_list;
-      const dci_ul_rnti_config_type                           dci_type   = ss.get_crnti_ul_dci_format();
-      const crb_interval                                      crb_lims   = ss.ul_crb_lims;
+      const search_space_info& ss       = ue_cc.cfg().search_space(ss_cfg->id);
+      const crb_interval       crb_lims = ss.ul_crb_lims;
 
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
-      const unsigned   time_res   = 0;
-      const unsigned   k2         = pusch_list[time_res].k2;
-      const slot_point pusch_slot = pdcch_slot + k2;
-      const unsigned   start_ul_symbols =
+      const unsigned                               time_res   = 0;
+      const pusch_time_domain_resource_allocation& pusch_td   = ss.pusch_time_domain_list[time_res];
+      const unsigned                               k2         = pusch_td.k2;
+      const slot_point                             pusch_slot = pdcch_slot + k2;
+      const unsigned                               start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
       // the first transmission.
       const bool sym_length_match_prev_grant_for_retx =
-          is_retx ? pusch_list[time_res].symbols.length() != h->last_tx_params().nof_symbols : true;
-      if (not cell_cfg_common.is_ul_enabled(pusch_slot) or pusch_list[time_res].symbols.start() < start_ul_symbols or
+          is_retx ? pusch_td.symbols.length() != h->last_tx_params().nof_symbols : true;
+      if (not cell_cfg_common.is_ul_enabled(pusch_slot) or pusch_td.symbols.start() < start_ul_symbols or
           !sym_length_match_prev_grant_for_retx) {
         // UL needs to be active for PUSCH in this slot.
-        continue;
-      }
-      if (time_res == pusch_list.size()) {
-        // no valid k2 found.
         continue;
       }
 
@@ -285,13 +261,12 @@ static bool alloc_ul_ue(const ue&                    u,
         // only one PUSCH per UE per slot.
         continue;
       }
-      const ofdm_symbol_range pusch_symbols = pusch_list[time_res].symbols;
-      const prb_bitmap used_crbs = grid.used_crbs(ss.bwp->ul_common->generic_params.scs, crb_lims, pusch_symbols);
+      const prb_bitmap used_crbs = grid.used_crbs(ss.bwp->ul_common->generic_params.scs, crb_lims, pusch_td.symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       const grant_prbs_mcs mcs_prbs =
           is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().rbs.type1().length()}
-                  : ue_cc.required_ul_prbs(pusch_list[time_res], pending_newtx_bytes, dci_type);
+                  : ue_cc.required_ul_prbs(pusch_td, pending_newtx_bytes, ss.get_crnti_ul_dci_format());
 
       const crb_interval ue_grant_crbs  = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
@@ -301,7 +276,7 @@ static bool alloc_ul_ue(const ue&                    u,
       }
       if (are_crbs_valid) {
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
-            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl, mcs_prbs.mcs});
+            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_td.symbols, time_res, ss_cfg->id, agg_lvl, mcs_prbs.mcs});
         if (res_allocated) {
           return true;
         }

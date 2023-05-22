@@ -76,40 +76,5 @@ crb_interval find_next_empty_interval(const prb_bitmap& used_rb_bitmap,
 crb_interval
 find_empty_interval_of_length(const prb_bitmap& used_rb_bitmap, size_t nof_rbs, uint32_t start_crb_idx = 0);
 
-/// \brief Get CRB boundaries where a RB allocation can be made given a chosen BWP, Coreset and SearchSpace.
-inline constexpr crb_interval get_dl_alloc_crb_limits(const bwp_downlink_common&        init_bwp_dl,
-                                                      const bwp_configuration&          active_bwp_cfg,
-                                                      const coreset_configuration&      cs_cfg,
-                                                      const search_space_configuration& ss_cfg)
-{
-  // Allocations are limited by active BWP CRB boundaries.
-  crb_interval crbs = active_bwp_cfg.crbs;
-
-  // See TS38.211, clause 7.3.1.6 - Mapping from virtual to physical resource blocks.
-  if (ss_cfg.type == search_space_configuration::type_t::ue_dedicated or not ss_cfg.common.f0_0_and_f1_0) {
-    return crbs;
-  }
-  crbs = {cs_cfg.get_coreset_start_crb(), crbs.stop()};
-
-  // See TS38.212, clause 7.3.1.2.1. For all types of RNTI, if CORESET#0 is enabled, the allocation is limited by
-  // CORESET#0 size.
-  if (init_bwp_dl.pdcch_common.coreset0.has_value()) {
-    crb_interval cs0_crbs = init_bwp_dl.pdcch_common.coreset0->coreset0_crbs();
-    crbs                  = {crbs.start(), crbs.start() + cs0_crbs.length()};
-  }
-  return crbs;
-}
-
-/// \brief Get CRB boundaries where a RB allocation can be made given an initial BWP configuration and a SearchSpaceId.
-inline crb_interval get_dl_alloc_crb_limits_common(const bwp_downlink_common& init_and_active_bwp_dl,
-                                                   search_space_id            ss_id)
-{
-  const search_space_configuration& ss_cfg = init_and_active_bwp_dl.pdcch_common.search_spaces[ss_id];
-  const coreset_configuration&      cs_cfg = ss_cfg.cs_id == to_coreset_id(0)
-                                                 ? *init_and_active_bwp_dl.pdcch_common.coreset0
-                                                 : *init_and_active_bwp_dl.pdcch_common.common_coreset;
-  return get_dl_alloc_crb_limits(init_and_active_bwp_dl, init_and_active_bwp_dl.generic_params, cs_cfg, ss_cfg);
-}
-
 } // namespace rb_helper
 } // namespace srsran
