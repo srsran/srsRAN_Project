@@ -55,11 +55,7 @@ TEST_F(pdu_session_resource_modification_test,
   // Test Preamble.
   cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
 
-  // Start PDU SESSION RESOURCE SETUP routine.
-  bearer_context_outcome_t bearer_context_setup_outcome{false, {}, {}};
-  bearer_context_outcome_t bearer_context_modification_outcome{false};
-  set_expected_results(bearer_context_setup_outcome, {false}, bearer_context_modification_outcome, false);
-
+  // Start modification routine (without setting any results).
   start_procedure(request);
 
   // PDU session resource modification for session 1 failed.
