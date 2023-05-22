@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/rx_softbuffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
@@ -129,6 +131,18 @@ struct downlink_processor_factory_sw_config {
 /// Creates a full software based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
 create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config);
+
+/// \brief Downlink processor hardware-accelerated factory configuration.
+struct downlink_processor_factory_hw_config {
+  /// \brief CRC calculator factory.
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory;
+  /// \brief PDSCH encoder factory.
+  std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory;
+};
+
+/// Creates a full hardware-accelerated based downlink processor factory.
+std::shared_ptr<downlink_processor_factory>
+create_downlink_processor_factory_hw(const downlink_processor_factory_hw_config& config);
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {
