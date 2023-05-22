@@ -12,9 +12,9 @@
 
 using namespace srsran;
 
-void channel_precoder_impl::apply_precoding(re_buffer_writer&              output,
-                                            const re_buffer_reader&        input,
-                                            const precoding_weight_matrix& precoding)
+void channel_precoder_impl::process(re_buffer_writer&              output,
+                                    const re_buffer_reader&        input,
+                                    const precoding_weight_matrix& precoding)
 {
   // Number of RE in a single slice, i.e., port or layer.
   unsigned nof_re_slice = output.get_nof_re();
@@ -52,20 +52,7 @@ void channel_precoder_impl::apply_precoding(re_buffer_writer&              outpu
     // layer for the antenna port.
     span<const cf_t> port_weights_view = precoding.get_port_coefficients(i_port);
 
-    // View of the input RE for the first layer.
-    span<const cf_t> layer_re_view = input.get_slice(0);
-
-    // Set the output RE to the contribution of the first layer.
-    for (unsigned i_re = 0; i_re != nof_re_slice; ++i_re) {
-      port_re_view[i_re] = layer_re_view[i_re] * port_weights_view[0];
-    }
-
-    // Accumulate the contributions of all other layers.
-    for (unsigned i_layer = 1; i_layer != nof_layers; ++i_layer) {
-      layer_re_view = input.get_slice(i_layer);
-      for (unsigned i_re = 0; i_re != nof_re_slice; ++i_re) {
-        port_re_view[i_re] += layer_re_view[i_re] * port_weights_view[i_layer];
-      }
-    }
+    // Apply precoding.
+    apply_precoding_port(port_re_view, input, port_weights_view);
   }
 }

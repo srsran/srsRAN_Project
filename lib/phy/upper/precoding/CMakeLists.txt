@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_library(srsran_channel_precoder channel_precoder_impl.cpp precoding_factories.cpp)
+add_library(srsran_channel_precoder channel_precoder_impl.cpp channel_precoder_generic.cpp precoding_factories.cpp)
 
 install(TARGETS srsran_channel_precoder
         EXPORT srsran_export)

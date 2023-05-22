@@ -9,7 +9,7 @@
  */
 
 #include "srsran/phy/upper/precoding/precoding_factories.h"
-#include "channel_precoder_impl.h"
+#include "channel_precoder_generic.h"
 
 using namespace srsran;
 
@@ -20,7 +20,7 @@ class channel_precoder_factory_impl : public channel_precoder_factory
 public:
   channel_precoder_factory_impl() = default;
 
-  std::unique_ptr<channel_precoder> create() override { return std::make_unique<channel_precoder_impl>(); }
+  std::unique_ptr<channel_precoder> create() override { return std::make_unique<channel_precoder_generic>(); }
 };
 
 } // namespace

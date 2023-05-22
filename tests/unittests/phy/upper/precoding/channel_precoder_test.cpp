@@ -200,7 +200,7 @@ TEST_P(PrecodingFixture, RandomWeights)
     const re_buffer_reader& golden = generate_golden(input_data, precoding_config);
 
     // Apply precoding.
-    precoder->apply_precoding(precoding_buffer, input_data, precoding_config.get_prg_coefficients(0));
+    precoder->process(precoding_buffer, input_data, precoding_config.get_prg_coefficients(0));
 
     // For each antenna port, compare the precoded RE with the golden sequence for all RE and PRG.
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
