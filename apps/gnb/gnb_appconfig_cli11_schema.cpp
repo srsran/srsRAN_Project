@@ -40,6 +40,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--gtpu_level", log_params.gtpu_level, "GTPU log level")->capture_default_str()->check(level_check);
   app.add_option("--radio_level", log_params.radio_level, "Radio log level")->capture_default_str()->check(level_check);
   app.add_option("--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
+  app.add_option("--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
   app.add_option("--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
   app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   app.add_option("--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
@@ -70,6 +71,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     }
     if (app.count("--rlc_level") == 0) {
       log_params.rlc_level = log_params.all_level;
+    }
+    if (app.count("--f1ap_level") == 0) {
+      log_params.f1ap_level = log_params.all_level;
     }
     if (app.count("--pdcp_level") == 0) {
       log_params.pdcp_level = log_params.all_level;
