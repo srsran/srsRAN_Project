@@ -43,8 +43,9 @@ struct up_context {
   std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions; // Map with active flag for existing PDU sessions
 
   /// Hash-maps for quick access.
-  std::map<five_qi_t, drb_id_t>        five_qi_map; // Maps QoS flow characteristics to existing DRBs.
-  std::map<drb_id_t, pdu_session_id_t> drb_map;     // Maps ID of currently active DRB to PDU corresponding PDU session.
+  std::map<five_qi_t, drb_id_t>        five_qi_map;  // Maps QoS flow characteristics to existing DRBs.
+  std::map<drb_id_t, pdu_session_id_t> drb_map;      // Maps ID of currently active DRB to corresponding PDU session.
+  std::map<qos_flow_id_t, drb_id_t>    qos_flow_map; // Maps QoS flow to corresponding DRB.
 };
 
 // Struct that contains all fields required to update the UP config based on an incoming
@@ -57,8 +58,9 @@ struct up_context {
 // resource manager. For removal of PDU sessions or DRBs only the respective identifiers are included.
 struct up_config_update {
   bool initial_context_creation = true; // True if this is the first PDU session to be created.
-  std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions_to_setup_list; // List of PDU sessions to be added.
-  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list;                     // List of PDU sessions to be removed.s
+  std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions_to_setup_list;  // List of PDU sessions to be added.
+  std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions_to_modify_list; // List of PDU sessions to be added.
+  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.s
   std::vector<drb_id_t>         drb_to_remove_list;
 };
 
@@ -77,6 +79,9 @@ public:
 
   /// \brief Returns updated UP config based on the PDU session resource setup message.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+
+  /// \brief Returns updated UP config based on the PDU session resource modification request.
+  virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
 
   /// \brief Apply and merge the config with the currently stored one.
   virtual bool apply_config_update(const up_config_update_result& config) = 0;

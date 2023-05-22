@@ -29,6 +29,16 @@ up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_sess
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
+up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
+{
+  if (!is_valid(pdu, context)) {
+    logger.error("Invalid PDU Session Resource Modify request.");
+    return {};
+  }
+
+  return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
+}
+
 bool up_resource_manager_impl::apply_config_update(const up_config_update_result& result)
 {
   // Apply config update in an additive way.

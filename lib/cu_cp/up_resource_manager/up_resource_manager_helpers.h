@@ -17,18 +17,27 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Perform sanity check on incoming resource setup request.
+/// \brief Perform sanity check on incoming resource setup/modifcation request.
 bool is_valid(const cu_cp_pdu_session_resource_setup_request& pdu, const up_context& context);
+bool is_valid(const cu_cp_pdu_session_resource_modify_request& pdu, const up_context& context);
 
-/// \brief Function to calculate a configuration update based on the active config and an incoming PDU session
-/// setup request. No configuration state is altered.
-/// \param pdu The PDU session resource setup request
+/// @brief Perform sanity check on requested QoS flow configuration.
+five_qi_t
+get_five_qi(const qos_flow_add_or_mod_item& qos_flow, const up_resource_manager_cfg& cfg, srslog::basic_logger& logger);
+
+/// \brief Functions to calculate a configuration update based on the active config and an incoming PDU session
+/// setup/modfication request. No configuration state is altered.
+/// \param pdu The PDU session resource setup/modification request
 /// \param  contest The currently active UP resource allocation.
 /// \return The config update struct
 up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu,
                                   const up_context&                               context,
                                   const up_resource_manager_cfg&                  cfg,
                                   srslog::basic_logger&                           logger);
+up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu,
+                                  const up_context&                                context,
+                                  const up_resource_manager_cfg&                   cfg,
+                                  srslog::basic_logger&                            logger);
 
 // \brief Allocates a new DRB ID and returns it.
 drb_id_t allocate_drb_id(const up_context& context, srslog::basic_logger& logger);

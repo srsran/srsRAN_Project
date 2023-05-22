@@ -341,11 +341,7 @@ struct cu_cp_pdu_session_resource_release_response {
   optional<crit_diagnostics_t>          crit_diagnostics;
 };
 
-// Note: Almost the same as qos_flow_setup_request_item but with optional QoS flow params.
-struct qos_flow_add_or_mod_item {
-  qos_flow_id_t                             qos_flow_id = qos_flow_id_t::invalid;
-  optional<cu_cp_qos_flow_level_qos_params> qos_flow_level_qos_params;
-};
+using qos_flow_add_or_mod_item = qos_flow_setup_request_item;
 
 struct cu_cp_pdu_session_res_modify_request_transfer {
   // All IEs are optional

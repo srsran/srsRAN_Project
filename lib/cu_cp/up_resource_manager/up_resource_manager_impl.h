@@ -25,6 +25,7 @@ public:
   ~up_resource_manager_impl() = default;
 
   up_config_update              calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  up_config_update              calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
   bool                          apply_config_update(const up_config_update_result& config) override;
   up_pdu_session_context        get_context(pdu_session_id_t psi) override;
   up_drb_context                get_context(drb_id_t drb_id) override;
