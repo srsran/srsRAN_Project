@@ -53,7 +53,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_td_cfg, ue_cfg);
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cfg, pdsch_td_cfg);
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
@@ -99,10 +99,10 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cfg, bwp_ul_cmn, pusch_td_cfg);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(cell_cfg, ue_cfg, pusch_td_cfg);
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");

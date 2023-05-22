@@ -1,5 +1,15 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #include "ue_configuration.h"
+#include "../support/bwp_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 
@@ -363,6 +373,11 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
     ss.bwp     = &bwp_table[bwpid];
     ss.pdsch_time_domain_list =
         get_c_rnti_pdsch_time_domain_list(ss_cfg, *ss.bwp->dl_common, nullptr, cell_cfg_common.dmrs_typeA_pos);
+    ss.dl_crb_lims = get_resource_alloc_dl_crb_limits(ss.get_crnti_dl_dci_format(),
+                                                      cell_cfg_common.dl_cfg_common.init_dl_bwp,
+                                                      *ss.bwp->dl_common,
+                                                      *ss.cfg,
+                                                      *ss.coreset);
   }
 }
 
@@ -371,9 +386,13 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_u
   // Compute UL BWP-Id lookup table.
   bwp_table[bwpid].ul_common = &bwp_ul_common;
 
-  for (const search_space_configuration& ss : bwp_table[bwpid].dl_common->pdcch_common.search_spaces) {
-    search_spaces[ss.id].pusch_time_domain_list =
-        get_c_rnti_pusch_time_domain_list(ss, *bwp_table[bwpid].ul_common, nullptr);
+  for (const search_space_configuration& ss_cfg : bwp_table[bwpid].dl_common->pdcch_common.search_spaces) {
+    search_space_info& ss     = search_spaces[ss_cfg.id];
+    ss.pusch_time_domain_list = get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, nullptr);
+    ss.ul_crb_lims            = get_resource_alloc_ul_crb_limits(ss.get_crnti_ul_dci_format(),
+                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
+                                                      bwp_ul_common.generic_params,
+                                                      ss.cfg->type);
   }
 }
 
@@ -406,6 +425,11 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
     ss.bwp                    = &bwp_table[bwpid];
     ss.pdsch_time_domain_list = get_c_rnti_pdsch_time_domain_list(
         ss_cfg, *bwp_table[bwpid].dl_common, bwp_table[bwpid].dl_ded, cell_cfg_common.dmrs_typeA_pos);
+    ss.dl_crb_lims = get_resource_alloc_dl_crb_limits(ss.get_crnti_dl_dci_format(),
+                                                      cell_cfg_common.dl_cfg_common.init_dl_bwp,
+                                                      *ss.bwp->dl_common,
+                                                      *ss.cfg,
+                                                      *ss.coreset);
   }
 }
 
@@ -414,8 +438,13 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
   // Compute UL BWP-Id lookup table.
   bwp_table[bwpid].ul_ded = &bwp_ul_ded;
 
-  for (const search_space_configuration& ss : bwp_table[bwpid].dl_ded->pdcch_cfg->search_spaces) {
-    search_spaces[ss.id].pusch_time_domain_list =
-        get_c_rnti_pusch_time_domain_list(ss, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
+  for (const search_space_configuration& ss_cfg : bwp_table[bwpid].dl_ded->pdcch_cfg->search_spaces) {
+    search_space_info& ss = search_spaces[ss_cfg.id];
+    ss.pusch_time_domain_list =
+        get_c_rnti_pusch_time_domain_list(ss_cfg, *bwp_table[bwpid].ul_common, bwp_table[bwpid].ul_ded);
+    ss.ul_crb_lims = get_resource_alloc_ul_crb_limits(ss.get_crnti_ul_dci_format(),
+                                                      cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
+                                                      ss.bwp->ul_common->generic_params,
+                                                      ss.cfg->type);
   }
 }

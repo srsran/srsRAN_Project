@@ -56,9 +56,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
   return pdsch;
 }
 
-pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                                         const ue_cell_configuration&                 ue_cell_cfg)
+pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
@@ -66,7 +65,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
 
   pdsch_config_params pdsch;
 
-  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs =
+      make_dmrs_info_common(pdsch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
@@ -82,9 +82,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
   return pdsch;
 }
 
-pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                                         const ue_cell_configuration&                 ue_cell_cfg)
+pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
@@ -94,7 +93,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const cell_configuratio
   pdsch_config_params pdsch;
 
   // TODO: Consider DMRS configured in PDSCH-Config. Need helpers from Phy.
-  pdsch.dmrs = make_dmrs_info_dedicated(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs = make_dmrs_info_dedicated(
+      pdsch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
@@ -152,8 +152,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   return pusch;
 }
 
-pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuration&                    cell_cfg,
-                                                         const ue_cell_configuration&                 ue_cell_cfg,
+pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                          const bwp_uplink_common&                     ul_bwp,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
@@ -174,7 +173,8 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
 
   pusch_config_params pusch;
 
-  pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pusch.dmrs =
+      make_dmrs_info_common(pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
 
   pusch.symbols = pusch_td_cfg.symbols;
 
@@ -197,8 +197,7 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
   return pusch;
 }
 
-pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const cell_configuration&                    cell_cfg,
-                                                         const ue_cell_configuration&                 ue_cell_cfg,
+pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
   const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
@@ -220,7 +219,8 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const cell_configuratio
   pusch_config_params pusch;
 
   // TODO: Consider DMRS configured in PUSCH-Config. Need helpers from Phy.
-  pusch.dmrs = make_dmrs_info_dedicated(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pusch.dmrs = make_dmrs_info_dedicated(
+      pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
 
   pusch.symbols = pusch_td_cfg.symbols;
 

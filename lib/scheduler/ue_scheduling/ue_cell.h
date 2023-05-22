@@ -74,16 +74,6 @@ public:
                                   unsigned                                     pending_bytes,
                                   dci_ul_rnti_config_type                      type) const;
 
-  /// \brief Derive UL resource allocation type1 BWP configuration as per TS38.214, 6.1.2.2.2.
-  bwp_configuration alloc_type1_bwp_limits(dci_ul_rnti_config_type            dci_type,
-                                           search_space_configuration::type_t ss_type) const
-  {
-    return get_resource_alloc_type_1_ul_bwp_size(dci_type,
-                                                 ue_cfg.bwp(to_bwp_id(0)).ul_common->generic_params,
-                                                 ue_cfg.bwp(active_bwp_id()).ul_common->generic_params,
-                                                 ss_type);
-  }
-
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 

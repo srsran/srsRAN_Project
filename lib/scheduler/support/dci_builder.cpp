@@ -180,8 +180,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   // PDSCH resources.
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for C-RNTI.
   unsigned N_rb_dl_bwp = active_dl_bwp.crbs.length();
-  if (ss_info.cfg->type == search_space_configuration::type_t::common and
-      init_dl_bwp.pdcch_common.coreset0.has_value()) {
+  if (ss_info.cfg->type == search_space_type::common and init_dl_bwp.pdcch_common.coreset0.has_value()) {
     N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   }
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.

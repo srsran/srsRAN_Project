@@ -58,66 +58,60 @@ inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval cr
   return crb_to_prb(bwp_cfg.crbs, crbs);
 }
 
-/// \brief Fetch DL BWP configuration for resource allocation type 1 based on SearchSpace type and DCI format.
+/// \brief Determine CRB limits for PDSCH grant, based on BWP config, SearchSpace type and DCI format as per
+/// TS38.214, 5.1.2.2.2.
+///
 /// \param dci_type DL DCI format.
 /// \param init_dl_bwp Initial DL BWP configuration.
 /// \param active_dl_bwp Active DL BWP configuration.
 /// \param ss_type SearchSpace configuration.
 /// \param cs_cfg CORESET configuration corresponding to SerachSpace.
-/// \return Calculated BWP configuration.
-inline bwp_configuration get_resource_alloc_type_1_dl_bwp_size(dci_dl_rnti_config_type           dci_type,
-                                                               const bwp_downlink_common&        init_dl_bwp,
-                                                               const bwp_downlink_common&        active_dl_bwp,
-                                                               const search_space_configuration& ss_cfg,
-                                                               const coreset_configuration&      cs_cfg)
+/// \return Calculated CRB limits.
+inline crb_interval get_resource_alloc_dl_crb_limits(dci_dl_rnti_config_type           dci_type,
+                                                     const bwp_downlink_common&        init_dl_bwp,
+                                                     const bwp_downlink_common&        active_dl_bwp,
+                                                     const search_space_configuration& ss_cfg,
+                                                     const coreset_configuration&      cs_cfg)
 {
-  // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+  crb_interval crbs = active_dl_bwp.generic_params.crbs;
+
   if (dci_type == dci_dl_rnti_config_type::si_f1_0 || dci_type == dci_dl_rnti_config_type::ra_f1_0 ||
       dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 || dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 ||
       dci_type == dci_dl_rnti_config_type::p_rnti_f1_0) {
-    bwp_configuration bwp_cfg = init_dl_bwp.generic_params;
-    if (ss_cfg.type == search_space_configuration::type_t::common) {
+    if (ss_cfg.type == search_space_type::common) {
+      // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks and TS38.214, 5.1.2.2. Resource
+      // Allocation in frequency domain.
+      crbs = {cs_cfg.get_coreset_start_crb(), crbs.stop()};
+
+      // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
       if (init_dl_bwp.pdcch_common.coreset0.has_value()) {
-        bwp_cfg.crbs = get_coreset0_crbs(init_dl_bwp.pdcch_common);
+        crbs.resize(std::min(crbs.length(), init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()));
+      } else {
+        crbs.resize(std::min(crbs.length(), init_dl_bwp.generic_params.crbs.length()));
       }
-      // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
-      if (ss_cfg.cs_id != to_coreset_id(0)) {
-        bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
-      }
-      return bwp_cfg;
     }
-    // UE Search Space.
-    return active_dl_bwp.generic_params;
   }
-  if (dci_type == dci_dl_rnti_config_type::c_rnti_f1_1) {
-    return active_dl_bwp.generic_params;
-  }
-  report_fatal_error("Unsupported DL DCI format={}", dci_type);
+  return crbs;
 }
 
-/// \brief Fetch UL BWP configuration for resource allocation type 1 based on SearchSpace type and DCI format.
+/// \brief Determine CRB limits for PUSCH grant, based on BWP config, SearchSpace type and DCI format as per
+/// TS38.214, 6.1.2.2.2.
+///
 /// \param dci_type DL DCI format.
 /// \param init_ul_bwp Initial UL BWP configuration.
 /// \param active_ul_bwp Active UL BWP configuration.
 /// \param ss_type SearchSpace type.
-/// \return Calculated BWP configuration.
-inline bwp_configuration get_resource_alloc_type_1_ul_bwp_size(dci_ul_rnti_config_type            dci_type,
-                                                               const bwp_configuration&           init_ul_bwp,
-                                                               const bwp_configuration&           active_ul_bwp,
-                                                               search_space_configuration::type_t ss_type)
+/// \return Calculated CRB limits.
+inline crb_interval get_resource_alloc_ul_crb_limits(dci_ul_rnti_config_type  dci_type,
+                                                     const bwp_configuration& init_ul_bwp,
+                                                     const bwp_configuration& active_ul_bwp,
+                                                     search_space_type        ss_type)
 {
   // See TS 38.214, 6.1.2.2.2, Uplink resource allocation type 1.
-  if (dci_type != dci_ul_rnti_config_type::c_rnti_f0_1) {
-    if (ss_type == search_space_configuration::type_t::common) {
-      return init_ul_bwp;
-    }
-    // UE Search Space.
-    return active_ul_bwp;
+  if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_0 and ss_type == search_space_type::common) {
+    return init_ul_bwp.crbs;
   }
-  if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
-    return active_ul_bwp;
-  }
-  report_fatal_error("Unsupported UL DCI format={}", dci_type);
+  return active_ul_bwp.crbs;
 }
 
 } // namespace srsran

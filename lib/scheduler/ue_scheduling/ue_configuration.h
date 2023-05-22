@@ -37,6 +37,8 @@ struct search_space_info {
   const search_space_configuration*                 cfg     = nullptr;
   const coreset_configuration*                      coreset = nullptr;
   const bwp_info*                                   bwp     = nullptr;
+  crb_interval                                      dl_crb_lims;
+  crb_interval                                      ul_crb_lims;
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list;
   dci_size_config                                   dci_sz_cfg;

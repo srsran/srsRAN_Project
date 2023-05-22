@@ -101,7 +101,7 @@ static bool alloc_dl_ue(const ue&                    u,
     return false;
   }
   // TODO: Set aggregation level based on link quality.
-  const aggregation_level agg_lvl    = srsran::aggregation_level::n4;
+  const aggregation_level agg_lvl    = aggregation_level::n4;
   const slot_point        pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
@@ -124,7 +124,6 @@ static bool alloc_dl_ue(const ue&                    u,
     }
 
     // Search for available symbolxRB resources in different SearchSpaces.
-    const cell_configuration& cell_cfg_cmn = ue_cc.cfg().cell_cfg_common;
     static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
     // See 3GPP TS 38.213, clause 10.1,
     // A UE monitors PDCCH candidates in one or more of the following search spaces sets
@@ -140,34 +139,16 @@ static bool alloc_dl_ue(const ue&                    u,
       if (ss_cfg->id == 0) {
         continue;
       }
-
-      // The existence of the Coreset has been verified by the validator.
-      const coreset_configuration& cs_cfg = ue_cc.cfg().coreset(ss_cfg->cs_id);
+      const search_space_info& ss = ue_cc.cfg().search_space(ss_cfg->id);
 
       // Ensure there are enough symbols where to allocate the PDCCH.
-      if (ss_cfg->get_first_symbol_index() + cs_cfg.duration >
+      if (ss_cfg->get_first_symbol_index() + ss.coreset->duration >
           res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot)) {
         continue;
       }
 
-      const span<const pdsch_time_domain_resource_allocation> pdsch_list =
-          ue_cc.cfg().search_space(ss_cfg->id).pdsch_time_domain_list;
-
-      bwp_configuration bwp_cfg = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->generic_params;
-      if (ss_cfg->type == search_space_configuration::type_t::common) {
-        // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-        bwp_cfg = ue_cc.cfg().bwp(to_bwp_id(0)).dl_common->generic_params;
-        if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-          bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
-        }
-        // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
-        if (ss_cfg->cs_id != to_coreset_id(0)) {
-          bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
-        }
-      }
-
-      for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
-        const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
+      for (unsigned time_res = 0; time_res != ss.pdsch_time_domain_list.size(); ++time_res) {
+        const pdsch_time_domain_resource_allocation& pdsch = ss.pdsch_time_domain_list[time_res];
         if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot + pdsch.k0)) {
           // DL needs to be active for PDSCH in this slot.
           continue;
@@ -183,8 +164,9 @@ static bool alloc_dl_ue(const ue&                    u,
           continue;
         }
 
-        const cell_slot_resource_grid& grid      = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
-        const prb_bitmap               used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
+        const cell_slot_resource_grid& grid = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
+        const crb_bitmap               used_crbs =
+            grid.used_crbs(ss.bwp->dl_common->generic_params.scs, ss.dl_crb_lims, pdsch.symbols);
 
         // TODO verify the there is at least 1 TB.
         const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
@@ -203,16 +185,15 @@ static bool alloc_dl_ue(const ue&                    u,
           are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().rbs.type1().length();
         }
         if (are_crbs_valid) {
-          const bool res_allocated =
-              pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                           ue_cc.cell_index,
-                                                           h->id,
-                                                           ss_cfg->id,
-                                                           time_res,
-                                                           ue_grant_crbs,
-                                                           ue_cc.cfg().search_space(ss_cfg->id).get_dl_dci_format(),
-                                                           agg_lvl,
-                                                           mcs_prbs.mcs});
+          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h->id,
+                                                                                  ss_cfg->id,
+                                                                                  time_res,
+                                                                                  ue_grant_crbs,
+                                                                                  ss.get_dl_dci_format(),
+                                                                                  agg_lvl,
+                                                                                  mcs_prbs.mcs});
           if (res_allocated) {
             return true;
           }
@@ -274,10 +255,10 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      const span<const pusch_time_domain_resource_allocation> pusch_list =
-          ue_cc.cfg().search_space(ss_cfg->id).pusch_time_domain_list;
-      const dci_ul_rnti_config_type dci_type = ue_cc.cfg().search_space(ss_cfg->id).get_crnti_ul_dci_format();
-      const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
+      const search_space_info&                                ss         = ue_cc.cfg().search_space(ss_cfg->id);
+      const span<const pusch_time_domain_resource_allocation> pusch_list = ss.pusch_time_domain_list;
+      const dci_ul_rnti_config_type                           dci_type   = ss.get_crnti_ul_dci_format();
+      const crb_interval                                      crb_lims   = ss.ul_crb_lims;
 
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       const unsigned   time_res   = 0;
@@ -305,7 +286,7 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
       const ofdm_symbol_range pusch_symbols = pusch_list[time_res].symbols;
-      const prb_bitmap        used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
+      const prb_bitmap used_crbs = grid.used_crbs(ss.bwp->ul_common->generic_params.scs, crb_lims, pusch_symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       const grant_prbs_mcs mcs_prbs =
