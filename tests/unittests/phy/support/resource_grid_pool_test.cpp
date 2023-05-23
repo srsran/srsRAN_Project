@@ -34,6 +34,8 @@ void test(unsigned nof_slots, unsigned nof_sectors)
   std::vector<std::vector<resource_grid*>>    grids;
 
   // Generate resource grids
+  srsran_assert(nof_slots <= 100, "The number of slots exceeds 100.");
+  srsran_assert(nof_sectors <= 3, "The number of slots exceeds 3.");
   grids.reserve(nof_slots * nof_sectors);
   grids.resize(nof_slots);
   for (unsigned slot = 0; slot != nof_slots; ++slot) {
