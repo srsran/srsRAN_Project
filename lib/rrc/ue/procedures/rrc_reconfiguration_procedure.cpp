@@ -44,11 +44,13 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   // create new transaction for RRC Reconfiguration procedure
   transaction = event_mng.transactions.create_transaction(timeout_ms);
 
-  {
-    srb_creation_message srb;
-    srb.ue_index = context.ue_index;
-    srb.srb_id   = srb_id_t::srb2;
-    du_processor_notifier.on_create_srb(srb);
+  if (args.radio_bearer_cfg.has_value()) {
+    for (const cu_cp_srb_to_add_mod& srb_to_add_mod : args.radio_bearer_cfg->srb_to_add_mod_list) {
+      srb_creation_message srb = {};
+      srb.ue_index             = context.ue_index;
+      srb.srb_id               = srb_to_add_mod.srb_id;
+      du_processor_notifier.on_create_srb(srb);
+    }
   }
 
   send_rrc_reconfiguration();
