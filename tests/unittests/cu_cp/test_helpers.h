@@ -86,8 +86,9 @@ private:
 // Stuct to configure Bearer Context Setup/Modification result content.
 struct bearer_context_outcome_t {
   bool                outcome = false;
-  std::list<unsigned> pdu_sessions_success_list; // List of PDU session IDs that were successful to setup.
-  std::list<unsigned> pdu_sessions_failed_list;  // List of PDU sessions IDs that failed to be setup.
+  std::list<unsigned> pdu_sessions_setup_list;    // List of PDU session IDs that were successful to setup.
+  std::list<unsigned> pdu_sessions_failed_list;   // List of PDU sessions IDs that failed to be setup.
+  std::list<unsigned> pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
@@ -98,11 +99,11 @@ public:
 
   void set_second_message_outcome(const bearer_context_outcome_t& outcome) { second_e1ap_response = outcome; }
 
-  template <typename T>
-  void fill_bearer_context_response(T& result, const bearer_context_outcome_t& outcome)
+  void fill_pdu_session_setup_list(
+      slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>& e1ap_setup_list,
+      const std::list<unsigned>&                                                              outcome_setup_list)
   {
-    result.success = outcome.outcome;
-    for (const auto& psi : outcome.pdu_sessions_success_list) {
+    for (const auto& psi : outcome_setup_list) {
       // add only the most relevant items
       e1ap_pdu_session_resource_setup_modification_item res_setup_item;
       res_setup_item.pdu_session_id = uint_to_pdu_session_id(psi);
@@ -122,14 +123,63 @@ public:
       drb_item.ul_up_transport_params.push_back(up_item);
       res_setup_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
 
-      result.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
+      e1ap_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
     }
+  }
 
-    for (const auto& id : outcome.pdu_sessions_failed_list) {
+  void fill_pdu_session_failed_list(
+      slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& e1ap_failed_list,
+      const std::list<unsigned>&                                                  outcome_failed_list)
+  {
+    for (const auto& id : outcome_failed_list) {
       e1ap_pdu_session_resource_failed_item res_failed_item;
       res_failed_item.pdu_session_id = uint_to_pdu_session_id(id);
-      result.pdu_session_resource_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
+      e1ap_failed_list.emplace(res_failed_item.pdu_session_id, res_failed_item);
     }
+  }
+
+  void fill_bearer_context_response(e1ap_bearer_context_setup_response& result, const bearer_context_outcome_t& outcome)
+  {
+    result.success = outcome.outcome;
+    fill_pdu_session_setup_list(result.pdu_session_resource_setup_list, outcome.pdu_sessions_setup_list);
+    fill_pdu_session_failed_list(result.pdu_session_resource_failed_list, outcome.pdu_sessions_failed_list);
+  }
+
+  void fill_pdu_session_modified_list(
+      slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& e1ap_modified_list,
+      const std::list<unsigned>&                                                    outcome_modified_list)
+  {
+    for (const auto& psi : outcome_modified_list) {
+      // add only the most relevant items
+      e1ap_pdu_session_resource_modified_item res_mod_item;
+      res_mod_item.pdu_session_id = uint_to_pdu_session_id(psi);
+
+      // add a single DRB with the same ID like the PDU session it belongs to
+      drb_id_t                   drb_id = uint_to_drb_id(psi); // Note: we use the PDU session ID here also as DRB ID
+      e1ap_drb_setup_item_ng_ran drb_item;
+      drb_item.drb_id = drb_id;
+
+      // add a QoS flow
+      e1ap_qos_flow_item qos_item;
+      qos_item.qos_flow_id = uint_to_qos_flow_id(psi); // Note: use the PSI again as QoS flow ID
+      drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
+
+      // add one UP transport item
+      e1ap_up_params_item up_item;
+      drb_item.ul_up_transport_params.push_back(up_item);
+      res_mod_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+
+      e1ap_modified_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
+    }
+  }
+
+  void fill_bearer_context_response(e1ap_bearer_context_modification_response& result,
+                                    const bearer_context_outcome_t&            outcome)
+  {
+    result.success = outcome.outcome;
+    fill_pdu_session_setup_list(result.pdu_session_resource_setup_list, outcome.pdu_sessions_setup_list);
+    fill_pdu_session_failed_list(result.pdu_session_resource_failed_list, outcome.pdu_sessions_failed_list);
+    fill_pdu_session_modified_list(result.pdu_session_resource_modified_list, outcome.pdu_sessions_modified_list);
   }
 
   async_task<e1ap_bearer_context_setup_response>
