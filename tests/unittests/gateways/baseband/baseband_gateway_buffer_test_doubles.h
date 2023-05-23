@@ -79,7 +79,9 @@ public:
 
   /// Constructor from a reader interface.
   baseband_gateway_buffer_read_only(const baseband_gateway_buffer_reader& other) noexcept :
-    nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
+    nof_channels(other.get_nof_channels()),
+    nof_samples(other.get_nof_samples()),
+    data(static_cast<unsigned long>(nof_channels) * nof_samples)
   {
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
       span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
@@ -89,7 +91,9 @@ public:
 
   /// Constructor from a writer interface.
   baseband_gateway_buffer_read_only(baseband_gateway_buffer_writer& other) noexcept :
-    nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
+    nof_channels(other.get_nof_channels()),
+    nof_samples(other.get_nof_samples()),
+    data(static_cast<unsigned long>(nof_channels) * nof_samples)
   {
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
       span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
