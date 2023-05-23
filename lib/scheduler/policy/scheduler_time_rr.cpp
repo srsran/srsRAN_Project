@@ -135,6 +135,9 @@ static bool alloc_dl_ue(const ue&                    u,
         continue;
       }
       const search_space_info& ss = ue_cc.cfg().search_space(ss_cfg->id);
+      if (is_retx and ss.get_crnti_dl_dci_format() != ss.get_crnti_dl_dci_format()) {
+        continue;
+      }
 
       // Ensure there are enough symbols where to allocate the PDCCH.
       if (ss_cfg->get_first_symbol_index() + ss.coreset->duration >
@@ -232,18 +235,18 @@ static bool alloc_ul_ue(const ue&                    u,
     }
 
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
+      const search_space_info& ss = ue_cc.cfg().search_space(ss_cfg->id);
       if (ss_cfg->id == to_search_space_id(0)) {
         continue;
       }
-
-      const search_space_info& ss       = ue_cc.cfg().search_space(ss_cfg->id);
-      const crb_interval       crb_lims = ss.ul_crb_lims;
+      if (is_retx and ss.get_crnti_ul_dci_format() != ss.get_crnti_ul_dci_format()) {
+        continue;
+      }
 
       // - [Implementation-defined] k2 value which is less than or equal to minimum value of k1(s) is used.
       const unsigned                               time_res   = 0;
       const pusch_time_domain_resource_allocation& pusch_td   = ss.pusch_time_domain_list[time_res];
-      const unsigned                               k2         = pusch_td.k2;
-      const slot_point                             pusch_slot = pdcch_slot + k2;
+      const slot_point                             pusch_slot = pdcch_slot + pusch_td.k2;
       const unsigned                               start_ul_symbols =
           NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot);
       // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
@@ -256,12 +259,13 @@ static bool alloc_ul_ue(const ue&                    u,
         continue;
       }
 
-      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
-      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), k2)) {
+      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, pusch_td.k2);
+      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), pusch_td.k2)) {
         // only one PUSCH per UE per slot.
         continue;
       }
-      const prb_bitmap used_crbs = grid.used_crbs(ss.bwp->ul_common->generic_params.scs, crb_lims, pusch_td.symbols);
+      const prb_bitmap used_crbs =
+          grid.used_crbs(ss.bwp->ul_common->generic_params.scs, ss.ul_crb_lims, pusch_td.symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       const grant_prbs_mcs mcs_prbs =
