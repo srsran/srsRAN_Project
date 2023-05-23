@@ -142,6 +142,8 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   result.csi = estimates.get_channel_state_information();
 
+  srsran_assert(config.nof_prb <= 16, "The number of PUCCH PRBs exceeds 16.");
+  srsran_assert(config.nof_symbols <= 2, "The number of symbols for the PUCCH transmission exceeds 2.");
   span<log_likelihood_ratio> llr =
       span<log_likelihood_ratio>(temp_llr).first(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb *
                                                  config.nof_symbols * get_bits_per_symbol(modulation_scheme::QPSK));
