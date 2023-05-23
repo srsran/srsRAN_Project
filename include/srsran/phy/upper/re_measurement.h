@@ -148,6 +148,8 @@ public:
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
+    srsran_assert(dimensions.nof_subc <= 275 * 12, "The number of subcarriers exceeds 275 * 12.");
+    srsran_assert(dimensions.nof_symbols <= 14, "The number of symbols exceeds 14.");
     srsran_assert(data.size() == dimensions.nof_subc * dimensions.nof_symbols,
                   "Slice size mismatch: given {}, current {}.",
                   data.size(),
