@@ -93,6 +93,8 @@ class pucch_grid
 public:
   pucch_grid(unsigned nof_rbs_, unsigned nof_symbols_) : nof_rbs{nof_rbs_}, nof_symbols{nof_symbols_}
   {
+    srsran_assert(nof_rbs <= 275, "The number of RBs exceeds 275.");
+    srsran_assert(nof_symbols <= 14, "The number of symbols exceeds 14.");
     grid.resize(nof_rbs * nof_symbols);
     for (auto& grid_elem : grid) {
       for (auto& occ_cs : grid_elem.allocated_occ_cs_list) {
