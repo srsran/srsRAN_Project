@@ -29,7 +29,9 @@ public:
   virtual std::unique_ptr<channel_precoder> create() = 0;
 };
 
-/// Creates and returns a channel precoder factory.
-std::shared_ptr<channel_precoder_factory> create_channel_precoder_factory();
-
+/// \brief Creates and returns a channel precoder factory.
+///
+/// \param[in] precoder_type A string indicating the channel precoder implementation to create.
+/// \return A channel precoder factory for the chosen precoder implementation.
+std::shared_ptr<channel_precoder_factory> create_channel_precoder_factory(const std::string& precoder_type);
 } // namespace srsran

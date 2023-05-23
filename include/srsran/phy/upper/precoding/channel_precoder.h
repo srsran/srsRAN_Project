@@ -34,8 +34,9 @@ public:
   /// of RE per layer of the input buffer.
   /// \remark An assertion is triggered if the precoding matrix dimensions do not match the number of layers of the
   /// input buffer and the number of antenna ports of the output buffer.
-  virtual void
-  process(re_buffer_writer& output, const re_buffer_reader& input, const precoding_weight_matrix& precoding) = 0;
+  virtual void apply_precoding(re_buffer_writer&              output,
+                               const re_buffer_reader&        input,
+                               const precoding_weight_matrix& precoding) = 0;
 };
 
 } // namespace srsran

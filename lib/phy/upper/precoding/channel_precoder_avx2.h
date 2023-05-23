@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief Channel precoder generic implementation.
+/// \brief Channel precoder AVX2 implementation.
 
 #pragma once
 
@@ -18,7 +18,7 @@
 namespace srsran {
 
 /// Channel precoder implementation.
-class channel_precoder_generic : public channel_precoder_impl
+class channel_precoder_avx2 : public channel_precoder_impl
 {
   // See interface for documentation.
   void

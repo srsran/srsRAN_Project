@@ -12,9 +12,9 @@
 
 using namespace srsran;
 
-void channel_precoder_impl::process(re_buffer_writer&              output,
-                                    const re_buffer_reader&        input,
-                                    const precoding_weight_matrix& precoding)
+void channel_precoder_impl::apply_precoding(re_buffer_writer&              output,
+                                            const re_buffer_reader&        input,
+                                            const precoding_weight_matrix& precoding)
 {
   // Number of RE in a single slice, i.e., port or layer.
   unsigned nof_re_slice = output.get_nof_re();

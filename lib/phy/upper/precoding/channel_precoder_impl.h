@@ -25,8 +25,9 @@ public:
   explicit channel_precoder_impl() = default;
 
   // See interface for documentation.
-  void
-  process(re_buffer_writer& output, const re_buffer_reader& input, const precoding_weight_matrix& precoding) override;
+  void apply_precoding(re_buffer_writer&              output,
+                       const re_buffer_reader&        input,
+                       const precoding_weight_matrix& precoding) override;
 
 private:
   /// \brief Applies precoding to the RE belonging to a single antenna port.

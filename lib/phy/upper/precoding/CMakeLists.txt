@@ -6,7 +6,18 @@
 # the distribution.
 #
 
-add_library(srsran_channel_precoder channel_precoder_impl.cpp channel_precoder_generic.cpp precoding_factories.cpp)
+set(channel_precoder_sources
+        channel_precoder_impl.cpp
+        channel_precoder_generic.cpp
+        precoding_factories.cpp)
+
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    list(APPEND channel_precoder_sources
+            channel_precoder_avx2.cpp)
+    set_source_files_properties(channel_precoder_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+
+add_library(srsran_channel_precoder STATIC ${channel_precoder_sources})
 
 install(TARGETS srsran_channel_precoder
         EXPORT srsran_export)
