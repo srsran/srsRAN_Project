@@ -64,6 +64,9 @@ protected:
     ASSERT_TRUE(setup_task.ready());
     ASSERT_EQ(setup_task.get().pdu_session_res_setup_response_items.size(), 1);
     ASSERT_EQ(setup_task.get().pdu_session_res_failed_to_setup_items.size(), 0);
+
+    // clear stored E1AP requests for next procedure
+    e1ap_ctrl_notifier.reset();
   }
 
 private:
@@ -86,7 +89,7 @@ TEST_F(pdu_session_resource_modification_test,
   ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
 }
 
-TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_failed_then_pdu_session_modification_fails)
+TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_fails_then_pdu_session_modification_fails)
 {
   // Test Preamble - Setup a single PDU session initially.
   setup_pdu_session();
@@ -97,6 +100,41 @@ TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_fai
   // Start modification routine.
   cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
   start_procedure(request);
+
+  // PDU session resource modification for session 1 failed.
+  ASSERT_TRUE(procedure_ready());
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.size(), 1);
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+}
+
+TEST_F(pdu_session_resource_modification_test, when_ue_ctxt_modification_fails_then_pdu_session_modification_fails)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Set expected results for sub-procedures.
+  set_expected_results({true, {1}, {}}, {false}, {}, false);
+
+  // Start modification routine.
+  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
+  start_procedure(request);
+
+  // Verify content of initial bearer modification request.
+  ASSERT_TRUE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+  ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+      e1ap_ctrl_notifier.first_e1ap_request.value()));
+  const auto& bearer_ctxt_mod_req =
+      variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
+  ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->pdu_session_id,
+            uint_to_pdu_session_id(1));
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->drb_to_setup_list_ng_ran.size(),
+            1);
 
   // PDU session resource modification for session 1 failed.
   ASSERT_TRUE(procedure_ready());
