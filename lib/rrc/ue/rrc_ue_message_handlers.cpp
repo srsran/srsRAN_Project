@@ -215,7 +215,7 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
 
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, du_processor_notifier, logger);
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg)

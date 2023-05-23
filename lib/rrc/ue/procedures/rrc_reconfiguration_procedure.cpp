@@ -10,6 +10,7 @@
 
 #include "rrc_reconfiguration_procedure.h"
 #include "../rrc_asn1_helpers.h"
+#include "srsran/cu_cp/du_processor.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -19,8 +20,14 @@ rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t& c
                                                              const cu_cp_rrc_reconfiguration_procedure_request& args_,
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
+                                                             rrc_ue_du_processor_notifier&         du_processor_,
                                                              srslog::basic_logger&                 logger_) :
-  context(context_), args(args_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
+  context(context_),
+  args(args_),
+  rrc_ue(rrc_ue_notifier_),
+  event_mng(event_mng_),
+  du_processor_notifier(du_processor_),
+  logger(logger_)
 {
 }
 
@@ -36,6 +43,13 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRC Reconfiguration procedure
   transaction = event_mng.transactions.create_transaction(timeout_ms);
+
+  {
+    srb_creation_message srb;
+    srb.ue_index = context.ue_index;
+    srb.srb_id   = srb_id_t::srb2;
+    du_processor_notifier.on_create_srb(srb);
+  }
 
   send_rrc_reconfiguration();
   CORO_AWAIT(transaction);
