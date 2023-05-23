@@ -10,6 +10,9 @@
   type: ue
   image: registry.gitlab.com/softwareradiosystems/ci/retina/android:0.4.7
   ephemeral-storage: "3G"
+  requirements:
+    cpu: 2
+    memory: 4G
   resources:
     - type: android
       model: one-plus-9-pro
@@ -18,6 +21,9 @@
   type: gnb
   image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.4.7
   ephemeral-storage: "3G"
+  requirements:
+    cpu: 10
+    memory: 10G
   resources:
     - type: sdr
       model: b200
@@ -27,3 +33,6 @@
   type: epc
   image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.4.7
   ephemeral-storage: "3G"
+  requirements:
+    cpu: 4
+    memory: 4G
