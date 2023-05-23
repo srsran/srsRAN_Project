@@ -246,6 +246,8 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
   encoder_config.nof_ch_symbols = Nre * nof_layers;
 
   // Prepare codeword size.
+  srsran_assert(Nre <= (275 * 12 * 14 * 4), "The number of RE exceeds max nof RE.");
+  srsran_assert(nof_layers <= 4, "The number of layers exceeds 4.");
   span<uint8_t> codeword = tmp_codeword.first(Nre * nof_layers * get_bits_per_symbol(modulation));
 
   // Encode codeword.
