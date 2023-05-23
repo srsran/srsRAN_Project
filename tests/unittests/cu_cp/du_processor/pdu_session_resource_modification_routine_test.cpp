@@ -113,7 +113,12 @@ TEST_F(pdu_session_resource_modification_test, when_ue_ctxt_modification_fails_t
   setup_pdu_session();
 
   // Set expected results for sub-procedures.
-  set_expected_results({true, {1}, {}}, {false}, {}, false);
+  bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
+  first_bearer_ctxt_mod_outcome.outcome                    = true;
+  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  set_expected_results(first_bearer_ctxt_mod_outcome, {false}, {}, false);
 
   // Start modification routine.
   cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
@@ -135,6 +140,39 @@ TEST_F(pdu_session_resource_modification_test, when_ue_ctxt_modification_fails_t
                 .pdu_session_res_to_modify_list.begin()
                 ->drb_to_setup_list_ng_ran.size(),
             1);
+
+  // PDU session resource modification for session 1 failed.
+  ASSERT_TRUE(procedure_ready());
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.size(), 1);
+  ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+}
+
+TEST_F(pdu_session_resource_modification_test,
+       when_second_bearer_ctxt_modification_fails_then_pdu_session_modification_fails)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Set expected results for sub-procedures.
+  bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
+  first_bearer_ctxt_mod_outcome.outcome                    = true;
+  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  ue_context_outcome_t ue_cxt_mod_outcome;
+  ue_cxt_mod_outcome.outcome          = true;
+  ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
+  ue_cxt_mod_outcome.drb_failed_list  = {};
+  bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
+  second_bearer_ctxt_mod_outcome.outcome = false;
+  set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, false);
+
+  // Start modification routine.
+  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
+  start_procedure(request);
+
+  // Verify content of UE context modifcation.
+  ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
 
   // PDU session resource modification for session 1 failed.
   ASSERT_TRUE(procedure_ready());
