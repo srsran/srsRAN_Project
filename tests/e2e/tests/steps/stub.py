@@ -14,7 +14,8 @@ from contextlib import suppress
 from typing import Dict, Sequence, Tuple
 
 import grpc
-from retina.protocol.base_pb2 import Empty, PingRequest, StartInfo, String, UEDefinition, UInteger
+import pytest
+from retina.protocol.base_pb2 import Empty, PingRequest, PingResponse, StartInfo, String, UEDefinition, UInteger
 from retina.protocol.epc_pb2 import IPerfResponse
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -115,20 +116,27 @@ def ue_start_and_attach(
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
         ue_stub: ue_stub.WainUntilAttached.future(UInteger(value=attach_timeout)) for ue_stub in ue_array
     }
+    for ue_stub, task in ue_attach_task_dict.items():
+        task.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_attached_ue(_task, _ue_stub))
 
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {
-        ue_stub: task.result() for ue_stub, task in ue_attach_task_dict.items()
-    }
+    try:
+        ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {
+            ue_stub: task.result() for ue_stub, task in ue_attach_task_dict.items()  # Waiting for attach
+        }
+    except grpc.RpcError:
+        pytest.fail("Attach timeout reached")
 
-    for ue_stub, ue_attach_info in ue_attach_info_dict.items():
+    return ue_attach_info_dict
+
+
+def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
+    with suppress(grpc.RpcError):
         logging.info(
             "UE [%s] attached: \n%s%s ",
             id(ue_stub),
             ue_stub.GetDefinition(Empty()).subscriber,
-            ue_attach_info,
+            future.result(),
         )
-
-    return ue_attach_info_dict
 
 
 def ue_stop(ue_array: Sequence[UEStub]):
@@ -149,6 +157,8 @@ def ping(
     Ping command between an UE and a EPC
     """
 
+    ping_success = True
+
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Launch both ping in parallel: ue -> epc and epc -> ue
@@ -156,15 +166,24 @@ def ping(
         epc_to_ue = epc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
 
         # Wait both ping to end
-        ue_to_epc_result = ue_to_epc.result()
-        epc_to_ue_result = epc_to_ue.result()
+        ue_to_epc_result: PingResponse = ue_to_epc.result()
+        epc_to_ue_result: PingResponse = epc_to_ue.result()
 
-        # Print status
-        logging.info("Ping [%s] UE -> EPC: %s", ue_attached_info.ipv4, ue_to_epc_result)
-        logging.info("Ping [%s] EPC -> UE: %s", ue_attached_info.ipv4, epc_to_ue_result)
+        # Wait both ping to end & print result
+        _print_ping_result(f"[{ue_attached_info.ipv4}] UE -> EPC", ue_to_epc_result)
+        _print_ping_result(f"[{ue_attached_info.ipv4}] EPC -> UE", epc_to_ue_result)
 
-        # Validate both ping results
-        assert all(map(lambda r: r.status, (ue_to_epc_result, epc_to_ue_result))) is True, "Ping failed!"
+        ping_success &= ue_to_epc_result.status and epc_to_ue_result.status
+
+    if not ping_success:
+        pytest.fail("Ping. Some packages got lost.")
+
+
+def _print_ping_result(msg: str, result: PingResponse):
+    log_fn = logging.info
+    if not result.status:
+        log_fn = logging.error
+    log_fn("Ping %s: %s", msg, result)
 
 
 def iperf(
