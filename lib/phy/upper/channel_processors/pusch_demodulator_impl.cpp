@@ -77,6 +77,8 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
   }
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
+  srsran_assert(nof_re_port <= 275 * NRE * 14, "The number of RE ports exceeds max number of RE for a single port.");
+  srsran_assert(config.nof_tx_layers <= 8, "The number of TX layers exceeds 8.");
   srsran_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
                 "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
                 nof_re_port * config.nof_tx_layers,

@@ -134,6 +134,9 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
 
   // Calculate the total number of DM-RS per PRB.
+  srsran_assert(pdu.dmrs.nof_dmrs_per_rb() <= 6, "The number of DM-RS per RB exceeds 6.");
+  srsran_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
+  srsran_assert(pdu.dmrs_symbol_mask.count() <= 14, "The DM-RS symbol mask size exceeds 14.");
   unsigned nof_dmrs_per_prb =
       pdu.dmrs.nof_dmrs_per_rb() * pdu.nof_cdm_groups_without_data * pdu.dmrs_symbol_mask.count();
 
