@@ -123,7 +123,6 @@ zmq:
   variables:
     TESTBED: "zmq"
     MARKERS: "zmq and not smoke"
-    RETINA_ARGS: "gnb.all.pcap=False"
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "smoke release update cache"
@@ -159,7 +158,6 @@ rf:
     TESTBED: "rf"
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: gnb.all.pcap=False
   needs:
     - job: "smoke release update cache"
       artifacts: true
@@ -203,7 +201,6 @@ android:
     TESTBED: "android"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: gnb.all.pcap=False
   needs:
     - job: "smoke release update cache"
       artifacts: true

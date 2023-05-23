@@ -28,6 +28,7 @@ def configure_test_parameters(
     sample_rate: Optional[int],
     global_timing_advance: int,
     time_alignment_calibration: Union[int, str],
+    pcap: Optional[bool] = None,
 ):
     """
     Configure test parameters
@@ -54,6 +55,8 @@ def configure_test_parameters(
             },
         },
     }
+    if pcap is not None:
+        retina_data.test_config["gnb"]["parameters"]["pcap"] = pcap
     if sample_rate is not None:
         retina_data.test_config["ue"]["parameters"]["sample_rate"] = sample_rate
         retina_data.test_config["gnb"]["parameters"]["sample_rate"] = sample_rate
