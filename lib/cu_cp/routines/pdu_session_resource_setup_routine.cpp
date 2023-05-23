@@ -141,7 +141,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 
     for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
       // Only include the DRB if it belongs to the this session.
-      if (pdu_session.second.drbs.find(drb_item.drb_id) != pdu_session.second.drbs.end()) {
+      if (pdu_session.second.drb_to_add.find(drb_item.drb_id) != pdu_session.second.drb_to_add.end()) {
         // DRB belongs to this PDU session
         e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
         e1ap_drb_item.drb_id = drb_item.drb_id;
@@ -348,7 +348,7 @@ void pdu_session_resource_setup_routine::operator()(
 
       for (const auto& pdu_session_to_add : next_config.pdu_sessions_to_setup_list) {
         // Add radio bearer config
-        for (const auto& drb_to_add : pdu_session_to_add.second.drbs) {
+        for (const auto& drb_to_add : pdu_session_to_add.second.drb_to_add) {
           cu_cp_drb_to_add_mod drb_to_add_mod;
           drb_to_add_mod.drb_id   = drb_to_add.first;
           drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
@@ -451,7 +451,7 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
 
-    for (const auto& drb_to_setup : session.drbs) {
+    for (const auto& drb_to_setup : session.drb_to_add) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
       e1ap_drb_setup_item.drb_id = drb_to_setup.first;
       // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured

@@ -57,7 +57,7 @@ TEST_F(up_resource_manager_test, when_initial_pdu_session_is_created_new_drb_is_
   // single PDU Session/DRB could be added
   up_config_update update = manager->calculate_update(msg);
   ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 1);
 
   // Assume DRB setup was successful.
   up_config_update_result result;
@@ -76,7 +76,7 @@ TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_
   // single DRB should be added
   up_config_update update = manager->calculate_update(msg);
   ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 1);
 
   // Assume DRB setup was successful.
   up_config_update_result result;
@@ -96,7 +96,8 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
 
   // Verify DRB config
   ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs.size(), 1);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drbs[uint_to_drb_id(1)].pdcp_cfg.rb_type,
-            pdcp_rb_type::drb);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 1);
+  ASSERT_EQ(
+      update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add[uint_to_drb_id(1)].pdcp_cfg.rb_type,
+      pdcp_rb_type::drb);
 }

@@ -43,7 +43,11 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
 {
   // Apply config update in an additive way.
   for (const auto& session : result.pdu_sessions_added_list) {
-    for (const auto& drb : session.drbs) {
+    // Create new PDU session context.
+    up_pdu_session_context new_ctxt(session.id);
+    for (const auto& drb : session.drb_to_add) {
+      new_ctxt.drbs.emplace(drb.first, drb.second);
+
       // Add to DRB-to-PDU session look-up table.
       context.drb_map.emplace(drb.first, session.id);
 
@@ -52,9 +56,8 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
     }
 
     // Add PDU session to list of active sessions.
-    context.pdu_sessions.emplace(session.id, session);
+    context.pdu_sessions.emplace(new_ctxt.id, new_ctxt);
   }
-
   return true;
 }
 

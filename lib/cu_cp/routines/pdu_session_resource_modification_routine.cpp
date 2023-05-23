@@ -35,7 +35,7 @@ void fill_e1ap_pdu_session_res_to_modify_list(
     const up_config_update&                                                   next_config,
     const cu_cp_pdu_session_resource_modify_request&                          modify_request)
 {
-  for (const auto& modify_item : next_config.pdu_sessions_to_setup_list) {
+  for (const auto& modify_item : next_config.pdu_sessions_to_modify_list) {
     const auto& session = modify_item.second;
     srsran_assert(modify_request.pdu_session_res_modify_items.contains(session.id),
                   "Modify request doesn't contain config for PDU session id={}",
@@ -46,8 +46,8 @@ void fill_e1ap_pdu_session_res_to_modify_list(
     e1ap_pdu_session_res_to_modify_item e1ap_pdu_session_item;
     e1ap_pdu_session_item.pdu_session_id = session.id;
 
-    // Setup new DRBs
-    for (const auto& drb_to_setup : session.drbs) {
+    // Setup new DRBs if needed
+    for (const auto& drb_to_setup : session.drb_to_add) {
       e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
       e1ap_drb_setup_item.drb_id = drb_to_setup.first;
       // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured

@@ -59,7 +59,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
 }
 
 /// \brief Allocates a QoS to a DRB. Creates a new DRB if needed. Inserts it in PDU session object.
-drb_id_t allocate_qos_flow(up_pdu_session_context&            session_context,
+drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
                            const qos_flow_setup_request_item& qos_flow,
                            const up_context&                  context,
                            const up_resource_manager_cfg&     cfg,
@@ -89,13 +89,11 @@ drb_id_t allocate_qos_flow(up_pdu_session_context&            session_context,
     drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
 
     // add new DRB to list
-    session_context.drbs.emplace(drb_id, drb_ctx);
+    session_context.drb_to_add.emplace(drb_id, drb_ctx);
   } else {
     // lookup existing DRB and add flow
     drb_id = context.five_qi_map.at(five_qi);
-    srsran_assert(session_context.drbs.find(drb_id) != session_context.drbs.end(), "DRB ID {} doesn't exist", drb_id);
-    up_drb_context& drb_ctx = session_context.drbs.at(drb_id);
-    drb_ctx.qos_flows.push_back(qos_flow.qos_flow_id);
+    logger.error("Addition of QoS flow to DRB not implemented.");
   }
 
   return drb_id;
@@ -115,14 +113,13 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
                   "PDU session already exists.");
     // Create new PDU session context.
-    up_pdu_session_context new_ctxt;
-    new_ctxt.id = pdu_session.pdu_session_id;
+    up_pdu_session_context_update new_ctxt(pdu_session.pdu_session_id);
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {
       auto drb_id = allocate_qos_flow(new_ctxt, flow_item, context, cfg, logger);
       logger.debug("Allocated QoS flow ID {} to DRB ID {} with 5QI {}",
                    flow_item.qos_flow_id,
                    drb_id,
-                   new_ctxt.drbs.at(drb_id).five_qi);
+                   new_ctxt.drb_to_add.at(drb_id).five_qi);
     }
     config.pdu_sessions_to_setup_list.emplace(new_ctxt.id, new_ctxt);
   }
@@ -173,17 +170,16 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     srsran_assert(context.pdu_sessions.find(modify_item.pdu_session_id) != context.pdu_sessions.end(),
                   "PDU session does not exist.");
 
-    // Load existing PDU session context.
-    auto existing_ctxt = context.pdu_sessions.at(modify_item.pdu_session_id);
+    up_pdu_session_context_update ctxt(modify_item.pdu_session_id);
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
-      auto drb_id = allocate_qos_flow(existing_ctxt, flow_item, context, cfg, logger);
+      auto drb_id = allocate_qos_flow(ctxt, flow_item, context, cfg, logger);
       logger.debug("Allocated QoS flow ID {} to DRB ID {} with 5QI {}",
                    flow_item.qos_flow_id,
                    drb_id,
-                   existing_ctxt.drbs.at(drb_id).five_qi);
+                   ctxt.drb_to_add.at(drb_id).five_qi);
     }
 
-    config.pdu_sessions_to_modify_list.emplace(existing_ctxt.id, existing_ctxt);
+    config.pdu_sessions_to_modify_list.emplace(ctxt.id, ctxt);
   }
 
   return config;
