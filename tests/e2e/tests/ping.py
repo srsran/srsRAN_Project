@@ -27,6 +27,13 @@ from .steps.stub import ping, start_network, ue_start_and_attach, ue_stop
 
 
 @mark.parametrize(
+    "reattach_count",
+    (
+        param(0, id="reattach:%s"),
+        param(2, id="reattach:%s", marks=mark.reattach),
+    ),
+)
+@mark.parametrize(
     "band, common_scs, bandwidth",
     (
         param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
@@ -43,53 +50,10 @@ def test_android(
     band: int,
     common_scs: int,
     bandwidth: int,
-):
-    """
-    Android Pings
-    """
-
-    _ping(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        ue_array=(ue_1,),
-        gnb=gnb,
-        epc=epc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
-        global_timing_advance=-1,
-        time_alignment_calibration="auto",
-        log_search=False,
-        always_download_artifacts=True,
-    )
-
-
-@mark.parametrize(
-    "reattach_count",
-    (param(2, id="reattach:%s", marks=mark.reattach),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (
-        # param(3, 15, 10, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, marks=mark.android, id="band:%s-scs:%s-bandwidth:%s"),
-    ),
-)
-# pylint: disable=too-many-arguments
-def test_android_reattach(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue_1: UEStub,
-    epc: EPCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
     reattach_count: int,
 ):
     """
-    Android Pings with reattach
+    Android Pings
     """
 
     _ping(
