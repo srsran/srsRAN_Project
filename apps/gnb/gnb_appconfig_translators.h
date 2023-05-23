@@ -16,6 +16,7 @@
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "srsran/ru/ru_generic_configuration.h"
+#include "srsran/ru/ru_configuration.h"
 #include <map>
 #include <vector>
 
@@ -45,6 +46,6 @@ scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& co
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a Radio Unit configuration.
-ru_generic_configuration generate_ru_config(const gnb_appconfig& config);
+ru_configuration generate_ru_config(const gnb_appconfig& config);
 
 } // namespace srsran

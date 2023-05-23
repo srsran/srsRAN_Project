@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/support/srsran_assert.h"
 #include <string>
 
 namespace srsran {
@@ -50,7 +51,38 @@ struct ru_compression_params {
   unsigned data_width;
 };
 
-inline std::string to_string(compression_type c)
+inline compression_type to_compression_type(const std::string& compr)
+{
+  std::string compr_lower = compr;
+  std::transform(compr.begin(), compr.end(), compr_lower.begin(), [](char c) { return std::tolower(c); });
+
+  if (compr_lower == "none") {
+    return compression_type::none;
+  }
+  if (compr_lower == "bfp") {
+    return compression_type::BFP;
+  }
+  if (compr_lower == "bfp selective") {
+    return compression_type::bfp_selective;
+  }
+  if (compr_lower == "block scaling") {
+    return compression_type::block_scaling;
+  }
+  if (compr_lower == "mu law") {
+    return compression_type::mu_law;
+  }
+  if (compr_lower == "modulation") {
+    return compression_type::modulation;
+  }
+  if (compr_lower == "modulation selective") {
+    return compression_type::mod_selective;
+  }
+
+  srsran_assert(0, "Unknown compression method={}", compr);
+  return ofh::compression_type::none;
+}
+
+inline std::string to_string(ofh::compression_type c)
 {
   switch (c) {
     case compression_type::none:

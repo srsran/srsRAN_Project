@@ -52,6 +52,8 @@
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_generic_factory.h"
+#include "srsran/ru/ru_ofh_configuration.h"
+#include "srsran/ru/ru_ofh_factory.h"
 #include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
@@ -133,12 +135,16 @@ struct worker_manager {
   worker_manager(const gnb_appconfig& appcfg)
   {
     lower_phy_thread_profile lower_phy_profile = lower_phy_thread_profile::blocking;
-    if (appcfg.rf_driver_cfg.device_driver != "zmq") {
-      lower_phy_profile = appcfg.expert_phy_cfg.lphy_executor_profile;
+    std::string              driver            = "";
+    if (variant_holds_alternative<ru_gen_appconfig>(appcfg.ru_cfg.ru_cfg)) {
+      const ru_gen_appconfig& gen_cfg = variant_get<ru_gen_appconfig>(appcfg.ru_cfg.ru_cfg);
+      driver                          = gen_cfg.device_driver;
+
+      lower_phy_profile =
+          (driver != "zmq") ? gen_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
     }
 
-    create_executors(
-        appcfg.rf_driver_cfg.device_driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
+    create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
   }
 
   void stop()
@@ -185,6 +191,9 @@ struct worker_manager {
   std::unique_ptr<task_executor> upper_prach_exec;
   std::unique_ptr<task_executor> radio_exec;
   std::unique_ptr<task_executor> ru_printer_exec;
+  std::unique_ptr<task_executor> ru_timing_exec;
+  std::unique_ptr<task_executor> ru_tx_exec;
+  std::unique_ptr<task_executor> ru_rx_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
@@ -233,7 +242,7 @@ private:
                                                            os_thread_realtime_priority::max() - 2,
                                                            os_sched_affinity_bitmask{});
 
-    if (blocking_mode_active) {
+    if (blocking_mode_active || lower_phy_profile == lower_phy_thread_profile::blocking) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
       create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
@@ -242,7 +251,7 @@ private:
           "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
     create_worker("radio", task_worker_queue_size);
-    create_worker("ru_printer_worker", 1);
+    create_worker("ru_stats_worker", 1);
 
     // Instantiate task executors
     cu_cp_exec      = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
@@ -252,7 +261,7 @@ private:
     du_timer_exec   = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
     du_ue_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
     du_cell_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
-    ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_printer_worker"));
+    ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_stats_worker"));
     if (blocking_mode_active) {
       du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
       task_worker& phy_worker = *workers.at("phy_worker");
@@ -319,6 +328,14 @@ private:
     }
 
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
+
+    // RU executors.
+    create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1, os_sched_affinity_bitmask(0));
+    ru_timing_exec = std::make_unique<task_worker_executor>(*workers.at("ru_timing"));
+    create_worker("ru_tx", 128, os_thread_realtime_priority::max() - 3, os_sched_affinity_bitmask(1));
+    ru_tx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_tx"));
+    create_worker("ru_rx", 1, os_thread_realtime_priority::max() - 2, os_sched_affinity_bitmask(3));
+    ru_rx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_rx"));
 
     // Executor mappers.
     du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
@@ -392,12 +409,12 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
   return fapi_config;
 }
 
-/// Resolves the Radio Unit dependencies and adds them to the configuration.
-static void configure_ru_executors_and_notifiers(ru_generic_configuration&           config,
-                                                 srslog::basic_logger&               rf_logger,
-                                                 worker_manager&                     workers,
-                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                                 ru_timing_notifier&                 timing_notifier)
+/// Resolves the generic Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_generic_executors_and_notifiers(ru_generic_configuration&           config,
+                                                         srslog::basic_logger&               rf_logger,
+                                                         worker_manager&                     workers,
+                                                         ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                         ru_timing_notifier&                 timing_notifier)
 {
   config.rf_logger                             = &rf_logger;
   config.radio_exec                            = workers.radio_exec.get();
@@ -409,6 +426,42 @@ static void configure_ru_executors_and_notifiers(ru_generic_configuration&      
   config.statistics_printer_executor           = workers.ru_printer_exec.get();
   config.timing_notifier                       = &timing_notifier;
   config.symbol_notifier                       = &symbol_notifier;
+}
+
+/// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
+                                                     srslog::basic_logger&               rf_logger,
+                                                     worker_manager&                     workers,
+                                                     ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                     ru_timing_notifier&                 timing_notifier)
+{
+  config.logger             = &rf_logger;
+  config.rt_timing_executor = workers.ru_timing_exec.get();
+  config.timing_notifier    = &timing_notifier;
+  config.rx_symbol_notifier = &symbol_notifier;
+
+  // Configure sector.
+  ru_ofh_sector_configuration& sector_cfg = config.sector_configs.front();
+  sector_cfg.receiver_executor            = workers.ru_rx_exec.get();
+  sector_cfg.transmitter_executor         = workers.ru_tx_exec.get();
+}
+
+/// Resolves the Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
+                                                 srslog::basic_logger&               rf_logger,
+                                                 worker_manager&                     workers,
+                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                 ru_timing_notifier&                 timing_notifier)
+{
+  if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
+    configure_ru_ofh_executors_and_notifiers(
+        variant_get<ru_ofh_configuration>(config.config), rf_logger, workers, symbol_notifier, timing_notifier);
+
+    return;
+  }
+
+  configure_ru_generic_executors_and_notifiers(
+      variant_get<ru_generic_configuration>(config.config), rf_logger, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -645,14 +698,19 @@ int main(int argc, char** argv)
   gnb_logger.info("CU-CP started successfully");
 
   // Radio Unit instantiation block.
-  ru_generic_configuration ru_cfg = generate_ru_config(gnb_cfg);
+  ru_configuration ru_cfg = generate_ru_config(gnb_cfg);
 
   upper_ru_ul_adapter     ru_ul_adapt;
   upper_ru_timing_adapter ru_timing_adapt;
 
   configure_ru_executors_and_notifiers(ru_cfg, rf_logger, workers, ru_ul_adapt, ru_timing_adapt);
 
-  auto ru_object = create_generic_ru(ru_cfg);
+  std::unique_ptr<radio_unit> ru_object;
+  if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
+    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config));
+  } else {
+    ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
+  }
   report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
   gnb_logger.info("Radio Unit created successfully");
 

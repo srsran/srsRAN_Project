@@ -95,4 +95,12 @@ struct ru_ofh_configuration {
   float iq_scaling;
 };
 
+/// Returns true if the given Open Fronthaul configuration is valid, otherwise false.
+inline bool is_valid_ru_ofh_config(const ru_ofh_configuration& config)
+{
+  // :TODO: Implement me!
+
+  return true;
+}
+
 } // namespace srsran

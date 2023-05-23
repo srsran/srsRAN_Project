@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
@@ -24,41 +26,6 @@
 #include <vector>
 
 namespace srsran {
-
-/// RF cell driver configuration.
-struct rf_driver_appconfig {
-  /// Sampling frequency in MHz.
-  double srate_MHz = 61.44;
-  /// RF driver name.
-  std::string device_driver = "uhd";
-  /// RF driver arguments.
-  std::string device_arguments = "";
-  /// All transmit channel gain in decibels.
-  double tx_gain_dB = 50.0;
-  /// All receive channel gain in decibels.
-  double rx_gain_dB = 60.0;
-  /// Center frequency offset in hertz applied to all radio channels.
-  double center_freq_offset_Hz = 0.0;
-  /// Clock calibration in Parts Per Million (PPM). It is applied to the carrier frequency.
-  double calibrate_clock_ppm = 0.0;
-  /// LO Offset in MHz. It shifts the LO from the center frequency for moving the LO leakage out of the channel.
-  double lo_offset_MHz = 0.0;
-  /// \brief Rx to Tx radio time alignment calibration in samples.
-  ///
-  /// Compensates for the reception and transmission time misalignment inherent to the RF device. Setting this parameter
-  /// overrides the default calibration, which is dependent on the selected RF device driver. Positive values reduce the
-  /// RF transmission delay with respect to the RF reception. Since the UE receives the DL signal earlier, an incoming
-  /// PRACH will also be detected earlier within the reception window. Negative values have the opposite effect, for
-  /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
-  /// PRACH to be detected 16.3 us later within the reception window.
-  optional<int> time_alignment_calibration;
-  /// Synchronization source.
-  std::string synch_source = "default";
-  /// Clock source.
-  std::string clock_source = "default";
-  /// Over-the wire format. Determines the format in which samples are transported from the radio to the host.
-  std::string otw_format = "default";
-};
 
 /// PRACH application configuration.
 struct prach_appconfig {
@@ -178,8 +145,6 @@ struct base_cell_appconfig {
   pusch_appconfig pusch_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
-  /// Amplitude control configuration.
-  amplitude_control_appconfig amplitude_cfg;
   /// TDD slot configuration.
   optional<tdd_ul_dl_appconfig> tdd_ul_dl_cfg;
 };
@@ -344,10 +309,8 @@ enum class lower_phy_thread_profile {
   quad
 };
 
-/// Expert physical layer configuration.
-struct expert_phy_appconfig {
-  /// Lower physical layer thread profile.
-  lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
+/// Expert upper physical layer configuration.
+struct expert_upper_phy_appconfig {
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
@@ -372,6 +335,124 @@ struct test_mode_appconfig {
   test_mode_ue_appconfig test_ue;
 };
 
+/// Expert generic Radio Unit configuration.
+struct ru_gen_expert_appconfig {
+  /// Lower physical layer thread profile.
+  lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
+};
+
+/// gNB app generic Radio Unit cell configuration.
+struct ru_gen_cell_appconfig {
+  /// Amplitude control configuration.
+  amplitude_control_appconfig amplitude_cfg;
+};
+
+/// gNB app generic Radio Unit configuration.
+struct ru_gen_appconfig {
+  /// Sampling frequency in MHz.
+  double srate_MHz = 61.44;
+  /// RF driver name.
+  std::string device_driver = "uhd";
+  /// RF driver arguments.
+  std::string device_arguments = "";
+  /// All transmit channel gain in decibels.
+  double tx_gain_dB = 50.0;
+  /// All receive channel gain in decibels.
+  double rx_gain_dB = 60.0;
+  /// Center frequency offset in hertz applied to all radio channels.
+  double center_freq_offset_Hz = 0.0;
+  /// Clock calibration in Parts Per Million (PPM). It is applied to the carrier frequency.
+  double calibrate_clock_ppm = 0.0;
+  /// LO Offset in MHz. It shifts the LO from the center frequency for moving the LO leakage out of the channel.
+  double lo_offset_MHz = 0.0;
+  /// \brief Rx to Tx radio time alignment calibration in samples.
+  ///
+  /// Compensates for the reception and transmission time misalignment inherent to the RF device. Setting this parameter
+  /// overrides the default calibration, which is dependent on the selected RF device driver. Positive values reduce the
+  /// RF transmission delay with respect to the RF reception. Since the UE receives the DL signal earlier, an incoming
+  /// PRACH will also be detected earlier within the reception window. Negative values have the opposite effect, for
+  /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
+  /// PRACH to be detected 16.3 us later within the reception window.
+  optional<int> time_alignment_calibration;
+  /// Synchronization source.
+  std::string synch_source = "default";
+  /// Clock source.
+  std::string clock_source = "default";
+  /// Over-the wire format. Determines the format in which samples are transported from the radio to the host.
+  std::string otw_format = "default";
+  /// Expert generic Radio Unit settings.
+  ru_gen_expert_appconfig expert_cfg;
+  /// Generic Radio Unit cells configuration.
+  std::vector<ru_gen_cell_appconfig> cells = {{}};
+};
+
+/// gNB app Open Fronthaul cell configuration.
+struct ru_ofh_cell_appconfig {
+  /// Ethernet network interface name.
+  std::string network_interface = "enp1s0f0";
+  /// Radio Unit MAC address.
+  std::string ru_mac_address = "70:b3:d5:e1:5b:06";
+  /// Distributed Unit MAC address.
+  std::string du_mac_address = "00:11:22:33:00:77";
+  /// V-LAN Tag control information field.
+  uint16_t vlan_tag = 1U;
+  /// RU PRACH port.
+  unsigned ru_prach_port_id = 4U;
+  /// RU Downlink ports.
+  std::vector<unsigned> ru_dl_ports = {0, 1};
+  /// RU Uplink port.
+  unsigned ru_ul_port = 0U;
+};
+
+/// gNB app Open Fronthaul Radio Unit configuration.
+struct ru_ofh_appconfig {
+  /// Sets the maximum allowed processing delay in slots.
+  unsigned max_processing_delay_slots = 2U;
+  /// GPS Alpha - Valid value range: [0, 1.2288e7].
+  unsigned gps_Alpha = 0;
+  /// GPS Beta - Valid value range: [-32768, 32767].
+  int gps_Beta = 0;
+  /// \brief RU operating bandwidth.
+  ///
+  /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
+  optional<bs_channel_bandwidth_fr1> ru_operating_bw;
+  /// T1a maximum parameter for downlink Control-Plane in microseconds.
+  unsigned T1a_max_cp_dl = 500U;
+  /// T1a minimum parameter for downlink Control-Plane in microseconds.
+  unsigned T1a_min_cp_dl = 258U;
+  /// T1a maximum parameter for uplink Control-Plane in microseconds.
+  unsigned T1a_max_cp_ul = 500U;
+  /// T1a minimum parameter for uplink Control-Plane in microseconds.
+  unsigned T1a_min_cp_ul = 285U;
+  /// T1a maximum parameter for downlink User-Plane in microseconds.
+  unsigned T1a_max_up = 300U;
+  /// T1a minimum parameter for downlink User-Plane in microseconds.
+  unsigned T1a_min_up = 85U;
+  /// Enables the Control-Plane PRACH message signalling.
+  bool is_prach_control_plane_enabled = false;
+  /// \brief Downlink broadcast flag.
+  ///
+  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAXCs.
+  bool is_downlink_broadcast_enabled = false;
+  /// Uplink compression method.
+  std::string compression_method_ul = "bfp";
+  /// Uplink compression bitwidth.
+  unsigned compresion_bitwidth_ul = 9;
+  /// Downlink compression method.
+  std::string compression_method_dl = "bfp";
+  /// Downlink compression bitwidth.
+  unsigned compresion_bitwidth_dl = 9;
+  /// IQ data scaling to be applied prior to Downlink data compression.
+  float iq_scaling = 0.35F;
+  /// Individual Open Fronthaul cells configurations.
+  std::vector<ru_ofh_cell_appconfig> cells = {{}};
+};
+
+/// gNB app Radio Unit configuration.
+struct ru_appconfig {
+  variant<ru_gen_appconfig, ru_ofh_appconfig> ru_cfg = {ru_gen_appconfig{}};
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -388,8 +469,8 @@ struct gnb_appconfig {
   amf_appconfig amf_cfg;
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
-  /// RF driver configuration.
-  rf_driver_appconfig rf_driver_cfg;
+  /// Radio Unit configuration.
+  ru_appconfig ru_cfg;
   /// \brief Base cell application configuration.
   ///
   /// \note When a cell is added, it will use the values of this base cell as default values for its base cell
@@ -404,7 +485,7 @@ struct gnb_appconfig {
   std::vector<qos_appconfig> qos_cfg;
 
   /// Expert physical layer configuration.
-  expert_phy_appconfig expert_phy_cfg;
+  expert_upper_phy_appconfig expert_phy_cfg;
 
   /// Configuration for testing purposes.
   test_mode_appconfig test_mode_cfg = {};

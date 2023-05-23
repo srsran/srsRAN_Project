@@ -9,6 +9,7 @@
 #include <map>
 
 using namespace srsran;
+using namespace std::chrono_literals;
 
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
@@ -304,24 +305,28 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
     out_cfg.dft_window_offset          = 0.5F;
     out_cfg.max_processing_delay_slots = 2;
 
-    out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
+    const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
+
+    srsran_assert(ru_cfg.cells.size(), "Error, currently supporting one cell");
+
+    out_cfg.srate = sampling_rate::from_MHz(ru_cfg.srate_MHz);
 
     out_cfg.ta_offset = band_helper::get_ta_offset(
         config.common_cell_cfg.band.has_value() ? *config.common_cell_cfg.band
                                                 : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn));
-    if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
+    if (ru_cfg.time_alignment_calibration.has_value()) {
       // Selects the user specific value.
-      out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
+      out_cfg.time_alignment_calibration = ru_cfg.time_alignment_calibration.value();
     } else {
       // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
       out_cfg.time_alignment_calibration = 0;
     }
 
     // Select buffer size policy.
-    if (config.rf_driver_cfg.device_driver == "zmq") {
+    if (ru_cfg.device_driver == "zmq") {
       out_cfg.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
       out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
-    } else if (config.expert_phy_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
+    } else if (ru_cfg.expert_cfg.lphy_executor_profile == lower_phy_thread_profile::single) {
       // For single executor, the same executor processes uplink and downlink. In this case, the processing is blocked
       // by the signal reception. The buffers must be smaller than a slot duration considering the downlink baseband
       // samples must arrive to the baseband device before the transmission time passes.
@@ -339,13 +344,13 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
 
     // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
     out_cfg.amplitude_config.input_gain_dB =
-        -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - config.common_cell_cfg.amplitude_cfg.gain_backoff_dB;
+        -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - ru_cfg.cells.back().amplitude_cfg.gain_backoff_dB;
 
     // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
     // 0.1 dB of the radio full scale value.
-    out_cfg.amplitude_config.ceiling_dBFS = config.common_cell_cfg.amplitude_cfg.power_ceiling_dBFS;
+    out_cfg.amplitude_config.ceiling_dBFS = ru_cfg.cells.back().amplitude_cfg.power_ceiling_dBFS;
 
-    out_cfg.amplitude_config.enable_clipping = config.common_cell_cfg.amplitude_cfg.enable_clipping;
+    out_cfg.amplitude_config.enable_clipping = ru_cfg.cells.back().amplitude_cfg.enable_clipping;
 
     // Set the full scale amplitude reference to 1.
     out_cfg.amplitude_config.full_scale_lin = 1.0F;
@@ -415,15 +420,17 @@ static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset
 
 static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb_appconfig& config)
 {
-  out_cfg.args             = config.rf_driver_cfg.device_arguments;
-  out_cfg.log_level        = config.log_cfg.radio_level;
-  out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
-  out_cfg.otw_format       = radio_configuration::to_otw_format(config.rf_driver_cfg.otw_format);
-  out_cfg.clock.clock      = radio_configuration::to_clock_source(config.rf_driver_cfg.clock_source);
-  out_cfg.clock.sync       = radio_configuration::to_clock_source(config.rf_driver_cfg.synch_source);
+  const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
 
-  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(config.rf_driver_cfg.device_arguments, "tx_port");
-  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(config.rf_driver_cfg.device_arguments, "rx_port");
+  out_cfg.args             = ru_cfg.device_arguments;
+  out_cfg.log_level        = config.log_cfg.radio_level;
+  out_cfg.sampling_rate_hz = ru_cfg.srate_MHz * 1e6;
+  out_cfg.otw_format       = radio_configuration::to_otw_format(ru_cfg.otw_format);
+  out_cfg.clock.clock      = radio_configuration::to_clock_source(ru_cfg.clock_source);
+  out_cfg.clock.sync       = radio_configuration::to_clock_source(ru_cfg.synch_source);
+
+  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(ru_cfg.device_arguments, "tx_port");
+  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(ru_cfg.device_arguments, "rx_port");
 
   // For each sector...
   for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {
@@ -440,33 +447,31 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
         band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn, cell.band));
 
     // Correct actual RF center frequencies considering offset and PPM calibration.
-    double center_tx_freq_cal_Hz = calibrate_center_freq_Hz(
-        cell_tx_freq_Hz, config.rf_driver_cfg.center_freq_offset_Hz, config.rf_driver_cfg.calibrate_clock_ppm);
-    double center_rx_freq_cal_Hz = calibrate_center_freq_Hz(
-        cell_rx_freq_Hz, config.rf_driver_cfg.center_freq_offset_Hz, config.rf_driver_cfg.calibrate_clock_ppm);
+    double center_tx_freq_cal_Hz =
+        calibrate_center_freq_Hz(cell_tx_freq_Hz, ru_cfg.center_freq_offset_Hz, ru_cfg.calibrate_clock_ppm);
+    double center_rx_freq_cal_Hz =
+        calibrate_center_freq_Hz(cell_rx_freq_Hz, ru_cfg.center_freq_offset_Hz, ru_cfg.calibrate_clock_ppm);
 
     // Calculate actual LO frequencies considering LO frequency offset and the frequency correction.
-    double lo_tx_freq_cal_Hz = calibrate_center_freq_Hz(cell_tx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6,
-                                                        config.rf_driver_cfg.center_freq_offset_Hz,
-                                                        config.rf_driver_cfg.calibrate_clock_ppm);
-    double lo_rx_freq_cal_Hz = calibrate_center_freq_Hz(cell_rx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6,
-                                                        config.rf_driver_cfg.center_freq_offset_Hz,
-                                                        config.rf_driver_cfg.calibrate_clock_ppm);
+    double lo_tx_freq_cal_Hz = calibrate_center_freq_Hz(
+        cell_tx_freq_Hz + ru_cfg.lo_offset_MHz * 1e6, ru_cfg.center_freq_offset_Hz, ru_cfg.calibrate_clock_ppm);
+    double lo_rx_freq_cal_Hz = calibrate_center_freq_Hz(
+        cell_rx_freq_Hz + ru_cfg.lo_offset_MHz * 1e6, ru_cfg.center_freq_offset_Hz, ru_cfg.calibrate_clock_ppm);
 
     // For each DL antenna port in the cell...
     for (unsigned port_id = 0; port_id != cell.nof_antennas_dl; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
       tx_ch_config.freq.center_frequency_hz     = center_tx_freq_cal_Hz;
-      if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
+      if (std::isnormal(ru_cfg.lo_offset_MHz)) {
         tx_ch_config.freq.lo_frequency_hz = lo_tx_freq_cal_Hz;
       } else {
         tx_ch_config.freq.lo_frequency_hz = 0.0;
       }
-      tx_ch_config.gain_dB = config.rf_driver_cfg.tx_gain_dB;
+      tx_ch_config.gain_dB = ru_cfg.tx_gain_dB;
 
       // Add the TX ports.
-      if (config.rf_driver_cfg.device_driver == "zmq") {
+      if (ru_cfg.device_driver == "zmq") {
         if (sector_id * cell.nof_antennas_dl + port_id >= zmq_tx_addr.size()) {
           report_error("ZMQ transmission channel arguments out of bounds\n");
         }
@@ -482,15 +487,15 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel rx_ch_config = {};
       rx_ch_config.freq.center_frequency_hz     = center_rx_freq_cal_Hz;
-      if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
+      if (std::isnormal(ru_cfg.lo_offset_MHz)) {
         rx_ch_config.freq.lo_frequency_hz = lo_rx_freq_cal_Hz;
       } else {
         rx_ch_config.freq.lo_frequency_hz = 0.0;
       }
-      rx_ch_config.gain_dB = config.rf_driver_cfg.rx_gain_dB;
+      rx_ch_config.gain_dB = ru_cfg.rx_gain_dB;
 
       // Add the RX ports.
-      if (config.rf_driver_cfg.device_driver == "zmq") {
+      if (ru_cfg.device_driver == "zmq") {
         if (sector_id * cell.nof_antennas_dl + port_id >= zmq_rx_addr.size()) {
           report_error("ZMQ reception channel arguments out of bounds\n");
         }
@@ -503,13 +508,95 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
   }
 }
 
-ru_generic_configuration srsran::generate_ru_config(const gnb_appconfig& config)
+static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const gnb_appconfig& config)
 {
-  ru_generic_configuration out_cfg;
+  const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
 
   generate_low_phy_config(out_cfg.lower_phy_config, config);
   generate_radio_config(out_cfg.radio_cfg, config);
-  out_cfg.device_driver = config.rf_driver_cfg.device_driver;
+  out_cfg.device_driver = ru_cfg.device_driver;
+}
+
+static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
+{
+  int bytes_read = std::sscanf(mac_str.c_str(),
+                               "%02x:%02x:%02x:%02x:%02x:%02x",
+                               (unsigned*)&mac[0],
+                               (unsigned*)&mac[1],
+                               (unsigned*)&mac[2],
+                               (unsigned*)&mac[3],
+                               (unsigned*)&mac[4],
+                               (unsigned*)&mac[5]);
+  if (bytes_read != ether::ETH_ADDR_LEN) {
+    fmt::print("Invalid MAC address provided: {}", mac_str);
+    return false;
+  }
+  return true;
+}
+
+static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& config)
+{
+  const ru_ofh_appconfig& ru_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg.ru_cfg);
+
+  /// Individual Open Fronthaul sector configurations.
+  std::vector<ru_ofh_sector_configuration> sector_configs;
+  const base_cell_appconfig&               cell = config.cells_cfg.front().cell;
+
+  out_cfg.max_processing_delay_slots     = ru_cfg.max_processing_delay_slots;
+  out_cfg.gps_Alpha                      = ru_cfg.gps_Alpha;
+  out_cfg.gps_Beta                       = ru_cfg.gps_Beta;
+  out_cfg.cp                             = cyclic_prefix::NORMAL;
+  out_cfg.scs                            = cell.common_scs;
+  out_cfg.bw                             = cell.channel_bw_mhz;
+  out_cfg.ru_operating_bw                = ru_cfg.ru_operating_bw;
+  out_cfg.tx_window_timing_params        = {std::chrono::microseconds(ru_cfg.T1a_max_cp_dl),
+                                            std::chrono::microseconds(ru_cfg.T1a_min_cp_dl),
+                                            std::chrono::microseconds(ru_cfg.T1a_max_cp_ul),
+                                            std::chrono::microseconds(ru_cfg.T1a_min_cp_ul),
+                                            std::chrono::microseconds(ru_cfg.T1a_max_up),
+                                            std::chrono::microseconds(ru_cfg.T1a_min_up)};
+  out_cfg.is_prach_control_plane_enabled = ru_cfg.is_prach_control_plane_enabled;
+  out_cfg.is_downlink_broadcast_enabled  = ru_cfg.is_downlink_broadcast_enabled;
+  out_cfg.ul_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_ul),
+                                            ru_cfg.compresion_bitwidth_ul};
+  out_cfg.dl_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_ul),
+                                            ru_cfg.compresion_bitwidth_dl};
+  out_cfg.iq_scaling                     = ru_cfg.iq_scaling;
+
+  // Add one cell.
+  out_cfg.sector_configs.emplace_back();
+  ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
+  const ru_ofh_cell_appconfig& cell_cfg   = ru_cfg.cells.back();
+  sector_cfg.interface                    = cell_cfg.network_interface;
+
+  if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
+    srsran_terminate("Invalid Distributed Unit MAC address");
+  }
+  if (!parse_mac_address(cell_cfg.ru_mac_address, sector_cfg.mac_dst_address)) {
+    srsran_terminate("Invalid Radio Unit MAC address");
+  }
+
+  sector_cfg.tci           = cell_cfg.vlan_tag;
+  sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
+  sector_cfg.ru_ul_port    = cell_cfg.ru_ul_port;
+  sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_ports.begin(), cell_cfg.ru_dl_ports.end());
+
+  if (!is_valid_ru_ofh_config(out_cfg)) {
+    report_error("Invalid Open Fronthaul Radio Unit configuration detected.\n");
+  }
+}
+
+ru_configuration srsran::generate_ru_config(const gnb_appconfig& config)
+{
+  ru_configuration out_cfg;
+
+  if (variant_holds_alternative<ru_gen_appconfig>(config.ru_cfg.ru_cfg)) {
+    ru_generic_configuration& cfg = out_cfg.config.emplace<ru_generic_configuration>();
+    generate_ru_generic_config(cfg, config);
+  } else {
+    ru_ofh_configuration& cfg = out_cfg.config.emplace<ru_ofh_configuration>();
+    generate_ru_ofh_config(cfg, config);
+  }
 
   return out_cfg;
 }

@@ -126,69 +126,8 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
       ->check(CLI::Range(1, 7200));
 }
 
-static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& rf_driver_params)
+static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
-  app.add_option("--srate", rf_driver_params.srate_MHz, "Sample rate in MHz")->capture_default_str();
-  app.add_option("--device_driver", rf_driver_params.device_driver, "Device driver name")->capture_default_str();
-  app.add_option("--device_args", rf_driver_params.device_arguments, "Optional device arguments")
-      ->capture_default_str();
-  app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels")->capture_default_str();
-  app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels")->capture_default_str();
-  app.add_option("--freq_offset", rf_driver_params.center_freq_offset_Hz, "Center frequency offset in hertz")
-      ->capture_default_str();
-  app.add_option("--clock_ppm", rf_driver_params.calibrate_clock_ppm, "Clock calibration in PPM.")
-      ->capture_default_str();
-  app.add_option("--lo_offset", rf_driver_params.lo_offset_MHz, "LO frequency offset in MHz")->capture_default_str();
-  app.add_option("--clock", rf_driver_params.clock_source, "Clock source")->capture_default_str();
-  app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source")->capture_default_str();
-  app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format")->capture_default_str();
-  app.add_option_function<std::string>(
-         "--time_alignment_calibration",
-         [&rf_driver_params](const std::string& value) {
-           if (!value.empty() && value != "auto") {
-             std::stringstream ss(value);
-             int               ta_samples;
-             ss >> ta_samples;
-             rf_driver_params.time_alignment_calibration = ta_samples;
-           }
-         },
-         "Rx to Tx radio time alignment calibration in samples.\n"
-         "Positive values reduce the RF transmission delay with respect\n"
-         "to the RF reception, while negative values increase it")
-      ->check([](const std::string& value) -> std::string {
-        // Check for valid option "auto".
-        if (value == "auto") {
-          return "";
-        }
-
-        // Check for a valid integer number;
-        CLI::TypeValidator<int> IntegerValidator("INTEGER");
-        return IntegerValidator(value);
-      })
-      ->default_str("auto");
-}
-
-static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
-{
-  app.add_option_function<std::string>(
-         "--low_phy_thread_profile",
-         [&expert_phy_params](const std::string& value) {
-           if (value == "single") {
-             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::single;
-           } else if (value == "dual") {
-             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::dual;
-           } else if (value == "quad") {
-             expert_phy_params.lphy_executor_profile = lower_phy_thread_profile::quad;
-           }
-         },
-         "Lower physical layer executor profile [single, dual, quad].")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "single") || (value == "dual") || (value == "quad")) {
-          return "";
-        }
-
-        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
-      });
   app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
       ->capture_default_str()
       ->check(CLI::Number);
@@ -417,10 +356,6 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   CLI::App* prach_subcmd = app.add_subcommand("prach", "PRACH parameters");
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
-  // Amplitude control configuration.
-  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
-  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, cell_params.amplitude_cfg);
-
   // TDD UL DL configuration.
   CLI::App* tdd_ul_dl_subcmd =
       app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
@@ -560,6 +495,266 @@ static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& t
   configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
 }
 
+static void configure_cli11_ru_gen_cells_args(CLI::App& app, ru_gen_cell_appconfig& config)
+{
+  // Amplitude control configuration.
+  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
+  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
+}
+
+static void configure_cli11_ru_gen_expert_args(CLI::App& app, ru_gen_expert_appconfig& config)
+{
+  app.add_option_function<std::string>(
+         "--low_phy_thread_profile",
+         [&config](const std::string& value) {
+           if (value == "single") {
+             config.lphy_executor_profile = lower_phy_thread_profile::single;
+           } else if (value == "dual") {
+             config.lphy_executor_profile = lower_phy_thread_profile::dual;
+           } else if (value == "quad") {
+             config.lphy_executor_profile = lower_phy_thread_profile::quad;
+           }
+         },
+         "Lower physical layer executor profile [single, dual, quad].")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "single") || (value == "dual") || (value == "quad")) {
+          return "";
+        }
+
+        return "Invalid executor profile. Valid profiles are: single, dual and quad.";
+      });
+}
+
+static void configure_cli11_ru_gen_args(CLI::App& app, ru_gen_appconfig& config)
+{
+  app.add_option("--srate", config.srate_MHz, "Sample rate in MHz")->capture_default_str();
+  app.add_option("--device_driver", config.device_driver, "Device driver name")->capture_default_str();
+  app.add_option("--device_args", config.device_arguments, "Optional device arguments")->capture_default_str();
+  app.add_option("--tx_gain", config.tx_gain_dB, "Transmit gain in decibels")->capture_default_str();
+  app.add_option("--rx_gain", config.rx_gain_dB, "Receive gain in decibels")->capture_default_str();
+  app.add_option("--freq_offset", config.center_freq_offset_Hz, "Center frequency offset in hertz")
+      ->capture_default_str();
+  app.add_option("--clock_ppm", config.calibrate_clock_ppm, "Clock calibration in PPM.")->capture_default_str();
+  app.add_option("--lo_offset", config.lo_offset_MHz, "LO frequency offset in MHz")->capture_default_str();
+  app.add_option("--clock", config.clock_source, "Clock source")->capture_default_str();
+  app.add_option("--sync", config.synch_source, "Time synchronization source")->capture_default_str();
+  app.add_option("--otw_format", config.otw_format, "Over-the-wire format")->capture_default_str();
+  app.add_option_function<std::string>(
+         "--time_alignment_calibration",
+         [&config](const std::string& value) {
+           if (!value.empty() && value != "auto") {
+             std::stringstream ss(value);
+             int               ta_samples;
+             ss >> ta_samples;
+             config.time_alignment_calibration = ta_samples;
+           }
+         },
+         "Rx to Tx radio time alignment calibration in samples.\n"
+         "Positive values reduce the RF transmission delay with respect\n"
+         "to the RF reception, while negative values increase it")
+      ->check([](const std::string& value) -> std::string {
+        // Check for valid option "auto".
+        if (value == "auto") {
+          return "";
+        }
+
+        // Check for a valid integer number;
+        CLI::TypeValidator<int> IntegerValidator("INTEGER");
+        return IntegerValidator(value);
+      })
+      ->default_str("auto");
+
+  // Expert configuration.
+  CLI::App* expert_subcmd = app.add_subcommand("expert_cfg", "Generic Radio Unit expert configuration");
+  configure_cli11_ru_gen_expert_args(*expert_subcmd, config.expert_cfg);
+
+  // Cell parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&config](const std::vector<std::string>& values) {
+        config.cells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("RU gen cells");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ru_gen_cells_args(subapp, config.cells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
+}
+
+static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconfig& config)
+{
+  app.add_option("--network_interface", config.network_interface, "Network interface")->capture_default_str();
+  app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
+  app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
+  app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
+  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 65535));
+  app.add_option("--dl_port_id", config.ru_dl_ports, "RU downlink port identifier")->capture_default_str();
+  app.add_option("--ul_port_id", config.ru_ul_port, "RU uplink port identifier")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 65535));
+}
+
+static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
+{
+  app.add_option("--max_proc_delay", config.max_processing_delay_slots, "Maximum allowed processing delay in slots")
+      ->capture_default_str()
+      ->check(CLI::Range(2, 6));
+  app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
+  app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
+
+  app.add_option_function<unsigned>(
+         "--ru_bandwidth_MHz",
+         [&config](unsigned value) { config.ru_operating_bw = MHz_to_bs_channel_bandwidth(value); },
+         "Channel bandwidth in MHz")
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        unsigned          bw;
+        ss >> bw;
+        const std::string& error_message = "Error in the channel bandwidth property. Valid values "
+                                           "[5,10,15,20,25,30,40,50,60,70,80,90,100]";
+        // Bandwidth cannot be less than 5MHz.
+        if (bw < 5U) {
+          return error_message;
+        }
+
+        // Check from [5-25] in steps of 5.
+        if (bw < 26U) {
+          return ((bw % 5) == 0) ? "" : error_message;
+        }
+
+        // Check from [30-100] in steps of 10.
+        if (bw < 101U) {
+          return ((bw % 10) == 0) ? "" : error_message;
+        }
+
+        return error_message;
+      });
+  // Note: For the timing parameters, worst case is 2 slots for scs 15KHz and 14 symbols. Implementation defined.
+  app.add_option("--t1a_max_cp_dl", config.T1a_max_cp_dl, "T1a maximum value for downlink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t1a_min_cp_dl", config.T1a_min_cp_dl, "T1a minimum value for downlink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t1a_max_cp_ul", config.T1a_max_cp_ul, "T1a maximum value for uplink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t1a_min_cp_ul", config.T1a_min_cp_ul, "T1a minimum value for uplink Control-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t1a_max_up", config.T1a_max_up, "T1a maximum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+  app.add_option("--t1a_min_up", config.T1a_min_up, "T1a minimum value for User-Plane")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1960));
+
+  if (config.T1a_min_cp_dl > config.T1a_max_cp_dl) {
+    report_error("Invalid Open Fronthaul Radio Unit configuration detected. T1a maximum value must be greater than "
+                 "minimum value for downlink Control-Plane.\n");
+  }
+  if (config.T1a_min_cp_ul > config.T1a_max_cp_ul) {
+    report_error("Invalid Open Fronthaul Radio Unit configuration detected. T1a maximum value must be greater than "
+                 "minimum value for uplink Control-Plane.\n");
+  }
+  if (config.T1a_min_up > config.T1a_max_up) {
+    report_error("Invalid Open Fronthaul Radio Unit configuration detected. T1a maximum value must be greater than "
+                 "minimum value for User-Plane.\n");
+  }
+
+  app.add_option("--is_prach_cp_enabled", config.is_prach_control_plane_enabled, "PRACH Control-Plane enabled flag")
+      ->capture_default_str();
+  app.add_option("--is_dl_broadcast_enabled", config.is_downlink_broadcast_enabled, "Downlink broadcast enabled flag")
+      ->capture_default_str();
+
+  auto compression_method_check = [](const std::string& value) -> std::string {
+    if (value == "none" || value == "bfp" || value == "bfp selective" || value == "block scaling" ||
+        value == "mu law" || value == "modulation" || value == "modulation selective") {
+      return {};
+    }
+
+    return "Compression method not supported. Accepted values [none, bfp, bfp selective, block scaling, mu law, "
+           "modulation, modulation selective]";
+  };
+
+  app.add_option("--compr_method_ul", config.compression_method_ul, "Uplink compression method")
+      ->capture_default_str()
+      ->check(compression_method_check);
+  app.add_option("--compr_bitwidth_ul", config.compresion_bitwidth_ul, "Uplink compression bit width")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--compr_method_dl", config.compression_method_dl, "Downlink compression method")
+      ->capture_default_str()
+      ->check(compression_method_check);
+  app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 1.0));
+
+  // Cell parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&config](const std::vector<std::string>& values) {
+        config.cells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("RU OFH cells");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ru_ofh_cells_args(subapp, config.cells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
+}
+
+static void configure_cli11_ru_args(CLI::App& app, ru_appconfig& config)
+{
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need to
+  // be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
+  // variable, but as it is requested later, the variable needs to be static.
+  static ru_gen_appconfig gen_cfg;
+  // By default parse the generic Radio Unit configuration.
+  CLI::App* ru_gen_subcmd = app.add_subcommand("ru_gen", "Generic Radio Unit configuration")->configurable();
+  configure_cli11_ru_gen_args(*ru_gen_subcmd, gen_cfg);
+
+  // Check the above note.
+  static ru_ofh_appconfig ofh_cfg;
+  CLI::App* ru_ofh_subcmd = app.add_subcommand("ru_ofh", "Open Fronthaul Radio Unit configuration")->configurable();
+  configure_cli11_ru_ofh_args(*ru_ofh_subcmd, ofh_cfg);
+
+  // Check which Radio Unit configuration was present and update the configuration file.
+  auto ru_ofh_verify_callback = [&]() {
+    unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
+    unsigned nof_gen_entries = app.get_subcommand("ru_gen")->count_all();
+
+    if (nof_gen_entries && nof_ofh_entries) {
+      srsran_terminate("Radio Unit configuration allows either a generic or Open Fronthaul configuration, but not both "
+                       "of them at the same time");
+    }
+
+    if (nof_ofh_entries != 0) {
+      config.ru_cfg = ofh_cfg;
+
+      return;
+    }
+
+    config.ru_cfg = gen_cfg;
+  };
+
+  app.callback(ru_ofh_verify_callback);
+}
+
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
@@ -584,9 +779,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* cu_cp_subcmd = app.add_subcommand("cu_cp", "CU-CP parameters")->configurable();
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
-  // RF section.
-  CLI::App* rf_driver_subcmd = app.add_subcommand("rf_driver", "RF driver parameters")->configurable();
-  configure_cli11_rf_driver_args(*rf_driver_subcmd, gnb_cfg.rf_driver_cfg);
+  // RU section.
+  CLI::App* ru_subcmd = app.add_subcommand("ru_cfg", "Radio Unit configuration")->configurable();
+  configure_cli11_ru_args(*ru_subcmd, gnb_cfg.ru_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();

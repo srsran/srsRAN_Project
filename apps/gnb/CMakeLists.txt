@@ -36,15 +36,14 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 mac_fapi_adaptor_factory
                 phy_fapi_adaptor_factory
                 srsran_fapi
-                srsran_ru_generic
                 srsran_phy_support
                 srsran_lower_phy
                 srsran_upper_phy
                 srsran_signal_processors
                 srsran_channel_processors
                 srsran_channel_equalizer
-                srsran_lower_phy
-                srsran_radio
+                srsran_ru_generic
+                srsran_ru_ofh
                 srsran_pcap
                 srsran_support
                 srsran_version

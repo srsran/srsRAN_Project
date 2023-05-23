@@ -1,19 +1,43 @@
 #include "gnb_appconfig_validators.h"
 #include "srsran/adt/span.h"
+#include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/srslog/logger.h"
 
 using namespace srsran;
 
+/// Validates the given amplitude control application configuration. Returns true on success, otherwise false.
+static bool validate_amplitude_control_appconfig(const amplitude_control_appconfig& config)
+{
+  bool valid = true;
+
+  if (config.gain_backoff_dB < 0.0F) {
+    fmt::print("Invalid gain backoff (i.e., {:.1f} dB). Must be positive or zero.\n", config.gain_backoff_dB);
+    valid = false;
+  }
+  if (config.power_ceiling_dBFS > 0.0F) {
+    fmt::print("Invalid power ceiling (i.e., {:.1f} dBFS). Must be negative or zero.\n", config.power_ceiling_dBFS);
+    valid = false;
+  }
+
+  return valid;
+}
+
 /// Validates the given RU application configuration. Returns true on success, otherwise false.
-static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
+static bool validate_ru_gen_appconfig(const ru_gen_appconfig& config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
     fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
     return false;
+  }
+
+  for (const auto& cell : config.cells) {
+    if (!validate_amplitude_control_appconfig(cell.amplitude_cfg)) {
+      return false;
+    }
   }
 
   return true;
@@ -81,23 +105,6 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   }
 
   return true;
-}
-
-/// Validates the given amplitude control application configuration. Returns true on success, otherwise false.
-static bool validate_amplitude_control_appconfig(const amplitude_control_appconfig& config)
-{
-  bool valid = true;
-
-  if (config.gain_backoff_dB < 0.0F) {
-    fmt::print("Invalid gain backoff (i.e., {:.1f} dB). Must be positive or zero.\n", config.gain_backoff_dB);
-    valid = false;
-  }
-  if (config.power_ceiling_dBFS > 0.0F) {
-    fmt::print("Invalid power ceiling (i.e., {:.1f} dBFS). Must be negative or zero.\n", config.power_ceiling_dBFS);
-    valid = false;
-  }
-
-  return valid;
 }
 
 /// Validates the given TDD UL DL pattern application configuration. Returns true on success, otherwise false.
@@ -229,10 +236,6 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 
   nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
   if (!validate_prach_cell_app_config(config.prach_cfg, band)) {
-    return false;
-  }
-
-  if (!validate_amplitude_control_appconfig(config.amplitude_cfg)) {
     return false;
   }
 
@@ -377,7 +380,7 @@ static bool validate_log_appconfig(const log_appconfig& config)
 }
 
 /// Validates expert physical layer configuration parameters.
-static bool validate_expert_phy_appconfig(const expert_phy_appconfig& config)
+static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
   if (config.pusch_decoder_max_iterations == 0) {
     fmt::print("Maximum PUSCH LDPC decoder iterations cannot be 0.\n");
@@ -404,19 +407,22 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (!validate_rf_driver_appconfig(config.rf_driver_cfg)) {
-    return false;
-  }
-
   if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
     return false;
   }
 
-  if (config.rf_driver_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
-    fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
-               config.rf_driver_cfg.srate_MHz,
-               bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
-    return false;
+  if (variant_holds_alternative<ru_gen_appconfig>(config.ru_cfg.ru_cfg)) {
+    const ru_gen_appconfig& gen_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
+    if (!validate_ru_gen_appconfig(gen_cfg)) {
+      return false;
+    }
+
+    if (gen_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
+      fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
+                 gen_cfg.srate_MHz,
+                 bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
+      return false;
+    }
   }
 
   if (config.gnb_id_bit_length < 22 or config.gnb_id_bit_length > 32) {
