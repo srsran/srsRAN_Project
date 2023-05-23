@@ -189,10 +189,11 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       if (subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR or subpdu.lcid() == lcid_ul_sch_t::SHORT_TRUNC_BSR) {
         bsr_ind.bsr_fmt =
             subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR ? bsr_format::SHORT_BSR : bsr_format::SHORT_TRUNC_BSR;
-        bsr_ind.report = decode_sbsr(subpdu.payload());
+        bsr_ind.lcg_reports.push_back(decode_sbsr(subpdu.payload()));
       } else {
         bsr_ind.bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
-        bsr_ind.report  = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
+        long_bsr_report lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
+        bsr_ind.lcg_reports         = lbsr_report.list;
       }
       sched.handle_ul_bsr_indication(bsr_ind);
     } break;

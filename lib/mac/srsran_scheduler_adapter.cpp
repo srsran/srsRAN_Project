@@ -80,7 +80,7 @@ void srsran_scheduler_adapter::handle_ul_bsr_indication(const mac_bsr_ce_info& b
   ul_bsr_ind.crnti      = bsr.rnti;
   ul_bsr_ind.type       = bsr.bsr_fmt;
   if (bsr.bsr_fmt == bsr_format::SHORT_BSR or bsr.bsr_fmt == bsr_format::SHORT_TRUNC_BSR) {
-    const ul_bsr_lcg_report sched_bsr = make_sched_lcg_report(bsr.get_sbsr(), bsr.bsr_fmt);
+    const ul_bsr_lcg_report sched_bsr = make_sched_lcg_report(bsr.lcg_reports[0], bsr.bsr_fmt);
 
     if (sched_bsr.nof_bytes == 0) {
       // In case SBSR=0, assume all LCGs are 0.
@@ -92,8 +92,7 @@ void srsran_scheduler_adapter::handle_ul_bsr_indication(const mac_bsr_ce_info& b
     }
   } else {
     // Long BSR or Long truncated BSR.
-    const long_bsr_report& lbsr_report = bsr.get_lbsr();
-    for (const lcg_bsr_report& lb : lbsr_report.list) {
+    for (const lcg_bsr_report& lb : bsr.lcg_reports) {
       ul_bsr_ind.reported_lcgs.push_back(make_sched_lcg_report(lb, bsr.bsr_fmt));
     }
   }

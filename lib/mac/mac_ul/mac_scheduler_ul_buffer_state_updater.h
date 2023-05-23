@@ -20,14 +20,12 @@ namespace srsran {
 
 /// \brief Information relative to a decoded MAC CE BSR.
 struct mac_bsr_ce_info {
-  du_cell_index_t                          cell_index;
-  du_ue_index_t                            ue_index;
-  rnti_t                                   rnti;
-  bsr_format                               bsr_fmt;
-  variant<lcg_bsr_report, long_bsr_report> report;
-
-  const lcg_bsr_report&  get_sbsr() const { return variant_get<0>(report); }
-  const long_bsr_report& get_lbsr() const { return variant_get<1>(report); }
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  rnti_t          rnti;
+  bsr_format      bsr_fmt;
+  /// \brief List of BSR reports decoded from the MAC CE BSR for different LCG IDs.
+  lcg_bsr_report_list lcg_reports;
 };
 
 /// \brief Command used by MAC to force the scheduling of an UL grant for a UE in the scheduler.

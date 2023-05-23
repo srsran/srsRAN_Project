@@ -43,45 +43,19 @@ public:
   }
 
   /// Compare last_bsr_msg with a test message passed to the function.
-  void verify_bsr_msg(const ul_bsr_indication_message& test_usr_msg)
-  {
-    EXPECT_EQ(last_bsr_msg->cell_index, test_usr_msg.cell_index);
-    EXPECT_EQ(last_bsr_msg->ue_index, test_usr_msg.ue_index);
-    EXPECT_EQ(last_bsr_msg->rnti, test_usr_msg.crnti);
-    EXPECT_EQ(last_bsr_msg->bsr_fmt, test_usr_msg.type);
-    if (test_usr_msg.type == bsr_format::SHORT_BSR and test_usr_msg.type == bsr_format::SHORT_TRUNC_BSR) {
-      EXPECT_EQ(test_usr_msg.reported_lcgs.size(), 1);
-      EXPECT_EQ(last_bsr_msg->get_sbsr().lcg_id, test_usr_msg.reported_lcgs[0].lcg_id);
-      const unsigned nof_bytes = buff_size_field_to_bytes(last_bsr_msg->get_sbsr().buffer_size, test_usr_msg.type);
-      EXPECT_EQ(nof_bytes, test_usr_msg.reported_lcgs[0].nof_bytes);
-    } else {
-      const long_bsr_report& lcg_list = last_bsr_msg->get_lbsr();
-      EXPECT_EQ(test_usr_msg.reported_lcgs.size(), lcg_list.list.size());
-      for (size_t n = 0; n < test_usr_msg.reported_lcgs.size(); ++n) {
-        EXPECT_EQ(test_usr_msg.reported_lcgs[n].lcg_id, lcg_list.list[n].lcg_id);
-        const unsigned nof_bytes = buff_size_field_to_bytes(lcg_list.list[n].buffer_size, test_usr_msg.type);
-        EXPECT_EQ(test_usr_msg.reported_lcgs[n].nof_bytes, nof_bytes);
-      }
-    }
-  }
-
-  /// Compare last_bsr_msg with a test message passed to the function.
   void verify_bsr_msg(const mac_bsr_ce_info& bsr)
   {
     EXPECT_EQ(last_bsr_msg->cell_index, bsr.cell_index);
     EXPECT_EQ(last_bsr_msg->ue_index, bsr.ue_index);
     EXPECT_EQ(last_bsr_msg->rnti, bsr.rnti);
     EXPECT_EQ(last_bsr_msg->bsr_fmt, bsr.bsr_fmt);
+    EXPECT_EQ(last_bsr_msg->lcg_reports.size(), bsr.lcg_reports.size());
+    for (size_t n = 0; n < bsr.lcg_reports.size(); ++n) {
+      EXPECT_EQ(last_bsr_msg->lcg_reports[n].lcg_id, bsr.lcg_reports[n].lcg_id);
+      EXPECT_EQ(last_bsr_msg->lcg_reports[n].buffer_size, bsr.lcg_reports[n].buffer_size);
+    }
     if (bsr.bsr_fmt == bsr_format::SHORT_BSR or bsr.bsr_fmt == bsr_format::SHORT_TRUNC_BSR) {
-      EXPECT_EQ(last_bsr_msg->get_sbsr().lcg_id, bsr.get_sbsr().lcg_id);
-      EXPECT_EQ(last_bsr_msg->get_sbsr().buffer_size, bsr.get_sbsr().buffer_size);
-    } else {
-      const long_bsr_report& lcg_list = last_bsr_msg->get_lbsr();
-      EXPECT_EQ(lcg_list.list.size(), bsr.get_lbsr().list.size());
-      for (size_t n = 0; n < lcg_list.list.size(); ++n) {
-        EXPECT_EQ(lcg_list.list[n].lcg_id, bsr.get_lbsr().list[n].lcg_id);
-        EXPECT_EQ(lcg_list.list[n].buffer_size, bsr.get_lbsr().list[n].buffer_size);
-      }
+      EXPECT_EQ(last_bsr_msg->lcg_reports.size(), 1);
     }
   }
 };
@@ -149,10 +123,6 @@ struct test_bench {
   bool verify_sched_req_notification(du_ue_index_t ue_index) { return sched_bs_handler.verify_sched_req_msg(ue_index); }
 
   // Call the dummy scheduler to compare the BSR indication with a benchmark message.
-  void verify_sched_bsr_notification(const ul_bsr_indication_message& test_msg)
-  {
-    sched_bs_handler.verify_bsr_msg(test_msg);
-  }
   void verify_sched_bsr_notification(const mac_bsr_ce_info& bsr) { sched_bs_handler.verify_bsr_msg(bsr); }
 
   // Call the dummy DU notifier to compare the UL CCCH indication with a benchmark message.
@@ -278,15 +248,15 @@ TEST(mac_ul_processor, decode_short_bsr)
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
 
   // Create UL BSR indication  message to compare with one passed to the scheduler.
-  ul_bsr_indication_message ul_bsr_ind{};
-  ul_bsr_ind.cell_index = cell_idx;
-  ul_bsr_ind.ue_index   = ue1_idx;
-  ul_bsr_ind.crnti      = ue1_rnti;
-  ul_bsr_ind.type       = bsr_format::SHORT_BSR;
-  ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(2U), .nof_bytes = 28581};
-  ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
+  mac_bsr_ce_info bsr;
+  bsr.cell_index  = cell_idx;
+  bsr.ue_index    = ue1_idx;
+  bsr.rnti        = ue1_rnti;
+  bsr.bsr_fmt     = bsr_format::SHORT_BSR;
+  bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(2U), .buffer_size = 25}};
+
   // Test if notification sent to Scheduler has been received and it is correct.
-  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for MAC CE Short Truncated BSR.
@@ -307,16 +277,15 @@ TEST(mac_ul_processor, decode_short_trunc_bsr)
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
 
   // Create UL BSR indication  message to compare with one passed to the scheduler.
-  ul_bsr_indication_message ul_bsr_ind{};
-  ul_bsr_ind.cell_index = cell_idx;
-  ul_bsr_ind.ue_index   = ue1_idx;
-  ul_bsr_ind.crnti      = ue1_rnti;
-  ul_bsr_ind.type       = bsr_format::SHORT_TRUNC_BSR;
-  ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(5U), .nof_bytes = 745};
-  ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
+  mac_bsr_ce_info bsr;
+  bsr.cell_index  = cell_idx;
+  bsr.ue_index    = ue1_idx;
+  bsr.rnti        = ue1_rnti;
+  bsr.bsr_fmt     = bsr_format::SHORT_TRUNC_BSR;
+  bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(5U), .buffer_size = 14}};
 
   // Test if notification sent to Scheduler has been received and it is correct.
-  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for MAC CE Long BSR.
@@ -336,19 +305,15 @@ TEST(mac_ul_processor, decode_long_bsr)
   // Send RX data indication to MAC UL.
   t_bench.send_rx_indication_msg(ue1_rnti, pdu);
 
-  // Create UL BSR indication  message to compare with one passed to the scheduler.
-  ul_bsr_indication_message ul_bsr_ind{};
-  ul_bsr_ind.cell_index = to_du_cell_index(1);
-  ul_bsr_ind.ue_index   = ue1_idx;
-  ul_bsr_ind.crnti      = ue1_rnti;
-  ul_bsr_ind.type       = bsr_format::LONG_BSR;
-  ul_bsr_lcg_report bsr_report_lcg0{.lcg_id = uint_to_lcg_id(0U), .nof_bytes = 8453028U};
-  ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg0);
-  ul_bsr_lcg_report bsr_report_lcg7{.lcg_id = uint_to_lcg_id(7U), .nof_bytes = 468377U};
-  ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg7);
-
-  // Test if notification sent to Scheduler has been received and it is correct.
-  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
+  // Create UL BSR indication message to compare with one passed to the scheduler.
+  mac_bsr_ce_info bsr;
+  bsr.cell_index  = cell_idx;
+  bsr.ue_index    = ue1_idx;
+  bsr.rnti        = ue1_rnti;
+  bsr.bsr_fmt     = bsr_format::LONG_BSR;
+  bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(0U), .buffer_size = 217},
+                     lcg_bsr_report{.lcg_id = uint_to_lcg_id(7U), .buffer_size = 171}};
+  ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
 }
 
 // Test UL MAC processing of RX indication message with MAC PDU for MAC CE C-RNTI.
@@ -404,11 +369,11 @@ TEST(mac_ul_processor, decode_crnti_ce_and_sbsr)
 
   // Create UL BSR indication message to compare with one passed to the scheduler.
   mac_bsr_ce_info bsr;
-  bsr.cell_index = cell_idx;
-  bsr.ue_index   = ue1_idx;
-  bsr.rnti       = ue1_rnti;
-  bsr.bsr_fmt    = bsr_format::SHORT_BSR;
-  bsr.report     = lcg_bsr_report{.lcg_id = uint_to_lcg_id(2U), .buffer_size = 25};
+  bsr.cell_index  = cell_idx;
+  bsr.ue_index    = ue1_idx;
+  bsr.rnti        = ue1_rnti;
+  bsr.bsr_fmt     = bsr_format::SHORT_BSR;
+  bsr.lcg_reports = {lcg_bsr_report{.lcg_id = uint_to_lcg_id(2U), .buffer_size = 25}};
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(bsr));
 }
 
