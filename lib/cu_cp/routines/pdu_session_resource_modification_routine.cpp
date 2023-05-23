@@ -120,6 +120,17 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
   return bearer_context_modification_response.success;
 }
 
+bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     response_msg,
+                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+                               const cu_cp_pdu_session_resource_modify_request modify_request,
+                               const cu_cp_ue_context_modification_response&   ue_context_modification_response,
+                               const up_config_update&                         next_config,
+                               srslog::basic_logger&                           logger)
+{
+  // TODO: add implementation
+  return ue_context_modification_response.success;
+}
+
 void pdu_session_resource_modification_routine::operator()(
     coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx)
 {
@@ -165,6 +176,25 @@ void pdu_session_resource_modification_routine::operator()(
                                   next_config,
                                   logger) == false) {
       logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
+      CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
+    }
+  }
+
+  {
+    // prepare UE Context Modification Request and call F1 notifier
+    ue_context_mod_request.ue_index = modify_request.ue_index;
+
+    CORO_AWAIT_VALUE(ue_context_modification_response,
+                     f1ap_ue_ctxt_notifier.on_ue_context_modification_request(ue_context_mod_request));
+
+    // Handle UE Context Modification Response
+    if (handle_procedure_response(response_msg,
+                                  bearer_context_modification_request,
+                                  modify_request,
+                                  ue_context_modification_response,
+                                  next_config,
+                                  logger) == false) {
+      logger.error("ue={}: \"{}\" failed to modify UE context at DU.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
