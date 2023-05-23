@@ -52,6 +52,9 @@ public:
     span<const cf_t> data      = data_;
     unsigned         nof_ports = get_max_nof_ports();
 
+    srsran_assert(nof_fd_occasions <= 10, "The number of fd_occasions exceeds 10.");
+    srsran_assert(nof_td_occasions <= 10, "The number of td_occasions exceeds 10.");
+    srsran_assert(sequence_length <= 839, "The sequence length exceeds 839.");
     report_fatal_error_if_not(data.size() == nof_td_occasions * nof_fd_occasions * sequence_length,
                               "The symbols data size is not consistent with the symbol size and number of symbols.");
 
