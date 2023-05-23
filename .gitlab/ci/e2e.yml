@@ -37,7 +37,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.6
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.3.0
 
 .prepare_test:
   before_script:
@@ -234,6 +234,3 @@ retina setup:
 retina post:
   stage: .post
   extends: .demolition
-
-
-  
