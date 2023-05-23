@@ -362,7 +362,10 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
 void du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
-  task_sched.schedule_async_task(cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
+  rrc_ue_interface* rrc_ue = rrc->find_ue(cmd.ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", cmd.ue_index);
+  task_sched.schedule_async_task(
+      cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd, rrc_ue->get_rrc_ue_up_resource_manager()));
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>

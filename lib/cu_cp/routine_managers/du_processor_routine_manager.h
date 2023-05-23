@@ -43,7 +43,8 @@ public:
   start_pdu_session_resource_modification_routine(const cu_cp_pdu_session_resource_modify_request& modify_msg,
                                                   up_resource_manager& rrc_ue_up_resource_manager);
 
-  async_task<void> start_ue_context_release_routine(const cu_cp_ue_context_release_command& command);
+  async_task<void> start_ue_context_release_routine(const cu_cp_ue_context_release_command& command,
+                                                    up_resource_manager&                    rrc_ue_up_resource_manager);
 
 private:
   du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;
