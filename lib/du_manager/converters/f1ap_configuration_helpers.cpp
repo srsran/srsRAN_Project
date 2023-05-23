@@ -562,6 +562,7 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     serv_cell.pci        = cell_cfg.pci;
     serv_cell.tac        = cell_cfg.tac;
     serv_cell.duplx_mode = cell_cfg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD;
+    serv_cell.scs_common = cell_cfg.scs_common;
     serv_cell.dl_carrier = cell_cfg.dl_carrier;
     if (serv_cell.duplx_mode == duplex_mode::FDD) {
       serv_cell.ul_carrier = cell_cfg.ul_carrier;

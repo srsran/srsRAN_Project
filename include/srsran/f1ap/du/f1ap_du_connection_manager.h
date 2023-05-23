@@ -26,6 +26,7 @@ struct f1_cell_setup_params {
   pci_t                           pci;
   uint32_t                        tac;
   duplex_mode                     duplx_mode;
+  subcarrier_spacing              scs_common;
   carrier_configuration           dl_carrier;
   optional<carrier_configuration> ul_carrier;
   byte_buffer                     packed_mib;

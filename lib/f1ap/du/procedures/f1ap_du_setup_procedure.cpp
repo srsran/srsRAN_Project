@@ -84,7 +84,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   setup_req->gnb_du_served_cells_list_present = true;
   setup_req->gnb_du_served_cells_list.value.resize(request.served_cells.size());
   for (unsigned i = 0; i != request.served_cells.size(); ++i) {
-    const auto& cell_cfg = request.served_cells[i];
+    const f1_cell_setup_params& cell_cfg = request.served_cells[i];
     setup_req->gnb_du_served_cells_list.value[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
     gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
 
@@ -102,6 +102,12 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
       tdd.nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
       tdd.nr_freq_info.freq_band_list_nr.resize(1);
       tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
+
+      tdd.tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
+      unsigned nof_crbs      = band_helper::get_n_rbs_from_bw(
+          MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
+      bool res = asn1::number_to_enum(tdd.tx_bw.nr_nrb, nof_crbs);
+      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     } else {
       fdd_info_s& fdd              = f1ap_cell.served_cell_info.nr_mode_info.set_fdd();
       fdd.dl_nr_freq_info.nr_arfcn = cell_cfg.dl_carrier.arfcn;
@@ -110,10 +116,17 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
       fdd.ul_nr_freq_info.nr_arfcn                              = cell_cfg.ul_carrier->arfcn;
       fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
       fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
-      fdd.dl_tx_bw.nr_scs                                       = asn1::f1ap::nr_scs_opts::scs30; // TODO fill.
-      fdd.dl_tx_bw.nr_nrb                                       = asn1::f1ap::nr_nrb_opts::nrb51; // TODO fill.
-      fdd.ul_tx_bw.nr_scs                                       = asn1::f1ap::nr_scs_opts::scs30; // TODO fill.
-      fdd.ul_tx_bw.nr_nrb                                       = asn1::f1ap::nr_nrb_opts::nrb51; // TODO fill.
+
+      fdd.dl_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
+      unsigned nof_dl_crbs      = band_helper::get_n_rbs_from_bw(
+          MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
+      bool res = asn1::number_to_enum(fdd.dl_tx_bw.nr_nrb, nof_dl_crbs);
+      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
+      fdd.ul_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
+      unsigned nof_ul_crbs      = band_helper::get_n_rbs_from_bw(
+          MHz_to_bs_channel_bandwidth(cell_cfg.ul_carrier->carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
+      res = asn1::number_to_enum(fdd.ul_tx_bw.nr_nrb, nof_ul_crbs);
+      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     }
 
     // Add System Information related to the cell.
