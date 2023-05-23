@@ -122,6 +122,7 @@ void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio>  
 
 span<log_likelihood_ratio> ldpc_decoder_avx512::get_rotated_node(unsigned var_node)
 {
+  srsran_assert(var_node <= MAX_BG_CHECK_EDGES, "The value of var_node exceeds MAX_BG_CHECK_EDGES.");
   return span<log_likelihood_ratio>(rotated_var_to_check).subspan(var_node * node_size_byte, node_size_byte);
 }
 

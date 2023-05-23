@@ -235,6 +235,8 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
+  unsigned max_nof_ch_symbols = 156 * 275 * 4;
+  srsran_assert(cfg.nof_ch_symbols <= max_nof_ch_symbols, "The number of symbols exceeds max possible nof symbols.");
   srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
   srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
                 "Wrong number of LLRs {} (expected {}).",

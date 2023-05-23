@@ -206,6 +206,7 @@ void ldpc_decoder_impl::update_soft_bits(unsigned check_node)
                                           last_var_index = current_var_indices.cend();
        (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
        ++this_var_index) {
+    srsran_assert(*this_var_index <= NO_EDGE, "The value of this_var_index exceeds NO_EDGE.");
     unsigned                   node_index = std::min(*this_var_index, bg_N_high_rate) * node_size_byte;
     span<log_likelihood_ratio> this_check_to_var =
         span<log_likelihood_ratio>(check_to_var[check_node]).subspan(node_index, node_size_byte);
@@ -251,6 +252,7 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
   for (const auto* this_var_index_itr = current_var_indices.cbegin();
        (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
        ++this_var_index_itr, ++var_node) {
+    srsran_assert(var_node <= MAX_BG_CHECK_EDGES, "The value of var_node exceeds MAX_BG_CHECK_EDGES.");
     // Rotate the variable node as specified by the base graph.
     unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index_itr);
     unsigned v2c_base_index = std::min(*this_var_index_itr, bg_N_high_rate);
@@ -274,6 +276,7 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
   for (const auto* this_var_index_itr = current_var_indices.cbegin();
        (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
        ++this_var_index_itr, ++var_node) {
+    srsran_assert(var_node <= MAX_BG_CHECK_EDGES, "The value of var_node exceeds MAX_BG_CHECK_EDGES.");
     unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index_itr);
     unsigned c2v_base_index = std::min(*this_var_index_itr, bg_N_high_rate);
 

@@ -145,6 +145,9 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
   unsigned tail_bytes     = node_size_byte - lifting_size;
 
   // Set state variables depending on the codeblock length.
+  srsran_assert(lifting_size <= ldpc::MAX_LIFTING_SIZE, "The lifting_size exceeds ldpc::MAX_LIFTING_SIZE.");
+  srsran_assert(node_size_avx2 <= MAX_NODE_SIZE_AVX2, "The node_size_avx2 exceeds MAX_NODE_SIZE_AVX2.");
+  srsran_assert(codeblock_length <= 26112, "The codeblock length exceeds max_codeblock_length=26112.");
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
   auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
 
