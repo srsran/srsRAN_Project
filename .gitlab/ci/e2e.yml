@@ -218,7 +218,6 @@ android:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: always
-    - if: $ON_MR
   image:
     name: $RETINA_LAUNCHER_IMAGE
     entrypoint: ["/bin/sh", "-c"]
