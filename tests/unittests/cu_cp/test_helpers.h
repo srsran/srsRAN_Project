@@ -161,7 +161,7 @@ public:
 
       // add a QoS flow
       e1ap_qos_flow_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(psi); // Note: use the PSI again as QoS flow ID
+      qos_item.qos_flow_id = uint_to_qos_flow_id(psi + 1); // QoS flow has different ID than i
       drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
 
       // add one UP transport item
