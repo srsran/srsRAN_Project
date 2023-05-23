@@ -61,7 +61,7 @@ static void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, 
     for (unsigned k = 0; k != N; ++k) {
       cf_t sum = 0;
       for (unsigned n = 0; n != N; ++n) {
-        sum += table[(s * n * k) % table.size()] * in[n * s];
+        sum += table[(s * n * k) % table.size()] * in[static_cast<unsigned long>(n) * s];
       }
       out[k] = sum;
     }
