@@ -50,7 +50,6 @@ BITRATE_THRESHOLD: float = 0.1
         param(41, 30, 50, False, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
-@mark.xfail
 # pylint: disable=too-many-arguments
 def test_zmq(
     retina_manager: RetinaTestManager,
@@ -108,7 +107,6 @@ def test_zmq(
         param(41, 30, 10, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
-@mark.xfail
 # pylint: disable=too-many-arguments
 def test_rf_udp(
     retina_manager: RetinaTestManager,
