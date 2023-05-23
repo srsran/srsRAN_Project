@@ -94,6 +94,12 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
 
       // Fill UE context modification for DU
       {
+        // SRB2
+        cu_cp_srbs_to_be_setup_mod_item srb_setup_mod_item;
+        srb_setup_mod_item.srb_id = srb_id_t::srb2;
+        ue_context_mod_request.srbs_to_be_setup_mod_list.emplace(srb_setup_mod_item.srb_id, srb_setup_mod_item);
+
+        // DRB
         cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
         drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
 
@@ -396,7 +402,7 @@ void pdu_session_resource_setup_routine::operator()(
     }
   }
 
-  // Register required DRB resources at DU
+  // Register required SRB and DRB resources at DU
   {
     // prepare UE Context Modification Request and call F1 notifier
     ue_context_mod_request.ue_index = setup_msg.ue_index;
@@ -440,6 +446,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
+    // if default DRB is being setup, SRB2 needs to be setup as well
     {
       for (const auto& pdu_session_to_add : next_config.pdu_sessions_to_setup_list) {
         // Add radio bearer config
@@ -454,6 +461,9 @@ void pdu_session_resource_setup_routine::operator()(
           drb_to_add_mod.cn_assoc = cn_assoc;
 
           cu_cp_radio_bearer_config radio_bearer_config;
+          cu_cp_srb_to_add_mod      srb_to_add_mod = {};
+          srb_to_add_mod.srb_id                    = srb_id_t::srb2;
+          radio_bearer_config.srb_to_add_mod_list.emplace(srb_to_add_mod.srb_id, srb_to_add_mod);
           radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
           rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
         }
