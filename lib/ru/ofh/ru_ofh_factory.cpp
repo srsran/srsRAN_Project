@@ -1,0 +1,107 @@
+/*
+ *
+ * Copyright 2013-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsran/ru/ru_ofh_factory.h"
+#include "ru_ofh_impl.h"
+#include "ru_ofh_rx_symbol_handler_impl.h"
+#include "ru_ofh_timing_handler.h"
+#include "srsran/ofh/ofh_factories.h"
+#include "srsran/ofh/ofh_receiver.h"
+#include "srsran/ofh/transmitter/ofh_transmitter.h"
+#include "srsran/support/error_handling.h"
+
+using namespace srsran;
+
+std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config)
+{
+  report_fatal_error_if_not(config.sector_configs.size() == 1,
+                            "Open FrontHaul interface currently only supports a single sector");
+  report_fatal_error_if_not(config.max_processing_delay_slots >= 1,
+                            "max_processing_delay_slots option should be greater or equal to 1");
+  if (config.ru_operating_bw) {
+    report_fatal_error_if_not(config.ru_operating_bw.value() >= config.bw,
+                              "The RU operating bandwidth should be greater or equal to the bandwidth of the cell");
+  }
+
+  ru_ofh_impl_dependencies ofh_deps;
+
+  // Create UL Rx symbol notifier.
+  ofh_deps.ul_data_notifier = std::make_unique<ru_ofh_rx_symbol_handler_impl>(*config.rx_symbol_notifier);
+
+  // Create sectors.
+  std::vector<ofh::symbol_handler*>               symbol_handlers;
+  std::vector<ofh::ota_symbol_boundary_notifier*> ota_symbol_notifiers;
+  for (const auto& sector_cfg : config.sector_configs) {
+    if (config.is_downlink_broadcast_enabled) {
+      report_fatal_error_if_not(
+          sector_cfg.ru_dl_ports.size() > 1,
+          "Downlink broadcast option only available when the number of downlink ports is more than one");
+    } else {
+      report_fatal_error_if_not(sector_cfg.ru_dl_ports.size() == 1,
+                                "Only one downlink antenna port is currently supported");
+    }
+
+    // Prepare sector configuration.
+    ofh::sector_configuration ofh_sector_config;
+    ofh_sector_config.logger                  = config.logger;
+    ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
+    ofh_sector_config.notifier                = ofh_deps.ul_data_notifier.get();
+    ofh_sector_config.interface               = sector_cfg.interface;
+    ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
+    ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
+    ofh_sector_config.tci                     = sector_cfg.tci;
+    ofh_sector_config.tx_window_timing_params = config.tx_window_timing_params;
+    ofh_sector_config.cp                      = config.cp;
+    ofh_sector_config.scs                     = config.scs;
+    ofh_sector_config.bw                      = config.bw;
+    ofh_sector_config.ru_operating_bw         = config.ru_operating_bw ? config.ru_operating_bw.value() : config.bw;
+    ofh_sector_config.ru_prach_port           = sector_cfg.ru_prach_port;
+    ofh_sector_config.ru_dl_ports             = sector_cfg.ru_dl_ports;
+    ofh_sector_config.ru_ul_port              = sector_cfg.ru_ul_port;
+    ofh_sector_config.is_prach_control_plane_enabled = config.is_prach_control_plane_enabled;
+    ofh_sector_config.is_downlink_broadcast_enabled  = config.is_downlink_broadcast_enabled;
+    ofh_sector_config.ul_compression_params          = config.ul_compression_params;
+    ofh_sector_config.dl_compression_params          = config.dl_compression_params;
+    ofh_sector_config.iq_scaling                     = config.iq_scaling;
+    ofh_sector_config.max_processing_delay_slots     = config.max_processing_delay_slots;
+
+    // Create OFH sector.
+    auto sector = ofh::create_ofh_sector(ofh_sector_config);
+    report_fatal_error_if_not(sector, "Unable to create OFH sector");
+    ofh_deps.sectors.emplace_back(std::move(sector), sector_cfg.transmitter_executor);
+
+    // Add the symbol handlers to the list of handlers.
+    symbol_handlers.push_back(&ofh_deps.sectors.back().first->get_transmitter().get_symbol_handler());
+    ota_symbol_notifiers.push_back(&ofh_deps.sectors.back().first->get_receiver().get_ota_symbol_notifier());
+  }
+
+  // Create OFH OTA symbol notifier.
+  ofh_deps.symbol_notifier =
+      create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
+                                     *config.logger,
+                                     std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
+                                     symbol_handlers,
+                                     ota_symbol_notifiers);
+
+  // Prepare OFH controller configuration.
+  ofh::controller_config controller_cfg;
+  controller_cfg.logger    = config.logger;
+  controller_cfg.notifier  = ofh_deps.symbol_notifier.get();
+  controller_cfg.executor  = config.rt_timing_executor;
+  controller_cfg.cp        = config.cp;
+  controller_cfg.scs       = config.scs;
+  controller_cfg.gps_Alpha = config.gps_Alpha;
+  controller_cfg.gps_Beta  = config.gps_Beta;
+
+  // Create OFH timing controller.
+  ofh_deps.timing_controller = ofh::create_ofh_timing_controller(controller_cfg);
+
+  return std::make_unique<ru_ofh_impl>(*config.logger, std::move(ofh_deps));
+}

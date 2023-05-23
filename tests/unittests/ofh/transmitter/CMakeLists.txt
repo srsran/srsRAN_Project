@@ -1,0 +1,25 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+set_directory_properties(PROPERTIES LABELS "transmitter")
+
+add_executable(ofh_data_flow_uplane_downlink_data_impl_test ofh_data_flow_uplane_downlink_data_impl_test.cpp)
+target_link_libraries(ofh_data_flow_uplane_downlink_data_impl_test srsran_ofh_transmitter srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_data_flow_uplane_downlink_data_impl_test)
+
+add_executable(ofh_downlink_handler_impl_test ofh_downlink_handler_impl_test.cpp)
+target_link_libraries(ofh_downlink_handler_impl_test srsran_ofh_transmitter srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_downlink_handler_impl_test)
+
+add_executable(ofh_uplane_packet_segment_calculator_test ofh_uplane_packet_segment_calculator_test.cpp)
+target_link_libraries(ofh_uplane_packet_segment_calculator_test srsran_ofh_transmitter srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_uplane_packet_segment_calculator_test)
+
+add_executable(ofh_uplink_request_handler_impl_test ofh_uplink_request_handler_impl_test.cpp)
+target_link_libraries(ofh_uplink_request_handler_impl_test srsran_ofh_transmitter srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_uplink_request_handler_impl_test)

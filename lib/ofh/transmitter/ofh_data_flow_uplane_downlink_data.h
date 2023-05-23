@@ -1,0 +1,33 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+namespace srsran {
+struct resource_grid_context;
+class resource_grid_reader;
+
+namespace ofh {
+
+/// Open Fronthaul data flow for User-Plane downlink data.
+class data_flow_uplane_downlink_data
+{
+public:
+  /// Default destructor.
+  virtual ~data_flow_uplane_downlink_data() = default;
+
+  /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
+  virtual void enqueue_section_type_1_message(const resource_grid_context& context,
+                                              const resource_grid_reader&  grid,
+                                              unsigned                     eaxc) = 0;
+};
+
+} // namespace ofh
+} // namespace srsran
