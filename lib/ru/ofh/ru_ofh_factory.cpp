@@ -19,6 +19,39 @@
 
 using namespace srsran;
 
+/// Generates the OFH sector configuration from the common Open FrontHaul configuration.
+static ofh::sector_configuration generate_sector_configuration(const ru_ofh_configuration&        config,
+                                                               const ru_ofh_sector_configuration& sector_cfg,
+                                                               ofh::uplane_rx_symbol_notifier*    notifier)
+{
+  // Prepare sector configuration.
+  ofh::sector_configuration ofh_sector_config;
+
+  ofh_sector_config.logger                  = config.logger;
+  ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
+  ofh_sector_config.notifier                = notifier;
+  ofh_sector_config.interface               = sector_cfg.interface;
+  ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
+  ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
+  ofh_sector_config.tci                     = sector_cfg.tci;
+  ofh_sector_config.tx_window_timing_params = config.tx_window_timing_params;
+  ofh_sector_config.cp                      = config.cp;
+  ofh_sector_config.scs                     = config.scs;
+  ofh_sector_config.bw                      = config.bw;
+  ofh_sector_config.ru_operating_bw         = config.ru_operating_bw ? config.ru_operating_bw.value() : config.bw;
+  ofh_sector_config.ru_prach_port           = sector_cfg.ru_prach_port;
+  ofh_sector_config.ru_dl_ports             = sector_cfg.ru_dl_ports;
+  ofh_sector_config.ru_ul_port              = sector_cfg.ru_ul_port;
+  ofh_sector_config.is_prach_control_plane_enabled = config.is_prach_control_plane_enabled;
+  ofh_sector_config.is_downlink_broadcast_enabled  = config.is_downlink_broadcast_enabled;
+  ofh_sector_config.ul_compression_params          = config.ul_compression_params;
+  ofh_sector_config.dl_compression_params          = config.dl_compression_params;
+  ofh_sector_config.iq_scaling                     = config.iq_scaling;
+  ofh_sector_config.max_processing_delay_slots     = config.max_processing_delay_slots;
+
+  return ofh_sector_config;
+}
+
 std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& config)
 {
   report_fatal_error_if_not(config.sector_configs.size() == 1,
@@ -48,32 +81,9 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                                 "Only one downlink antenna port is currently supported");
     }
 
-    // Prepare sector configuration.
-    ofh::sector_configuration ofh_sector_config;
-    ofh_sector_config.logger                  = config.logger;
-    ofh_sector_config.receiver_executor       = sector_cfg.receiver_executor;
-    ofh_sector_config.notifier                = ofh_deps.ul_data_notifier.get();
-    ofh_sector_config.interface               = sector_cfg.interface;
-    ofh_sector_config.mac_dst_address         = sector_cfg.mac_dst_address;
-    ofh_sector_config.mac_src_address         = sector_cfg.mac_src_address;
-    ofh_sector_config.tci                     = sector_cfg.tci;
-    ofh_sector_config.tx_window_timing_params = config.tx_window_timing_params;
-    ofh_sector_config.cp                      = config.cp;
-    ofh_sector_config.scs                     = config.scs;
-    ofh_sector_config.bw                      = config.bw;
-    ofh_sector_config.ru_operating_bw         = config.ru_operating_bw ? config.ru_operating_bw.value() : config.bw;
-    ofh_sector_config.ru_prach_port           = sector_cfg.ru_prach_port;
-    ofh_sector_config.ru_dl_ports             = sector_cfg.ru_dl_ports;
-    ofh_sector_config.ru_ul_port              = sector_cfg.ru_ul_port;
-    ofh_sector_config.is_prach_control_plane_enabled = config.is_prach_control_plane_enabled;
-    ofh_sector_config.is_downlink_broadcast_enabled  = config.is_downlink_broadcast_enabled;
-    ofh_sector_config.ul_compression_params          = config.ul_compression_params;
-    ofh_sector_config.dl_compression_params          = config.dl_compression_params;
-    ofh_sector_config.iq_scaling                     = config.iq_scaling;
-    ofh_sector_config.max_processing_delay_slots     = config.max_processing_delay_slots;
-
     // Create OFH sector.
-    auto sector = ofh::create_ofh_sector(ofh_sector_config);
+    auto sector =
+        ofh::create_ofh_sector(generate_sector_configuration(config, sector_cfg, ofh_deps.ul_data_notifier.get()));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_deps.sectors.emplace_back(std::move(sector), sector_cfg.transmitter_executor);
 
@@ -84,11 +94,12 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
   // Create OFH OTA symbol notifier.
   ofh_deps.symbol_notifier =
-      create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
-                                     *config.logger,
-                                     std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
-                                     symbol_handlers,
-                                     ota_symbol_notifiers);
+      ofh::create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
+                                          *config.logger,
+                                          std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
+                                          symbol_handlers,
+                                          ota_symbol_notifiers);
+  report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
 
   // Prepare OFH controller configuration.
   ofh::controller_config controller_cfg;
@@ -102,6 +113,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
   // Create OFH timing controller.
   ofh_deps.timing_controller = ofh::create_ofh_timing_controller(controller_cfg);
+  report_fatal_error_if_not(ofh_deps.timing_controller, "Unable to create OFH timing controller");
 
   return std::make_unique<ru_ofh_impl>(*config.logger, std::move(ofh_deps));
 }
