@@ -22,7 +22,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, ue_start_and_attach, ue_stop
+from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach, ue_stop
 
 HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
@@ -216,10 +216,12 @@ def _attach_and_detach_multi_ues(
 
     # Stop and attach half of the UEs while the others are connecting and doing iperf
     for _ in range(reattach_count):
-        ue_stop(ue_array_to_attach)
+        ue_stop(ue_array_to_attach, retina_data)
         ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, epc)
     # final stop will be triggered by teardown
 
     # Stop and validate iperfs
     for ue_attached_info, task, iperf_request in iperf_array:
         iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, BITRATE_THRESHOLD)
+
+    stop(ue_array, gnb, epc, retina_data)

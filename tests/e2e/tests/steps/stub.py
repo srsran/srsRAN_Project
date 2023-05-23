@@ -15,6 +15,8 @@ from typing import Dict, Sequence, Tuple
 
 import grpc
 import pytest
+from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.public import stop_stub
 from retina.protocol.base_pb2 import Empty, PingRequest, PingResponse, StartInfo, String, UEDefinition, UInteger
 from retina.protocol.epc_pb2 import IPerfResponse
 from retina.protocol.epc_pb2_grpc import EPCStub
@@ -137,15 +139,6 @@ def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
             ue_stub.GetDefinition(Empty()).subscriber,
             future.result(),
         )
-
-
-def ue_stop(ue_array: Sequence[UEStub]):
-    """
-    Stop an array of UEs to detach from already running gnb and epc
-    """
-    for ue_stub in ue_array:
-        return_code = ue_stub.Stop(Empty()).value
-        logging.info("UE [%s] stopped with return code %d", id(ue_stub), return_code)
 
 
 def ping(
@@ -290,3 +283,48 @@ def _iperf_dir_to_str(direction):
         IPerfDir.UPLINK: "uplink",
         IPerfDir.BIDIRECTIONAL: "bidirectional",
     }[direction]
+
+
+def stop(
+    ue_array: Sequence[UEStub],
+    gnb: GNBStub,
+    epc: EPCStub,
+    retina_data: RetinaTestData,
+    ue_stop_timeout: int = 0,  # Auto
+    gnb_stop_timeout: int = 0,
+    epc_stop_timeout: int = 0,
+):
+    """
+    Stop ue(s), gnb and epc
+    """
+    error_msg_array = []
+    error_msg_array.append(stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout))
+    error_msg_array.append(stop_stub(epc, "EPC", retina_data, epc_stop_timeout))
+    for index, ue_stub in enumerate(ue_array):
+        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+
+    error_msg_array = list(filter(bool, error_msg_array))
+    if error_msg_array:
+        pytest.fail(
+            f"Stop stage. {error_msg_array[0]}"
+            + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
+        )
+
+
+def ue_stop(
+    ue_array: Sequence[UEStub],
+    retina_data: RetinaTestData,
+    ue_stop_timeout: int = 0,  # Auto
+):
+    """
+    Stop an array of UEs to detach from already running gnb and epc
+    """
+    error_msg_array = []
+    for index, ue_stub in enumerate(ue_array):
+        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+    error_msg_array = list(filter(bool, error_msg_array))
+    if error_msg_array:
+        pytest.fail(
+            f"UE Stop. {error_msg_array[0]}"
+            + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
+        )

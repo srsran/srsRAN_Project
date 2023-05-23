@@ -23,7 +23,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import iperf, start_and_attach
+from .steps.stub import iperf, start_and_attach, stop
 
 TINY_DURATION = 5
 SHORT_DURATION = 20
@@ -274,3 +274,4 @@ def _iperf(
         bitrate,
         BITRATE_THRESHOLD,
     )
+    stop(ue_array, gnb, epc, retina_data)

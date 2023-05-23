@@ -14,6 +14,7 @@ from contextlib import suppress
 from typing import Optional, Sequence, Union
 
 import grpc
+from _pytest.outcomes import Failed
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -23,7 +24,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_network, ue_start_and_attach, ue_stop
+from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop
 
 
 @mark.parametrize(
@@ -144,7 +145,7 @@ def test_zmq_valgrind(
     - Fails only if ue/gnb/epc crashes
     """
 
-    with suppress(grpc.RpcError, AssertionError):
+    with suppress(grpc.RpcError, AssertionError, Failed):
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
@@ -229,7 +230,7 @@ def test_rf_does_not_crash(
     - Fails only if ue/gnb/epc crashes
     """
 
-    with suppress(grpc.RpcError, AssertionError):
+    with suppress(grpc.RpcError, AssertionError, Failed):
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
@@ -266,6 +267,7 @@ def _ping(
     reattach_count: int = 0,
     pre_command: str = "",
     post_command: str = "",
+    gnb_stop_timeout: int = 0,
 ):
     logging.info("Ping Test")
 
@@ -288,9 +290,12 @@ def _ping(
     start_network(ue_array, gnb, epc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
     ping(ue_attach_info_dict, epc, ping_count)
+
     # reattach and repeat if requested
     for _ in range(reattach_count):
-        ue_stop(ue_array)
+        ue_stop(ue_array, retina_data)
         ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
         ping(ue_attach_info_dict, epc, ping_count)
-    # final stop will be triggered by teardown
+
+    # final stop
+    stop(ue_array, gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout)
