@@ -118,7 +118,7 @@ void test_make_dmrs_info_common()
 
       // Verify that for each symbol set [S, S+L) in pdsch_cfg.pdsch_td_alloc_list the function generates the correct
       // struct.
-      for (uint8_t idx = 0; idx < pdsch_cfg.pdsch_td_alloc_list.size(); ++idx) {
+      for (unsigned idx = 0; idx < pdsch_cfg.pdsch_td_alloc_list.size(); ++idx) {
         // Generate dmrs_information to be tested.
         dmrs_information test_dmrs = make_dmrs_info_common(pdsch_cfg, idx, pci, dmrs_typeA_pos);
 
