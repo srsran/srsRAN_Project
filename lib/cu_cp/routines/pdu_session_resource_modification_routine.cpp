@@ -19,11 +19,13 @@ pdu_session_resource_modification_routine::pdu_session_resource_modification_rou
     const cu_cp_pdu_session_resource_modify_request& modify_request_,
     du_processor_e1ap_control_notifier&              e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&           f1ap_ue_ctxt_notif_,
+    du_processor_rrc_ue_control_message_notifier&    rrc_ue_notifier_,
     up_resource_manager&                             rrc_ue_up_resource_manager_,
     srslog::basic_logger&                            logger_) :
   modify_request(modify_request_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
+  rrc_ue_notifier(rrc_ue_notifier_),
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
@@ -95,7 +97,7 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
   }
 }
 
-// \brief Helper function to amend the final PDU session resource modify response.
+// \brief Handle first Bearer Context Modifcation response and prepare subsequent UE context modifcation request.
 bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
                                cu_cp_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
@@ -120,6 +122,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
   return bearer_context_modification_response.success;
 }
 
+// Handle UE context modifcation response and prepare second Bearer Context Modification.
 bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     response_msg,
                                e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
                                const cu_cp_pdu_session_resource_modify_request modify_request,
@@ -127,8 +130,43 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     r
                                const up_config_update&                         next_config,
                                const srslog::basic_logger&                     logger)
 {
-  // TODO: add implementation
+  // Traverse modify list
+  if (update_modify_list(response_msg.pdu_session_res_modify_list,
+                         bearer_ctxt_mod_request,
+                         modify_request.pdu_session_res_modify_items,
+                         ue_context_modification_response,
+                         next_config,
+                         logger) == false) {
+    return false;
+  }
+
   return ue_context_modification_response.success;
+}
+
+// Helper function to fail all requested PDU session.
+void fill_modify_failed_list(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                             const cu_cp_pdu_session_resource_modify_request& modify_request)
+{
+  for (const auto& item : modify_request.pdu_session_res_modify_items) {
+    cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+    failed_item.pdu_session_id                                         = item.pdu_session_id;
+    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::misc;
+    response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+  }
+}
+
+// Handle RRC reconfiguration result
+bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
+                               const cu_cp_pdu_session_resource_modify_request& modify_request,
+                               bool                                             rrc_reconfig_result,
+                               const srslog::basic_logger&                      logger)
+{
+  // Let all PDU sessions fail if response is negative.
+  if (rrc_reconfig_result == false) {
+    fill_modify_failed_list(response_msg, modify_request);
+  }
+
+  return rrc_reconfig_result;
 }
 
 void pdu_session_resource_modification_routine::operator()(
@@ -160,7 +198,7 @@ void pdu_session_resource_modification_routine::operator()(
   }
 
   {
-    // prepare BearerContextModificationRequest
+    // prepare first BearerContextModificationRequest
     bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace(); // initialize fresh message
     fill_initial_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
@@ -195,6 +233,71 @@ void pdu_session_resource_modification_routine::operator()(
                                   next_config,
                                   logger) == false) {
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", modify_request.ue_index, name());
+      CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
+    }
+  }
+
+  // Inform CU-UP about the new TEID for UL F1u traffic
+  {
+    // add remaining fields to BearerContextModificationRequest
+    bearer_context_modification_request.ue_index = modify_request.ue_index;
+
+    // call E1AP procedure and wait for BearerContextModificationResponse
+    CORO_AWAIT_VALUE(bearer_context_modification_response,
+                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+
+    // Handle BearerContextModificationResponse
+    if (handle_procedure_response(response_msg,
+                                  ue_context_mod_request,
+                                  modify_request,
+                                  bearer_context_modification_response,
+                                  next_config,
+                                  logger) == false) {
+      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
+      CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
+    }
+  }
+
+  {
+    // prepare RRC Reconfiguration and call RRC UE notifier
+    {
+      for (const auto& pdu_session_to_modify : next_config.pdu_sessions_to_modify_list) {
+        // Add radio bearer config
+        for (const auto& drb_to_add : pdu_session_to_modify.second.drb_to_add) {
+          cu_cp_drb_to_add_mod drb_to_add_mod;
+          drb_to_add_mod.drb_id   = drb_to_add.first;
+          drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
+
+          // Add CN association and SDAP config
+          cu_cp_cn_assoc cn_assoc;
+          cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
+          drb_to_add_mod.cn_assoc = cn_assoc;
+
+          cu_cp_radio_bearer_config radio_bearer_config;
+          radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
+          rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
+        }
+
+        // set masterCellGroupConfig as received by DU
+        cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
+        rrc_recfg_v1530_ies.master_cell_group =
+            ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
+
+        // append NAS PDUs as received by AMF
+        for (const auto& pdu_session : modify_request.pdu_session_res_modify_items) {
+          if (!pdu_session.nas_pdu.empty()) {
+            rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.nas_pdu.copy());
+          }
+        }
+        rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
+      }
+    }
+
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
+
+    // Handle RRC Reconfiguration result.
+    if (handle_procedure_response(response_msg, modify_request, rrc_reconfig_result, logger) == false) {
+      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }

@@ -194,9 +194,9 @@ bool srsran::srs_cu_cp::update_modify_list(
       return false;
     }
     // Also check if PDU session is included in expected next configuration.
-    if (next_config.pdu_sessions_to_setup_list.find(e1ap_item.pdu_session_id) ==
-        next_config.pdu_sessions_to_setup_list.end()) {
-      logger.error("Didn't expect setup for PDU session {}", e1ap_item.pdu_session_id);
+    if (next_config.pdu_sessions_to_modify_list.find(e1ap_item.pdu_session_id) ==
+        next_config.pdu_sessions_to_modify_list.end()) {
+      logger.error("Didn't expect modification for PDU session {}", e1ap_item.pdu_session_id);
       return false;
     }
 
@@ -224,9 +224,10 @@ bool srsran::srs_cu_cp::update_modify_list(
         // Verify the QoS flow ID is present in original setup message.
         if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
                 e1ap_flow.qos_flow_id) == false) {
-          logger.error("PDU Session Resource setup request doesn't include setup for QoS flow {} in PDU session {}",
-                       e1ap_flow.qos_flow_id,
-                       e1ap_item.pdu_session_id);
+          logger.error(
+              "PDU Session Resource modifify request doesn't include addition for QoS flow {} in PDU session {}",
+              e1ap_flow.qos_flow_id,
+              e1ap_item.pdu_session_id);
           return false;
         }
 
@@ -278,4 +279,90 @@ bool srsran::srs_cu_cp::update_modify_list(
   }
 
   return true;
+}
+
+void fill_e1ap_bearer_context_list(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& e1ap_list,
+    const cu_cp_ue_context_modification_response&                             ue_context_modification_response,
+    const std::map<pdu_session_id_t, up_pdu_session_context_update>&          pdu_sessions_update_list)
+{
+  /// Iterate over all PDU sessions to be updated and match the containing DRBs.
+  for (const auto& pdu_session : pdu_sessions_update_list) {
+    // The modifications are only for this PDU session.
+    e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
+    e1ap_mod_item.pdu_session_id = pdu_session.second.id;
+
+    for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
+      // Only include the DRB if it belongs to the this session.
+      if (pdu_session.second.drb_to_add.find(drb_item.drb_id) != pdu_session.second.drb_to_add.end()) {
+        // DRB belongs to this PDU session
+        e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
+        e1ap_drb_item.drb_id = drb_item.drb_id;
+
+        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+          e1ap_up_params_item e1ap_dl_up_param;
+          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+          e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
+
+          e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
+        }
+        e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
+      }
+    }
+    e1ap_list.emplace(e1ap_mod_item.pdu_session_id, e1ap_mod_item);
+  }
+}
+
+bool srsran::srs_cu_cp::update_modify_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item>&      ngap_response_list,
+    e1ap_bearer_context_modification_request&                                             bearer_ctxt_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
+    const cu_cp_ue_context_modification_response& ue_context_modification_response,
+    const up_config_update&                       next_config,
+    const srslog::basic_logger&                   logger)
+{
+  // Fail procedure if (single) DRB couldn't be setup
+  if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
+    logger.error("Couldn't setup {} DRBs at DU.",
+                 ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
+    return false;
+  }
+
+  // Start with empty message.
+  e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
+      bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
+
+  fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
+                                ue_context_modification_response,
+                                next_config.pdu_sessions_to_modify_list);
+
+#if 0
+  // Let all PDU sessions fail if response is negative.
+  if (ue_context_modification_response.success == false) {
+    fill_response_failed_list(ngap_response_list, ngap_modify_list);
+  }
+#endif
+
+  // TODO: traverse other fields
+
+  return ue_context_modification_response.success;
+}
+
+bool srsran::srs_cu_cp::update_setup_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
+    e1ap_bearer_context_modification_request&                                       bearer_ctxt_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
+    const cu_cp_ue_context_modification_response&                                   ue_context_modification_response,
+    const up_config_update&                                                         next_config,
+    const srslog::basic_logger&                                                     logger)
+{
+  // Start with empty message.
+  e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
+      bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
+
+  fill_e1ap_bearer_context_list(e1ap_bearer_context_mod.pdu_session_res_to_modify_list,
+                                ue_context_modification_response,
+                                next_config.pdu_sessions_to_setup_list);
+
+  return ue_context_modification_response.success;
 }

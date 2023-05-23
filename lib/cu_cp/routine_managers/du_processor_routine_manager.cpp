@@ -51,10 +51,11 @@ du_processor_routine_manager::start_pdu_session_resource_setup_routine(
 async_task<cu_cp_pdu_session_resource_modify_response>
 du_processor_routine_manager::start_pdu_session_resource_modification_routine(
     const cu_cp_pdu_session_resource_modify_request& modify_msg,
+    du_processor_rrc_ue_control_message_notifier&    rrc_ue_ctrl_notifier,
     up_resource_manager&                             rrc_ue_up_resource_manager)
 {
   return launch_async<pdu_session_resource_modification_routine>(
-      modify_msg, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_up_resource_manager, logger);
+      modify_msg, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_ctrl_notifier, rrc_ue_up_resource_manager, logger);
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>

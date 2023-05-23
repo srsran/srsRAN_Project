@@ -101,8 +101,8 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 }
 
 // Helper function to fail all requested PDU session.
-void fill_response_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg)
+void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                            const cu_cp_pdu_session_resource_setup_request& setup_msg)
 {
   for (const auto& item : setup_msg.pdu_session_res_setup_items) {
     cu_cp_pdu_session_res_setup_failed_item failed_item;
@@ -120,7 +120,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                const cu_cp_ue_context_modification_response&   ue_context_modification_response,
                                const up_config_update&                         next_config,
-                               srslog::basic_logger&                           logger)
+                               const srslog::basic_logger&                     logger)
 {
   // Fail procedure if (single) DRB couldn't be setup
   if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
@@ -129,40 +129,18 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
     return false;
   }
 
-  // Start with empty message.
-  e1ap_ng_ran_bearer_context_mod_request& e1ap_bearer_context_mod =
-      bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.emplace();
-
-  /// Iterate over all PDU sessions to be setup and match the containing DRBs.
-  for (const auto& pdu_session : next_config.pdu_sessions_to_setup_list) {
-    // The modifications are only for this PDU session.
-    e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
-    e1ap_mod_item.pdu_session_id = pdu_session.second.id;
-
-    for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
-      // Only include the DRB if it belongs to the this session.
-      if (pdu_session.second.drb_to_add.find(drb_item.drb_id) != pdu_session.second.drb_to_add.end()) {
-        // DRB belongs to this PDU session
-        e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
-        e1ap_drb_item.drb_id = drb_item.drb_id;
-
-        for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
-          e1ap_up_params_item e1ap_dl_up_param;
-
-          e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
-          e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
-
-          e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
-        }
-        e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
-      }
-    }
-    e1ap_bearer_context_mod.pdu_session_res_to_modify_list.emplace(e1ap_mod_item.pdu_session_id, e1ap_mod_item);
+  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                        bearer_ctxt_mod_request,
+                        setup_msg.pdu_session_res_setup_items,
+                        ue_context_modification_response,
+                        next_config,
+                        logger) == false) {
+    return false;
   }
 
   // Let all PDU sessions fail if response is negative.
   if (ue_context_modification_response.success == false) {
-    fill_response_failed_list(response_msg, setup_msg);
+    fill_setup_failed_list(response_msg, setup_msg);
   }
 
   // TODO: traverse other fields
@@ -173,11 +151,11 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
 bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
                                const cu_cp_pdu_session_resource_setup_request& setup_msg,
                                bool                                            rrc_reconfig_result,
-                               srslog::basic_logger&                           logger)
+                               const srslog::basic_logger&                     logger)
 {
   // Let all PDU sessions fail if response is negative.
   if (rrc_reconfig_result == false) {
-    fill_response_failed_list(response_msg, setup_msg);
+    fill_setup_failed_list(response_msg, setup_msg);
   }
 
   return rrc_reconfig_result;

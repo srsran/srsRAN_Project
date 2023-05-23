@@ -36,7 +36,8 @@ protected:
 
   void start_procedure(const cu_cp_pdu_session_resource_modify_request& msg)
   {
-    t = routine_mng->start_pdu_session_resource_modification_routine(msg, *rrc_ue_up_resource_manager);
+    t = routine_mng->start_pdu_session_resource_modification_routine(
+        msg, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
     t_launcher.emplace(t);
   }
 

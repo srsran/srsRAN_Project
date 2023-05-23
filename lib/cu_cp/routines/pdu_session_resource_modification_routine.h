@@ -25,6 +25,7 @@ public:
   pdu_session_resource_modification_routine(const cu_cp_pdu_session_resource_modify_request& modify_request_,
                                             du_processor_e1ap_control_notifier&              e1ap_ctrl_notif_,
                                             du_processor_f1ap_ue_context_notifier&           f1ap_ue_ctxt_notif_,
+                                            du_processor_rrc_ue_control_message_notifier&    rrc_ue_notifier_,
                                             up_resource_manager&  rrc_ue_up_resource_manager_,
                                             srslog::basic_logger& logger_);
 
@@ -43,10 +44,11 @@ private:
 
   up_config_update next_config;
 
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU
-  up_resource_manager&                   rrc_ue_up_resource_manager; // to get RRC DRB config
-  srslog::basic_logger&                  logger;
+  du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier&        f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU
+  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;            // to trigger RRC Reconfiguration at UE
+  up_resource_manager&                          rrc_ue_up_resource_manager; // to get RRC DRB config
+  srslog::basic_logger&                         logger;
 
   // (sub-)routine requests
   e1ap_bearer_context_modification_request    bearer_context_modification_request;
@@ -57,7 +59,8 @@ private:
   cu_cp_pdu_session_resource_modify_response response_msg;                     // Final routine result.
   cu_cp_ue_context_modification_response     ue_context_modification_response; // to inform DU about the new DRBs
   e1ap_bearer_context_modification_response
-      bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+  bool rrc_reconfig_result = false;          // the final UE reconfiguration
 };
 
 } // namespace srs_cu_cp

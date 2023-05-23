@@ -13,6 +13,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/pdcp/pdcp_config.h"
 
 using namespace srsran;
@@ -35,10 +36,26 @@ bool update_setup_list(
     up_resource_manager&    rrc_ue_up_resource_manager,
     srslog::basic_logger&   logger);
 
+bool update_setup_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
+    e1ap_bearer_context_modification_request&                                       bearer_ctxt_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
+    const cu_cp_ue_context_modification_response&                                   ue_context_modification_response,
+    const up_config_update&                                                         next_config,
+    const srslog::basic_logger&                                                     logger);
+
 void update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list);
 
+/// @brief Processes the result of a Bearer Context Modifcation Result's PDU session modify list.
+/// @param ngap_response_list Reference to the final NGAP response
+/// @param ue_context_mod_request Reference to the next request message - a UE context modification.
+/// @param ngap_modify_list Const reference to the original NGAP request
+/// @param e1ap_pdu_session_resource_modify_list Const reference to the response of the previous subprocedure
+/// @param next_config Const reference to the calculated config update
+/// @param logger Reference to the logger.
+/// @return True on success, false otherwise.
 bool update_modify_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>&       ngap_response_list,
     cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
@@ -47,6 +64,22 @@ bool update_modify_list(
                                 e1ap_pdu_session_resource_modify_list,
     const up_config_update&     next_config,
     const srslog::basic_logger& logger);
+
+/// @brief Processes the response of a UE Context Modifcation Request.
+/// @param ngap_response_list Reference to the final NGAP response.
+/// @param ue_context_mod_request Reference to the next request message - a Bearer context modification request.
+/// @param ngap_modify_list Const reference to the original NGAP request
+/// @param ue_context_modification_response Const reference to the response of the UE context modifcation request.
+/// @param next_config Const reference to the calculated config update
+/// @param logger Reference to the logger.
+/// @return True on success, false otherwise.
+bool update_modify_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item>&      ngap_response_list,
+    e1ap_bearer_context_modification_request&                                             bearer_context_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
+    const cu_cp_ue_context_modification_response& ue_context_modification_response,
+    const up_config_update&                       next_config,
+    const srslog::basic_logger&                   logger);
 
 } // namespace srs_cu_cp
 } // namespace srsran
