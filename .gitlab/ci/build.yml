@@ -10,6 +10,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "6"
     file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/srsran_project_packaging
+    ref: "1"
+    file: .gitlab/ci-shared/package.yml
 
 stages:
   - build and unit tests
@@ -581,12 +584,58 @@ not rf and not zmq:
     - launch_tests
     - exit $(find build/apps/ -executable -type f | wc -l)
 
+# Packaging
+
+package:
+  extends: .deb-package
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs: []
+
+install-package:
+  extends: .deb-install
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  script:
+    - gnb --version
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs:
+    - package
+
 # Validate export on, enabled for test vector generation
 
 export on amd64:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 10 minutes
   interruptible: false
   variables:
     COMPILER: gcc
@@ -613,7 +662,7 @@ ubuntu-23.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 10 minutes
+      start_in: 20 minutes
   interruptible: false
   parallel:
     matrix:
@@ -628,7 +677,7 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 20 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -643,7 +692,7 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 40 minutes
   interruptible: false
   parallel:
     matrix:
@@ -658,7 +707,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 40 minutes
+      start_in: 50 minutes
   interruptible: false
   parallel:
     matrix:
