@@ -116,7 +116,7 @@ def ue_start_and_attach(
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
-        ue_stub: ue_stub.WainUntilAttached.future(UInteger(value=attach_timeout)) for ue_stub in ue_array
+        ue_stub: ue_stub.WaitUntilAttached.future(UInteger(value=attach_timeout)) for ue_stub in ue_array
     }
     for ue_stub, task in ue_attach_task_dict.items():
         task.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_attached_ue(_task, _ue_stub))
