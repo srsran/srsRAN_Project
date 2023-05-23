@@ -161,6 +161,7 @@ def test_zmq_valgrind(
             log_search=False,
             always_download_artifacts=True,
             pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=yes --error-exitcode=22",
+            gnb_stop_timeout=60,
         )
 
 
