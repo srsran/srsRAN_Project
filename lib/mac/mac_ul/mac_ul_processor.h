@@ -24,12 +24,14 @@ namespace srsran {
 class mac_ul_processor final : public mac_ul_configurator, public mac_pdu_handler
 {
 public:
-  mac_ul_processor(mac_common_config_t& cfg_, scheduler_feedback_handler& sched_, du_rnti_table& rnti_table_) :
+  mac_ul_processor(mac_common_config_t&                   cfg_,
+                   mac_scheduler_ul_buffer_state_updater& sched,
+                   du_rnti_table&                         rnti_table_) :
     cfg(cfg_),
     logger(cfg.logger),
     rnti_table(rnti_table_),
     ue_manager(rnti_table),
-    pdu_handler(cfg.event_notifier, cfg.ue_exec_mapper, sched_, ue_manager, rnti_table, cfg.pcap)
+    pdu_handler(cfg.event_notifier, cfg.ue_exec_mapper, sched, ue_manager, rnti_table, cfg.pcap)
   {
   }
 

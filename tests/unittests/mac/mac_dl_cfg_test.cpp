@@ -135,7 +135,7 @@ void test_dl_ue_procedure_execution_contexts()
   mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table       rnti_table;
 
-  srs_sched_config_adapter sched_cfg_adapter{cfg};
+  srsran_scheduler_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
   mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);
@@ -184,7 +184,7 @@ void test_dl_ue_procedure_tsan()
   mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table       rnti_table;
 
-  srs_sched_config_adapter sched_cfg_adapter{cfg};
+  srsran_scheduler_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
   mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);

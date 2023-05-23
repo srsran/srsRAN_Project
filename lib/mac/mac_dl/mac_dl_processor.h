@@ -12,7 +12,7 @@
 
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "../mac_ctrl/srs_sched_config_adapter.h"
+#include "../srsran_scheduler_adapter.h"
 #include "mac_cell_processor.h"
 #include "mac_dl_ue_manager.h"
 #include "srsran/mac/mac.h"

@@ -16,6 +16,7 @@
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
+#include "srsran_scheduler_adapter.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/mac/mac_paging_information_handler.h"
@@ -73,7 +74,7 @@ private:
   du_rnti_table rnti_table;
 
   /// Handle used to await scheduler configurations.
-  srs_sched_config_adapter sched_cfg_adapter;
+  std::unique_ptr<mac_scheduler_adapter> sched_cfg_adapter;
 
   /// MAC Scheduler.
   std::unique_ptr<mac_scheduler> sched_obj;
