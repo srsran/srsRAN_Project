@@ -16,14 +16,13 @@ from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import Empty
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import iperf_start, iperf_wait_until_finish, start_and_attach, ue_start_and_attach
+from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, ue_start_and_attach, ue_stop
 
 HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
@@ -170,6 +169,7 @@ def _attach_and_detach_multi_ues(
     time_alignment_calibration: Union[int, str],
     log_search: bool,
     always_download_artifacts: bool,
+    reattach_count: int = 1,
 ):
     logging.info("Attach / Detach Test")
 
@@ -189,7 +189,8 @@ def _attach_and_detach_multi_ues(
         log_search=log_search,
     )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
+    start_network(ue_array, gnb, epc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
 
     ue_array_to_iperf = ue_array[::2]
     ue_array_to_attach = ue_array[1::2]
@@ -213,10 +214,10 @@ def _attach_and_detach_multi_ues(
         )
 
     # Stop and attach half of the UEs while the others are connecting and doing iperf
-    for ue_stub in ue_array_to_attach:
-        ue_stub.Stop(Empty())
-        logging.info("UE [%s] has stopped", id(ue_stub))
-    ue_start_and_attach(ue_array_to_attach, gnb, epc)
+    for _ in range(reattach_count):
+        ue_stop(ue_array_to_attach)
+        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, epc)
+    # final stop will be triggered by teardown
 
     # Stop and validate iperfs
     for ue_attached_info, task, iperf_request in iperf_array:
