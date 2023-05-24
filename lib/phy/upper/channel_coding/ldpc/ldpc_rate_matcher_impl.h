@@ -54,7 +54,7 @@ private:
   /// Base graph.
   ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
   /// Number of systematic bits (including filler bits) in the codeblock.
-  unsigned nof_systematic_bits;
+  unsigned nof_systematic_bits = 0;
   /// Number of filler bits.
   unsigned nof_filler_bits = 0;
   /// Buffer length.

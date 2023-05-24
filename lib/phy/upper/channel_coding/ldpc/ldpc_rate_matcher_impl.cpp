@@ -64,16 +64,16 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t
     BG_N_short   = BG2_N_SHORT;
     BG_K         = BG2_N_FULL - BG2_M;
   } else {
-    srsran_assert(false, "LDPC rate dematching: invalid input length.");
+    srsran_assert(false, "LDPC rate matching: invalid input length.");
   }
   uint16_t lifting_size = block_length / BG_N_short;
   srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
-                "LDPC rate dematching: invalid input length.");
+                "LDPC rate matching: invalid input length.");
 
   // Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.
   nof_systematic_bits = (BG_K - 2) * lifting_size;
   srsran_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
-                "LDPC rate dematching: invalid number of filler bits.");
+                "LDPC rate matching: invalid number of filler bits.");
   nof_filler_bits = cfg.cb_specific.nof_filler_bits;
 
   srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
@@ -118,7 +118,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
       in_index = filler_bits_range.stop();
     }
 
-    // If the input chunk range contains filler bits, limit the chunk to the first filler bit.
+    // Select input chunk interval. Stop the chunk at the first filler bit.
     interval<unsigned> input_chunk_range(in_index, in.size());
     if (input_chunk_range.contains(filler_bits_range.start())) {
       input_chunk_range = {in_index, filler_bits_range.start()};
