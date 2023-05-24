@@ -293,3 +293,20 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_FALSE(was_ue_context_release_complete_sent());
   ASSERT_FALSE(was_ue_removed());
 }
+
+/// Test UE context release request for UE that hasn't received an AMF UE ID yet.
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_ue_context_release_request_is_received_but_no_amf_ue_ngap_id_is_set_then_request_is_ignored)
+{
+  // Test preamble - Only create UE but do not have DL traffic from the AMF.
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
+  create_ue(ue_index);
+
+  // Trigger UE context release request.
+  cu_cp_ue_context_release_request release_request;
+  release_request.ue_index = ue_index;
+  ngap->handle_ue_context_release_request(release_request);
+
+  ASSERT_FALSE(was_ue_context_release_request_sent());
+}
