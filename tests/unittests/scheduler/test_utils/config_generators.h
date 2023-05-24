@@ -49,8 +49,13 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.searchspace0      = 0U;
   sched_req.sib1_payload_size = 101; // Random size.
 
-  sched_req.pucch_guardbands =
-      config_helpers::build_pucch_guardbands_list(config_helpers::make_default_ue_uplink_config(params));
+  pucch_builder_params default_pucch_builder_params     = du_cell_config{}.pucch_cfg;
+  default_pucch_builder_params.nof_ue_pucch_f1_res_harq = 3;
+  default_pucch_builder_params.nof_ue_pucch_f2_res_harq = 6;
+  default_pucch_builder_params.nof_sr_resources         = 2;
+
+  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
+      default_pucch_builder_params, sched_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   if (params.csi_rs_enabled) {
     sched_req.zp_csi_rs_list = config_helpers::make_default_pdsch_config(params).zp_csi_rs_res_list;
