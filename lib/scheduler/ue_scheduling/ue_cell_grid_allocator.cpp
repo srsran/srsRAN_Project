@@ -496,8 +496,15 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
           pdcch->dci, ue_cell_cfg, grant.ss_id, grant.crbs, grant.time_res_index, mcs_tbs_info.value().mcs, rv, h_ul);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      build_dci_f0_1_c_rnti(
-          pdcch->dci, ue_cell_cfg, grant.ss_id, grant.crbs, grant.time_res_index, mcs_tbs_info.value().mcs, rv, h_ul, dai);
+      build_dci_f0_1_c_rnti(pdcch->dci,
+                            ue_cell_cfg,
+                            grant.ss_id,
+                            grant.crbs,
+                            grant.time_res_index,
+                            mcs_tbs_info.value().mcs,
+                            rv,
+                            h_ul,
+                            dai);
       break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");
