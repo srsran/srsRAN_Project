@@ -71,22 +71,6 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
 {
   srsran_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
 
-  printf("F1- HARQ %d\n", user_defined_pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint());
-  printf("F1- SR %d\n", user_defined_pucch_cfg.nof_sr_resources.to_uint());
-  printf("F2- HARQ %d\n", user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint());
-  printf("F1- OCC %s\n", user_defined_pucch_cfg.f1_params.occ_supported ? "true" : "false");
-  printf("F1- intra freq. hopping %s\n", user_defined_pucch_cfg.f1_params.intraslot_freq_hopping ? "true" : "false");
-  printf("F1- nof symbols %d\n", user_defined_pucch_cfg.f1_params.nof_symbols.to_uint());
-  printf("F1- nof CS %d\n", static_cast<unsigned>(user_defined_pucch_cfg.f1_params.nof_cyc_shifts));
-  printf("F2- intra freq. hopping %s\n", user_defined_pucch_cfg.f2_params.intraslot_freq_hopping ? "true" : "false");
-  printf("F2- nof PRBs %d\n", user_defined_pucch_cfg.f2_params.max_nof_rbs);
-  printf("F2- nof symbols %d\n", user_defined_pucch_cfg.f2_params.nof_symbols.to_uint());
-  printf("F2- max code rate %f\n", to_max_code_rate_float(user_defined_pucch_cfg.f2_params.max_code_rate));
-  printf("F2- Max paylaod %s\n",
-         user_defined_pucch_cfg.f2_params.max_payload_bits.has_value()
-             ? std::to_string(user_defined_pucch_cfg.f2_params.max_payload_bits.value()).c_str()
-             : "No payload specified");
-
   // Compute fundamental SR period.
   // TODO: Handle more than one SR period.
   const unsigned sr_period = sr_periodicity_to_slot(default_pucch_cfg.sr_res_list[0].period);
