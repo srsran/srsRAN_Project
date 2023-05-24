@@ -152,6 +152,38 @@ private:
 
 namespace fmt {
 
+// drb_id_t formatter
+template <>
+struct formatter<srsran::drb_id_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::drb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o));
+  }
+};
+
+// srb_id_t formatter
+template <>
+struct formatter<srsran::srb_id_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::srb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "SRB{}", srb_id_to_uint(o));
+  }
+};
+
 // rb_id_t formatter
 template <>
 struct formatter<srsran::rb_id_t> {
@@ -165,10 +197,10 @@ struct formatter<srsran::rb_id_t> {
   auto format(srsran::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (o.is_drb()) {
-      return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o.get_drb_id()));
+      return format_to(ctx.out(), "{}", o.get_drb_id());
     }
     if (o.is_srb()) {
-      return format_to(ctx.out(), "SRB{}", srb_id_to_uint(o.get_srb_id()));
+      return format_to(ctx.out(), "{}", o.get_srb_id());
     }
     return format_to(ctx.out(), "Invalid");
   }
