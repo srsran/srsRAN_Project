@@ -324,6 +324,7 @@ public:
   async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
     logger.info("Received a new RRC reconfiguration request");
+    last_radio_bearer_cfg = msg.radio_bearer_cfg;
 
     return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -338,6 +339,10 @@ public:
     // TODO: Add values
     return user_location_info;
   }
+
+  optional<cu_cp_radio_bearer_config> last_radio_bearer_cfg;
+
+  void reset() { last_radio_bearer_cfg.reset(); }
 
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");

@@ -43,6 +43,19 @@ protected:
 
   bool procedure_ready() const { return t.ready(); }
 
+  // Return SRB IDs that were requested to be added/modified in RRC reconfiguration.
+  std::list<unsigned> rrc_srbs_to_add_mod_in_reconf()
+  {
+    std::list<unsigned> srb_list = {};
+    if (not rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value()) {
+      return srb_list;
+    }
+    for (const auto& item : rrc_ue_ctrl_notifier.last_radio_bearer_cfg->srb_to_add_mod_list) {
+      srb_list.push_back(srb_id_to_uint(item.srb_id));
+    }
+    return srb_list;
+  }
+
   // Return PDU session IDs that failed to be setup.
   std::list<unsigned> pdu_session_res_failed_to_setup()
   {
@@ -90,6 +103,9 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_request_with_unco
 
   // nothing has failed to setup
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
+
+  // SRB2 should not be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_received_then_setup_fails)
@@ -106,6 +122,9 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_setup_failure_receiv
 
   // PDU session resource setup failed.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
+
+  // SRB2 should not be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_received_then_setup_fails)
@@ -121,6 +140,9 @@ TEST_F(pdu_session_resource_setup_test, when_ue_context_modification_failure_rec
 
   // PDU session resource setup failed.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
+
+  // SRB2 should not be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure_received_then_setup_fails)
@@ -152,6 +174,9 @@ TEST_F(pdu_session_resource_setup_test, when_bearer_context_modification_failure
 
   // PDU session resource setup failed.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
+
+  // SRB2 should not be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_fails_then_setup_fails)
@@ -197,6 +222,9 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
   // nothing has failed to setup
   VERIFY_EQUAL(pdu_session_res_setup(), {1});
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
+
+  // SRB2 should be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_session_arrives_then_setup_fails)
@@ -215,11 +243,20 @@ TEST_F(pdu_session_resource_setup_test, when_pdu_session_setup_for_existing_sess
   // nothing has failed to setup
   VERIFY_EQUAL(pdu_session_res_setup(), {1});
 
+  // SRB2 should be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
+
+  // Reset stored SRB information
+  rrc_ue_ctrl_notifier.reset();
+
   // Inject same PDU session resource setup again.
   start_procedure(request);
 
   // 2nd setup attempt failed.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {1});
+
+  // SRB2 should not be setup now
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 /// Test handling of PDU session setup request without any setup item.
@@ -243,6 +280,9 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
   // Empy success and fail list.
   VERIFY_EQUAL(pdu_session_res_setup(), {});
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
+
+  // SRB2 should not be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
 }
 
 /// One PDU session with two QoS flows.
@@ -279,6 +319,9 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos
 
   // One PDU session succeeded to be setup.
   VERIFY_EQUAL(pdu_session_res_setup(), {1});
+
+  // One SRB2 should be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
 }
 
 /// Test with multiple PDU sessions in same request.
@@ -304,6 +347,9 @@ TEST_F(pdu_session_resource_setup_test,
 
   // One PDU session failed to be setup.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {2});
+
+  // One SRB2 should be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
 }
 
 TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_requested_and_both_succeed_setup_succeeds)
@@ -327,6 +373,9 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_two_pdu_sessions_is_reque
 
   // Zero PDU session failed to be setup.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});
+
+  // One SRB2 should be setup
+  VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
 }
 
 /// Test with two consecutive requests. Both with one PDU session.
@@ -352,14 +401,18 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
     // First PDU session setup succeeded.
     VERIFY_EQUAL(pdu_session_res_setup(), {1});
 
+    // One SRB2 should be setup
+    VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {2});
+
     // Verify generated messages can be packed into valid ASN.1 encoded messages
     is_valid_e1ap_message(
         variant_get<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
     is_valid_e1ap_message(e1ap_ctrl_notifier.second_e1ap_request.value());
   }
 
-  // clear stored E1AP requests for next procedure
+  // clear stored E1AP requests/RRC reconf for next procedure
   e1ap_ctrl_notifier.reset();
+  rrc_ue_ctrl_notifier.reset();
 
   {
     // Generate 2nd request for different PDU session ID (we generate a request for two sessions and delete the first)
@@ -425,5 +478,8 @@ TEST_F(pdu_session_resource_setup_test, when_two_consecutive_setups_arrive_beare
 
     // PDU session setup for ID=2 succeeded.
     VERIFY_EQUAL(pdu_session_res_setup(), {2});
+
+    // SRB2 should not be setup again
+    VERIFY_EQUAL(rrc_srbs_to_add_mod_in_reconf(), {});
   }
 }
