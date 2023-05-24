@@ -24,6 +24,7 @@ class ota_symbol_dispatcher : public ota_symbol_boundary_notifier
 {
 public:
   ota_symbol_dispatcher(unsigned                            nof_slot_offset_du_ru_,
+                        unsigned                            nof_symbols_per_slot,
                         srslog::basic_logger&               logger_,
                         std::unique_ptr<timing_notifier>    timing_notifier_,
                         span<symbol_handler*>               symbol_handlers_,
@@ -34,6 +35,8 @@ public:
 
 private:
   const unsigned                             nof_slot_offset_du_ru;
+  const unsigned                             half_slot_symbol;
+  const unsigned                             full_slot_symbol;
   srslog::basic_logger&                      logger;
   std::unique_ptr<timing_notifier>           time_notifier;
   std::vector<symbol_handler*>               symbol_handlers;

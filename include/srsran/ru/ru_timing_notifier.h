@@ -35,8 +35,6 @@ public:
 
   /// \brief Notifies that an uplink full slot has been received and processed by the Radio Unit.
   ///
-  /// After this notification, the lower PHY does not report more uplink receive symbols events for the given context.
-  ///
   /// \param[in] slot Current slot.
   virtual void on_ul_full_slot_boundary(slot_point slot) = 0;
 };

@@ -95,6 +95,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   // Create OFH OTA symbol notifier.
   ofh_deps.symbol_notifier =
       ofh::create_ofh_ota_symbol_notifier(config.max_processing_delay_slots,
+                                          get_nsymb_per_slot(config.cp),
                                           *config.logger,
                                           std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
                                           symbol_handlers,

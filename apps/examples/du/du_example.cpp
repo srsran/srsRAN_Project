@@ -60,8 +60,6 @@ static const cyclic_prefix      cp             = cyclic_prefix::NORMAL;
 static unsigned                 dl_arfcn       = 536020;
 static bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
-static const unsigned max_nof_concurrent_requests = 11;
-
 /// Radio configuration parameters.
 static std::string                               driver_name = "zmq";
 static std::string                               rx_address  = "tcp://localhost:6000";
@@ -73,7 +71,6 @@ static radio_configuration::over_the_wire_format otw_format = radio_configuratio
 static radio_configuration::clock_sources        clock_src  = {};
 static sampling_rate                             srate      = sampling_rate::from_MHz(61.44);
 static int                                       time_alignmemt_calibration = 0;
-static const n_ta_offset                         ta_offset                  = n_ta_offset::n0;
 static double                                    tx_gain                    = 60.0;
 static double                                    rx_gain                    = 70.0;
 

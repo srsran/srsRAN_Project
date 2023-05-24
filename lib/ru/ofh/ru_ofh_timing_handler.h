@@ -24,6 +24,12 @@ public:
   // See interface for documentation.
   void on_tti_boundary(slot_point slot) override { notifier.on_tti_boundary(slot); }
 
+  // See interface for documentation.
+  void on_ul_half_slot_boundary(slot_point slot) override { notifier.on_ul_half_slot_boundary(slot); }
+
+  // See interface for documentation.
+  void on_ul_full_slot_boundary(slot_point slot) override { notifier.on_ul_full_slot_boundary(slot); }
+
 private:
   ru_timing_notifier& notifier;
 };

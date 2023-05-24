@@ -27,8 +27,18 @@ public:
   /// Notifies that the processing of a new slot has started. It indicates in \c slot the next slot available for
   /// transmission.
   ///
-  /// \param[in] context Notification context.
+  /// \param[in] slot Current slot.
   virtual void on_tti_boundary(slot_point slot) = 0;
+
+  /// \brief Notifies that an uplink half slot has been received and processed by the Open Fronthaul.
+  ///
+  /// \param[in] slot Current slot.
+  virtual void on_ul_half_slot_boundary(slot_point slot) = 0;
+
+  /// \brief Notifies that an uplink full slot has been received and processed by the Open Fronthaul.
+  ///
+  /// \param[in] slot Current slot.
+  virtual void on_ul_full_slot_boundary(slot_point slot) = 0;
 };
 
 } // namespace ofh

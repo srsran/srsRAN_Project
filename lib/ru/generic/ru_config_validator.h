@@ -19,7 +19,7 @@ namespace srsran {
 ///
 /// The pointers to baseband gateway, rx symbol notifier, timing notifier and error notifier are not being checked as
 /// the Radio Unit factory still needs to create the adapters and set them in the lower PHY configuration.
-bool is_valid(const ru_generic_configuration& config)
+inline bool is_valid(const ru_generic_configuration& config)
 {
   if (!config.symbol_notifier) {
     return false;

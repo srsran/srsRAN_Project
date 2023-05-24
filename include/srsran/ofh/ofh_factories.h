@@ -81,6 +81,7 @@ std::unique_ptr<controller> create_ofh_timing_controller(const controller_config
 /// Creates an Open Fronthaul OTA symbol notifier.
 std::unique_ptr<ota_symbol_boundary_notifier>
 create_ofh_ota_symbol_notifier(unsigned                            nof_slot_offset_du_ru,
+                               unsigned                            nof_symbols_per_slot,
                                srslog::basic_logger&               logger,
                                std::unique_ptr<timing_notifier>    timing_notifier,
                                span<symbol_handler*>               symbol_handlers,

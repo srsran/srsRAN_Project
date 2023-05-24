@@ -20,8 +20,8 @@ struct lower_phy_configuration;
 class task_executor;
 
 /// Helper class that creates the lower PHY factory using the given configuration.
-std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
-                                                            unsigned                 max_nof_prach_concurrent_requests)
+inline std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
+                                                                   unsigned max_nof_prach_concurrent_requests)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.
