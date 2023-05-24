@@ -23,10 +23,10 @@ using namespace srs_cu_cp;
 class pdu_session_resource_setup_test : public pdu_session_resource_routine_test
 {
 protected:
-  void set_expected_results(const bearer_context_outcome_t& first_e1ap_message_outcome,
-                            const ue_context_outcome_t&     ue_context_modification_outcome,
-                            const bearer_context_outcome_t& second_e1ap_message_outcome,
-                            bool                            rrc_reconfiguration_outcome)
+  void set_expected_results(const bearer_context_outcome_t&      first_e1ap_message_outcome,
+                            const ue_context_outcome_t&          ue_context_modification_outcome,
+                            const bearer_context_outcome_t&      second_e1ap_message_outcome,
+                            const rrc_reconfiguration_outcome_t& rrc_reconfiguration_outcome)
   {
     e1ap_ctrl_notifier.set_first_message_outcome(first_e1ap_message_outcome);
     f1ap_ue_ctxt_notifier.set_ue_context_modification_outcome(ue_context_modification_outcome);
