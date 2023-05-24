@@ -156,7 +156,7 @@ struct e1ap_drb_to_setup_item_ng_ran {
   drb_id_t                                                       drb_id = drb_id_t::invalid;
   sdap_config_t                                                  sdap_cfg;
   e1ap_pdcp_config                                               pdcp_cfg;
-  std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
+  std::vector<e1ap_cell_group_info_item>                         cell_group_info;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> qos_flow_info_to_be_setup;
   optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
   optional<std::chrono::seconds>                                 drb_inactivity_timer;
@@ -264,7 +264,7 @@ struct e1ap_drb_to_setup_mod_item_ng_ran {
   drb_id_t                                                       drb_id = drb_id_t::invalid;
   sdap_config_t                                                  sdap_cfg;
   e1ap_pdcp_config                                               pdcp_cfg;
-  std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
+  std::vector<e1ap_cell_group_info_item>                         cell_group_info;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> flow_map_info;
   optional<e1ap_data_forwarding_info_request>                    drb_data_forwarding_info_request;
   optional<uint16_t>                                             drb_inactivity_timer;
