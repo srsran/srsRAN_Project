@@ -90,6 +90,16 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 }
 
+void cu_cp_test::receive_ngap_dl_info_transfer()
+{
+  // Inject NGAP DL message using random AMF UE ID
+  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t  ran_ue_id        = uint_to_ran_ue_id(0);
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
+  cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
+}
+
 bool cu_cp_test::check_minimal_paging_result()
 {
   if (f1ap_pdu_notifier.last_f1ap_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||

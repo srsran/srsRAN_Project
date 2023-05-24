@@ -38,6 +38,7 @@ protected:
                                  gnb_cu_ue_f1ap_id_t cu_ue_id,
                                  pci_t               pci,
                                  rnti_t              crnti);
+  void receive_ngap_dl_info_transfer();
   bool check_minimal_paging_result();
   bool check_paging_result();
 

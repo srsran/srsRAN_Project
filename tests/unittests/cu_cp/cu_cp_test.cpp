@@ -423,6 +423,7 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
   pci_t               pci      = 0;
   rnti_t              crnti    = to_rnti(0x4601);
   test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
+  receive_ngap_dl_info_transfer();
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -473,6 +474,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   rnti_t              crnti    = to_rnti(0x4601);
   pci_t               pci      = 0;
   test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
+  receive_ngap_dl_info_transfer();
 
   // Attach second UE with RRC Reestablishment Request
   {
@@ -529,6 +531,7 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   rnti_t              crnti    = to_rnti(0x4601);
   pci_t               pci      = 0;
   test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
+  receive_ngap_dl_info_transfer();
 
   // Inject UE Context Release Request
   cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0))
