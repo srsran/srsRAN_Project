@@ -452,6 +452,11 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
     return;
   }
 
+  if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
+    logger.debug("ue={} does not have an AMF UE ID - ignoring release request", msg.ue_index);
+    return;
+  }
+
   ngap_message ngap_msg;
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST);
