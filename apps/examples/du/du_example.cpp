@@ -64,6 +64,8 @@ static bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20
 static std::string                               driver_name = "zmq";
 static std::string                               rx_address  = "tcp://localhost:6000";
 static std::string                               tx_address  = "tcp://*:5000";
+static unsigned                                  num_tx_ant  = 1;
+static unsigned                                  num_rx_ant  = 1;
 static std::string                               device_arguments;
 static std::vector<std::string>                  tx_channel_args;
 static std::vector<std::string>                  rx_channel_args;
@@ -316,7 +318,7 @@ struct worker_manager {
       ctrl_exec,
       ctrl_exec};
   // Downlink Lower PHY task executors.
-  task_worker          lower_dl_task_worker{"low_dl", 1, os_thread_realtime_priority::max()};
+  task_worker          lower_dl_task_worker{"low_dl", 2048, os_thread_realtime_priority::max()};
   task_worker_executor lower_tx_task_executor{{lower_dl_task_worker}};
   task_worker_executor lower_dl_task_executor{{lower_dl_task_worker}};
   // Uplink Lower PHY task executors.
@@ -509,6 +511,10 @@ static fapi::carrier_config generate_carrier_config_tlv()
   fapi_config.ul_grid_size             = {};
   fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
 
+  // Number of transmit and receive antenna ports.
+  fapi_config.num_tx_ant = num_tx_ant;
+  fapi_config.num_rx_ant = num_rx_ant;
+
   return fapi_config;
 }
 
@@ -580,22 +586,30 @@ static void fill_cell_prach_cfg(du_cell_config& cell_cfg)
 static ru_generic_configuration build_ru_config(srslog::basic_logger&               rf_logger,
                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                 ru_timing_notifier&                 timing_notifier,
-                                                worker_manager&                     workers)
+                                                worker_manager&                     workers,
+                                                bool                                is_zmq_used)
 {
   ru_generic_configuration config;
 
-  config.radio_cfg                             = generate_radio_config();
-  config.device_driver                         = driver_name;
-  config.rf_logger                             = &rf_logger;
-  config.lower_phy_config                      = create_lower_phy_configuration();
-  config.timing_notifier                       = &timing_notifier;
-  config.symbol_notifier                       = &symbol_notifier;
-  config.radio_exec                            = &workers.radio_executor;
-  config.lower_phy_config.tx_task_executor     = &workers.lower_tx_task_executor;
-  config.lower_phy_config.rx_task_executor     = &workers.lower_rx_task_executor;
-  config.lower_phy_config.dl_task_executor     = &workers.lower_dl_task_executor;
-  config.lower_phy_config.ul_task_executor     = &workers.lower_ul_task_executor;
-  config.lower_phy_config.prach_async_executor = &workers.lower_prach_executor;
+  config.radio_cfg        = generate_radio_config();
+  config.device_driver    = driver_name;
+  config.rf_logger        = &rf_logger;
+  config.lower_phy_config = create_lower_phy_configuration();
+  config.timing_notifier  = &timing_notifier;
+  config.symbol_notifier  = &symbol_notifier;
+  config.radio_exec       = &workers.radio_executor;
+  config.lower_phy_config.tx_task_executor =
+      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_tx_task_executor;
+  config.lower_phy_config.rx_task_executor =
+      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_rx_task_executor;
+  config.lower_phy_config.dl_task_executor =
+      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_dl_task_executor;
+  config.lower_phy_config.ul_task_executor =
+      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_ul_task_executor;
+  config.lower_phy_config.prach_async_executor =
+      (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.lower_prach_executor;
+
+  config.statistics_printer_executor = &workers.lower_dl_task_executor;
 
   return config;
 }
@@ -631,17 +645,14 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt;
   upper_ru_timing_adapter ru_timing_adapt;
 
+  bool is_zmq_used = driver_name == "zmq";
+
   ru_generic_configuration ru_cfg =
-      build_ru_config(srslog::fetch_basic_logger("Radio", true), ru_ul_adapt, ru_timing_adapt, workers);
+      build_ru_config(srslog::fetch_basic_logger("Radio", true), ru_ul_adapt, ru_timing_adapt, workers, is_zmq_used);
 
   auto ru_object = create_generic_ru(ru_cfg);
   report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
   du_logger.info("Radio Unit created successfully");
-
-  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
-  upper_ru_ul_request_adapter ru_ul_request_adapt;
-  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
-  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
   // Create upper PHY.
   upper_phy_params upper_params;
@@ -649,8 +660,16 @@ int main(int argc, char** argv)
   upper_params.channel_bw_mhz = channel_bw_mhz;
   upper_params.scs            = scs;
 
-  auto upper = create_upper_phy(
-      upper_params, &ru_dl_rg_adapt, &workers.upper_dl_executor, &workers.upper_ul_executor, &ru_ul_request_adapt);
+  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
+  upper_ru_ul_request_adapter ru_ul_request_adapt;
+  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
+  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
+
+  auto upper = create_upper_phy(upper_params,
+                                &ru_dl_rg_adapt,
+                                (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_dl_executor,
+                                (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_ul_executor,
+                                &ru_ul_request_adapt);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   du_logger.info("Upper PHY created successfully");
 
