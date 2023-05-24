@@ -135,7 +135,7 @@ static bool alloc_dl_ue(const ue&                    u,
         continue;
       }
       const search_space_info& ss = ue_cc.cfg().search_space(ss_cfg->id);
-      if (is_retx and ss.get_crnti_dl_dci_format() != ss.get_crnti_dl_dci_format()) {
+      if (is_retx and h->last_alloc_params().dci_cfg_type != ss.get_crnti_dl_dci_format()) {
         continue;
       }
 
@@ -183,15 +183,8 @@ static bool alloc_dl_ue(const ue&                    u,
           are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().rbs.type1().length();
         }
         if (are_crbs_valid) {
-          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h->id,
-                                                                                  ss_cfg->id,
-                                                                                  time_res,
-                                                                                  ue_grant_crbs,
-                                                                                  ss.get_dl_dci_format(),
-                                                                                  agg_lvl,
-                                                                                  mcs_prbs.mcs});
+          const bool res_allocated = pdsch_alloc.allocate_dl_grant(
+              ue_pdsch_grant{&u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, agg_lvl, mcs_prbs.mcs});
           if (res_allocated) {
             return true;
           }
@@ -239,7 +232,7 @@ static bool alloc_ul_ue(const ue&                    u,
       if (ss_cfg->id == to_search_space_id(0)) {
         continue;
       }
-      if (is_retx and ss.get_crnti_ul_dci_format() != ss.get_crnti_ul_dci_format()) {
+      if (is_retx and h->last_tx_params().dci_cfg_type != ss.get_crnti_ul_dci_format()) {
         continue;
       }
 

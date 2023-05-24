@@ -99,7 +99,6 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
                        .ss_id          = to_search_space_id(1),
                        .time_res_index = 0,
                        .crbs           = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
-                       .dci_fmt        = dci_dl_format::f1_0,
                        .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
@@ -131,7 +130,6 @@ TEST_F(ue_grid_allocator_tester,
       .time_res_index = 0,
       .crbs           = {crbs.start(),
                          crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()},
-      .dci_fmt        = dci_dl_format::f1_0,
       .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
