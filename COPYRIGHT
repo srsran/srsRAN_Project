@@ -5,6 +5,12 @@ License:   See LICENSE file
 
 The following files are used within srsRAN:
 
+Files:     docs/doxygen-awesome-sidebar-only.css
+           docs/doxygen-awesome.css
+Copyright: 2021-2022 jothepro
+License:   MIT
+
+
 Files:     external/Backward/backward.hpp
 Copyright: 2013-2017 Google Inc.
 License:   MIT
@@ -25,7 +31,7 @@ Files:     external/fmt/chrono.h
            external/fmt/ranges.h
            external/fmt/format.cc
            external/fmt/os.cc
-Copyright: 2012-2020, Victor Zverovich
+Copyright: 2012-2020 Victor Zverovich
 License:   MIT
 
 
