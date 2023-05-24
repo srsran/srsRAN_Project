@@ -47,27 +47,10 @@ void fill_e1ap_pdu_session_res_to_modify_list(
     const auto&                         pdu_session_cfg = modify_request.pdu_session_res_modify_items[session.id];
     e1ap_pdu_session_res_to_modify_item e1ap_pdu_session_item;
     e1ap_pdu_session_item.pdu_session_id = session.id;
-
-    // Setup new DRBs if needed
-    for (const auto& drb_to_setup : session.drb_to_add) {
-      e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id = drb_to_setup.first;
-      // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
-      e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
-
-      e1ap_cell_group_info_item e1ap_cell_group_item;
-      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-      e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
-
-      for (const auto& request_item : pdu_session_cfg.transfer.qos_flow_add_or_modify_request_list) {
-        e1ap_qos_flow_qos_param_item e1ap_qos_item;
-        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
-      }
-
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
-    }
+    fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
+                           pdu_session_cfg.transfer.qos_flow_add_or_modify_request_list,
+                           session.drb_to_add,
+                           logger);
 
     pdu_session_res_to_modify_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
   }

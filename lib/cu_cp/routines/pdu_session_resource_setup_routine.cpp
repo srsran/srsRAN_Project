@@ -406,7 +406,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 
 void fill_e1ap_pdu_session_res_to_setup_list(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item>& pdu_session_res_to_setup_list,
-    srslog::basic_logger&                                                    logger,
+    const srslog::basic_logger&                                              logger,
     const up_config_update&                                                  next_config,
     const cu_cp_pdu_session_resource_setup_request&                          setup_msg,
     const ue_configuration&                                                  ue_cfg)
@@ -428,28 +428,12 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
     e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
+    fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
+                           pdu_session_cfg.qos_flow_setup_request_items,
+                           session.drb_to_add,
+                           logger);
 
-    for (const auto& drb_to_setup : session.drb_to_add) {
-      e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-      e1ap_drb_setup_item.drb_id = drb_to_setup.first;
-      // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
-      e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
-      fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
-
-      e1ap_cell_group_info_item e1ap_cell_group_item;
-      e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-      e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
-
-      for (const auto& request_item : pdu_session_cfg.qos_flow_setup_request_items) {
-        e1ap_qos_flow_qos_param_item e1ap_qos_item;
-        fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
-      }
-
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
-    }
-
-    pdu_session_res_to_setup_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
+    pdu_session_res_to_setup_list.emplace(e1ap_pdu_session_item.pdu_session_id, e1ap_pdu_session_item);
   }
 }
 

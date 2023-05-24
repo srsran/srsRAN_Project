@@ -164,6 +164,33 @@ bool srsran::srs_cu_cp::update_setup_list(
   return true;
 }
 
+void srsran::srs_cu_cp::fill_drb_to_setup_list(
+    slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>&          e1ap_drb_to_setup_list,
+    const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
+    const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
+    const srslog::basic_logger&                                          logger)
+{
+  for (const auto& drb_to_setup : drb_to_add_list) {
+    e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
+    e1ap_drb_setup_item.drb_id = drb_to_setup.first;
+    // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
+    e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
+    fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
+
+    e1ap_cell_group_info_item e1ap_cell_group_item;
+    e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
+    e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
+
+    for (const auto& request_item : qos_flow_list) {
+      e1ap_qos_flow_qos_param_item e1ap_qos_item;
+      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
+      e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+    }
+
+    e1ap_drb_to_setup_list.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
+  }
+}
+
 void srsran::srs_cu_cp::update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
