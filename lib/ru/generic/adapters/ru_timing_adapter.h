@@ -18,9 +18,6 @@ namespace srsran {
 /// Implements a generic lower physical layer to Radio Unit timing adapter.
 class ru_timing_adapter : public lower_phy_timing_notifier
 {
-private:
-  ru_timing_notifier& timing_handler;
-
 public:
   explicit ru_timing_adapter(ru_timing_notifier& timing_handler_) : timing_handler(timing_handler_) {}
 
@@ -31,10 +28,19 @@ public:
   }
 
   // See interface for documentation.
-  void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override {}
+  void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override
+  {
+    timing_handler.on_ul_half_slot_boundary(context.slot);
+  }
 
   // See interface for documentation.
-  void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override {}
+  void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override
+  {
+    timing_handler.on_ul_full_slot_boundary(context.slot);
+  }
+
+private:
+  ru_timing_notifier& timing_handler;
 };
 
 } // namespace srsran

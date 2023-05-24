@@ -19,9 +19,6 @@ namespace srsran {
 /// Implements a generic lower physical layer to Radio Unit receive symbol adapter.
 class ru_rx_symbol_adapter : public lower_phy_rx_symbol_notifier
 {
-private:
-  ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler;
-
 public:
   explicit ru_rx_symbol_adapter(ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler_) :
     rx_symbol_handler(rx_symbol_handler_)
@@ -45,7 +42,18 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override {}
+  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
+  {
+    ru_uplink_rx_symbol_context upper_context;
+    upper_context.slot      = context.slot;
+    upper_context.sector    = context.sector;
+    upper_context.symbol_id = context.nof_symbols;
+    
+    rx_symbol_handler.on_rx_srs_symbol(upper_context);
+  }
+
+private:
+  ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler;
 };
 
 } // namespace srsran

@@ -45,6 +45,7 @@ std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configurat
   // Create OFDM PRACH demodulator factory.
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
       create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate);
+  report_fatal_error_if_not(prach_demodulator_factory, "Failed to create PRACH demodulator factory.");
 
   // Create PDxCH processor factory.
   std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =

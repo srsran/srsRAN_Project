@@ -14,7 +14,7 @@
 #include "adapters/rx_symbol_adapter.h"
 #include "ru_controller_generic_impl.h"
 #include "ru_downlink_handler_generic_impl.h"
-#include "ru_radio_notifier_sample.h"
+#include "ru_radio_notifier_handler.h"
 #include "ru_uplink_request_handler_generic_impl.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"

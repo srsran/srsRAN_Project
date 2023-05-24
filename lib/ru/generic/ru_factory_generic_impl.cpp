@@ -11,7 +11,7 @@
 #include "lower_phy_factory.h"
 #include "ru_config_validator.h"
 #include "ru_generic_impl.h"
-#include "ru_radio_notifier_sample.h"
+#include "ru_radio_notifier_handler.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/ru/ru_generic_factory.h"

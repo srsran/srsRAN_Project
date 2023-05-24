@@ -391,11 +391,11 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
 }
 
 /// Resolves the Radio Unit dependencies and adds them to the configuration.
-static void resolve_ru_dependencies(ru_generic_configuration&           config,
-                                    srslog::basic_logger&               rf_logger,
-                                    worker_manager&                     workers,
-                                    ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
-                                    ru_timing_notifier&                 timing_notifier)
+static void configure_ru_executors_and_notifiers(ru_generic_configuration&           config,
+                                                 srslog::basic_logger&               rf_logger,
+                                                 worker_manager&                     workers,
+                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                 ru_timing_notifier&                 timing_notifier)
 {
   config.rf_logger                             = &rf_logger;
   config.radio_exec                            = workers.radio_exec.get();
@@ -647,7 +647,7 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt;
   upper_ru_timing_adapter ru_timing_adapt;
 
-  resolve_ru_dependencies(ru_cfg, rf_logger, workers, ru_ul_adapt, ru_timing_adapt);
+  configure_ru_executors_and_notifiers(ru_cfg, rf_logger, workers, ru_ul_adapt, ru_timing_adapt);
 
   auto ru_object = create_generic_ru(ru_cfg);
   report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
