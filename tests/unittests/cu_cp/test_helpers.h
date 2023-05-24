@@ -90,13 +90,6 @@ struct bearer_context_outcome_t {
   std::list<unsigned> pdu_sessions_failed_list;  // List of PDU sessions IDs that failed to be setup.
 };
 
-// Stuct to configure RRC reconfiguration outcome result content.
-struct rrc_reconfiguration_outcome_t {
-  bool                outcome = false;
-  std::list<unsigned> srbs_to_add_mod; // List of SRB IDs that were requested to add mod.
-  std::list<unsigned> drbs_to_add_mod; // List of DRB IDs that were requested to add mod.
-};
-
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
   dummy_du_processor_e1ap_control_notifier() = default;
@@ -316,10 +309,7 @@ struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_
 public:
   dummy_du_processor_rrc_ue_control_message_notifier() = default;
 
-  void set_rrc_reconfiguration_outcome(const rrc_reconfiguration_outcome_t& outcome)
-  {
-    rrc_reconfiguration_outcome = outcome;
-  }
+  void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
   async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
   {
@@ -350,9 +340,9 @@ public:
   }
 
 private:
-  srslog::basic_logger&         logger                      = srslog::fetch_basic_logger("TEST");
-  bool                          ue_cap_transfer_outcome     = true;
-  rrc_reconfiguration_outcome_t rrc_reconfiguration_outcome = {false, {}, {}};
+  srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
+  bool                  ue_cap_transfer_outcome     = true;
+  bool                  rrc_reconfiguration_outcome = false;
 };
 
 struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
