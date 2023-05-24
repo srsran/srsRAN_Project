@@ -245,13 +245,15 @@ void ul_harq_process::new_retx(slot_point pusch_slot)
 int ul_harq_process::crc_info(bool ack)
 {
   if (base_type::ack_info_common(0, ack)) {
-    if (not ack and empty()) {
+    if (ack) {
+      return (int)prev_tx_params.tbs_bytes;
+    }
+    if (empty()) {
       logger.info(id,
                   "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                   prev_tx_params.tbs_bytes,
                   max_nof_harq_retxs(),
                   ack_wait_in_slots);
-      return (int)prev_tx_params.tbs_bytes;
     }
     return 0;
   }
