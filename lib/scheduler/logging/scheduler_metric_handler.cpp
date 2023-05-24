@@ -80,6 +80,18 @@ void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool 
   }
 }
 
+void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_dl)
+{
+  if (ues.contains(ue_index)) {
+    auto& u = ues[ue_index];
+    if (is_dl) {
+      u.data.count_uci_harqs++;
+    } else {
+      u.data.count_crc_pdus++;
+    }
+  }
+}
+
 void scheduler_metrics_handler::handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr)
 {
   if (ues.contains(ue_index)) {

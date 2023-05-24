@@ -1,7 +1,17 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
@@ -62,7 +72,9 @@ TEST(ue_configuration, when_reconfiguration_is_received_then_ue_updates_logical_
   sched_cell_configuration_request_message msg        = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
   sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg};
+  scheduler_ue_metrics_dummy_notifier      metrics_notif;
+  scheduler_metrics_handler                metrics{std::chrono::milliseconds{1000}, metrics_notif};
+  ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg, metrics};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};

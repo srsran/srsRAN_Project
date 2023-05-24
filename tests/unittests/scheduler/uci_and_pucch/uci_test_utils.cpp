@@ -148,7 +148,7 @@ test_bench::test_bench(const test_bench_params& params) :
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, metrics));
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
   slot_indication(sl_tx);
@@ -182,7 +182,7 @@ void test_bench::add_ue()
   }
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, metrics));
   last_allocated_rnti = ue_req.crnti;
 }
 

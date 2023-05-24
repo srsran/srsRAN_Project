@@ -14,9 +14,11 @@
 
 using namespace srsran;
 
+harq_timeout_notifier dummy_ue_timeout_notifier;
+
 TEST(harq_entity, when_harq_entity_is_created_all_harqs_are_empty)
 {
-  harq_entity harq_ent(to_rnti(0x4601), 16, 16, 4);
+  harq_entity harq_ent(to_rnti(0x4601), 16, 16, dummy_ue_timeout_notifier, 4);
 
   ASSERT_EQ(harq_ent.nof_dl_harqs(), 16);
   ASSERT_EQ(harq_ent.nof_ul_harqs(), 16);
@@ -31,7 +33,7 @@ TEST(harq_entity, when_harq_entity_is_created_all_harqs_are_empty)
 TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_harq)
 {
   unsigned    nof_harqs = 8;
-  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, 4);
+  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, dummy_ue_timeout_notifier, 4);
   slot_point  sl_tx{0, 0};
   unsigned    ack_delay = 4;
 
@@ -46,7 +48,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
 TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
 {
   unsigned    nof_harqs = 8, max_ack_wait_slots = 4;
-  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, max_ack_wait_slots);
+  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, dummy_ue_timeout_notifier, max_ack_wait_slots);
   slot_point  sl_tx{0, 0};
   unsigned    ack_delay = 4;
 
@@ -80,7 +82,7 @@ protected:
   }
 
   const unsigned nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
-  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs};
+  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs, nof_harqs, dummy_ue_timeout_notifier};
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
@@ -155,7 +157,7 @@ protected:
   }
 
   const unsigned        nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
-  harq_entity           harq_ent{to_rnti(0x4601), nof_harqs};
+  harq_entity           harq_ent{to_rnti(0x4601), nof_harqs, nof_harqs, dummy_ue_timeout_notifier};
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
   slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};

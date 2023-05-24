@@ -16,7 +16,8 @@ using namespace srsran;
 
 ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
        const cell_configuration&                cell_cfg_common_,
-       const sched_ue_creation_request_message& req) :
+       const sched_ue_creation_request_message& req,
+       scheduler_metrics_handler&               metrics_handler_) :
   ue_index(req.ue_index),
   crnti(req.crnti),
   expert_cfg(expert_cfg_),
@@ -26,8 +27,8 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
-    ue_du_cells[i] =
-        std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg);
+    ue_du_cells[i] = std::make_unique<ue_cell>(
+        ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg, metrics_handler_);
     ue_cells.push_back(ue_du_cells[i].get());
   }
 

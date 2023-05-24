@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
@@ -41,9 +42,12 @@ struct test_bench {
   // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
   static constexpr unsigned max_test_run_slots_per_ue = 40;
 
-  scheduler_ue_expert_config    expert_cfg;
-  cell_configuration            cell_cfg;
-  sched_cfg_dummy_notifier      dummy_notif;
+  scheduler_ue_expert_config          expert_cfg;
+  cell_configuration                  cell_cfg;
+  sched_cfg_dummy_notifier            dummy_notif;
+  scheduler_ue_metrics_dummy_notifier metrics_notif;
+  scheduler_metrics_handler           metrics{std::chrono::milliseconds{1000}, metrics_notif};
+
   cell_resource_allocator       res_grid;
   pdcch_resource_allocator_impl pdcch_sch;
   pucch_allocator_impl          pucch_alloc;
@@ -237,7 +241,7 @@ protected:
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
     // Add UE to UE DB.
-    auto u = std::make_unique<ue>(bench->expert_cfg, bench->cell_cfg, ue_create_req);
+    auto u = std::make_unique<ue>(bench->expert_cfg, bench->cell_cfg, ue_create_req, bench->metrics);
     if (bench->ue_db.contains(ue_index)) {
       // UE already exists.
       return false;

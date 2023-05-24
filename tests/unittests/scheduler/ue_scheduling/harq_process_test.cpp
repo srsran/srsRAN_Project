@@ -20,15 +20,16 @@ class dl_harq_process_tester : public ::testing::Test
 protected:
   dl_harq_process_tester(unsigned max_ack_timeout_slots = 16) :
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_timeout_slots)
+    h_dl(to_harq_id(0), dl_logger, dummy_ue_timeout_notifier, max_ack_timeout_slots)
   {
     srslog::fetch_basic_logger("SCHED").set_level(srslog::basic_levels::debug);
 
     srslog::init();
   }
 
-  harq_logger     dl_logger;
-  dl_harq_process h_dl;
+  harq_timeout_notifier dummy_ue_timeout_notifier;
+  harq_logger           dl_logger;
+  dl_harq_process       h_dl;
 };
 
 TEST_F(dl_harq_process_tester, harq_starts_empty)
@@ -136,7 +137,7 @@ protected:
     max_ack_wait_slots(std::get<1>(GetParam())),
     k1(std::get<2>(GetParam())),
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_wait_slots)
+    h_dl(to_harq_id(0), dl_logger, dummy_ue_timeout_notifier, max_ack_wait_slots)
   {
     srslog::init();
   }
@@ -154,9 +155,10 @@ protected:
   const unsigned max_ack_wait_slots;
   const unsigned k1;
 
-  harq_logger     dl_logger;
-  dl_harq_process h_dl;
-  slot_point      sl_tx{0, 0};
+  harq_logger           dl_logger;
+  harq_timeout_notifier dummy_ue_timeout_notifier;
+  dl_harq_process       h_dl;
+  slot_point            sl_tx{0, 0};
 };
 
 TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
@@ -229,7 +231,7 @@ protected:
     max_ack_wait_slots(12),
     k1(1),
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_wait_slots)
+    h_dl(to_harq_id(0), dl_logger, dummy_ue_timeout_notifier, max_ack_wait_slots)
   {
     srslog::init();
   }
@@ -248,9 +250,10 @@ protected:
   const unsigned shortened_ack_wait_slots{10};
   const unsigned k1;
 
-  harq_logger     dl_logger;
-  dl_harq_process h_dl;
-  slot_point      sl_tx{0, 0};
+  harq_logger           dl_logger;
+  harq_timeout_notifier dummy_ue_timeout_notifier;
+  dl_harq_process       h_dl;
+  slot_point            sl_tx{0, 0};
 };
 
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx)

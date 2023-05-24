@@ -43,6 +43,9 @@ public:
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
+  /// \brief Register HARQ timeout.
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl);
+
   /// \brief Register PUCCH SINR.
   void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);
 

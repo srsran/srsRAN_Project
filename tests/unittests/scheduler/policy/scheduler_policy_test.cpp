@@ -9,6 +9,7 @@
  */
 
 #include "../test_utils/config_generators.h"
+#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/policy/scheduler_time_rr.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -107,7 +108,7 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req, metrics));
     return ues[ue_req.ue_index];
   }
 
@@ -149,9 +150,11 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier   dummy_mac_notif;
+  scheduler_ue_expert_config          expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
+  cell_configuration                  cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier            dummy_mac_notif;
+  scheduler_ue_metrics_dummy_notifier metrics_notif;
+  scheduler_metrics_handler           metrics{std::chrono::milliseconds{1000}, metrics_notif};
 
   cell_resource_allocator           res_grid;
   ue_resource_grid_view             ue_res_grid;

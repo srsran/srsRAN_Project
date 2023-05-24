@@ -23,7 +23,8 @@ class ue
 public:
   ue(const scheduler_ue_expert_config&        expert_cfg_,
      const cell_configuration&                cell_cfg_common_,
-     const sched_ue_creation_request_message& req);
+     const sched_ue_creation_request_message& req,
+     scheduler_metrics_handler&               metrics_handler_);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
   ue& operator=(const ue&) = delete;

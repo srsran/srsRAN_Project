@@ -24,10 +24,14 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
                  rnti_t                            crnti_val,
                  const scheduler_ue_expert_config& expert_cfg_,
                  const cell_configuration&         cell_cfg_common_,
-                 const serving_cell_config&        ue_serv_cell) :
+                 const serving_cell_config&        ue_serv_cell,
+                 scheduler_metrics_handler&        metrics_handler_) :
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
-  harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS),
+  harqs(crnti_val,
+        (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc,
+        NOF_UL_HARQS,
+        harq_timeout_notifier{ue_index_, metrics_handler_}),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell)
