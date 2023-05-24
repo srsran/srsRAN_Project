@@ -37,6 +37,10 @@ bool is_valid(const ru_generic_configuration& config)
     return false;
   }
 
+  if (!config.statistics_printer_executor) {
+    return false;
+  }
+
   if (!config.lower_phy_config.rx_task_executor) {
     return false;
   }

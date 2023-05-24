@@ -186,6 +186,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> upper_pucch_exec;
   std::unique_ptr<task_executor> upper_prach_exec;
   std::unique_ptr<task_executor> radio_exec;
+  std::unique_ptr<task_executor> ru_printer_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
@@ -233,6 +234,7 @@ private:
                                                            std::chrono::microseconds{10},
                                                            os_thread_realtime_priority::max() - 2,
                                                            os_sched_affinity_bitmask{});
+
     if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
@@ -242,15 +244,17 @@ private:
           "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
     create_worker("radio", task_worker_queue_size);
+    create_worker("ru_printer_worker", 1);
 
     // Instantiate task executors
-    cu_cp_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-    cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-    du_ctrl_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-    du_timer_exec = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
-    du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_cell_exec  = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
+    cu_cp_exec      = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    cu_up_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    gtpu_pdu_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
+    du_ctrl_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    du_timer_exec   = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
+    du_ue_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    du_cell_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
+    ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_printer_worker"));
     if (blocking_mode_active) {
       du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
       task_worker& phy_worker = *workers.at("phy_worker");
@@ -404,6 +408,7 @@ static void configure_ru_executors_and_notifiers(ru_generic_configuration&      
   config.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
   config.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
   config.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
+  config.statistics_printer_executor           = workers.ru_printer_exec.get();
   config.timing_notifier                       = &timing_notifier;
   config.symbol_notifier                       = &symbol_notifier;
 }
@@ -612,7 +617,7 @@ int main(int argc, char** argv)
   cu_up_cfg.timers               = &app_timers;
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr;                              // FIXME: check if this can be removed for co-located case
+      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
@@ -779,13 +784,8 @@ int main(int argc, char** argv)
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
 
-  //  unsigned count = 0;
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    //    if ((++count) == 10) {
-    //      radio_event_counter.print();
-    //      count = 0;
-    //    }
   }
 
   console.on_app_stopping();

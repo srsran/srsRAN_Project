@@ -10,12 +10,11 @@
 
 #pragma once
 
-#include "adapters/ru_timing_adapter.h"
-#include "adapters/rx_symbol_adapter.h"
 #include "ru_controller_generic_impl.h"
 #include "ru_downlink_handler_generic_impl.h"
-#include "ru_radio_notifier_handler.h"
+#include "ru_timing_adapter.h"
 #include "ru_uplink_request_handler_generic_impl.h"
+#include "rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/radio/radio_session.h"
@@ -28,8 +27,6 @@ namespace srsran {
 struct ru_generic_impl_config {
   /// Sampling rate in MHz.
   double srate_MHz;
-  /// Radio notification handler counter.
-  std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
   /// PHY error printer.
   std::unique_ptr<phy_error_adapter> phy_err_printer;
   /// Radio Unit received symbol adapter.
@@ -58,15 +55,14 @@ public:
   ru_uplink_plane_handler& get_uplink_plane_handler() override;
 
 private:
-  std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
-  std::unique_ptr<phy_error_adapter>                     phy_err_printer;
-  std::unique_ptr<ru_rx_symbol_adapter>                  ru_rx_adapter;
-  std::unique_ptr<ru_timing_adapter>                     ru_time_adapter;
-  std::unique_ptr<radio_session>                         radio;
-  std::unique_ptr<lower_phy>                             low_phy;
-  ru_controller_generic_impl                             ru_ctrl;
-  ru_downlink_handler_generic_impl                       ru_downlink_hdlr;
-  ru_uplink_request_handler_generic_impl                 ru_uplink_request_hdlr;
+  std::unique_ptr<phy_error_adapter>     phy_err_printer;
+  std::unique_ptr<ru_rx_symbol_adapter>  ru_rx_adapter;
+  std::unique_ptr<ru_timing_adapter>     ru_time_adapter;
+  std::unique_ptr<radio_session>         radio;
+  std::unique_ptr<lower_phy>             low_phy;
+  ru_controller_generic_impl             ru_ctrl;
+  ru_downlink_handler_generic_impl       ru_downlink_hdlr;
+  ru_uplink_request_handler_generic_impl ru_uplink_request_hdlr;
 };
 
 } // namespace srsran

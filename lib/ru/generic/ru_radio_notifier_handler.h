@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/radio/radio_notification_handler.h"
+#include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 
 namespace srsran {
@@ -59,8 +60,13 @@ private:
 class ru_radio_notification_handler_counter : public radio_notification_handler
 {
 public:
-  explicit ru_radio_notification_handler_counter(std::unique_ptr<radio_notification_handler> handler_) :
-    handler(std::move(handler_))
+  explicit ru_radio_notification_handler_counter(std::unique_ptr<radio_notification_handler> handler_,
+                                                 task_executor&                              executor_,
+                                                 unsigned                                    print_interval_in_slots_) :
+    handler(std::move(handler_)),
+    executor(executor_),
+    print_interval_in_slots(print_interval_in_slots_),
+    slot_counter(0)
   {
   }
 
@@ -91,8 +97,19 @@ public:
     }
   }
 
-  /// Prints statistics.
+  /// Enqueue the task of printing statistics.
   void print()
+  {
+    ++slot_counter;
+
+    if (slot_counter == print_interval_in_slots) {
+      slot_counter = 0;
+      executor.defer([this]() { print_statistics(); });
+    }
+  }
+
+private:
+  void print_statistics()
   {
     unsigned temp_late_count      = late_count.exchange(0);
     unsigned temp_underflow_count = underflow_count.exchange(0);
@@ -110,6 +127,9 @@ private:
   std::atomic<unsigned>                       underflow_count = {};
   std::atomic<unsigned>                       overflow_count  = {};
   std::unique_ptr<radio_notification_handler> handler;
+  task_executor&                              executor;
+  const unsigned                              print_interval_in_slots;
+  unsigned                                    slot_counter;
 };
 
 } // namespace srsran

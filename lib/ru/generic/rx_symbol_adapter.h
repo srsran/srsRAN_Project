@@ -48,7 +48,7 @@ public:
     upper_context.slot      = context.slot;
     upper_context.sector    = context.sector;
     upper_context.symbol_id = context.nof_symbols;
-    
+
     rx_symbol_handler.on_rx_srs_symbol(upper_context);
   }
 

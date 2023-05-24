@@ -13,7 +13,6 @@
 using namespace srsran;
 
 ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
-  radio_event_counter(std::move(config.radio_event_counter)),
   phy_err_printer(std::move(config.phy_err_printer)),
   ru_rx_adapter(std::move(config.ru_rx_adapter)),
   ru_time_adapter(std::move(config.ru_time_adapter)),
@@ -23,7 +22,6 @@ ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
   ru_downlink_hdlr(low_phy->get_rg_handler()),
   ru_uplink_request_hdlr(low_phy->get_request_handler())
 {
-  srsran_assert(radio_event_counter, "Invalid radio event counter");
   srsran_assert(phy_err_printer, "Invalid PHY error printer");
   srsran_assert(ru_rx_adapter, "Invalid Radio Unit receiver adapter");
   srsran_assert(ru_time_adapter, "Invalid Radio Unit time adapter");
