@@ -20,7 +20,7 @@ namespace srsran {
 class dlt_pcap_impl : public dlt_pcap
 {
 public:
-  dlt_pcap_impl(unsigned dlt_, std::string layer_name);
+  dlt_pcap_impl(unsigned dlt_, const std::string& layer_name_);
   ~dlt_pcap_impl() override;
   dlt_pcap_impl(const dlt_pcap_impl& other)            = delete;
   dlt_pcap_impl& operator=(const dlt_pcap_impl& other) = delete;
@@ -35,6 +35,7 @@ public:
 
 private:
   unsigned             dlt;
+  std::string          layer_name;
   void                 write_pdu(srsran::byte_buffer buf);
   task_worker          worker;
   std::vector<uint8_t> tmp_mem;
