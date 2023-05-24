@@ -64,17 +64,15 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH. Cause: SearchSpace not valid for active BWP.");
     return false;
   }
-  const search_space_configuration& ss_cfg                  = *ss_info->cfg;
-  const dci_dl_rnti_config_type     ss_supported_dci_format = ss_info->get_crnti_dl_dci_format();
+  const search_space_configuration& ss_cfg = *ss_info->cfg;
 
   // In case of re-transmission DCI format must remain same and therefore its necessary to find the SS which support
   // that DCI format.
-  if (not h_dl.empty() and h_dl.last_alloc_params().dci_cfg_type != ss_supported_dci_format) {
+  if (not h_dl.empty() and h_dl.last_alloc_params().dci_cfg_type != ss_info->get_crnti_dl_dci_format()) {
     return false;
   }
 
-  const dci_dl_rnti_config_type dci_type =
-      h_dl.empty() ? ss_supported_dci_format : h_dl.last_alloc_params().dci_cfg_type;
+  const dci_dl_rnti_config_type dci_type = ss_info->get_crnti_dl_dci_format();
 
   // See 3GPP TS 38.213, clause 10.1,
   // A UE monitors PDCCH candidates in one or more of the following search spaces sets
