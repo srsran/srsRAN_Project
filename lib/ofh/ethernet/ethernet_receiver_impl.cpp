@@ -85,7 +85,7 @@ void receiver_impl::receive()
   static constexpr unsigned BUFFER_SIZE = 9600;
 
   std::array<uint8_t, BUFFER_SIZE> buffer;
-  auto                             nof_bytes = ::recvfrom(socket_fd, buffer.data(), buffer.size(), 0, nullptr, nullptr);
+  auto                             nof_bytes = ::recvfrom(socket_fd, buffer.data(), BUFFER_SIZE, 0, nullptr, nullptr);
 
   if (nof_bytes < 0) {
     logger.warning("recvfrom failed");
