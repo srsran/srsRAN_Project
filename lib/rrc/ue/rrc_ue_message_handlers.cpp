@@ -123,6 +123,11 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   asn1::bit_ref bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
+  logger.debug("Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
+               var_short_mac_input.source_pci,
+               var_short_mac_input.target_cell_id.to_number(),
+               var_short_mac_input.source_c_rnti);
+
   // Get source PCell AS config
   security::sec_as_config source_as_config = {}; // TODO
   bool                    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
