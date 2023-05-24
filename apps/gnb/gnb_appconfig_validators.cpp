@@ -289,12 +289,6 @@ static bool validate_pdcp_appconfig(five_qi_t five_qi, const pdcp_appconfig& con
     fmt::print("PDCP TX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.tx.sn_field_length);
     return false;
   }
-  if (config.tx.discard_timer != -1) {
-    fmt::print("PDCP TX discard timer different than infinity (-1) not supported.  5QI={} discard_timer={}\n",
-               five_qi,
-               config.tx.discard_timer);
-    return false;
-  }
   if (config.tx.status_report_required) {
     fmt::print("PDCP TX status report required not supported yet. 5QI={}\n", five_qi);
     return false;
