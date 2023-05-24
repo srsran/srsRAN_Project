@@ -17,6 +17,8 @@
 
 namespace srsran {
 
+class resource_grid_mapper;
+
 /// Describes a resource grid coordinate as symbol index and carrier.
 struct resource_grid_coordinate {
   /// Symbol index (0...13).
@@ -186,6 +188,9 @@ class resource_grid : public resource_grid_writer, public resource_grid_reader
 public:
   /// Sets all resource elements in the grid to zero.
   virtual void set_all_zero() = 0;
+
+  /// Gets the resource grid mapper.
+  virtual resource_grid_mapper& get_mapper() = 0;
 };
 
 } // namespace srsran

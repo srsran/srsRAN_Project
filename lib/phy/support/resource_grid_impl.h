@@ -12,11 +12,12 @@
 
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 
 namespace srsran {
 
 /// Describes a generic resource grid implementation
-class resource_grid_impl : public resource_grid
+class resource_grid_impl : public resource_grid, public resource_grid_mapper
 {
 private:
   /// Dimension, i.e. number of coordinates, of each indexing level of the resource grid.
@@ -56,6 +57,11 @@ public:
   void       get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override;
 
   void set_all_zero() override;
+
+  resource_grid_mapper& get_mapper() override;
+
+  void
+  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override;
 };
 
 } // namespace srsran

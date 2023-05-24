@@ -20,3 +20,6 @@ add_executable(interpolator_test interpolator_test.cpp)
 target_link_libraries(interpolator_test srsran_phy_support srslog gtest gtest_main)
 add_test(interpolator_test interpolator_test)
 
+add_library(resource_grid_mapper_test_doubles STATIC resource_grid_mapper_test_doubles.cpp)
+target_link_libraries(srsran_upper_phy_support)
+

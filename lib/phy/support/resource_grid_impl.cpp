@@ -255,3 +255,40 @@ bool resource_grid_impl::is_empty(unsigned port) const
   srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
   return empty[port];
 }
+
+resource_grid_mapper& resource_grid_impl::get_mapper()
+{
+  return *this;
+}
+
+void resource_grid_impl::map(const re_buffer_reader&        input,
+                             const re_pattern_list&         pattern,
+                             const precoding_configuration& precoding)
+{
+  for (unsigned i_symbol = 0, i_re = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+    // Get the symbol RE mask.
+    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
+    pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
+
+    // Find the highest used subcarrier. Skip symbol if no active subcarrier.
+    int i_highest_subc = symbol_re_mask.find_highest();
+    if (i_highest_subc < 0) {
+      continue;
+    }
+
+    // Resize the mask to the highest subcarrier, ceiling to PRB.
+    symbol_re_mask.resize(divide_ceil(i_highest_subc, NRE) * NRE);
+
+    // Count the number of mapped RE.
+    unsigned nof_re = symbol_re_mask.count();
+
+    for (unsigned i_tx_port = 0, nof_tx_ports = input.get_nof_slices(); i_tx_port != nof_tx_ports; ++i_tx_port) {
+      // Map each port.
+      span<const cf_t> port_data = input.get_slice(i_tx_port);
+      put(i_tx_port, i_symbol, 0, symbol_re_mask, port_data.subspan(i_re, nof_re));
+    }
+
+    // Advance RE counter.
+    i_re += nof_re;
+  }
+}

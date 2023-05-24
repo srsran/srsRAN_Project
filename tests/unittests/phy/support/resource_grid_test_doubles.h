@@ -13,6 +13,7 @@
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
@@ -315,7 +316,7 @@ private:
 };
 
 /// Describes a resource grid spy.
-class resource_grid_spy : public resource_grid
+class resource_grid_spy : public resource_grid, public resource_grid_mapper
 {
 public:
   resource_grid_spy() : writer(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB)
@@ -406,6 +407,15 @@ public:
     get_count          = 0;
   }
 
+  resource_grid_mapper& get_mapper() override { return *this; }
+
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
+           const precoding_configuration& /* precoding */) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
+  }
+
 private:
   resource_grid_reader_spy reader;
   resource_grid_writer_spy writer;
@@ -419,7 +429,7 @@ private:
 /// interface.
 ///
 /// \note The test terminates if any component under test calls any method from the interface.
-class resource_grid_dummy : public resource_grid
+class resource_grid_dummy : public resource_grid, public resource_grid_mapper
 {
 private:
   /// Throws a assertion failure due to an overridden method call.
@@ -477,6 +487,15 @@ public:
   }
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { failure(); }
   void set_all_zero() override { ++set_all_zero_count; }
+
+  resource_grid_mapper& get_mapper() override { return *this; }
+
+  void
+  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  {
+    failure();
+    return;
+  }
 
   void clear_set_all_zero_count() { set_all_zero_count = 0; }
 };

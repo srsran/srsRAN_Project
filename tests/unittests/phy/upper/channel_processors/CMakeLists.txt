@@ -98,11 +98,16 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pdcch_encoder_test pdcch_encoder_test_data.tar.gz "")
 
     add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
-    target_link_libraries(pdcch_modulator_test srsran_channel_processors srslog srsran_channel_modulation srsran_sequence_generators)
+    target_link_libraries(pdcch_modulator_test
+            srsran_channel_processors
+            srslog
+            srsran_channel_modulation
+            srsran_sequence_generators
+            resource_grid_mapper_test_doubles)
     add_test_vector(pdcch_modulator_test pdcch_modulator_test_data.tar.gz "")
 
     add_executable(pdcch_processor_vectortest pdcch_processor_vectortest.cpp)
-    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog resource_grid_mapper_test_doubles gtest gtest_main)
     add_test_vector(pdcch_processor_vectortest pdcch_processor_test_data.tar.gz "")
 
     add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
