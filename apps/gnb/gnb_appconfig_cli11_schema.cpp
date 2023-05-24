@@ -213,6 +213,8 @@ static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_par
          "SearchSpace type for UE data")
       ->default_str("ue_dedicated")
       ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
+  app.add_option("--dci_format_0_1_and_1_1", pdcch_params.dci_format_0_1_and_1_1, "DCI format to use for UE data")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)

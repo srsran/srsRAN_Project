@@ -95,6 +95,8 @@ struct tdd_ul_dl_appconfig {
 struct pdcch_appconfig {
   /// Use an UE-dedicated or Common Search Space.
   search_space_configuration::type_t ue_ss_type = search_space_configuration::type_t::ue_dedicated;
+  /// Flag specifying whether to use non-fallback or fallback DCI format in UE dedicated SearchSpace.
+  bool dci_format_0_1_and_1_1 = true;
 };
 
 /// PDSCH application configuration.

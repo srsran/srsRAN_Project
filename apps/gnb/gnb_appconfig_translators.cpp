@@ -96,6 +96,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.total_nof_ra_preambles                        = base_cell.prach_cfg.total_nof_ra_preambles;
 
     // UE-dedicated config.
+    if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common and
+        config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+      report_error(
+          "Invalid DCI format set for Common SearchSpace in cell with id={} and pci={}\n", cell_id, base_cell.pci);
+    }
     if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       coreset_configuration&      cs_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
@@ -114,6 +119,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
                 std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
                 0,
                 0};
+    } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+      search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+      ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
     }
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
