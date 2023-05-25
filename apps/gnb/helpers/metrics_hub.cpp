@@ -22,9 +22,11 @@ metrics_hub::metrics_hub(task_executor* du_executor_)
 }
 void metrics_hub::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
 {
-  du_executor->execute([this, ue_metrics]() {
+  std::vector<scheduler_ue_metrics> ue_metrics_copy(ue_metrics.begin(), ue_metrics.end());
+  du_executor->execute([this, ue_metrics_copy]() {
     for (auto& subscriber : subscribers) {
-      subscriber->report_metrics(ue_metrics);
+      span<const scheduler_ue_metrics> _ue_metrics(&ue_metrics_copy[0], ue_metrics_copy.size());
+      subscriber->report_metrics(_ue_metrics);
     }
   });
 }
