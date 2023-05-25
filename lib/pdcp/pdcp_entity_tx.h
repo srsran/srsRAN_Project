@@ -136,6 +136,12 @@ public:
    */
   void enable_security(security::sec_128_as_config sec_cfg_) final
   {
+    srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
+                      (is_drb() && sec_cfg_.domain == security::sec_domain::up),
+                  "Invalid sec_domain={} for {} in {}",
+                  sec_cfg.domain,
+                  rb_type,
+                  rb_id);
     integrity_enabled = security::integrity_enabled::on;
     ciphering_enabled = security::ciphering_enabled::on;
     sec_cfg           = sec_cfg_;
