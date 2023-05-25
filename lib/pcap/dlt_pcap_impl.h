@@ -17,7 +17,7 @@
 
 namespace srsran {
 
-class dlt_pcap_impl : public dlt_pcap
+class dlt_pcap_impl final : public dlt_pcap
 {
 public:
   dlt_pcap_impl(unsigned dlt_, const std::string& layer_name_);
