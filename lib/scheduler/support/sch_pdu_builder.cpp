@@ -93,8 +93,16 @@ pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configura
   pdsch_config_params pdsch;
 
   // TODO: Consider DMRS configured in PDSCH-Config. Need helpers from Phy.
-  pdsch.dmrs = make_dmrs_info_dedicated(
-      pdsch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
+  if (ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value()) {
+    pdsch.dmrs =
+        make_dmrs_info_dedicated(pdsch_td_cfg,
+                                 ue_cell_cfg.cell_cfg_common.pci,
+                                 ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
+                                 ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value());
+  } else {
+    pdsch.dmrs = make_dmrs_info_common(
+        pdsch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
+  }
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
@@ -219,8 +227,16 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   pusch_config_params pusch;
 
   // TODO: Consider DMRS configured in PUSCH-Config. Need helpers from Phy.
-  pusch.dmrs = make_dmrs_info_dedicated(
-      pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
+  if (ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value()) {
+    pusch.dmrs = make_dmrs_info_dedicated(
+        pusch_td_cfg,
+        ue_cell_cfg.cell_cfg_common.pci,
+        ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
+        ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value());
+  } else {
+    pusch.dmrs = make_dmrs_info_common(
+        pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
+  }
 
   pusch.symbols = pusch_td_cfg.symbols;
 

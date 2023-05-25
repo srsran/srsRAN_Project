@@ -321,7 +321,7 @@ pusch_config srsran::config_helpers::make_default_pusch_config()
   cfg.tx_cfg = pusch_config::tx_config::codebook;
   cfg.pusch_mapping_type_a_dmrs.emplace();
   cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.emplace();
-  cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos1;
+  cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos2;
 
   cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
                                                          .p0_nominal_without_grant = -76,
@@ -756,7 +756,7 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdsch_config& pdsch_cfg = serv_cell.init_dl_bwp.pdsch_cfg.value();
   pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
   dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
-  dmrs_type_a.additional_positions.emplace(dmrs_additional_positions::pos1);
+  dmrs_type_a.additional_positions  = dmrs_additional_positions::pos1;
   pdsch_cfg.tci_states.push_back(tci_state{
       .state_id  = static_cast<tci_state_id_t>(0),
       .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,

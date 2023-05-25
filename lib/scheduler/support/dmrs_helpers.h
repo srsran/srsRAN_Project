@@ -13,6 +13,7 @@
 #include "../cell/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/error_handling.h"
 
@@ -78,7 +79,8 @@ inline dmrs_information make_dmrs_info_common(const pdsch_time_domain_resource_a
 
 inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                                  pci_t                                        pci,
-                                                 dmrs_typeA_position                          dmrs_typeA_pos)
+                                                 dmrs_typeA_position                          dmrs_typeA_pos,
+                                                 const dmrs_downlink_config&                  dmrs_dl_cfg_ded)
 {
   dmrs_information dmrs{};
 
@@ -86,7 +88,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
     // Get DM-RS symbols.
     pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
     dmrscfg.typeA_pos                         = dmrs_typeA_pos;
-    dmrscfg.additional_position               = dmrs_additional_positions::pos1;
+    dmrscfg.additional_position               = dmrs_dl_cfg_ded.additional_positions;
     dmrscfg.last_symbol                       = pdsch_td_cfg.symbols.stop();
     dmrscfg.lte_crs_match_around              = false;
     dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
@@ -96,7 +98,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
     srsran_terminate("Mapping type B not supported");
   }
 
-  dmrs.config_type = dmrs_config_type::type1;
+  dmrs.config_type = dmrs_dl_cfg_ded.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
@@ -168,7 +170,8 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
 
 inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                  pci_t                                        pci,
-                                                 dmrs_typeA_position                          dmrs_typeA_pos)
+                                                 dmrs_typeA_position                          dmrs_typeA_pos,
+                                                 const dmrs_uplink_config&                    dmrs_ul_cfg)
 {
   dmrs_information dmrs{};
 
@@ -176,7 +179,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
     // Get DM-RS symbols.
     pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
     dmrscfg.typeA_pos                         = dmrs_typeA_pos;
-    dmrscfg.additional_position               = dmrs_additional_positions::pos1;
+    dmrscfg.additional_position               = dmrs_ul_cfg.additional_positions;
     dmrscfg.last_symbol                       = pusch_td_cfg.symbols.stop();
     dmrscfg.lte_crs_match_around              = false;
     dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
@@ -186,7 +189,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
     srsran_terminate("Mapping type B not supported");
   }
 
-  dmrs.config_type = dmrs_config_type::type1;
+  dmrs.config_type = dmrs_ul_cfg.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;

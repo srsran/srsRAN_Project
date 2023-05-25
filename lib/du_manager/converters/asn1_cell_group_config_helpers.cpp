@@ -230,10 +230,10 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
     out.dmrs_type_present = true;
   }
 
-  if (cfg.additional_positions.has_value() &&
-      cfg.additional_positions.value() != srsran::dmrs_additional_positions::pos2) {
+  if (cfg.additional_positions != srsran::dmrs_additional_positions::pos2 and
+      cfg.additional_positions != srsran::dmrs_additional_positions::not_set) {
     out.dmrs_add_position_present = true;
-    switch (cfg.additional_positions.value()) {
+    switch (cfg.additional_positions) {
       case dmrs_additional_positions::pos0:
         out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos0;
         break;
@@ -244,7 +244,7 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
         out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos3;
         break;
       default:
-        srsran_assertion_failure("Invalid DMRS DL Add. Position={}", cfg.additional_positions.value());
+        srsran_assertion_failure("Invalid DMRS DL Add. Position={}", cfg.additional_positions);
     }
   }
 
@@ -908,7 +908,8 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
     out.dmrs_type_present = true;
   }
 
-  if (dest.additional_positions != srsran::dmrs_additional_positions::not_set) {
+  if (dest.additional_positions != srsran::dmrs_additional_positions::not_set and
+      dest.additional_positions != srsran::dmrs_additional_positions::pos2) {
     out.dmrs_add_position_present = true;
     switch (dest.additional_positions) {
       case dmrs_additional_positions::pos0:

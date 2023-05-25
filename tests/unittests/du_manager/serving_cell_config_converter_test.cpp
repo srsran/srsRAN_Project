@@ -236,9 +236,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pdsch_cfg_conversion)
   });
   dest_pdsch_cfg.tci_states.erase(dest_pdsch_cfg.tci_states.begin());
 
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions.value() = dmrs_additional_positions::pos0;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0               = 10;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1               = 20;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos0;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0       = 10;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1       = 20;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
