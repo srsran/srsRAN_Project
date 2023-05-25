@@ -80,7 +80,7 @@ void pdu_session_resource_modification_routine::fill_initial_e1ap_bearer_context
   }
 }
 
-// \brief Handle first Bearer Context Modifcation response and prepare subsequent UE context modifcation request.
+// \brief Handle first Bearer Context Modifcation response and prepare subsequent UE context modification request.
 bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      response_msg,
                                cu_cp_ue_context_modification_request&           ue_context_mod_request,
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
