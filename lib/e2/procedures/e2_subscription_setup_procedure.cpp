@@ -53,5 +53,11 @@ void e2_subscription_setup_procedure::send_e2_subscription_setup_response(const 
 
 void e2_subscription_setup_procedure::send_e2_subscription_setup_failure(const e2_subscribe_reponse_message& failure)
 {
-  logger.info("E2AP: Sending subscription response");
+  e2_message msg;
+  msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RICSUBSCRIPTION);
+  auto& sub_fail                                  = msg.pdu.unsuccessful_outcome().value.ricsubscription_fail();
+  sub_fail->ri_crequest_id.value.ric_instance_id  = failure.request_id.ric_instance_id;
+  sub_fail->ri_crequest_id.value.ric_requestor_id = failure.request_id.ric_requestor_id;
+  sub_fail->cause.value                           = failure.cause;
+  logger.info("E2AP: Sending subscription failure");
 }
