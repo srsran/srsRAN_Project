@@ -257,7 +257,7 @@ struct cu_cp_qos_flow_per_tnl_information {
 };
 
 struct cu_cp_pdu_session_resource_setup_response_transfer {
-  std::vector<cu_cp_qos_flow_per_tnl_information>                       add_dl_qos_flow_per_tnl_info = {};
+  std::vector<cu_cp_qos_flow_per_tnl_information>                       add_dl_qos_flow_per_tnl_info;
   cu_cp_qos_flow_per_tnl_information                                    dlqos_flow_per_tnl_info;
   slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>           associated_qos_flow_list;
   slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
@@ -428,7 +428,7 @@ struct cu_cp_drb_info {
 struct cu_cp_drbs_to_be_setup_mod_item {
   drb_id_t                             drb_id = drb_id_t::invalid;
   cu_cp_drb_info                       qos_info;
-  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list = {};
+  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list;
   srsran::rlc_mode                     rlc_mod;
   optional<cu_cp_ul_cfg>               ul_cfg;
   optional<std::string>                dupl_activation;
@@ -437,7 +437,7 @@ struct cu_cp_drbs_to_be_setup_mod_item {
 struct cu_cp_drbs_to_be_modified_item {
   drb_id_t                             drb_id = drb_id_t::invalid;
   optional<cu_cp_drb_info>             qos_info;
-  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list = {};
+  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list;
   optional<cu_cp_ul_cfg>               ul_cfg;
 };
 
@@ -498,9 +498,9 @@ struct cu_cp_dl_up_tnl_info_to_be_setup_item {
 };
 
 struct cu_cp_drbs_setup_modified_item {
-  drb_id_t                                           drb_id                          = drb_id_t::invalid;
-  optional<lcid_t>                                   lcid                            = lcid_t::INVALID_LCID;
-  std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list = {};
+  drb_id_t                                           drb_id = drb_id_t::invalid;
+  optional<lcid_t>                                   lcid   = lcid_t::INVALID_LCID;
+  std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
 };
 
 struct cu_cp_srbs_failed_to_be_setup_mod_item {
@@ -536,11 +536,11 @@ struct cu_cp_ue_context_modification_response {
   slotted_id_vector<drb_id_t, cu_cp_drbs_setup_modified_item>              drbs_modified_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
-  std::vector<cu_cp_scell_failed_to_setup_mod_item>                        scell_failed_to_setup_mod_list = {};
+  std::vector<cu_cp_scell_failed_to_setup_mod_item>                        scell_failed_to_setup_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
   optional<std::string>                                                    inactivity_monitoring_resp;
   optional<srsran::rnti_t>                                                 c_rnti;
-  std::vector<cu_cp_associated_scell_item>                                 associated_scell_list = {};
+  std::vector<cu_cp_associated_scell_item>                                 associated_scell_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_modified_list;
   optional<std::string>                                                    full_cfg;
@@ -587,7 +587,7 @@ struct cu_cp_security_config {
 struct cu_cp_radio_bearer_config {
   slotted_id_vector<srb_id_t, cu_cp_srb_to_add_mod> srb_to_add_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drb_to_add_mod> drb_to_add_mod_list;
-  std::vector<drb_id_t>                             drb_to_release_list = {};
+  std::vector<drb_id_t>                             drb_to_release_list;
   optional<cu_cp_security_config>                   security_cfg;
   bool                                              srb3_to_release_present = false;
 };
@@ -614,7 +614,7 @@ struct cu_cp_other_cfg {
 struct cu_cp_rrc_recfg_v1530_ies {
   bool                           full_cfg_present = false;
   byte_buffer                    master_cell_group;
-  std::vector<byte_buffer>       ded_nas_msg_list = {};
+  std::vector<byte_buffer>       ded_nas_msg_list;
   optional<cu_cp_master_key_upd> master_key_upd;
   byte_buffer                    ded_sib1_delivery;
   byte_buffer                    ded_sys_info_delivery;
