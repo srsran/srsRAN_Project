@@ -102,20 +102,13 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // Notifiy CU-CP about the RRC Reestablishment Request
-  cu_cp_notifier.on_rrc_reestablishment(
+  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment(
       msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
 
-  // Reject RRC Reestablishment by sending RRC Setup
-  task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
-                                                                   asn1::rrc_nr::establishment_cause_e::mt_access,
-                                                                   du_to_cu_container,
-                                                                   *this,
-                                                                   du_processor_notifier,
-                                                                   nas_notifier,
-                                                                   *event_mng,
-                                                                   logger));
-
-  // TODO: handle RRC reestablishment request
+  // store capabilities if available
+  if (reest_context.capabilities.has_value()) {
+    context.capabilities = reest_context.capabilities.value();
+  }
 
   // Get RX short MAC
   security::sec_short_mac_i short_mac = {};
@@ -134,6 +127,29 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   security::sec_as_config source_as_config = {}; // TODO
   bool                    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
   logger.debug("Received RRC Restablishment. short_mac_valid={}", valid);
+
+  if (!valid) {
+    // Reject RRC Reestablishment by sending RRC Setup
+    task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
+                                                                     asn1::rrc_nr::establishment_cause_e::mt_access,
+                                                                     du_to_cu_container,
+                                                                     *this,
+                                                                     du_processor_notifier,
+                                                                     nas_notifier,
+                                                                     *event_mng,
+                                                                     logger));
+
+    if (reest_context.ue_index != ue_index_t::invalid) {
+      // Release the old UE
+      cu_cp_ue_context_release_request release_req;
+      release_req.ue_index = reest_context.ue_index;
+      release_req.cause    = cause_t::radio_network;
+
+      ngap_ctrl_notifier.on_ue_context_release_request(release_req);
+    }
+  }
+
+  // TODO: launch RRC Reestablishment procedure
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
@@ -238,4 +254,16 @@ cu_cp_user_location_info_nr rrc_ue_impl::handle_rrc_ue_release()
   send_dl_dcch(dl_dcch_msg);
 
   return user_location_info;
+}
+
+rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
+{
+  rrc_reestablishment_ue_context_t rrc_reest_context;
+  rrc_reest_context.sec_context = context.sec_context;
+
+  if (context.capabilities.has_value()) {
+    rrc_reest_context.capabilities = context.capabilities.value();
+  }
+
+  return rrc_reest_context;
 }

@@ -44,5 +44,23 @@ private:
   ngap_control_message_handler* ngap_ctrl_handler = nullptr;
 };
 
+/// Adapter between CU-CP and RRC UE, to transfer UE context e.g. for RRC Reestablishments
+class cu_cp_rrc_ue_adapter : public cu_cp_rrc_ue_context_trasfer_notifier
+{
+public:
+  cu_cp_rrc_ue_adapter() = default;
+
+  void connect_rrc_ue(rrc_ue_context_handler& rrc_context_handler_) { rrc_context_handler = &rrc_context_handler_; }
+
+  rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() override
+  {
+    srsran_assert(rrc_context_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_context_handler->get_context();
+  }
+
+private:
+  rrc_ue_context_handler* rrc_context_handler = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran

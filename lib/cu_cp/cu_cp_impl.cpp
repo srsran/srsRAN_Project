@@ -156,6 +156,10 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
+
+  // Create and connect cu-cp to rrc ue adapter
+  cu_cp_rrc_ue_ev_notifiers[ue_index] = {};
+  cu_cp_rrc_ue_ev_notifiers.at(ue_index).connect_rrc_ue(rrc_ue->get_rrc_ue_context_handler());
 }
 
 void cu_cp::handle_new_cu_up_connection()
@@ -210,16 +214,22 @@ void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
   }
 }
 
-void cu_cp::handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index)
+rrc_reestablishment_ue_context_t
+cu_cp::handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index)
 {
-  // TODO: Handle RRC Reestablishment
+  rrc_reestablishment_ue_context_t reest_context;
 
-  // Release the old UE
-  cu_cp_ue_context_release_request release_req;
-  release_req.ue_index = ue_mng.get_ue_index(old_pci, old_c_rnti);
-  release_req.cause    = cause_t::radio_network;
+  ue_index_t old_ue_index = ue_mng.get_ue_index(old_pci, old_c_rnti);
+  if (old_ue_index == ue_index_t::invalid || old_ue_index == ue_index) {
+    return reest_context;
+  }
 
-  ngap_adapter.on_ue_context_release_request(release_req);
+  // Get RRC Reestablishment UE Context from old UE
+  reest_context = cu_cp_rrc_ue_ev_notifiers.at(old_ue_index).on_rrc_ue_context_transfer();
+
+  reest_context.ue_index = old_ue_index;
+
+  return reest_context;
 }
 
 // private

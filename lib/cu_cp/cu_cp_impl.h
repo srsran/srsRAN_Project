@@ -77,7 +77,8 @@ public:
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
   // RRC UE handler
-  void handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) override;
+  rrc_reestablishment_ue_context_t
+  handle_rrc_reestablishment(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
 
   // cu_cp interface
   cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }
@@ -186,6 +187,9 @@ private:
 
   // NGAP to DU processor adapters
   std::map<du_index_t, ngap_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
+
+  // CU-CP to RRC UE adapter array
+  std::map<ue_index_t, cu_cp_rrc_ue_adapter> cu_cp_rrc_ue_ev_notifiers; // indexed by UE index
 
   std::atomic<bool> amf_connected = {false};
 

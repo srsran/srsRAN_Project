@@ -257,9 +257,10 @@ class rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
 public:
   void connect_cu_cp(cu_cp_rrc_ue_interface& cu_cp_rrc_ue_) { cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_; }
 
-  void on_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) override
+  rrc_reestablishment_ue_context_t
+  on_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) override
   {
-    cu_cp_rrc_ue_handler->handle_rrc_reestablishment(old_pci, old_c_rnti, ue_index);
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment(old_pci, old_c_rnti, ue_index);
   }
 
 private:

@@ -259,6 +259,13 @@ public:
   virtual async_task<bool> handle_init_security_context(const security::security_context& msg) = 0;
 };
 
+/// Struct containing all information needed from the old RRC UE for Reestablishment.
+struct rrc_reestablishment_ue_context_t {
+  ue_index_t                          ue_index = ue_index_t::invalid;
+  security::security_context          sec_context;
+  optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
+};
+
 /// Interface to notify about RRC Reestablishment Requests.
 class rrc_ue_reestablishment_notifier
 {
@@ -269,7 +276,19 @@ public:
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
-  virtual void on_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) = 0;
+  /// \returns The RRC Reestablishment UE context for the old UE.
+  virtual rrc_reestablishment_ue_context_t
+  on_rrc_reestablishment(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
+};
+
+class rrc_ue_context_handler
+{
+public:
+  virtual ~rrc_ue_context_handler() = default;
+
+  /// \brief Get the RRC Reestablishment UE context to transfer it to new UE.
+  /// \returns The RRC Reestablishment UE Context.
+  virtual rrc_reestablishment_ue_context_t get_context() = 0;
 };
 
 /// Combined entry point for the RRC UE handling.
@@ -281,7 +300,8 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
-                         public rrc_ue_reconfiguration_proc_notifier
+                         public rrc_ue_reconfiguration_proc_notifier,
+                         public rrc_ue_context_handler
 {
 public:
   rrc_ue_interface()          = default;
@@ -294,6 +314,7 @@ public:
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;
   virtual security::security_context&           get_rrc_ue_security_context()              = 0;
+  virtual rrc_ue_context_handler&               get_rrc_ue_context_handler()               = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,

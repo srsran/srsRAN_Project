@@ -58,6 +58,16 @@ public:
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
 };
 
+/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
+class cu_cp_rrc_ue_context_trasfer_notifier
+{
+public:
+  virtual ~cu_cp_rrc_ue_context_trasfer_notifier() = default;
+
+  /// \brief Notifies the RRC UE to return the RRC Reestablishment UE context.
+  virtual rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() = 0;
+};
+
 /// Interface used to handle DU specific procedures
 class cu_cp_du_handler
 {
@@ -166,11 +176,13 @@ class cu_cp_rrc_ue_interface
 public:
   virtual ~cu_cp_rrc_ue_interface() = default;
 
-  /// \brief Handle the reception of an RRC Reestablishment Request.
+  /// \brief Handle the reception of an RRC Reestablishment Request by transfering UE Contexts at the NGAP and RRC.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
-  virtual void handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index) = 0;
+  /// \returns The RRC Reestablishment UE context for the old UE.
+  virtual rrc_reestablishment_ue_context_t
+  handle_rrc_reestablishment(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
 };
 
 class cu_cp_interface : public cu_cp_du_handler,

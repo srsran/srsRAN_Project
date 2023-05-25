@@ -53,6 +53,7 @@ public:
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   up_resource_manager&                  get_rrc_ue_up_resource_manager() override { return context.get_up_manager(); }
   security::security_context&           get_rrc_ue_security_context() override { return context.sec_context; }
+  rrc_ue_context_handler&               get_rrc_ue_context_handler() override { return *this; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,
@@ -66,6 +67,9 @@ public:
   async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override;
   cu_cp_user_location_info_nr handle_rrc_ue_release() override;
+
+  // rrc_ue_context_handler
+  rrc_reestablishment_ue_context_t get_context() override;
 
 private:
   // message handlers
