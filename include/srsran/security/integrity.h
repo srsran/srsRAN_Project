@@ -21,7 +21,7 @@
 namespace srsran {
 namespace security {
 
-constexpr uint32_t sec_var_short_mac_input_packed_len = 16;
+constexpr uint32_t sec_var_short_mac_input_packed_len = 8;
 
 /******************************************************************************
  * Integrity Protection

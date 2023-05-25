@@ -123,7 +123,9 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   asn1::bit_ref bref(var_short_mac_input_packed);
   var_short_mac_input.pack(bref);
 
-  logger.debug("Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
+  logger.debug(var_short_mac_input_packed.begin(),
+               var_short_mac_input_packed.end(),
+               "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
                var_short_mac_input.source_pci,
                var_short_mac_input.target_cell_id.to_number(),
                var_short_mac_input.source_c_rnti);

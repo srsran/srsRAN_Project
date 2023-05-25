@@ -1375,10 +1375,9 @@ TEST(short_mac, short_mac_valid)
   sec_config.integ_algo    = integrity_algorithm::nia2;
   sec_config.k_int         = make_sec_key(k_int_cstr);
 
-  sec_short_mac_i short_mac                  = {0x6c, 0x24};
-  byte_buffer     var_short_mac_input_packed = {
-          0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
-  bool valid = verify_short_mac(short_mac, var_short_mac_input_packed, sec_config);
+  sec_short_mac_i short_mac                  = {0xc2, 0x18};
+  byte_buffer     var_short_mac_input_packed = {0x00, 0x40, 0x00, 0x00, 0x00, 0x01, 0x18, 0x04};
+  bool            valid                      = verify_short_mac(short_mac, var_short_mac_input_packed, sec_config);
   ASSERT_EQ(true, valid);
 }
 
