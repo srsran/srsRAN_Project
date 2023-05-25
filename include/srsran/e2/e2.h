@@ -160,8 +160,10 @@ public:
 
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
-  /// @brief start the subscription request
+  /// \brief start the subscription request
   virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) = 0;
+
+  virtual void add_e2sm_service(uint16_t ran_func_id, e2sm_handler* e2sm_packer) = 0;
 };
 
 } // namespace srsran
