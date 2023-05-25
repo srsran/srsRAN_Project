@@ -377,10 +377,11 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
   rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.ue_index);
 
-  return routine_mng->start_pdu_session_resource_setup_routine(msg,
-                                                               rrc_ue->get_rrc_ue_security_context().get_as_config(),
-                                                               ue->get_rrc_ue_notifier(),
-                                                               rrc_ue->get_rrc_ue_up_resource_manager());
+  return routine_mng->start_pdu_session_resource_setup_routine(
+      msg,
+      rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::rrc),
+      ue->get_rrc_ue_notifier(),
+      rrc_ue->get_rrc_ue_up_resource_manager());
 }
 
 async_task<cu_cp_pdu_session_resource_release_response>

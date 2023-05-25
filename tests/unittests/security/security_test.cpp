@@ -1296,9 +1296,10 @@ TEST(security_select_algo, when_all_supported_first_algo_selected)
   sec_context.supported_enc_algos = supp_ciph_list;
   ASSERT_EQ(true, sec_context.select_algorithms(inte_algo_pref_list, ciph_algo_pref_list));
 
-  sec_as_config sec_cfg = sec_context.get_as_config();
+  sec_as_config sec_cfg = sec_context.get_as_config(sec_domain::up);
   ASSERT_EQ(integrity_algorithm::nia2, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea2, sec_cfg.cipher_algo);
+  ASSERT_EQ(sec_domain::up, sec_cfg.domain);
 }
 
 /// Selection of second algorithm in list
@@ -1317,9 +1318,10 @@ TEST(security_select_algo, when_first_not_supported_select_second)
   sec_context.supported_enc_algos = supp_ciph_list;
   ASSERT_EQ(true, sec_context.select_algorithms(inte_algo_pref_list, ciph_algo_pref_list));
 
-  sec_as_config sec_cfg = sec_context.get_as_config();
+  sec_as_config sec_cfg = sec_context.get_as_config(sec_domain::up);
   ASSERT_EQ(integrity_algorithm::nia1, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea1, sec_cfg.cipher_algo);
+  ASSERT_EQ(sec_domain::up, sec_cfg.domain);
 }
 
 /// Select NEA0 if preferred
@@ -1338,9 +1340,10 @@ TEST(security_select_algo, when_all_supported_and_nea0_prefered_select_nea0)
   sec_context.supported_enc_algos = supp_ciph_list;
   ASSERT_EQ(true, sec_context.select_algorithms(inte_algo_pref_list, ciph_algo_pref_list));
 
-  sec_as_config sec_cfg = sec_context.get_as_config();
+  sec_as_config sec_cfg = sec_context.get_as_config(sec_domain::up);
   ASSERT_EQ(integrity_algorithm::nia2, sec_cfg.integ_algo);
   ASSERT_EQ(ciphering_algorithm::nea0, sec_cfg.cipher_algo);
+  ASSERT_EQ(sec_domain::up, sec_cfg.domain);
 }
 
 /// Do not allow NIA0 selection
@@ -1364,12 +1367,13 @@ TEST(security_select_algo, do_not_allow_nia0_selection)
 TEST(short_mac, short_mac_valid)
 {
   // Testdata in plain format
-  const char* k_rrc_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
+  const char* k_int_cstr = "534208f43b924efb677d95f93dbcbcb05c2cc2fda0f318a1e0ce35b9db5e80a5";
 
   // Pack hex strings into srsran types
   sec_as_config sec_config = {};
+  sec_config.domain        = security::sec_domain::rrc;
   sec_config.integ_algo    = integrity_algorithm::nia2;
-  sec_config.k_rrc_int     = make_sec_key(k_rrc_int_cstr);
+  sec_config.k_int         = make_sec_key(k_int_cstr);
 
   sec_short_mac_i short_mac                  = {0x6c, 0x24};
   byte_buffer     var_short_mac_input_packed = {

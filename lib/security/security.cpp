@@ -96,19 +96,28 @@ void security_context::horizontal_key_derivation(pci_t target_pci, unsigned targ
   generate_as_keys();
 }
 
-sec_128_as_config security_context::get_128_as_config()
+sec_128_as_config security_context::get_128_as_config(sec_domain domain)
 {
-  return truncate_config(get_as_config());
+  return truncate_config(get_as_config(domain));
 }
 
-sec_as_config security_context::get_as_config()
+sec_as_config security_context::get_as_config(sec_domain domain)
 {
   srsran_sanity_check(sel_algos.algos_selected, "Tried to get AS config, but no algorithms are selected");
   sec_as_config as_cfg;
-  as_cfg.k_rrc_int   = as_keys.k_rrc_int;
-  as_cfg.k_rrc_enc   = as_keys.k_rrc_enc;
-  as_cfg.k_up_int    = as_keys.k_up_int;
-  as_cfg.k_up_enc    = as_keys.k_up_enc;
+  as_cfg.domain = domain;
+  switch (domain) {
+    case sec_domain::rrc:
+      as_cfg.k_int = as_keys.k_rrc_int;
+      as_cfg.k_enc = as_keys.k_rrc_enc;
+      break;
+    case sec_domain::up:
+      as_cfg.k_int = as_keys.k_up_int;
+      as_cfg.k_enc = as_keys.k_up_enc;
+      break;
+    default:
+      srsran_assertion_failure("Unsupported sec_domain={}", domain);
+  }
   as_cfg.integ_algo  = sel_algos.integ_algo;
   as_cfg.cipher_algo = sel_algos.cipher_algo;
   return as_cfg;
@@ -249,10 +258,9 @@ sec_128_key srsran::security::truncate_key(const sec_key& key_in)
 sec_128_as_config srsran::security::truncate_config(const sec_as_config& cfg_in)
 {
   sec_128_as_config cfg_out = {};
-  cfg_out.k_128_rrc_int     = truncate_key(cfg_in.k_rrc_int);
-  cfg_out.k_128_rrc_enc     = truncate_key(cfg_in.k_rrc_enc);
-  cfg_out.k_128_up_int      = truncate_key(cfg_in.k_up_int);
-  cfg_out.k_128_up_enc      = truncate_key(cfg_in.k_up_enc);
+  cfg_out.domain            = cfg_in.domain;
+  cfg_out.k_128_int         = truncate_key(cfg_in.k_int);
+  cfg_out.k_128_enc         = truncate_key(cfg_in.k_enc);
   cfg_out.integ_algo        = cfg_in.integ_algo;
   cfg_out.cipher_algo       = cfg_in.cipher_algo;
   return cfg_out;

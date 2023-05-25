@@ -162,10 +162,9 @@ protected:
       ASSERT_EQ(tx_security_notifier->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
       ASSERT_EQ(rx_security_notifier->last_sec_cfg.integ_algo, sec_cfg.integ_algo);
       ASSERT_EQ(rx_security_notifier->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
-      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
-      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
-      ASSERT_EQ(tx_security_notifier->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
-      ASSERT_EQ(tx_security_notifier->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_enc, sec_cfg.k_128_enc);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_int, sec_cfg.k_128_int);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.domain, sec_cfg.domain);
     }
   }
 

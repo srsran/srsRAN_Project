@@ -139,15 +139,14 @@ public:
     integrity_enabled = security::integrity_enabled::on;
     ciphering_enabled = security::ciphering_enabled::on;
     sec_cfg           = sec_cfg_;
-    logger.log_info("Security configured: NIA{} ({}) NEA{} ({})",
+    logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
                     sec_cfg.integ_algo,
                     integrity_enabled,
                     sec_cfg.cipher_algo,
-                    ciphering_enabled);
-    logger.log_debug(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
-    logger.log_debug(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
-    logger.log_debug(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
-    logger.log_debug(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
+                    ciphering_enabled,
+                    sec_cfg.domain);
+    logger.log_debug(sec_cfg.k_128_int.data(), 16, "128 K_int");
+    logger.log_debug(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   };
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.

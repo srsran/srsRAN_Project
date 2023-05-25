@@ -269,37 +269,32 @@ pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer hdr, const 
 
 void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count)
 {
-  // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
   switch (sec_cfg.integ_algo) {
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
   }
 
   logger.log_debug("Integrity gen. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_int.data(), k_int.size(), "Integrity gen key.");
+  logger.log_debug((uint8_t*)sec_cfg.k_128_int.data(), sec_cfg.k_128_int.size(), "Integrity gen key.");
   logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message.");
   logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
 
 byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 {
-  // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
-
   logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key.");
+  logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher encrypt key.");
   logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg.");
 
   byte_buffer ct;
@@ -309,13 +304,13 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
       ct.append(msg);
       break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(k_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(k_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(k_enc, count, bearer_id, direction, msg.begin(), msg.end());
+      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg.begin(), msg.end());
       break;
     default:
       break;

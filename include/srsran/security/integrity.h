@@ -287,7 +287,7 @@ inline bool verify_short_mac(const sec_short_mac_i& rx_short_mac,
 
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
-  sec_128_key       key      = truncate_key(source_as_config.k_rrc_int);
+  sec_128_key       key      = truncate_key(source_as_config.k_int);
   switch (source_as_config.integ_algo) {
     case security::integrity_algorithm::nia0:
       break;

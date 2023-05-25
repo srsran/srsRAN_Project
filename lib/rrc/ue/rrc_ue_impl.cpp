@@ -74,8 +74,10 @@ void rrc_ue_impl::on_new_as_security_context()
   srsran_sanity_check(srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier != nullptr,
                       "Attempted to configure security, but there is no interface to PDCP RX");
 
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(context.sec_context.get_128_as_config());
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(context.sec_context.get_128_as_config());
+  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(
+      context.sec_context.get_128_as_config(security::sec_domain::rrc));
+  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(
+      context.sec_context.get_128_as_config(security::sec_domain::rrc));
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const security::security_context& sec_ctx)

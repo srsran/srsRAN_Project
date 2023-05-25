@@ -380,22 +380,19 @@ byte_buffer pdcp_entity_rx::compile_status_report()
  */
 bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac)
 {
-  // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_key& k_int = is_srb() ? sec_cfg.k_128_rrc_int : sec_cfg.k_128_up_int;
-
   security::sec_mac mac_exp  = {};
   bool              is_valid = true;
   switch (sec_cfg.integ_algo) {
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia1(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia2(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
+      security_nia3(mac_exp, sec_cfg.k_128_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
@@ -417,9 +414,9 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
                count,
                bearer_id,
                direction);
-    logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key.");
-    logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC expected.");
-    logger.log(level, (uint8_t*)mac.data(), 4, "MAC found.");
+    logger.log(level, (uint8_t*)sec_cfg.k_128_int.data(), sec_cfg.k_128_int.size(), "Integrity check key.");
+    logger.log(level, (uint8_t*)mac_exp.data(), mac_exp.size(), "MAC expected.");
+    logger.log(level, (uint8_t*)mac.data(), mac.size(), "MAC found.");
     logger.log(level, buf.begin(), buf.end(), "Integrity check input message. len={}", buf.length());
   }
 
@@ -430,11 +427,8 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
                                            byte_buffer_slice_chain::const_iterator msg_end,
                                            uint32_t                                count)
 {
-  // If control plane use RRC integrity key. If data use user plane key
-  const security::sec_128_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
-
   logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key.");
+  logger.log_debug((uint8_t*)sec_cfg.k_128_enc.data(), sec_cfg.k_128_enc.size(), "Cipher decrypt key.");
   logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg.");
 
   byte_buffer ct;
@@ -444,13 +438,13 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
       ct.append(msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(k_enc, count, bearer_id, direction, msg_begin, msg_end);
+      ct = security_nea1(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(k_enc, count, bearer_id, direction, msg_begin, msg_end);
+      ct = security_nea2(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(k_enc, count, bearer_id, direction, msg_begin, msg_end);
+      ct = security_nea3(sec_cfg.k_128_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     default:
       break;

@@ -121,11 +121,13 @@ using preferred_ciphering_algorithms = std::array<ciphering_algorithm, nof_pref_
 constexpr uint16_t nof_supported_algos = 3;
 using supported_algorithms             = std::array<bool, nof_supported_algos>;
 
+/// Security domain, whether applies to RRC or UP
+enum class sec_domain { rrc = 0, up = 1 };
+
 struct sec_128_as_config {
-  sec_128_key         k_128_rrc_int;
-  sec_128_key         k_128_rrc_enc;
-  sec_128_key         k_128_up_int;
-  sec_128_key         k_128_up_enc;
+  sec_domain          domain;
+  sec_128_key         k_128_int;
+  sec_128_key         k_128_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
 
@@ -137,16 +139,13 @@ struct sec_128_as_config {
     if (cipher_algo != rhs.cipher_algo) {
       return false;
     }
-    if (k_128_rrc_int != rhs.k_128_rrc_int) {
+    if (domain != rhs.domain) {
       return false;
     }
-    if (k_128_rrc_enc != rhs.k_128_rrc_enc) {
+    if (k_128_int != rhs.k_128_int) {
       return false;
     }
-    if (k_128_up_int != rhs.k_128_up_int) {
-      return false;
-    }
-    if (k_128_up_enc != rhs.k_128_up_enc) {
+    if (k_128_enc != rhs.k_128_enc) {
       return false;
     }
     return true;
@@ -154,10 +153,9 @@ struct sec_128_as_config {
 };
 
 struct sec_as_config {
-  sec_key             k_rrc_int;
-  sec_key             k_rrc_enc;
-  sec_key             k_up_int;
-  sec_key             k_up_enc;
+  sec_domain          domain;
+  sec_key             k_int;
+  sec_key             k_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
 };
@@ -187,8 +185,8 @@ struct security_context {
 
   bool select_algorithms(preferred_integrity_algorithms pref_inte_list, preferred_ciphering_algorithms pref_ciph_list);
   void generate_as_keys();
-  sec_as_config     get_as_config();
-  sec_128_as_config get_128_as_config();
+  sec_as_config     get_as_config(sec_domain domain);
+  sec_128_as_config get_128_as_config(sec_domain domain);
   void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 };
 
@@ -378,4 +376,22 @@ struct formatter<srsran::security::preferred_ciphering_algorithms> {
     return format_to(ctx.out(), "NEA{}, NEA{}, NEA{}, NEA{}", algos[0], algos[1], algos[2], algos[3]);
   }
 };
+
+// Security domain
+template <>
+struct formatter<srsran::security::sec_domain> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::security::sec_domain domain, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"RRC", "UP"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(domain)]);
+  }
+};
+
 } // namespace fmt
