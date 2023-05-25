@@ -64,7 +64,7 @@ struct e1ap_security_ind {
 };
 
 struct e1ap_cell_group_info_item {
-  uint8_t               cell_group_id;
+  uint8_t               cell_group_id = 0;
   optional<std::string> ul_cfg;
   optional<std::string> dl_tx_stop;
   optional<std::string> rat_type;
