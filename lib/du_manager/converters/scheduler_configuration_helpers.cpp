@@ -46,6 +46,8 @@ sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_
 
   sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(*du_cfg.ue_ded_serv_cell_cfg.ul_config);
 
+  sched_req.zp_csi_rs_list = du_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list;
+
   sched_req.csi_meas_cfg = du_cfg.ue_ded_serv_cell_cfg.csi_meas_cfg;
 
   return sched_req;
