@@ -372,12 +372,7 @@ struct cu_cp_pdu_session_resource_failed_to_modify_item {
   pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
 };
 
-using cu_cp_pdu_session_res_modify_response_transfer = cu_cp_pdu_session_res_setup_response_item;
-
-struct cu_cp_pdu_session_res_modify_response_item {
-  pdu_session_id_t                               pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_pdu_session_res_modify_response_transfer transfer;
-};
+using cu_cp_pdu_session_res_modify_response_item = cu_cp_pdu_session_res_setup_response_item;
 
 struct cu_cp_pdu_session_resource_modify_response {
   ue_index_t ue_index = ue_index_t::invalid;

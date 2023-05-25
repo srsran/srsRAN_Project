@@ -59,8 +59,16 @@ bool srsran::srs_cu_cp::update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                             pdu_session_resource_setup_list,
     const up_config_update& next_config,
+    up_resource_manager&    rrc_ue_up_resource_manager,
     srslog::basic_logger&   logger)
 {
+  // Set up SRB2 if this is the first DRB to be setup
+  if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
+    cu_cp_srbs_to_be_setup_mod_item srb2;
+    srb2.srb_id = srb_id_t::srb2;
+    ue_context_mod_request.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
+  }
+
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
     // Sanity check - make sure this session ID is present in the original setup message.
     if (ngap_setup_list.contains(e1ap_item.pdu_session_id) == false) {
@@ -154,4 +162,17 @@ bool srsran::srs_cu_cp::update_setup_list(
   }
 
   return true;
+}
+
+void srsran::srs_cu_cp::update_failed_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
+{
+  for (const auto& e1ap_item : pdu_session_resource_failed_list) {
+    // Add to list taking cause received from CU-UP.
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id                                         = e1ap_item.pdu_session_id;
+    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = e1ap_item.cause;
+    ngap_failed_list.emplace(failed_item.pdu_session_id, failed_item);
+  }
 }

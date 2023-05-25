@@ -32,7 +32,12 @@ bool update_setup_list(
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                             pdu_session_resource_setup_list,
     const up_config_update& next_config,
+    up_resource_manager&    rrc_ue_up_resource_manager,
     srslog::basic_logger&   logger);
+
+void update_failed_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list);
 
 } // namespace srs_cu_cp
 } // namespace srsran
