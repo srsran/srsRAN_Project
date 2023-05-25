@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 
 void fill_e1ap_drb_pdcp_config(e1ap_pdcp_config& e1ap_pdcp_cfg, const pdcp_config& cu_cp_pdcp_cfg);
 void fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_item&      e1ap_qos_item,
-                                   srslog::basic_logger&              logger,
+                                   const srslog::basic_logger&        logger,
                                    const qos_flow_setup_request_item& request_item);
 
 bool update_setup_list(
@@ -44,9 +44,9 @@ bool update_modify_list(
     cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
-                            e1ap_pdu_session_resource_modify_list,
-    const up_config_update& next_config,
-    srslog::basic_logger&   logger);
+                                e1ap_pdu_session_resource_modify_list,
+    const up_config_update&     next_config,
+    const srslog::basic_logger& logger);
 
 } // namespace srs_cu_cp
 } // namespace srsran

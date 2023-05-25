@@ -101,7 +101,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&      
                                const cu_cp_pdu_session_resource_modify_request  modify_request,
                                const e1ap_bearer_context_modification_response& bearer_context_modification_response,
                                const up_config_update&                          next_config,
-                               srslog::basic_logger&                            logger)
+                               const srslog::basic_logger&                      logger)
 {
   // Traverse modify list
   if (update_modify_list(response_msg.pdu_session_res_modify_list,
@@ -125,7 +125,7 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_modify_response&     r
                                const cu_cp_pdu_session_resource_modify_request modify_request,
                                const cu_cp_ue_context_modification_response&   ue_context_modification_response,
                                const up_config_update&                         next_config,
-                               srslog::basic_logger&                           logger)
+                               const srslog::basic_logger&                     logger)
 {
   // TODO: add implementation
   return ue_context_modification_response.success;
