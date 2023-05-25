@@ -119,8 +119,31 @@ void pdu_session_resource_modification_routine::operator()(
   }
 
   {
-    // Calculate next user-plane configuration based on incoming setup message.
-    // next_config = rrc_ue_up_resource_manager.calculate_update(setup_msg);
+    // Calculate next user-plane configuration based on incoming modify message.
+    next_config = rrc_ue_up_resource_manager.calculate_update(modify_request);
+  }
+
+  {
+    // prepare BearerContextModificationRequest
+    bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace(); // initialize fresh message
+    fill_initial_e1ap_bearer_context_modification_request(bearer_context_modification_request);
+
+    // call E1AP procedure and wait for BearerContextModificationResponse
+    CORO_AWAIT_VALUE(bearer_context_modification_response,
+                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+
+#if 0
+    // Handle BearerContextModificationResponse and fill subsequent UE context modification
+    if (handle_procedure_response(response_msg,
+                                  ue_context_mod_request,
+                                  modify_request,
+                                  bearer_context_modification_response,
+                                  next_config,
+                                  logger) == false) {
+      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", modify_request.ue_index, name());
+      CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
+    }
+#endif
   }
 
   // we are done
@@ -134,7 +157,7 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&    
   for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
     failed_item.pdu_session_id = modify_item.pdu_session_id;
-    response_msg.pdu_session_res_failed_to_modify_list.push_back(failed_item);
+    response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
 

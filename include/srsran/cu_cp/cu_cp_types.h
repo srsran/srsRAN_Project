@@ -290,7 +290,7 @@ struct cu_cp_pdu_session_res_release_cmd_transfer {
 };
 
 struct cu_cp_pdu_session_res_to_release_item_rel_cmd {
-  pdu_session_id_t                           pdu_session_id;
+  pdu_session_id_t                           pdu_session_id = pdu_session_id_t::invalid;
   cu_cp_pdu_session_res_release_cmd_transfer pdu_session_res_release_cmd_transfer;
 };
 
@@ -330,7 +330,7 @@ struct cu_cp_pdu_session_res_release_resp_transfer {
 };
 
 struct cu_cp_pdu_session_res_released_item_rel_res {
-  pdu_session_id_t                            pdu_session_id;
+  pdu_session_id_t                            pdu_session_id = pdu_session_id_t::invalid;
   cu_cp_pdu_session_res_release_resp_transfer pdu_session_res_release_resp_transfer;
 };
 
@@ -358,7 +358,7 @@ struct cu_cp_pdu_session_res_modify_request_transfer {
 };
 
 struct cu_cp_pdu_session_res_modify_item_mod_req {
-  pdu_session_id_t                              pdu_session_id;
+  pdu_session_id_t                              pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                                   nas_pdu;
   cu_cp_pdu_session_res_modify_request_transfer transfer;
 };
@@ -369,13 +369,23 @@ struct cu_cp_pdu_session_resource_modify_request {
 };
 
 struct cu_cp_pdu_session_resource_failed_to_modify_item {
-  pdu_session_id_t pdu_session_id;
+  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
+};
+
+using cu_cp_pdu_session_res_modify_response_transfer = cu_cp_pdu_session_res_setup_response_item;
+
+struct cu_cp_pdu_session_res_modify_response_item {
+  pdu_session_id_t                               pdu_session_id = pdu_session_id_t::invalid;
+  cu_cp_pdu_session_res_modify_response_transfer transfer;
 };
 
 struct cu_cp_pdu_session_resource_modify_response {
-  ue_index_t                                                    ue_index = ue_index_t::invalid;
-  std::vector<cu_cp_pdu_session_resource_failed_to_modify_item> pdu_session_res_failed_to_modify_list;
+  ue_index_t ue_index = ue_index_t::invalid;
   // id-PDUSessionResourceModifyListModRes
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item> pdu_session_res_modify_list;
+  // id-PDUSessionResourceFailedToModifyListModRes
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_failed_to_modify_item>
+      pdu_session_res_failed_to_modify_list;
   // id-UserLocationInformation
   // id-CriticalityDiagnostics
 };

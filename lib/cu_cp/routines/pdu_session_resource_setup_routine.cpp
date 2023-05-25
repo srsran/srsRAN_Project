@@ -35,14 +35,15 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
 {
 }
 
-bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_msg,
-                       cu_cp_ue_context_modification_request&         ue_context_mod_request,
-                       const cu_cp_pdu_session_resource_setup_request setup_msg,
-                       const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
-                                               pdu_session_resource_setup_list,
-                       const up_config_update& next_config,
-                       up_resource_manager&    rrc_ue_up_resource_manager,
-                       srslog::basic_logger&   logger)
+bool update_setup_list(
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,
+    cu_cp_ue_context_modification_request&                                          ue_context_mod_request,
+    const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>&    ngap_setup_list,
+    const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
+                            pdu_session_resource_setup_list,
+    const up_config_update& next_config,
+    up_resource_manager&    rrc_ue_up_resource_manager,
+    srslog::basic_logger&   logger)
 {
   // Set up SRB2 if this is the first DRB to be setup
   if (rrc_ue_up_resource_manager.get_nof_drbs() == 0) {
@@ -53,7 +54,7 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
 
   for (const auto& e1ap_item : pdu_session_resource_setup_list) {
     // Sanity check - make sure this session ID is present in the original setup message.
-    if (setup_msg.pdu_session_res_setup_items.contains(e1ap_item.pdu_session_id) == false) {
+    if (ngap_setup_list.contains(e1ap_item.pdu_session_id) == false) {
       logger.error("PDU Session Resource setup request doesn't include setup for PDU session {}",
                    e1ap_item.pdu_session_id);
       return false;
@@ -88,8 +89,8 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
 
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
         // Verify the QoS flow ID is present in original setup message.
-        if (setup_msg.pdu_session_res_setup_items[e1ap_item.pdu_session_id].qos_flow_setup_request_items.contains(
-                e1ap_flow.qos_flow_id) == false) {
+        if (ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items.contains(e1ap_flow.qos_flow_id) ==
+            false) {
           logger.error("PDU Session Resource setup request doesn't include setup for QoS flow {} in PDU session {}",
                        e1ap_flow.qos_flow_id,
                        e1ap_item.pdu_session_id);
@@ -110,12 +111,12 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
         // Add qos info
         for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
           drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
-              setup_msg.pdu_session_res_setup_items[item.pdu_session_id]
+              ngap_setup_list[item.pdu_session_id]
                   .qos_flow_setup_request_items[e1ap_flow.qos_flow_id]
                   .qos_flow_level_qos_params.qos_characteristics;
 
           non_dyn_5qi_descriptor_t non_dyn_5qi;
-          non_dyn_5qi.five_qi = setup_msg.pdu_session_res_setup_items[item.pdu_session_id]
+          non_dyn_5qi.five_qi = ngap_setup_list[item.pdu_session_id]
                                     .qos_flow_setup_request_items[e1ap_flow.qos_flow_id]
                                     .qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value()
                                     .five_qi;
@@ -141,7 +142,7 @@ bool update_setup_list(cu_cp_pdu_session_resource_setup_response&     response_m
       return false;
     }
 
-    response_msg.pdu_session_res_setup_response_items.emplace(item.pdu_session_id, item);
+    ngap_response_list.emplace(item.pdu_session_id, item);
   }
 
   return true;
@@ -171,13 +172,13 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
                                srslog::basic_logger&                            logger)
 {
   // Traverse setup list
-  if (!update_setup_list(response_msg,
-                         ue_context_mod_request,
-                         setup_msg,
-                         bearer_context_modification_response.pdu_session_resource_setup_list,
-                         next_config,
-                         rrc_ue_up_resource_manager_,
-                         logger)) {
+  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                        ue_context_mod_request,
+                        setup_msg.pdu_session_res_setup_items,
+                        bearer_context_modification_response.pdu_session_resource_setup_list,
+                        next_config,
+                        rrc_ue_up_resource_manager_,
+                        logger) == false) {
     return false;
   }
 
@@ -207,13 +208,13 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      r
                                srslog::basic_logger&                           logger)
 {
   // Traverse setup list
-  if (!update_setup_list(response_msg,
-                         ue_context_mod_request,
-                         setup_msg,
-                         bearer_context_setup_response.pdu_session_resource_setup_list,
-                         next_config,
-                         rrc_ue_up_resource_manager_,
-                         logger)) {
+  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                        ue_context_mod_request,
+                        setup_msg.pdu_session_res_setup_items,
+                        bearer_context_setup_response.pdu_session_resource_setup_list,
+                        next_config,
+                        rrc_ue_up_resource_manager_,
+                        logger) == false) {
     return false;
   }
 
