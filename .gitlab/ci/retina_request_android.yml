@@ -11,7 +11,7 @@
   image: registry.gitlab.com/softwareradiosystems/ci/retina/android:0.5.2
   requirements:
     cpu: 1
-    memory: 1G
+    memory: 2G
     ephemeral-storage: "3G"
   resources:
     - type: android
@@ -22,7 +22,7 @@
   image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.5.2
   requirements:
     cpu: 6
-    memory: 6G
+    memory: 10G
     ephemeral-storage: "3G"
   resources:
     - type: sdr
