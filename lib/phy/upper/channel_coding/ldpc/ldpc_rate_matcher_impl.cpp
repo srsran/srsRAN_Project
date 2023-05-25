@@ -120,7 +120,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
 
     // Select input chunk interval. Stop the chunk at the first filler bit.
     interval<unsigned> input_chunk_range(in_index, in.size());
-    if (input_chunk_range.contains(filler_bits_range.start())) {
+    if (!filler_bits_range.empty() && input_chunk_range.contains(filler_bits_range.start())) {
       input_chunk_range = {in_index, filler_bits_range.start()};
     }
 
