@@ -8,16 +8,16 @@
  *
  */
 
-#include "e2_subscriber_impl.h"
+#include "e2_subscription_manager_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 
 using namespace asn1::e2ap;
 using namespace srsran;
 
-e2_subscriber_impl::e2_subscriber_impl(e2sm_handler&            e2sm_packer_,
-                                       e2sm_interface&          e2sm_,
-                                       e2_message_notifier&     notif_,
-                                       e2_du_metrics_interface& du_metrics_interface_) :
+e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_handler&            e2sm_packer_,
+                                                           e2sm_interface&          e2sm_,
+                                                           e2_message_notifier&     notif_,
+                                                           e2_du_metrics_interface& du_metrics_interface_) :
   e2sm_packer(e2sm_packer_),
   e2sm_iface(e2sm_),
   notif(notif_),
@@ -27,7 +27,7 @@ e2_subscriber_impl::e2_subscriber_impl(e2sm_handler&            e2sm_packer_,
 }
 
 e2_subscribe_reponse_message
-e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg)
+e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg)
 {
   e2_subscription_t subscription                             = {};
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
@@ -51,7 +51,7 @@ e2_subscriber_impl::handle_subscription_setup(const asn1::e2ap::ricsubscription_
 }
 
 // in this function we start the indication procedure for this subscription
-int e2_subscriber_impl::start_subscription(int ric_instance_id, e2_event_manager& ev_mng)
+int e2_subscription_manager_impl::start_subscription(int ric_instance_id, e2_event_manager& ev_mng)
 {
   subscriptions[ric_instance_id].indication_task = launch_async<e2_indication_procedure>(
       notif, e2sm_iface, ev_mng, subscriptions[ric_instance_id].subscription_info, logger);
@@ -59,9 +59,9 @@ int e2_subscriber_impl::start_subscription(int ric_instance_id, e2_event_manager
 }
 
 // check if action is supported by the E2 agent and return the result
-bool e2_subscriber_impl::action_supported(const srsran::byte_buffer& action_definition,
-                                          uint32_t                   ric_instance_id,
-                                          uint16_t                   ric_action_id)
+bool e2_subscription_manager_impl::action_supported(const srsran::byte_buffer& action_definition,
+                                                    uint32_t                   ric_instance_id,
+                                                    uint16_t                   ric_action_id)
 {
   auto action_def  = e2sm_packer.handle_packed_e2sm_kpm_action_definition(action_definition);
   auto action_type = action_def.action_definition_formats.type().value;
@@ -82,9 +82,9 @@ bool e2_subscriber_impl::action_supported(const srsran::byte_buffer& action_defi
 }
 
 // create subscription result message
-void e2_subscriber_impl::get_subscription_result(e2_subscribe_reponse_message&         outcome,
-                                                 e2_subscription_t&                    subscription,
-                                                 const ri_cactions_to_be_setup_list_l& actions)
+void e2_subscription_manager_impl::get_subscription_result(e2_subscribe_reponse_message&         outcome,
+                                                           e2_subscription_t&                    subscription,
+                                                           const ri_cactions_to_be_setup_list_l& actions)
 {
   outcome.success                     = false;
   outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;

@@ -153,10 +153,10 @@ public:
   virtual ~e2_interface() = default;
 };
 
-class e2_subscriber
+class e2_subscription_manager
 {
 public:
-  virtual ~e2_subscriber() = default;
+  virtual ~e2_subscription_manager() = default;
 
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;

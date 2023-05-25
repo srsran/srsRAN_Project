@@ -20,14 +20,14 @@ using namespace asn1::e2sm_kpm;
 
 namespace srsran {
 
-class e2_subscriber_impl : public e2_subscriber
+class e2_subscription_manager_impl : public e2_subscription_manager
 {
 public:
-  explicit e2_subscriber_impl(e2sm_handler&            e2sm_packer_,
-                              e2sm_interface&          e2sm_,
-                              e2_message_notifier&     notif_,
-                              e2_du_metrics_interface& du_metrics_interface_);
-  virtual ~e2_subscriber_impl() = default;
+  explicit e2_subscription_manager_impl(e2sm_handler&            e2sm_packer_,
+                                        e2sm_interface&          e2sm_,
+                                        e2_message_notifier&     notif_,
+                                        e2_du_metrics_interface& du_metrics_interface_);
+  virtual ~e2_subscription_manager_impl() = default;
 
   /// \brief  Handles the subscription request message.
   /// \param[in] msg  The subscription request message.

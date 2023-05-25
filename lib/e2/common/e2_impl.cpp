@@ -17,12 +17,14 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_impl::e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscriber& subscrbier_) :
+e2_impl::e2_impl(timer_factory            timers_,
+                 e2_message_notifier&     e2_pdu_notifier_,
+                 e2_subscription_manager& subscription_mngr_) :
   logger(srslog::fetch_basic_logger("E2")),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
-  subscrbier(subscrbier_),
-  subscribe_proc(e2_pdu_notifier_, subscrbier, timers, logger),
+  subscription_mngr(subscription_mngr_),
+  subscribe_proc(e2_pdu_notifier_, subscription_mngr, timers, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/e2/common/e2_subscriber_impl.h"
+#include "lib/e2/common/e2_subscription_manager_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2sm_kpm_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -107,10 +107,10 @@ public:
   void get_metrics(scheduler_ue_metrics& ue_metrics) override {}
 };
 
-class dummy_e2_subscriber : public e2_subscriber
+class dummy_e2_subscription_mngr : public e2_subscription_manager
 {
 public:
-  dummy_e2_subscriber() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e2_subscription_mngr() : logger(srslog::fetch_basic_logger("TEST")){};
   e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& request) override
   {
     last_subscription = request;
@@ -249,7 +249,7 @@ protected:
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   std::unique_ptr<e2sm_interface>                     e2sm_iface;
   std::unique_ptr<e2sm_handler>                       e2sm_packer;
-  std::unique_ptr<e2_subscriber>                      subscriber;
+  std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
@@ -263,13 +263,13 @@ class e2_test : public e2_test_base
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    subscriber   = std::make_unique<dummy_e2_subscriber>();
-    du_metrics   = std::make_unique<dummy_e2_du_metrics>();
-    factory      = timer_factory{timers, task_worker};
-    e2           = create_e2(factory, *msg_notifier, *subscriber);
-    gw           = std::make_unique<dummy_network_gateway_data_handler>();
-    packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    msg_notifier         = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+    e2_subscription_mngr = std::make_unique<dummy_e2_subscription_mngr>();
+    du_metrics           = std::make_unique<dummy_e2_du_metrics>();
+    factory              = timer_factory{timers, task_worker};
+    e2                   = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
+    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
+    packer               = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
   }
 
@@ -292,10 +292,11 @@ class e2_test_subscriber : public e2_test_base
     e2sm_packer  = std::make_unique<dummy_e2sm_handler>();
     du_metrics   = std::make_unique<dummy_e2_du_metrics>();
     e2sm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
-    subscriber   = std::make_unique<e2_subscriber_impl>(*e2sm_packer, *e2sm_iface, *msg_notifier, *du_metrics);
-    e2           = create_e2(factory, *msg_notifier, *subscriber);
-    gw           = std::make_unique<dummy_network_gateway_data_handler>();
-    packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
+    e2_subscription_mngr =
+        std::make_unique<e2_subscription_manager_impl>(*e2sm_packer, *e2sm_iface, *msg_notifier, *du_metrics);
+    e2     = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
+    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
   }
 
