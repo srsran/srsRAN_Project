@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../lib/e2/procedures/e2_event_manager.h"
+#include "e2_event_manager.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e2ap/e2ap.h"
@@ -63,16 +63,16 @@ struct ric_action_t {
 };
 
 // here we define a subscription struct
-typedef struct {
+struct e2_subscription_info_t {
   asn1::e2ap::ri_crequest_id_s request_id;
   std::vector<ric_action_t>    action_list;
   uint64_t                     report_period;
-} e2_subscription_info_t;
+};
 
-typedef struct {
+struct e2_subscription_t {
   e2_subscription_info_t subscription_info;
   eager_async_task<void> indication_task;
-} e2_subscription_t;
+};
 
 /// This interface is used to push E2 messages to the E2 interface.
 class e2_message_handler
