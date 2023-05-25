@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-set(SOURCES du_cell_config_validation.cpp)
+set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(srsran_du_config_validators STATIC ${SOURCES})

@@ -13,6 +13,7 @@
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_update_config_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
@@ -107,8 +108,14 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.msg1_scs                     = is_long_prach ? subcarrier_spacing::invalid : base_cell.common_scs;
     rach_cfg.prach_root_seq_index         = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
-    rach_cfg.rach_cfg_generic.msg1_frequency_start         = base_cell.prach_cfg.prach_frequency_start;
-    rach_cfg.total_nof_ra_preambles                        = base_cell.prach_cfg.total_nof_ra_preambles;
+    // \c msg1_frequency_start for RACH is one of the parameters that can either be set manually, or need to be
+    // recomputed at the end of the manual configuration, as a results of other user parameters passed by the user.
+    bool update_msg1_frequency_start = not base_cell.prach_cfg.prach_frequency_start.has_value();
+    if (not update_msg1_frequency_start) {
+      // Set manually.
+      rach_cfg.rach_cfg_generic.msg1_frequency_start = base_cell.prach_cfg.prach_frequency_start.value();
+    }
+    rach_cfg.total_nof_ra_preambles = base_cell.prach_cfg.total_nof_ra_preambles;
 
     // UE-dedicated config.
     if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common and
@@ -175,6 +182,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
     if (user_pucch_cfg.max_payload_bits > 0) {
       du_pucch_cfg.f2_params.max_payload_bits.emplace(static_cast<unsigned>(user_pucch_cfg.max_payload_bits));
+    }
+
+    // If any dependent parameter needs to be updated, this is the place.
+    if (update_msg1_frequency_start) {
+      rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::update_prach_frequency_start(
+          du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+      printf("This is the new PRACH frequency start %d \n", rach_cfg.rach_cfg_generic.msg1_frequency_start);
     }
 
     logger.info(

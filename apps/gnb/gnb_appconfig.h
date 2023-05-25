@@ -43,7 +43,7 @@ struct prach_appconfig {
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
   /// with the PUCCH, the user should leave some guardband between the PUCCH CRBs and the PRACH PRBs.
   /// Possible values: {0,...,MAX_NOF_PRB - 1}.
-  unsigned prach_frequency_start = 6;
+  optional<unsigned> prach_frequency_start;
 };
 
 /// TDD configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
