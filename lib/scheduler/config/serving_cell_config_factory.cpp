@@ -767,6 +767,18 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdsch_cfg.rbg_sz    = rbg_size::config1;
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
+  pdsch_cfg.zp_csi_rs_res_list.resize(1);
+  pdsch_cfg.zp_csi_rs_res_list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.fd_alloc.resize(3);
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.fd_alloc.set(0);
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.nof_ports               = 4;
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.first_ofdm_symbol_in_td = 8;
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.cdm                     = csi_rs_cdm_type::fd_CDM2;
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.freq_density            = csi_rs_freq_density_type::one;
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.freq_band_start_rb      = 0;
+  pdsch_cfg.zp_csi_rs_res_list[0].res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
+  pdsch_cfg.zp_csi_rs_res_list[0].period                              = csi_resource_periodicity::slots80;
+  pdsch_cfg.zp_csi_rs_res_list[0].offset                              = 1;
 
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config(params));

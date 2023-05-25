@@ -127,6 +127,10 @@ struct pdsch_config {
   /// vrb-ToPRB-Interleaver and rbg-Size settings are described in TS 38.214, clause 5.1.2.3. If a bundleSize(Set)
   /// value is absent, the UE applies the value n2. The field prb-BundlingType applies to DCI format 1_1.
   prb_bundling prb_bndlg;
+  /// \brief List of zp-CSI-RS-Resources.
+  static_vector<zp_csi_rs_resource, MAX_NOF_ZP_CSI_RS_RESOURCES> zp_csi_rs_res_list;
+  /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
+  optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 
   // TODO: Remaining.
 
@@ -138,7 +142,8 @@ struct pdsch_config {
            tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
            rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
-           is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg;
+           is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg &&
+           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res;
   }
   bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };
