@@ -180,61 +180,114 @@ private:
 /*********************
   function helpers
 *********************/
-
 template <class T>
 class dyn_array
 {
 public:
-  using value_type     = typename std::vector<T>::value_type;
-  using iterator       = typename std::vector<T>::iterator;
-  using const_iterator = typename std::vector<T>::const_iterator;
+  typedef T value_type;
+  using iterator       = T*;
+  using const_iterator = const T*;
 
-  constexpr dyn_array() = default;
-  explicit dyn_array(uint32_t new_size) : data_(new_size) {}
-  dyn_array(const dyn_array<T>& other) = default;
-  dyn_array(const T* ptr, uint32_t nof_items) : data_(nof_items) { std::copy(ptr, ptr + nof_items, data_.data()); }
-  uint32_t      size() const { return data_.size(); }
-  uint32_t      capacity() const { return data_.capacity(); }
+  dyn_array() = default;
+  explicit dyn_array(uint32_t new_size) : size_(new_size), cap_(new_size)
+  {
+    if (size_ > 0) {
+      data_ = new T[size_];
+    }
+  }
+  dyn_array(const dyn_array<T>& other) : dyn_array(other.data(), other.size()) {}
+  dyn_array(const T* ptr, uint32_t nof_items)
+  {
+    size_ = nof_items;
+    cap_  = nof_items;
+    data_ = new T[cap_];
+    std::copy(ptr, ptr + size_, data_);
+  }
+  ~dyn_array()
+  {
+    if (data_ != nullptr) {
+      delete[] data_;
+    }
+  }
+  uint32_t      size() const { return size_; }
+  uint32_t      capacity() const { return cap_; }
   T&            operator[](uint32_t idx) { return data_[idx]; }
   const T&      operator[](uint32_t idx) const { return data_[idx]; }
-  dyn_array<T>& operator=(const dyn_array<T>& other) = default;
-
+  dyn_array<T>& operator=(const dyn_array<T>& other)
+  {
+    if (this == &other) {
+      return *this;
+    }
+    if (cap_ < other.size()) {
+      delete[] data_;
+      data_ = new T[other.size()];
+      cap_  = other.size();
+    }
+    size_ = other.size();
+    std::copy(other.data(), other.data() + other.size(), data());
+    return *this;
+  }
   void resize(uint32_t new_size, uint32_t new_cap = 0)
   {
-    if (new_cap > new_size) {
-      data_.reserve(new_cap);
+    if (new_size == size_) {
+      return;
     }
-    data_.resize(new_size);
-  }
+    if (cap_ >= new_size) {
+      if (new_size > size_) {
+        std::fill(data_ + size_, data_ + new_size, T());
+      }
+      size_ = new_size;
+      return;
+    }
 
+    T* old_data = data_;
+    cap_        = new_size > new_cap ? new_size : new_cap;
+    if (cap_ > 0) {
+      data_ = new T[cap_];
+      if (old_data != nullptr) {
+        std::copy(old_data, old_data + size_, data_);
+      }
+    } else {
+      data_ = nullptr;
+    }
+    size_ = new_size;
+    delete[] old_data;
+  }
   iterator erase(iterator it)
   {
     if (it < begin() or it >= end()) {
       log_warning("Trying to access out-of-bounds iterator.");
       return end();
     }
-    return data_.erase(it);
-  }
 
+    std::copy(it + 1, end(), it);
+    size_--;
+
+    return it;
+  }
   bool operator==(const dyn_array<T>& other) const
   {
-    return size() == other.size() and std::equal(begin(), end(), other.begin());
+    return size() == other.size() and std::equal(data_, data_ + size(), other.data_);
   }
-
-  void push_back(const T& elem) { data_.push_back(elem); }
-
-  void           clear() { data_.clear(); }
+  void push_back(const T& elem)
+  {
+    resize(size() + 1, size() * 2);
+    data_[size() - 1] = elem;
+  }
+  void           clear() { resize(0); }
   T&             back() { return data_[size() - 1]; }
   const T&       back() const { return data_[size() - 1]; }
-  T*             data() { return data_.data(); }
-  const T*       data() const { return data_.data(); }
-  iterator       begin() { return data_.begin(); }
-  iterator       end() { return data_.end(); }
-  const_iterator begin() const { return data_.begin(); }
-  const_iterator end() const { return data_.end(); }
+  T*             data() { return &data_[0]; }
+  const T*       data() const { return &data_[0]; }
+  iterator       begin() { return &data_[0]; }
+  iterator       end() { return &data_[size()]; }
+  const_iterator begin() const { return &data_[0]; }
+  const_iterator end() const { return &data_[size()]; }
 
 private:
-  std::vector<T> data_;
+  T*       data_ = nullptr;
+  uint32_t size_ = 0;
+  uint32_t cap_  = 0;
 };
 
 template <class T, uint32_t MAX_N>
