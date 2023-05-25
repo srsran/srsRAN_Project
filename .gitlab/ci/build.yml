@@ -53,6 +53,9 @@ variables:
   BUILD_ARGS:
     description: It will be passed to cmake
     value: ""
+  MAKE_ARGS:
+    description: It will be passed to make/ninja
+    value: "-j4"
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
@@ -144,7 +147,7 @@ pull_src_cache:
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.8.0"
+    DOCKER_BUILDER_VERSION: "1.8.2"
     SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
@@ -199,6 +202,9 @@ pull_src_cache:
         fi
         if [[ $TEST_MODE = "none" ]]; then
           BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+        fi
+        if [ -n "${MAKE_ARGS}" ]; then
+          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
         fi
 
         BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
@@ -351,6 +357,7 @@ smoke release cached:
   extends: .smoke release
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -363,6 +370,7 @@ smoke tsan cached:
   extends: .smoke tsan
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -376,6 +384,7 @@ smoke rhel cached:
   extends: .smoke rhel
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -388,6 +397,7 @@ smoke archlinux cached:
   extends: .smoke archlinux
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -443,6 +453,7 @@ intermediate commits:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -636,7 +647,7 @@ export on amd64:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 10 minutes
+      start_in: 30 minutes
   interruptible: false
   variables:
     COMPILER: gcc
@@ -663,7 +674,7 @@ ubuntu-23.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 20 minutes
+      start_in: 60 minutes
   interruptible: false
   parallel:
     matrix:
@@ -678,7 +689,7 @@ ubuntu-22.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 90 minutes
   interruptible: false
   parallel:
     matrix:
@@ -693,7 +704,7 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 40 minutes
+      start_in: 120 minutes
   interruptible: false
   parallel:
     matrix:
@@ -708,7 +719,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 50 minutes
+      start_in: 150 minutes
   interruptible: false
   parallel:
     matrix:
@@ -744,7 +755,7 @@ archlinux amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -865,7 +876,7 @@ ubuntu-23.04 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -879,7 +890,7 @@ ubuntu-23.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -894,7 +905,7 @@ ubuntu-23.04 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -908,7 +919,7 @@ ubuntu-23.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
   interruptible: false
   parallel:
     matrix:
@@ -922,7 +933,7 @@ ubuntu-22.04 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   parallel:
     matrix:
@@ -936,7 +947,7 @@ ubuntu-22.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   parallel:
     matrix:
@@ -951,7 +962,7 @@ ubuntu-22.04 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   parallel:
     matrix:
@@ -965,7 +976,7 @@ ubuntu-22.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 60 minutes
   interruptible: false
   parallel:
     matrix:
@@ -979,7 +990,7 @@ ubuntu-20.04 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 45 minutes
+      start_in: 90 minutes
   interruptible: false
   parallel:
     matrix:
@@ -993,7 +1004,7 @@ ubuntu-20.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 45 minutes
+      start_in: 90 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1008,7 +1019,7 @@ ubuntu-20.04 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 45 minutes
+      start_in: 90 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1022,7 +1033,7 @@ ubuntu-20.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 45 minutes
+      start_in: 90 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1036,7 +1047,7 @@ rhel-8 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1050,7 +1061,7 @@ rhel-8 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1065,7 +1076,7 @@ rhel-8 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   parallel:
     matrix:
@@ -1079,7 +1090,7 @@ rhel-8 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 60 minutes
+      start_in: 120 minutes
   interruptible: false
   parallel:
     matrix:
