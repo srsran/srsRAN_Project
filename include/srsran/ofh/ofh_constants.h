@@ -29,5 +29,8 @@ constexpr size_t MAX_UP_MESSAGES_PER_SYMBOL = 2;
 /// Maximum number of supported eAxC. Implementation defined.
 constexpr unsigned MAX_NOF_SUPPORTED_EAXC = 4;
 
+/// Maximum allowed value for eAxC ID.
+constexpr size_t MAX_SUPPORTED_EAXC_ID_VALUE = 32;
+
 } // namespace ofh
 } // namespace srsran

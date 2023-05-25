@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
+#include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -20,16 +20,24 @@ namespace ofh {
 /// Sequence identifier generator.
 class sequence_identifier_generator
 {
-  static_vector<uint8_t, MAX_NOF_SUPPORTED_EAXC> counters = {0, 0, 0, 0};
+  circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> counters;
 
 public:
+  /// Default constructor.
+  sequence_identifier_generator()
+  {
+    for (unsigned K = 0; K != MAX_SUPPORTED_EAXC_ID_VALUE; ++K) {
+      counters.insert(K, 0);
+    }
+  }
+
   /// Generates a new sequence identifier and returns it.
   uint8_t generate(unsigned eaxc)
   {
-    srsran_assert(eaxc < MAX_NOF_SUPPORTED_EAXC,
-                  "Invalid eAxC={} detected. Maximum eAxC suported={}",
+    srsran_assert(eaxc < MAX_SUPPORTED_EAXC_ID_VALUE,
+                  "Invalid eAxC={} detected. Maximum supported eAxC value = {}",
                   eaxc,
-                  MAX_NOF_SUPPORTED_EAXC);
+                  MAX_SUPPORTED_EAXC_ID_VALUE);
 
     uint8_t& value = counters[eaxc];
     return value++;
