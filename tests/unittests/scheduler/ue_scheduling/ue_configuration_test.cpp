@@ -71,7 +71,6 @@ TEST(ue_configuration, when_reconfiguration_is_received_then_ue_updates_logical_
   sched_cell_configuration_request_message msg        = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
   sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
-  scheduler_ue_metrics_dummy_notifier      metrics_notif;
   scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
   ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg, harq_timeout_handler};
 

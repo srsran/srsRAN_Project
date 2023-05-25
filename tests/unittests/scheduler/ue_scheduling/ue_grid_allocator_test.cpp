@@ -77,10 +77,9 @@ protected:
         &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier   mac_notif;
-
+  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
+  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier             mac_notif;
   scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;

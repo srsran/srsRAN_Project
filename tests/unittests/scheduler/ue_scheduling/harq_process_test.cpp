@@ -14,6 +14,19 @@
 
 using namespace srsran;
 
+class dummy_harq_timeout_handler : public harq_timeout_handler
+{
+public:
+  du_ue_index_t last_ue_index  = INVALID_DU_UE_INDEX;
+  bool          last_dir_is_dl = false;
+
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override
+  {
+    last_ue_index  = ue_index;
+    last_dir_is_dl = is_dl;
+  }
+};
+
 /// Tester for different combinations of max HARQ retxs, ack wait timeouts, and k1s.
 class dl_harq_process_tester : public ::testing::Test
 {
@@ -229,7 +242,7 @@ protected:
     max_ack_wait_slots(12),
     k1(1),
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, {}, max_ack_wait_slots)
+    h_dl(to_harq_id(0), dl_logger, {timeout_handler, to_du_ue_index(0)}, max_ack_wait_slots)
   {
     srslog::init();
   }
@@ -248,9 +261,10 @@ protected:
   const unsigned shortened_ack_wait_slots{10};
   const unsigned k1;
 
-  harq_logger     dl_logger;
-  dl_harq_process h_dl;
-  slot_point      sl_tx{0, 0};
+  harq_logger                dl_logger;
+  dummy_harq_timeout_handler timeout_handler;
+  dl_harq_process            h_dl;
+  slot_point                 sl_tx{0, 0};
 };
 
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
@@ -263,15 +277,18 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
       ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
     }
 
-    // Before reaching the ack_wait_slots, the HARQ should be neither empty nor having pending TX.
+    // Before reaching the ack_wait_slots, the HARQ should be neither empty nor have pending reTX.
     if (i < shortened_ack_wait_slots + k1) {
       ASSERT_FALSE(h_dl.empty());
       ASSERT_FALSE(h_dl.has_pending_retx());
+      ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX);
     }
-    // Once the shortened_ack_wait_slots has passed, expect pending transmissions.
+    // Once the shortened_ack_wait_slots has passed, expect pending reTXs.
     else {
       ASSERT_FALSE(h_dl.empty());
       ASSERT_TRUE(h_dl.has_pending_retx());
+      ASSERT_EQ(timeout_handler.last_ue_index, to_du_ue_index(0));
+      ASSERT_TRUE(timeout_handler.last_dir_is_dl);
     }
     slot_indication();
   }
@@ -330,6 +347,8 @@ TEST_F(dl_harq_process_param_tester_dtx, test_ack_dtx)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
 
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
@@ -358,6 +377,8 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
 
 TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
@@ -385,4 +406,6 @@ TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
