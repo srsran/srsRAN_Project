@@ -495,6 +495,19 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
     }
   }
 
+  // Compute zp CSI-RS resources and resource sets.
+  calculate_addmodremlist_diff(
+      out.zp_csi_rs_res_to_add_mod_list,
+      out.zp_csi_rs_res_to_release_list,
+      src.zp_csi_rs_res_list,
+      dest.zp_csi_rs_res_list,
+      [](const zp_csi_rs_resource& r) { return make_asn1_zp_csi_rs_resource(r); },
+      [](const zp_csi_rs_resource& r) { return r.id; });
+  out.p_zp_csi_rs_res_set_present = calculate_setup_release(
+      out.p_zp_csi_rs_res_set, src.p_zp_csi_rs_res, dest.p_zp_csi_rs_res, [](const zp_csi_rs_resource_set& s) {
+        return make_asn1_zp_csi_rs_resource_set(s);
+      });
+
   // TODO: Remaining.
 }
 

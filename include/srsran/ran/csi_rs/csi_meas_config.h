@@ -331,8 +331,8 @@ struct zp_csi_rs_resource {
   /// \brief OFDM symbol and subcarrier occupancy of the ZP-CSI-RS resource within a slot.
   csi_rs_resource_mapping res_mapping;
   /// Periodicity and slot offset for periodic/semi-persistent ZP-CSI-RS.
-  csi_resource_periodicity period;
-  unsigned                 offset;
+  optional<csi_resource_periodicity> period;
+  optional<unsigned>                 offset;
 
   bool operator==(const zp_csi_rs_resource& other) const
   {

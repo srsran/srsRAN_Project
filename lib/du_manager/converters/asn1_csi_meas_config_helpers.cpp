@@ -189,6 +189,29 @@ static void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_an
   }
 }
 
+asn1::rrc_nr::zp_csi_rs_res_s srsran::srs_du::make_asn1_zp_csi_rs_resource(const zp_csi_rs_resource& cfg)
+{
+  zp_csi_rs_res_s out{};
+  out.zp_csi_rs_res_id = static_cast<uint8_t>(cfg.id);
+  out.res_map          = make_asn1_nzp_csi_rs_resource_mapping(cfg.res_mapping);
+  if (cfg.period.has_value() and cfg.offset.has_value()) {
+    out.periodicity_and_offset_present = true;
+    make_asn1_csi_resource_periodicity_and_offset(out.periodicity_and_offset, cfg.period.value(), cfg.offset.value());
+  }
+  return out;
+}
+
+asn1::rrc_nr::zp_csi_rs_res_set_s srsran::srs_du::make_asn1_zp_csi_rs_resource_set(const zp_csi_rs_resource_set& cfg)
+{
+  zp_csi_rs_res_set_s out{};
+  out.zp_csi_rs_res_set_id = cfg.id;
+  out.zp_csi_rs_res_id_list.resize(cfg.zp_csi_rs_res_list.size());
+  for (unsigned i = 0; i != cfg.zp_csi_rs_res_list.size(); ++i) {
+    out.zp_csi_rs_res_id_list[i] = static_cast<uint8_t>(cfg.zp_csi_rs_res_list[i]);
+  }
+  return out;
+}
+
 asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_resource& cfg)
 {
   nzp_csi_rs_res_s out{};
