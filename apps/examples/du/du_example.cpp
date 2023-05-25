@@ -14,7 +14,7 @@
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
