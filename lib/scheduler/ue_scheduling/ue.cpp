@@ -9,10 +9,27 @@
  */
 
 #include "ue.h"
+#include "../logging/scheduler_metrics_handler.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
 
 using namespace srsran;
+
+/// \brief Adapter class to forward HARQ timeout signals to scheduler_metrics_handler.
+class harq_timeout_handler_adapter final : public harq_timeout_notifier
+{
+public:
+  harq_timeout_handler_adapter(du_ue_index_t ue_index_, scheduler_metrics_handler& metrics_) :
+    ue_index(ue_index_), metrics(metrics_)
+  {
+  }
+
+  void notify_harq_timeout(bool is_dl) override { metrics.handle_harq_timeout(ue_index, is_dl); }
+
+private:
+  du_ue_index_t              ue_index;
+  scheduler_metrics_handler& metrics;
+};
 
 ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
        const cell_configuration&                cell_cfg_common_,
@@ -24,11 +41,12 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   cell_cfg_common(cell_cfg_common_),
   log_channels_configs(req.cfg.lc_config_list),
   sched_request_configs(req.cfg.sched_request_config_list),
+  harq_timeout_notif(std::make_unique<harq_timeout_handler_adapter>(ue_index, metrics_handler_)),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
     ue_du_cells[i] = std::make_unique<ue_cell>(
-        ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg, metrics_handler_);
+        ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg, *harq_timeout_notif);
     ue_cells.push_back(ue_du_cells[i].get());
   }
 

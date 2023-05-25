@@ -26,7 +26,18 @@ namespace srsran {
 
 struct pdsch_information;
 struct pusch_information;
-class scheduler_metrics_handler;
+
+/// \brief Notifier for HARQ process timeouts.
+class harq_timeout_notifier
+{
+public:
+  virtual ~harq_timeout_notifier() = default;
+
+  virtual void notify_harq_timeout(bool is_dl)
+  {
+    // base class does nothing with timeouts.
+  }
+};
 
 /// \brief Helper class to log HARQ events.
 class harq_logger
@@ -73,20 +84,6 @@ private:
   rnti_t                rnti;
   du_cell_index_t       cell_index;
   bool                  is_dl;
-};
-
-/// \brief Notifier of HARQ timeouts.
-class harq_timeout_notifier
-{
-public:
-  harq_timeout_notifier() = default;
-  harq_timeout_notifier(du_ue_index_t ue_idx_, scheduler_metrics_handler& metrics_handler_);
-
-  void notify_timeout(bool is_dl);
-
-private:
-  du_ue_index_t              ue_idx          = INVALID_DU_UE_INDEX;
-  scheduler_metrics_handler* metrics_handler = nullptr;
 };
 
 namespace detail {
@@ -136,10 +133,10 @@ public:
   /// \brief HARQ process constructor.
   /// \param h_id HARQ process ID.
   /// \param max_ack_wait_in_slots_ number of slots above which the scheduler considers that the ACK/CRC went missing.
-  explicit harq_process(harq_id_t             h_id,
-                        harq_logger&          logger_,
-                        harq_timeout_notifier timeout_notifier_      = {},
-                        unsigned              max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS);
+  explicit harq_process(harq_id_t              h_id,
+                        harq_logger&           logger_,
+                        harq_timeout_notifier& timeout_notifier_,
+                        unsigned               max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// \brief Indicate the beginning of a new slot.
   void slot_indication(slot_point slot_tx);
@@ -195,7 +192,7 @@ protected:
   harq_logger& logger;
 
   /// Notifier used by this HARQ process when there is a timeout.
-  harq_timeout_notifier timeout_notifier;
+  harq_timeout_notifier& timeout_notifier;
 
   /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
@@ -360,10 +357,10 @@ public:
   /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
   /// \param max_ack_wait_in_slots Duration in slots before a HARQ process acknowledgement is considered to have gone
   /// missing and that the HARQ can be reset.
-  explicit harq_entity(rnti_t                rnti,
-                       unsigned              nof_dl_harq_procs,
-                       unsigned              nof_ul_harq_procs,
-                       harq_timeout_notifier ue_timeout_notifier,
+  explicit harq_entity(rnti_t                 rnti,
+                       unsigned               nof_dl_harq_procs,
+                       unsigned               nof_ul_harq_procs,
+                       harq_timeout_notifier& timeout_notif,
                        unsigned max_ack_wait_in_slots = detail::harq_process<true>::DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
@@ -446,7 +443,6 @@ private:
   srslog::basic_logger& logger;
   harq_logger           dl_h_logger;
   harq_logger           ul_h_logger;
-  harq_timeout_notifier timeout_notif;
 
   // slot_rx is the slot index at which the scheduler is currently working
   slot_point                   slot_tx;

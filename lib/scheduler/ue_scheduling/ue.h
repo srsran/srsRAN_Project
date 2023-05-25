@@ -18,6 +18,8 @@
 
 namespace srsran {
 
+class scheduler_metrics_handler;
+
 class ue
 {
 public:
@@ -141,6 +143,9 @@ private:
 
   /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<scheduling_request_to_addmod> sched_request_configs;
+
+  /// Notifier used by HARQ processes to signal timeouts due to undetected HARQ ACKs/CRCs.
+  std::unique_ptr<harq_timeout_notifier> harq_timeout_notif;
 
   srslog::basic_logger& logger;
 

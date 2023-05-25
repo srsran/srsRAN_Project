@@ -9,29 +9,16 @@
  */
 
 #include "harq_process.h"
-#include "../logging/scheduler_metrics_handler.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
-harq_timeout_notifier::harq_timeout_notifier(du_ue_index_t ue_idx_, scheduler_metrics_handler& metrics_handler_) :
-  ue_idx(ue_idx_), metrics_handler(&metrics_handler_)
-{
-}
-
-void harq_timeout_notifier::notify_timeout(bool is_dl)
-{
-  if (metrics_handler != nullptr) {
-    metrics_handler->handle_harq_timeout(ue_idx, is_dl);
-  }
-}
-
 template <bool IsDownlink>
-detail::harq_process<IsDownlink>::harq_process(harq_id_t             h_id,
-                                               harq_logger&          logger_,
-                                               harq_timeout_notifier timeout_notifier_,
-                                               unsigned              max_ack_wait_in_slots_) :
+detail::harq_process<IsDownlink>::harq_process(harq_id_t              h_id,
+                                               harq_logger&           logger_,
+                                               harq_timeout_notifier& timeout_notifier_,
+                                               unsigned               max_ack_wait_in_slots_) :
   id(h_id),
   logger(logger_),
   timeout_notifier(timeout_notifier_),
@@ -65,7 +52,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      "but only invalid HARQ-ACKs were received so far.",
                      ack_wait_in_slots);
       }
-      timeout_notifier.notify_timeout(IsDownlink);
+      timeout_notifier.notify_harq_timeout(IsDownlink);
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
       // Max number of reTxs was exceeded. Clear HARQ process
@@ -305,16 +292,15 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-harq_entity::harq_entity(rnti_t                rnti_,
-                         unsigned              nof_dl_harq_procs,
-                         unsigned              nof_ul_harq_procs,
-                         harq_timeout_notifier ue_timeout_notifier,
-                         unsigned              max_ack_wait_in_slots) :
+harq_entity::harq_entity(rnti_t                 rnti_,
+                         unsigned               nof_dl_harq_procs,
+                         unsigned               nof_ul_harq_procs,
+                         harq_timeout_notifier& timeout_notif,
+                         unsigned               max_ack_wait_in_slots) :
   rnti(rnti_),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_h_logger(logger, rnti_, to_du_cell_index(0), true),
-  ul_h_logger(logger, rnti_, to_du_cell_index(0), false),
-  timeout_notif(ue_timeout_notifier)
+  ul_h_logger(logger, rnti_, to_du_cell_index(0), false)
 {
   // Create HARQ processes
   dl_harqs.reserve(nof_dl_harq_procs);

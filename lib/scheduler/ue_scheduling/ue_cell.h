@@ -46,7 +46,7 @@ public:
           const scheduler_ue_expert_config& expert_cfg_,
           const cell_configuration&         cell_cfg_common_,
           const serving_cell_config&        ue_serv_cell,
-          scheduler_metrics_handler&        metrics_handler_);
+          harq_timeout_notifier&            harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
