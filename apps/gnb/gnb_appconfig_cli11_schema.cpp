@@ -605,7 +605,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 {
   app.add_option("--max_proc_delay", config.max_processing_delay_slots, "Maximum allowed processing delay in slots")
       ->capture_default_str()
-      ->check(CLI::Range(2, 6));
+      ->check(CLI::Range(1, 30));
   app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
   app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
 

@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        ru_ofh_config_validator.cpp
         ru_ofh_downlink_plane_handler_proxy.cpp
         ru_ofh_factory.cpp
         ru_ofh_impl.cpp

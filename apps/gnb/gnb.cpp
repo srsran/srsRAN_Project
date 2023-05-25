@@ -242,7 +242,7 @@ private:
                                                            os_thread_realtime_priority::max() - 2,
                                                            os_sched_affinity_bitmask{});
 
-    if (blocking_mode_active || lower_phy_profile == lower_phy_thread_profile::blocking) {
+    if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
       create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
@@ -250,6 +250,11 @@ private:
       create_worker_pool(
           "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
+
+    if (!blocking_mode_active && lower_phy_profile == lower_phy_thread_profile::blocking) {
+      create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
+    }
+
     create_worker("radio", task_worker_queue_size);
     create_worker("ru_stats_worker", 1);
 
