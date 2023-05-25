@@ -11,7 +11,6 @@
 #pragma once
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
@@ -138,11 +137,10 @@ public:
 
   void slot_indication(slot_point slot_tx);
 
-  scheduler_expert_config             expert_cfg;
-  cell_configuration                  cell_cfg;
-  sched_cfg_dummy_notifier            mac_notif;
-  scheduler_ue_metrics_dummy_notifier metrics_notif;
-  scheduler_metrics_handler           metrics{std::chrono::milliseconds{10000}, metrics_notif};
+  scheduler_expert_config              expert_cfg;
+  cell_configuration                   cell_cfg;
+  sched_cfg_dummy_notifier             mac_notif;
+  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   cell_resource_allocator res_grid{cell_cfg};
   pdcch_dl_information    dci_info;

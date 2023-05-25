@@ -10,7 +10,6 @@
 
 #include "../test_utils/config_generators.h"
 #include "../test_utils/dummy_test_components.h"
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -54,14 +53,14 @@ protected:
     for (lcid_t lcid : lcids_to_activate) {
       ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, metrics));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
 
     return ues[ue_index];
   }
 
   ue& add_ue(const sched_ue_creation_request_message& ue_creation_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, metrics));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
     return ues[ue_creation_req.ue_index];
   }
 
@@ -82,8 +81,7 @@ protected:
   cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
   sched_cfg_dummy_notifier   mac_notif;
 
-  scheduler_ue_metrics_dummy_notifier metrics_notif;
-  scheduler_metrics_handler           metrics{std::chrono::milliseconds{1000}, metrics_notif};
+  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
   dummy_uci_allocator            dummy_uci_alloc;

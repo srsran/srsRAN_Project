@@ -8,7 +8,6 @@
  *
  */
 
-#include "lib/scheduler/logging/scheduler_metrics_handler.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -73,8 +72,8 @@ TEST(ue_configuration, when_reconfiguration_is_received_then_ue_updates_logical_
   cell_configuration                       cell_cfg{msg};
   sched_ue_creation_request_message        ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
   scheduler_ue_metrics_dummy_notifier      metrics_notif;
-  scheduler_metrics_handler                metrics{std::chrono::milliseconds{1000}, metrics_notif};
-  ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg, metrics};
+  scheduler_harq_timeout_dummy_handler     harq_timeout_handler;
+  ue                                       u{expert_cfg.ue, cell_cfg, ue_create_msg, harq_timeout_handler};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
   sched_ue_reconfiguration_message recfg{};

@@ -14,14 +14,27 @@
 
 using namespace srsran;
 
+class noop_harq_timeout_notifier final : public harq_timeout_handler
+{
+public:
+  void handle_harq_timeout(du_ue_index_t /**/, bool /**/) override
+  {
+    // do nothing
+  }
+};
+
+static noop_harq_timeout_notifier noop_notifier;
+
+ue_harq_timeout_notifier::ue_harq_timeout_notifier() : notifier(&noop_notifier), ue_index(INVALID_DU_UE_INDEX) {}
+
 template <bool IsDownlink>
-detail::harq_process<IsDownlink>::harq_process(harq_id_t              h_id,
-                                               harq_logger&           logger_,
-                                               harq_timeout_notifier& timeout_notifier_,
-                                               unsigned               max_ack_wait_in_slots_) :
+detail::harq_process<IsDownlink>::harq_process(harq_id_t                h_id,
+                                               harq_logger&             logger_,
+                                               ue_harq_timeout_notifier timeout_notif,
+                                               unsigned                 max_ack_wait_in_slots_) :
   id(h_id),
   logger(logger_),
-  timeout_notifier(timeout_notifier_),
+  timeout_notifier(timeout_notif),
   max_ack_wait_in_slots(max_ack_wait_in_slots_),
   ack_wait_in_slots(max_ack_wait_in_slots_)
 {
@@ -292,11 +305,11 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-harq_entity::harq_entity(rnti_t                 rnti_,
-                         unsigned               nof_dl_harq_procs,
-                         unsigned               nof_ul_harq_procs,
-                         harq_timeout_notifier& timeout_notif,
-                         unsigned               max_ack_wait_in_slots) :
+harq_entity::harq_entity(rnti_t                   rnti_,
+                         unsigned                 nof_dl_harq_procs,
+                         unsigned                 nof_ul_harq_procs,
+                         ue_harq_timeout_notifier timeout_notif,
+                         unsigned                 max_ack_wait_in_slots) :
   rnti(rnti_),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_h_logger(logger, rnti_, to_du_cell_index(0), true),

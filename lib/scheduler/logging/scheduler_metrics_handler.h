@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../ue_scheduling/harq_process.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -18,7 +19,7 @@
 namespace srsran {
 
 ///\brief Handler of scheduler slot metrics.
-class scheduler_metrics_handler
+class scheduler_metrics_handler : public harq_timeout_handler
 {
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
@@ -44,7 +45,7 @@ public:
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
 
   /// \brief Register HARQ timeout.
-  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl);
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override;
 
   /// \brief Register PUCCH SINR.
   void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);

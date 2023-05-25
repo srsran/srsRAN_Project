@@ -147,4 +147,12 @@ public:
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
 };
 
+class scheduler_harq_timeout_dummy_handler : public harq_timeout_handler
+{
+public:
+  du_ue_index_t last_ue_idx = INVALID_DU_UE_INDEX;
+
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override { last_ue_idx = ue_index; }
+};
+
 } // namespace srsran
