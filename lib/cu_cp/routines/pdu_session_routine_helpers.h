@@ -61,7 +61,7 @@ void update_failed_list(
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
 bool update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>&       ngap_response_list,
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
@@ -78,7 +78,7 @@ bool update_modify_list(
 /// \param[in] logger Reference to the logger.
 /// \return True on success, false otherwise.
 bool update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item>&      ngap_response_list,
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                             bearer_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const cu_cp_ue_context_modification_response& ue_context_modification_response,

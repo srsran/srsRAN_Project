@@ -13,6 +13,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
@@ -291,6 +292,35 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   if (request->nas_pdu_present) {
     handle_nas_pdu(logger, request->nas_pdu.value, *ue);
   }
+}
+
+void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
+{
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping PduSessionResourceModifyRequest (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   request->ran_ue_ngap_id.value,
+                   request->amf_ue_ngap_id.value);
+    return;
+  }
+
+  logger.info("ue={} Received PduSessionResourceModifyRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
+
+  if (request->ran_paging_prio_present) {
+    logger.debug("Not handling RAN paging prio");
+  }
+
+  // Convert to common type
+  cu_cp_pdu_session_resource_modify_request msg;
+  msg.ue_index = ue_index;
+  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req.value);
+
+  // start routine
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_pdu_session_resource_modify_procedure>(
+                                     msg, *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)

@@ -85,6 +85,10 @@ private:
   /// \param[in] msg The received PDU Session Resource Setup Request.
   void handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request);
 
+  /// \brief Notify about the reception of an PDU Session Resource Modify Request.
+  /// \param[in] msg The received PDU Session Resource Modify Request.
+  void handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request);
+
   /// \brief Notify about the reception of an PDU Session Resource Release Command.
   /// \param[in] msg The received PDU Session Resource Release Command.
   void handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command);

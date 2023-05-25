@@ -269,6 +269,45 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   }
 }
 
+/// \brief Convert a NGAP ASN1 modify item to commong type.
+/// \param[out] modify_item The flat/common version
+/// \param[in] asn1_session_item The ASN1 struct to be converted.
+inline void fill_cu_cp_pdu_session_resource_modify_item_base(
+    cu_cp_pdu_session_res_modify_item_mod_req&               modify_item,
+    const asn1::ngap::pdu_session_res_modify_item_mod_req_s& asn1_session_item)
+{
+  modify_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
+
+  asn1::ngap::pdu_session_res_modify_request_transfer_s asn1_modify_req_transfer;
+  asn1::cbit_ref bref({asn1_session_item.pdu_session_res_modify_request_transfer.begin(),
+                       asn1_session_item.pdu_session_res_modify_request_transfer.end()});
+  if (asn1_modify_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Modify Request Transfer PDU");
+    return;
+  }
+
+  if (!asn1_session_item.nas_pdu.empty()) {
+    modify_item.nas_pdu.resize(asn1_session_item.nas_pdu.size());
+    std::copy(asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), modify_item.nas_pdu.begin());
+  }
+}
+
+/// \brief Convert NGAP ASN1 PDU Session Resource Modify List ASN1 struct to common type.
+/// \param[out] cu_cp_pdu_session_resource_modify_msg The cu_cp_pdu_session_res_modify_msg struct to fill.
+/// \param[in] asn1_pdu_session_res_modify_list The pdu_session_res_modify_list ASN1 struct.
+inline void fill_cu_cp_pdu_session_resource_modify_request(
+    cu_cp_pdu_session_resource_modify_request& cu_cp_pdu_session_resource_modify_msg,
+    const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_modify_item_mod_req_s, 1, 256, true>&
+        asn1_pdu_session_res_modify_list)
+{
+  for (const auto& asn1_session_item : asn1_pdu_session_res_modify_list) {
+    cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+    fill_cu_cp_pdu_session_resource_modify_item_base(modify_item, asn1_session_item);
+    cu_cp_pdu_session_resource_modify_msg.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id,
+                                                                               std::move(modify_item));
+  }
+}
+
 /// \brief Convert NGAP ASN1 PDU Session Resource Setup List CTX REQ
 /// ASN1 struct to common type.
 /// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
@@ -326,6 +365,27 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
       resp->pdu_session_res_failed_to_setup_list_su_res->push_back(setup_failed_item);
     }
   }
+}
+
+/// \brief Convert common type PDU Session Resource Modify Response message to NGAP PDU Session Resource Modify Response
+/// message.
+/// \param[out] resp The ASN1 NGAP PDU Session Resource Modify Response message.
+/// \param[in] cu_cp_resp The CU-CP PDU Session Resource Modify Response message.
+inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_res_modify_resp_s&       resp,
+                                                      const cu_cp_pdu_session_resource_modify_response cu_cp_resp)
+{
+  // Fill PDU Session Resource Modify Response List
+  if (!cu_cp_resp.pdu_session_res_modify_list.empty()) {
+    resp->pdu_session_res_modify_list_mod_res_present = true;
+
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_modify_list) {
+      asn1::ngap::pdu_session_res_modify_item_mod_res_s resp_item;
+      pdu_session_res_modify_response_item_to_asn1(resp_item, cu_cp_resp_item);
+      resp->pdu_session_res_modify_list_mod_res->push_back(resp_item);
+    }
+  }
+
+  // TODO: Add pdu_session_res_failed_to_modify_list_mod_res support
 }
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Release Comman ASN1 struct to common type.

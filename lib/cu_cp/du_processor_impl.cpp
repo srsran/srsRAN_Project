@@ -384,6 +384,19 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
       rrc_ue->get_rrc_ue_up_resource_manager());
 }
 
+async_task<cu_cp_pdu_session_resource_modify_response>
+du_processor_impl::handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg)
+{
+  du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
+  srsran_assert(ue != nullptr, "ue={} Could not find DU UE", msg.ue_index);
+
+  rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
+  srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", msg.ue_index);
+
+  return routine_mng->start_pdu_session_resource_modification_routine(
+      msg, ue->get_rrc_ue_notifier(), rrc_ue->get_rrc_ue_up_resource_manager());
+}
+
 async_task<cu_cp_pdu_session_resource_release_response>
 du_processor_impl::handle_new_pdu_session_resource_release_command(
     const cu_cp_pdu_session_resource_release_command& msg)

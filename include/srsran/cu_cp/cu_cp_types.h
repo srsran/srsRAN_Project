@@ -368,13 +368,25 @@ struct cu_cp_pdu_session_resource_modify_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req> pdu_session_res_modify_items;
 };
 
-using cu_cp_pdu_session_res_modify_response_item       = cu_cp_pdu_session_res_setup_response_item;
 using cu_cp_pdu_session_resource_failed_to_modify_item = cu_cp_pdu_session_res_setup_failed_item;
+
+struct qos_flow_add_or_mod_response_item {
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
+};
+
+struct cu_cp_pdu_session_res_modify_response_transfer {
+  optional<slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_response_item>> qos_flow_add_or_modify_response_list;
+};
+
+struct cu_cp_pdu_session_resource_modify_response_item {
+  pdu_session_id_t                               pdu_session_id;
+  cu_cp_pdu_session_res_modify_response_transfer transfer;
+};
 
 struct cu_cp_pdu_session_resource_modify_response {
   ue_index_t ue_index = ue_index_t::invalid;
   // id-PDUSessionResourceModifyListModRes
-  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item> pdu_session_res_modify_list;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item> pdu_session_res_modify_list;
   // id-PDUSessionResourceFailedToModifyListModRes
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_failed_to_modify_item>
       pdu_session_res_failed_to_modify_list;

@@ -205,7 +205,7 @@ void srsran::srs_cu_cp::update_failed_list(
 }
 
 bool srsran::srs_cu_cp::update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>&       ngap_response_list,
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     cu_cp_ue_context_modification_request&                                                ue_context_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
@@ -227,10 +227,8 @@ bool srsran::srs_cu_cp::update_modify_list(
       return false;
     }
 
-    cu_cp_pdu_session_res_setup_response_item item;
+    cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
-
-    auto& transfer = item.pdu_session_resource_setup_response_transfer;
 
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
       // Catch implementation limitations.
@@ -247,6 +245,7 @@ bool srsran::srs_cu_cp::update_modify_list(
 
       // TODO: add DRB verification
 
+      item.transfer.qos_flow_add_or_modify_response_list.emplace();
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
         // Verify the QoS flow ID is present in original setup message.
         if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
@@ -258,9 +257,9 @@ bool srsran::srs_cu_cp::update_modify_list(
           return false;
         }
 
-        cu_cp_associated_qos_flow qos_flow;
+        qos_flow_add_or_mod_response_item qos_flow;
         qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
-        transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(e1ap_flow.qos_flow_id, qos_flow);
+        item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
       }
 
       // Fill UE context modification for DU
@@ -341,7 +340,7 @@ void fill_e1ap_bearer_context_list(
 }
 
 bool srsran::srs_cu_cp::update_modify_list(
-    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_response_item>&      ngap_response_list,
+    slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_resource_modify_response_item>& ngap_response_list,
     e1ap_bearer_context_modification_request&                                             bearer_ctxt_mod_request,
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_modify_item_mod_req>& ngap_modify_list,
     const cu_cp_ue_context_modification_response& ue_context_modification_response,

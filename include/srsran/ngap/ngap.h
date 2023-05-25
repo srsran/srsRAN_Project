@@ -185,6 +185,10 @@ public:
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
 
+  /// \brief Notify about the reception of a new PDU Session Resource Modify Request.
+  virtual async_task<cu_cp_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) = 0;
+
   /// \brief Notify about the reception of a new PDU Session Resource Release Command.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;

@@ -277,6 +277,33 @@ inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&     
   std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_setup_resp_transfer.begin());
 }
 
+/// \brief Convert common type modify response item to ASN1 type message.
+/// \param[out] asn1_resp The ASN1 NGAP struct.
+/// \param[in] resp The common type struct.
+template <typename template_asn1_item>
+inline void pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn1_resp,
+                                                         const cu_cp_pdu_session_resource_modify_response_item resp)
+{
+  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+
+  asn1::ngap::pdu_session_res_modify_resp_transfer_s response_transfer;
+
+  // qos_flow_add_or_modify_resp_list
+  if (resp.transfer.qos_flow_add_or_modify_response_list.has_value()) {
+    for (const auto& qos_flow : resp.transfer.qos_flow_add_or_modify_response_list.value()) {
+      asn1::ngap::qos_flow_add_or_modify_resp_item_s asn1_item;
+      asn1_item.qos_flow_id = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      response_transfer.qos_flow_add_or_modify_resp_list.push_back(asn1_item);
+    }
+  }
+
+  // Pack pdu_session_res_modify_resp_transfer_s
+  byte_buffer pdu = pack_into_pdu(response_transfer);
+
+  asn1_resp.pdu_session_res_modify_resp_transfer.resize(pdu.length());
+  std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_modify_resp_transfer.begin());
+}
+
 /// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
 /// message.
 /// \param[out] resp The ASN1 NGAP Initial Context Setup Response message.
