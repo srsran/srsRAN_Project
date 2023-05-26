@@ -12,16 +12,12 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 
 using namespace asn1::e2ap;
+using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
-e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_interface&          e2sm_,
-                                                           e2_message_notifier&     notif_,
-                                                           e2_du_metrics_interface& du_metrics_interface_) :
+e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_interface& e2sm_, e2_message_notifier& notif_) :
 
-  e2sm_iface(e2sm_),
-  notif(notif_),
-  du_metrics_interface(du_metrics_interface_),
-  logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
+  e2sm_iface(e2sm_), notif(notif_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
 {
 }
 
