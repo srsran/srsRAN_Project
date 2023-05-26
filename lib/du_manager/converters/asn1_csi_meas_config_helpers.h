@@ -10,8 +10,16 @@
 
 #pragma once
 
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
+
+namespace asn1 {
+namespace rrc_nr {
+
+// forward declarations.
+struct csi_meas_cfg_s;
+
+} // namespace rrc_nr
+} // namespace asn1
 
 namespace srsran {
 namespace srs_du {

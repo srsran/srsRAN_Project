@@ -9,7 +9,7 @@
  */
 
 #include "srsran/du/du_cell_config_validation.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
