@@ -651,7 +651,7 @@ int main(int argc, char** argv)
       build_ru_config(srslog::fetch_basic_logger("Radio", true), ru_ul_adapt, ru_timing_adapt, workers, is_zmq_used);
 
   auto ru_object = create_generic_ru(ru_cfg);
-  report_fatal_error_if_not(ru_object, "Unable to create Radio Unit.");
+  report_error_if_not(ru_object, "Unable to create Radio Unit.");
   du_logger.info("Radio Unit created successfully");
 
   // Create upper PHY.
@@ -691,7 +691,7 @@ int main(int argc, char** argv)
                                             upper->get_uplink_pdu_validator(),
                                             generate_prach_config_tlv(),
                                             generate_carrier_config_tlv());
-  report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
+  report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
 
@@ -703,21 +703,21 @@ int main(int argc, char** argv)
   if (enable_fapi_logs) {
     // Create gateway loggers and intercept MAC adaptor calls.
     logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
-    report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
+    report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
     mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_notifier);
 
     // Create notification loggers.
     logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
-    report_fatal_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
+    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
     logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(mac_adaptor->get_slot_time_notifier());
-    report_fatal_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+    report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.
     phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
     phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
     mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_notifier);
-    report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
+    report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
   }

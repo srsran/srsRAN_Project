@@ -51,4 +51,7 @@ template <typename... Args>
 #define report_fatal_error_if_not(condition, fmtstr, ...)                                                              \
   (void)((condition) || (report_fatal_error(fmtstr, ##__VA_ARGS__), 0))
 
+/// \brief Verifies if condition is true. If not, report an error and close application.
+#define report_error_if_not(condition, fmtstr, ...) (void)((condition) || (report_error(fmtstr, ##__VA_ARGS__), 0))
+
 } // namespace srsran

@@ -1,3 +1,13 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
@@ -119,11 +129,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-          0,
-          0,
-          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-          0,
-          0};
+                0,
+                0,
+                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+                0,
+                0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -520,14 +530,8 @@ static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const 
 static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
 {
   std::array<unsigned, 6> data       = {};
-  int                     bytes_read = std::sscanf(mac_str.c_str(),
-                               "%02x:%02x:%02x:%02x:%02x:%02x",
-                               &data[0],
-                               &data[1],
-                               &data[2],
-                               &data[3],
-                               &data[4],
-                               &data[5]);
+  int                     bytes_read = std::sscanf(
+      mac_str.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &data[0], &data[1], &data[2], &data[3], &data[4], &data[5]);
   if (bytes_read != ether::ETH_ADDR_LEN) {
     fmt::print("Invalid MAC address provided: {}", mac_str);
     return false;

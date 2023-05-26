@@ -15,7 +15,6 @@
 #include "srsran/du/du_qos_config.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
-#include "srsran/ru/ru_generic_configuration.h"
 #include "srsran/ru/ru_configuration.h"
 #include <map>
 #include <vector>

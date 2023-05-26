@@ -61,7 +61,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
       get_statistics_time_interval_in_slots(config.statistics_print_interval_s, low_cfg.scs));
 
   auto radio = build_radio(*config.radio_exec, *radio_event_counter, config.radio_cfg, config.device_driver);
-  report_fatal_error_if_not(radio, "Unable to create radio session.");
+  report_error_if_not(radio, "Unable to create radio session.");
 
   // Create adapters.
   auto phy_err_printer = std::make_unique<phy_error_adapter>("info");
@@ -76,11 +76,11 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
 
   // Create lower PHY factory.
   auto lphy_factory = create_lower_phy_factory(config.lower_phy_config, config.max_nof_prach_concurrent_requests);
-  report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
+  report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   // Create lower PHY.
   auto lower = lphy_factory->create(config.lower_phy_config);
-  report_fatal_error_if_not(lower, "Unable to create lower PHY.");
+  report_error_if_not(lower, "Unable to create lower PHY.");
 
   // Create RU and return.
   ru_generic_impl_config ru_cfg;
