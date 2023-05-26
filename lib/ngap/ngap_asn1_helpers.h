@@ -286,6 +286,50 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
     return;
   }
 
+  if (asn1_modify_req_transfer->qos_flow_add_or_modify_request_list_present) {
+    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list.value) {
+      qos_flow_add_or_mod_item qos_flow_add_item;
+
+      // qosFlowIdentifier
+      qos_flow_add_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
+
+      // qosFlowLevelQosParameters
+      if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+          asn1::ngap::qos_characteristics_c::types::dyn5qi) {
+        dyn_5qi_descriptor_t dyn_5qi = {};
+        if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
+          dyn_5qi.five_qi =
+              uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
+        }
+        // TODO: Add optional values
+
+        qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+
+        // TODO: Add optional values
+
+      } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+                 asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
+        non_dyn_5qi_descriptor_t non_dyn_5qi = {};
+        non_dyn_5qi.five_qi =
+            uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
+        qos_flow_add_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+        // TODO: Add optional values
+      }
+
+      // allocationAndRetentionPriority
+      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
+      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
+      qos_flow_add_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
+
+      modify_item.transfer.qos_flow_add_or_modify_request_list.emplace(qos_flow_add_item.qos_flow_id,
+                                                                       qos_flow_add_item);
+    }
+  }
+
   if (!asn1_session_item.nas_pdu.empty()) {
     modify_item.nas_pdu.resize(asn1_session_item.nas_pdu.size());
     std::copy(asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), modify_item.nas_pdu.begin());
@@ -358,6 +402,8 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
     for (const auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
+      srsran_assert(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause != cause_t::nulltype,
+                    "Failed cause must not be null.");
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 
       pdu_session_res_setup_failed_item_to_asn1(setup_failed_item, cu_cp_setup_failed_item);
