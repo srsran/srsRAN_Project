@@ -12,7 +12,9 @@
 #include "../routines/pdu_session_resource_modification_routine.h"
 #include "../routines/pdu_session_resource_release_routine.h"
 #include "../routines/pdu_session_resource_setup_routine.h"
+#include "../routines/reestablishment_context_modification_routine.h"
 #include "../routines/ue_context_release_routine.h"
+#include "srsran/support/async/coroutine.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -73,4 +75,13 @@ du_processor_routine_manager::start_ue_context_release_routine(const cu_cp_ue_co
 {
   return launch_async<ue_context_release_routine>(
       command, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_du_notifier, ue_manager, ue_up_resource_manager, logger);
+}
+
+async_task<bool> du_processor_routine_manager::start_reestablishment_context_modification_routine(
+    ue_index_t                                    ue_index,
+    du_processor_rrc_ue_control_message_notifier& rrc_ue_ctrl_notifier,
+    up_resource_manager&                          ue_up_resource_manager)
+{
+  return launch_async<reestablishment_context_modification_routine>(
+      ue_index, e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_ue_ctrl_notifier, ue_up_resource_manager, logger);
 }

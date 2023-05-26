@@ -175,6 +175,10 @@ public:
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
   virtual void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+
+  /// \brief Notify about a required reestablishment context modification.
+  /// \param[in] ue_index The index of the UE that needs the context modification.
+  virtual void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Schedules asynchronous tasks associated with an UE.

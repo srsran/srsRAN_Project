@@ -68,6 +68,7 @@ public:
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
   void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
   async_task<cu_cp_pdu_session_resource_setup_response>

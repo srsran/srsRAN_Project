@@ -85,6 +85,11 @@ public:
     last_cu_cp_ue_context_release_command = msg;
   }
 
+  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
+  }
+
   srb_creation_message             last_srb_creation_message;
   bool                             srb1_created = false;
   bool                             srb2_created = false;

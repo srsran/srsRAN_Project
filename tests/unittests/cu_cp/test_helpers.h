@@ -410,10 +410,10 @@ public:
     return nullptr;
   }
 
-  void on_ue_context_release_command(ue_index_t ue_index) override { logger.info("Received a UE Release Command"); };
+  void on_ue_context_release_command(ue_index_t ue_index) override { logger.info("Received a UE Release Command"); }
 
   /// Send RRC Release to all UEs connected to this DU.
-  void on_release_ues() override { logger.info("Releasing all UEs"); };
+  void on_release_ues() override { logger.info("Releasing all UEs"); }
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

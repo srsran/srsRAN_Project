@@ -62,6 +62,11 @@ public:
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
+  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
+  }
+
 private:
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };

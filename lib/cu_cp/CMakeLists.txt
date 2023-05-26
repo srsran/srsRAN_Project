@@ -26,6 +26,7 @@ set(SOURCES
       routines/pdu_session_resource_release_routine.cpp
       routines/pdu_session_resource_modification_routine.cpp
       routines/ue_context_release_routine.cpp
+      routines/reestablishment_context_modification_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
