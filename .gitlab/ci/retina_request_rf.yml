@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.1
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.2
   count: 4
   requirements:
     cpu: 9
@@ -22,7 +22,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.1
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.2
   requirements:
     cpu: 9
     memory: 10G
@@ -34,7 +34,7 @@
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.1
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.2
   requirements:
     cpu: 2
     memory: 2G
