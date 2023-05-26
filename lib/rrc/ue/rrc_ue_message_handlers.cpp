@@ -9,6 +9,7 @@
  */
 
 #include "../../ran/gnb_format.h"
+#include "procedures/rrc_reestablishment_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
@@ -101,7 +102,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
-  // Notifiy CU-CP about the RRC Reestablishment Request
+  // Notifiy CU-CP about the RRC Reestablishment Request to get old RRC UE context
   rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
       msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
 
@@ -140,7 +141,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
     logger.warning("Received RRC Restablishment, but old UE does not have valid security context");
   }
   if (not valid) {
-    // Reject RRC Reestablishment by sending RRC Setup
+    // Reject RRC Reestablishment Request by sending RRC Setup
     task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
                                                                      asn1::rrc_nr::establishment_cause_e::mt_access,
                                                                      du_to_cu_container,
@@ -160,7 +161,9 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
     }
   }
 
-  // TODO: launch RRC Reestablishment procedure
+  // Accept RRC Reestablishment Request by sending RRC Reestablishment
+  task_sched.schedule_async_task(
+      launch_async<rrc_reestablishment_procedure>(context, reest_context.ue_index, *this, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
@@ -197,6 +200,9 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       break;
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
+      break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_reest_complete().rrc_transaction_id);
       break;
     default:
       log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Unsupported message type");
