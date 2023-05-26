@@ -183,16 +183,27 @@ struct security_context {
   sec_selected_algos             sel_algos;
   sec_as_keys                    as_keys;
 
-  security_context operator=(const security_context& sec_ctxt) // copy-constructor
+  security_context()  = default;
+  ~security_context() = default;
+  security_context(const security_context& sec_ctxt) :
+    k(sec_ctxt.k),
+    supported_int_algos(sec_ctxt.supported_int_algos),
+    supported_enc_algos(sec_ctxt.supported_enc_algos),
+    sel_algos(sec_ctxt.sel_algos),
+    as_keys(sec_ctxt.as_keys)
   {
-    security_context ret_ctxt;
-    ret_ctxt.k                   = sec_ctxt.k;
-    ret_ctxt.supported_int_algos = sec_ctxt.supported_int_algos;
-    ret_ctxt.supported_enc_algos = sec_ctxt.supported_enc_algos;
-    ret_ctxt.sel_algos           = sec_ctxt.sel_algos;
-    ret_ctxt.as_keys             = sec_ctxt.as_keys;
-
-    return ret_ctxt;
+  }
+  security_context& operator=(const security_context& sec_ctxt)
+  {
+    if (this == &sec_ctxt) {
+      return *this;
+    }
+    k                   = sec_ctxt.k;
+    supported_int_algos = sec_ctxt.supported_int_algos;
+    supported_enc_algos = sec_ctxt.supported_enc_algos;
+    sel_algos           = sec_ctxt.sel_algos;
+    as_keys             = sec_ctxt.as_keys;
+    return *this;
   }
 
   bool select_algorithms(preferred_integrity_algorithms pref_inte_list, preferred_ciphering_algorithms pref_ciph_list);
