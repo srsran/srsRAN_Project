@@ -193,3 +193,11 @@ void test_bench::slot_indication(slot_point slot_tx)
   test_logger.set_context(slot_tx.sfn(), slot_tx.slot_index());
   res_grid.slot_indication(slot_tx);
 }
+
+void test_bench::fill_all_grid(slot_point slot_tx)
+{
+  cell_slot_resource_allocator& pucch_slot_alloc = res_grid[slot_tx];
+  pucch_slot_alloc.ul_res_grid.fill(grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                               ofdm_symbol_range{0, 14},
+                                               cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs});
+}

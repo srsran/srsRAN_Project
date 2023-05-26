@@ -238,23 +238,23 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   }
 
   // Get the PUCCH resources, either from default tables.
-  pucch_res_alloc_cfg pucch_res;
-  pucch_res = alloc_pucch_common_res_harq(pucch_harq_ack_output.pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
+  optional<pucch_res_alloc_cfg> pucch_res = alloc_pucch_common_res_harq(pucch_slot_alloc, dci_info.ctx);
 
   // No resources available for PUCCH.
-  if (not pucch_res.has_config) {
+  if (not pucch_res.has_value()) {
     logger.debug("PUCCH for TC-RNTI={:#x} not allocated due to resources not available", tcrnti);
     return pucch_harq_ack_output;
   }
 
   // Fill Slot grid.
-  pucch_slot_alloc.ul_res_grid.fill(pucch_res.first_hop_res);
-  pucch_slot_alloc.ul_res_grid.fill(pucch_res.second_hop_res);
+  pucch_slot_alloc.ul_res_grid.fill(pucch_res.value().first_hop_res);
+  pucch_slot_alloc.ul_res_grid.fill(pucch_res.value().second_hop_res);
 
   // Fill scheduler output.
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res);
-  pucch_harq_ack_output.pucch_pdu = &pucch_info;
+  fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res.value());
+  pucch_harq_ack_output.pucch_pdu           = &pucch_info;
+  pucch_harq_ack_output.pucch_res_indicator = pucch_res.value().pucch_res_indicator;
 
   logger.debug("PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot);
 
@@ -498,13 +498,16 @@ void pucch_allocator_impl::slot_indication(slot_point sl_tx)
 
 //////////////    Private functions       //////////////
 
-pucch_allocator_impl::pucch_res_alloc_cfg
-pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                      pucch_res_indicator,
-                                                  cell_slot_resource_allocator&  pucch_alloc,
+// The function returns an available common PUCCH resource (i.e., not used by other UEs); it returns a null optional if
+// no resource is available.
+optional<pucch_allocator_impl::pucch_res_alloc_cfg>
+pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
                                                   const dci_context_information& dci_info)
 {
-  // This is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
+  // As per Section 9.2.1, TS 38.213, this is the max value of \f$\Delta_{PRI}\f$, which is a 3-bit unsigned.
   const unsigned max_d_pri = 7;
+  // As per Section 9.2.1, TS 38.213, r_pucch can take values within {0,...,15}.
+  const unsigned r_pucch_invalid = 16;
 
   // Get the parameter N_bwp_size, which is the Initial UL BWP size in PRBs, as per TS 38.213, Section 9.2.1.
   const unsigned size_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
@@ -526,10 +529,32 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
 
   const bwp_configuration& init_ul_bwp_param = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  // Find a value of \Delta_PRI such that the PUCCH resources are not used.
-  for (unsigned d_pri = 0; d_pri != max_d_pri; ++d_pri) {
+  pucch_res_alloc_cfg candidate_pucch_resource{};
+  // Initialize r_pucch candidate with an invalid value. This is to verify whether an available resource exists at the
+  // end of the loop.
+  unsigned candiadate_r_pucch = r_pucch_invalid;
+  // Flag to check if the backup resource (i.e., an available resource that collides with the grid) has been
+  // initialized.
+  bool backup_res_initialized = false;
+
+  // The scope of the loop below is to allocate the PUCCH common resource while pursuing the following objectives:
+  // - Not selecting common PUCCH resources that are already used by other UEs. If there is no resource available, then
+  // the allocation fails.
+  // - Trying to find REs in the grid that are unused. However, since the UE-specific PUCCH guardbands can take quite
+  // some space on the band, if no common PUCCH resource can be allocated on a free part of the grid, the allocator will
+  // choose the first available common PUCCH resource (i.e., not used by other UEs), even though it collides with the
+  // grid.
+  //
+  // Loop over the values of \Delta_PRI to find an available common PUCCH resource that possibly doesn't collide with
+  // the UL grid.
+  for (unsigned d_pri = 0; d_pri != max_d_pri + 1; ++d_pri) {
     // r_PUCCH, as per Section 9.2.1, TS 38.213.
     const unsigned r_pucch = get_pucch_default_resource_index(start_cce_idx, nof_coreset_cces, d_pri);
+    srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
+
+    if (not resource_manager.is_common_resource_available(pucch_alloc.slot, r_pucch)) {
+      continue;
+    }
 
     // Compute PRB_first_hop and PRB_second_hop as per Section 9.2.1, TS 38.213.
     auto prbs = get_pucch_default_prb_index(r_pucch, pucch_res.rb_bwp_offset, pucch_res.cs_indexes.size(), size_ul_bwp);
@@ -552,16 +577,36 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
     if (not pucch_alloc.ul_res_grid.collides(first_hop_grant) &&
         not pucch_alloc.ul_res_grid.collides(second_hop_grant)) {
       // Set outputs before exiting the function.
-      pucch_res_alloc_cfg ret_pucch_resource{
-          .first_hop_res = first_hop_grant, .cs = cyclic_shift, .format = pucch_res.format};
-      ret_pucch_resource.second_hop_res = second_hop_grant;
-      ret_pucch_resource.has_config     = true;
-      pucch_res_indicator               = d_pri;
-      return ret_pucch_resource;
+      candidate_pucch_resource.first_hop_res       = first_hop_grant;
+      candidate_pucch_resource.cs                  = cyclic_shift;
+      candidate_pucch_resource.format              = pucch_res.format;
+      candidate_pucch_resource.second_hop_res      = second_hop_grant;
+      candidate_pucch_resource.pucch_res_indicator = d_pri;
+      resource_manager.reserve_common_resource(pucch_alloc.slot, r_pucch);
+      return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
+    }
+
+    // Save the first available common PUCCH resource. If no other resource can be found that doesn't collide with the
+    // grid, then we allocate this back-up resource at the end of the loop.
+    if (not backup_res_initialized) {
+      backup_res_initialized                       = true;
+      candidate_pucch_resource.first_hop_res       = first_hop_grant;
+      candidate_pucch_resource.cs                  = cyclic_shift;
+      candidate_pucch_resource.format              = pucch_res.format;
+      candidate_pucch_resource.second_hop_res      = second_hop_grant;
+      candidate_pucch_resource.pucch_res_indicator = d_pri;
+      candiadate_r_pucch                           = r_pucch;
     }
   }
 
-  return pucch_res_alloc_cfg{};
+  // This is the case in which there exists no available resource that doesn't collide with the grid.
+  if (candiadate_r_pucch < r_pucch_invalid) {
+    resource_manager.reserve_common_resource(pucch_alloc.slot, candiadate_r_pucch);
+    return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
+  }
+
+  // This is the case in which there exists no available resource.
+  return nullopt;
 }
 
 void pucch_allocator_impl::fill_pucch_harq_common_grant(pucch_info&                pucch_info,
@@ -1085,8 +1130,6 @@ void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pu
   pucch_grant.format_1.harq_ack_nof_bits = harq_ack_bits;
   // [Implementation-defined] We do not implement PUCCH over several slots.
   pucch_grant.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-
-  return;
 }
 
 void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                  pucch_grant,
@@ -1127,6 +1170,4 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
                                            .init_ul_bwp.pucch_cfg.value()
                                            .format_2_common_param.value()
                                            .max_c_rate;
-
-  return;
 }
