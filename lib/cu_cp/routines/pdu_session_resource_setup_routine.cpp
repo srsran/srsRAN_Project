@@ -168,48 +168,10 @@ void pdu_session_resource_setup_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
-  // Perform initial sanity checks.
-  if (setup_msg.pdu_session_res_setup_items.empty()) {
-    logger.info("ue={}: \"{}\" Skipping empty PDU Session Resource Setup", setup_msg.ue_index, name());
+  // Perform initial sanity checks on incoming message.
+  if (!rrc_ue_up_resource_manager.validate_request(setup_msg)) {
+    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Setup", setup_msg.ue_index, name());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-  }
-
-  for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
-    // Make sure PDU session does not already exist.
-    if (rrc_ue_up_resource_manager.has_pdu_session(setup_item.pdu_session_id)) {
-      logger.error(
-          "ue={}: \"{}\" PDU session ID {} already exists.", setup_msg.ue_index, name(), setup_item.pdu_session_id);
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
-
-    if (setup_item.qos_flow_setup_request_items.empty()) {
-      logger.error("ue={}: \"{}\" Setup request for PDU session ID {} has empty QoS flow to setup list.",
-                   setup_msg.ue_index,
-                   name(),
-                   setup_item.pdu_session_id);
-      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-    }
-
-    // initial sanity check, making sure we only allow flows with a configured 5QI
-    for (const qos_flow_setup_request_item& flow_item : setup_item.qos_flow_setup_request_items) {
-      if (not valid_5qi(flow_item)) {
-        five_qi_t five_qi;
-        if (flow_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
-          five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-        } else if (flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-          five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
-        } else {
-          CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false))
-        }
-
-        logger.error("ue={}: \"{}\" QoS flow 5QI is not configured. id {} 5QI {}",
-                     setup_msg.ue_index,
-                     name(),
-                     flow_item.qos_flow_id,
-                     five_qi);
-        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
-      }
-    }
   }
 
   {
@@ -483,21 +445,4 @@ void pdu_session_resource_setup_routine::fill_initial_e1ap_bearer_context_modifi
   for (const auto& pdu_session_id : next_config.pdu_sessions_to_remove_list) {
     e1ap_bearer_context_mod.pdu_session_res_to_rem_list.push_back(pdu_session_id);
   }
-}
-
-bool pdu_session_resource_setup_routine::valid_5qi(const qos_flow_setup_request_item& flow)
-{
-  if (flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
-    return rrc_ue_up_resource_manager.valid_5qi(
-        flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi);
-  }
-  if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
-    if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
-      return rrc_ue_up_resource_manager.valid_5qi(
-          flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.value());
-    }
-  } else {
-    logger.error("Invalid QoS characteristics. Either dynamic or non-dynamic 5qi must be set");
-  }
-  return false;
 }

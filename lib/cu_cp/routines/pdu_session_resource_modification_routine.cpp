@@ -159,20 +159,10 @@ void pdu_session_resource_modification_routine::operator()(
 
   logger.debug("ue={}: \"{}\" initialized.", modify_request.ue_index, name());
 
-  // Perform initial sanity checks.
-  if (modify_request.pdu_session_res_modify_items.empty()) {
-    logger.info("ue={}: \"{}\" Skipping empty PDU Session Resource Modification", modify_request.ue_index, name());
+  // Perform initial sanity checks on incoming message.
+  if (!rrc_ue_up_resource_manager.validate_request(modify_request)) {
+    logger.error("ue={}: \"{}\" Invalid PDU Session Resource Modification", modify_request.ue_index, name());
     CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
-  }
-
-  for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
-    if (!rrc_ue_up_resource_manager.has_pdu_session(modify_item.pdu_session_id)) {
-      logger.error("ue={}: \"{}\" PDU session ID {} doesn't exist.",
-                   modify_request.ue_index,
-                   name(),
-                   modify_item.pdu_session_id);
-      CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
-    }
   }
 
   {

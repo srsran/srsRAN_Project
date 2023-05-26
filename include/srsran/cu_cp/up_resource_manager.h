@@ -23,12 +23,12 @@ struct up_resource_manager_cfg {
 };
 
 struct up_drb_context {
-  srsran::drb_id_t           drb_id         = drb_id_t::invalid;
-  pdu_session_id_t           pdu_session_id = pdu_session_id_t::invalid;
-  s_nssai_t                  s_nssai        = {};
-  bool                       default_drb    = false;
-  five_qi_t                  five_qi        = five_qi_t::invalid;
-  std::vector<qos_flow_id_t> qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
+  srsran::drb_id_t                drb_id         = drb_id_t::invalid;
+  pdu_session_id_t                pdu_session_id = pdu_session_id_t::invalid;
+  s_nssai_t                       s_nssai        = {};
+  bool                            default_drb    = false;
+  cu_cp_qos_flow_level_qos_params qos_params;
+  std::vector<qos_flow_id_t>      qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
 
   pdcp_config   pdcp_cfg;
   sdap_config_t sdap_cfg;
@@ -88,6 +88,12 @@ class up_resource_manager
 public:
   virtual ~up_resource_manager() = default;
 
+  /// \brief Checks whether an incoming PDU session resource setup request is valid.
+  virtual bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
+
+  /// \brief Checks whether an incoming PDU session resource modify request is valid.
+  virtual bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) = 0;
+
   /// \brief Returns updated UP config based on the PDU session resource setup message.
   virtual up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
 
@@ -114,9 +120,6 @@ public:
 
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
-
-  /// \brief Return whether a configuration for a 5QI exists.
-  virtual bool valid_5qi(five_qi_t five_qi) = 0;
 };
 
 /// Creates an instance of an UP resource manager.

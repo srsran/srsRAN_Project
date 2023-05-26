@@ -102,8 +102,33 @@ bool srsran::srs_cu_cp::update_setup_list(
         return false;
       }
 
-      // TODO: add DRB verification
+      // Make sure the DRB ID returned by E1AP is actually present in next config.
+      if (next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id).drb_to_add.find(e1ap_drb_item.drb_id) ==
+          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id).drb_to_add.end()) {
+        logger.error("DRB id {} not part of next configuration", e1ap_drb_item.drb_id);
+        return false;
+      }
 
+      // Prepare DRB item for DU.
+      cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+
+      // QoS config.
+      drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
+          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id)
+              .drb_to_add.at(e1ap_drb_item.drb_id)
+              .qos_params.qos_characteristics;
+      drb_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio =
+          next_config.pdu_sessions_to_setup_list.at(e1ap_item.pdu_session_id)
+              .drb_to_add.at(e1ap_drb_item.drb_id)
+              .qos_params.alloc_and_retention_prio;
+
+      // Add up tnl info
+      for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
+        drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+      }
+
+      // QoS flows.
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
         // Verify the QoS flow ID is present in original setup message.
         if (ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items.contains(e1ap_flow.qos_flow_id) ==
@@ -114,42 +139,27 @@ bool srsran::srs_cu_cp::update_setup_list(
           return false;
         }
 
+        // Add flow to NGAP response
         cu_cp_associated_qos_flow qos_flow;
         qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
         transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(e1ap_flow.qos_flow_id, qos_flow);
+
+        // Retrieve QoS properties from NGAP request
+        const auto& ngap_qos_flow =
+            ngap_setup_list[e1ap_item.pdu_session_id].qos_flow_setup_request_items[e1ap_flow.qos_flow_id];
+
+        // Add flow to F1AP DRB item
+        cu_cp_flows_mapped_to_drb_item flow_mapped_to_drb;
+        flow_mapped_to_drb.qos_flow_id               = e1ap_flow.qos_flow_id;
+        flow_mapped_to_drb.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
+        drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(flow_mapped_to_drb.qos_flow_id,
+                                                                     flow_mapped_to_drb);
       }
 
-      // Fill UE context modification for DU
-      {
-        cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+      // Add rlc mode
+      drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
-        // Add qos info
-        for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
-          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
-              ngap_setup_list[item.pdu_session_id]
-                  .qos_flow_setup_request_items[e1ap_flow.qos_flow_id]
-                  .qos_flow_level_qos_params.qos_characteristics;
-
-          non_dyn_5qi_descriptor_t non_dyn_5qi;
-          non_dyn_5qi.five_qi = ngap_setup_list[item.pdu_session_id]
-                                    .qos_flow_setup_request_items[e1ap_flow.qos_flow_id]
-                                    .qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value()
-                                    .five_qi;
-
-          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-        }
-
-        // Add up tnl info
-        for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-          drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
-        }
-
-        // Add rlc mode
-        drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
-
-        ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
-      }
+      ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
     // Fail on any DRB that fails to be setup

@@ -15,27 +15,29 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 up_resource_manager_impl::up_resource_manager_impl(const up_resource_manager_cfg& cfg_) :
-  cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
+  cfg(cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
+}
+
+bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_setup_request& pdu)
+{
+  return is_valid(pdu, context, cfg, logger);
+}
+
+bool up_resource_manager_impl::validate_request(const cu_cp_pdu_session_resource_modify_request& pdu)
+{
+  return is_valid(pdu, context, cfg, logger);
 }
 
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
-  if (!is_valid(pdu, context)) {
-    logger.error("Invalid PDU Session Resource Setup request.");
-    return {};
-  }
-
+  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Setup request.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
 up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu)
 {
-  if (!is_valid(pdu, context)) {
-    logger.error("Invalid PDU Session Resource Modify request.");
-    return {};
-  }
-
+  srsran_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
@@ -52,7 +54,7 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
       context.drb_map.emplace(drb.first, session.id);
 
       // add FiveQI to map of existing QoS groups.
-      context.five_qi_map.emplace(drb.second.five_qi, drb.first);
+      context.five_qi_map.emplace(drb.second.qos_params.qos_characteristics.get_five_qi(), drb.first);
     }
 
     // Add PDU session to list of active sessions.
@@ -114,17 +116,4 @@ std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
   }
 
   return pdu_session_ids;
-}
-
-bool up_resource_manager_impl::valid_5qi(five_qi_t five_qi)
-{
-  if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {
-    logger.warning("No config for 5QI={} present", five_qi);
-    logger.warning("Currently configured 5QIs:");
-    for (const auto& qos : cfg.five_qi_config) {
-      logger.warning(" - 5QI={}: PDCP={}", qos.first, qos.second.pdcp);
-    }
-    return false;
-  }
-  return true;
 }

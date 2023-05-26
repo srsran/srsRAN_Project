@@ -24,8 +24,12 @@ public:
   up_resource_manager_impl(const up_resource_manager_cfg& cfg);
   ~up_resource_manager_impl() = default;
 
-  up_config_update              calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
-  up_config_update              calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
+  bool validate_request(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  bool validate_request(const cu_cp_pdu_session_resource_modify_request& pdu) override;
+
+  up_config_update calculate_update(const cu_cp_pdu_session_resource_setup_request& pdu) override;
+  up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
+
   bool                          apply_config_update(const up_config_update_result& config) override;
   up_pdu_session_context        get_context(pdu_session_id_t psi) override;
   up_drb_context                get_context(drb_id_t drb_id) override;
@@ -33,10 +37,10 @@ public:
   size_t                        get_nof_drbs() override;
   size_t                        get_nof_pdu_sessions() override;
   std::vector<pdu_session_id_t> get_pdu_sessions() override;
-  bool                          valid_5qi(const five_qi_t five_qi) override;
 
 private:
   up_drb_context get_drb(drb_id_t drb_id);
+  bool           valid_5qi(const five_qi_t five_qi);
 
   up_resource_manager_cfg cfg;
 

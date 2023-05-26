@@ -17,9 +17,18 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Perform sanity check on incoming resource setup/modifcation request.
-bool is_valid(const cu_cp_pdu_session_resource_setup_request& pdu, const up_context& context);
-bool is_valid(const cu_cp_pdu_session_resource_modify_request& pdu, const up_context& context);
+/// \brief Perform sanity check on incoming resource setup/modifcation requests.
+bool is_valid(const cu_cp_pdu_session_resource_setup_request& pdu,
+              const up_context&                               context,
+              const up_resource_manager_cfg&                  cfg,
+              const srslog::basic_logger&                     logger);
+bool is_valid(const cu_cp_pdu_session_resource_modify_request& pdu,
+              const up_context&                                context,
+              const up_resource_manager_cfg&                   cfg,
+              const srslog::basic_logger&                      logger);
+
+/// \brief Validates that a given FiveQI has a valid PDCP and SDAP config.
+bool is_valid(five_qi_t five_qi, const up_resource_manager_cfg& cfg, const srslog::basic_logger& logger);
 
 /// @brief Perform sanity check on requested QoS flow configuration.
 five_qi_t get_five_qi(const qos_flow_add_or_mod_item& qos_flow,
@@ -41,7 +50,8 @@ up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_reques
                                   const srslog::basic_logger&                      logger);
 
 // \brief Allocates a new DRB ID and returns it.
-drb_id_t allocate_drb_id(const up_context& context, const srslog::basic_logger& logger);
+drb_id_t
+allocate_drb_id(const up_context& context, const up_config_update& config_update, const srslog::basic_logger& logger);
 
 // \brief Returns valid RRC PDCP config for a given FiveQI
 pdcp_config   set_rrc_pdcp_config(five_qi_t five_qi, const up_resource_manager_cfg& cfg);
