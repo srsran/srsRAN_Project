@@ -227,31 +227,31 @@ public:
 
   mac_cell_dummy mac_cell;
 
-  optional<mac_ue_create_request_message>                           last_ue_create_msg{};
-  optional<mac_ue_reconfiguration_request_message>                  last_ue_reconf_msg{};
-  optional<mac_ue_delete_request_message>                           last_ue_delete_msg{};
-  optional<mac_dl_buffer_state_indication_message>                  last_dl_bs;
-  byte_buffer                                                       last_pushed_ul_ccch_msg;
-  wait_manual_event_tester<mac_ue_create_response_message>          wait_ue_create;
-  wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
-  wait_manual_event_tester<mac_ue_delete_response_message>          wait_ue_delete;
+  optional<mac_ue_create_request>                           last_ue_create_msg{};
+  optional<mac_ue_reconfiguration_request>                  last_ue_reconf_msg{};
+  optional<mac_ue_delete_request>                           last_ue_delete_msg{};
+  optional<mac_dl_buffer_state_indication_message>          last_dl_bs;
+  byte_buffer                                               last_pushed_ul_ccch_msg;
+  wait_manual_event_tester<mac_ue_create_response>          wait_ue_create;
+  wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
+  wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
 
   void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
   void                 remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
 
-  async_task<mac_ue_create_response_message> handle_ue_create_request(const mac_ue_create_request_message& msg) override
+  async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override
   {
     last_ue_create_msg = msg;
     return wait_ue_create.launch();
   }
-  async_task<mac_ue_reconfiguration_response_message>
-  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  async_task<mac_ue_reconfiguration_response>
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override
   {
     last_ue_reconf_msg = msg;
     return wait_ue_reconf.launch();
   }
-  async_task<mac_ue_delete_response_message> handle_ue_delete_request(const mac_ue_delete_request_message& msg) override
+  async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& msg) override
   {
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();

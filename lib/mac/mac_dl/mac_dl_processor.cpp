@@ -47,7 +47,7 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
   cells[cell_index].reset();
 }
 
-async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
+async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request& request)
 {
   // > Allocate UE DL HARQ buffers.
   // Note: This is a large allocation, and therefore, should be done outside of the cell thread to avoid causing lates.
@@ -73,7 +73,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
   });
 }
 
-async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message& request)
+async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request& request)
 {
   return launch_async([this, request](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);

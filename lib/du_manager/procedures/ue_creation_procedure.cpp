@@ -171,10 +171,10 @@ void ue_creation_procedure::create_rlc_srbs()
       create_rlc_entity(make_rlc_entity_creation_message(ue_ctx->ue_index, ue_ctx->pcell_index, srb1, services));
 }
 
-async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()
+async_task<mac_ue_create_response> ue_creation_procedure::make_mac_ue_create_req()
 {
   // Create Request to MAC to create new UE.
-  mac_ue_create_request_message mac_ue_create_msg{};
+  mac_ue_create_request mac_ue_create_msg{};
   mac_ue_create_msg.ue_index           = ue_ctx->ue_index;
   mac_ue_create_msg.crnti              = msg.crnti;
   mac_ue_create_msg.cell_index         = msg.cell_index;

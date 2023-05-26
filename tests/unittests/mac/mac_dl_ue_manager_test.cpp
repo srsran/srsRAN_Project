@@ -36,10 +36,10 @@ protected:
   {
     this->rnti_table.add_ue(rnti, ue_index);
 
-    mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
-    req.ue_index                      = ue_index;
-    req.crnti                         = rnti;
-    req.rlf_notifier                  = &rlf_notifier;
+    mac_ue_create_request req = test_helpers::make_default_ue_creation_request();
+    req.ue_index              = ue_index;
+    req.crnti                 = rnti;
+    req.rlf_notifier          = &rlf_notifier;
     this->ue_mng.add_ue(req, {});
   }
 };

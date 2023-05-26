@@ -33,7 +33,7 @@ public:
   {
   }
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& request) override
+  async_task<bool> add_ue(const mac_ue_create_request& request) override
   {
     // Update UE executor to match new PCell.
     task_executor& ul_exec = cfg.ue_exec_mapper.rebind_executor(request.ue_index, request.cell_index);
@@ -60,7 +60,7 @@ public:
         });
   }
 
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
   {
     return dispatch_and_resume_on(cfg.ue_exec_mapper.executor(msg.ue_index),
                                   cfg.ctrl_exec,

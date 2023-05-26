@@ -35,12 +35,12 @@ public:
   bool                                                                        expected_result   = true;
   bool                                                                        ul_ccch_forwarded = false;
   manual_event_flag                                                           ue_created_ev;
-  optional<mac_ue_create_request_message>                                     last_ue_create_request;
-  optional<mac_ue_delete_request_message>                                     last_ue_delete_request;
+  optional<mac_ue_create_request>                                             last_ue_create_request;
+  optional<mac_ue_delete_request>                                             last_ue_delete_request;
   optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
   optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
+  async_task<bool> add_ue(const mac_ue_create_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -70,7 +70,7 @@ public:
     });
   }
 
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
@@ -100,13 +100,13 @@ class mac_dl_dummy_configurer final : public mac_dl_configurator
 public:
   bool                                                                        expected_result = true;
   manual_event_flag                                                           ue_created_ev;
-  optional<mac_ue_create_request_message>                                     last_ue_create_request;
-  optional<mac_ue_delete_request_message>                                     last_ue_delete_request;
+  optional<mac_ue_create_request>                                             last_ue_create_request;
+  optional<mac_ue_delete_request>                                             last_ue_delete_request;
   optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
   optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
   mac_cell_dummy_controller                                                   cell_ctrl;
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
+  async_task<bool> add_ue(const mac_ue_create_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -115,7 +115,7 @@ public:
       CORO_RETURN(expected_result);
     });
   }
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
@@ -226,7 +226,7 @@ public:
 
   void remove_cell(du_cell_index_t cell_index) override {}
 
-  async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
+  async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override
   {
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -234,7 +234,7 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override
   {
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -242,7 +242,7 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request_message& msg) override
+  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override
   {
     return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);

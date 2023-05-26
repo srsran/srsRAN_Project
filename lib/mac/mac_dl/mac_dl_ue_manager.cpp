@@ -18,8 +18,7 @@ mac_dl_ue_manager::mac_dl_ue_manager(const mac_expert_config& mac_cfg, du_rnti_t
 {
 }
 
-bool mac_dl_ue_manager::add_ue(const mac_ue_create_request_message& request,
-                               std::vector<std::vector<uint8_t>>    dl_harq_buffers)
+bool mac_dl_ue_manager::add_ue(const mac_ue_create_request& request, std::vector<std::vector<uint8_t>> dl_harq_buffers)
 {
   std::lock_guard<std::mutex> lock(ue_mutex[request.ue_index]);
   return add_ue_nolock(request.ue_index,

@@ -66,9 +66,9 @@ struct add_reconf_delete_ue_test_task {
   std::thread::id                        tid;
   mac_dl_processor&                      mac_dl;
   unique_function<void(test_task_event)> event_test;
-  mac_ue_create_request_message          create_msg{};
-  mac_ue_reconfiguration_request_message reconf_msg{};
-  mac_ue_delete_request_message          delete_msg{};
+  mac_ue_create_request                  create_msg{};
+  mac_ue_reconfiguration_request         reconf_msg{};
+  mac_ue_delete_request                  delete_msg{};
 
   add_reconf_delete_ue_test_task(mac_dl_processor& mac_dl_, unique_function<void(test_task_event)> event_callback_) :
     mac_dl(mac_dl_), event_test(std::move(event_callback_))

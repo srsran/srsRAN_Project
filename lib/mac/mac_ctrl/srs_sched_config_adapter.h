@@ -38,7 +38,7 @@ public:
     // TODO: Call scheduler cell remove.
   }
 
-  async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
+  async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -54,7 +54,7 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
@@ -70,7 +70,7 @@ public:
     });
   }
 
-  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request_message& msg) override
+  async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override
   {
     return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);

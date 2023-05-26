@@ -171,10 +171,9 @@ mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_confi
   return test_ue_adapted_bearers;
 }
 
-async_task<mac_ue_create_response_message>
-mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_message& cfg)
+async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request& cfg)
 {
-  mac_ue_create_request_message cfg_adapted = cfg;
+  mac_ue_create_request cfg_adapted = cfg;
   if (cfg_adapted.crnti == test_ue.rnti) {
     // It is the test UE.
 
@@ -185,11 +184,11 @@ mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_mess
     cfg_adapted.bearers = adapt_bearers(cfg.bearers);
   }
 
-  return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response_message>>& ctx) mutable {
+  return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Create the UE in mac instance.
-    CORO_AWAIT_VALUE(mac_ue_create_response_message ret,
+    CORO_AWAIT_VALUE(mac_ue_create_response ret,
                      mac_adapted->get_ue_configurator().handle_ue_create_request(cfg_adapted));
 
     if (test_ue.rnti == cfg_adapted.crnti) {
@@ -210,8 +209,8 @@ mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_mess
   });
 }
 
-async_task<mac_ue_reconfiguration_response_message>
-mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)
+async_task<mac_ue_reconfiguration_response>
+mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg)
 {
   if (cfg.crnti == test_ue.rnti) {
     // If it is the test UE.
@@ -227,8 +226,7 @@ mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfigur
   return mac_adapted->get_ue_configurator().handle_ue_reconfiguration_request(cfg);
 }
 
-async_task<mac_ue_delete_response_message>
-mac_test_mode_adapter::handle_ue_delete_request(const mac_ue_delete_request_message& cfg)
+async_task<mac_ue_delete_response> mac_test_mode_adapter::handle_ue_delete_request(const mac_ue_delete_request& cfg)
 {
   return mac_adapted->get_ue_configurator().handle_ue_delete_request(cfg);
 }

@@ -78,7 +78,7 @@ public:
     return u.dl_bearers.contains(lcid) ? u.dl_bearers[lcid] : nullptr;
   }
 
-  bool add_ue(const mac_ue_create_request_message& request, std::vector<std::vector<uint8_t>> dl_harq_buffers);
+  bool add_ue(const mac_ue_create_request& request, std::vector<std::vector<uint8_t>> dl_harq_buffers);
 
   bool remove_ue(du_ue_index_t ue_index);
 

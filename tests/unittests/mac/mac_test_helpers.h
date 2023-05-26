@@ -55,9 +55,9 @@ public:
   void on_rlf_detected() override { rlf_detected = true; }
 };
 
-inline mac_ue_create_request_message make_default_ue_creation_request()
+inline mac_ue_create_request make_default_ue_creation_request()
 {
-  mac_ue_create_request_message msg{};
+  mac_ue_create_request msg{};
 
   msg.ue_index   = to_du_ue_index(0);
   msg.crnti      = to_rnti(0x4601);
@@ -145,8 +145,8 @@ struct mac_test_ue {
   rnti_t                                              rnti;
   slotted_array<mac_test_ue_bearer, MAX_NOF_RB_LCIDS> bearers;
 
-  void                          add_bearer(lcid_t lcid);
-  mac_ue_create_request_message make_ue_create_request();
+  void                  add_bearer(lcid_t lcid);
+  mac_ue_create_request make_ue_create_request();
 };
 
 class dummy_mac_pcap : public mac_pcap

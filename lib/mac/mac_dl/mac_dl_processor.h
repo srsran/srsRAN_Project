@@ -47,10 +47,10 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return *cells[cell_index]; }
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
-  async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
+  async_task<bool> add_ue(const mac_ue_create_request& request) override;
 
   /// Deletes UE context in MAC MUX.
-  async_task<void> remove_ue(const mac_ue_delete_request_message& request) override;
+  async_task<void> remove_ue(const mac_ue_delete_request& request) override;
 
   /// Add/Modify UE bearers in the MUX.
   async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
