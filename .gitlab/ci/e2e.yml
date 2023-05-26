@@ -37,7 +37,7 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.4.0
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.5.0
 
 .prepare_test:
   before_script:
