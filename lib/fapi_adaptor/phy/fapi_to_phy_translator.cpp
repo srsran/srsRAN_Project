@@ -155,11 +155,17 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
-        if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP) {
+        if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP && pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_ZP) {
           logger.warning(
-              "Only NZP-CSI-RS PDU type is supported. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request message in {}.{}.",
+              msg.sfn,
+              msg.slot);
 
           return {};
+        }
+        // ZP-CSI does not need any further work to do.
+        if (pdu.csi_rs_pdu.type == csi_rs_type::CSI_RS_ZP) {
+          break;
         }
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
         convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
