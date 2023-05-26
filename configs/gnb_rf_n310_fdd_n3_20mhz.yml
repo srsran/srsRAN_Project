@@ -2,15 +2,14 @@ amf:
   addr: 127.0.1.100                   # The address or hostname of the AMF.
   bind_addr: 127.0.0.1                # A local IP that the gNB binds to for traffic from the AMF.
 
-ru_cfg:
-  ru_gen:
-    device_driver: uhd                # The RF driver name.
-    device_args: type=n3xx            # Optionally pass arguments to the selected RF driver.
-    clock: gpsdo                      # Specify the clock source used by the RF.
-    sync: gpsdo                       # Specify the sync source used by the RF.
-    srate: 30.72                      # RF sample rate might need to be adjusted according to selected bandwidth.
-    tx_gain: 35                       # Transmit gain of the RF might need to adjusted to the given situation.
-    rx_gain: 60                       # Receive gain of the RF might need to adjusted to the given situation.
+ru_sdr:
+  device_driver: uhd                # The RF driver name.
+  device_args: type=n3xx            # Optionally pass arguments to the selected RF driver.
+  clock: gpsdo                      # Specify the clock source used by the RF.
+  sync: gpsdo                       # Specify the sync source used by the RF.
+  srate: 30.72                      # RF sample rate might need to be adjusted according to selected bandwidth.
+  tx_gain: 35                       # Transmit gain of the RF might need to adjusted to the given situation.
+  rx_gain: 60                       # Receive gain of the RF might need to adjusted to the given situation.
 
 cell_cfg:
   dl_arfcn: 368640                    # ARFCN of the downlink carrier (center frequency).
