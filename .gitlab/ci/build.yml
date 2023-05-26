@@ -148,7 +148,7 @@ pull_src_cache:
     ENABLE_WERROR: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.8.2"
+    DOCKER_BUILDER_VERSION: "1.8.3"
     SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
@@ -166,6 +166,9 @@ pull_src_cache:
       build_srsgnb() {
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
+        fi
+        if [ -n "${OUTPUT_FINGERPRINT}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -o ${OUTPUT_FINGERPRINT}"
         fi
         if [ -n "${BUILD_TYPE}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
@@ -236,7 +239,10 @@ pull_src_cache:
             BUILD_ARGS="${BUILD_ARGS} -DEXIT_TIMEOUT=40"
             ;;
         esac
-        CTEST_CMD="ctest -j "$(nproc --all)" $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        if [ -n "${FINGERPRINT}" ]; then
+          ctest_subset="-I 0,0,0,"$(changed_tests.py -i "${FINGERPRINT}" -d md5)
+        fi
+        CTEST_CMD="ctest -j "$(nproc --all)" $ctest_subset $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
         $CTEST_CMD && ret=0 || ret=1
@@ -480,6 +486,36 @@ intermediate commits:
         build_srsgnb
         sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
+  cache:
+    - *cache_src_get
+    - *cache_build_get
+
+differential valgrind:
+  extends: .build_and_unit
+  rules:
+    - if: $ON_MR
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    TEST_MODE: valgrind
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
+    FINGERPRINT: "fingerprints.csv"
+  script:
+    - git config advice.detachedHead false
+    - git fetch --depth 1 origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - |
+      echo "##################################################"
+      echo "#### origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME ####"
+      echo "##################################################"
+      git checkout origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+      OUTPUT_FINGERPRINT="${FINGERPRINT}"
+      build_srsgnb
+      OUTPUT_FINGERPRINT=""
   cache:
     - *cache_src_get
     - *cache_build_get
