@@ -20,6 +20,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/async/async_task_loop.h"
+#include <gtest/gtest.h>
 #include <unordered_map>
 
 namespace srsran {
@@ -282,6 +283,12 @@ public:
   void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received message");
+
+    // Verify correct packing of outbound PDU.
+    byte_buffer   pack_buffer;
+    asn1::bit_ref bref(pack_buffer);
+    ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
+
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       msg.pdu.to_json(js);
@@ -372,8 +379,10 @@ public:
       CORO_BEGIN(ctx);
 
       if (last_request.pdu_session_res_setup_items.size() == 0) {
-        res.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(1),
-                                                          cu_cp_pdu_session_res_setup_failed_item{});
+        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        failed_item.pdu_session_id                                         = uint_to_pdu_session_id(1);
+        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+        res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
       } else {
         res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
       }
