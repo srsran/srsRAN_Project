@@ -47,14 +47,14 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT(update_mac_mux_and_demux());
+  CORO_AWAIT_VALUE(mac_ue_reconfiguration_response_message mac_res, update_mac_mux_and_demux());
 
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 
   proc_logger.log_proc_completed();
 
-  CORO_RETURN(make_ue_config_response());
+  CORO_RETURN(mac_res.result ? make_ue_config_response() : make_ue_config_failure());
 }
 
 void ue_configuration_procedure::update_ue_context()
