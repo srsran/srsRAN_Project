@@ -137,11 +137,13 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   if (reest_context.sec_context.sel_algos.algos_selected) {
     security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
     valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-    logger.debug("Received RRC Restablishment. short_mac_valid={}", valid);
+    logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
   } else {
-    logger.warning("Received RRC Restablishment, but old UE does not have valid security context");
+    logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
   }
-  if (not valid) {
+
+  // TODO Starting the RRC Re-establishment procedure is temporally disabled.
+  if (true /* not valid */) {
     // Reject RRC Reestablishment Request by sending RRC Setup
     task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
                                                                      asn1::rrc_nr::establishment_cause_e::mt_access,
@@ -160,11 +162,11 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
 
       ngap_ctrl_notifier.on_ue_context_release_request(release_req);
     }
+  } else {
+    // Accept RRC Reestablishment Request by sending RRC Reestablishment
+    task_sched.schedule_async_task(
+        launch_async<rrc_reestablishment_procedure>(context, reest_context.ue_index, *this, *event_mng, logger));
   }
-
-  // Accept RRC Reestablishment Request by sending RRC Reestablishment
-  task_sched.schedule_async_task(
-      launch_async<rrc_reestablishment_procedure>(context, reest_context.ue_index, *this, *event_mng, logger));
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
