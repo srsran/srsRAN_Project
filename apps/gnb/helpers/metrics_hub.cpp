@@ -9,10 +9,6 @@
  */
 
 #include "metrics_hub.h"
-#include "srsran/support/math_utils.h"
-#include <float.h>
-#include <iomanip>
-#include <sstream>
 
 using namespace srsran;
 
