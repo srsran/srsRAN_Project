@@ -144,6 +144,13 @@ struct worker_manager {
           (driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
     }
 
+    if (appcfg.expert_phy_cfg.nof_pdsch_threads > 1) {
+      create_worker_pool("pdsch",
+                         appcfg.expert_phy_cfg.nof_pdsch_threads,
+                         2 * MAX_CBS_PER_PDU,
+                         os_thread_realtime_priority::max() - 10);
+    }
+
     create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
   }
 
@@ -189,6 +196,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> upper_pusch_exec;
   std::unique_ptr<task_executor> upper_pucch_exec;
   std::unique_ptr<task_executor> upper_prach_exec;
+  std::unique_ptr<task_executor> upper_pdsch_exec;
   std::unique_ptr<task_executor> radio_exec;
   std::unique_ptr<task_executor> ru_printer_exec;
   std::unique_ptr<task_executor> ru_timing_exec;
@@ -286,6 +294,10 @@ private:
       upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
       upper_pucch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
       upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
+    }
+
+    if (worker_pools.count("pdsch")) {
+      upper_pdsch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("pdsch"));
     }
 
     switch (lower_phy_profile) {
@@ -734,6 +746,7 @@ int main(int argc, char** argv)
                                 workers.upper_pucch_exec.get(),
                                 workers.upper_pusch_exec.get(),
                                 workers.upper_prach_exec.get(),
+                                workers.upper_pdsch_exec.get(),
                                 &ru_ul_request_adapt);
   report_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");

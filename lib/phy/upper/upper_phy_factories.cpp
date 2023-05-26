@@ -739,8 +739,20 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor factory.");
 
   // Create channel processors - PDSCH
-  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-      create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
+  if (config.nof_pdsch_codeblock_threads > 1) {
+    report_fatal_error_if_not(config.pdsch_codeblock_task_executor, "Invalid codeblock executor.");
+    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
+                                                                      ldpc_enc_factory,
+                                                                      ldpc_rm_factory,
+                                                                      pdsch_mod_factory,
+                                                                      dmrs_pdsch_proc_factory,
+                                                                      *config.pdsch_codeblock_task_executor,
+                                                                      config.nof_pdsch_codeblock_threads);
+  } else {
+    pdsch_proc_factory =
+        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory);
+  }
   report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
 
   // Create channel processors - SSB

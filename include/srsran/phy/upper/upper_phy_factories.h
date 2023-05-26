@@ -126,6 +126,10 @@ struct downlink_processor_factory_sw_config {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// Number of threads for processing PDSCH codeblocks concurrently.
+  unsigned nof_pdsch_codeblock_threads;
+  /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_threads is less than 2.
+  task_executor* pdsch_codeblock_task_executor;
 };
 
 /// Creates a full software based downlink processor factory.
@@ -252,6 +256,8 @@ struct upper_phy_config {
   task_executor* pusch_executor;
   /// PRACH task executor.
   task_executor* prach_executor;
+  /// PDSCH encoder task executor. Set to \c nullptr to
+  task_executor* pdsch_encoder_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
 };

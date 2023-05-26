@@ -13,6 +13,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/srsran_test.h"
 #include "srsran/support/unique_thread.h"
 #include <condition_variable>
@@ -68,12 +69,16 @@ static uint64_t                           nof_threads                 = max_nof_
 static uint64_t                           batch_size_per_thread       = 100;
 static std::string                        selected_profile_name       = "default";
 static std::string                        ldpc_encoder_type           = "auto";
+static std::string                        pdsch_processor_type        = "generic";
 static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static unsigned                           nof_tx_layers               = 1;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
+static constexpr unsigned                         nof_pdsch_processor_concurrent_threads = 4;
+static std::unique_ptr<task_worker_pool>          worker_pool                            = nullptr;
+static std::unique_ptr<task_worker_pool_executor> executor                               = nullptr;
 
 // Thread shared variables.
 static std::mutex              mutex_pending_count;
@@ -206,6 +211,7 @@ static void usage(const char* prog)
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
   fmt::print("\t-D LDPC encoder type. [Default {}]\n", ldpc_encoder_type);
+  fmt::print("\t-t PDSCH processor type. [Default {}]\n", pdsch_processor_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
@@ -216,7 +222,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:P:m:t:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -229,6 +235,9 @@ static int parse_args(int argc, char** argv)
         break;
       case 'D':
         ldpc_encoder_type = std::string(optarg);
+        break;
+      case 't':
+        pdsch_processor_type = std::string(optarg);
         break;
       case 'P':
         selected_profile_name = std::string(optarg);
@@ -363,8 +372,22 @@ static std::tuple<std::unique_ptr<pdsch_processor>, std::unique_ptr<pdsch_pdu_va
   TESTASSERT(pdsch_enc_factory);
 
   // Create PDSCH processor.
-  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
-      create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = nullptr;
+
+  if (pdsch_processor_type == "generic") {
+    pdsch_proc_factory =
+        create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
+  }
+
+  if (pdsch_processor_type == "concurrent") {
+    pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
+                                                                      ldpc_enc_factory,
+                                                                      ldpc_rm_factory,
+                                                                      pdsch_mod_factory,
+                                                                      dmrs_pdsch_gen_factory,
+                                                                      *executor,
+                                                                      nof_pdsch_processor_concurrent_threads);
+  }
   TESTASSERT(pdsch_proc_factory);
 
   // Create PDSCH processor.
@@ -465,6 +488,11 @@ int main(int argc, char** argv)
     finish_count = 0;
     thread_quit  = false;
 
+    if (pdsch_processor_type == "concurrent") {
+      worker_pool = std::make_unique<task_worker_pool>(nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc");
+      executor    = std::make_unique<task_worker_pool_executor>(*worker_pool);
+    }
+
     // Prepare threads for the current case.
     std::vector<unique_thread> threads(nof_threads);
     for (unsigned thread_id = 0; thread_id != nof_threads; ++thread_id) {
@@ -546,6 +574,10 @@ int main(int argc, char** argv)
   if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
     fmt::print("\n--- Thread throughput ---\n");
     perf_meas.print_percentiles_throughput("bits", 1.0 / static_cast<double>(nof_threads));
+  }
+
+  if (worker_pool) {
+    worker_pool->stop();
   }
 
   return 0;
