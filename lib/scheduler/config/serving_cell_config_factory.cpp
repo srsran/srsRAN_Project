@@ -764,6 +764,10 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   res.period                              = csi_resource_periodicity::slots80;
   pdsch_cfg.zp_csi_rs_res_list[0].offset  = 2;
 
+  pdsch_cfg.p_zp_csi_rs_res.emplace();
+  pdsch_cfg.p_zp_csi_rs_res->id = static_cast<zp_csi_rs_res_set_id_t>(0);
+  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list.emplace_back(res.id);
+
   return pdsch_cfg;
 }
 
@@ -796,6 +800,9 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // > CSI-MeasConfig.
   if (params.csi_rs_enabled) {
     serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params));
+  } else {
+    serv_cell.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list.clear();
+    serv_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res.reset();
   }
 
   return serv_cell;
