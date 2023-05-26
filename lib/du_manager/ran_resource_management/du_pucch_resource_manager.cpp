@@ -101,8 +101,22 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
       dealloc_resources(cell_grp_cfg);
       return false;
     }
-    target_csi_cfg.report_slot_offset = free_csi_list.back();
-    free_csi_list.pop_back();
+
+    // Find CSI slot offset that does not coincide with any of SR slot offsets.
+    auto rev_it = std::find_if(free_csi_list.rbegin(), free_csi_list.rend(), [&](unsigned offset) {
+      for (const auto& sr : sr_res_list) {
+        if (sr.offset == offset) {
+          return false;
+        }
+      }
+      return true;
+    });
+    if (rev_it == free_csi_list.rend()) {
+      // If no CSI slot offset that doesn't collide with SR was found, use same slot offset.
+      rev_it = free_csi_list.rbegin();
+    }
+    target_csi_cfg.report_slot_offset = *rev_it;
+    free_csi_list.erase(std::next(rev_it).base());
   }
 
   return true;
