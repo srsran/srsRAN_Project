@@ -267,3 +267,22 @@ TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_inc
   ASSERT_EQ(resp.drbs_failed_to_setup.size(), 1);
   ASSERT_EQ(resp.drbs_failed_to_setup[0], drb_id_t::drb1);
 }
+
+TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_other_layers_and_returns_failure)
+{
+  // Start Procedure.
+  f1ap_ue_context_update_request req = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  start_procedure(req);
+
+  // MAC and F1AP should not receive commands to apply UE configuration update.
+  ASSERT_FALSE(this->mac.last_ue_reconf_msg.has_value());
+  ASSERT_FALSE(this->f1ap.last_ue_config.has_value());
+
+  // Procedure completes with failure.
+  ASSERT_TRUE(proc.ready());
+  f1ap_ue_context_update_response resp = proc.get();
+  ASSERT_FALSE(resp.result);
+  ASSERT_TRUE(resp.du_to_cu_rrc_container.empty());
+  ASSERT_TRUE(resp.drbs_setup.empty());
+  ASSERT_TRUE(resp.drbs_failed_to_setup.empty());
+}
