@@ -210,6 +210,18 @@ TEST_F(pdu_session_resource_setup_test, when_rrc_reconfiguration_succeeds_then_s
 
   start_procedure(request);
 
+  // Verify validity of Bearer context setup.
+  is_valid_e1ap_message(variant_get<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
+
+  // Verify content of UE context modification which should include the setup of DRB1.
+  const auto& ue_ctxt_mod_req = f1ap_ue_ctxt_notifier.get_ctxt_mod_request();
+  ASSERT_EQ(ue_ctxt_mod_req.drbs_to_be_setup_mod_list.size(), 1);
+  ASSERT_EQ(ue_ctxt_mod_req.drbs_to_be_setup_mod_list.begin()->drb_id, uint_to_drb_id(1));
+  ASSERT_EQ(ue_ctxt_mod_req.drbs_to_be_setup_mod_list.begin()->qos_info.flows_mapped_to_drb_list.size(), 1);
+
+  // Verify generated messages can be packed into valid ASN.1 encoded messages
+  is_valid_f1ap_message(f1ap_ue_ctxt_notifier.get_ctxt_mod_request());
+
   // Verify content of Bearer modification request.
   ASSERT_TRUE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
   const auto& bearer_context_mod_req = e1ap_ctrl_notifier.second_e1ap_request.value();
