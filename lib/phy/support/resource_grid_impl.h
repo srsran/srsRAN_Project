@@ -12,9 +12,11 @@
 
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid.h"
-#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/upper/precoding/channel_precoder.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes a generic resource grid implementation
 class resource_grid_impl : public resource_grid, public resource_grid_mapper
@@ -58,7 +60,7 @@ public:
 
   void set_all_zero() override;
 
-  resource_grid_mapper& get_mapper() override;
+  resource_grid_mapper& get_mapper() override { return *this; }
 
   void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override;

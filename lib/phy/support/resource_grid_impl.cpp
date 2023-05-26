@@ -256,11 +256,6 @@ bool resource_grid_impl::is_empty(unsigned port) const
   return empty[port];
 }
 
-resource_grid_mapper& resource_grid_impl::get_mapper()
-{
-  return *this;
-}
-
 void resource_grid_impl::map(const re_buffer_reader&        input,
                              const re_pattern_list&         pattern,
                              const precoding_configuration& precoding)

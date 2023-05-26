@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/re_buffer.h"
 #include "srsran/phy/upper/re_pattern.h"
 #include "srsran/ran/precoding/precoding_configuration.h"
@@ -32,19 +31,6 @@ public:
   /// \param[in] precoding  Precoding configuration.
   virtual void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) = 0;
-};
-
-/// Resource grid mapper - Precodes and writes resource elements into the resource grid.
-class resource_mapper
-{
-public:
-  /// Constructs a resource grid mapper for a given grid.
-  resource_mapper() = default;
-
-  /// Default destructor.
-  virtual ~resource_mapper() = default;
-
-  virtual resource_grid_mapper& get_mapper() = 0;
 };
 
 } // namespace srsran
