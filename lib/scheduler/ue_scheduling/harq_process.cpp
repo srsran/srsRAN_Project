@@ -14,7 +14,8 @@
 
 using namespace srsran;
 
-class noop_harq_timeout_notifier final : public harq_timeout_handler
+/// \brief No-op handler for HARQ timeout.
+class noop_harq_timeout_handler final : public harq_timeout_handler
 {
 public:
   void handle_harq_timeout(du_ue_index_t /**/, bool /**/) override
@@ -23,9 +24,14 @@ public:
   }
 };
 
-static noop_harq_timeout_notifier noop_notifier;
+static noop_harq_timeout_handler noop_handler;
 
-ue_harq_timeout_notifier::ue_harq_timeout_notifier() : notifier(&noop_notifier), ue_index(INVALID_DU_UE_INDEX) {}
+ue_harq_timeout_notifier::ue_harq_timeout_notifier() : handler(&noop_handler), ue_index(INVALID_DU_UE_INDEX) {}
+
+ue_harq_timeout_notifier::ue_harq_timeout_notifier(harq_timeout_handler& handler_, du_ue_index_t ue_index_) :
+  handler(&handler_), ue_index(ue_index_)
+{
+}
 
 template <bool IsDownlink>
 detail::harq_process<IsDownlink>::harq_process(harq_id_t                h_id,

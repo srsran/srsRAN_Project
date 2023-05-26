@@ -27,7 +27,7 @@ namespace srsran {
 struct pdsch_information;
 struct pusch_information;
 
-/// \brief Notifier for HARQ process timeouts.
+/// \brief Handler of HARQ process timeouts.
 class harq_timeout_handler
 {
 public:
@@ -40,16 +40,20 @@ public:
 class ue_harq_timeout_notifier
 {
 public:
+  /// \brief Default constructor creates a no-op notifier.
   ue_harq_timeout_notifier();
-  ue_harq_timeout_notifier(harq_timeout_handler& notifier_, du_ue_index_t ue_index_) :
-    notifier(&notifier_), ue_index(ue_index_)
-  {
-  }
 
-  void notify_harq_timeout(bool is_dl) { notifier->handle_harq_timeout(ue_index, is_dl); }
+  /// \brief Creates a notifier to a custom harq timeout handler.
+  ///
+  /// \param notifier_ The custom harq timeout handler.
+  /// \param ue_index_ The UE index.
+  ue_harq_timeout_notifier(harq_timeout_handler& handler_, du_ue_index_t ue_index_);
+
+  /// \brief Notifies a HARQ timeout.
+  void notify_harq_timeout(bool is_dl) { handler->handle_harq_timeout(ue_index, is_dl); }
 
 private:
-  harq_timeout_handler* notifier;
+  harq_timeout_handler* handler;
   du_ue_index_t         ue_index;
 };
 
