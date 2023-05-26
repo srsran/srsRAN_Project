@@ -130,12 +130,16 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                var_short_mac_input.target_cell_id.to_number(),
                var_short_mac_input.source_c_rnti);
 
-  // Get source PCell AS config
-  security::sec_as_config source_as_config = {}; // TODO
-  bool                    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
-  logger.debug("Received RRC Restablishment. short_mac_valid={}", valid);
-
-  if (!valid) {
+  // Verify ShortMAC-I
+  bool valid = false;
+  if (reest_context.sec_context.sel_algos.algos_selected) {
+    security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
+    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
+    logger.debug("Received RRC Restablishment. short_mac_valid={}", valid);
+  } else {
+    logger.warning("Received RRC Restablishment, but old UE does not have valid security context");
+  }
+  if (not valid) {
     // Reject RRC Reestablishment by sending RRC Setup
     task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
                                                                      asn1::rrc_nr::establishment_cause_e::mt_access,
