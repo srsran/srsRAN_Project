@@ -32,10 +32,11 @@ public:
   {
   }
 
-  void on_new_pdu(const rrc_pdu_message& msg) override
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
+    f1ap_msg.old_ue_index        = old_ue_index;
     f1ap_msg.srb_id              = srb_id_t::srb0;
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
@@ -111,7 +112,10 @@ class rrc_ue_pdcp_pdu_adapter : public rrc_pdu_notifier
 public:
   explicit rrc_ue_pdcp_pdu_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
 
-  void on_new_pdu(const rrc_pdu_message& msg) override { pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()}); }
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  {
+    pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()});
+  }
 
 private:
   pdcp_tx_upper_data_interface& pdcp_handler;

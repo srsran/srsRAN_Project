@@ -38,7 +38,8 @@ public:
 
   /// \brief Notify about a new PDU.
   /// \param[in] msg The RRC PDU message.
-  virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
+  /// \param[in] old_ue_index Optional old index of UE, e.g. for reestablishment.
+  virtual void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index = ue_index_t::invalid) = 0;
 };
 
 /// Interface to configure security in a SRB
@@ -77,7 +78,7 @@ class rrc_pdu_null_notifier : public rrc_pdu_notifier
 {
 public:
   rrc_pdu_null_notifier() = default;
-  void on_new_pdu(const rrc_pdu_message& msg) override
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
   {
     srsran_assertion_failure("Received PDU on unconnected notifier. Discarding.");
     logger.error("Received PDU on unconnected notifier. Discarding.");
@@ -117,7 +118,7 @@ public:
   virtual ~rrc_ue_reconfiguration_proc_notifier() = default;
 
   /// \brief Notify about a DL DCCH message.
-  /// \param[in] dl_ccch_msg The DL DCCH message.
+  /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
@@ -133,7 +134,7 @@ public:
   virtual ~rrc_ue_security_mode_command_proc_notifier() = default;
 
   /// \brief Notify about a DL DCCH message.
-  /// \param[in] dl_ccch_msg The DL DCCH message.
+  /// \param[in] dl_dcch_msg The DL DCCH message.
   virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
@@ -142,6 +143,23 @@ public:
   /// \brief Setup AS security in the UE. This includes configuring
   /// the PDCP entity security on SRB1 with the new AS keys.
   virtual void on_new_as_security_context() = 0;
+};
+
+/// Interface used by the RRC reestablishment procedure to
+/// invoke actions carried out by the main RRC UE class (i.e. send DL message, remove UE).
+class rrc_ue_reestablishment_proc_notifier
+{
+public:
+  rrc_ue_reestablishment_proc_notifier()          = default;
+  virtual ~rrc_ue_reestablishment_proc_notifier() = default;
+
+  /// \brief Notify about a DL DCCH message.
+  /// \param[in] dl_dcch_msg The DL DCCH message.
+  /// \param[in] ue_index The old index of the UE.
+  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index) = 0;
+
+  /// \brief Notify about the need to delete a UE.
+  virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.
@@ -301,7 +319,8 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier,
-                         public rrc_ue_context_handler
+                         public rrc_ue_context_handler,
+                         public rrc_ue_reestablishment_proc_notifier
 {
 public:
   rrc_ue_interface()          = default;

@@ -33,8 +33,9 @@ struct f1ap_ul_rrc_message {
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t  ue_index = ue_index_t::invalid;
-  srb_id_t    srb_id   = srb_id_t::nulltype;
+  ue_index_t  ue_index     = ue_index_t::invalid;
+  ue_index_t  old_ue_index = ue_index_t::invalid;
+  srb_id_t    srb_id       = srb_id_t::nulltype;
   byte_buffer rrc_container;
 };
 

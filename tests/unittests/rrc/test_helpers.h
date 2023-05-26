@@ -23,7 +23,10 @@ class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 public:
   dummy_rrc_pdu_notifier() = default;
 
-  void on_new_pdu(const rrc_pdu_message& msg) override { last_pdu = byte_buffer_slice{msg.pdu}; }
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  {
+    last_pdu = byte_buffer_slice{msg.pdu};
+  }
 
   byte_buffer_slice last_pdu;
 };

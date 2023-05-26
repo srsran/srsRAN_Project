@@ -93,6 +93,15 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->srb_id.value                     = (uint8_t)msg.srb_id;
   dlrrc_msg->rrc_container.value              = msg.rrc_container.copy();
 
+  if (msg.old_ue_index != ue_index_t::invalid) {
+    f1ap_ue_context& old_ue_ctxt             = ue_ctx_list[msg.old_ue_index];
+    dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
+    dlrrc_msg->old_gnb_du_ue_f1ap_id.value   = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
+
+    // Remove old UE context from F1
+    ue_ctx_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
+  }
+
   // Pack message into PDU
   f1ap_message f1ap_dl_rrc_msg;
   f1ap_dl_rrc_msg.pdu.set_init_msg();
