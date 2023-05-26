@@ -13,6 +13,7 @@
 #include "lib/du_manager/converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/mac_configuration_helpers.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/serving_cell_config.h"

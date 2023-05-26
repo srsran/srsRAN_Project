@@ -18,12 +18,11 @@
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
-#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
-#include "srsran/security/security.h"
 #include <cstdint>
 #include <map>
 #include <string>

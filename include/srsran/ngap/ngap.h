@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "ngap_types.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 

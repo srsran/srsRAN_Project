@@ -14,7 +14,8 @@
 #include "lib/scheduler/support/ssb_helpers.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

@@ -10,17 +10,11 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_qos_config.h"
 #include "srsran/mac/mac_config.h"
-#include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
-#include "srsran/radio/radio_configuration.h"
 #include "srsran/ru/ru_generic_configuration.h"
 #include <map>
 #include <vector>

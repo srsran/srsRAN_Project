@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/srslog/srslog.h"
+#include "srsran/srslog/logger.h"
 #include <fstream>
 #include <string>
 #include <thread>

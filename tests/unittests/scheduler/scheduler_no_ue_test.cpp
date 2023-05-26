@@ -19,6 +19,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;

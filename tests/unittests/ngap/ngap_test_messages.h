@@ -12,6 +12,7 @@
 
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -1,6 +1,10 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_cell_config_validation.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include <map>
 

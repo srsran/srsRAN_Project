@@ -14,7 +14,6 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pusch/pusch_mcs.h"

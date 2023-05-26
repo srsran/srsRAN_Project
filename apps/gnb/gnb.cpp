@@ -8,9 +8,11 @@
  *
  */
 
+#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
+#include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 #include "srsran/support/version/version.h"
@@ -44,12 +46,8 @@
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
-#include "radio_notifier_sample.h"
-#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
-#include "srsran/phy/adapters/phy_error_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"

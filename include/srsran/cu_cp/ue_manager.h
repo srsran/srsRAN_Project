@@ -13,6 +13,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {

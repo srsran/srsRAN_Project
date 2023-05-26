@@ -13,7 +13,6 @@
 #include "du_cell_config.h"
 #include "srsran/du/du_qos_config.h"
 #include "srsran/ran/band_helper.h"
-#include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -21,7 +20,6 @@
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
-#include "srsran/support/error_handling.h"
 #include <map>
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.

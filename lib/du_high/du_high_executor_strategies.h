@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/circular_array.h"
-#include "srsran/adt/span.h"
 #include "srsran/du_high/du_high_executor_mapper.h"
-#include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {

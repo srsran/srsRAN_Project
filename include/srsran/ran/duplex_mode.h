@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 namespace srsran {
 
 /// NR Duplex mode.

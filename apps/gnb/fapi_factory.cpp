@@ -9,6 +9,7 @@
  */
 
 #include "fapi_factory.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
