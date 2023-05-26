@@ -28,5 +28,11 @@ cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedu
 /// \brief Generate RRC Container with invalid RRC Reestablishment Request.
 byte_buffer generate_invalid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti);
 
+/// \brief Generate RRC Container with valid RRC Reestablishment Request.
+byte_buffer generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti);
+
+/// \brief Generate RRC Container with RRC Reestablishment Complete.
+byte_buffer generate_rrc_reestablishment_complete_pdu();
+
 } // namespace srs_cu_cp
 } // namespace srsran

@@ -76,6 +76,19 @@ protected:
     return dl_ccch.msg.c1().type();
   }
 
+  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb1_pdu_type()
+  {
+    // generated PDU must not be empty
+    EXPECT_GT(rrc_pdu_notifier->last_pdu.length(), 0);
+
+    // Unpack received PDU
+    byte_buffer                 rx_pdu{rrc_pdu_notifier->last_pdu.begin(), rrc_pdu_notifier->last_pdu.end()};
+    asn1::cbit_ref              bref(rx_pdu);
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+    EXPECT_EQ(dl_dcch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_dcch.msg.c1().type();
+  }
+
   rrc_ue_init_security_context_handler* get_rrc_ue_security_handler()
   {
     return &rrc_ue->get_rrc_ue_init_security_context_handler();
@@ -102,6 +115,18 @@ protected:
   {
     // inject RRC Reestablishment Request into UE object
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu(pci, c_rnti));
+  }
+
+  void receive_valid_reestablishment_request(pci_t pci, rnti_t c_rnti)
+  {
+    // inject RRC Reestablishment Request into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(pci, c_rnti));
+  }
+
+  void receive_reestablishment_complete()
+  {
+    // inject RRC Reestablishment complete
+    rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(generate_rrc_reestablishment_complete_pdu());
   }
 
   void receive_setup_complete()
