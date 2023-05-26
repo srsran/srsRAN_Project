@@ -26,8 +26,7 @@ namespace {
 /// Spy OFH User-Plane packet builder.
 class ofh_uplane_packet_builder_spy : public uplane_message_builder
 {
-  bool                                     build_method_called = false;
-  const resource_grid_reader*              rg_grid             = nullptr;
+  const resource_grid_reader*              rg_grid = nullptr;
   static_vector<uplane_message_params, 14> uplane_msg_params;
 
 public:
@@ -36,15 +35,11 @@ public:
   unsigned
   build_message(span<uint8_t> buffer, const resource_grid_reader& grid, const uplane_message_params& params) override
   {
-    build_method_called = true;
-    rg_grid             = &grid;
+    rg_grid = &grid;
     uplane_msg_params.push_back(params);
 
     return 0;
   }
-
-  /// Returns true if build dl/ul radio channel packet was called, otherwise false.
-  bool has_build_method_been_called() { return build_method_called; }
 
   /// Returns the number of built packets.
   unsigned nof_built_packets() const { return uplane_msg_params.size(); }
@@ -55,20 +50,24 @@ public:
   /// Returns a pointer to the resource grid reader processed by this builder.
   const resource_grid_reader* get_resource_grid() const { return rg_grid; }
 };
+
 } // namespace
 
 class ofh_data_flow_uplane_downlink_data_impl_fixture : public ::testing::TestWithParam<ru_compression_params>
 {
 protected:
-  const unsigned                          nof_symbols = 3;
-  const unsigned                          ru_nof_prbs = 273;
-  ether::vlan_frame_params                vlan_params;
-  ru_compression_params                   comp_params = GetParam();
+  const unsigned                          nof_symbols;
+  const unsigned                          ru_nof_prbs;
+  const ether::vlan_frame_params          vlan_params = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11},
+                                                         {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22},
+                                                         1,
+                                                         0xaabb};
+  const ru_compression_params             comp_params = GetParam();
   ether::eth_frame_pool                   ether_pool;
+  data_flow_uplane_downlink_data_impl     data_flow;
   ether::testing::vlan_frame_builder_spy* vlan_builder;
   ecpri::testing::packet_builder_spy*     ecpri_builder;
   ofh_uplane_packet_builder_spy*          uplane_builder;
-  data_flow_uplane_downlink_data_impl     data_flow;
 
   ofh_data_flow_uplane_downlink_data_impl_fixture() : nof_symbols(3), ru_nof_prbs(273), data_flow(get_config()) {}
 
@@ -85,20 +84,19 @@ protected:
     config.frame_pool     = std::make_shared<ether::eth_frame_pool>();
 
     {
-      std::unique_ptr<ofh_uplane_packet_builder_spy> temp = std::make_unique<ofh_uplane_packet_builder_spy>();
-      uplane_builder                                      = temp.get();
-      config.up_builder                                   = std::move(temp);
+      auto temp         = std::make_unique<ofh_uplane_packet_builder_spy>();
+      uplane_builder    = temp.get();
+      config.up_builder = std::move(temp);
     }
     {
-      std::unique_ptr<ether::testing::vlan_frame_builder_spy> temp =
-          std::make_unique<ether::testing::vlan_frame_builder_spy>();
+      auto temp          = std::make_unique<ether::testing::vlan_frame_builder_spy>();
       vlan_builder       = temp.get();
       config.eth_builder = std::move(temp);
     }
     {
-      std::unique_ptr<ecpri::testing::packet_builder_spy> temp = std::make_unique<ecpri::testing::packet_builder_spy>();
-      ecpri_builder                                            = temp.get();
-      config.ecpri_builder                                     = std::move(temp);
+      auto temp            = std::make_unique<ecpri::testing::packet_builder_spy>();
+      ecpri_builder        = temp.get();
+      config.ecpri_builder = std::move(temp);
     }
 
     return config;
@@ -113,7 +111,7 @@ INSTANTIATE_TEST_SUITE_P(compression_params,
                          ofh_data_flow_uplane_downlink_data_impl_fixture,
                          ::testing::ValuesIn(comp_params));
 
-TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_type_1_message_sucess)
+TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_type_1_message_success)
 {
   resource_grid_context context;
   resource_grid_dummy   grid;
@@ -132,7 +130,7 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
   // Assert eCPRI parameters.
   ASSERT_TRUE(ecpri_builder->has_build_data_packet_method_been_called());
   ASSERT_FALSE(ecpri_builder->has_build_control_packet_method_been_called());
-  // One packet per symbol.
+  // Assert there is only one packet per symbol.
   span<const ecpri::iq_data_parameters> data_params = ecpri_builder->get_data_parameters();
   ASSERT_EQ(data_params.size(), nof_symbols * segmented_prbs[static_cast<unsigned>(comp_params.type)].size());
   sequence_identifier_generator generator;
@@ -141,7 +139,7 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
     ASSERT_EQ(param.pc_id, eaxc);
   }
 
-  /// Assert Open Fronthaul parameters.
+  // Assert Open Fronthaul parameters.
   span<const uplane_message_params>      uplane_params = uplane_builder->get_uplane_params();
   const std::vector<interval<unsigned>>& seg_prbs      = segmented_prbs[static_cast<unsigned>(comp_params.type)];
   ASSERT_EQ(uplane_builder->nof_built_packets(), nof_symbols * seg_prbs.size());
