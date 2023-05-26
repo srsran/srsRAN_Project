@@ -109,6 +109,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                           span<const csi_rs_info>               csi_rs_list)
 {
   for (const auto& pdu : csi_rs_list) {
+    bool                        is_nzp_csi  = pdu.type == csi_rs_type::CSI_RS_NZP;
     fapi::dl_csi_rs_pdu_builder csi_builder = builder.add_csi_rs_pdu(pdu.crbs.start(),
                                                                      pdu.crbs.length(),
                                                                      pdu.type,
@@ -118,12 +119,17 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                                                      pdu.symbol1,
                                                                      pdu.cdm_type,
                                                                      pdu.freq_density,
-                                                                     pdu.scrambling_id);
+                                                                     (is_nzp_csi) ? pdu.scrambling_id : 0);
 
     csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs,
                                    pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
-    csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset_profile_nr,
-                                             to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss_profile_nr));
+    if (is_nzp_csi) {
+      csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset_profile_nr,
+                                               to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss_profile_nr));
+    } else {
+      // ZP-CSI type does not use these values.
+      csi_builder.set_tx_power_info_parameters(0, fapi::nzp_csi_rs_epre_to_ssb::dB0);
+    }
     csi_builder.set_maintenance_v3_tx_power_info_parameters({});
   }
 }
