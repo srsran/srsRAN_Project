@@ -213,7 +213,6 @@ public:
   /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
   void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 
-private:
   /// Get the internal resource element patterns.
   span<const re_pattern> get_re_patterns() const { return list; }
 };

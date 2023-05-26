@@ -1126,6 +1126,21 @@ private:
     return false;
   }
 
+  /// \brief Generates a list of bit positions corresponding to the information bits set to one.
+  ///
+  /// The bit positions correspond to the location of each bit within the information bit word stored in the bitset,
+  /// regardless of the bit index order in memory given by \ref LowestInfoBitIsMSB.
+  ///
+  /// \param[in,out] positions Vector used to store the bit positions.
+  void get_bit_positions(std::vector<unsigned>& positions) const
+  {
+    for (size_t i = 0; i != size(); ++i) {
+      if (test(i)) {
+        positions.emplace_back(i);
+      }
+    }
+  }
+
   /// \brief Formatting helper to convert bitset to string of bits.
   /// \tparam OutputIt Output fmt memory buffer type.
   /// \param[out] mem_buffer Fmt memory buffer.
@@ -1278,9 +1293,8 @@ namespace fmt {
 /// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB>
 template <size_t N, bool LowestInfoBitIsMSB>
 struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
-  enum { hexadecimal, binary } mode = binary;
-  enum { forward, reverse } order   = forward;
-
+  enum { hexadecimal, binary, bit_positions } mode = binary;
+  enum { forward, reverse } order                  = forward;
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -1291,6 +1305,9 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
       }
       if (*it == 'r') {
         order = reverse;
+      }
+      if (*it == 'n') {
+        mode = bit_positions;
       }
       ++it;
     }
@@ -1305,6 +1322,29 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex(ctx.out(), order == reverse);
     }
+
+    if (mode == bit_positions) {
+      if (s.is_contiguous()) {
+        unsigned lowest  = s.find_lowest();
+        unsigned highest = s.find_highest();
+        if (lowest == highest) {
+          // Single value.
+          fmt::format_to(ctx.out(), "{}", lowest);
+        } else {
+          // Format as a range.
+          fmt::format_to(ctx.out(), "[{}, {})", lowest, highest + 1);
+        }
+
+      } else {
+        // Format as a list of bit positions.
+        std::vector<unsigned> bit_pos;
+        s.get_bit_positions(bit_pos);
+
+        fmt::format_to(ctx.out(), "{}", srsran::span<unsigned>(bit_pos));
+      }
+      return ctx.out();
+    }
+
     return s.template to_string_of_bits(ctx.out(), order == reverse);
   }
 };
