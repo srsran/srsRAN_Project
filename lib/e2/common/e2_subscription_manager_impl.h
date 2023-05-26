@@ -51,10 +51,10 @@ public:
   /// \param[out] outcome The subscription response message.
   /// \param[in]  subscription  The subscription to use.
   /// \param[in]  actions The actions that have been requested.
-  void get_subscription_result(uint16_t                              ran_func_id,
-                               e2_subscribe_reponse_message&         outcome,
-                               e2_subscription_t&                    subscription,
-                               const ri_cactions_to_be_setup_list_l& actions);
+  void get_subscription_result(uint16_t                                          ran_func_id,
+                               e2_subscribe_reponse_message&                     outcome,
+                               e2_subscription_t&                                subscription,
+                               const asn1::e2ap::ri_cactions_to_be_setup_list_l& actions);
 
   /// \brief Adds an e2sm service to the list of services that can be used to unpack e2sm messages.
   /// \param[in] ran_func_id The ran function id associated with the e2sm service.

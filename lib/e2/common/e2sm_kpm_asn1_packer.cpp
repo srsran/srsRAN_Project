@@ -10,6 +10,8 @@
 
 #include "e2sm_kpm_asn1_packer.h"
 
+using namespace asn1::e2ap;
+using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
 e2_sm_kpm_action_definition_s

@@ -53,7 +53,6 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   return outcome;
 }
 
-// in this function we start the indication procedure for this subscription
 int e2_subscription_manager_impl::start_subscription(int ric_instance_id, e2_event_manager& ev_mng)
 {
   subscriptions[ric_instance_id].indication_task = launch_async<e2_indication_procedure>(
@@ -61,7 +60,6 @@ int e2_subscription_manager_impl::start_subscription(int ric_instance_id, e2_eve
   return 0;
 }
 
-// check if action is supported by the E2 agent and return the result
 bool e2_subscription_manager_impl::action_supported(const srsran::byte_buffer& action_definition,
                                                     uint16_t                   ran_func_id,
                                                     uint32_t                   ric_instance_id,
@@ -69,23 +67,21 @@ bool e2_subscription_manager_impl::action_supported(const srsran::byte_buffer& a
 {
   auto action_def  = e2sm_packer_list[ran_func_id]->handle_packed_e2sm_kpm_action_definition(action_definition);
   auto action_type = action_def.action_definition_formats.type().value;
-  if (action_type ==
-      asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::nulltype) {
+  if (action_type == e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::nulltype) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
         {action_definition.deep_copy(), ric_action_id});
     return true;
-  } else if (action_type == asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
-                                action_definition_format3) {
-    subscriptions[ric_instance_id].subscription_info.action_list.push_back(
-        {action_definition.deep_copy(), ric_action_id});
-    return true;
-  } else {
-    logger.error("Action not supported");
-    return false;
   }
-}
+  if (action_type ==
+      e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format3) {
+    subscriptions[ric_instance_id].subscription_info.action_list.push_back(
+        {action_definition.deep_copy(), ric_action_id});
+    return true;
+  }
 
-// create subscription result message
+  logger.error("Action not supported");
+  return false;
+}
 
 void e2_subscription_manager_impl::get_subscription_result(uint16_t                              ran_func_id,
                                                            e2_subscribe_reponse_message&         outcome,
@@ -95,7 +91,7 @@ void e2_subscription_manager_impl::get_subscription_result(uint16_t             
   outcome.success                     = false;
   outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
   outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
-  for (unsigned i = 0; i < actions.size(); i++) {
+  for (unsigned i = 0, e = actions.size(); i != e; ++i) {
     auto& action = actions[i].value().ri_caction_to_be_setup_item();
     if (action_supported(
             action.ric_action_definition, ran_func_id, outcome.request_id.ric_instance_id, action.ric_action_id)) {

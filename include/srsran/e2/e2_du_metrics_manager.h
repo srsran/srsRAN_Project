@@ -13,10 +13,14 @@
 #include "srsran/e2/e2.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <queue>
+
 namespace srsran {
-#define MAX_UE_METRICS 10
-/// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
-class e2_du_metrics_manager : public scheduler_ue_metrics_notifier, public e2_du_metrics_interface
+
+constexpr MAX_UE_METRICS 10
+
+    /// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
+    class e2_du_metrics_manager : public scheduler_ue_metrics_notifier,
+                                  public e2_du_metrics_interface
 {
 public:
   e2_du_metrics_manager() { ue_metrics_queue.resize(MAX_UE_METRICS); }

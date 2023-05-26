@@ -37,7 +37,7 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       logger.info("Subscription deleted");
       running = false;
     }
-    for (auto action : subscription.action_list) {
+    for (const auto& action : subscription.action_list) {
       e2_indication_message e2_ind                        = {};
       e2_ind.request_id                                   = subscription.request_id;
       e2_ind.indication->ra_nfunction_id.value            = 1;
@@ -47,12 +47,12 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       e2_ind.indication->ri_crequest_id->ric_instance_id  = subscription.request_id.ric_instance_id;
       e2_ind.indication->ri_crequest_id->ric_requestor_id = subscription.request_id.ric_requestor_id;
       e2_ind.indication->ri_cind_type.value               = ri_cind_type_opts::report;
-      auto& action_def                                    = action.action_definition;
-      byte_buffer ind_msg_bytes                                 = e2sm.handle_action(action_def);
+      auto&       action_def                              = action.action_definition;
+      byte_buffer ind_msg_bytes                           = e2sm.handle_action(action_def);
+      byte_buffer ind_hdr_bytes                           = e2sm.get_indication_header(action.ric_action_id);
+
       e2_ind.indication->ri_cind_msg.value.resize(ind_msg_bytes.length());
       std::copy(ind_msg_bytes.begin(), ind_msg_bytes.end(), e2_ind.indication->ri_cind_msg.value.begin());
-
-      byte_buffer ind_hdr_bytes = e2sm.get_indication_header(action.ric_action_id);
       e2_ind.indication->ri_cind_hdr.value.resize(ind_hdr_bytes.length());
       std::copy(ind_hdr_bytes.begin(), ind_hdr_bytes.end(), e2_ind.indication->ri_cind_hdr.value.begin());
       logger.info("Sending E2 indication");
