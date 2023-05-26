@@ -29,7 +29,8 @@ public:
   {
 #ifdef __x86_64__
     bool supports_avx2 = cpu_supports_feature(cpu_feature::avx2);
-    if (((precoder_type == "avx2") || (precoder_type == "auto")) && supports_avx2) {
+    bool supports_fma  = cpu_supports_feature(cpu_feature::fma);
+    if (((precoder_type == "avx2") || (precoder_type == "auto")) && supports_avx2 && supports_fma) {
       return std::make_unique<channel_precoder_avx2>();
     }
 #endif // __x86_64__

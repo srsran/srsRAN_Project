@@ -14,7 +14,7 @@ set(channel_precoder_sources
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND channel_precoder_sources
             channel_precoder_avx2.cpp)
-    set_source_files_properties(channel_precoder_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
+    set_source_files_properties(channel_precoder_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;-mfma;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 add_library(srsran_channel_precoder STATIC ${channel_precoder_sources})

@@ -31,7 +31,8 @@ public:
 
 /// \brief Creates and returns a channel precoder factory.
 ///
-/// \param[in] precoder_type A string indicating the channel precoder implementation to create.
+/// \param[in] precoder_type A string indicating the precoder implementation to create. Values: generic, auto, avx2.
 /// \return A channel precoder factory for the chosen precoder implementation.
 std::shared_ptr<channel_precoder_factory> create_channel_precoder_factory(const std::string& precoder_type);
+
 } // namespace srsran
