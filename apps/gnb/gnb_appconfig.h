@@ -335,20 +335,20 @@ struct test_mode_appconfig {
   test_mode_ue_appconfig test_ue;
 };
 
-/// Expert generic Radio Unit configuration.
-struct ru_gen_expert_appconfig {
+/// Expert SDR Radio Unit configuration.
+struct ru_sdr_expert_appconfig {
   /// Lower physical layer thread profile.
   lower_phy_thread_profile lphy_executor_profile = lower_phy_thread_profile::dual;
 };
 
-/// gNB app generic Radio Unit cell configuration.
-struct ru_gen_cell_appconfig {
+/// gNB app SDR Radio Unit cell configuration.
+struct ru_sdr_cell_appconfig {
   /// Amplitude control configuration.
   amplitude_control_appconfig amplitude_cfg;
 };
 
-/// gNB app generic Radio Unit configuration.
-struct ru_gen_appconfig {
+/// gNB app SDR Radio Unit configuration.
+struct ru_sdr_appconfig {
   /// Sampling frequency in MHz.
   double srate_MHz = 61.44;
   /// RF driver name.
@@ -380,10 +380,10 @@ struct ru_gen_appconfig {
   std::string clock_source = "default";
   /// Over-the wire format. Determines the format in which samples are transported from the radio to the host.
   std::string otw_format = "default";
-  /// Expert generic Radio Unit settings.
-  ru_gen_expert_appconfig expert_cfg;
-  /// Generic Radio Unit cells configuration.
-  std::vector<ru_gen_cell_appconfig> cells = {{}};
+  /// Expert SDR Radio Unit settings.
+  ru_sdr_expert_appconfig expert_cfg;
+  /// SDR Radio Unit cells configuration.
+  std::vector<ru_sdr_cell_appconfig> cells = {{}};
 };
 
 /// gNB app Open Fronthaul cell configuration.
@@ -448,11 +448,6 @@ struct ru_ofh_appconfig {
   std::vector<ru_ofh_cell_appconfig> cells = {{}};
 };
 
-/// gNB app Radio Unit configuration.
-struct ru_appconfig {
-  variant<ru_gen_appconfig, ru_ofh_appconfig> ru_cfg = {ru_gen_appconfig{}};
-};
-
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -470,7 +465,7 @@ struct gnb_appconfig {
   /// CU-CP configuration.
   cu_cp_appconfig cu_cp_cfg;
   /// Radio Unit configuration.
-  ru_appconfig ru_cfg;
+  variant<ru_sdr_appconfig, ru_ofh_appconfig> ru_cfg = {ru_sdr_appconfig{}};
   /// \brief Base cell application configuration.
   ///
   /// \note When a cell is added, it will use the values of this base cell as default values for its base cell

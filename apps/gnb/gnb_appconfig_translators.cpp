@@ -315,7 +315,7 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
     out_cfg.dft_window_offset          = 0.5F;
     out_cfg.max_processing_delay_slots = 2;
 
-    const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
+    const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
     srsran_assert(ru_cfg.cells.size(), "Error, currently supporting one cell");
 
@@ -430,7 +430,7 @@ static double calibrate_center_freq_Hz(double center_freq_Hz, double freq_offset
 
 static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb_appconfig& config)
 {
-  const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
+  const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
   out_cfg.args             = ru_cfg.device_arguments;
   out_cfg.log_level        = config.log_cfg.radio_level;
@@ -520,7 +520,7 @@ static void generate_radio_config(radio_configuration::radio& out_cfg, const gnb
 
 static void generate_ru_generic_config(ru_generic_configuration& out_cfg, const gnb_appconfig& config)
 {
-  const ru_gen_appconfig& ru_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
+  const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
   generate_low_phy_config(out_cfg.lower_phy_config, config);
   generate_radio_config(out_cfg.radio_cfg, config);
@@ -544,7 +544,7 @@ static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
 
 static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appconfig& config)
 {
-  const ru_ofh_appconfig& ru_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg.ru_cfg);
+  const ru_ofh_appconfig& ru_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg);
 
   /// Individual Open Fronthaul sector configurations.
   std::vector<ru_ofh_sector_configuration> sector_configs;
@@ -572,23 +572,24 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   out_cfg.iq_scaling                     = ru_cfg.iq_scaling;
 
   // Add one cell.
-  out_cfg.sector_configs.emplace_back();
-  ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
-  const ru_ofh_cell_appconfig& cell_cfg   = ru_cfg.cells.back();
-  sector_cfg.interface                    = cell_cfg.network_interface;
+  for (const auto& cell_cfg : ru_cfg.cells) {
+    out_cfg.sector_configs.emplace_back();
+    ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
 
-  if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
-    srsran_terminate("Invalid Distributed Unit MAC address");
+    sector_cfg.interface = cell_cfg.network_interface;
+    if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
+      srsran_terminate("Invalid Distributed Unit MAC address");
+    }
+
+    if (!parse_mac_address(cell_cfg.ru_mac_address, sector_cfg.mac_dst_address)) {
+      srsran_terminate("Invalid Radio Unit MAC address");
+    }
+
+    sector_cfg.tci           = cell_cfg.vlan_tag;
+    sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
+    sector_cfg.ru_ul_port    = cell_cfg.ru_ul_port;
+    sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_ports.begin(), cell_cfg.ru_dl_ports.end());
   }
-
-  if (!parse_mac_address(cell_cfg.ru_mac_address, sector_cfg.mac_dst_address)) {
-    srsran_terminate("Invalid Radio Unit MAC address");
-  }
-
-  sector_cfg.tci           = cell_cfg.vlan_tag;
-  sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
-  sector_cfg.ru_ul_port    = cell_cfg.ru_ul_port;
-  sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_ports.begin(), cell_cfg.ru_dl_ports.end());
 
   if (!is_valid_ru_ofh_config(out_cfg)) {
     report_error("Invalid Open Fronthaul Radio Unit configuration detected.\n");
@@ -599,7 +600,7 @@ ru_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 {
   ru_configuration out_cfg;
 
-  if (variant_holds_alternative<ru_gen_appconfig>(config.ru_cfg.ru_cfg)) {
+  if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     ru_generic_configuration& cfg = out_cfg.config.emplace<ru_generic_configuration>();
     generate_ru_generic_config(cfg, config);
   } else {

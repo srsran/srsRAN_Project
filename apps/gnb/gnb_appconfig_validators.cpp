@@ -35,7 +35,7 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 }
 
 /// Validates the given RU application configuration. Returns true on success, otherwise false.
-static bool validate_ru_gen_appconfig(const ru_gen_appconfig& config)
+static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
 
@@ -421,15 +421,15 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
-  if (variant_holds_alternative<ru_gen_appconfig>(config.ru_cfg.ru_cfg)) {
-    const ru_gen_appconfig& gen_cfg = variant_get<ru_gen_appconfig>(config.ru_cfg.ru_cfg);
-    if (!validate_ru_gen_appconfig(gen_cfg)) {
+  if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
+    const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+    if (!validate_ru_sdr_appconfig(sdr_cfg)) {
       return false;
     }
 
-    if (gen_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
+    if (sdr_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
       fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
-                 gen_cfg.srate_MHz,
+                 sdr_cfg.srate_MHz,
                  bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
       return false;
     }

@@ -136,12 +136,12 @@ struct worker_manager {
   {
     lower_phy_thread_profile lower_phy_profile = lower_phy_thread_profile::blocking;
     std::string              driver            = "";
-    if (variant_holds_alternative<ru_gen_appconfig>(appcfg.ru_cfg.ru_cfg)) {
-      const ru_gen_appconfig& gen_cfg = variant_get<ru_gen_appconfig>(appcfg.ru_cfg.ru_cfg);
-      driver                          = gen_cfg.device_driver;
+    if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
+      const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
+      driver                          = sdr_cfg.device_driver;
 
       lower_phy_profile =
-          (driver != "zmq") ? gen_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
+          (driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
     }
 
     create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);

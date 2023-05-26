@@ -495,14 +495,14 @@ static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& t
   configure_cli11_test_ue_mode_args(*test_ue, test_params.test_ue);
 }
 
-static void configure_cli11_ru_gen_cells_args(CLI::App& app, ru_gen_cell_appconfig& config)
+static void configure_cli11_ru_sdr_cells_args(CLI::App& app, ru_sdr_cell_appconfig& config)
 {
   // Amplitude control configuration.
   CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
   configure_cli11_amplitude_control_args(*amplitude_control_subcmd, config.amplitude_cfg);
 }
 
-static void configure_cli11_ru_gen_expert_args(CLI::App& app, ru_gen_expert_appconfig& config)
+static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_expert_appconfig& config)
 {
   app.add_option_function<std::string>(
          "--low_phy_thread_profile",
@@ -525,7 +525,7 @@ static void configure_cli11_ru_gen_expert_args(CLI::App& app, ru_gen_expert_appc
       });
 }
 
-static void configure_cli11_ru_gen_args(CLI::App& app, ru_gen_appconfig& config)
+static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_appconfig& config)
 {
   app.add_option("--srate", config.srate_MHz, "Sample rate in MHz")->capture_default_str();
   app.add_option("--device_driver", config.device_driver, "Device driver name")->capture_default_str();
@@ -566,7 +566,7 @@ static void configure_cli11_ru_gen_args(CLI::App& app, ru_gen_appconfig& config)
 
   // Expert configuration.
   CLI::App* expert_subcmd = app.add_subcommand("expert_cfg", "Generic Radio Unit expert configuration");
-  configure_cli11_ru_gen_expert_args(*expert_subcmd, config.expert_cfg);
+  configure_cli11_ru_sdr_expert_args(*expert_subcmd, config.expert_cfg);
 
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(
@@ -575,10 +575,10 @@ static void configure_cli11_ru_gen_args(CLI::App& app, ru_gen_appconfig& config)
         config.cells.resize(values.size());
 
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("RU gen cells");
+          CLI::App subapp("RU SDR cells");
           subapp.config_formatter(create_yaml_config_parser());
           subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ru_gen_cells_args(subapp, config.cells[i]);
+          configure_cli11_ru_sdr_cells_args(subapp, config.cells[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
         }
@@ -636,6 +636,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 
         return error_message;
       });
+
   // Note: For the timing parameters, worst case is 2 slots for scs 15KHz and 14 symbols. Implementation defined.
   app.add_option("--t1a_max_cp_dl", config.T1a_max_cp_dl, "T1a maximum value for downlink Control-Plane")
       ->capture_default_str()
@@ -718,15 +719,14 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
 }
 
-static void configure_cli11_ru_args(CLI::App& app, ru_appconfig& config)
+static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
 {
   // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need to
   // be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
-  static ru_gen_appconfig gen_cfg;
-  // By default parse the generic Radio Unit configuration.
-  CLI::App* ru_gen_subcmd = app.add_subcommand("ru_gen", "Generic Radio Unit configuration")->configurable();
-  configure_cli11_ru_gen_args(*ru_gen_subcmd, gen_cfg);
+  static ru_sdr_appconfig sdr_cfg;
+  CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();
+  configure_cli11_ru_sdr_args(*ru_sdr_subcmd, sdr_cfg);
 
   // Check the above note.
   static ru_ofh_appconfig ofh_cfg;
@@ -736,10 +736,10 @@ static void configure_cli11_ru_args(CLI::App& app, ru_appconfig& config)
   // Check which Radio Unit configuration was present and update the configuration file.
   auto ru_ofh_verify_callback = [&]() {
     unsigned nof_ofh_entries = app.get_subcommand("ru_ofh")->count_all();
-    unsigned nof_gen_entries = app.get_subcommand("ru_gen")->count_all();
+    unsigned nof_sdr_entries = app.get_subcommand("ru_sdr")->count_all();
 
-    if (nof_gen_entries && nof_ofh_entries) {
-      srsran_terminate("Radio Unit configuration allows either a generic or Open Fronthaul configuration, but not both "
+    if (nof_sdr_entries && nof_ofh_entries) {
+      srsran_terminate("Radio Unit configuration allows either a SDR or Open Fronthaul configuration, but not both "
                        "of them at the same time");
     }
 
@@ -749,7 +749,7 @@ static void configure_cli11_ru_args(CLI::App& app, ru_appconfig& config)
       return;
     }
 
-    config.ru_cfg = gen_cfg;
+    config.ru_cfg = sdr_cfg;
   };
 
   app.callback(ru_ofh_verify_callback);
@@ -780,8 +780,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_cu_cp_args(*cu_cp_subcmd, gnb_cfg.cu_cp_cfg);
 
   // RU section.
-  CLI::App* ru_subcmd = app.add_subcommand("ru_cfg", "Radio Unit configuration")->configurable();
-  configure_cli11_ru_args(*ru_subcmd, gnb_cfg.ru_cfg);
+  parse_ru_config(app, gnb_cfg);
 
   // Common cell parameters.
   CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Default cell configuration")->configurable();
