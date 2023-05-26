@@ -297,6 +297,11 @@ public:
   /// \returns The RRC Reestablishment UE context for the old UE.
   virtual rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
+
+  /// \brief Handle the reception of an RRC Reestablishment Complete by transfering and setting up contexts and bearer.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
+  virtual void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
 };
 
 class rrc_ue_context_handler

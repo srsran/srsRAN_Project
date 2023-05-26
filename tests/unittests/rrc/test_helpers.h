@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
@@ -133,6 +131,11 @@ public:
                 old_c_rnti);
 
     return rrc_reestablishment_ue_context_t{};
+  }
+
+  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    logger.info("Received RRC Reestablishment Complete from ueId={} with old_ueId={}", ue_index, old_ue_index);
   }
 
 private:

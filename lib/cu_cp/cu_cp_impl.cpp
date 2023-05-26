@@ -9,10 +9,9 @@
  */
 
 #include "cu_cp_impl.h"
-#include "routines/initial_cu_cp_setup_routine.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor_factory.h"
 #include "srsran/cu_cp/du_processor_factory.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ngap/ngap_factory.h"
 #include <future>
 
@@ -230,6 +229,15 @@ cu_cp::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_i
   reest_context.ue_index = old_ue_index;
 
   return reest_context;
+}
+
+void cu_cp::handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index)
+{
+  // Transfer NGAP UE Context to new UE and remove the old context
+  ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
+
+  // Remove old RRC UE and DU UE
+  du_db.at(get_du_index_from_ue_index(old_ue_index))->get_du_processor_ue_handler().remove_ue(old_ue_index);
 }
 
 // private

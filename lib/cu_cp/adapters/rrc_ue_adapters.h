@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "../task_schedulers/ue_task_scheduler.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
@@ -265,6 +263,11 @@ public:
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
+  }
+
+  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(ue_index, old_ue_index);
   }
 
 private:

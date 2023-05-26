@@ -17,8 +17,6 @@
 #include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
-#include "cu_up_processor_impl.h"
-#include "du_processor_impl.h"
 #include "routine_managers/cu_cp_routine_manager.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
@@ -26,8 +24,6 @@
 #include "ue_manager_impl.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
-#include "srsran/support/async/async_task_loop.h"
-#include "srsran/support/executors/task_executor.h"
 #include <memory>
 #include <unordered_map>
 
@@ -37,7 +33,7 @@ namespace srs_cu_cp {
 class cu_cp final : public cu_cp_interface
 {
 public:
-  explicit cu_cp(const cu_cp_configuration& cfg_);
+  explicit cu_cp(const cu_cp_configuration& config_);
   ~cu_cp();
 
   void start() override;
@@ -78,7 +74,8 @@ public:
 
   // RRC UE handler
   rrc_reestablishment_ue_context_t
-  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+       handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+  void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override;
 
   // cu_cp interface
   cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }

@@ -19,7 +19,6 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc.h"
-#include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
 #include <string>
 
@@ -317,6 +316,15 @@ public:
   virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
+class du_processor_ue_handler
+{
+public:
+  virtual ~du_processor_ue_handler() = default;
+
+  /// \brief Removes a UE from the RRC and DU Processor.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+};
+
 /// Methods to get statistics of the DU processor.
 class du_processor_statistics_handler
 {
@@ -335,7 +343,8 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_paging_handler,
                                public du_processor_inactivity_handler,
-                               public du_processor_statistics_handler
+                               public du_processor_statistics_handler,
+                               public du_processor_ue_handler
 
 {
 public:
@@ -349,6 +358,7 @@ public:
   virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
   virtual du_processor_inactivity_handler& get_du_processor_inactivity_handler() = 0;
   virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
+  virtual du_processor_ue_handler&         get_du_processor_ue_handler()         = 0;
 };
 
 } // namespace srs_cu_cp

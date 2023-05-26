@@ -12,7 +12,6 @@
 
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ngap/ngap.h"
-#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
