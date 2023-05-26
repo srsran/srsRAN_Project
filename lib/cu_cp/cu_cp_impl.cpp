@@ -215,7 +215,7 @@ void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
 }
 
 rrc_reestablishment_ue_context_t
-cu_cp::handle_rrc_reestablishment(const pci_t old_pci, const rnti_t old_c_rnti, const ue_index_t ue_index)
+cu_cp::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index)
 {
   rrc_reestablishment_ue_context_t reest_context;
 

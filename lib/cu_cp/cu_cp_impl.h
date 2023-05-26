@@ -78,7 +78,7 @@ public:
 
   // RRC UE handler
   rrc_reestablishment_ue_context_t
-  handle_rrc_reestablishment(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
+  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override;
 
   // cu_cp interface
   cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }

@@ -102,7 +102,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // Notifiy CU-CP about the RRC Reestablishment Request
-  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment(
+  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
       msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
 
   // store capabilities if available

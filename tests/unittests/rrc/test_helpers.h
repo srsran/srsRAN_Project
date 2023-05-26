@@ -122,10 +122,12 @@ class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
 {
 public:
   rrc_reestablishment_ue_context_t
-  on_rrc_reestablishment(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
-    logger.info(
-        "Received RRC Reestablishment from ueId={} with old_pci={} and old_c_rnti={}", ue_index, old_pci, old_c_rnti);
+    logger.info("Received RRC Reestablishment Request from ueId={} with old_pci={} and old_c_rnti={}",
+                ue_index,
+                old_pci,
+                old_c_rnti);
 
     return rrc_reestablishment_ue_context_t{};
   }
