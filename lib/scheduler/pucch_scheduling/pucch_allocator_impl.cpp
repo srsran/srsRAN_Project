@@ -538,11 +538,11 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
   bool backup_res_initialized = false;
 
   // The scope of the loop below is to allocate the PUCCH common resource while pursuing the following objectives:
-  // - Not selecting common PUCCH resources that are already used by other UEs. If there is no resource available, then
-  // the allocation fails.
-  // - Trying to find REs in the grid that are unused. However, since the UE-specific PUCCH guardbands can take quite
-  // some space on the band, if no common PUCCH resource can be allocated on a free part of the grid, the allocator will
-  // choose the first available common PUCCH resource (i.e., not used by other UEs), even though it collides with the
+  // - Avoiding the common PUCCH resources that are already allocated to other UEs. If there is no resource available,
+  // then the allocation fails.
+  // - Trying to allocate the common PUCCH resource in grid REs that are free. Should this not be possible (as the
+  // UE-specific PUCCH guardbands can take quite some space on the band), the PUCCH allocator will choose the first
+  // available common PUCCH resource (i.e., not used by other UEs), even though this will result in collision with the
   // grid.
   //
   // Loop over the values of \Delta_PRI to find an available common PUCCH resource that possibly doesn't collide with
@@ -573,7 +573,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
     srsran_assert(cs_idx < pucch_res.cs_indexes.size(), "CS index exceeds static vector size");
     const uint8_t cyclic_shift = pucch_res.cs_indexes[cs_idx];
 
-    // If both 1st and 2nd hop grants do not collide with any UL grants, then allocate PUCCH in the grid.
+    // If both 1st and 2nd hop grants do not collide with any UL grants, then the allocator chooses this PUCCH resource.
     if (not pucch_alloc.ul_res_grid.collides(first_hop_grant) &&
         not pucch_alloc.ul_res_grid.collides(second_hop_grant)) {
       // Set outputs before exiting the function.
@@ -586,8 +586,8 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
       return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
     }
 
-    // Save the first available common PUCCH resource. If no other resource can be found that doesn't collide with the
-    // grid, then we allocate this back-up resource at the end of the loop.
+    // Save the first available common PUCCH resource. If no other resource not colliding with the grid, then we
+    // allocate this back-up resource at the end of the loop.
     if (not backup_res_initialized) {
       backup_res_initialized                       = true;
       candidate_pucch_resource.first_hop_res       = first_hop_grant;
@@ -599,7 +599,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
     }
   }
 
-  // This is the case in which there exists no available resource that doesn't collide with the grid.
+  // This is the case in which the only common PUCCH resources available collide with the grid.
   if (candiadate_r_pucch < r_pucch_invalid) {
     resource_manager.reserve_common_resource(pucch_alloc.slot, candiadate_r_pucch);
     return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
