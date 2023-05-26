@@ -236,6 +236,10 @@ void cu_cp::handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t 
   // Transfer NGAP UE Context to new UE and remove the old context
   ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
 
+  // Transfer E1AP UE Context to new UE and remove old context
+  // TODO: Add ue index to cu up index lookup
+  cu_up_db.begin()->second->update_ue_index(ue_index, old_ue_index);
+
   // Remove old RRC UE and DU UE
   du_db.at(get_du_index_from_ue_index(old_ue_index))->get_du_processor_ue_handler().remove_ue(old_ue_index);
 }
