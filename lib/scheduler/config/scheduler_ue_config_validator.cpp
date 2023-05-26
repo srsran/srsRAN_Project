@@ -172,7 +172,13 @@ error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sche
                                             zp.res_mapping.first_ofdm_symbol_in_td ==
                                                 csi_im.csi_im_res_element_pattern->symbol_location;
                                    });
-          VERIFY(found, "CSI-IM does not overlap with zp-CSI-RS");
+          VERIFY(found,
+                 "CSI-IM does not overlap with ZP-CSI-RS. CSI-IM: {{period={} offset={} band=[{}, {}) symbol={}}}",
+                 csi_im.csi_res_period,
+                 csi_im.csi_res_offset,
+                 csi_im.freq_band_start_rb,
+                 csi_im.freq_band_nof_rb,
+                 csi_im.csi_im_res_element_pattern->symbol_location);
         }
       }
     }
