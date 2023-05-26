@@ -50,7 +50,6 @@ variables:
   stage: e2e
   resource_group: e2e
   timeout: 6h
-  interruptible: false
   image:
     name: $RETINA_LAUNCHER_IMAGE
     entrypoint: ["/bin/sh", "-c"]
@@ -71,6 +70,7 @@ variables:
     reports:
       junit: tests/e2e/out.xml
   script:
+    - retina-delete-orchestration-network --user-name ^ci_ --regex
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
@@ -215,6 +215,7 @@ android:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: always
+  interruptible: false
   image:
     name: $RETINA_LAUNCHER_IMAGE
     entrypoint: ["/bin/sh", "-c"]
