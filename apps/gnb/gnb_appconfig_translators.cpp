@@ -188,7 +188,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::update_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
-      printf("This is the new PRACH frequency start %d \n", rach_cfg.rach_cfg_generic.msg1_frequency_start);
     }
 
     logger.info(

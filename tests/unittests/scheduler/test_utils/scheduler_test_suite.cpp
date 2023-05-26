@@ -338,11 +338,10 @@ void srsran::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 
   std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : ul_grants) {
-    if (grid.collides(test_grant.grant)) {
-      printf("Sopt here");
+    if (test_grant.type != test_grant_info::PUCCH) {
+      ASSERT_FALSE(grid.collides(test_grant.grant))
+          << fmt::format("Resource collision for grant with rnti={:#x}", test_grant.rnti);
     }
-    //    ASSERT_FALSE(grid.collides(test_grant.grant))
-    //        << fmt::format("Resource collision for grant with rnti={:#x}", test_grant.rnti);
     grid.fill(test_grant.grant);
   }
 }

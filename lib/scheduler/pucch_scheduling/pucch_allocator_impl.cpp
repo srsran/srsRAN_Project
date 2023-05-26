@@ -759,6 +759,12 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                                                            curr_sr_bits,
                                                            csi_part1_nof_bits);
 
+  if (uci_bits.harq_ack_nof_bits + sr_nof_bits_to_uint(uci_bits.sr_bits) + uci_bits.csi_part1_bits <
+      curr_harq_bits + harq_ack_nof_bits + sr_nof_bits_to_uint(curr_sr_bits) + csi_part1_nof_bits) {
+    logger.warning(
+        "PUCCH F2 max payload is smaller than the required UCI bits. Consider increasing the PUCCH F2 payload.");
+  }
+
   // Compute the number of PRBs required for the uci bits computed above.
   const unsigned nof_prbs = get_pucch_format2_nof_prbs(
       uci_bits.harq_ack_nof_bits + sr_nof_bits_to_uint(uci_bits.sr_bits) + uci_bits.csi_part1_bits,
@@ -832,6 +838,13 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
                                existing_grant.format_2.harq_ack_nof_bits + harq_ack_bits_increment,
                                existing_grant.format_2.sr_bits,
                                existing_grant.format_2.csi_part1_bits);
+
+  if (uci_bits.harq_ack_nof_bits + sr_nof_bits_to_uint(uci_bits.sr_bits) + uci_bits.csi_part1_bits <
+      existing_grant.format_2.harq_ack_nof_bits + harq_ack_bits_increment +
+          sr_nof_bits_to_uint(existing_grant.format_2.sr_bits) + existing_grant.format_2.csi_part1_bits) {
+    logger.warning(
+        "PUCCH F2 max payload is smaller than the required UCI bits. Consider increasing the PUCCH F2 payload.");
+  }
 
   // Compute the number of PRBs required for the uci bits computed above.
   const unsigned nof_prbs = get_pucch_format2_nof_prbs(
@@ -989,6 +1002,12 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
   // Compute the number of and which UCI bits can be reported so as not to exceed the Max Code Rate of PUCCH Format 2.
   const pucch_uci_bits uci_bits =
       compute_format2_uci_bits(*format2_res.pucch_res, max_pucch_code_rate, harq_ack_bits, sr_bits, csi_part1_bits);
+
+  if (uci_bits.harq_ack_nof_bits + sr_nof_bits_to_uint(uci_bits.sr_bits) + uci_bits.csi_part1_bits <
+      harq_ack_bits + sr_nof_bits_to_uint(sr_bits) + csi_part1_bits) {
+    logger.warning(
+        "PUCCH F2 max payload is smaller than the required UCI bits. Consider increasing the PUCCH F2 payload.");
+  }
 
   // Compute the number of PRBs required for the uci bits computed above.
   const unsigned nof_prbs = get_pucch_format2_nof_prbs(
