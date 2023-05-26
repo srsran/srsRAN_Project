@@ -222,7 +222,7 @@ pull_src_cache:
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
           cd build
-          /usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -o "$OUTPUT_FINGERPRINT"
+          /usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -o "../$OUTPUT_FINGERPRINT"
           cd ..
         fi
       }
@@ -244,7 +244,7 @@ pull_src_cache:
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
-          ctest_subset="-I 0,0,0,"$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -i "${FINGERPRINT}" -d md5)
+          ctest_subset="-I 0,0,0,"$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
         fi
         CTEST_CMD="ctest -j "$(nproc --all)" $ctest_subset $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
@@ -511,7 +511,7 @@ differential valgrind:
     FINGERPRINT: "fingerprints.csv"
   script:
     - git config advice.detachedHead false
-    - git fetch --depth 1 origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
     - |
       echo "##################################################"
       echo "#### origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME ####"
@@ -520,6 +520,13 @@ differential valgrind:
       OUTPUT_FINGERPRINT="${FINGERPRINT}"
       build_srsgnb
       OUTPUT_FINGERPRINT=""
+    - |
+      echo "##################################################"
+      echo "#### origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
+      echo "##################################################"
+      git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      build_srsgnb
+    - launch_tests
   cache:
     - *cache_src_get
     - *cache_build_get
