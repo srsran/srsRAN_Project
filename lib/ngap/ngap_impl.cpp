@@ -189,6 +189,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_setup_request:
       handle_pdu_session_resource_setup_request(msg.value.pdu_session_res_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_modify_request:
+      handle_pdu_session_resource_modify_request(msg.value.pdu_session_res_modify_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_release_cmd:
       handle_pdu_session_resource_release_command(msg.value.pdu_session_res_release_cmd());
       break;
