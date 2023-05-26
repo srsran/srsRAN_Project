@@ -239,14 +239,11 @@ void ue_manager::transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t ol
   ran_ue_id_to_ue_index.at(find_ran_ue_id(old_ue_index)) = new_ue_index;
   amf_ue_id_to_ue_index.at(find_amf_ue_id(old_ue_index)) = new_ue_index;
 
-  // transfer UE NGAP IDs to new UE
+  // transfer NGAP UE Context to new UE
   auto& old_ue = ues.at(old_ue_index);
   auto& new_ue = ues.at(new_ue_index);
-  new_ue.set_ran_ue_id(old_ue.get_ran_ue_id());
-  new_ue.set_amf_ue_id(old_ue.get_amf_ue_id());
 
-  // transfer aggregate maximum bit rate dl
-  new_ue.set_aggregate_maximum_bit_rate_dl(old_ue.get_aggregate_maximum_bit_rate_dl());
+  new_ue.set_ngap_ue_context(old_ue.get_ngap_ue_context());
 
   logger.debug(
       "Transferred NGAP UE context from ueId={} (ran_ue_id={} amf_ue_id={}) to ueId={} (ran_ue_id={} amf_ue_id={})",

@@ -18,6 +18,12 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+struct ngap_ue_context_t {
+  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+};
+
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
@@ -81,19 +87,22 @@ public:
   }
 
   /// \brief Get the AMF UE ID of the UE.
-  amf_ue_id_t get_amf_ue_id() override { return amf_ue_id; }
+  amf_ue_id_t get_amf_ue_id() override { return ngap_ue_context.amf_ue_id; }
 
   /// \brief Get the RAN UE ID of the UE.
-  ran_ue_id_t get_ran_ue_id() override { return ran_ue_id; }
+  ran_ue_id_t get_ran_ue_id() override { return ngap_ue_context.ran_ue_id; }
 
   /// \brief Get the aggregate maximum bit rate DL of the UE.
-  uint64_t get_aggregate_maximum_bit_rate_dl() override { return aggregate_maximum_bit_rate_dl; }
+  uint64_t get_aggregate_maximum_bit_rate_dl() override { return ngap_ue_context.aggregate_maximum_bit_rate_dl; }
+
+  /// \brief Get the NGAP UE Context.
+  ngap_ue_context_t get_ngap_ue_context() { return ngap_ue_context; }
 
   /// \brief Set the aggregate maximum bit rate DL of the UE.
   /// \param[in] aggregate_maximum_bit_rate_dl Aggregate maximum bit rate DL.
   void set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl_) override
   {
-    aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
+    ngap_ue_context.aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
   }
 
   bool du_ue_created   = false;
@@ -101,7 +110,7 @@ public:
 
   /// \brief Set the RAN UE ID of the UE.
   /// \param[in] ran_ue_id_ RAN UE ID of the UE.
-  void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ran_ue_id = ran_ue_id_; }
+  void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ngap_ue_context.ran_ue_id = ran_ue_id_; }
 
   /// \brief Set the RRC UE PDU notifier of the UE.
   /// \param[in] rrc_ue_pdu_notifier_ RRC UE PDU notifier for the UE.
@@ -126,7 +135,11 @@ public:
 
   /// \brief Set the AMF UE ID in the UE.
   /// \param[in] amf_ue_id The AMF UE ID to set.
-  void set_amf_ue_id(amf_ue_id_t amf_ue_id_) { amf_ue_id = amf_ue_id_; }
+  void set_amf_ue_id(amf_ue_id_t amf_ue_id_) { ngap_ue_context.amf_ue_id = amf_ue_id_; }
+
+  /// \brief Set the NGAP UE Context.
+  /// \param[in] ue_context The NGAP UE Context.
+  void set_ngap_ue_context(ngap_ue_context_t ue_context) { ngap_ue_context = ue_context; }
 
 private:
   // common context
@@ -142,9 +155,7 @@ private:
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
 
   // ngap ue context
-  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+  ngap_ue_context_t ngap_ue_context;
 
   ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
   ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
