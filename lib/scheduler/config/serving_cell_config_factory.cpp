@@ -762,7 +762,7 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   res.res_mapping.freq_band_start_rb      = 0;
   res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
   res.period                              = csi_resource_periodicity::slots80;
-  pdsch_cfg.zp_csi_rs_res_list[0].offset  = 1;
+  pdsch_cfg.zp_csi_rs_res_list[0].offset  = 2;
 
   return pdsch_cfg;
 }
