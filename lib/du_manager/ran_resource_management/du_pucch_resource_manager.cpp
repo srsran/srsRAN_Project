@@ -105,7 +105,9 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     // Find CSI slot offset that does not coincide with any of SR slot offsets.
     auto rev_it = std::find_if(free_csi_list.rbegin(), free_csi_list.rend(), [&](unsigned offset) {
       for (const auto& sr : sr_res_list) {
-        if (sr.offset == offset) {
+        unsigned lowest_period = std::min(sr_periodicity_to_slot(sr.period),
+                                          csi_report_periodicity_to_uint(target_csi_cfg.report_slot_period));
+        if (sr.offset % lowest_period == offset % lowest_period) {
           return false;
         }
       }
