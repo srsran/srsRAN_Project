@@ -593,7 +593,7 @@ INSTANTIATE_TEST_SUITE_P(test_res_generation_given_rbs,
 
 class test_ue_pucch_config_builder : public ::testing::TestWithParam<pucch_cfg_builder_params>
 {
-public:
+protected:
   test_ue_pucch_config_builder() :
     f1_params(pucch_f1_params{.nof_cyc_shifts         = nof_cyclic_shifts::no_cyclic_shift,
                               .occ_supported          = false,
@@ -630,7 +630,6 @@ public:
     return test_result;
   }
 
-protected:
   // Parameters that are passed by the routing to run the tests.
   const unsigned        bwp_size{106};
   const unsigned        nof_symbols_per_slot{14};
