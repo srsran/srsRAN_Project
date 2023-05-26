@@ -37,6 +37,12 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
+  if (request.drbs_to_setup.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
+      request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
+    proc_logger.log_proc_failure("No SCells, DRBs or SRBs to setup or release");
+    CORO_EARLY_RETURN(make_ue_config_failure());
+  }
+
   prev_cell_group = ue->resources.value();
   if (ue->resources.update(ue->pcell_index, request).release_required) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
