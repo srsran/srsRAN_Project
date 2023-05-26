@@ -167,9 +167,6 @@ pull_src_cache:
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
-        if [ -n "${OUTPUT_FINGERPRINT}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -o ${OUTPUT_FINGERPRINT}"
-        fi
         if [ -n "${BUILD_TYPE}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
         fi
@@ -221,6 +218,13 @@ pull_src_cache:
         echo "============================================================================================="
         $BUILD_CMD
         cd build && ninja install && cd ..
+
+        if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
+          echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
+          cd build
+          /usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -o "$OUTPUT_FINGERPRINT"
+          cd ..
+        fi
       }
     - |
       launch_tests() {
@@ -240,7 +244,7 @@ pull_src_cache:
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
-          ctest_subset="-I 0,0,0,"$(changed_tests.py -i "${FINGERPRINT}" -d md5)
+          ctest_subset="-I 0,0,0,"$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -i "${FINGERPRINT}" -d md5)
         fi
         CTEST_CMD="ctest -j "$(nproc --all)" $ctest_subset $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
