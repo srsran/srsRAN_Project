@@ -66,6 +66,8 @@ struct test_bench {
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)
   {
+    pucch_alloc.slot_indication(
+        slot_point{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0});
   }
 };
 

@@ -599,7 +599,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(cell_slot_resource_allocator& 
     }
   }
 
-  // This is the case in which the only common PUCCH resources available collide with the grid.
+  // This is the case in which the only common PUCCH resources available collides with the grid.
   if (candiadate_r_pucch < r_pucch_invalid) {
     resource_manager.reserve_common_resource(pucch_alloc.slot, candiadate_r_pucch);
     return optional<pucch_allocator_impl::pucch_res_alloc_cfg>{candidate_pucch_resource};
