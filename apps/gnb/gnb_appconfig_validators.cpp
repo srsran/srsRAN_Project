@@ -34,7 +34,7 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
   return valid;
 }
 
-/// Validates the given RU application configuration. Returns true on success, otherwise false.
+/// Validates the given SDR Radio Unit application configuration. Returns true on success, otherwise false.
 static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
@@ -46,6 +46,23 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
 
   for (const auto& cell : config.cells) {
     if (!validate_amplitude_control_appconfig(cell.amplitude_cfg)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise false.
+static bool validate_ru_ofh_appconfig(const ru_ofh_appconfig& config)
+{
+  for (const auto& cell : config.cells) {
+    std::vector<unsigned> ports = cell.ru_dl_port_id;
+    std::sort(ports.begin(), ports.end());
+
+    if (std::unique(ports.begin(), ports.end()) != ports.end()) {
+      fmt::print("Detected duplicated downlink port identifiers\n");
+
       return false;
     }
   }
@@ -423,6 +440,15 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
     const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
+
+    if (config.cells_cfg.size() != sdr_cfg.cells.size()) {
+      fmt::print("Number of cells in the DU={} don't match the number of cells in the RU={}\n",
+                 config.cells_cfg.size(),
+                 sdr_cfg.cells.size());
+
+      return false;
+    }
+
     if (!validate_ru_sdr_appconfig(sdr_cfg)) {
       return false;
     }
@@ -431,6 +457,22 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
                  sdr_cfg.srate_MHz,
                  bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
+      return false;
+    }
+  }
+
+  if (variant_holds_alternative<ru_ofh_appconfig>(config.ru_cfg)) {
+    const ru_ofh_appconfig& ofh_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg);
+
+    if (config.cells_cfg.size() != ofh_cfg.cells.size()) {
+      fmt::print("Number of cells in the DU={} don't match the number of cells in the RU={}\n",
+                 config.cells_cfg.size(),
+                 ofh_cfg.cells.size());
+
+      return false;
+    }
+
+    if (!validate_ru_ofh_appconfig(ofh_cfg)) {
       return false;
     }
   }

@@ -398,10 +398,10 @@ struct ru_ofh_cell_appconfig {
   uint16_t vlan_tag = 1U;
   /// RU PRACH port.
   unsigned ru_prach_port_id = 4U;
-  /// RU Downlink ports.
-  std::vector<unsigned> ru_dl_ports = {0, 1};
+  /// RU Downlink port.
+  std::vector<unsigned> ru_dl_port_id = {0, 1};
   /// RU Uplink port.
-  unsigned ru_ul_port = 0U;
+  unsigned ru_ul_port_id = 0U;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsran/ofh/ofh_constants.h"
 #include "srsran/ru/ru_ofh_configuration.h"
 
 using namespace srsran;
@@ -19,9 +20,9 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
     return false;
   }
 
-  if (!(params.data_width == 8) && !(params.data_width == 9) && !(params.data_width == 12) &&
-      !(params.data_width == 14) && !(params.data_width == 16)) {
-    fmt::print("Compression bit width not supported. Valid values [8,9,14,16].\n");
+  if (params.type == ofh::compression_type::BFP && !(params.data_width == 8) && !(params.data_width == 9) &&
+      !(params.data_width == 12) && !(params.data_width == 14) && !(params.data_width == 16)) {
+    fmt::print("BFP compression bit width not supported. Valid values [8,9,12,14,16].\n");
 
     return false;
   }
@@ -31,14 +32,21 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
 
 static bool check_dl_ports_if_broadcast_is_enabled(const ru_ofh_configuration& config)
 {
-  if (!config.is_downlink_broadcast_enabled)
-    return true;
-
   for (const auto& sector : config.sector_configs) {
-    if (sector.ru_dl_ports.size() < 2) {
-      fmt::print("If the broadcast flag is enabled, there must be more than one downlink port id configured.\n");
-      return false;
+    // When broadcast flag is enabled, two downlink ports are supported.
+    if (config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 2) {
+      continue;
     }
+
+    // When broadcast flag is disabled, one downlink port is supported.
+    if (!config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 1) {
+      continue;
+    }
+
+    fmt::print("Invalid downlink port identifier configuration, broadcast flag is {} and there are {} downlink ports\n",
+               (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
+               sector.ru_dl_ports.size());
+    return false;
   }
 
   return true;
@@ -46,9 +54,12 @@ static bool check_dl_ports_if_broadcast_is_enabled(const ru_ofh_configuration& c
 
 static bool check_port_id(unsigned port_id)
 {
-  static constexpr unsigned MAX_RU_PORT_ID = (1U << 5U);
+  bool result = port_id < ofh::MAX_SUPPORTED_EAXC_ID_VALUE;
+  if (!result) {
+    fmt::print("Port id={} not supported. Valid values [0-{}]\n", port_id, ofh::MAX_SUPPORTED_EAXC_ID_VALUE - 1U);
+  }
 
-  return port_id < MAX_RU_PORT_ID;
+  return result;
 }
 
 static bool check_ports_id(const ru_ofh_configuration& config)
@@ -90,6 +101,12 @@ bool srsran::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
   }
 
   if (!check_ports_id(config)) {
+    return false;
+  }
+
+  if (config.is_prach_control_plane_enabled) {
+    fmt::print("Control-Plane for PRACH is not supported\n");
+
     return false;
   }
 

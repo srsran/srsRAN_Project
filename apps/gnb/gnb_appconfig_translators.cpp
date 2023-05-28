@@ -567,7 +567,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   out_cfg.is_downlink_broadcast_enabled  = ru_cfg.is_downlink_broadcast_enabled;
   out_cfg.ul_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_ul),
                                             ru_cfg.compresion_bitwidth_ul};
-  out_cfg.dl_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_ul),
+  out_cfg.dl_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_dl),
                                             ru_cfg.compresion_bitwidth_dl};
   out_cfg.iq_scaling                     = ru_cfg.iq_scaling;
 
@@ -587,8 +587,8 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
 
     sector_cfg.tci           = cell_cfg.vlan_tag;
     sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
-    sector_cfg.ru_ul_port    = cell_cfg.ru_ul_port;
-    sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_ports.begin(), cell_cfg.ru_dl_ports.end());
+    sector_cfg.ru_ul_port    = cell_cfg.ru_ul_port_id;
+    sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {
