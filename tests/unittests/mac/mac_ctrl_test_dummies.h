@@ -16,6 +16,7 @@
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -199,6 +200,12 @@ public:
                 last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;
   }
+};
+
+class dummy_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

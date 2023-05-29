@@ -29,9 +29,7 @@ namespace srsran {
 class srsran_scheduler_adapter final : public mac_scheduler_adapter
 {
 public:
-  explicit srsran_scheduler_adapter(mac_common_config_t& cfg_, rnti_manager& rnti_mng_, rlf_detector& rlf_handler_);
-
-  void set_sched(mac_scheduler& sched_) override { srs_sched = &sched_; }
+  explicit srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_, rlf_detector& rlf_handler_);
 
   void add_cell(const mac_cell_creation_request& msg) override;
 
@@ -61,6 +59,8 @@ public:
 
   void handle_rach_indication(du_cell_index_t cell_index, const mac_rach_indication& rach_ind) override;
 
+  void handle_paging_information(const paging_information& msg) override;
+
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
 
 private:
@@ -75,18 +75,19 @@ private:
     srsran_scheduler_adapter& parent;
   };
 
-  mac_common_config_t& cfg;
-  rnti_manager&        rnti_mng;
-  rlf_detector&        rlf_handler;
-
-  /// srsGNB scheduler.
-  mac_scheduler* srs_sched = nullptr;
-
-  /// Allocator of TC-RNTI values.
-  rnti_manager rnti_alloc;
+  rnti_manager&         rnti_mng;
+  rlf_detector&         rlf_handler;
+  task_executor&        ctrl_exec;
+  srslog::basic_logger& logger;
 
   /// Notifier that is used by MAC to start and await configurations of the scheduler.
   sched_config_notif_adapter notifier;
+
+  /// srsGNB scheduler.
+  std::unique_ptr<mac_scheduler> srs_sched;
+
+  /// Allocator of TC-RNTI values.
+  rnti_manager rnti_alloc;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.
   struct ue_notification_context {

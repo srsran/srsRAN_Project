@@ -11,13 +11,19 @@
 #include "srsran_scheduler_adapter.h"
 #include "mac_ul/ul_bsr.h"
 #include "srsran/du_high/rnti_value_table.h"
+#include "srsran/scheduler/scheduler_factory.h"
 
 using namespace srsran;
 
-srsran_scheduler_adapter::srsran_scheduler_adapter(mac_common_config_t& cfg_,
-                                                   rnti_manager&        rnti_mng_,
-                                                   rlf_detector&        rlf_handler_) :
-  cfg(cfg_), rnti_mng(rnti_mng_), rlf_handler(rlf_handler_), notifier(*this)
+srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params,
+                                                   rnti_manager&     rnti_mng_,
+                                                   rlf_detector&     rlf_handler_) :
+  rnti_mng(rnti_mng_),
+  rlf_handler(rlf_handler_),
+  ctrl_exec(params.ctrl_exec),
+  logger(srslog::fetch_basic_logger("MAC")),
+  notifier(*this),
+  srs_sched(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier}))
 {
 }
 
@@ -177,7 +183,7 @@ void srsran_scheduler_adapter::handle_uci(du_cell_index_t cell_idx, const mac_uc
     ind.ucis[i].ue_index             = rnti_mng[msg.ucis[i].rnti];
     if (ind.ucis[i].ue_index == INVALID_DU_UE_INDEX) {
       ind.ucis.pop_back();
-      cfg.logger.info("rnti={}: Discarding UCI PDU. Cause: The RNTI does not exist.", uci_pdu.crnti);
+      logger.info("rnti={}: Discarding UCI PDU. Cause: The RNTI does not exist.", uci_pdu.crnti);
       continue;
     }
 
@@ -307,7 +313,7 @@ void srsran_scheduler_adapter::handle_rach_indication(du_cell_index_t cell_index
     for (const auto& preamble : occasion.preambles) {
       rnti_t alloc_tc_rnti = rnti_alloc.allocate();
       if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
-        cfg.logger.warning(
+        logger.warning(
             "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
         continue;
       }
@@ -336,9 +342,9 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
 
   // Remove continuation of task in ctrl executor.
-  if (not parent.cfg.ctrl_exec.defer(
+  if (not parent.ctrl_exec.defer(
           [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.cfg.logger.error("Unable to finish configuration of ue={}. Cause: DU task queue is full.", ue_index);
+    parent.logger.error("Unable to finish configuration of ue={}. Cause: DU task queue is full.", ue_index);
   }
 }
 
@@ -347,8 +353,22 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_delete_response
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
 
   // Continuation of ue remove task dispatched to the ctrl executor.
-  if (not parent.cfg.ctrl_exec.defer(
+  if (not parent.ctrl_exec.defer(
           [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.cfg.logger.error("Unable to remove ue={}. Cause: DU task queue is full.", ue_index);
+    parent.logger.error("Unable to remove ue={}. Cause: DU task queue is full.", ue_index);
   }
+}
+
+void srsran_scheduler_adapter::handle_paging_information(const paging_information& msg)
+{
+  // Convert MAC paging information to scheduler notification.
+  sched_paging_information pg_info{};
+  pg_info.paging_drx              = msg.paging_drx;
+  pg_info.paging_identity         = msg.paging_identity;
+  pg_info.paging_type_indicator   = msg.paging_type_indicator;
+  pg_info.ue_identity_index_value = msg.ue_identity_index_value;
+  pg_info.paging_cells.resize(msg.paging_cells.size());
+  pg_info.paging_cells.assign(msg.paging_cells.begin(), msg.paging_cells.end());
+
+  srs_sched->handle_paging_information(pg_info);
 }
