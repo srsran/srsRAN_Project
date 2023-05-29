@@ -16,7 +16,7 @@
 
 using namespace srsran;
 
-mac_controller::mac_controller(mac_common_config_t&        cfg_,
+mac_controller::mac_controller(const mac_control_config&   cfg_,
                                mac_ul_configurator&        ul_unit_,
                                mac_dl_configurator&        dl_unit_,
                                rach_handler_configurator&  rach_unit_,

@@ -10,6 +10,7 @@
 
 #include "mac_dl_processor.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 

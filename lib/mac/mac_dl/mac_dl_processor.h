@@ -10,15 +10,13 @@
 
 #pragma once
 
-#include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "../srsran_scheduler_adapter.h"
 #include "mac_cell_processor.h"
 #include "mac_dl_ue_manager.h"
+#include "mac_scheduler_cell_info_handler.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/mac/mac_config.h"
-#include "srsran/support/async/execute_on.h"
 
 namespace srsran {
 

@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "../mac_config.h"
 #include "../mac_config_interfaces.h"
+#include "mac_config.h"
 #include "mac_scheduler_configurator.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
 
@@ -32,7 +33,7 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class mac_controller : public mac_ctrl_configurator, public mac_ue_configurator, public mac_cell_manager
 {
 public:
-  mac_controller(mac_common_config_t&        cfg,
+  mac_controller(const mac_control_config&   cfg_,
                  mac_ul_configurator&        ul_unit_,
                  mac_dl_configurator&        dl_unit_,
                  rach_handler_configurator&  rach_unit_,
@@ -74,7 +75,7 @@ private:
   void remove_ue(du_ue_index_t ue_index) override;
 
   // args
-  mac_common_config_t&        cfg;
+  mac_control_config          cfg;
   srslog::basic_logger&       logger;
   mac_ul_configurator&        ul_unit;
   mac_dl_configurator&        dl_unit;

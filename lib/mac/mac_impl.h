@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "mac_config.h"
+#include "mac_ctrl/mac_config.h"
 #include "mac_ctrl/mac_controller.h"
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_dl/rlf_detector.h"
@@ -51,8 +51,6 @@ public:
   mac_paging_information_handler& get_cell_paging_info_handler() override { return *mac_sched; }
 
 private:
-  mac_common_config_t cfg;
-
   /// Used to allocate new TC-RNTIs and convert from C-RNTI to UE index.
   rnti_manager rnti_table;
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../mac_config.h"
+#include "../mac_ctrl/mac_config.h"
 #include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_manager.h"
 #include "mac_scheduler_cell_info_handler.h"

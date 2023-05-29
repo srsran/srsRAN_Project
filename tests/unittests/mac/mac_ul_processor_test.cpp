@@ -136,7 +136,6 @@ struct test_bench {
   void run_slot()
   {
     logger.set_level(srslog::basic_levels::debug);
-    timers.tick();
     task_exec.run_pending_tasks();
   }
 
@@ -151,20 +150,17 @@ struct test_bench {
   }
 
 private:
-  srslog::basic_logger&     logger = srslog::fetch_basic_logger("MAC", true);
-  timer_manager             timers;
-  manual_task_worker        task_exec{128};
-  dummy_ue_executor_mapper  ul_exec_mapper{task_exec};
-  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
-  dummy_mac_result_notifier phy_notifier;
-  dummy_mac_event_indicator du_mng_notifier;
-  dummy_mac_pcap            pcap;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier, pcap};
-  du_rnti_table             rnti_table;
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
+  manual_task_worker                  task_exec{128};
+  dummy_ue_executor_mapper            ul_exec_mapper{task_exec};
+  dummy_mac_event_indicator           du_mng_notifier;
+  du_rnti_table                       rnti_table;
   dummy_sched_ul_buffer_state_handler sched_bs_handler;
+  dummy_mac_pcap                      pcap;
+  mac_ul_config cfg{task_exec, ul_exec_mapper, du_mng_notifier, sched_bs_handler, rnti_table, pcap};
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()
   du_cell_index_t        cell_idx;
-  mac_ul_processor       mac_ul{cfg, sched_bs_handler, rnti_table};
+  mac_ul_processor       mac_ul{cfg};
   mac_rx_data_indication rx_msg_sbsr;
 
   slotted_array<mac_test_ue, MAX_NOF_DU_UES> test_ues;
