@@ -34,7 +34,9 @@ struct mac_dl_config {
 class mac_dl_processor final : public mac_dl_configurator
 {
 public:
-  explicit mac_dl_processor(const mac_dl_config& mac_cfg, mac_scheduler& sched_, du_rnti_table& rnti_table_);
+  explicit mac_dl_processor(const mac_dl_config&             mac_cfg,
+                            mac_scheduler_cell_info_handler& sched_,
+                            du_rnti_table&                   rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 
@@ -77,7 +79,8 @@ private:
 
   mac_dl_ue_manager ue_mng;
 
-  mac_scheduler& sched_obj;
+  /// \brief Reference to MAC scheduler interface used by the MAC DL processor.
+  mac_scheduler_cell_info_handler& sched;
 };
 
 } // namespace srsran

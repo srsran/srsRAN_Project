@@ -14,9 +14,10 @@
 #include "mac_ctrl/mac_controller.h"
 #include "mac_ctrl/mac_scheduler_configurator.h"
 #include "mac_dl/mac_dl_processor.h"
+#include "mac_dl/rlf_detector.h"
+#include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
-#include "srsran_scheduler_adapter.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/mac/mac_paging_information_handler.h"
@@ -72,6 +73,9 @@ private:
 
   /// Table used to convert from RNTI to UE index.
   du_rnti_table rnti_table;
+
+  /// Detector of UE RLFs.
+  rlf_detector rlf_handler;
 
   /// Handle used to await scheduler configurations.
   std::unique_ptr<mac_scheduler_adapter> sched_cfg_adapter;

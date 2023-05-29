@@ -129,16 +129,17 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_dl_executor_mapper     dl_exec_mapper{dl_execs[0]};
   dummy_mac_event_indicator    du_mng_notifier;
   dummy_mac_result_notifier    phy_notifier;
+  rlf_detector                 rlf_handler{1000, 1000};
   test_helpers::dummy_mac_pcap pcap;
   mac_dl_config                mac_dl_cfg{
       ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
   mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table       rnti_table;
 
-  srsran_scheduler_adapter sched_cfg_adapter{cfg};
+  srsran_scheduler_adapter sched_cfg_adapter{cfg, rnti_table, rlf_handler};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_table);
 
   // Action: Add Cell.
   mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_config();
@@ -178,16 +179,17 @@ void test_dl_ue_procedure_tsan()
   dummy_dl_executor_mapper     dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator    du_mng_notifier;
   dummy_mac_result_notifier    phy_notifier;
+  rlf_detector                 rlf_handler{1000, 1000};
   test_helpers::dummy_mac_pcap pcap;
   mac_dl_config                mac_dl_cfg{
       ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
   mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table       rnti_table;
 
-  srsran_scheduler_adapter sched_cfg_adapter{cfg};
+  srsran_scheduler_adapter sched_cfg_adapter{cfg, rnti_table, rlf_handler};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_table);
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();

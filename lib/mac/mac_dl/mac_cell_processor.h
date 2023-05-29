@@ -13,6 +13,7 @@
 #include "../mac_config.h"
 #include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_manager.h"
+#include "mac_scheduler_cell_info_handler.h"
 #include "paging_pdu_assembler.h"
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
@@ -30,7 +31,7 @@ class mac_cell_processor final : public mac_cell_slot_handler,
 {
 public:
   mac_cell_processor(const mac_cell_creation_request& cell_cfg_req,
-                     mac_scheduler&                   sched,
+                     mac_scheduler_cell_info_handler& sched,
                      mac_dl_ue_manager&               ue_mng,
                      mac_cell_result_notifier&        phy_notifier,
                      task_executor&                   cell_exec,
@@ -90,8 +91,8 @@ private:
   dl_sch_pdu_assembler dlsch_assembler;
   paging_pdu_assembler paging_assembler;
 
-  mac_scheduler&     sched_obj;
-  mac_dl_ue_manager& ue_mng;
+  mac_scheduler_cell_info_handler& sched;
+  mac_dl_ue_manager&               ue_mng;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

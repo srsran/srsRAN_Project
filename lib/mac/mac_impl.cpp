@@ -21,7 +21,8 @@ mac_impl::mac_impl(const mac_config& params) :
       params.ctrl_exec,
       params.phy_notifier,
       params.pcap),
-  sched_cfg_adapter(std::make_unique<srsran_scheduler_adapter>(cfg)),
+  rlf_handler(params.mac_cfg.max_consecutive_dl_kos, params.mac_cfg.max_consecutive_ul_kos),
+  sched_cfg_adapter(std::make_unique<srsran_scheduler_adapter>(cfg, rnti_table, rlf_handler)),
   sched_obj(create_scheduler(
       scheduler_config{params.sched_cfg, sched_cfg_adapter->get_sched_notifier(), params.metric_notifier})),
   dl_unit(mac_dl_config{cfg.ue_exec_mapper,
@@ -30,7 +31,7 @@ mac_impl::mac_impl(const mac_config& params) :
                         cfg.phy_notifier,
                         params.mac_cfg,
                         params.pcap},
-          *sched_obj,
+          *sched_cfg_adapter,
           rnti_table),
   ul_unit(cfg, *sched_cfg_adapter, rnti_table),
   rach_hdl(*sched_obj, rnti_table),

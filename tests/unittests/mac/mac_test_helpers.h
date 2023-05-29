@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
+#include "lib/mac/mac_scheduler_adapter.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/mac_cell_result.h"
@@ -96,6 +97,23 @@ public:
     return next_sched_result;
   }
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
+};
+
+class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
+{
+public:
+  sched_result next_sched_result = {};
+
+  void handle_crc_info(du_cell_index_t cell_idx, const mac_crc_indication_message& msg) override {}
+
+  void handle_uci(du_cell_index_t cell_idx, const mac_uci_indication_message& msg) override {}
+
+  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
+  {
+    return next_sched_result;
+  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
