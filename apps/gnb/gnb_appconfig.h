@@ -247,6 +247,7 @@ struct amf_appconfig {
   int         sctp_rto_max           = 500;
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo    = 500;
+  bool        no_core                = false;
 };
 
 struct cu_cp_appconfig {

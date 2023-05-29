@@ -138,7 +138,7 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
-  app.add_option("--addr", amf_params.ip_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
+  app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
   app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
       ->check(CLI::ValidIPV4);
@@ -147,6 +147,7 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
   app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
   app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
+  app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
