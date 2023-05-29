@@ -676,9 +676,10 @@ int main(int argc, char** argv)
 
     // Connect NGAP adapter to SCTP network gateway.
     ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
+    gnb_logger.info("AMF connection established");
+  } else {
+    gnb_logger.info("Bypassing AMF connection");
   }
-  gnb_logger.info("AMF connection established");
-
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
