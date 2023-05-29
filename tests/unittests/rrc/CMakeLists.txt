@@ -14,6 +14,7 @@ target_link_libraries(rrc_ue_test_helpers srsran_support srslog)
 
 set(SOURCES
         rrc_ue_setup_proc_test.cpp
+        rrc_ue_dl_info_transfer_proc_test.cpp
         rrc_ue_smc_proc_test.cpp
         rrc_ue_reconfig_proc_test.cpp
         rrc_ue_capability_transfer_proc_test.cpp
