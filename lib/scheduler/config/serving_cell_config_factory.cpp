@@ -734,6 +734,25 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   return meas_cfg;
 }
 
+zp_csi_rs_resource srsran::config_helpers::make_default_zp_csi_rs_resource(const cell_config_builder_params& params)
+{
+  zp_csi_rs_resource res{};
+  res.id = static_cast<zp_csi_rs_res_id_t>(0);
+  res.res_mapping.fd_alloc.reset();
+  res.res_mapping.fd_alloc.resize(12);
+  res.res_mapping.fd_alloc.set(0, true);
+  res.res_mapping.nof_ports               = 1;
+  res.res_mapping.first_ofdm_symbol_in_td = 8;
+  res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
+  res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
+  res.res_mapping.freq_band_start_rb      = 0;
+  res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
+  res.period                              = get_max_csi_rs_period(params);
+  res.offset                              = 2;
+
+  return res;
+}
+
 pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config_builder_params& params)
 {
   pdsch_config pdsch_cfg;
@@ -751,22 +770,33 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
-  pdsch_cfg.zp_csi_rs_res_list.resize(1);
-  zp_csi_rs_resource& res                 = pdsch_cfg.zp_csi_rs_res_list[0];
-  res.id                                  = static_cast<zp_csi_rs_res_id_t>(0);
-  res.res_mapping.fd_alloc                = {false, false, false, true};
-  res.res_mapping.nof_ports               = 1;
-  res.res_mapping.first_ofdm_symbol_in_td = 8;
-  res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
-  res.res_mapping.freq_density            = csi_rs_freq_density_type::three;
-  res.res_mapping.freq_band_start_rb      = 0;
-  res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
-  res.period                              = get_max_csi_rs_period(params);
-  pdsch_cfg.zp_csi_rs_res_list[0].offset  = 2;
+  // Resource 0.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  // Resource 1.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(1, true);
+  // Resource 2.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
+  // Resource 3.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(3, true);
 
   pdsch_cfg.p_zp_csi_rs_res.emplace();
-  pdsch_cfg.p_zp_csi_rs_res->id = static_cast<zp_csi_rs_res_set_id_t>(0);
-  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list.emplace_back(res.id);
+  pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(1),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(2),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(3)};
 
   return pdsch_cfg;
 }

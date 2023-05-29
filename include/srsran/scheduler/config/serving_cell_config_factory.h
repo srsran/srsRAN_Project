@@ -65,6 +65,8 @@ csi_meas_config make_default_csi_meas_config(const cell_config_builder_params& p
 
 pdsch_config make_default_pdsch_config(const cell_config_builder_params& params = {});
 
+zp_csi_rs_resource make_default_zp_csi_rs_resource(const cell_config_builder_params& params = {});
+
 /// \brief Creates a default UE Serving Cell configuration.
 serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});
 
