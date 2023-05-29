@@ -15,9 +15,9 @@
 using namespace srsran;
 
 srsran_scheduler_adapter::srsran_scheduler_adapter(mac_common_config_t& cfg_,
-                                                   du_rnti_table&       rnti_table_,
+                                                   rnti_manager&        rnti_mng_,
                                                    rlf_detector&        rlf_handler_) :
-  cfg(cfg_), rnti_table(rnti_table_), rlf_handler(rlf_handler_), rnti_alloc(rnti_table_), notifier(*this)
+  cfg(cfg_), rnti_mng(rnti_mng_), rlf_handler(rlf_handler_), notifier(*this)
 {
 }
 
@@ -134,7 +134,7 @@ void srsran_scheduler_adapter::handle_crc_info(du_cell_index_t cell_idx, const m
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
     ul_crc_pdu_indication& pdu = ind.crcs.emplace_back();
     pdu.rnti                   = msg.crcs[i].rnti;
-    pdu.ue_index               = rnti_table[msg.crcs[i].rnti];
+    pdu.ue_index               = rnti_mng[msg.crcs[i].rnti];
     pdu.harq_id                = to_harq_id(msg.crcs[i].harq_id);
     pdu.tb_crc_success         = msg.crcs[i].tb_crc_success;
     pdu.ul_sinr_metric         = msg.crcs[i].ul_sinr_metric;
@@ -174,7 +174,7 @@ void srsran_scheduler_adapter::handle_uci(du_cell_index_t cell_idx, const mac_uc
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
     uci_indication::uci_pdu& uci_pdu = ind.ucis.emplace_back();
     ind.ucis[i].crnti                = msg.ucis[i].rnti;
-    ind.ucis[i].ue_index             = rnti_table[msg.ucis[i].rnti];
+    ind.ucis[i].ue_index             = rnti_mng[msg.ucis[i].rnti];
     if (ind.ucis[i].ue_index == INVALID_DU_UE_INDEX) {
       ind.ucis.pop_back();
       cfg.logger.info("rnti={}: Discarding UCI PDU. Cause: The RNTI does not exist.", uci_pdu.crnti);

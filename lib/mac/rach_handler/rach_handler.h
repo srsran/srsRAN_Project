@@ -12,43 +12,10 @@
 
 #include "../mac_config_interfaces.h"
 #include "mac_scheduler_rach_handler.h"
-#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
-
-using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
-
-class rnti_allocator
-{
-public:
-  explicit rnti_allocator(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
-
-  /// Handles detected PRACHs by allocating a temporary C-RNTI and signalling the scheduler to allocate an RAR.
-  rnti_t allocate()
-  {
-    if (rnti_table.nof_ues() >= MAX_NOF_DU_UES) {
-      // If the number of UEs is already maximum, ignore RACH.
-      return rnti_t::INVALID_RNTI;
-    }
-    // Increments rnti counter until it finds an available temp C-RNTI.
-    rnti_t temp_crnti;
-    do {
-      uint16_t prev_counter = rnti_counter.fetch_add(1, std::memory_order_relaxed) % CRNTI_RANGE;
-      temp_crnti            = to_rnti(prev_counter + rnti_t::MIN_CRNTI);
-    } while (rnti_table.has_rnti(temp_crnti));
-    return temp_crnti;
-  }
-
-private:
-  static constexpr int    CRNTI_RANGE  = rnti_t::MAX_CRNTI + 1 - rnti_t::MIN_CRNTI;
-  static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
-
-  du_rnti_table& rnti_table;
-
-  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter{INITIAL_RNTI - MIN_CRNTI};
-};
 
 /// \brief Handles the allocation of RNTIs and forwarding of RACH indications to scheduler.
 /// This class is thread-safe.

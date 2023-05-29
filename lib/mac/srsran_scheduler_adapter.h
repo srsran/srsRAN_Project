@@ -15,17 +15,12 @@
 #include "mac_dl/rlf_detector.h"
 #include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
-#include "rach_handler/rach_handler.h"
+#include "rach_handler/rnti_manager.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
 
 namespace srsran {
-
-template <typename T, T SentinelValue>
-class rnti_value_table;
-
-using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 /// \brief This class adapts srsRAN scheduler interface to operate with srsRAN MAC.
 /// The configuration completion notification handling (e.g. ue creation complete) is deferred for later processing
@@ -34,7 +29,7 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class srsran_scheduler_adapter final : public mac_scheduler_adapter
 {
 public:
-  explicit srsran_scheduler_adapter(mac_common_config_t& cfg_, du_rnti_table& rnti_table_, rlf_detector& rlf_handler_);
+  explicit srsran_scheduler_adapter(mac_common_config_t& cfg_, rnti_manager& rnti_mng_, rlf_detector& rlf_handler_);
 
   void set_sched(mac_scheduler& sched_) override { srs_sched = &sched_; }
 
@@ -81,14 +76,14 @@ private:
   };
 
   mac_common_config_t& cfg;
-  du_rnti_table&       rnti_table;
+  rnti_manager&        rnti_mng;
   rlf_detector&        rlf_handler;
 
   /// srsGNB scheduler.
   mac_scheduler* srs_sched = nullptr;
 
   /// Allocator of TC-RNTI values.
-  rnti_allocator rnti_alloc;
+  rnti_manager rnti_alloc;
 
   /// Notifier that is used by MAC to start and await configurations of the scheduler.
   sched_config_notif_adapter notifier;

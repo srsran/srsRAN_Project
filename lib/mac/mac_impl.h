@@ -18,6 +18,7 @@
 #include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler/rach_handler.h"
+#include "rach_handler/rnti_manager.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/mac/mac_paging_information_handler.h"
@@ -72,7 +73,7 @@ private:
   mac_common_config_t cfg;
 
   /// Table used to convert from RNTI to UE index.
-  du_rnti_table rnti_table;
+  rnti_manager rnti_table;
 
   /// Detector of UE RLFs.
   rlf_detector rlf_handler;
