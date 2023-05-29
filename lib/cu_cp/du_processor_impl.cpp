@@ -239,8 +239,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.cell.cgi = msg.cgi;
   rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue->get_srbs()[int_to_srb_id(i)]       = {};
-    rrc_ue_create_msg.srbs[i].pdu_notifier = ue->get_srbs().at(int_to_srb_id(i)).rrc_tx_notifier.get();
+    ue->get_srbs()[int_to_srb_id(i)] = {};
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = &ue->get_task_sched();
