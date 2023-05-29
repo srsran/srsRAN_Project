@@ -51,8 +51,8 @@ static unsigned get_max_rb_on_bwp_left_side(const pucch_resource& res, unsigned 
   return prach_f_start;
 }
 
-unsigned srsran::config_helpers::update_prach_frequency_start(const pucch_builder_params& user_params,
-                                                              unsigned                    bwp_size)
+unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_builder_params& user_params,
+                                                               unsigned                    bwp_size)
 {
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = 3;

@@ -260,10 +260,12 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
 {
-  app.add_option("--f1_nof_res_harq", pucch_params.nof_pucch_f1_res_harq, "Number of PUCCH F1 resources for HARQ")
+  app.add_option(
+         "--f1_nof_ue_res_harq", pucch_params.nof_ue_pucch_f1_res_harq, "Number of PUCCH F1 resources for HARQ per UE")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
-  app.add_option("--f1_nof_res_sr", pucch_params.nof_sr_resources, "Number of PUCCH F1 resources for SR")
+  app.add_option(
+         "--f1_nof_cell_res_sr", pucch_params.nof_cell_sr_resources, "Number of PUCCH F1 resources for SR per cell")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
@@ -277,7 +279,8 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
                  pucch_params.f1_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F1.")
       ->capture_default_str();
-  app.add_option("--f2_nof_res_harq", pucch_params.nof_pucch_f2_res_harq, "Number of PUCCH F2 resources for HARQ")
+  app.add_option(
+         "--f2_nof_ue_res_harq", pucch_params.nof_ue_pucch_f2_res_harq, "Number of PUCCH F2 resources for HARQ per UE")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")

@@ -108,18 +108,18 @@ struct pusch_appconfig {
 
 struct pucch_appconfig {
   /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_pucch_f1_res_harq = 3;
+  unsigned nof_ue_pucch_f1_res_harq = 3;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
-  unsigned nof_pucch_f2_res_harq = 6;
+  unsigned nof_ue_pucch_f2_res_harq = 6;
   /// Number of PUCCH Format 1 cell resources for SR. Values {1,...,4}.
-  unsigned nof_sr_resources = 2;
+  unsigned nof_cell_sr_resources = 2;
 
   /// PUCCH F1 resource parameters.
-  /// Number of symbols for PUCCH Format 2. Values {4, 14}.
+  /// Number of symbols for PUCCH Format 1. Values {4, 14}.
   unsigned f1_nof_symbols = 14;
   bool     f1_enable_occ  = false;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
-  /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift.
+  /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
   unsigned nof_cyclic_shift = 1;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
@@ -131,7 +131,7 @@ struct pucch_appconfig {
   unsigned f2_max_nof_rbs = 1;
   /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
   /// Value -1 to unset. If this is set, \ref f2_max_nof_rbs is ignored.
-  int max_payload_bits = -1;
+  optional<unsigned> max_payload_bits;
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.

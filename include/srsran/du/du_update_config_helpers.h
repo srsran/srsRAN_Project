@@ -16,11 +16,15 @@
 namespace srsran {
 namespace config_helpers {
 
-/// \brief Checks whether the provided DU cell configuration is valid.
+/// \brief Compute the PRACH frequency start as a function of the PUCCH guardbands.
 ///
-/// \param cell_cfg DU cell configuration.
-/// \return in case an invalid parameter is detected, returns a string containing an error message.
-unsigned update_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size);
+/// This function computes the PRACH frequency start so as it won't collide with the PUCCH resources. As per TS 38.331,
+/// PRACH frequency start is \c msg1-FrequencyStart.
+///
+/// \param user_params parameters passed by the user for the generation the PUCCH resource list.
+/// \param bwp_size size of the BWP in RBs.
+/// \return PRACH frequency start.
+unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size);
 
 } // namespace config_helpers
 } // namespace srsran

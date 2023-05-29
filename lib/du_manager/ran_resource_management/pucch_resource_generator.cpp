@@ -490,7 +490,7 @@ static unsigned cell_res_list_validator(const std::vector<pucch_resource>&      
 {
   const unsigned FAILURE_CASE = 0U;
 
-  auto count_resources = [res_list](pucch_format format) {
+  auto count_resources = [&res_list](pucch_format format) {
     unsigned cnt = 0;
     for (auto it = res_list.begin(); it != res_list.end(); ++it) {
       if (it->format == format) {

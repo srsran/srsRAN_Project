@@ -136,11 +136,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-                0,
-                0,
-                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                0,
-                0};
+          0,
+          0,
+          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+          0,
+          0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -169,9 +169,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // Parameters for PUCCH-Config.
     pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;
     const pucch_appconfig& user_pucch_cfg         = base_cell.pucch_cfg;
-    du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_pucch_f1_res_harq;
-    du_pucch_cfg.nof_ue_pucch_f2_res_harq         = user_pucch_cfg.nof_pucch_f2_res_harq;
-    du_pucch_cfg.nof_sr_resources                 = user_pucch_cfg.nof_sr_resources;
+    du_pucch_cfg.nof_ue_pucch_f1_res_harq         = user_pucch_cfg.nof_ue_pucch_f1_res_harq;
+    du_pucch_cfg.nof_ue_pucch_f2_res_harq         = user_pucch_cfg.nof_ue_pucch_f2_res_harq;
+    du_pucch_cfg.nof_sr_resources                 = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.f1_params.nof_symbols            = user_pucch_cfg.f1_nof_symbols;
     du_pucch_cfg.f1_params.occ_supported          = user_pucch_cfg.f1_enable_occ;
     du_pucch_cfg.f1_params.nof_cyc_shifts         = static_cast<nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
@@ -180,13 +180,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
     du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
-    if (user_pucch_cfg.max_payload_bits > 0) {
-      du_pucch_cfg.f2_params.max_payload_bits.emplace(static_cast<unsigned>(user_pucch_cfg.max_payload_bits));
-    }
+    du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
 
     // If any dependent parameter needs to be updated, this is the place.
     if (update_msg1_frequency_start) {
-      rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::update_prach_frequency_start(
+      rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
     }
 
