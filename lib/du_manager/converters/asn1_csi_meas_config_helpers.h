@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
+#include "srsran/ran/csi_rs/csi_meas_config.h"
 
 namespace srsran {
 namespace srs_du {
