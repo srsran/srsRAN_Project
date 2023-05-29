@@ -120,14 +120,16 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
-  bool           is_paired_spectrum          = band_helper::is_paired_spectrum(band);
-  const unsigned max_supported_prach_cfg_idx = is_paired_spectrum ? 107U : 86U;
-  if (config.prach_config_index > max_supported_prach_cfg_idx) {
-    fmt::print("PRACH configuration index {} not supported. For {}, the max PRACH configuration index "
-               "supported is {} \n",
+  bool       is_paired_spectrum = band_helper::is_paired_spectrum(band);
+  const bool is_prach_cfg_idx_supported =
+      is_paired_spectrum
+          ? config.prach_config_index <= 107U or (config.prach_config_index > 197U and config.prach_config_index < 219U)
+          : config.prach_config_index <= 86U or (config.prach_config_index > 144U and config.prach_config_index < 169U);
+  if (not is_prach_cfg_idx_supported) {
+    fmt::print("PRACH configuration index {} not supported. For {}, the supported PRACH configuration indices are {}\n",
                config.prach_config_index,
                is_paired_spectrum ? "FDD" : "TDD",
-               max_supported_prach_cfg_idx);
+               is_paired_spectrum ? "[0, 107] and [198, 218]" : "[0, 86] and [145, 168]");
     return false;
   }
 
