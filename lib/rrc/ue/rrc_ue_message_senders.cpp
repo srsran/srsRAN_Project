@@ -40,7 +40,14 @@ void rrc_ue_impl::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_dcch_msg, to_c_str(fmtbuf2));
 
   // send down the stack
-  send_srb_pdu(srb_id_t::srb1, std::move(pdu), old_ue_index);
+  if (srbs[srb_id_to_uint(srb_id_t::srb2)].pdu_notifier != nullptr &&
+      dl_dcch_msg.msg.c1().type().value == dl_dcch_msg_type_c::c1_c_::types_opts::options::dl_info_transfer) {
+    // SRB2 is setup and it is preferred
+    send_srb_pdu(srb_id_t::srb2, std::move(pdu), old_ue_index);
+  } else {
+    // send over SRB1
+    send_srb_pdu(srb_id_t::srb1, std::move(pdu), old_ue_index);
+  }
 }
 
 void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
