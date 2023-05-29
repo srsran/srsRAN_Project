@@ -416,11 +416,14 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
 
 /// Resolves the generic Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_generic_executors_and_notifiers(ru_generic_configuration&           config,
-                                                         srslog::basic_logger&               rf_logger,
+                                                         const log_appconfig&                log_cfg,
                                                          worker_manager&                     workers,
                                                          ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                          ru_timing_notifier&                 timing_notifier)
 {
+  srslog::basic_logger& rf_logger = srslog::fetch_basic_logger("RF", false);
+  rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
+
   config.rf_logger                             = &rf_logger;
   config.radio_exec                            = workers.radio_exec.get();
   config.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
@@ -435,12 +438,15 @@ static void configure_ru_generic_executors_and_notifiers(ru_generic_configuratio
 
 /// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
-                                                     srslog::basic_logger&               rf_logger,
+                                                     const log_appconfig&                log_cfg,
                                                      worker_manager&                     workers,
                                                      ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                      ru_timing_notifier&                 timing_notifier)
 {
-  config.logger             = &rf_logger;
+  srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
+  ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
+
+  config.logger             = &ofh_logger;
   config.rt_timing_executor = workers.ru_timing_exec.get();
   config.timing_notifier    = &timing_notifier;
   config.rx_symbol_notifier = &symbol_notifier;
@@ -453,20 +459,20 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
 
 /// Resolves the Radio Unit dependencies and adds them to the configuration.
 static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
-                                                 srslog::basic_logger&               rf_logger,
+                                                 const log_appconfig&                log_cfg,
                                                  worker_manager&                     workers,
                                                  ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
                                                  ru_timing_notifier&                 timing_notifier)
 {
   if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
     configure_ru_ofh_executors_and_notifiers(
-        variant_get<ru_ofh_configuration>(config.config), rf_logger, workers, symbol_notifier, timing_notifier);
+        variant_get<ru_ofh_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 
     return;
   }
 
   configure_ru_generic_executors_and_notifiers(
-      variant_get<ru_generic_configuration>(config.config), rf_logger, workers, symbol_notifier, timing_notifier);
+      variant_get<ru_generic_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -588,9 +594,6 @@ int main(int argc, char** argv)
   gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
   gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  auto& rf_logger = srslog::fetch_basic_logger("RF", false);
-  rf_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.radio_level));
-
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
   fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
 
@@ -708,7 +711,7 @@ int main(int argc, char** argv)
   upper_ru_ul_adapter     ru_ul_adapt;
   upper_ru_timing_adapter ru_timing_adapt;
 
-  configure_ru_executors_and_notifiers(ru_cfg, rf_logger, workers, ru_ul_adapt, ru_timing_adapt);
+  configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
 
   std::unique_ptr<radio_unit> ru_object;
   if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {

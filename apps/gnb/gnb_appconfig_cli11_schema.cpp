@@ -41,6 +41,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--gtpu_level", log_params.gtpu_level, "GTPU log level")->capture_default_str()->check(level_check);
   app.add_option("--radio_level", log_params.radio_level, "Radio log level")->capture_default_str()->check(level_check);
   app.add_option("--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
+  app.add_option("--ofh_level", log_params.ofh_level, "Open Fronthaul log level")
+      ->capture_default_str()
+      ->check(level_check);
   app.add_option("--f1ap_level", log_params.f1ap_level, "F1AP log level")->capture_default_str()->check(level_check);
   app.add_option("--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
   app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
@@ -90,6 +93,33 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     }
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
+    }
+    if (app.count("--radio_level") == 0) {
+      log_params.radio_level = log_params.all_level;
+    }
+    if (app.count("--fapi_level") == 0) {
+      log_params.fapi_level = log_params.all_level;
+    }
+    if (app.count("--ofh_level") == 0) {
+      log_params.ofh_level = log_params.all_level;
+    }
+    if (app.count("--f1ap_level") == 0) {
+      log_params.f1ap_level = log_params.all_level;
+    }
+    if (app.count("--f1u_level") == 0) {
+      log_params.f1u_level = log_params.all_level;
+    }
+    if (app.count("--du_level") == 0) {
+      log_params.du_level = log_params.all_level;
+    }
+    if (app.count("--cu_level") == 0) {
+      log_params.cu_level = log_params.all_level;
+    }
+    if (app.count("--sec_level") == 0) {
+      log_params.sec_level = log_params.all_level;
+    }
+    if (app.count("--lib_level") == 0) {
+      log_params.lib_level = log_params.all_level;
     }
   });
 }

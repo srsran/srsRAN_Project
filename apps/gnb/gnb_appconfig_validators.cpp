@@ -371,6 +371,10 @@ static bool validate_log_appconfig(const log_appconfig& config)
   }
 
   // validate level selection
+  if (srslog::str_to_basic_level(config.all_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
   if (srslog::str_to_basic_level(config.lib_level) == srslog::basic_levels::none) {
     return false;
   }
@@ -400,6 +404,18 @@ static bool validate_log_appconfig(const log_appconfig& config)
   }
 
   if (srslog::str_to_basic_level(config.rrc_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.radio_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.fapi_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.ofh_level) == srslog::basic_levels::none) {
     return false;
   }
 
