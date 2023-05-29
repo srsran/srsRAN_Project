@@ -319,6 +319,8 @@ struct expert_upper_phy_appconfig {
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
   bool pusch_decoder_early_stop = true;
+  /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling for more information.
+  float lphy_dl_throttling = 0.9F;
 };
 
 struct test_mode_ue_appconfig {

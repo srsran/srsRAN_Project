@@ -9,6 +9,7 @@
  */
 
 #include "lower_phy_baseband_processor.h"
+#include "srsran/adt/interval.h"
 
 using namespace srsran;
 
@@ -16,6 +17,8 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   srate(config.srate),
   tx_buffer_size(config.tx_buffer_size),
   rx_buffer_size(config.rx_buffer_size),
+  cpu_throttling_time((config.tx_buffer_size * static_cast<uint64_t>(config.system_time_throttling * 1e6)) /
+                      config.srate.to_kHz()),
   rx_executor(*config.rx_task_executor),
   tx_executor(*config.tx_task_executor),
   uplink_executor(*config.ul_task_executor),
@@ -29,9 +32,15 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   tx_time_offset(config.tx_time_offset),
   rx_to_tx_max_delay(config.rx_to_tx_max_delay)
 {
+  static constexpr interval<float> system_time_throttling_range(0, 1);
+
   srsran_assert(tx_buffer_size, "Invalid buffer size.");
   srsran_assert(rx_buffer_size, "Invalid buffer size.");
   srsran_assert(config.rx_task_executor, "Invalid receive task executor.");
+  srsran_assert(system_time_throttling_range.contains(config.system_time_throttling),
+                "System time throttling (i.e., {}) is out of the range {}.",
+                config.system_time_throttling,
+                system_time_throttling_range);
   srsran_assert(config.tx_task_executor, "Invalid transmit task executor.");
   srsran_assert(config.ul_task_executor, "Invalid uplink task executor.");
   srsran_assert(config.dl_task_executor, "Invalid downlink task executor.");
@@ -92,6 +101,17 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
       return (timestamp < last_rx_timestamp + rx_to_tx_max_delay) || !tx_state.is_running();
     });
   }
+
+  // Throttling mechanism to slow down the baseband processing.
+  if ((cpu_throttling_time.count() > 0) && (last_tx_time.has_value())) {
+    std::chrono::time_point<std::chrono::high_resolution_clock> now     = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds                                    elapsed = now - last_tx_time.value();
+
+    if (elapsed < cpu_throttling_time) {
+      std::this_thread::sleep_until(last_tx_time.value() + cpu_throttling_time);
+    }
+  }
+  last_tx_time.emplace(std::chrono::high_resolution_clock::now());
 
   // Process downlink buffer.
   downlink_processor.process(dl_buffer->get_writer(), timestamp);

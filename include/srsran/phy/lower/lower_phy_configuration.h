@@ -81,6 +81,14 @@ struct lower_phy_configuration {
   /// \remark Positive values cause a reduction of the RF transmission delay with respect to the RF reception, while
   /// negative values increase it.
   int time_alignment_calibration;
+  /// \brief System time-based throttling.
+  ///
+  /// Determines a minimum baseband processor period time between downlink packets. It is expressed as a fraction of the
+  /// time equivalent to the number of samples in the baseband buffer. Set to 0.9 to ensure that the downlink packets
+  /// are processed with a minimum period of 90% of the buffer duration.
+  ///
+  /// Set to zero to disable this feature.
+  float system_time_throttling;
   /// Baseband transmit buffer size policy.
   lower_phy_baseband_buffer_size_policy baseband_tx_buffer_size_policy;
   /// Baseband receive buffer size policy.

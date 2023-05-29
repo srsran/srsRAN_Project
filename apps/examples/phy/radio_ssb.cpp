@@ -393,6 +393,7 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
   phy_config.scs                            = scs;
   phy_config.max_processing_delay_slots     = max_processing_delay_slots;
   phy_config.time_alignment_calibration     = 0;
+  phy_config.system_time_throttling         = 0.0F;
   phy_config.ta_offset                      = n_ta_offset::n0;
   phy_config.cp                             = cp;
   phy_config.dft_window_offset              = 0.5F;

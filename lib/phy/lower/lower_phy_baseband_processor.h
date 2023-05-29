@@ -75,6 +75,8 @@ public:
     unsigned rx_buffer_size;
     /// Number of receive buffers of size \c rx_buffer_size.
     unsigned nof_rx_buffers;
+    /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling.
+    float system_time_throttling;
   };
 
   /// Constructs a baseband adaptor.
@@ -180,26 +182,28 @@ private:
   /// Processes uplink baseband.
   void ul_process();
 
-  sampling_rate                                                    srate;
-  unsigned                                                         tx_buffer_size;
-  unsigned                                                         rx_buffer_size;
-  task_executor&                                                   rx_executor;
-  task_executor&                                                   tx_executor;
-  task_executor&                                                   uplink_executor;
-  task_executor&                                                   downlink_executor;
-  baseband_gateway_receiver&                                       receiver;
-  baseband_gateway_transmitter&                                    transmitter;
-  uplink_processor_baseband&                                       uplink_processor;
-  downlink_processor_baseband&                                     downlink_processor;
-  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>> rx_buffers;
-  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>> tx_buffers;
-  baseband_gateway_timestamp                                       tx_time_offset;
-  baseband_gateway_timestamp                                       rx_to_tx_max_delay;
-  internal_fsm                                                     tx_state;
-  internal_fsm                                                     rx_state;
-  baseband_gateway_timestamp                                       last_rx_timestamp;
-  std::mutex                                                       last_rx_mutex;
-  std::condition_variable                                          last_rx_cvar;
+  sampling_rate                                                         srate;
+  unsigned                                                              tx_buffer_size;
+  unsigned                                                              rx_buffer_size;
+  std::chrono::nanoseconds                                              cpu_throttling_time;
+  task_executor&                                                        rx_executor;
+  task_executor&                                                        tx_executor;
+  task_executor&                                                        uplink_executor;
+  task_executor&                                                        downlink_executor;
+  baseband_gateway_receiver&                                            receiver;
+  baseband_gateway_transmitter&                                         transmitter;
+  uplink_processor_baseband&                                            uplink_processor;
+  downlink_processor_baseband&                                          downlink_processor;
+  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>      rx_buffers;
+  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>      tx_buffers;
+  baseband_gateway_timestamp                                            tx_time_offset;
+  baseband_gateway_timestamp                                            rx_to_tx_max_delay;
+  internal_fsm                                                          tx_state;
+  internal_fsm                                                          rx_state;
+  baseband_gateway_timestamp                                            last_rx_timestamp;
+  std::mutex                                                            last_rx_mutex;
+  std::condition_variable                                               last_rx_cvar;
+  optional<std::chrono::time_point<std::chrono::high_resolution_clock>> last_tx_time;
 };
 
 } // namespace srsran

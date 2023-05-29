@@ -280,6 +280,7 @@ protected:
     config.dl_task_executor            = &dl_task_executor;
     config.ul_task_executor            = &ul_task_executor;
     config.prach_async_executor        = &prach_task_executor;
+    config.system_time_throttling      = 0.1;
 
     // Prepare downlink processor factory.
     std::shared_ptr<lower_phy_downlink_processor_factory_spy> lphy_dl_proc_factory =
@@ -488,19 +489,8 @@ TEST_P(LowerPhyFixture, ErrorNotifiers)
     resource_grid_context context;
     context.sector = sector_id_dist(rgen);
     context.slot   = slot_point(to_numerology_value(scs), slot_dist(rgen));
-    pdxch_notifier->on_late_resource_grid(context);
+    pdxch_notifier->on_pdxch_request_late(context);
     auto& entries = error_notifier_spy.get_late_rg_errors();
-    ASSERT_EQ(entries.size(), 1);
-    ASSERT_EQ(context, entries.back());
-  }
-
-  // Notify overflow RG event.
-  {
-    resource_grid_context context;
-    context.sector = sector_id_dist(rgen);
-    context.slot   = slot_point(to_numerology_value(scs), slot_dist(rgen));
-    pdxch_notifier->on_overflow_resource_grid(context);
-    auto& entries = error_notifier_spy.get_overflow_rg_errors();
     ASSERT_EQ(entries.size(), 1);
     ASSERT_EQ(context, entries.back());
   }
@@ -566,19 +556,8 @@ TEST_P(LowerPhyFixture, ErrorNotifiers)
     ASSERT_EQ(context, entries.back());
   }
 
-  // Notify overflow PUxCH request event.
-  {
-    resource_grid_context context;
-    context.sector = sector_id_dist(rgen);
-    context.slot   = slot_point(to_numerology_value(scs), slot_dist(rgen));
-    puxch_notifier->on_puxch_request_overflow(context);
-    auto& entries = error_notifier_spy.get_puxch_request_overflow_errors();
-    ASSERT_EQ(entries.size(), 1);
-    ASSERT_EQ(context, entries.back());
-  }
-
-  // Assert only six error events.
-  ASSERT_EQ(error_notifier_spy.get_nof_errors(), 6);
+  // Assert only four error events.
+  ASSERT_EQ(error_notifier_spy.get_nof_errors(), 4);
 
   // No other events.
   ASSERT_EQ(timing_notifier_spy.get_nof_events(), 0);
@@ -644,7 +623,7 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
     ASSERT_EQ(rg_spy.get_total_count(), 0);
   }
 
-  // Assert only six error events.
+  // Assert only two error events.
   ASSERT_EQ(rx_symbol_notifier_spy.get_nof_events(), 2);
 
   // No other events.

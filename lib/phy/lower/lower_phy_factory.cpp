@@ -151,23 +151,24 @@ public:
 
     // Prepare processor baseband adaptor configuration.
     lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
-    proc_bb_adaptor_config.srate              = config.srate;
-    proc_bb_adaptor_config.rx_task_executor   = config.rx_task_executor;
-    proc_bb_adaptor_config.tx_task_executor   = config.tx_task_executor;
-    proc_bb_adaptor_config.ul_task_executor   = config.ul_task_executor;
-    proc_bb_adaptor_config.dl_task_executor   = config.dl_task_executor;
-    proc_bb_adaptor_config.receiver           = &config.bb_gateway->get_receiver(0);
-    proc_bb_adaptor_config.transmitter        = &config.bb_gateway->get_transmitter(0);
-    proc_bb_adaptor_config.ul_bb_proc         = &ul_proc->get_baseband();
-    proc_bb_adaptor_config.dl_bb_proc         = &dl_proc->get_baseband();
-    proc_bb_adaptor_config.nof_tx_ports       = config.sectors.back().nof_tx_ports;
-    proc_bb_adaptor_config.nof_rx_ports       = config.sectors.back().nof_rx_ports;
-    proc_bb_adaptor_config.tx_time_offset     = tx_time_offset;
-    proc_bb_adaptor_config.rx_to_tx_max_delay = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
-    proc_bb_adaptor_config.rx_buffer_size     = rx_buffer_size;
-    proc_bb_adaptor_config.nof_rx_buffers     = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
-    proc_bb_adaptor_config.tx_buffer_size     = tx_buffer_size;
-    proc_bb_adaptor_config.nof_tx_buffers     = std::max(4U, rx_to_tx_max_delay / tx_buffer_size);
+    proc_bb_adaptor_config.srate                  = config.srate;
+    proc_bb_adaptor_config.rx_task_executor       = config.rx_task_executor;
+    proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
+    proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
+    proc_bb_adaptor_config.dl_task_executor       = config.dl_task_executor;
+    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver(0);
+    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter(0);
+    proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
+    proc_bb_adaptor_config.dl_bb_proc             = &dl_proc->get_baseband();
+    proc_bb_adaptor_config.nof_tx_ports           = config.sectors.back().nof_tx_ports;
+    proc_bb_adaptor_config.nof_rx_ports           = config.sectors.back().nof_rx_ports;
+    proc_bb_adaptor_config.tx_time_offset         = tx_time_offset;
+    proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
+    proc_bb_adaptor_config.rx_buffer_size         = rx_buffer_size;
+    proc_bb_adaptor_config.nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
+    proc_bb_adaptor_config.tx_buffer_size         = tx_buffer_size;
+    proc_bb_adaptor_config.nof_tx_buffers         = std::max(4U, rx_to_tx_max_delay / tx_buffer_size);
+    proc_bb_adaptor_config.system_time_throttling = config.system_time_throttling;
 
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =

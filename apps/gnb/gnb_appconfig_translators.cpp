@@ -347,6 +347,9 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
       out_cfg.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::single_packet;
     }
 
+    // Get lower PHY system time throttling.
+    out_cfg.system_time_throttling = config.expert_phy_cfg.lphy_dl_throttling;
+
     unsigned bandwidth_sc =
         NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.common_cell_cfg.channel_bw_mhz,
                                                                 config.common_cell_cfg.common_scs,
