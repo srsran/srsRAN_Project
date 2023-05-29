@@ -14,6 +14,13 @@
 
 using namespace srsran;
 
+srsran_scheduler_adapter::srsran_scheduler_adapter(mac_common_config_t& cfg_,
+                                                   du_rnti_table&       rnti_table_,
+                                                   rlf_detector&        rlf_handler_) :
+  cfg(cfg_), rnti_table(rnti_table_), rlf_handler(rlf_handler_), rnti_alloc(rnti_table_), notifier(*this)
+{
+}
+
 void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
 {
   srs_sched->handle_cell_configuration_request(msg.sched_req);
@@ -285,6 +292,38 @@ void srsran_scheduler_adapter::handle_dl_buffer_state_update_required(
   bs.lcid     = mac_dl_bs_ind.lcid;
   bs.bs       = mac_dl_bs_ind.bs;
   srs_sched->handle_dl_buffer_state_indication(bs);
+}
+
+void srsran_scheduler_adapter::handle_rach_indication(du_cell_index_t cell_index, const mac_rach_indication& rach_ind)
+{
+  // Create Scheduler RACH indication message. Allocate TC-RNTIs in the process.
+  rach_indication_message sched_rach{};
+  sched_rach.cell_index = cell_index;
+  sched_rach.slot_rx    = rach_ind.slot_rx;
+  for (const auto& occasion : rach_ind.occasions) {
+    auto& sched_occasion           = sched_rach.occasions.emplace_back();
+    sched_occasion.start_symbol    = occasion.start_symbol;
+    sched_occasion.frequency_index = occasion.frequency_index;
+    for (const auto& preamble : occasion.preambles) {
+      rnti_t alloc_tc_rnti = rnti_alloc.allocate();
+      if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
+        cfg.logger.warning(
+            "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
+        continue;
+      }
+      auto& sched_preamble        = sched_occasion.preambles.emplace_back();
+      sched_preamble.preamble_id  = preamble.index;
+      sched_preamble.tc_rnti      = alloc_tc_rnti;
+      sched_preamble.time_advance = preamble.time_advance;
+    }
+    if (sched_occasion.preambles.empty()) {
+      // No preamble was added. Remove occasion.
+      sched_rach.occasions.pop_back();
+    }
+  }
+
+  // Forward RACH indication to scheduler.
+  srs_sched->handle_rach_indication(sched_rach);
 }
 
 const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx, du_cell_index_t cell_idx)

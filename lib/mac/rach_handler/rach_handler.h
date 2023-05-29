@@ -10,12 +10,15 @@
 
 #pragma once
 
+#include "../mac_config_interfaces.h"
+#include "mac_scheduler_rach_handler.h"
 #include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 class rnti_allocator
 {
@@ -52,66 +55,31 @@ private:
 class cell_rach_handler final : public mac_cell_rach_handler
 {
 public:
-  explicit cell_rach_handler(du_cell_index_t cell_index_, scheduler_configurator& sched_, rnti_allocator& rnti_alloc_) :
-    logger(srslog::fetch_basic_logger("MAC")), cell_index(cell_index_), rnti_alloc(rnti_alloc_), sched(sched_)
+  explicit cell_rach_handler(du_cell_index_t cell_index_, mac_scheduler_rach_handler& sched_) :
+    cell_index(cell_index_), sched(sched_)
   {
   }
 
   /// Handles detected PRACHs by allocating a temporary C-RNTI and signalling the scheduler to allocate an RAR.
   void handle_rach_indication(const mac_rach_indication& rach_ind) override
   {
-    rach_indication_message sched_rach{};
-    sched_rach.cell_index = cell_index;
-    sched_rach.slot_rx    = rach_ind.slot_rx;
-    for (const auto& occasion : rach_ind.occasions) {
-      auto& sched_occasion           = sched_rach.occasions.emplace_back();
-      sched_occasion.start_symbol    = occasion.start_symbol;
-      sched_occasion.frequency_index = occasion.frequency_index;
-      for (const auto& preamble : occasion.preambles) {
-        rnti_t alloc_tc_rnti = rnti_alloc.allocate();
-        if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
-          logger.warning(
-              "Ignoring PRACH, cell={} preamble id={}. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
-          continue;
-        }
-        auto& sched_preamble        = sched_occasion.preambles.emplace_back();
-        sched_preamble.preamble_id  = preamble.index;
-        sched_preamble.tc_rnti      = alloc_tc_rnti;
-        sched_preamble.time_advance = preamble.time_advance;
-      }
-      if (sched_occasion.preambles.empty()) {
-        // No preamble was added. Remove occasion.
-        sched_rach.occasions.pop_back();
-      }
-    }
-
-    notify_sched(sched_rach);
+    sched.handle_rach_indication(cell_index, rach_ind);
   }
 
 private:
-  static constexpr int    CRNTI_RANGE  = rnti_t::MAX_CRNTI + 1 - rnti_t::MIN_CRNTI;
-  static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
-
-  /// Notify Scheduler of handled RACH indication.
-  void notify_sched(const rach_indication_message& rach_ind) { sched.handle_rach_indication(rach_ind); }
-
-  srslog::basic_logger&   logger;
-  const du_cell_index_t   cell_index;
-  rnti_allocator&         rnti_alloc;
-  scheduler_configurator& sched;
-
-  std::atomic<std::underlying_type_t<rnti_t>> rnti_counter{INITIAL_RNTI - MIN_CRNTI};
+  const du_cell_index_t       cell_index;
+  mac_scheduler_rach_handler& sched;
 };
 
-class rach_handler : public rach_handler_configurator
+class rach_handler final : public rach_handler_configurator
 {
 public:
-  rach_handler(scheduler_configurator& sched_, du_rnti_table& rnti_table_) : sched(sched_), rnti_alloc(rnti_table_) {}
+  rach_handler(mac_scheduler_rach_handler& sched_) : sched(sched_) {}
 
   void add_cell(du_cell_index_t cell_index) override
   {
     srsran_assert(not cells.contains(cell_index), "Cell {} already exists", cell_index);
-    cells.emplace(cell_index, cell_index, sched, rnti_alloc);
+    cells.emplace(cell_index, cell_index, sched);
   }
 
   void remove_cell(du_cell_index_t cell_index) override
@@ -127,8 +95,7 @@ public:
   }
 
 private:
-  scheduler_configurator&                            sched;
-  rnti_allocator                                     rnti_alloc;
+  mac_scheduler_rach_handler&                        sched;
   slotted_array<cell_rach_handler, MAX_NOF_DU_CELLS> cells;
 };
 

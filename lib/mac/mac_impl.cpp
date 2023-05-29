@@ -34,7 +34,7 @@ mac_impl::mac_impl(const mac_config& params) :
           *sched_cfg_adapter,
           rnti_table),
   ul_unit(cfg, *sched_cfg_adapter, rnti_table),
-  rach_hdl(*sched_obj, rnti_table),
+  rach_hdl(*sched_cfg_adapter),
   ctrl_unit(cfg, ul_unit, dl_unit, rach_hdl, rnti_table, *sched_cfg_adapter)
 {
   sched_cfg_adapter->set_sched(*sched_obj);

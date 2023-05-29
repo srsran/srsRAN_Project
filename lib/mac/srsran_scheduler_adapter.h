@@ -15,6 +15,7 @@
 #include "mac_dl/rlf_detector.h"
 #include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
+#include "rach_handler/rach_handler.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
@@ -33,10 +34,7 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class srsran_scheduler_adapter final : public mac_scheduler_adapter
 {
 public:
-  explicit srsran_scheduler_adapter(mac_common_config_t& cfg_, du_rnti_table& rnti_table_, rlf_detector& rlf_handler_) :
-    cfg(cfg_), rnti_table(rnti_table_), rlf_handler(rlf_handler_), notifier(*this)
-  {
-  }
+  explicit srsran_scheduler_adapter(mac_common_config_t& cfg_, du_rnti_table& rnti_table_, rlf_detector& rlf_handler_);
 
   void set_sched(mac_scheduler& sched_) override { srs_sched = &sched_; }
 
@@ -66,6 +64,8 @@ public:
   /// \brief Forward to scheduler an RLC DL buffer state update.
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 
+  void handle_rach_indication(du_cell_index_t cell_index, const mac_rach_indication& rach_ind) override;
+
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
 
 private:
@@ -86,6 +86,9 @@ private:
 
   /// srsGNB scheduler.
   mac_scheduler* srs_sched = nullptr;
+
+  /// Allocator of TC-RNTI values.
+  rnti_allocator rnti_alloc;
 
   /// Notifier that is used by MAC to start and await configurations of the scheduler.
   sched_config_notif_adapter notifier;
