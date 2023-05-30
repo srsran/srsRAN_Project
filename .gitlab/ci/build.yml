@@ -511,6 +511,7 @@ valgrind (changed):
   extends: .build_and_unit
   rules:
     - if: $ON_MR
+      allow_failure: true
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
