@@ -248,9 +248,17 @@ pull_src_cache:
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
-          ctest_subset="-I 0,0,0,"$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
+          CTEST_SUBSET=$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
+          if [ -n "${CTEST_SUBSET}" ]; then
+            echo "Tests with changed fingerprint: ${CTEST_SUBSET}"
+            CTEST_SUBSET_CMD="-I 0,0,0,${CTEST_SUBSET}"
+          else
+            echo "No tests changed"
+            ret=0
+            exit $ret
+          fi
         fi
-        CTEST_CMD="ctest -j "$(nproc --all)" $ctest_subset $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        CTEST_CMD="ctest -j "$(nproc --all)" ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
         $CTEST_CMD && ret=0 || ret=1
