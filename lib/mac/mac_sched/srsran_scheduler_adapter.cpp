@@ -239,23 +239,28 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   ul_crc_indication ind{};
   ind.cell_index = cell_idx;
   ind.sl_rx      = msg.sl_rx;
-  for (unsigned i = 0; i != ind.crcs.size(); ++i) {
-    // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
-    ul_crc_pdu_indication& pdu = ind.crcs.emplace_back();
-    pdu.rnti                   = msg.crcs[i].rnti;
-    pdu.ue_index               = parent->rnti_mng[msg.crcs[i].rnti];
-    pdu.harq_id                = to_harq_id(msg.crcs[i].harq_id);
-    pdu.tb_crc_success         = msg.crcs[i].tb_crc_success;
-    pdu.ul_sinr_metric         = msg.crcs[i].ul_sinr_metric;
-
-    // If not Msg3, report crc=OK/KO.
-    if (pdu.ue_index != INVALID_DU_UE_INDEX) {
-      parent->rlf_handler.handle_crc(pdu.ue_index, pdu.tb_crc_success);
-    }
+  ind.crcs.resize(msg.crcs.size());
+  for (unsigned i = 0; i != msg.crcs.size(); ++i) {
+    const mac_crc_pdu&     mac_pdu = msg.crcs[i];
+    ul_crc_pdu_indication& pdu     = ind.crcs[i];
+    pdu.rnti                       = mac_pdu.rnti;
+    pdu.ue_index                   = parent->rnti_mng[mac_pdu.rnti];
+    pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
+    pdu.tb_crc_success             = mac_pdu.tb_crc_success;
+    pdu.ul_sinr_metric             = mac_pdu.ul_sinr_metric;
   }
 
   // Forward CRC indication to the scheduler.
   parent->sched_impl->handle_crc_indication(ind);
+
+  // Report to RLF handler the CRC result.
+  for (unsigned i = 0; i != ind.crcs.size(); ++i) {
+    // If Msg3, ignore the CRC result.
+    // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
+    if (ind.crcs[i].ue_index != INVALID_DU_UE_INDEX) {
+      parent->rlf_handler.handle_crc(ind.crcs[i].ue_index, ind.crcs[i].tb_crc_success);
+    }
+  }
 }
 
 void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication_message& msg)

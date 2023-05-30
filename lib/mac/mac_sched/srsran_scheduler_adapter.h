@@ -44,8 +44,6 @@ public:
 
   async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) override;
 
-  sched_configuration_notifier& get_sched_notifier() override { return notifier; }
-
   void handle_ul_bsr_indication(const mac_bsr_ce_info& bsr) override;
 
   void handle_ul_sched_command(const mac_ul_scheduling_command& cmd) override;

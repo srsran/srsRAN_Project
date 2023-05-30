@@ -250,8 +250,6 @@ public:
     });
   }
 
-  sched_configuration_notifier& get_sched_notifier() override { return notifier; }
-
   class dummy_notifier : public sched_configuration_notifier
   {
     void on_ue_config_complete(du_ue_index_t ue_index) override {}

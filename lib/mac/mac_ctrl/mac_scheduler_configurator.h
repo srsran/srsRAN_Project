@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/mac/mac_ue_configurator.h"
-#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -35,8 +34,6 @@ public:
   /// \brief Removes UE from MAC scheduler in an asynchronous manner.
   /// The scheduler shouldn't allocate more grants directed at the UE being removed after this procedure is complete.
   virtual async_task<bool> handle_ue_removal_request(const mac_ue_delete_request& msg) = 0;
-
-  virtual sched_configuration_notifier& get_sched_notifier() = 0;
 };
 
 } // namespace srsran
