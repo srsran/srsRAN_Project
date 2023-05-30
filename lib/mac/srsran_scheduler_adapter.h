@@ -15,7 +15,7 @@
 #include "mac_dl/rlf_detector.h"
 #include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
-#include "rach_handler/rnti_manager.h"
+#include "rnti_manager.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
@@ -57,14 +57,32 @@ public:
   /// \brief Forward to scheduler an RLC DL buffer state update.
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 
-  void handle_rach_indication(du_cell_index_t cell_index, const mac_rach_indication& rach_ind) override;
-
   void handle_paging_information(const paging_information& msg) override;
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override;
 
+  mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
+  {
+    return cell_handlers[cell_index];
+  }
+
 private:
-  class sched_config_notif_adapter : public sched_configuration_notifier
+  class cell_handler final : public mac_cell_rach_handler
+  {
+  public:
+    cell_handler() = default;
+    cell_handler(du_cell_index_t cell_idx_, srsran_scheduler_adapter& parent_) : cell_idx(cell_idx_), parent(&parent_)
+    {
+    }
+
+    void handle_rach_indication(const mac_rach_indication& rach_ind) override;
+
+  private:
+    du_cell_index_t           cell_idx = INVALID_DU_CELL_INDEX;
+    srsran_scheduler_adapter* parent   = nullptr;
+  };
+
+  class sched_config_notif_adapter final : public sched_configuration_notifier
   {
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
@@ -84,7 +102,7 @@ private:
   sched_config_notif_adapter notifier;
 
   /// srsGNB scheduler.
-  std::unique_ptr<mac_scheduler> srs_sched;
+  std::unique_ptr<mac_scheduler> sched_impl;
 
   /// Allocator of TC-RNTI values.
   rnti_manager rnti_alloc;
@@ -94,6 +112,9 @@ private:
     manual_event<bool> ue_config_ready;
   };
   std::array<ue_notification_context, MAX_NOF_DU_UES> sched_cfg_notif_map;
+
+  /// Handler for each DU cell.
+  std::array<cell_handler, MAX_NOF_DU_CELLS> cell_handlers;
 };
 
 } // namespace srsran

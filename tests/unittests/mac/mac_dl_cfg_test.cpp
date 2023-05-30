@@ -10,7 +10,7 @@
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/mac_dl_processor.h"
-#include "lib/mac/rach_handler/rnti_manager.h"
+#include "lib/mac/rnti_manager.h"
 #include "lib/mac/srsran_scheduler_adapter.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"

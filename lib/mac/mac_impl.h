@@ -16,8 +16,7 @@
 #include "mac_dl/rlf_detector.h"
 #include "mac_scheduler_adapter.h"
 #include "mac_ul/mac_ul_processor.h"
-#include "rach_handler/rach_handler.h"
-#include "rach_handler/rnti_manager.h"
+#include "rnti_manager.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 
@@ -28,7 +27,10 @@ class mac_impl : public mac_interface
 public:
   explicit mac_impl(const mac_config& mac_cfg);
 
-  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override { return rach_hdl.get_cell(cell_index); }
+  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
+  {
+    return mac_sched->get_cell_rach_handler(cell_index);
+  }
 
   mac_ue_configurator& get_ue_configurator() override { return ctrl_unit; }
 
@@ -65,9 +67,6 @@ private:
 
   /// MAC Rx PDU processor.
   mac_ul_processor ul_unit;
-
-  /// Used to handle RACH indications.
-  rach_handler rach_hdl;
 
   /// Orchestrates the interaction and configuration of other MAC components.
   mac_controller ctrl_unit;

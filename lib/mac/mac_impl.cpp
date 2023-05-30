@@ -30,12 +30,10 @@ mac_impl::mac_impl(const mac_config& params) :
                         *mac_sched,
                         rnti_table,
                         params.pcap}),
-  rach_hdl(*mac_sched),
   ctrl_unit(
       mac_control_config{params.ul_ccch_notifier, params.ue_exec_mapper, params.cell_exec_mapper, params.ctrl_exec},
       ul_unit,
       dl_unit,
-      rach_hdl,
       rnti_table,
       *mac_sched)
 {

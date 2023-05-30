@@ -18,7 +18,7 @@
 
 namespace srsran {
 
-/// \brief Information relative to a decoded MAC CE BSR.
+/// \brief Information and context relative to a decoded MAC CE BSR.
 struct mac_bsr_ce_info {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
@@ -36,9 +36,7 @@ struct mac_ul_scheduling_command {
   rnti_t          rnti;
 };
 
-/// \brief Adapter interface between MAC and scheduler that allows the srsGNB MAC to configure different scheduler
-/// implementations.
-/// Note: This adapter interface makes scheduler configuration methods awaitable.
+/// \brief Interface between MAC and scheduler that is used by MAC to forward decoded UL BSRs and force UL grants.
 class mac_scheduler_ul_buffer_state_updater
 {
 public:

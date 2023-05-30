@@ -151,13 +151,6 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
 
-class dummy_rach_handler_configurator : public rach_handler_configurator
-{
-public:
-  void add_cell(du_cell_index_t cell_index) override {}
-  void remove_cell(du_cell_index_t cell_index) override {}
-};
-
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 {
 public:

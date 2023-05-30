@@ -23,13 +23,16 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params,
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
-  srs_sched(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier}))
+  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier}))
 {
+  for (unsigned i = 0; i != MAX_NOF_DU_CELLS; ++i) {
+    cell_handlers[i] = cell_handler{to_du_cell_index(i), *this};
+  }
 }
 
 void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
 {
-  srs_sched->handle_cell_configuration_request(msg.sched_req);
+  sched_impl->handle_cell_configuration_request(msg.sched_req);
 }
 
 async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_ue_create_request& msg)
@@ -38,7 +41,7 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_
     CORO_BEGIN(ctx);
 
     // Create UE in the Scheduler.
-    srs_sched->handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
+    sched_impl->handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
 
     // Await Scheduler notification that UE was added.
     CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
@@ -54,7 +57,7 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_reconfiguration_request(con
     CORO_BEGIN(ctx);
 
     // Reconfigure UE in the scheduler.
-    srs_sched->handle_ue_reconfiguration_request(make_scheduler_ue_reconfiguration_request(msg));
+    sched_impl->handle_ue_reconfiguration_request(make_scheduler_ue_reconfiguration_request(msg));
 
     // Await Scheduler notification.
     CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
@@ -70,7 +73,7 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_removal_request(const mac_u
     CORO_BEGIN(ctx);
 
     // Remove UE from the scheduler.
-    srs_sched->handle_ue_removal_request(msg.ue_index);
+    sched_impl->handle_ue_removal_request(msg.ue_index);
 
     // Await Scheduler notification.
     CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
@@ -112,7 +115,7 @@ void srsran_scheduler_adapter::handle_ul_bsr_indication(const mac_bsr_ce_info& b
   }
 
   // Send UL BSR indication to Scheduler.
-  srs_sched->handle_ul_bsr_indication(ul_bsr_ind);
+  sched_impl->handle_ul_bsr_indication(ul_bsr_ind);
 }
 
 void srsran_scheduler_adapter::handle_ul_sched_command(const mac_ul_scheduling_command& cmd)
@@ -127,7 +130,7 @@ void srsran_scheduler_adapter::handle_ul_sched_command(const mac_ul_scheduling_c
   uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
 
   // Send SR indication to Scheduler.
-  srs_sched->handle_uci_indication(uci);
+  sched_impl->handle_uci_indication(uci);
 }
 
 void srsran_scheduler_adapter::handle_crc_info(du_cell_index_t cell_idx, const mac_crc_indication_message& msg)
@@ -152,7 +155,7 @@ void srsran_scheduler_adapter::handle_crc_info(du_cell_index_t cell_idx, const m
   }
 
   // Forward CRC indication to the scheduler.
-  srs_sched->handle_crc_indication(ind);
+  sched_impl->handle_crc_indication(ind);
 }
 
 static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
@@ -286,7 +289,7 @@ void srsran_scheduler_adapter::handle_uci(du_cell_index_t cell_idx, const mac_uc
   }
 
   // Forward UCI indication to the scheduler.
-  srs_sched->handle_uci_indication(ind);
+  sched_impl->handle_uci_indication(ind);
 }
 
 void srsran_scheduler_adapter::handle_dl_buffer_state_update_required(
@@ -297,44 +300,12 @@ void srsran_scheduler_adapter::handle_dl_buffer_state_update_required(
   bs.ue_index = mac_dl_bs_ind.ue_index;
   bs.lcid     = mac_dl_bs_ind.lcid;
   bs.bs       = mac_dl_bs_ind.bs;
-  srs_sched->handle_dl_buffer_state_indication(bs);
-}
-
-void srsran_scheduler_adapter::handle_rach_indication(du_cell_index_t cell_index, const mac_rach_indication& rach_ind)
-{
-  // Create Scheduler RACH indication message. Allocate TC-RNTIs in the process.
-  rach_indication_message sched_rach{};
-  sched_rach.cell_index = cell_index;
-  sched_rach.slot_rx    = rach_ind.slot_rx;
-  for (const auto& occasion : rach_ind.occasions) {
-    auto& sched_occasion           = sched_rach.occasions.emplace_back();
-    sched_occasion.start_symbol    = occasion.start_symbol;
-    sched_occasion.frequency_index = occasion.frequency_index;
-    for (const auto& preamble : occasion.preambles) {
-      rnti_t alloc_tc_rnti = rnti_alloc.allocate();
-      if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
-        logger.warning(
-            "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
-        continue;
-      }
-      auto& sched_preamble        = sched_occasion.preambles.emplace_back();
-      sched_preamble.preamble_id  = preamble.index;
-      sched_preamble.tc_rnti      = alloc_tc_rnti;
-      sched_preamble.time_advance = preamble.time_advance;
-    }
-    if (sched_occasion.preambles.empty()) {
-      // No preamble was added. Remove occasion.
-      sched_rach.occasions.pop_back();
-    }
-  }
-
-  // Forward RACH indication to scheduler.
-  srs_sched->handle_rach_indication(sched_rach);
+  sched_impl->handle_dl_buffer_state_indication(bs);
 }
 
 const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx, du_cell_index_t cell_idx)
 {
-  return srs_sched->slot_indication(slot_tx, cell_idx);
+  return sched_impl->slot_indication(slot_tx, cell_idx);
 }
 
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index)
@@ -370,5 +341,37 @@ void srsran_scheduler_adapter::handle_paging_information(const paging_informatio
   pg_info.paging_cells.resize(msg.paging_cells.size());
   pg_info.paging_cells.assign(msg.paging_cells.begin(), msg.paging_cells.end());
 
-  srs_sched->handle_paging_information(pg_info);
+  sched_impl->handle_paging_information(pg_info);
+}
+
+void srsran_scheduler_adapter::cell_handler::handle_rach_indication(const mac_rach_indication& rach_ind)
+{
+  // Create Scheduler RACH indication message. Allocate TC-RNTIs in the process.
+  rach_indication_message sched_rach{};
+  sched_rach.cell_index = cell_idx;
+  sched_rach.slot_rx    = rach_ind.slot_rx;
+  for (const auto& occasion : rach_ind.occasions) {
+    auto& sched_occasion           = sched_rach.occasions.emplace_back();
+    sched_occasion.start_symbol    = occasion.start_symbol;
+    sched_occasion.frequency_index = occasion.frequency_index;
+    for (const auto& preamble : occasion.preambles) {
+      rnti_t alloc_tc_rnti = parent->rnti_alloc.allocate();
+      if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
+        parent->logger.warning(
+            "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_idx, preamble.index);
+        continue;
+      }
+      auto& sched_preamble        = sched_occasion.preambles.emplace_back();
+      sched_preamble.preamble_id  = preamble.index;
+      sched_preamble.tc_rnti      = alloc_tc_rnti;
+      sched_preamble.time_advance = preamble.time_advance;
+    }
+    if (sched_occasion.preambles.empty()) {
+      // No preamble was added. Remove occasion.
+      sched_rach.occasions.pop_back();
+    }
+  }
+
+  // Forward RACH indication to scheduler.
+  parent->sched_impl->handle_rach_indication(sched_rach);
 }

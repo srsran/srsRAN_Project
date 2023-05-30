@@ -13,18 +13,20 @@
 #include "mac_ctrl/mac_scheduler_configurator.h"
 #include "mac_dl/mac_scheduler_cell_info_handler.h"
 #include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
-#include "rach_handler/mac_scheduler_rach_handler.h"
 
 namespace srsran {
 
+/// \brief Interface from MAC to a scheduler implementation.
 class mac_scheduler_adapter : public mac_scheduler_configurator,
                               public mac_scheduler_ul_buffer_state_updater,
                               public mac_scheduler_cell_info_handler,
-                              public mac_scheduler_rach_handler,
                               public mac_paging_information_handler
 {
 public:
   virtual ~mac_scheduler_adapter() = default;
+
+  /// \brief Gets the RACH handler for a given cell.
+  virtual mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran
