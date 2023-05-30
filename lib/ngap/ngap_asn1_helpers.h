@@ -431,7 +431,15 @@ inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
     }
   }
 
-  // TODO: Add pdu_session_res_failed_to_modify_list_mod_res support
+  // Fill PDU Session Resource failed to modify list
+  if (!cu_cp_resp.pdu_session_res_failed_to_modify_list.empty()) {
+    resp->pdu_session_res_failed_to_modify_list_mod_res_present = true;
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_failed_to_modify_list) {
+      asn1::ngap::pdu_session_res_failed_to_modify_item_mod_res_s resp_item;
+      pdu_session_res_failed_to_modify_item_to_asn1(resp_item, cu_cp_resp_item);
+      resp->pdu_session_res_failed_to_modify_list_mod_res->push_back(resp_item);
+    }
+  }
 }
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Release Comman ASN1 struct to common type.
