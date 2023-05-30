@@ -252,7 +252,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
     // Add result
     drb_result.success = true;
-    pdu_session_result.drb_setup_results.push_back(drb_result);
+    pdu_session_result.drb_modification_results.push_back(drb_result);
   }
 
   // > DRB To Remove List
