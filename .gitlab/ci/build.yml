@@ -248,6 +248,7 @@ pull_src_cache:
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
+          echo "Searching for changed tests"
           CTEST_SUBSET=$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
           if [ -n "${CTEST_SUBSET}" ]; then
             echo "Tests with changed fingerprint: ${CTEST_SUBSET}"
