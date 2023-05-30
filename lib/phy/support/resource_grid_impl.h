@@ -12,6 +12,7 @@
 
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/precoding/channel_precoder.h"
 
 namespace srsran {
@@ -19,7 +20,7 @@ namespace srsran {
 class resource_grid_mapper;
 
 /// Describes a generic resource grid implementation
-class resource_grid_impl : public resource_grid, public resource_grid_mapper
+class resource_grid_impl : public resource_grid, private resource_grid_mapper
 {
 private:
   /// Dimension, i.e. number of coordinates, of each indexing level of the resource grid.
@@ -36,8 +37,21 @@ private:
   /// OFDM symbols and antenna ports.
   dynamic_tensor<dim_all, cf_t> rg_buffer;
 
+  /// Channel precoder.
+  std::unique_ptr<channel_precoder> precoder;
+
+  /// Temporal output buffer, used to store the Resource Elements after precoding.
+  static_re_buffer<precoding_constants::MAX_NOF_PORTS, MAX_RB * NRE> precoding_buffer;
+
+  // See interface for documentation.
+  void
+  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override;
+
 public:
-  resource_grid_impl(unsigned nof_ports, unsigned nof_symb, unsigned nof_subc);
+  resource_grid_impl(unsigned                          nof_ports,
+                     unsigned                          nof_symb,
+                     unsigned                          nof_subc,
+                     std::unique_ptr<channel_precoder> precoder_);
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override;
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override;
@@ -61,9 +75,6 @@ public:
   void set_all_zero() override;
 
   resource_grid_mapper& get_mapper() override { return *this; }
-
-  void
-  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override;
 };
 
 } // namespace srsran

@@ -14,11 +14,10 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
 #include "srsran/phy/constants.h"
-#include "resource_grid_mapper.h"
 
 namespace srsran {
 
-//class resource_grid_mapper;
+class resource_grid_mapper;
 
 /// Describes a resource grid coordinate as symbol index and carrier.
 struct resource_grid_coordinate {

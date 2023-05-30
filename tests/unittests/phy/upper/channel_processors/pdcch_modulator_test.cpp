@@ -8,8 +8,8 @@
  *
  */
 
-#include "pdcch_modulator_test_data.h"
 #include "../../support/resource_grid_mapper_test_doubles.h"
+#include "pdcch_modulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 
 using namespace srsran;

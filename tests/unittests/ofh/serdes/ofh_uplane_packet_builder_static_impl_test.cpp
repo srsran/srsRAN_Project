@@ -125,8 +125,15 @@ TEST(ofh_uplane_packet_builder_static_impl_test, non_compressed_packet_should_pa
     ofh_uplane_message_builder_static_compression_impl builder(
         srslog::fetch_basic_logger("TEST"), compressor, test_case.params.nof_prb, test_case.params.nof_prb);
 
+    // Create resource grid.
+    std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("generic");
+    ASSERT_NE(precoding_factory, nullptr) << "Invalid channel precoder factory.";
+    std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+    ASSERT_NE(rg_factory, nullptr) << "Invalid resource grid factory.";
+
+    std::unique_ptr<resource_grid> grid = rg_factory->create(N_PORTS, N_SYMBOLS, test_case.params.nof_prb * NRE);
+
     // Prepare input data.
-    std::unique_ptr<resource_grid> grid = create_resource_grid(N_PORTS, N_SYMBOLS, test_case.params.nof_prb * NRE);
     init_resource_grid(grid.get(), test_case);
 
     // Prepare output buffer and build packet.

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/downlink_processor.h"
@@ -281,6 +282,7 @@ public:
 
 /// Creates and returns an upper PHY factory.
 std::unique_ptr<upper_phy_factory>
-create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory);
+create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory,
+                         std::shared_ptr<resource_grid_factory>      rg_factory);
 
 } // namespace srsran

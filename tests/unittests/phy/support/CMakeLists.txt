@@ -13,7 +13,7 @@ target_link_libraries(resource_grid_pool_test srsvec srsran_phy_support srslog)
 add_test(resource_grid_pool_test resource_grid_pool_test)
 
 add_executable(resource_grid_test resource_grid_test.cpp)
-target_link_libraries(resource_grid_test srsvec srsran_phy_support srslog)
+target_link_libraries(resource_grid_test srsvec srsran_phy_support srsran_channel_precoder srslog)
 add_test(resource_grid_test resource_grid_test)
 
 add_executable(interpolator_test interpolator_test.cpp)
@@ -30,7 +30,7 @@ target_link_libraries(resource_grid_mapper_test
         srslog
         gtest
         gtest_main)
-add_test(resource_grid_mapper_test resource_grid_mapper_test)
+gtest_discover_tests(resource_grid_mapper_test)
 
 add_library(resource_grid_mapper_test_doubles STATIC resource_grid_mapper_test_doubles.cpp)
 target_link_libraries(srsran_upper_phy_support)

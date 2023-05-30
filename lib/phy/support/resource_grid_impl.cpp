@@ -17,8 +17,11 @@
 
 using namespace srsran;
 
-resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
-  empty(nof_ports_), nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_)
+resource_grid_impl::resource_grid_impl(unsigned                          nof_ports_,
+                                       unsigned                          nof_symb_,
+                                       unsigned                          nof_subc_,
+                                       std::unique_ptr<channel_precoder> precoder_) :
+  empty(nof_ports_), nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_), precoder(std::move(precoder_))
 {
   // Reserve memory for the internal buffer.
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
@@ -260,9 +263,27 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
                              const re_pattern_list&         pattern,
                              const precoding_configuration& precoding)
 {
-  for (unsigned i_symbol = 0, i_re = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+  unsigned nof_layers = precoding.get_nof_layers();
+
+  srsran_assert(input.get_nof_slices() == precoding.get_nof_layers(),
+                "The input number of layers (i.e., {}) and the precoding number of layers (i.e., {}) are different.",
+                input.get_nof_slices(),
+                nof_layers);
+
+  unsigned nof_precoding_ports = precoding.get_nof_ports();
+  srsran_assert(nof_precoding_ports <= nof_ports,
+                "The precoding number of ports (i.e., {}) exceeds the grid number of ports (i.e., {}).",
+                precoding.get_nof_ports(),
+                nof_ports);
+
+  // PRG size in number of subcarriers.
+  unsigned prg_size = precoding.get_prg_size() * NRE;
+
+  // Counter for the number of RE read from the input and mapped to the grid.
+  unsigned i_re_buffer = 0;
+  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
-    bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
+    bounded_bitset<MAX_RB * NRE> symbol_re_mask(nof_subc);
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
 
     // Find the highest used subcarrier. Skip symbol if no active subcarrier.
@@ -274,16 +295,62 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
     // Resize the mask to the highest subcarrier, ceiling to PRB.
     symbol_re_mask.resize(divide_ceil(i_highest_subc, NRE) * NRE);
 
-    // Count the number of mapped RE.
-    unsigned nof_re = symbol_re_mask.count();
+    // Number of RE to be allocated for the current symbol.
+    unsigned nof_re_symbol = symbol_re_mask.count();
 
-    for (unsigned i_tx_port = 0, nof_tx_ports = input.get_nof_slices(); i_tx_port != nof_tx_ports; ++i_tx_port) {
-      // Map each port.
-      span<const cf_t> port_data = input.get_slice(i_tx_port);
-      put(i_tx_port, i_symbol, 0, symbol_re_mask, port_data.subspan(i_re, nof_re));
+    if ((nof_re_symbol != precoding_buffer.get_nof_re()) ||
+        (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
+      // Resize the output buffer if the input dimensions don't match.
+      precoding_buffer.resize(nof_precoding_ports, nof_re_symbol);
     }
 
-    // Advance RE counter.
-    i_re += nof_re;
+    // Counter for the number of precoded REs for the current symbol.
+    unsigned i_precoding_buffer = 0;
+    for (unsigned i_prg = 0, nof_prg = precoding.get_nof_prg(), i_subc = 0; i_prg != nof_prg; ++i_prg) {
+      // Get the precoding matrix for the current PRG.
+      const precoding_weight_matrix& prg_weights = precoding.get_prg_coefficients(i_prg);
+
+      // Number of grid RE belonging to the current PRG for the provided allocation pattern dimensions.
+      unsigned nof_subc_prg = std::min(prg_size, static_cast<unsigned>(symbol_re_mask.size()) - i_subc);
+
+      // Mask for the RE belonging to the current PRG.
+      bounded_bitset<MAX_RB* NRE> prg_re_mask = symbol_re_mask.slice(i_subc, i_subc + nof_subc_prg);
+
+      // Number of allocated RE for the current PRG.
+      unsigned nof_re_prg = prg_re_mask.count();
+
+      // Views of the input and precoder buffers for the REs belonging to the current PRG.
+      re_buffer_reader_view input_re_prg(input, i_re_buffer, nof_re_prg);
+      re_buffer_writer_view output_re_prg(precoding_buffer, i_precoding_buffer, nof_re_prg);
+
+      // Apply precoding.
+      precoder->apply_precoding(output_re_prg, input_re_prg, prg_weights);
+
+      // Advance input and output buffers.
+      i_re_buffer += nof_re_prg;
+      i_precoding_buffer += nof_re_prg;
+
+      // Advance mask slice.
+      i_subc += nof_subc_prg;
+    }
+
+    // Assert that the precoding buffer has been filled.
+    srsran_assert((i_precoding_buffer == precoding_buffer.get_nof_re()),
+                  "The number of precoded RE (i.e., {}) does not match the precoding buffer size (i.e., {}).",
+                  i_precoding_buffer,
+                  precoding_buffer.get_nof_re());
+
+    for (unsigned i_tx_port = 0; i_tx_port != nof_precoding_ports; ++i_tx_port) {
+      // Map the precoded REs to each port for the current symbol.
+      span<const cf_t> port_data = precoding_buffer.get_slice(i_tx_port);
+      span<const cf_t> unmapped  = put(i_tx_port, i_symbol, 0, symbol_re_mask, port_data);
+      srsran_assert(unmapped.empty(), "Not all REs have been mapped to the grid.");
+    }
   }
+
+  // Assert that all input REs have been processed.
+  srsran_assert((i_re_buffer == input.get_nof_re()),
+                "The number of total precoded RE (i.e., {}) does not match the number of total input RE (i.e., {}).",
+                i_re_buffer,
+                input.get_nof_re());
 }

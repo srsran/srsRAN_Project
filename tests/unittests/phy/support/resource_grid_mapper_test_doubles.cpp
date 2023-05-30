@@ -16,7 +16,8 @@ void resource_grid_mapper_spy::map(const re_buffer_reader& input,
                                    const re_pattern_list&  pattern,
                                    const precoding_configuration& /* precoding */)
 {
-  for (unsigned i_symbol = 0, i_re = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+  unsigned i_re = 0;
+  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     // Get the symbol RE mask.
     bounded_bitset<MAX_RB * NRE> symbol_re_mask(MAX_RB * NRE);
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
@@ -36,10 +37,17 @@ void resource_grid_mapper_spy::map(const re_buffer_reader& input,
     for (unsigned i_layer = 0, nof_layers = input.get_nof_slices(); i_layer != nof_layers; ++i_layer) {
       // Map each layer without precoding.
       span<const cf_t> layer_data = input.get_slice(i_layer);
-      rg_writer_spy.put(i_layer, i_symbol, 0, symbol_re_mask, layer_data.subspan(i_re, nof_re));
+      span<const cf_t> unmapped =
+          rg_writer_spy.put(i_layer, i_symbol, 0, symbol_re_mask, layer_data.subspan(i_re, nof_re));
+      srsran_assert(unmapped.empty(), "Not all REs have been mapped to the grid. {} remaining.", unmapped.size());
     }
 
     // Advance RE counter.
     i_re += nof_re;
   }
+
+  srsran_assert(i_re == input.get_nof_re(),
+                "The nuber of mapped RE (i.e., {}) does not match the number of input RE (i.e., {}).",
+                i_re,
+                input.get_nof_re());
 }

@@ -14,6 +14,7 @@ target_link_libraries(pdsch_processor_benchmark
         srsran_phy_support
         srsran_pusch_processor
         srsran_channel_equalizer
+        srsran_channel_precoder
         srsran_channel_processors
         srsran_sched
         srslog
@@ -26,6 +27,7 @@ target_link_libraries(pusch_processor_benchmark
         srsran_phy_support
         srsran_pusch_processor
         srsran_channel_equalizer
+        srsran_channel_precoder
         srsran_channel_processors
         srsran_sched
         srslog
