@@ -207,11 +207,11 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   // assert valid conversion result
   srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap !=
                     asn1::f1ap::pre_emption_cap_e::nulltype,
-                "Invalid preemption type");
+                "Invalid preemption capability type");
 
   srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability !=
                     asn1::f1ap::pre_emption_vulnerability_opts::nulltype,
-                "Invalid preemption type");
+                "Invalid preemption vulnerability type");
 
   // gbr qos info
   if (qos_info.drb_qos.gbr_qos_info.has_value()) {
