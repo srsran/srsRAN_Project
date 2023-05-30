@@ -12,29 +12,21 @@
 #include "srsran/adt/span.h"
 #include "srsran/e2/e2.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include <queue>
+#include <deque>
 
 namespace srsran {
 
-constexpr MAX_UE_METRICS 10
+constexpr int MAX_UE_METRICS = 10;
 
-    /// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
-    class e2_du_metrics_manager : public scheduler_ue_metrics_notifier,
-                                  public e2_du_metrics_interface
+/// \brief Class used to receive metrics reports from scheduler and sends them to the e2 interface.
+class e2_du_metrics_manager : public scheduler_ue_metrics_notifier, public e2_du_metrics_interface
 {
 public:
-  e2_du_metrics_manager() { ue_metrics_queue.resize(MAX_UE_METRICS); }
-  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
-  {
-    for (auto& ue_metric : ue_metrics) {
-      if (ue_metrics_queue.size() == MAX_UE_METRICS) {
-        ue_metrics_queue.pop_front();
-      }
-      ue_metrics_queue.push_back(ue_metric);
-    }
-  }
+  e2_du_metrics_manager();
 
-  void get_metrics(scheduler_ue_metrics& ue_metrics) override { ue_metrics = ue_metrics_queue.front(); }
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+
+  void get_metrics(scheduler_ue_metrics& ue_metrics) override;
 
 private:
   std::deque<scheduler_ue_metrics> ue_metrics_queue;
