@@ -260,27 +260,32 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
 {
-  app.add_option(
-         "--f1_nof_ue_res_harq", pucch_params.nof_ue_pucch_f1_res_harq, "Number of PUCCH F1 resources for HARQ per UE")
+  app.add_option("--f1_nof_ue_res_harq",
+                 pucch_params.nof_ue_pucch_f1_res_harq,
+                 "Number of PUCCH F1 resources available per UE for HARQ")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
-  app.add_option(
-         "--f1_nof_cell_res_sr", pucch_params.nof_cell_sr_resources, "Number of PUCCH F1 resources for SR per cell")
+  app.add_option("--f1_nof_cell_res_sr",
+                 pucch_params.nof_cell_sr_resources,
+                 "Number of PUCCH F1 resources available per cell for SR")
       ->capture_default_str()
-      ->check(CLI::Range(1, 8));
+      ->check(CLI::Range(1, 4));
   app.add_option("--f1_nof_symbols", pucch_params.f1_nof_symbols, "Number of symbols for PUCCH F1 resources")
       ->capture_default_str()
-      ->check(CLI::Range(1, 8));
-  app.add_option("--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1.")->capture_default_str();
-  app.add_option("--f1_nof_cyclic_shifts", pucch_params.nof_cyclic_shift, "Number of symbols for PUCCH F1 resources")
+      ->check(CLI::Range(4, 14));
+  app.add_option("--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1")->capture_default_str();
+  app.add_option("--f1_nof_cyclic_shifts",
+                 pucch_params.nof_cyclic_shift,
+                 "Number of possible cyclic shifts available for PUCCH F1 resources")
       ->capture_default_str()
-      ->check(CLI::IsMember({0, 2, 3, 4, 6, 12}));
+      ->check(CLI::IsMember({1, 2, 3, 4, 6, 12}));
   app.add_option("--f1_intraslot_freq_hop",
                  pucch_params.f1_intraslot_freq_hopping,
-                 "Enable intra-slot frequency hopping for PUCCH F1.")
+                 "Enable intra-slot frequency hopping for PUCCH F1")
       ->capture_default_str();
-  app.add_option(
-         "--f2_nof_ue_res_harq", pucch_params.nof_ue_pucch_f2_res_harq, "Number of PUCCH F2 resources for HARQ per UE")
+  app.add_option("--f2_nof_ue_res_harq",
+                 pucch_params.nof_ue_pucch_f2_res_harq,
+                 "Number of PUCCH F2 resources available per UE for HARQ")
       ->capture_default_str()
       ->check(CLI::Range(1, 8));
   app.add_option("--f2_nof_symbols", pucch_params.f2_nof_symbols, "Number of symbols for PUCCH F2 resources")
@@ -290,7 +295,6 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--f2_max_payload", pucch_params.max_payload_bits, "Max number payload bits for PUCCH F2 resources")
-      ->capture_default_str()
       ->check(CLI::Range(1, 11));
   app.add_option_function<std::string>(
          "--f2_max_code_rate",
@@ -311,7 +315,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
              pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
            }
          },
-         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}.")
+         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot25")
       ->check([](const std::string& value) -> std::string {
         if ((value == "dot08") || (value == "dot15") || (value == "dot25") || (value == "dot35") ||
             (value == "dot45") || (value == "dot60") || (value == "dot80")) {
@@ -319,11 +323,12 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
         }
 
         return "Invalid PUCCH F2 max code rate. \n"
-               "Valid profiles are: dot08, dot15, dot25, dot35, dot45, dot60, dot80.";
+               "Valid profiles are: dot08, dot15, dot25, dot35, dot45, dot60, dot80";
       });
   app.add_option("--f2_intraslot_freq_hop",
                  pucch_params.f2_intraslot_freq_hopping,
-                 "Enable intra-slot frequency hopping for PUCCH F2.");
+                 "Enable intra-slot frequency hopping for PUCCH F2")
+      ->capture_default_str();
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)

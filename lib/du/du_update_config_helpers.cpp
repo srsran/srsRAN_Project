@@ -13,9 +13,15 @@
 
 using namespace srsran;
 
-static unsigned get_max_rb_on_bwp_left_side(const pucch_resource& res, unsigned bwp_size)
+// Helper that computes the greatest RB index used by the PUCCH resources on the BWP's left side. Note that the PUCCH
+// resources are located at in 2 separate blocks, at both sides of the BWP, i.e., 1 block on the left side (where
+// indices is 0, 1, 2, ...) and 1 block on the right side (where indices are ..., N_BWP_RBs -3, N_BWP_RBs-2,
+// N_BWP_RBs-1) of the BWP. This function considers only the block of PUCCH resources on the BWP's left side and returns
+// the RB with the greatest index of this block.
+static unsigned greatest_used_rb_on_bwp_left_side(const pucch_resource& res, unsigned bwp_size)
 {
-  // Return true if the given PRB is on the first half of the PRB of a BWP.
+  // Return true if the given PRB is on the BWP's left side (i.e., if the PRB index is less than the BWP's size measured
+  // in PRBs).
   auto is_on_bwp_left_side = [bwp_size](unsigned prb) { return prb < bwp_size / 2; };
 
   srsran_assert((res.format == srsran::pucch_format::FORMAT_1 and
@@ -24,17 +30,17 @@ static unsigned get_max_rb_on_bwp_left_side(const pucch_resource& res, unsigned 
                      variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)),
                 "Only PUCCH Format 1 and 2 currently supported.");
 
-  unsigned prach_f_start = 0;
+  unsigned max_rb_idx_on_left_side = 0;
 
   if (res.format == srsran::pucch_format::FORMAT_1) {
     const unsigned nof_prbs_f1 = 1U;
 
     // Check if first hop and second hop separately.
     if (is_on_bwp_left_side(res.starting_prb + nof_prbs_f1)) {
-      prach_f_start = std::max(res.starting_prb + nof_prbs_f1, prach_f_start);
+      max_rb_idx_on_left_side = std::max(res.starting_prb + nof_prbs_f1, max_rb_idx_on_left_side);
     }
     if (res.second_hop_prb.has_value() and is_on_bwp_left_side(res.second_hop_prb.value() + nof_prbs_f1)) {
-      prach_f_start = std::max(res.second_hop_prb.value() + nof_prbs_f1, prach_f_start);
+      max_rb_idx_on_left_side = std::max(res.second_hop_prb.value() + nof_prbs_f1, max_rb_idx_on_left_side);
     }
   }
   if (res.format == srsran::pucch_format::FORMAT_2) {
@@ -42,13 +48,13 @@ static unsigned get_max_rb_on_bwp_left_side(const pucch_resource& res, unsigned 
     const unsigned nof_prbs = variant_get<pucch_format_2_3_cfg>(res.format_params).nof_prbs;
 
     if (is_on_bwp_left_side(res.starting_prb + nof_prbs)) {
-      prach_f_start = std::max(res.starting_prb + nof_prbs, prach_f_start);
+      max_rb_idx_on_left_side = std::max(res.starting_prb + nof_prbs, max_rb_idx_on_left_side);
     }
     if (res.second_hop_prb.has_value() and is_on_bwp_left_side(res.second_hop_prb.value() + nof_prbs)) {
-      prach_f_start = std::max(res.second_hop_prb.value() + nof_prbs, prach_f_start);
+      max_rb_idx_on_left_side = std::max(res.second_hop_prb.value() + nof_prbs, max_rb_idx_on_left_side);
     }
   }
-  return prach_f_start;
+  return max_rb_idx_on_left_side;
 }
 
 unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_builder_params& user_params,
@@ -71,7 +77,7 @@ unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_build
   unsigned prach_f_start = 0;
 
   for (const auto& pucch_res : res_list) {
-    prach_f_start = std::max(get_max_rb_on_bwp_left_side(pucch_res, bwp_size), prach_f_start);
+    prach_f_start = std::max(greatest_used_rb_on_bwp_left_side(pucch_res, bwp_size), prach_f_start);
   }
 
   return prach_f_start + pucch_to_prach_guardband;

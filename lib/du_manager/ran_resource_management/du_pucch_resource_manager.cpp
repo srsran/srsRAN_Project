@@ -17,7 +17,7 @@ static std::vector<pucch_resource> build_default_pucch_res_list(const pucch_buil
                                                                 unsigned                    bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  const unsigned nof_pucch_f2_res_f1 = 1U;
+  static const unsigned nof_pucch_f2_res_f1 = 1U;
   return srs_du::generate_pucch_res_list_given_number(
       ue_def_pucch_params.nof_ue_pucch_f1_res_harq.to_uint() + ue_def_pucch_params.nof_sr_resources.to_uint(),
       ue_def_pucch_params.nof_ue_pucch_f2_res_harq.to_uint() + nof_pucch_f2_res_f1,
