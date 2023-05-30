@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "mac_ctrl/mac_config.h"
-#include "mac_ctrl/mac_scheduler_configurator.h"
-#include "mac_dl/rlf_detector.h"
+#include "../mac_ctrl/mac_config.h"
+#include "../mac_ctrl/mac_scheduler_configurator.h"
+#include "../mac_dl/rlf_detector.h"
+#include "../mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 #include "mac_scheduler_adapter.h"
-#include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 #include "rnti_manager.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
@@ -50,12 +50,8 @@ public:
 
   void handle_ul_sched_command(const mac_ul_scheduling_command& cmd) override;
 
-  void handle_crc_info(du_cell_index_t cell_idx, const mac_crc_indication_message& msg) override;
-
-  void handle_uci(du_cell_index_t cell_idx, const mac_uci_indication_message& msg) override;
-
   /// \brief Forward to scheduler an RLC DL buffer state update.
-  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
+  void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 
   void handle_paging_information(const paging_information& msg) override;
 
@@ -66,8 +62,13 @@ public:
     return cell_handlers[cell_index];
   }
 
+  mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) override
+  {
+    return cell_handlers[cell_index];
+  }
+
 private:
-  class cell_handler final : public mac_cell_rach_handler
+  class cell_handler final : public mac_cell_rach_handler, public mac_cell_control_information_handler
   {
   public:
     cell_handler() = default;
@@ -76,6 +77,10 @@ private:
     }
 
     void handle_rach_indication(const mac_rach_indication& rach_ind) override;
+
+    void handle_crc(const mac_crc_indication_message& msg) override;
+
+    void handle_uci(const mac_uci_indication_message& msg) override;
 
   private:
     du_cell_index_t           cell_idx = INVALID_DU_CELL_INDEX;

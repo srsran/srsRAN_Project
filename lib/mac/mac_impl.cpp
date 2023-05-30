@@ -9,7 +9,7 @@
  */
 
 #include "mac_impl.h"
-#include "srsran_scheduler_adapter.h"
+#include "mac_sched/srsran_scheduler_adapter.h"
 
 namespace srsran {
 

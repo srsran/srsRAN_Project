@@ -53,7 +53,7 @@ public:
   mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override;
 
 private:
-  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override;
+  void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override;
 
   // mac_ue_configurator interface.
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg) override;

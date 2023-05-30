@@ -25,9 +25,7 @@
 
 namespace srsran {
 
-class mac_cell_processor final : public mac_cell_slot_handler,
-                                 public mac_cell_controller,
-                                 public mac_cell_control_information_handler
+class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
   mac_cell_processor(const mac_cell_creation_request& cell_cfg_req,
@@ -46,10 +44,6 @@ public:
   async_task<void> stop() override;
 
   void handle_slot_indication(slot_point sl_tx) override;
-
-  void handle_crc(const mac_crc_indication_message& msg) override;
-
-  void handle_uci(const mac_uci_indication_message& msg) override;
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);

@@ -74,18 +74,6 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
   }
 }
 
-void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
-{
-  // Forward CRC indication to the scheduler.
-  sched.handle_crc_info(cell_cfg.cell_index, msg);
-}
-
-void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
-{
-  // Forward UCI indication to the scheduler.
-  sched.handle_uci(cell_cfg.cell_index, msg);
-}
-
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
   // * Start of Critical Path * //
@@ -299,7 +287,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
           // Update DL buffer state for the allocated logical channel.
           mac_dl_buffer_state_indication_message bs{
               ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), bearer->on_buffer_state_update()};
-          sched.handle_dl_buffer_state_update_required(bs);
+          sched.handle_dl_buffer_state_update(bs);
         }
       }
     }

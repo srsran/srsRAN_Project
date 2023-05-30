@@ -25,10 +25,6 @@ class mac_scheduler_cell_info_handler : public mac_ue_control_information_handle
 public:
   virtual ~mac_scheduler_cell_info_handler() = default;
 
-  virtual void handle_crc_info(du_cell_index_t cell_idx, const mac_crc_indication_message& msg) = 0;
-
-  virtual void handle_uci(du_cell_index_t cell_idx, const mac_uci_indication_message& msg) = 0;
-
   virtual const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) = 0;
 };
 

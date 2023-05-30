@@ -14,9 +14,9 @@
 #include "mac_ctrl/mac_controller.h"
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_dl/rlf_detector.h"
-#include "mac_scheduler_adapter.h"
+#include "mac_sched/mac_scheduler_adapter.h"
+#include "mac_sched/rnti_manager.h"
 #include "mac_ul/mac_ul_processor.h"
-#include "rnti_manager.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_config.h"
 
@@ -36,7 +36,7 @@ public:
 
   mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override
   {
-    return dl_unit.get_cell_control_information_handler(cell_index);
+    return mac_sched->get_cell_control_info_handler(cell_index);
   }
 
   mac_ue_control_information_handler& get_ue_control_info_handler() override { return *mac_sched; }

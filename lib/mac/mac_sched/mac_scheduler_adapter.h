@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "mac_ctrl/mac_scheduler_configurator.h"
-#include "mac_dl/mac_scheduler_cell_info_handler.h"
-#include "mac_ul/mac_scheduler_ul_buffer_state_updater.h"
+#include "../mac_ctrl/mac_scheduler_configurator.h"
+#include "../mac_dl/mac_scheduler_cell_info_handler.h"
+#include "../mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 
 namespace srsran {
 
@@ -27,6 +27,9 @@ public:
 
   /// \brief Gets the RACH handler for a given cell.
   virtual mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) = 0;
+
+  /// \brief Gets the control info handler for a given cell.
+  virtual mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran

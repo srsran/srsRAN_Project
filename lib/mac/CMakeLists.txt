@@ -24,7 +24,7 @@ set(SOURCES mac_factory.cpp
             mac_ul/ul_bsr.cpp
             mac_ul/pdu_rx_handler.cpp
             mac_ul/mac_ul_ue_manager.cpp
-            srsran_scheduler_adapter.cpp)
+        mac_sched/srsran_scheduler_adapter.cpp)
 
 add_library(srsran_mac STATIC ${SOURCES})
 target_link_libraries(srsran_mac srsran_sched mac_configuration_helpers srsran_ran srsran_pcap rrc_nr_asn1)

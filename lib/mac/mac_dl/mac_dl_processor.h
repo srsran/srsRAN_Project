@@ -63,13 +63,6 @@ public:
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) { return *cells[cell_index]; }
 
-  mac_cell_control_information_handler& get_cell_control_information_handler(du_cell_index_t cell_index)
-  {
-    srsran_assert(cells[cell_index], "Cell index does not exist");
-
-    return *cells[cell_index];
-  }
-
 private:
   mac_dl_config cfg;
 

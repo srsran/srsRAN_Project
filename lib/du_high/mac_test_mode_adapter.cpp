@@ -144,14 +144,14 @@ mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_ha
   return *cell_info_handler[cell_index];
 }
 
-void mac_test_mode_adapter::handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs)
+void mac_test_mode_adapter::handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs)
 {
   mac_dl_buffer_state_indication_message dl_bs_copy = dl_bs;
   if (test_ue_index == dl_bs.ue_index and test_ue.pdsch_active) {
     // It is the test UE. Set a positive DL buffer state if PDSCH is set to "activated".
     dl_bs_copy.bs = TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE;
   }
-  mac_adapted->get_ue_control_info_handler().handle_dl_buffer_state_update_required(dl_bs_copy);
+  mac_adapted->get_ue_control_info_handler().handle_dl_buffer_state_update(dl_bs_copy);
 }
 
 std::vector<mac_logical_channel_config>
@@ -196,7 +196,7 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
 
       if (test_ue.pdsch_active) {
         // Update DL buffer state automatically.
-        handle_dl_buffer_state_update_required({ret.ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
+        handle_dl_buffer_state_update({ret.ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
       }
 
       if (test_ue.pusch_active) {
