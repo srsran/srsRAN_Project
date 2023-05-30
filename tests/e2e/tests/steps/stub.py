@@ -121,11 +121,13 @@ def ue_start_and_attach(
     for ue_stub, task in ue_attach_task_dict.items():
         task.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_attached_ue(_task, _ue_stub))
 
-    try:
-        ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {}
+    with suppress(grpc.RpcError):
+        ue_attach_info_dict = {
             ue_stub: task.result() for ue_stub, task in ue_attach_task_dict.items()  # Waiting for attach
         }
-    except grpc.RpcError:
+
+    if not ue_attach_info_dict:
         pytest.fail("Attach timeout reached")
 
     return ue_attach_info_dict

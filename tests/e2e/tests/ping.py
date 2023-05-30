@@ -10,7 +10,6 @@
 Test ping
 """
 import logging
-from contextlib import suppress
 from typing import Optional, Sequence, Union
 
 import grpc
@@ -144,8 +143,8 @@ def test_zmq_valgrind(
     - Ignore if the ping fails or ue can't attach
     - Fails only if ue/gnb/epc crashes
     """
-
-    with suppress(grpc.RpcError, AssertionError, Failed):
+    try:
+        gnb_stop_timeout = 60
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
@@ -161,8 +160,11 @@ def test_zmq_valgrind(
             log_search=False,
             always_download_artifacts=True,
             pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=yes --error-exitcode=22",
-            gnb_stop_timeout=60,
+            gnb_stop_timeout=gnb_stop_timeout,
         )
+    except (grpc.RpcError, AssertionError, Failed):
+        stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout)
+        raise
 
 
 @mark.parametrize(
@@ -231,7 +233,7 @@ def test_rf_does_not_crash(
     - Fails only if ue/gnb/epc crashes
     """
 
-    with suppress(grpc.RpcError, AssertionError, Failed):
+    try:
         _ping(
             retina_manager=retina_manager,
             retina_data=retina_data,
@@ -247,6 +249,9 @@ def test_rf_does_not_crash(
             log_search=False,
             always_download_artifacts=True,
         )
+    except (grpc.RpcError, AssertionError, Failed):
+        stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data)
+        raise
 
 
 # pylint: disable=too-many-arguments, too-many-locals
