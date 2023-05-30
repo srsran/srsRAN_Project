@@ -174,7 +174,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
     qos_params.qos_characteristics.non_dyn_5qi.emplace();
     qos_params.qos_characteristics.non_dyn_5qi.value().five_qi    = five_qi;
     qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
-    qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+    qos_params.alloc_and_retention_prio.pre_emption_cap           = "shall-not-trigger-pre-emption";
     qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
     // Add flow
