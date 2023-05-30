@@ -115,14 +115,15 @@ update_headers() {
 
 main() {
     # Check number of args
-    if (($# != 2)); then
+    if [ $# != 2 ] && [ $# != 3 ]; then
         echo >&2 "Please call script with source branch and target branch as argument"
-        echo >&2 "E.g. ./auto_merge.sh <source_branch> <target_branch>"
+        echo >&2 "E.g. ./auto_merge.sh <source_branch> <target_branch> [dryrun]"
         exit 1
     fi
 
     local source_branch=$1
     local target_branch=$2
+    local mode="${3:-push}"
 
     # Checkout target branch
     git fetch -q origin "$target_branch"
@@ -151,7 +152,9 @@ main() {
     git commit -a -m "Adding AGPL copyright to new files"
 
     # Push
-    git push origin "$target_branch"
+    if [ "$mode" = "push" ]; then
+        git push origin "$target_branch"
+    fi
 }
 
 main "$@"

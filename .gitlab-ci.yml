@@ -371,6 +371,17 @@ promote code:
     - git push
   dependencies: []
 
+update agpl main dryrun:
+  extends: .update agpl main
+  stage: .post
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: always
+      allow_failure: true
+      variables:
+        MODE: "dryrun"
+  needs: []
+
 ################################################################################
 # Enable / Disable pipelines
 ################################################################################

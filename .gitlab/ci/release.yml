@@ -15,15 +15,13 @@ stages:
   - private
   - public
 
-update agpl main:
+.update agpl main:
   stage: private
-  rules:
-    - if: $ON_TAG
-      allow_failure: true
   interruptible: false
   variables:
     GIT_STRATEGY: none
     BRANCH: agpl_main
+    MODE: ""
   image: ubuntu:22.04
   before_script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
@@ -33,7 +31,14 @@ update agpl main:
     - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
     - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
-    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH}
+    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH} ${MODE}
+
+update agpl main:
+  extends: .update agpl main
+  rules:
+    - if: $ON_TAG
+      variables:
+        MODE: "push"
 
 generate testvector tar gz:
   stage: private
