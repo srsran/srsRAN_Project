@@ -21,7 +21,7 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
   du_manager_params::ran_params ran_params;
   ran_params.gnb_du_name = "srsgnb";
   ran_params.gnb_du_id   = 1;
-  ran_params.rrc_version = 15;
+  ran_params.rrc_version = 1;
   du_cell_config cell    = config_helpers::make_default_du_cell_config();
   ran_params.cells       = {cell};
   fill_f1_setup_request(request_msg, ran_params);
