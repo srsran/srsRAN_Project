@@ -59,11 +59,13 @@ public:
 
   void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
   {
+    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
   void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
   {
+    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
     du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
   }
 
@@ -267,11 +269,13 @@ public:
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
   }
 
   void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
   {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
     return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(ue_index, old_ue_index);
   }
 
