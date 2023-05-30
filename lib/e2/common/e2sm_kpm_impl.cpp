@@ -46,6 +46,14 @@ bool e2sm_kpm_impl::check_measurement_name(meas_type_c meas_type, const char* me
   return false;
 }
 
+void e2sm_kpm_impl::add_matching_condition_item(const char*            name,
+                                                meas_cond_ueid_item_s& cond_ueid_item,
+                                                matching_cond_item_s&  match_cond_item)
+{
+  cond_ueid_item.meas_type.set_meas_name().from_string(name);
+  cond_ueid_item.matching_cond.push_back(match_cond_item);
+}
+
 void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def)
 {
   auto action_type = action_def.action_definition_formats.type().value;
@@ -59,9 +67,9 @@ void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_d
       logger.warning("Action type 2 not supported yet");
       break;
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
-        action_definition_format3: {
+        action_definition_format3:
       handle_action_definition_format3(action_def.action_definition_formats.action_definition_format3());
-    } break;
+      break;
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format4:
       logger.warning("Action type 4 not supported yet");
@@ -78,49 +86,51 @@ void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_d
 
 void e2sm_kpm_impl::handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def)
 {
-  // Used to carry UE-level measurement report for a group of UEs per measurement type matching subscribed conditions
-  // from a target E2 Node
+  // Create an RIC indication message with format 2
   ric_ind_message.ind_msg_formats.set_ind_msg_format2();
+
+  // Set the granularity period
   ric_ind_message.ind_msg_formats.ind_msg_format2().granul_period_present = true;
   ric_ind_message.ind_msg_formats.ind_msg_format2().granul_period         = action_def.granul_period;
-  scheduler_ue_metrics ue_metrics                                         = {};
+
+  // Get UE metrics from the DU metrics interface
+  scheduler_ue_metrics ue_metrics = {};
   du_metrics_interface.get_metrics(ue_metrics);
+
+  // Resize the measurement data and measurement condition UE ID lists to the number of UEs
   size_t num_ues = 1; // TODO get number of UEs from DU
   ric_ind_message.ind_msg_formats.ind_msg_format2().meas_data.resize(num_ues);
   ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list.resize(num_ues);
+
+  // Loop over each UE and each measurement condition in the action definition
   for (unsigned int j = 0; j < num_ues; j++) {
     auto& meas_cond_list = action_def.meas_cond_list;
     for (auto& meas_cond : meas_cond_list) {
+      // Check the measurement name and add a matching condition item to the UE's measurement condition UE ID list
       if (check_measurement_name(meas_cond.meas_type, "CQI")) {
         matching_cond_item_s match_cond_item;
         match_cond_item.matching_cond_choice.set_test_cond_info();
         match_cond_item.matching_cond_choice.test_cond_info().test_type.set_cqi();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.cqi;
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].meas_type.set_meas_name().from_string(
-            "CQI");
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].matching_cond.push_back(
-            match_cond_item);
+        add_matching_condition_item(
+            "CQI", ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j], match_cond_item);
       } else if (check_measurement_name(meas_cond.meas_type, "RSRP")) {
         matching_cond_item_s match_cond_item;
         match_cond_item.matching_cond_choice.set_test_cond_info();
         match_cond_item.matching_cond_choice.test_cond_info().test_type.set_rsrp();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.pusch_snr_db;
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].meas_type.set_meas_name().from_string(
-            "RSRP");
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].matching_cond.push_back(
-            match_cond_item);
+        add_matching_condition_item(
+            "RSRP", ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j], match_cond_item);
       } else if (check_measurement_name(meas_cond.meas_type, "RSRQ")) {
         matching_cond_item_s match_cond_item;
         match_cond_item.matching_cond_choice.set_test_cond_info();
         match_cond_item.matching_cond_choice.test_cond_info().test_type.set_rsrq();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.set_value_int();
         match_cond_item.matching_cond_choice.test_cond_info().test_value.value_int() = ue_metrics.pusch_snr_db;
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].meas_type.set_meas_name().from_string(
-            "RSRQ");
-        ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j].matching_cond.push_back(
-            match_cond_item);
+        add_matching_condition_item(
+            "RSRQ", ric_ind_message.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list[j], match_cond_item);
       } else {
         logger.error("Unknown meas type %s", meas_cond.meas_type.meas_name().to_string().c_str());
       }
