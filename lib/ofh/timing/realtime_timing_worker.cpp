@@ -145,7 +145,7 @@ void realtime_timing_worker::poll()
 
   // Check if we have missed more than one symbol.
   if (delta > 1) {
-    logger.warning("Realtime timing worker late, skipped {} symbols", delta);
+    logger.warning("Real-time timing worker late, skipped {} symbols", delta);
     return;
   }
 
