@@ -9,7 +9,6 @@
  */
 
 #include "rrc_reestablishment_procedure.h"
-#include "../rrc_asn1_helpers.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -18,15 +17,24 @@ using namespace asn1::rrc_nr;
 rrc_reestablishment_procedure::rrc_reestablishment_procedure(rrc_ue_context_t&                     context_,
                                                              const ue_index_t                      old_ue_index_,
                                                              rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
-                                                             rrc_ue_event_manager&                 event_mng_,
-                                                             srslog::basic_logger&                 logger_) :
-  context(context_), old_ue_index(old_ue_index_), rrc_ue(rrc_ue_notifier_), event_mng(event_mng_), logger(logger_)
+                                                             rrc_ue_du_processor_notifier& du_processor_notifier_,
+                                                             rrc_ue_event_manager&         event_mng_,
+                                                             srslog::basic_logger&         logger_) :
+  context(context_),
+  old_ue_index(old_ue_index_),
+  rrc_ue(rrc_ue_notifier_),
+  du_processor_notifier(du_processor_notifier_),
+  event_mng(event_mng_),
+  logger(logger_)
 {
 }
 
 void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
+
+  // create SRB1
+  create_srb1();
 
   // create new transaction for RRC Reestablishment
   transaction = event_mng.transactions.create_transaction(rrc_reest_timeout_ms);
@@ -47,6 +55,16 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   }
 
   CORO_RETURN();
+}
+
+void rrc_reestablishment_procedure::create_srb1()
+{
+  // create SRB1
+  srb_creation_message srb1_msg{};
+  srb1_msg.ue_index = context.ue_index;
+  srb1_msg.srb_id   = srb_id_t::srb1;
+  srb1_msg.pdcp_cfg = srb1_pdcp_cfg;
+  du_processor_notifier.on_create_srb(srb1_msg);
 }
 
 void rrc_reestablishment_procedure::send_rrc_reestablishment()
