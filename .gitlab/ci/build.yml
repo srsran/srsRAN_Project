@@ -152,6 +152,7 @@ pull_src_cache:
     SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
   needs:
     - job: pull_src_cache
       artifacts: false
@@ -363,6 +364,7 @@ smoke release cached:
   extends: .smoke release
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -376,6 +378,7 @@ smoke tsan cached:
   extends: .smoke tsan
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
     MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
@@ -390,6 +393,7 @@ smoke rhel cached:
   extends: .smoke rhel
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -403,6 +407,7 @@ smoke archlinux cached:
   extends: .smoke archlinux
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -459,6 +464,7 @@ intermediate commits:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
     MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
@@ -614,6 +620,7 @@ package:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
     KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
   tags:
     - ${INFRASTRUCTURE_TAG}
