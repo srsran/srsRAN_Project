@@ -75,5 +75,5 @@ void rrc_reconfiguration_procedure::send_rrc_reconfiguration()
   dl_dcch_msg.msg.set_c1().set_rrc_recfg();
   rrc_recfg_s& rrc_reconfig = dl_dcch_msg.msg.c1().rrc_recfg();
   fill_asn1_rrc_reconfiguration_msg(rrc_reconfig, transaction.id(), args);
-  rrc_ue.on_new_dl_dcch(dl_dcch_msg);
+  rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
 }

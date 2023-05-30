@@ -18,7 +18,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-/// Fixture class RRC Reconfiguration tests preparation (to bring UE in RRC connected state)
+/// Fixture class RRC DL info transfer tests preparation (to bring UE in RRC connected state)
 class rrc_ue_dl_info_transfer : public rrc_ue_test_helper, public ::testing::Test
 {
 protected:

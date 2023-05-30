@@ -242,7 +242,11 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   dl_info_transfer.ded_nas_msg.resize(msg.nas_pdu.length());
   std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), dl_info_transfer.ded_nas_msg.begin());
 
-  send_dl_dcch(dl_dcch_msg);
+  if (srbs[srb_id_to_uint(srb_id_t::srb2)].pdu_notifier != nullptr) {
+    send_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
+  } else {
+    send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  }
 }
 
 void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint8_t transaction_id_)
@@ -277,7 +281,7 @@ cu_cp_user_location_info_nr rrc_ue_impl::handle_rrc_ue_release()
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
-  send_dl_dcch(dl_dcch_msg);
+  send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
 
   return user_location_info;
 }

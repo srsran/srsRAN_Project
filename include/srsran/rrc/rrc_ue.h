@@ -119,7 +119,7 @@ public:
 
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
-  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
+  virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request(const cause_t& cause) = 0;
@@ -135,7 +135,7 @@ public:
 
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
-  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
+  virtual void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) = 0;
 
   /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request(const cause_t& cause) = 0;
@@ -156,7 +156,8 @@ public:
   /// \brief Notify about a DL DCCH message.
   /// \param[in] dl_dcch_msg The DL DCCH message.
   /// \param[in] ue_index The old index of the UE.
-  virtual void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index) = 0;
+  virtual void
+  on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index) = 0;
 
   /// \brief Notify about the need to delete a UE.
   virtual void on_ue_delete_request(const cause_t& cause) = 0;

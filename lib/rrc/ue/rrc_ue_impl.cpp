@@ -62,14 +62,16 @@ void rrc_ue_impl::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
   send_dl_ccch(dl_ccch_msg);
 }
 
-void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
+void rrc_ue_impl::on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
 {
-  send_dl_dcch(dl_dcch_msg);
+  send_dl_dcch(srb_id, dl_dcch_msg);
 }
 
-void rrc_ue_impl::on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index)
+void rrc_ue_impl::on_new_dl_dcch(srb_id_t                           srb_id,
+                                 const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg,
+                                 ue_index_t                         old_ue_index)
 {
-  send_dl_dcch(dl_dcch_msg, old_ue_index);
+  send_dl_dcch(srb_id, dl_dcch_msg, old_ue_index);
 }
 
 void rrc_ue_impl::on_new_as_security_context()

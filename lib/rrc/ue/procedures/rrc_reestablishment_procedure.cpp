@@ -57,5 +57,5 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
   rrc_reest.rrc_transaction_id = transaction.id();
   rrc_reest.crit_exts.set_rrc_reest();
 
-  rrc_ue.on_new_dl_dcch(dl_dcch_msg, old_ue_index);
+  rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg, old_ue_index);
 }

@@ -107,5 +107,5 @@ void rrc_security_mode_command_procedure::send_rrc_security_mode_command()
   security_mode_cmd_s& rrc_smc = dl_dcch_msg.msg.c1().security_mode_cmd();
   fill_asn1_rrc_smc_msg(
       rrc_smc, context.sec_context.sel_algos.integ_algo, context.sec_context.sel_algos.cipher_algo, transaction.id());
-  rrc_ue.on_new_dl_dcch(dl_dcch_msg);
+  rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
 }
