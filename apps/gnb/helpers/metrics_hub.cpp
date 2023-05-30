@@ -26,7 +26,7 @@ void metrics_hub::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
     }
   });
 }
-void metrics_hub::add_subscriber(scheduler_ue_metrics_notifier* subscriber)
+void metrics_hub::add_subscriber(scheduler_ue_metrics_notifier& subscriber)
 {
-  subscribers.push_back(subscriber);
+  subscribers.push_back(&subscriber);
 }
