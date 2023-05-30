@@ -669,10 +669,10 @@ int main(int argc, char** argv)
       std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
+  std::unique_ptr<sctp_network_gateway> sctp_gateway = {};
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
-    std::unique_ptr<sctp_network_gateway> sctp_gateway =
-        create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
+    sctp_gateway = create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
 
     // Connect NGAP adapter to SCTP network gateway.
     ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
