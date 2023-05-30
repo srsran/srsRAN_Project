@@ -139,7 +139,7 @@ mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_ha
   }
   if (cell_info_handler[cell_index] == nullptr) {
     cell_info_handler[cell_index] = std::make_unique<test_cell_adapter>(
-        test_ue, mac_adapted->get_control_info_handler(cell_index), mac_adapted->get_pdu_handler(cell_index));
+        test_ue, mac_adapted->get_control_info_handler(cell_index), mac_adapted->get_pdu_handler());
   }
   return *cell_info_handler[cell_index];
 }
@@ -201,8 +201,8 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
 
       if (test_ue.pusch_active) {
         // In case of PUSCH test mode is enabled, push a BSR.
-        mac_adapted->get_pdu_handler(cfg_adapted.cell_index)
-            .handle_rx_data_indication(create_test_pdu_with_bsr(slot_point{0, 0}, test_ue.rnti, to_harq_id(0)));
+        mac_adapted->get_pdu_handler().handle_rx_data_indication(
+            create_test_pdu_with_bsr(slot_point{0, 0}, test_ue.rnti, to_harq_id(0)));
       }
     }
     CORO_RETURN(ret);

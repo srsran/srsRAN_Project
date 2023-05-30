@@ -778,7 +778,7 @@ int main(int argc, char** argv)
   du_cell_index_t cell_id = to_du_cell_index(0);
   mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(cell_id));
   mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(cell_id));
-  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
+  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler());
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
   // Start processing.

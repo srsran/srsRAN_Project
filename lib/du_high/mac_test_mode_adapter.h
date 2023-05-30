@@ -38,10 +38,7 @@ public:
 
   mac_ue_control_information_handler& get_ue_control_info_handler() override { return *this; }
 
-  mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override
-  {
-    return mac_adapted->get_pdu_handler(cell_index);
-  }
+  mac_pdu_handler& get_pdu_handler() override { return mac_adapted->get_pdu_handler(); }
 
   mac_paging_information_handler& get_cell_paging_info_handler() override
   {

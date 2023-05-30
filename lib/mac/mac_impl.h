@@ -48,7 +48,7 @@ public:
 
   mac_cell_manager& get_cell_manager() override { return ctrl_unit; }
 
-  mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
+  mac_pdu_handler& get_pdu_handler() override { return ul_unit; }
 
   mac_paging_information_handler& get_cell_paging_info_handler() override { return *mac_sched; }
 
