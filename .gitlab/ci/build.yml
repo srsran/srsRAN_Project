@@ -164,6 +164,7 @@ pull_src_cache:
     - git reset --hard $CI_COMMIT_SHA
     - |
       build_srsgnb() {
+        BUILD_ARGS=""
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
