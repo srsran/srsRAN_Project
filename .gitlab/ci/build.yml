@@ -212,6 +212,9 @@ pull_src_cache:
         if [ -n "${MAKE_ARGS}" ]; then
           BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
         fi
+        if [ -n "${CLEAN_BUILD}" ]; then
+          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
+        fi
 
         BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
         echo "${BUILD_CMD}"
@@ -505,6 +508,7 @@ valgrind (changed):
     INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    CLEAN_BUILD: "False"
     TEST_MODE: valgrind
     KUBERNETES_MEMORY_REQUEST: 7Gi
     MAKE_ARGS: ""
