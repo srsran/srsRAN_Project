@@ -507,7 +507,7 @@ intermediate commits:
     - *cache_src_get
     - *cache_build_get
 
-valgrind (changed):
+valgrind changed tests:
   extends: .build_and_unit
   rules:
     - if: $ON_MR
