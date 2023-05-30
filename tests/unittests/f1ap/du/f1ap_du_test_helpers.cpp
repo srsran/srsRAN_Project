@@ -154,13 +154,6 @@ f1ap_message srsran::srs_du::generate_ue_context_release_command()
   return msg;
 }
 
-bool srsran::srs_du::is_f1ap_pdu_packable(const asn1::f1ap::f1ap_pdu_c& pdu)
-{
-  byte_buffer   buffer;
-  asn1::bit_ref bref(buffer);
-  return pdu.pack(bref) == asn1::SRSASN_SUCCESS;
-}
-
 //////////////////////////////////
 
 f1ap_du_test::f1ap_du_test()

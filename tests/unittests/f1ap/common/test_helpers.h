@@ -18,6 +18,13 @@
 
 namespace srsran {
 
+inline bool is_f1ap_pdu_packable(const asn1::f1ap::f1ap_pdu_c& pdu)
+{
+  byte_buffer   buffer;
+  asn1::bit_ref bref(buffer);
+  return pdu.pack(bref) == asn1::SRSASN_SUCCESS;
+}
+
 class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
 {
 public:
@@ -141,6 +148,9 @@ public:
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
     test_logger.info("Received PDU");
     last_f1ap_msg = msg;
+    if (not is_f1ap_pdu_packable(msg.pdu)) {
+      report_fatal_error("Output F1AP message is not packable");
+    }
   }
 };
 
@@ -185,6 +195,9 @@ public:
   {
     last_msg = msg;
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
+    if (not is_f1ap_pdu_packable(msg.pdu)) {
+      report_fatal_error("Output F1AP message is not packable");
+    }
   }
 
   f1ap_message last_msg;
