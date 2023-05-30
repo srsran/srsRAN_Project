@@ -253,7 +253,15 @@ bool srsran::srs_cu_cp::update_modify_list(
         return false;
       }
 
-      // TODO: add DRB verification
+      // Verify DRB is present in calculated config.
+      if (next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.find(e1ap_drb_item.drb_id) ==
+          next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.end()) {
+        logger.error("Couldn't find configuration for DRB {}", e1ap_drb_item.drb_id);
+        return false;
+      }
+
+      auto& next_config_drb_cfg =
+          next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.at(e1ap_drb_item.drb_id);
 
       item.transfer.qos_flow_add_or_modify_response_list.emplace();
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
@@ -275,22 +283,19 @@ bool srsran::srs_cu_cp::update_modify_list(
       // Fill UE context modification for DU
       {
         cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id = e1ap_drb_item.drb_id;
+        drb_setup_mod_item.drb_id           = e1ap_drb_item.drb_id;
+        drb_setup_mod_item.qos_info.drb_qos = next_config_drb_cfg.qos_params;
 
-        // Add qos info
+        // Add qos flows info
         for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
-          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics =
+          // Add mapped flows and extract required QoS info from original NGAP request
+          cu_cp_flows_mapped_to_drb_item mapped_flow_item;
+          mapped_flow_item.qos_flow_id = e1ap_flow.qos_flow_id;
+          mapped_flow_item.qos_flow_level_qos_params =
               ngap_modify_list[e1ap_item.pdu_session_id]
                   .transfer.qos_flow_add_or_modify_request_list[e1ap_flow.qos_flow_id]
-                  .qos_flow_level_qos_params.qos_characteristics;
-
-          non_dyn_5qi_descriptor_t non_dyn_5qi;
-          non_dyn_5qi.five_qi = ngap_modify_list[e1ap_item.pdu_session_id]
-                                    .transfer.qos_flow_add_or_modify_request_list[e1ap_flow.qos_flow_id]
-                                    .qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value()
-                                    .five_qi;
-
-          drb_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+                  .qos_flow_level_qos_params;
+          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
         }
 
         // Add up tnl info
