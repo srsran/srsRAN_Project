@@ -11,7 +11,3 @@ add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(equalization)
 add_subdirectory(precoding)
-
-add_executable(downlink_processor_benchmark downlink_processor_benchmark.cpp)
-target_link_libraries(downlink_processor_benchmark srsran_upper_phy srsvec srslog)
-add_test(downlink_processor_benchmark downlink_processor_benchmark -s -R 1)
