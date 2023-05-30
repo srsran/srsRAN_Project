@@ -88,8 +88,9 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     setup_req->gnb_du_served_cells_list.value[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
     gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
 
-    // Fill Served PLMNs (TODO)
+    // Fill Served PLMNs
     f1ap_cell.served_cell_info.served_plmns.resize(1);
+    f1ap_cell.served_cell_info.served_plmns[0].plmn_id.from_number(plmn_string_to_bcd(cell_cfg.nr_cgi.plmn));
 
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg.pci;
