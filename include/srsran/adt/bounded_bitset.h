@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
@@ -253,6 +254,10 @@ int count_ones(Integer value)
 /// fmt::print("{:x}", a); // prints "1".
 /// fmt::print("{:b}", b); // prints "01000".
 /// fmt::print("{:x}", b); // prints "8".
+///
+/// However, it does not affect the information bit position string representation, e.g.
+/// fmt::print("{:n}", a); // prints "0".
+/// fmt::print("{:n}", b); // prints "1".
 ///
 /// \tparam N Upper bound for bitset size in number of bits.
 /// \tparam LowestInfoBitIsMSB Bit index order in memory. If set to (false / true), the bit index 0 (Lowest Information
@@ -700,7 +705,7 @@ public:
     assert_range_bounds_(startpos, endpos);
 
     if (LowestInfoBitIsMSB) {
-      int ret = find_first_(startpos, endpos, value);
+      int ret = find_first_(size() - endpos, size() - startpos, value);
       if (ret == -1) {
         return ret;
       }
@@ -774,7 +779,7 @@ public:
       value_count = size() - value_count;
     }
 
-    // Condition 3. The number of elements must match with the star to end number of elements.
+    // Condition 3. The number of elements must match with the start to end number of elements.
     return (value_count == static_cast<size_t>((endpos + 1) - startpos));
   }
 
@@ -1126,19 +1131,33 @@ private:
     return false;
   }
 
-  /// \brief Generates a list of bit positions corresponding to the information bits set to one.
+  /// \brief Generates a list of bit positions corresponding to the information bits set to one or zero.
   ///
   /// The bit positions correspond to the location of each bit within the information bit word stored in the bitset,
   /// regardless of the bit index order in memory given by \ref LowestInfoBitIsMSB.
   ///
-  /// \param[in,out] positions Vector used to store the bit positions.
-  void get_bit_positions(std::vector<unsigned>& positions) const
+  /// \param[in] value Selects the bits whose positions are returned. Set to \c true to find ones, \c false for zeros.
+  /// \return A list containing the bit positions.
+  static_vector<size_t, N> get_bit_positions(bool value = true) const
   {
-    for (size_t i = 0; i != size(); ++i) {
-      if (test(i)) {
-        positions.emplace_back(i);
+    static_vector<size_t, N> positions;
+
+    size_t i_bit = 0;
+    while (i_bit < size()) {
+      // Find the next bit position of the bit set to value.
+      int next_position = find_lowest(i_bit, size(), value);
+      if (next_position < 0) {
+        break;
       }
+
+      // If a bit was found, add to the list.
+      positions.emplace_back(static_cast<size_t>(next_position));
+
+      // Exclude the evaluated bit range from the next search.
+      i_bit = next_position + 1;
     }
+
+    return positions;
   }
 
   /// \brief Formatting helper to convert bitset to string of bits.
@@ -1337,10 +1356,9 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
 
       } else {
         // Format as a list of bit positions.
-        std::vector<unsigned> bit_pos;
-        s.get_bit_positions(bit_pos);
+        srsran::static_vector<size_t, N> bit_pos = s.get_bit_positions();
 
-        fmt::format_to(ctx.out(), "{}", srsran::span<unsigned>(bit_pos));
+        fmt::format_to(ctx.out(), "{}", srsran::span<size_t>(bit_pos));
       }
       return ctx.out();
     }
