@@ -28,6 +28,7 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
+  ASSERT_TRUE(is_f1ap_pdu_packable(msg_notifier.last_f1ap_msg.pdu));
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());

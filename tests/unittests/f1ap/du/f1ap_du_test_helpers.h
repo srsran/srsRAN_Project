@@ -153,6 +153,8 @@ private:
   mac_paging_information_handler* mac;
 };
 
+bool is_f1ap_pdu_packable(const asn1::f1ap::f1ap_pdu_c& pdu);
+
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
