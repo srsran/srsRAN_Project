@@ -52,7 +52,7 @@ generate testvector tar gz:
   artifacts:
     paths:
       - phy_testvectors.tar.gz
-    expire_in: "7 days"
+    expire_in: "30 days"
 
 coverity-agpl:
   extends: .coverity_base
