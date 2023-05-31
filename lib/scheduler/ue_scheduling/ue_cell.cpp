@@ -103,7 +103,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg);
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg, get_nof_layers_ul());
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");

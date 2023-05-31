@@ -59,7 +59,8 @@ pdsch_config_params get_pdsch_config_f1_0_c_rnti(const ue_cell_configuration&   
 ///
 /// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
+                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                 unsigned                                     nof_layers);
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 ///
@@ -78,7 +79,8 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&   
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
 pusch_config_params get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg);
+                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                 unsigned                                     nof_layers);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by SI-RNTI.
 void build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,

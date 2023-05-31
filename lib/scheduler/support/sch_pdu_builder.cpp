@@ -83,12 +83,11 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const ue_cell_configura
 }
 
 pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                         unsigned                                     nof_layers)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
-  // TODO: Set appropriate nof. layers supported bu gNB and UE.
-  static constexpr unsigned nof_layers = 1;
 
   pdsch_config_params pdsch;
 
@@ -206,11 +205,10 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
 }
 
 pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg)
+                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                         unsigned                                     nof_layers)
 {
   const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
-  // TODO: Set appropriate nof. layers supported bu gNB and UE.
-  constexpr unsigned nof_layers = 1;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   constexpr unsigned tb_scaling_field = 0;

@@ -87,6 +87,14 @@ public:
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
+  /// \brief Fetches number of layers to be used in DL based on reported PMI.
+  // TODO: Adapt nof. layers returned based on reported PMI.
+  unsigned get_nof_layers_dl() const { return 1; }
+
+  /// \brief Fetches number of layers to be used in UL based on reported PMI.
+  // TODO: Adapt nof. layers returned based on reported PMI.
+  unsigned get_nof_layers_ul() const { return 1; }
+
   /// \brief Get the current UE cell metrics.
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
