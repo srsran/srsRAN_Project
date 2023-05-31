@@ -74,8 +74,8 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
 
     // init F1-U logger
-    srslog::fetch_basic_logger("F1-U", false).set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("F1-U", false).set_hex_dump_max_size(100);
+    srslog::fetch_basic_logger("CU-F1-U", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("CU-F1-U", false).set_hex_dump_max_size(100);
 
     // create tester and testee
     logger.info("Creating F1-U bearer");

@@ -582,9 +582,11 @@ int main(int argc, char** argv)
   cu_f1ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1ap_level));
   cu_f1ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  auto& f1u_logger = srslog::fetch_basic_logger("F1-U", false);
-  f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
-  f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  for (const auto& id : {"CU-F1-U", "DU-F1-U"}) {
+    auto& f1u_logger = srslog::fetch_basic_logger(id, false);
+    f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
+    f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
 
   auto& sec_logger = srslog::fetch_basic_logger("SEC", false);
   sec_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sec_level));

@@ -23,7 +23,7 @@ struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_noti
     last_sdu = std::move(sdu);
   }
   byte_buffer_slice_chain last_sdu;
-  srslog::basic_logger&   logger = srslog::fetch_basic_logger("F1-U", false);
+  srslog::basic_logger&   logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
 struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
@@ -35,7 +35,7 @@ struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_del
   {
     logger.info("CU-UP PDCP PDU delivered up to highest_pdcp_sn={}", highest_pdcp_sn);
   }
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
 // dummy DU RX bearer interface
@@ -49,7 +49,7 @@ struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
   byte_buffer last_sdu;
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
 /// Fixture class for F1-U connector tests.
@@ -64,8 +64,10 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
 
     // init logger
-    f1u_logger.set_level(srslog::basic_levels::debug);
-    f1u_logger.set_hex_dump_max_size(100);
+    f1u_logger_cu.set_level(srslog::basic_levels::debug);
+    f1u_logger_du.set_level(srslog::basic_levels::debug);
+    f1u_logger_cu.set_hex_dump_max_size(100);
+    f1u_logger_du.set_hex_dump_max_size(100);
 
     logger.info("Creating F1-U connector");
 
@@ -91,7 +93,8 @@ protected:
   srs_du::f1u_config                   config;
   std::unique_ptr<f1u_local_connector> f1u_conn;
   srslog::basic_logger&                logger     = srslog::fetch_basic_logger("TEST", false);
-  srslog::basic_logger&                f1u_logger = srslog::fetch_basic_logger("F1-U", false);
+  srslog::basic_logger&                f1u_logger_cu = srslog::fetch_basic_logger("CU-F1-U", false);
+  srslog::basic_logger&                f1u_logger_du = srslog::fetch_basic_logger("DU-F1-U", false);
 };
 
 /// Test the instantiation of a new entity

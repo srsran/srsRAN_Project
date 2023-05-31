@@ -26,7 +26,7 @@ public:
   void on_new_pdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("F1-U").warning("Cannot handle NR-U DL message: DU handler not attached.");
+      srslog::fetch_basic_logger("DU-F1-U").warning("Cannot handle NR-U DL message: DU handler not attached.");
       return;
     }
     handler->handle_pdu(std::move(msg));
@@ -56,7 +56,7 @@ public:
   void on_new_pdu(nru_ul_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("F1-U").info("Cannot handle NR-U UL message: CU handler not attached.");
+      srslog::fetch_basic_logger("DU-F1-U").info("Cannot handle NR-U UL message: CU handler not attached.");
       return;
     }
     handler->handle_pdu(std::move(msg));
