@@ -237,9 +237,19 @@ bool srsran::srs_cu_cp::update_modify_list(
       return false;
     }
 
-    cu_cp_pdu_session_resource_modify_response_item item;
-    item.pdu_session_id = e1ap_item.pdu_session_id;
+    if (ngap_response_list.contains(e1ap_item.pdu_session_id)) {
+      // Load existing response item from previous call.
+      logger.debug("Amend to existing NGAP response item for PDU session ID {}", e1ap_item.pdu_session_id);
+    } else {
+      // Add empty new item;
+      cu_cp_pdu_session_resource_modify_response_item new_item;
+      new_item.pdu_session_id = e1ap_item.pdu_session_id;
+      ngap_response_list.emplace(new_item.pdu_session_id, new_item);
+      logger.debug("Insert new NGAP response item for PDU session ID {}", e1ap_item.pdu_session_id);
+    }
 
+    // Start/continue filling response item.
+    cu_cp_pdu_session_resource_modify_response_item& ngap_item = ngap_response_list[e1ap_item.pdu_session_id];
     for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
       // Catch implementation limitations.
       if (!e1ap_drb_item.flow_failed_list.empty()) {
@@ -263,7 +273,18 @@ bool srsran::srs_cu_cp::update_modify_list(
       auto& next_config_drb_cfg =
           next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.at(e1ap_drb_item.drb_id);
 
-      item.transfer.qos_flow_add_or_modify_response_list.emplace();
+      // Prepare DRB creation at DU.
+      cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      drb_setup_mod_item.drb_id           = e1ap_drb_item.drb_id;
+      drb_setup_mod_item.qos_info.drb_qos = next_config_drb_cfg.qos_params;
+      // Add up tnl info
+      for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
+        drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+      }
+      drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+
+      // Note: don't add the final DRB item yet.
+
       for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
         // Verify the QoS flow ID is present in original setup message.
         if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
@@ -275,19 +296,20 @@ bool srsran::srs_cu_cp::update_modify_list(
           return false;
         }
 
-        qos_flow_add_or_mod_response_item qos_flow;
-        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
-        item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
-      }
+        // Fill added flows in NGAP response.
+        {
+          if (!ngap_item.transfer.qos_flow_add_or_modify_response_list.has_value()) {
+            // Add list if it's not present yet.
+            ngap_item.transfer.qos_flow_add_or_modify_response_list.emplace();
+          }
 
-      // Fill UE context modification for DU
-      {
-        cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
-        drb_setup_mod_item.drb_id           = e1ap_drb_item.drb_id;
-        drb_setup_mod_item.qos_info.drb_qos = next_config_drb_cfg.qos_params;
+          qos_flow_add_or_mod_response_item qos_flow;
+          qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+          ngap_item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
+        }
 
-        // Add qos flows info
-        for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+        // Fill QoS flows for UE context modification.
+        {
           // Add mapped flows and extract required QoS info from original NGAP request
           cu_cp_flows_mapped_to_drb_item mapped_flow_item;
           mapped_flow_item.qos_flow_id = e1ap_flow.qos_flow_id;
@@ -297,17 +319,10 @@ bool srsran::srs_cu_cp::update_modify_list(
                   .qos_flow_level_qos_params;
           drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
         }
-
-        // Add up tnl info
-        for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
-          drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
-        }
-
-        // Add rlc mode
-        drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
-
-        ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
       }
+
+      // Finally add DRB to setup to UE context modifaction.
+      ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
     // Fail on any DRB that fails to be setup
@@ -315,8 +330,6 @@ bool srsran::srs_cu_cp::update_modify_list(
       logger.error("Non-empty DRB failed list not supported");
       return false;
     }
-
-    ngap_response_list.emplace(item.pdu_session_id, item);
   }
 
   return true;

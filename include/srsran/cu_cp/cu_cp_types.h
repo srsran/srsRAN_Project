@@ -374,6 +374,7 @@ struct qos_flow_add_or_mod_response_item {
 };
 
 struct cu_cp_pdu_session_res_modify_response_transfer {
+  std::vector<cu_cp_qos_flow_per_tnl_information>                               add_dl_qos_flow_per_tnl_info;
   optional<slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_response_item>> qos_flow_add_or_modify_response_list;
 };
 
