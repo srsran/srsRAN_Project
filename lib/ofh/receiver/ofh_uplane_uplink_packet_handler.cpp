@@ -96,7 +96,7 @@ bool uplane_uplink_packet_handler::should_ecpri_packet_be_filtered(const ecpri::
 
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if (ecpri_iq_params.pc_id != ru_ul_data_port && ecpri_iq_params.pc_id != ru_prach_port) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eaxC is {}.", ecpri_iq_params.pc_id);
+    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eAxC is {}.", ecpri_iq_params.pc_id);
 
     return true;
   }

@@ -473,7 +473,7 @@ struct ru_ofh_appconfig {
   bool is_prach_control_plane_enabled = false;
   /// \brief Downlink broadcast flag.
   ///
-  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAXCs.
+  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
   bool is_downlink_broadcast_enabled = false;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
