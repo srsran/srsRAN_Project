@@ -24,6 +24,8 @@ static std::unique_ptr<radio_session> build_radio(task_executor&              ex
                                                   radio_configuration::radio& config,
                                                   const std::string&          device_driver)
 {
+  print_available_radio_factories();
+
   std::unique_ptr<radio_factory> factory = create_radio_factory(device_driver);
   if (!factory) {
     return nullptr;

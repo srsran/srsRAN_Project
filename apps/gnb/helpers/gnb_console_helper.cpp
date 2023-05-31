@@ -10,7 +10,6 @@
 
 #include "gnb_console_helper.h"
 #include "string_helpers.h"
-#include "srsran/radio/radio_factory.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/build_info/build_info.h"
@@ -107,7 +106,6 @@ void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 
 void gnb_console_helper::on_app_starting()
 {
-  print_available_radio_factories();
   fmt::print("\n--== srsRAN gNB (commit {}) ==--\n\n", get_build_hash());
 }
 
