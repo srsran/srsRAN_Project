@@ -129,11 +129,10 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
 
 void f1u_bearer_impl::on_expired_ul_notif_timer()
 {
-  logger.log_debug("UL notification timer expired");
   nru_ul_message msg = {};
   fill_data_delivery_status(msg);
   if (msg.data_delivery_status.has_value()) {
-    logger.log_debug("Sending data delivery status");
+    logger.log_debug("Sending data delivery status due to expired UL notification timer");
     tx_pdu_notifier.on_new_pdu(std::move(msg));
   }
 }
