@@ -66,6 +66,9 @@ void rrc_reestablishment_procedure::create_srb1()
   srb1_msg.srb_id   = srb_id_t::srb1;
   srb1_msg.pdcp_cfg = srb1_pdcp_cfg;
   du_processor_notifier.on_create_srb(srb1_msg);
+
+  // activate SRB1 PDCP security
+  rrc_ue.on_new_as_security_context();
 }
 
 void rrc_reestablishment_procedure::send_rrc_reestablishment()

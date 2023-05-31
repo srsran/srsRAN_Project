@@ -241,6 +241,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.c_rnti               = msg.c_rnti;
   rrc_ue_create_msg.cell.cgi             = msg.cgi;
   rrc_ue_create_msg.cell.tac             = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.cell.pci             = cell_db.at(pcell_index).pci;
   rrc_ue_create_msg.meas_time_cfg_packed = cell_db.at(pcell_index).meas_time_cfg.copy();
 
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {

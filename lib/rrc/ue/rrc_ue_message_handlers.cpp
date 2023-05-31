@@ -146,12 +146,15 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
       logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
 
-      // TODO: use SSB ARFCN for HKD:
       uint32_t ssb_arfcn = context.cfg.meas_timing_cfg.crit_exts.c1()
                                .meas_timing_conf()
                                .meas_timing.begin()
                                ->freq_and_timing.carrier_freq;
-      (void)ssb_arfcn;
+      // Update keys
+      context.sec_context = reest_context.sec_context;
+      context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);
+      logger.debug(
+          "ue={} refreshed keys horizontally. pci={} ssb-arfcn={}", context.ue_index, context.cell.pci, ssb_arfcn);
     } else {
       logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
     }
