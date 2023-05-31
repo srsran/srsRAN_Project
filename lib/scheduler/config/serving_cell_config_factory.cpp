@@ -689,9 +689,16 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   // Resource 0.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(0);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
+  if (params.nof_dl_ports == 1) {
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports = 1;
+  } else {
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(6);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports = params.nof_dl_ports;
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.cdm       = csi_rs_cdm_type::fd_CDM2;
+  }
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 2;
   // Resource 1.
@@ -760,7 +767,7 @@ zp_csi_rs_resource srsran::config_helpers::make_default_zp_csi_rs_resource(const
     res.res_mapping.nof_ports = 1;
     res.res_mapping.cdm       = csi_rs_cdm_type::no_CDM;
   } else {
-    res.res_mapping.fd_alloc.resize(3);
+    res.res_mapping.fd_alloc.resize(6);
     res.res_mapping.fd_alloc.set(0, true);
     res.res_mapping.nof_ports = params.nof_dl_ports;
     res.res_mapping.cdm       = csi_rs_cdm_type::fd_CDM2;
