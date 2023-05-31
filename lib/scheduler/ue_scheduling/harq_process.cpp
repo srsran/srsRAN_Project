@@ -344,6 +344,7 @@ void harq_entity::slot_indication(slot_point slot_tx_)
 
 const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai)
 {
+  srsran_assert(dai < 4, "DAI must be in range [0, 3]");
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
