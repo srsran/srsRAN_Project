@@ -92,7 +92,7 @@ protected:
 
   srs_du::f1u_config                   config;
   std::unique_ptr<f1u_local_connector> f1u_conn;
-  srslog::basic_logger&                logger     = srslog::fetch_basic_logger("TEST", false);
+  srslog::basic_logger&                logger        = srslog::fetch_basic_logger("TEST", false);
   srslog::basic_logger&                f1u_logger_cu = srslog::fetch_basic_logger("CU-F1-U", false);
   srslog::basic_logger&                f1u_logger_du = srslog::fetch_basic_logger("DU-F1-U", false);
 };
