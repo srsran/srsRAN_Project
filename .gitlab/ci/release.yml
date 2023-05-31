@@ -54,6 +54,20 @@ generate testvector tar gz:
       - phy_testvectors.tar.gz
     expire_in: "7 days"
 
+coverity-agpl:
+  extends: .coverity_base
+  stage: private
+  rules:
+    - if: $ON_TAG
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G_agpl"
+    - export DESCRIPTION="srsRAN Project AGPL build"
+    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
+  needs:
+    - job: update agpl main
+      optional: false
+      artifacts: false
+
 push:
   stage: public
   rules:

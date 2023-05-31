@@ -184,15 +184,6 @@ coverity-dev:
     - export DESCRIPTION="srsRAN Project dev build"
     - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
 
-coverity-agpl:
-  extends: .coverity_base
-  rules:
-    - if: $CI_DESCRIPTION =~ /AGPL-COVERITY/
-  before_script:
-    - export PROJECT_NAME="srsRAN_5G_agpl"
-    - export DESCRIPTION="srsRAN Project AGPL build"
-    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
-
 e2e tests tox:
   stage: static
   rules:
