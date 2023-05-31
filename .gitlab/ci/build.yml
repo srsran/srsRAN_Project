@@ -510,7 +510,12 @@ intermediate commits:
 valgrind changed tests:
   extends: .build_and_unit
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      allow_failure: true
     - if: $ON_MR
+      when: manual
       allow_failure: true
   variables:
     OS: ubuntu-22.04
