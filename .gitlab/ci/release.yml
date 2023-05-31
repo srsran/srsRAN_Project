@@ -10,6 +10,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/features/all.yml
 
 stages:
   - private
@@ -113,6 +116,21 @@ publish main:
       optional: false
       artifacts: false
 
+notify main published:
+  extends: .notifier
+  stage: public
+  rules:
+    - if: $ON_TAG
+  needs:
+    - job: publish main
+      optional: false
+      artifacts: false
+  variables:
+    CI_DESCRIPTION: "Public GitHub Updated"
+    MSG: "main branch has been updated."
+    SLACK_CHANNEL: $SLACK_CHANNEL_OK
+    LEVEL: "ok"
+
 release public:
   stage: release
   rules:
@@ -173,3 +191,19 @@ release public:
         -H "Content-Type: application/octet-stream" \
         https://uploads.github.com/repos/${PUBLIC_REPO}/releases/${RELEASE_ID}/assets?name=${ARTIFACT} \
         --data-binary "@${CI_PROJECT_DIR}/${ARTIFACT}"
+
+notify release published:
+  extends: .notifier
+  stage: release
+  rules:
+    - if: $ON_TAG
+  needs:
+    - job: release public
+      optional: false
+      artifacts: false
+  variables:
+    CI_DESCRIPTION: "Public Release created on GitHub"
+    SLACK_CHANNEL: $SLACK_CHANNEL_OK
+    LEVEL: "ok"
+  before_script:
+    - MSG="release_${CI_COMMIT_TAG//./_} created"
