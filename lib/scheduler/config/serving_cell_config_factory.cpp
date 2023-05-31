@@ -754,12 +754,18 @@ zp_csi_rs_resource srsran::config_helpers::make_default_zp_csi_rs_resource(const
 {
   zp_csi_rs_resource res{};
   res.id = static_cast<zp_csi_rs_res_id_t>(0);
-  res.res_mapping.fd_alloc.reset();
-  res.res_mapping.fd_alloc.resize(12);
-  res.res_mapping.fd_alloc.set(0, true);
-  res.res_mapping.nof_ports               = 1;
+  if (params.nof_dl_ports == 1) {
+    res.res_mapping.fd_alloc.resize(12);
+    res.res_mapping.fd_alloc.set(0, true);
+    res.res_mapping.nof_ports = 1;
+    res.res_mapping.cdm       = csi_rs_cdm_type::no_CDM;
+  } else {
+    res.res_mapping.fd_alloc.resize(3);
+    res.res_mapping.fd_alloc.set(0, true);
+    res.res_mapping.nof_ports = params.nof_dl_ports;
+    res.res_mapping.cdm       = csi_rs_cdm_type::fd_CDM2;
+  }
   res.res_mapping.first_ofdm_symbol_in_td = 8;
-  res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
   res.res_mapping.freq_band_start_rb      = 0;
   res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
@@ -786,33 +792,44 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
-  // Resource 0.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  // Resource 1.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(1, true);
-  // Resource 2.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
-  // Resource 3.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(3, true);
+  if (params.nof_dl_ports == 1) {
+    // Resource 0.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    // Resource 1.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(1, true);
+    // Resource 2.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
+    // Resource 3.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(3, true);
 
-  pdsch_cfg.p_zp_csi_rs_res.emplace();
-  pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
-  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(1),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(2),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(3)};
+    pdsch_cfg.p_zp_csi_rs_res.emplace();
+    pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+    pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(1),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(2),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(3)};
+  } else {
+    // Resource 0.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+
+    pdsch_cfg.p_zp_csi_rs_res.emplace();
+    pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+    pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(1)};
+  }
 
   return pdsch_cfg;
 }
