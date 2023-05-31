@@ -68,19 +68,15 @@ coverity-agpl:
       optional: false
       artifacts: false
 
-push:
+.publish:
   stage: public
-  rules:
-    - if: $ON_TAG
-      when: manual
-      allow_failure: false
   interruptible: false
   image: alpine:3.16.0 # sh entrypoint
   variables:
     GIT_STRATEGY: none
     PRIVATE_BRANCH: agpl_main
     PUBLIC_REPO: srsran/srsRAN_Project
-    PUBLIC_BRANCH: main
+    PUBLIC_BRANCH: ""
   before_script:
     - apk add git
   script:
@@ -91,6 +87,32 @@ push:
     # Push code to github main
     - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
 
+publish branch test:
+  extends: .publish
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  variables:
+    PUBLIC_BRANCH: test
+  needs:
+    - job: update agpl main
+      optional: false
+      artifacts: false
+
+publish main:
+  extends: .publish
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  variables:
+    PUBLIC_BRANCH: main
+  needs:
+    - job: publish branch test
+      optional: false
+      artifacts: false
+
 release public:
   stage: release
   rules:
@@ -100,7 +122,7 @@ release public:
   interruptible: false
   image: alpine:3.16.0 # sh entrypoint
   needs:
-    - job: push
+    - job: publish main
       optional: false
       artifacts: false
     - job: generate testvector tar gz
