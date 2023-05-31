@@ -229,6 +229,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
          "MCS table to use PDSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+  app.add_option("--nof_ports", pdsch_params.nof_ports, "Number of ports for PDSCH")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -602,6 +605,11 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
+  app.add_option("--nof_dl_layers",
+                 test_params.nof_dl_layers,
+                 "Number of DL layers. This value has to be lower or equal to the number of ports")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)

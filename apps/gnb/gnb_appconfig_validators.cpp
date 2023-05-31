@@ -451,6 +451,22 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
   return valid;
 }
 
+static bool validate_test_mode_appconfig(const gnb_appconfig& config)
+{
+  if (config.test_mode_cfg.test_ue.nof_dl_layers > 2 and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+    fmt::print("Test mode UE configured to use {} layers which is not possible for DCI format 1_0",
+               config.test_mode_cfg.test_ue.nof_dl_layers);
+    return false;
+  }
+  if (config.test_mode_cfg.test_ue.nof_dl_layers > config.common_cell_cfg.pdsch_cfg.nof_ports) {
+    fmt::print("Test mode UE configured to use {} layers which is higher than the number of ports={} for the cell",
+               config.test_mode_cfg.test_ue.nof_dl_layers,
+               config.common_cell_cfg.pdsch_cfg.nof_ports);
+    return false;
+  }
+  return true;
+}
+
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -512,8 +528,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     }
   }
 
-  if (config.gnb_id_bit_length < 22 or config.gnb_id_bit_length > 32) {
-    fmt::print("gNB id bit length must be within the range [22,..,32].\n");
+  if (!validate_test_mode_appconfig(config)) {
     return false;
   }
 

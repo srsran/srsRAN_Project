@@ -18,9 +18,10 @@ namespace srs_du {
 /// \brief Configuration that enable DU modes operation for testing purposes.
 struct du_test_config {
   struct test_ue_config {
-    rnti_t rnti;
-    bool   pdsch_active;
-    bool   pusch_active;
+    rnti_t   rnti;
+    bool     pdsch_active;
+    bool     pusch_active;
+    unsigned nof_layers;
   };
 
   /// \brief Creation of a phantom UE for testing purposes.

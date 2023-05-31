@@ -46,6 +46,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
+
   std::vector<du_cell_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
 
@@ -60,6 +62,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
+    param.nof_ports      = base_cell.pdsch_cfg.nof_ports;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
@@ -71,8 +74,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (!ssb_freq_loc.has_value()) {
       report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", base_cell.pci);
     }
-
-    srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
 
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;

@@ -88,6 +88,8 @@ struct pdsch_appconfig {
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  /// Number of antenna ports.
+  unsigned nof_ports = 1;
 };
 
 /// PUSCH application configuration.
@@ -368,6 +370,8 @@ struct test_mode_ue_appconfig {
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
   bool pusch_active = true;
+  /// Number of DL layers to configure in the test UE. This value has to be lower or equal to the number of ports.
+  unsigned nof_dl_layers = 1;
 };
 
 /// gNB app Test Mode configuration.
