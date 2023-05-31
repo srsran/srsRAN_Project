@@ -101,7 +101,6 @@ bool detail::harq_process<IsDownlink>::ack_info_common(unsigned tb_idx, bool ack
   if (empty(tb_idx)) {
     return false;
   }
-  tb_array[tb_idx].ack_state = ack;
 
   if (ack) {
     tb_array[tb_idx].state = transport_block::state_t::empty;
@@ -124,7 +123,6 @@ void detail::harq_process<IsDownlink>::reset()
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 {
-  tb_array[tb_idx].ack_state = false;
   tb_array[tb_idx].state     = transport_block::state_t::empty;
   tb_array[tb_idx].nof_retxs = 0;
 }
@@ -145,7 +143,6 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
   tb_array[tb_idx].state              = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].ndi                = !tb_array[tb_idx].ndi;
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
-  tb_array[tb_idx].ack_state          = false;
   tb_array[tb_idx].nof_retxs          = 0;
   tb_array[tb_idx].dai                = dai;
 }
@@ -156,9 +153,8 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
-  tb_array[tb_idx].state     = transport_block::state_t::waiting_ack;
-  tb_array[tb_idx].ack_state = false;
-  tb_array[tb_idx].dai       = dai;
+  tb_array[tb_idx].state = transport_block::state_t::waiting_ack;
+  tb_array[tb_idx].dai   = dai;
   tb_array[tb_idx].nof_retxs++;
 }
 
@@ -204,36 +200,39 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   }
 }
 
-int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
+bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
-  // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
-  if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack and
-      ack == mac_harq_ack_report_status::dtx) {
-    ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
-    return 0;
-  }
-  // For any other case of receiving a DTX, don't take any action and exit.
   if (ack == mac_harq_ack_report_status::dtx) {
-    return 0;
+    // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
+    if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack) {
+      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+    }
+    return true;
   }
 
-  // When receiving a ACK or NACK, reset the ack_wait_in_slots to the maximum value.
-  ack_wait_in_slots = max_ack_wait_in_slots;
-  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
-  if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {
-    if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
-      logger.info(id,
-                  "Discarding HARQ tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                  tb_idx,
-                  prev_tx_params.tb[tb_idx]->tbs_bytes,
-                  max_nof_harq_retxs(tb_idx),
-                  ack_wait_in_slots);
-      return (int)prev_tx_params.tb[tb_idx]->tbs_bytes;
-    }
-    return 0;
+  // If it is an ACK or NACK, check if the TB_idx is active.
+  if (empty(tb_idx)) {
+    logger.info(id,
+                "Discarding HARQ-ACK tb={} ack={}. Cause: HARQ process is not active",
+                tb_idx,
+                ack == mac_harq_ack_report_status::ack ? 1 : 0);
+    return false;
   }
-  logger.warning(id, "HARQ-ACK arrived for inactive HARQ");
-  return -1;
+
+  // When receiving an ACK or NACK, reset the ack_wait_in_slots to the maximum value.
+  ack_wait_in_slots = max_ack_wait_in_slots;
+
+  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
+  base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack);
+  if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
+    logger.info(id,
+                "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                tb_idx,
+                prev_tx_params.tb[tb_idx]->tbs_bytes,
+                max_nof_harq_retxs(tb_idx),
+                ack_wait_in_slots);
+  }
+  return true;
 }
 
 void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch)

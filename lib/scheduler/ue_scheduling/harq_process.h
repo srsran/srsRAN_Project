@@ -127,9 +127,6 @@ public:
     /// State of the Transport Block.
     enum class state_t { empty, pending_retx, waiting_ack } state = state_t::empty;
 
-    /// Whether the Transport Block was ACKed.
-    bool ack_state = false;
-
     /// New Data Indicator. Its value should flip for every new Tx.
     bool ndi = false;
 
@@ -284,8 +281,8 @@ public:
                uint8_t                   dai);
 
   /// \brief Updates the ACK state of the HARQ process.
-  /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
-  int ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
+  /// \return True if harq was not empty and state was succesfully updated. False, otherwise.
+  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.

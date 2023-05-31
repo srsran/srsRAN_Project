@@ -148,9 +148,11 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits)
 {
-  for (unsigned dai = 0; dai != harq_bits.size(); ++dai) {
-    const mac_harq_ack_report_status ack_value = harq_bits[dai];
-    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, dai);
+  static constexpr unsigned dai_mod = 4;
+
+  for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
+    const mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
+    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
     if (h_dl != nullptr) {
       const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
       // Log Event.
