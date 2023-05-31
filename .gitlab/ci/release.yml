@@ -14,6 +14,7 @@ include:
 stages:
   - private
   - public
+  - release
 
 .update agpl main:
   stage: private
@@ -76,8 +77,8 @@ push:
     # Push code to github main
     - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
 
-release:
-  stage: public
+release public:
+  stage: release
   rules:
     - if: $ON_TAG
       when: manual

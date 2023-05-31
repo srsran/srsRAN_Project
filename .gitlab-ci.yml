@@ -37,6 +37,7 @@ stages:
   - documentation
   - private
   - public
+  - release
 
 variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
