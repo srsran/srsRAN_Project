@@ -62,12 +62,12 @@ bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
     // modified list
-    logger.warning("Implement handling of resource modified item {}.", e1ap_item.pdu_session_id);
+    logger.info("Implement handling of resource modified item {}.", e1ap_item.pdu_session_id);
   }
 
   for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
     // modified list
-    logger.warning("Implement handling of resource failed to modify item {}.", e1ap_item.pdu_session_id);
+    logger.info("Implement handling of resource failed to modify item {}.", e1ap_item.pdu_session_id);
   }
 
   return bearer_context_modification_response.success;
