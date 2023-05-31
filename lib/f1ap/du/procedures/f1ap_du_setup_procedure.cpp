@@ -129,6 +129,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
       res = asn1::number_to_enum(fdd.ul_tx_bw.nr_nrb, nof_ul_crbs);
       srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
     }
+    f1ap_cell.served_cell_info.meas_timing_cfg = cell_cfg.packed_meas_time_cfg.copy();
 
     // Add System Information related to the cell.
     f1ap_cell.gnb_du_sys_info_present  = true;

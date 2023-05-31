@@ -35,6 +35,11 @@ byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::st
 /// \return byte buffer with packed cell BCCH-DL-SCH message.
 byte_buffer make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg);
 
+/// \brief Derive packed cell measurementTimingConfiguration from DU cell configuration.
+/// \param[in] du_cfg DU Cell Configuration.
+/// \return byte buffer with packed cell measurementTimingConfiguration as per TS38.331.
+byte_buffer make_asn1_meas_time_cfg_buffer(const du_cell_config& du_cfg);
+
 struct f1_setup_request_message;
 
 /// \brief Generate request message for F1AP to initiate an F1 Setup Request procedure.

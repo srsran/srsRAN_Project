@@ -542,6 +542,21 @@ byte_buffer srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_con
   return buf;
 }
 
+byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config& du_cfg)
+{
+  byte_buffer                     buf;
+  asn1::bit_ref                   bref{buf};
+  asn1::rrc_nr::meas_timing_cfg_s cfg;
+  auto&                           meas_timing = cfg.crit_exts.set_c1().set_meas_timing_conf();
+  meas_timing.meas_timing.resize(1);
+  meas_timing.meas_timing[0].freq_and_timing_present = false;
+  // TODO: Fill meas freq and timing.
+
+  asn1::SRSASN_CODE ret = cfg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack meas_time_cfg");
+  return buf;
+}
+
 void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            req,
                                            const du_manager_params::ran_params& ran_params,
                                            std::vector<std::string>*            sib1_jsons)
@@ -566,6 +581,8 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     if (serv_cell.duplx_mode == duplex_mode::FDD) {
       serv_cell.ul_carrier = cell_cfg.ul_carrier;
     }
+
+    serv_cell.packed_meas_time_cfg = make_asn1_meas_time_cfg_buffer(cell_cfg);
 
     // Pack RRC ASN.1 Serving Cell system info.
     serv_cell.packed_mib = make_asn1_rrc_cell_mib_buffer(cell_cfg);
