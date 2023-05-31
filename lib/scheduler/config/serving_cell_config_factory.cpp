@@ -529,7 +529,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     pucch_cfg.dl_data_to_ul_ack = {4};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7};
+    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7, 8};
   }
 
   // > PUSCH config.
