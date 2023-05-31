@@ -346,14 +346,19 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
         std::make_unique<rrc_ue_pdcp_rx_security_adapter>(srb.pdcp_context->entity->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    rrc->find_ue(msg.ue_index)
-        ->connect_srb_notifier(msg.srb_id,
-                               *ue->get_srbs().at(msg.srb_id).rrc_tx_notifier,
-                               ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_tx_sec_notifier.get(),
-                               ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_rx_sec_notifier.get());
+    rrc_ue_interface* rrc_ue = rrc->find_ue(msg.ue_index);
+    rrc_ue->connect_srb_notifier(msg.srb_id,
+                                 *ue->get_srbs().at(msg.srb_id).rrc_tx_notifier,
+                                 ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_tx_sec_notifier.get(),
+                                 ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_rx_sec_notifier.get());
 
     // update notifier in F1AP
     f1ap->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue->get_srbs().at(msg.srb_id).rx_notifier);
+    if (msg.srb_id == srb_id_t::srb2) {
+      security::sec_as_config sec_cfg = rrc_ue->get_rrc_ue_security_context().get_as_config(security::sec_domain::rrc);
+      srb.pdcp_context->rrc_tx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
+      srb.pdcp_context->rrc_rx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
+    }
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }
