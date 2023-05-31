@@ -18,6 +18,30 @@
 
 using namespace srsran;
 
+// Helpers that checks if the slot is a candidate one for CSI reporting for a given user.
+static bool is_csi_slot(const serving_cell_config& ue_cfg, slot_point sl_tx)
+{
+  if (ue_cfg.csi_meas_cfg.has_value()) {
+    // We assume we only use the first CSI report configuration.
+    const unsigned csi_report_cfg_idx = 0;
+    const auto&    csi_report_cfg     = ue_cfg.csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+
+    // > Scheduler CSI grants.
+    unsigned csi_offset =
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+            .report_slot_offset;
+    unsigned csi_period = csi_report_periodicity_to_uint(
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+            .report_slot_period);
+
+    if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                                                ue_repository&                    ues_,
                                                srslog::basic_logger&             logger_) :
@@ -141,9 +165,20 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   unsigned            k1      = 0;
   span<const uint8_t> k1_list = ss_info->get_k1_candidates();
   uci_allocation      uci     = {};
+  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH to 3, until the PUCCH allocator supports
+  // more than this.
+  const uint8_t max_harq_bits_per_uci = 2U;
   for (const uint8_t k1_candidate : k1_list) {
     const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
+      continue;
+    }
+    // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
+    // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
+    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot) and
+        get_uci_alloc(grant.cell_index)
+                .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
+            max_harq_bits_per_uci) {
       continue;
     }
     uci = get_uci_alloc(grant.cell_index)
