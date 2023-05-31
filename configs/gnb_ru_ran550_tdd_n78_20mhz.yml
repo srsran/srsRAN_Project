@@ -39,9 +39,6 @@ cell_cfg:
     prach_root_sequence_index: 1                                  # PRACH root sequence index.
     zero_correlation_zone: 0                                      # Zero correlation zone.
     prach_frequency_start: 0                                      # Offset in PRBs of lowest PRACH transmission occasion in frequency domain respective to PRB 0.
-  tdd_ul_dl_cfg:
-    nof_dl_slots: 7                                               # Number of downlink slots in the TDD pattern.
-    nof_ul_slots: 2                                               # Number of uplink slots in the TDD pattern.
 
 log:
   filename: /tmp/gnb.log                                          # Path of the log file.
