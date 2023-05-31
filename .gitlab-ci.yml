@@ -24,6 +24,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/tools/test_reporter.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
@@ -373,6 +376,21 @@ update agpl main dryrun:
       variables:
         MODE: "dryrun"
   needs: []
+
+tag successful schedule:
+  extends: .create-tag
+  stage: .post
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: manual
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: manual
+  variables:
+    GIT_STRATEGY: none
+  interruptible: false
+  script:
+    - create_tag $(date +"%Y.%m.%d")
+  dependencies: []
 
 ################################################################################
 # Enable / Disable pipelines
