@@ -105,7 +105,7 @@
       FMT_CLANG_VERSION > 600
 #    define FMT_OVERRIDE override
 #  else
-#    define FMT_OVERRIDE 
+#    define FMT_OVERRIDE
 #  endif
 #endif
 
@@ -1278,10 +1278,6 @@ template <typename T> const T& unwrap(const std::reference_wrapper<T>& v) {
 }
 
 class dynamic_arg_list {
-public:
-  static constexpr std::size_t max_pool_string_size = 256;
-
-private:
   // Workaround for clang's -Wweak-vtables. Unlike for regular classes, for
   // templates it doesn't complain about inability to deduce single translation
   // unit for placing vtable. So storage_node_base is made a fake template.
@@ -1289,10 +1285,6 @@ private:
     virtual ~node() = default;
     std::unique_ptr<node<>> next;
   };
-
-  // Pool storage allocation functions.
-  static void *allocate_from_pool(std::size_t sz);
-  static void free_from_pool(void *ptr);
 
   template <typename T> struct typed_node : node<> {
     T value;
@@ -1305,35 +1297,9 @@ private:
         : value(arg.data(), arg.size()) {}
   };
 
-  struct pooled_node : node<> {
-    std::array<char, max_pool_string_size> value;
-
-    static void* operator new(std::size_t sz) {
-      return allocate_from_pool(sz);
-    }
-    static void operator delete(void* ptr) {
-      free_from_pool(ptr);
-    }
-
-    pooled_node(const char *str, std::size_t sz) {
-      FMT_ASSERT(sz < value.size(), "String is too big");
-      std::copy(str, str + sz, value.begin());
-    }
-  };
-
   std::unique_ptr<node<>> head_;
 
  public:
-  static constexpr std::size_t max_pool_node_size = sizeof(pooled_node);
-
-  const char *push_small_string(const char *str, std::size_t sz) {
-    auto new_node  = std::unique_ptr<pooled_node>(new pooled_node(str, sz));
-    auto& value    = new_node->value;
-    new_node->next = std::move(head_);
-    head_          = std::move(new_node);
-    return value.data();
-  }
-
   template <typename T, typename Arg> const T& push(const Arg& arg) {
     auto new_node = std::unique_ptr<typed_node<T>>(new typed_node<T>(arg));
     auto& value = new_node->value;
@@ -1577,18 +1543,7 @@ class dynamic_format_arg_store
       std::string result = fmt::vformat("{} and {} and {}", store);
     \endrst
   */
-  template <typename T,
-      typename std::enable_if<detail::is_string<typename std::decay<T>::type>::value, int>::type = 0>
-   void push_back(const T& arg) {
-    fmt::string_view view(arg);
-    if (view.size() + 1 < dynamic_args_.max_pool_string_size) {
-      emplace_arg(dynamic_args_.push_small_string(view.data(), view.size() + 1));
-    } else {
-      emplace_arg(dynamic_args_.push<stored_type<T> >(arg));
-    }
-  }
-  template <typename T,
-      typename std::enable_if<!detail::is_string<typename std::decay<T>::type>::value, int>::type = 0>
+  template <typename T>
   void push_back(const T& arg) {
     if (detail::const_check(need_copy<T>::value)) {
       emplace_arg(dynamic_args_.push<stored_type<T> >(arg));
