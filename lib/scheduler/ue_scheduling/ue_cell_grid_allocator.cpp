@@ -165,7 +165,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   unsigned            k1      = 0;
   span<const uint8_t> k1_list = ss_info->get_k1_candidates();
   uci_allocation      uci     = {};
-  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH to 3, until the PUCCH allocator supports
+  // [Implementation-defined] We restrict the number of HARQ bits per PUCCH to 2, until the PUCCH allocator supports
   // more than this.
   const uint8_t max_harq_bits_per_uci = 2U;
   for (const uint8_t k1_candidate : k1_list) {
