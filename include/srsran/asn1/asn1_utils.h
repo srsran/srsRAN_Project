@@ -196,23 +196,26 @@ public:
     }
   }
   dyn_array(const dyn_array<T>& other) : dyn_array(other.data(), other.size()) {}
-  dyn_array(const T* ptr, uint32_t nof_items)
+  dyn_array(const T* ptr, uint32_t nof_items) : size_(nof_items), cap_(nof_items)
   {
-    size_ = nof_items;
-    cap_  = nof_items;
-    data_ = new T[cap_];
-    std::copy(ptr, ptr + size_, data_);
-  }
-  ~dyn_array()
-  {
-    if (data_ != nullptr) {
-      delete[] data_;
+    if (size_ > 0) {
+      data_ = new T[cap_];
+      std::copy(ptr, ptr + size_, data_);
     }
   }
-  uint32_t      size() const { return size_; }
-  uint32_t      capacity() const { return cap_; }
-  T&            operator[](uint32_t idx) { return data_[idx]; }
-  const T&      operator[](uint32_t idx) const { return data_[idx]; }
+  ~dyn_array() { delete[] data_; }
+  uint32_t size() const { return size_; }
+  uint32_t capacity() const { return cap_; }
+  T&       operator[](uint32_t idx)
+  {
+    srsran_assert(idx < size(), "out-of-bounds access to dyn_array ({} >= {})", idx, size());
+    return data_[idx];
+  }
+  const T& operator[](uint32_t idx) const
+  {
+    srsran_assert(idx < size(), "out-of-bounds access to dyn_array ({} >= {})", idx, size());
+    return data_[idx];
+  }
   dyn_array<T>& operator=(const dyn_array<T>& other)
   {
     if (this == &other) {
@@ -275,14 +278,14 @@ public:
     data_[size() - 1] = elem;
   }
   void           clear() { resize(0); }
-  T&             back() { return data_[size() - 1]; }
-  const T&       back() const { return data_[size() - 1]; }
-  T*             data() { return &data_[0]; }
-  const T*       data() const { return &data_[0]; }
-  iterator       begin() { return &data_[0]; }
-  iterator       end() { return &data_[size()]; }
-  const_iterator begin() const { return &data_[0]; }
-  const_iterator end() const { return &data_[size()]; }
+  T&             back() { return (*this)[size() - 1]; }
+  const T&       back() const { return (*this)[size() - 1]; }
+  T*             data() { return data_; }
+  const T*       data() const { return data_; }
+  iterator       begin() { return data_; }
+  iterator       end() { return data_ + size(); }
+  const_iterator begin() const { return data_; }
+  const_iterator end() const { return data_ + size(); }
 
 private:
   T*       data_ = nullptr;
