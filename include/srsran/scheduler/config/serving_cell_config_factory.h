@@ -19,7 +19,9 @@
 namespace srsran {
 namespace config_helpers {
 
-carrier_configuration make_default_carrier_configuration(const cell_config_builder_params& params = {});
+carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params& params = {});
+
+carrier_configuration make_default_ul_carrier_configuration(const cell_config_builder_params& params = {});
 
 tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params = {});
 

@@ -50,9 +50,7 @@ struct sched_grid_resource {
 struct sched_cell_configuration_request_message {
   du_cell_index_t       cell_index;
   du_cell_group_index_t cell_group_index;
-  uint8_t               nof_beams;     // (0..64)
-  uint8_t               nof_layers;    // (0..8)
-  uint8_t               nof_ant_ports; // (0..64)
+  uint8_t               nof_beams; // (0..64)
   pci_t                 pci;
 
   dl_config_common dl_cfg_common;

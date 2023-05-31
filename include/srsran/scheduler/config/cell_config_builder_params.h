@@ -40,8 +40,8 @@ struct cell_config_builder_params {
   ssb_subcarrier_offset k_ssb = 0;
   /// Whether to enable CSI-RS in the cell.
   bool csi_rs_enabled = false;
-  /// Number of ports for the cell.
-  unsigned nof_ports;
+  /// Number of DL ports for the cell.
+  unsigned nof_dl_ports = 1;
 };
 
 } // namespace srsran

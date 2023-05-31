@@ -32,8 +32,8 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   req.pci              = params.pci;
   req.cell_index       = to_du_cell_index(0);
   req.scs_common       = params.scs_common;
-  req.dl_carrier       = config_helpers::make_default_carrier_configuration(params);
-  req.ul_carrier       = config_helpers::make_default_carrier_configuration(params);
+  req.dl_carrier       = config_helpers::make_default_dl_carrier_configuration(params);
+  req.ul_carrier       = config_helpers::make_default_ul_carrier_configuration(params);
   req.ssb_cfg          = config_helpers::make_default_ssb_config(params);
   req.cell_barred      = false;
   req.intra_freq_resel = false;

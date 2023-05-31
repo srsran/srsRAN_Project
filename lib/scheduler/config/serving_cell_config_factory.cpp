@@ -50,20 +50,36 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
   return 24;
 }
 
-carrier_configuration
-srsran::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
+static carrier_configuration make_default_carrier_configuration(const cell_config_builder_params& params, bool is_dl)
 {
   carrier_configuration cfg{};
-  cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
-  cfg.arfcn                                  = params.dl_arfcn;
-  cfg.nof_ant                                = 1;
-  cfg.band                                   = get_band(params);
+  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
+  cfg.band           = get_band(params);
+  if (is_dl) {
+    cfg.arfcn   = params.dl_arfcn;
+    cfg.nof_ant = params.nof_dl_ports;
+  } else {
+    cfg.arfcn   = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, cfg.band);
+    cfg.nof_ant = 1;
+  }
   const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cfg.band, params.scs_common);
   srsran_assert(cfg.carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_channel_bw),
                 "Carrier BW {}Mhz must be greater than or equal to minimum channel BW {}Mhz",
                 cfg.carrier_bw_mhz,
                 min_channel_bandwidth_to_MHz(min_channel_bw));
   return cfg;
+}
+
+carrier_configuration
+srsran::config_helpers::make_default_dl_carrier_configuration(const cell_config_builder_params& params)
+{
+  return make_default_carrier_configuration(params, true);
+}
+
+carrier_configuration
+srsran::config_helpers::make_default_ul_carrier_configuration(const cell_config_builder_params& params)
+{
+  return make_default_carrier_configuration(params, false);
 }
 
 tdd_ul_dl_config_common
