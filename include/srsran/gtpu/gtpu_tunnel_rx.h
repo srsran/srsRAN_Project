@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/cu_types.h"
 
 /*
  * This file will hold the interfaces and notifiers for the GTP-U tunnel.
@@ -65,7 +66,7 @@ public:
 
   /// \brief Interface for the GTP-U to pass SDUs into the lower layer
   /// \param sdu SDU to be passed down.
-  virtual void on_new_sdu(byte_buffer sdu) = 0;
+  virtual void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) = 0;
 };
 
 } // namespace srsran

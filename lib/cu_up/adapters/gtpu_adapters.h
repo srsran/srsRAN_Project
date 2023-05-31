@@ -46,10 +46,10 @@ public:
 
   void connect_sdap(sdap_tx_sdu_handler& sdap_handler_) { sdap_handler = &sdap_handler_; }
 
-  void on_new_sdu(byte_buffer sdu) override
+  void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) override
   {
     srsran_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
-    sdap_handler->handle_sdu(std::move(sdu));
+    sdap_handler->handle_sdu(std::move(sdu), qos_flow_id);
   }
 
 private:

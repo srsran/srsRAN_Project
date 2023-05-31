@@ -9,6 +9,7 @@
  */
 
 #include "gtpu_test.h"
+#include "lib/gtpu/gtpu_pdu.h"
 #include "srsran/gtpu/gtpu_tunnel_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

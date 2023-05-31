@@ -29,7 +29,7 @@ public:
   {
   }
 
-  void handle_sdu(byte_buffer sdu) final
+  void handle_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final
   {
     // pass through
     logger.log_debug("TX PDU. pdu_len={}", sdu.length());

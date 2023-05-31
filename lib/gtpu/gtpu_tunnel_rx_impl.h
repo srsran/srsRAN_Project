@@ -15,6 +15,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
+#include "srsran/ran/cu_types.h"
 #include <cstdint>
 
 namespace srsran {
@@ -45,8 +46,13 @@ public:
       logger.log_error("Dropped PDU, mismatched TEID. sdu_len={} teid={:#x}", buf.length(), hdr.teid);
       return;
     }
-    logger.log_info(buf.begin(), buf.end(), "RX SDU. sdu_len={} teid={:#x}", buf.length(), hdr.teid);
-    lower_dn.on_new_sdu(std::move(buf));
+
+    qos_flow_id_t qos_flow = qos_flow_id_t::invalid;
+    // TODO: pick corret qos_flow from hdr.ext_list
+
+    logger.log_info(
+        buf.begin(), buf.end(), "RX SDU. sdu_len={} teid={:#x} qos_flow={}", buf.length(), hdr.teid, qos_flow);
+    lower_dn.on_new_sdu(std::move(buf), qos_flow);
   }
 
 private:

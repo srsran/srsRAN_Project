@@ -79,7 +79,7 @@ TEST_F(sdap_tx_test, test_tx)
   const std::array<uint8_t, 4> sdu_buf = {0x00, 0x01, 0x02, 0x03};
   byte_buffer                  sdu{sdu_buf};
 
-  sdap->handle_sdu(sdu.deep_copy());
+  sdap->handle_sdu(sdu.deep_copy(), qos_flow_id_t::min);
 
   ASSERT_FALSE(tester->pdu_queue.empty());
   EXPECT_EQ(tester->pdu_queue.front(), sdu);

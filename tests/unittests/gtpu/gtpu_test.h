@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/gtpu/gtpu_pdu.h"
+#include "lib/gtpu/gtpu_tunnel_logger.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <gtest/gtest.h>
@@ -42,10 +42,15 @@ const uint8_t gtpu_ping_two_ext_vec[] = {
 
 class gtpu_test_rx_lower : public gtpu_tunnel_rx_lower_layer_notifier
 {
-  void on_new_sdu(byte_buffer buf) final { last_rx = std::move(buf); }
+  void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final
+  {
+    last_rx             = std::move(sdu);
+    last_rx_qos_flow_id = qos_flow_id;
+  }
 
 public:
   byte_buffer last_rx;
+  qos_flow_id_t last_rx_qos_flow_id;
 };
 class gtpu_test_tx_upper : public gtpu_tunnel_tx_upper_layer_notifier
 {
