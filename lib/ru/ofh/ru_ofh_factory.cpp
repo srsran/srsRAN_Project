@@ -112,7 +112,8 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                                           get_nsymb_per_slot(config.cp),
                                           *config.logger,
                                           std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
-                                          symbol_handlers);
+                                          symbol_handlers,
+                                          *config.timing_notifier_executor);
   report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
 
   // Prepare OFH controller configuration.

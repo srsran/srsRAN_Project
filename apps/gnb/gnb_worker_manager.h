@@ -60,6 +60,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> radio_exec;
   std::unique_ptr<task_executor> ru_printer_exec;
   std::unique_ptr<task_executor> ru_timing_exec;
+  std::unique_ptr<task_executor> ru_timing_notifier_exec;
   std::unique_ptr<task_executor> ru_tx_exec;
   std::unique_ptr<task_executor> ru_rx_exec;
 

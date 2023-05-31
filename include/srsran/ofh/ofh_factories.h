@@ -94,7 +94,8 @@ create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_
                                unsigned                         nof_symbols_per_slot,
                                srslog::basic_logger&            logger,
                                std::unique_ptr<timing_notifier> timing_notifier,
-                               span<ota_symbol_handler*>        symbol_handlers);
+                               span<ota_symbol_handler*>        symbol_handlers,
+                               task_executor&                   executor);
 
 struct symbol_handler_factory_config {
   /// Cyclic prefix.

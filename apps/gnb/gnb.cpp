@@ -143,10 +143,11 @@ static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&      
   srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
   ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
 
-  config.logger             = &ofh_logger;
-  config.rt_timing_executor = workers.ru_timing_exec.get();
-  config.timing_notifier    = &timing_notifier;
-  config.rx_symbol_notifier = &symbol_notifier;
+  config.logger                   = &ofh_logger;
+  config.rt_timing_executor       = workers.ru_timing_exec.get();
+  config.timing_notifier_executor = workers.ru_timing_notifier_exec.get();
+  config.timing_notifier          = &timing_notifier;
+  config.rx_symbol_notifier       = &symbol_notifier;
 
   // Configure sector.
   ru_ofh_sector_configuration& sector_cfg = config.sector_configs.front();

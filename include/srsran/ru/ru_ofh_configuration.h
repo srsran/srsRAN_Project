@@ -54,6 +54,8 @@ struct ru_ofh_configuration {
   ru_uplink_plane_rx_symbol_notifier* rx_symbol_notifier = nullptr;
   /// Realtime timing task executor.
   task_executor* rt_timing_executor = nullptr;
+  /// Timing notifier task executor.
+  task_executor* timing_notifier_executor = nullptr;
 
   /// Individual Open Fronthaul sector configurations.
   std::vector<ru_ofh_sector_configuration> sector_configs;

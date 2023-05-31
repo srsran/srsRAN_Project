@@ -9,11 +9,12 @@
  */
 
 #include "ofh_ota_symbol_dispatcher.h"
+#include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
 using namespace ofh;
 
-void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+void ota_symbol_dispatcher::handle_new_symbol(slot_symbol_point symbol_point)
 {
   // Handle the new symbol.
   for (auto* handler : symbol_handlers) {
@@ -36,6 +37,11 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
     time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
   }
 
+  notify_new_slot(symbol_point);
+}
+
+void ota_symbol_dispatcher::notify_new_slot(slot_symbol_point symbol_point)
+{
   // Skip if the slot did not change.
   if (symbol_point.get_slot() == current_slot) {
     return;
@@ -51,14 +57,21 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
   time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 }
 
+void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+{
+  executor.execute([this, symbol_point]() { handle_new_symbol(symbol_point); });
+}
+
 ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         nof_slot_offset_du_ru_,
                                              unsigned                         nof_symbols_per_slot,
                                              srslog::basic_logger&            logger_,
                                              std::unique_ptr<timing_notifier> timing_notifier_,
-                                             span<ota_symbol_handler*>        symbol_handlers_) :
+                                             span<ota_symbol_handler*>        symbol_handlers_,
+                                             task_executor&                   executor_) :
   nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
   half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
   full_slot_symbol(nof_symbols_per_slot - 1U),
+  executor(executor_),
   logger(logger_),
   time_notifier(std::move(timing_notifier_)),
   symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end())

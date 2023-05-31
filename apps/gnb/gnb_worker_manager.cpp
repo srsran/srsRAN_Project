@@ -181,8 +181,10 @@ void worker_manager::create_executors(bool                               blockin
   radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
 
   // RU executors.
-  create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1, os_sched_affinity_bitmask(0));
+  create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1);
   ru_timing_exec = std::make_unique<task_worker_executor>(*workers.at("ru_timing"));
+  create_worker("ru_time_not", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
+  ru_timing_notifier_exec = std::make_unique<task_worker_executor>(*workers.at("ru_time_not"));
   create_worker("ru_tx",
                 128,
                 os_thread_realtime_priority::max() - 3,
@@ -190,7 +192,7 @@ void worker_manager::create_executors(bool                               blockin
   ru_tx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_tx"));
   create_worker("ru_rx",
                 1,
-                os_thread_realtime_priority::max() - 2,
+                os_thread_realtime_priority::max() - 4,
                 os_sched_affinity_bitmask(std::min(srsran::compute_host_nof_hardware_threads() - 1, size_t(3U))));
   ru_rx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_rx"));
 
