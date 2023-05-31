@@ -15,7 +15,6 @@
 #include "srsran/f1u/cu_up/f1u_rx_pdu_handler.h"
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/f1u/du/f1u_rx_pdu_handler.h"
-#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 
 namespace srsran {
