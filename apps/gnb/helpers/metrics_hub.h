@@ -19,13 +19,13 @@ namespace srsran {
 class metrics_hub : public scheduler_ue_metrics_notifier
 {
 public:
-  metrics_hub(task_executor* du_executor_);
+  metrics_hub(task_executor& du_executor_);
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
   void add_subscriber(scheduler_ue_metrics_notifier& subscriber);
 
 private:
   std::vector<scheduler_ue_metrics_notifier*> subscribers;
-  task_executor*                              du_executor;
+  task_executor&                              du_executor;
 };
 
 } // namespace srsran
