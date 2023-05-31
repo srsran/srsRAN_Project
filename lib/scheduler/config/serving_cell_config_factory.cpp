@@ -830,7 +830,11 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   } else {
     // Resource 0.
     pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    // Resource 1.
     pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
 
     pdsch_cfg.p_zp_csi_rs_res.emplace();
     pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
