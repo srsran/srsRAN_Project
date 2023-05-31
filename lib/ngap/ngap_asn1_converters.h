@@ -288,7 +288,14 @@ inline void pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn
 
   asn1::ngap::pdu_session_res_modify_resp_transfer_s response_transfer;
 
-  // qos_flow_add_or_modify_resp_list
+  // Add AdditionalDLQosFlowPerTNLInformation
+  for (const auto& cu_cp_qos_flow_info : resp.transfer.add_dl_qos_flow_per_tnl_info) {
+    asn1::ngap::qos_flow_per_tnl_info_item_s ngap_qos_flow_info;
+    ngap_qos_flow_info.qos_flow_per_tnl_info =
+        cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_info);
+    response_transfer.add_dl_qos_flow_per_tnl_info.push_back(ngap_qos_flow_info);
+  }
+
   if (resp.transfer.qos_flow_add_or_modify_response_list.has_value()) {
     for (const auto& qos_flow : resp.transfer.qos_flow_add_or_modify_response_list.value()) {
       asn1::ngap::qos_flow_add_or_modify_resp_item_s asn1_item;
