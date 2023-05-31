@@ -31,6 +31,13 @@ e2_impl::e2_impl(timer_factory            timers_,
 
 async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_setup_request_message& request)
 {
+  for (unsigned i = 0; i < request.request->ra_nfunctions_added.value.size(); i++) {
+    auto&    item               = request.request->ra_nfunctions_added.value[i].value().ra_nfunction_item();
+    uint16_t id                 = item.ran_function_id;
+    candidate_ran_functions[id] = item;
+    logger.info("Added RAN function OID {} to candidate list",
+                candidate_ran_functions[id].ran_function_oid.to_string().c_str());
+  }
   return launch_async<e2_setup_procedure>(request, pdu_notifier, *events, timers, logger);
 }
 
@@ -142,5 +149,29 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");
       break;
+  }
+}
+
+void e2_impl::set_allowed_ran_functions(const uint16_t ran_function_id)
+{
+  if (candidate_ran_functions.count(ran_function_id)) {
+    allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
+    logger.info("Added RAN function with id {}", ran_function_id);
+    auto ran_oid = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
+    if (ran_oid == "E2SM-KPM") {
+      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
+      std::unique_ptr<e2sm_handler> e2sm_handler = std::make_unique<e2sm_kpm_asn1_packer>();
+      subscription_mngr.add_e2sm_service(ran_function_id, std::move(e2sm_handler));
+    } else if (ran_oid == "E2SM-RC") {
+      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
+      // TODO add E2SM-RC handler
+    } else if (ran_oid == "E2SM-NI") {
+      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
+      // TODO add E2SM-NI handler
+    } else {
+      logger.warning("Not adding RAN function with id {} and OID {}", ran_function_id, ran_oid);
+    }
+  } else {
+    logger.warning("RAN function with id {} is not a candidate", ran_function_id);
   }
 }

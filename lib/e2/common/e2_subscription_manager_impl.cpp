@@ -105,8 +105,7 @@ void e2_subscription_manager_impl::get_subscription_result(uint16_t             
   }
 }
 
-void e2_subscription_manager_impl::add_e2sm_service(uint16_t ran_func_id, e2sm_handler* e2sm_packer)
+void e2_subscription_manager_impl::add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer)
 {
-  std::pair<uint16_t, e2sm_handler*> e2sm_packer_pair(ran_func_id, e2sm_packer);
-  e2sm_packer_list.emplace(e2sm_packer_pair);
+  e2sm_packer_list.emplace(ran_func_id, std::move(e2sm_packer));
 }

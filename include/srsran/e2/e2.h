@@ -177,7 +177,7 @@ public:
   /// \brief start the subscription request
   virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) = 0;
 
-  virtual void add_e2sm_service(uint16_t ran_func_id, e2sm_handler* e2sm_packer) = 0;
+  virtual void add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer) = 0;
 };
 
 } // namespace srsran
