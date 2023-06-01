@@ -57,22 +57,17 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
     return;
   }
 
-  // Perform round-robin prioritization of UL and DL scheduling. This avoids that we give unfair preference to DL over
-  // UL scheduling or vice-versa, when allocating PDCCHs.
-  unsigned dl_idx = slot_tx.to_uint() % 2 == 0;
-  for (unsigned rr_idx = 0; rr_idx != 2; ++rr_idx) {
-    if (rr_idx == dl_idx) {
-      if (not expert_cfg.enable_csi_rs_pdsch_multiplexing and
-          not(*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-        continue;
-      }
-      sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-      sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
-    } else {
-      sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-      sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
-    }
+  // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
+  // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
+  // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
+  // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
+  // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
+  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
   }
+  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+  sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
 }
 
 void ue_scheduler_impl::run_slot(slot_point slot_tx, du_cell_index_t cell_index)

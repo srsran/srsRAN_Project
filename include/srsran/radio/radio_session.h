@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/gateways/baseband/baseband_gateway.h"
+#include "srsran/gateways/baseband/baseband_gateway_timestamp.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_management_plane.h"
 #include "srsran/radio/radio_notification_handler.h"
@@ -41,13 +42,17 @@ public:
   /// \return The reference to the data plane for this radio session.
   virtual baseband_gateway& get_baseband_gateway() = 0;
 
+  /// \brief Gets the current time.
+  virtual baseband_gateway_timestamp read_current_time() = 0;
+
   /// \brief Starts the radio operation.
   ///
   /// It requests all radio streams to start simultaneously.
   ///
+  /// \param[in] init_time Initial time in which streaming shall start.
   /// \remark Radio streams run until halted by a call of the stop() method.
   /// \remark Calling start() more than once results in undefined behavior, even after calling stop().
-  virtual void start() = 0;
+  virtual void start(baseband_gateway_timestamp init_time) = 0;
 
   /// \brief Stops the radio session operation.
   ///

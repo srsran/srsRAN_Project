@@ -26,6 +26,38 @@
 
 using namespace srsran;
 
+/// \brief No-op handler for HARQ timeout.
+class noop_harq_timeout_handler final : public harq_timeout_handler
+{
+public:
+  void handle_harq_timeout(du_ue_index_t /**/, bool /**/) override
+  {
+    // do nothing
+  }
+};
+
+static noop_harq_timeout_handler noop_handler;
+
+ue_harq_timeout_notifier::ue_harq_timeout_notifier() : handler(&noop_handler), ue_index(INVALID_DU_UE_INDEX) {}
+
+ue_harq_timeout_notifier::ue_harq_timeout_notifier(harq_timeout_handler& handler_, du_ue_index_t ue_index_) :
+  handler(&handler_), ue_index(ue_index_)
+{
+}
+
+template <bool IsDownlink>
+detail::harq_process<IsDownlink>::harq_process(harq_id_t                h_id,
+                                               harq_logger&             logger_,
+                                               ue_harq_timeout_notifier timeout_notif,
+                                               unsigned                 max_ack_wait_in_slots_) :
+  id(h_id),
+  logger(logger_),
+  timeout_notifier(timeout_notif),
+  max_ack_wait_in_slots(max_ack_wait_in_slots_),
+  ack_wait_in_slots(max_ack_wait_in_slots_)
+{
+}
+
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
 {
@@ -51,6 +83,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                      "but only invalid HARQ-ACKs were received so far.",
                      ack_wait_in_slots);
       }
+      timeout_notifier.notify_harq_timeout(IsDownlink);
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
       // Max number of reTxs was exceeded. Clear HARQ process
@@ -80,7 +113,6 @@ bool detail::harq_process<IsDownlink>::ack_info_common(unsigned tb_idx, bool ack
   if (empty(tb_idx)) {
     return false;
   }
-  tb_array[tb_idx].ack_state = ack;
 
   if (ack) {
     tb_array[tb_idx].state = transport_block::state_t::empty;
@@ -103,7 +135,6 @@ void detail::harq_process<IsDownlink>::reset()
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 {
-  tb_array[tb_idx].ack_state = false;
   tb_array[tb_idx].state     = transport_block::state_t::empty;
   tb_array[tb_idx].nof_retxs = 0;
 }
@@ -124,7 +155,6 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
   tb_array[tb_idx].state              = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].ndi                = !tb_array[tb_idx].ndi;
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
-  tb_array[tb_idx].ack_state          = false;
   tb_array[tb_idx].nof_retxs          = 0;
   tb_array[tb_idx].dai                = dai;
 }
@@ -135,9 +165,8 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8
   srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsran_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
-  tb_array[tb_idx].state     = transport_block::state_t::waiting_ack;
-  tb_array[tb_idx].ack_state = false;
-  tb_array[tb_idx].dai       = dai;
+  tb_array[tb_idx].state = transport_block::state_t::waiting_ack;
+  tb_array[tb_idx].dai   = dai;
   tb_array[tb_idx].nof_retxs++;
 }
 
@@ -183,36 +212,39 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   }
 }
 
-int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
+bool dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
-  // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
-  if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack and
-      ack == mac_harq_ack_report_status::dtx) {
-    ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
-    return 0;
-  }
-  // For any other case of receiving a DTX, don't take any action and exit.
   if (ack == mac_harq_ack_report_status::dtx) {
-    return 0;
+    // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
+    if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack) {
+      ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+    }
+    return true;
   }
 
-  // When receiving a ACK or NACK, reset the ack_wait_in_slots to the maximum value.
-  ack_wait_in_slots = max_ack_wait_in_slots;
-  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
-  if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {
-    if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
-      logger.info(id,
-                  "Discarding HARQ tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                  tb_idx,
-                  prev_tx_params.tb[tb_idx]->tbs_bytes,
-                  max_nof_harq_retxs(tb_idx),
-                  ack_wait_in_slots);
-      return (int)prev_tx_params.tb[tb_idx]->tbs_bytes;
-    }
-    return 0;
+  // If it is an ACK or NACK, check if the TB_idx is active.
+  if (empty(tb_idx)) {
+    logger.info(id,
+                "Discarding HARQ-ACK tb={} ack={}. Cause: HARQ process is not active",
+                tb_idx,
+                ack == mac_harq_ack_report_status::ack ? 1 : 0);
+    return false;
   }
-  logger.warning(id, "HARQ-ACK arrived for inactive HARQ");
-  return -1;
+
+  // When receiving an ACK or NACK, reset the ack_wait_in_slots to the maximum value.
+  ack_wait_in_slots = max_ack_wait_in_slots;
+
+  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
+  base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack);
+  if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
+    logger.info(id,
+                "Discarding HARQ process tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                tb_idx,
+                prev_tx_params.tb[tb_idx]->tbs_bytes,
+                max_nof_harq_retxs(tb_idx),
+                ack_wait_in_slots);
+  }
+  return true;
 }
 
 void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, const pdsch_information& pdsch)
@@ -223,20 +255,20 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
     srsran_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
     srsran_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
-                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, PRBs={}. New MCS={}, PRBs={}",
+                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, RBs={}. New MCS={}, RBs={}",
                   prev_tx_params.tb[tb_idx]->tbs_bytes,
                   cw.tb_size_bytes,
                   prev_tx_params.tb[tb_idx]->mcs,
-                  prev_tx_params.prbs.prbs(),
+                  prev_tx_params.rbs,
                   cw.mcs_index,
-                  pdsch.prbs.prbs());
+                  pdsch.rbs);
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;
     ++tb_idx;
   }
   prev_tx_params.dci_cfg_type = dci_cfg_type;
-  prev_tx_params.prbs         = pdsch.prbs;
+  prev_tx_params.rbs          = pdsch.rbs;
   prev_tx_params.nof_symbols  = pdsch.symbols.length();
 }
 
@@ -257,13 +289,15 @@ void ul_harq_process::new_retx(slot_point pusch_slot)
 int ul_harq_process::crc_info(bool ack)
 {
   if (base_type::ack_info_common(0, ack)) {
-    if (not ack and empty()) {
+    if (ack) {
+      return (int)prev_tx_params.tbs_bytes;
+    }
+    if (empty()) {
       logger.info(id,
                   "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                   prev_tx_params.tbs_bytes,
                   max_nof_harq_retxs(),
                   ack_wait_in_slots);
-      return (int)prev_tx_params.tbs_bytes;
     }
     return 0;
   }
@@ -283,15 +317,16 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
   prev_tx_params.mcs          = pusch.mcs_index;
   prev_tx_params.tbs_bytes    = pusch.tb_size_bytes;
   prev_tx_params.dci_cfg_type = dci_cfg_type;
-  prev_tx_params.prbs         = pusch.prbs;
+  prev_tx_params.rbs          = pusch.rbs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-harq_entity::harq_entity(rnti_t   rnti_,
-                         unsigned nof_dl_harq_procs,
-                         unsigned nof_ul_harq_procs,
-                         unsigned max_ack_wait_in_slots) :
+harq_entity::harq_entity(rnti_t                   rnti_,
+                         unsigned                 nof_dl_harq_procs,
+                         unsigned                 nof_ul_harq_procs,
+                         ue_harq_timeout_notifier timeout_notif,
+                         unsigned                 max_ack_wait_in_slots) :
   rnti(rnti_),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_h_logger(logger, rnti_, to_du_cell_index(0), true),
@@ -301,10 +336,10 @@ harq_entity::harq_entity(rnti_t   rnti_,
   dl_harqs.reserve(nof_dl_harq_procs);
   ul_harqs.reserve(nof_ul_harq_procs);
   for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
-    dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, max_ack_wait_in_slots);
+    dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, timeout_notif, max_ack_wait_in_slots);
   }
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
-    ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, max_ack_wait_in_slots);
+    ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, timeout_notif, max_ack_wait_in_slots);
   }
 }
 
@@ -321,6 +356,7 @@ void harq_entity::slot_indication(slot_point slot_tx_)
 
 const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai)
 {
+  srsran_assert(dai < 4, "DAI must be in range [0, 3]");
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 

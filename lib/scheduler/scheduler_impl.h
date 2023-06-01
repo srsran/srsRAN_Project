@@ -40,7 +40,7 @@ public:
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
   /// Obtain scheduling result for a given slot and cell.
-  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
+  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   // DU manager events.
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override;

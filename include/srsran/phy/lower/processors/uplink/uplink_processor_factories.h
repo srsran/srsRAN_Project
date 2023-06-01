@@ -47,8 +47,6 @@ struct uplink_processor_configuration {
   double center_frequency_Hz;
   /// Number of receive ports.
   unsigned nof_rx_ports;
-  /// Initial slot index within the radio frame.
-  unsigned initial_slot_index;
 };
 
 /// Lower physical layer uplink processor - Factory interface.

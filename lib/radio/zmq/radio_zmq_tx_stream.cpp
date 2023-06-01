@@ -57,6 +57,13 @@ radio_zmq_tx_stream::radio_zmq_tx_stream(void*                       zmq_context
   successful = true;
 }
 
+void radio_zmq_tx_stream::start(srsran::baseband_gateway_timestamp init_time)
+{
+  for (auto& channel : channels) {
+    channel->start(init_time);
+  }
+}
+
 void radio_zmq_tx_stream::stop()
 {
   for (auto& channel : channels) {
@@ -81,7 +88,7 @@ bool radio_zmq_tx_stream::align(baseband_gateway_timestamp timestamp, std::chron
   return timestamp_passed;
 }
 
-void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data, const metadata& md)
+void radio_zmq_tx_stream::transmit(const baseband_gateway_buffer_reader& data, const metadata& md)
 {
   report_fatal_error_if_not(data.get_nof_channels() == channels.size(),
                             "Invalid number of channels ({}) expected {}.",
@@ -105,8 +112,4 @@ void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data, const metadata
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
     channels[channel_id]->transmit(data.get_channel_buffer(channel_id));
   }
-}
-unsigned radio_zmq_tx_stream::get_buffer_size() const
-{
-  return TRANSMIT_BUFFER_SIZE;
 }

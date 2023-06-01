@@ -21,9 +21,9 @@
  */
 
 #include "radio_notifier_sample.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/file_sink.h"
@@ -287,7 +287,7 @@ int main(int argc, char** argv)
       stream_config.channels.emplace_back(ch_config);
 
       // Generate random data in buffer.
-      span<radio_sample_type> data = tx_baseband_buffers.back().get_channel_buffer(channel_idx);
+      span<cf_t> data = tx_baseband_buffers.back()[channel_idx];
       for (cf_t& iq : data) {
         iq = {dist(rgen), dist(rgen)};
       }
@@ -351,11 +351,11 @@ int main(int argc, char** argv)
 
       // Receive baseband.
       static_vector<baseband_gateway_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);
-      rx_metadata[stream_id] = receiver.receive(rx_baseband_buffers[stream_id]);
+      rx_metadata[stream_id] = receiver.receive(rx_baseband_buffers[stream_id].get_writer());
 
       // Save file.
       if (stream_id == 0 && rx_file.is_open()) {
-        rx_file.write(rx_baseband_buffers[stream_id].get_channel_buffer(0));
+        rx_file.write(rx_baseband_buffers[stream_id][0]);
       }
 
       // Prepare transmit metadata.
@@ -363,7 +363,7 @@ int main(int argc, char** argv)
       tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
 
       // Transmit baseband.
-      transmitter.transmit(tx_baseband_buffers[stream_id], tx_metadata);
+      transmitter.transmit(tx_baseband_buffers[stream_id].get_reader(), tx_metadata);
     }
 
     // Increment sample counter.

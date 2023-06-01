@@ -55,7 +55,6 @@ public:
     baseband_config.cp                      = config.cp;
     baseband_config.rate                    = config.rate;
     baseband_config.nof_tx_ports            = config.nof_tx_ports;
-    baseband_config.initial_slot_index      = config.initial_slot_index;
     baseband_config.nof_slot_tti_in_advance = config.nof_slot_tti_in_advance;
 
     return std::make_unique<downlink_processor_impl>(

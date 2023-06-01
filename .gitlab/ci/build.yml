@@ -20,8 +20,11 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/srsran_project_packaging
+    ref: "1"
+    file: .gitlab/ci-shared/package.yml
 
 stages:
   - build and unit tests
@@ -37,6 +40,7 @@ variables:
   OS:
     description: Operating system
     options:
+      - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
       - "archlinux-latest"
@@ -61,6 +65,9 @@ variables:
   BUILD_ARGS:
     description: It will be passed to cmake
     value: ""
+  MAKE_ARGS:
+    description: It will be passed to make/ninja
+    value: "-j4"
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
@@ -99,6 +106,7 @@ push_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   script:
     - echo "Saving git repo in cache"
   cache:
@@ -112,6 +120,7 @@ pull_src_cache:
   stage: .pre
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     GIT_STRATEGY: none
   needs:
@@ -148,22 +157,26 @@ pull_src_cache:
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
+    ENABLE_WERROR: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.7.8"
+    DOCKER_BUILDER_VERSION: "1.8.3"
     SAVE_ARTIFACTS: "" # Empty by default
     GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
   needs:
     - job: pull_src_cache
       artifacts: false
       optional: true
+  resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   before_script:
     - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
     - git fetch --depth=1 origin $CI_COMMIT_SHA
     - git reset --hard $CI_COMMIT_SHA
     - |
       build_srsgnb() {
+        BUILD_ARGS=""
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
@@ -203,8 +216,17 @@ pull_src_cache:
         if [ -n "${ENABLE_AVX512}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX512=${ENABLE_AVX512}"
         fi
+        if [ -n "${ENABLE_WERROR}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_WERROR=${ENABLE_WERROR}"
+        fi
         if [[ $TEST_MODE = "none" ]]; then
           BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+        fi
+        if [ -n "${MAKE_ARGS}" ]; then
+          BUILD_ARGS="-m ${MAKE_ARGS} ${BUILD_ARGS}"
+        fi
+        if [ -n "${CLEAN_BUILD}" ]; then
+          BUILD_ARGS="-r ${CLEAN_BUILD} ${BUILD_ARGS}"
         fi
 
         BUILD_CMD="builder.sh -c ${COMPILER} ${BUILD_ARGS} ."
@@ -212,6 +234,13 @@ pull_src_cache:
         echo "============================================================================================="
         $BUILD_CMD
         cd build && ninja install && cd ..
+
+        if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
+          echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
+          cd build
+          /usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -o "../$OUTPUT_FINGERPRINT"
+          cd ..
+        fi
       }
     - |
       launch_tests() {
@@ -227,9 +256,22 @@ pull_src_cache:
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
             ctest_extra="-T memcheck --timeout 10800"
+            BUILD_ARGS="${BUILD_ARGS} -DEXIT_TIMEOUT=40"
             ;;
         esac
-        CTEST_CMD="ctest -j "$(nproc --all)" $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        if [ -n "${FINGERPRINT}" ]; then
+          echo "Searching for changed tests"
+          CTEST_SUBSET=$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
+          if [ -n "${CTEST_SUBSET}" ]; then
+            echo "Tests with changed fingerprint: ${CTEST_SUBSET}"
+            CTEST_SUBSET_CMD="-I 0,0,0,${CTEST_SUBSET}"
+          else
+            echo "No tests changed"
+            ret=0
+            exit $ret
+          fi
+        fi
+        CTEST_CMD="ctest -j "$(nproc --all)" ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "${CTEST_CMD}"
         echo "============================================================================================="
         $CTEST_CMD && ret=0 || ret=1
@@ -331,6 +373,7 @@ pull_src_cache:
   extends: .build_and_unit
   variables:
     OS: archlinux-latest
+    ENABLE_WERROR: "False"
     COMPILER: gcc
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -356,6 +399,8 @@ smoke release cached:
   extends: .smoke release
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -368,6 +413,8 @@ smoke tsan cached:
   extends: .smoke tsan
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
+    MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -381,6 +428,8 @@ smoke rhel cached:
   extends: .smoke rhel
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -393,6 +442,8 @@ smoke archlinux cached:
   extends: .smoke archlinux
   variables:
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
+    MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -448,6 +499,8 @@ intermediate commits:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_MEMORY_LIMIT: 7Gi
+    MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -466,6 +519,51 @@ intermediate commits:
     - *cache_src_get
     - *cache_build_get
 
+valgrind changed tests:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
+      when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+      allow_failure: true
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+  variables:
+    OS: ubuntu-22.04
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "False"
+    CLEAN_BUILD: "False"
+    TEST_MODE: valgrind
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    MAKE_ARGS: ""
+    FINGERPRINT: "fingerprints.csv"
+  script:
+    - git config advice.detachedHead false
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
+    - |
+      FORK_POINT=$(git merge-base origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME)
+      echo "##################################################"
+      echo "#### $FORK_POINT ####"
+      echo "##################################################"
+      git checkout $FORK_POINT
+      OUTPUT_FINGERPRINT="${FINGERPRINT}"
+      build_srsgnb
+      OUTPUT_FINGERPRINT=""
+    - |
+      echo "##################################################"
+      echo "#### origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
+      echo "##################################################"
+      git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      build_srsgnb
+    - launch_tests
+  cache:
+    - *cache_src_get
+    - *cache_build_get
+
 ###########
 # Nightly #
 ###########
@@ -478,6 +576,7 @@ smoke release update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
@@ -490,6 +589,7 @@ smoke tsan update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
@@ -502,6 +602,7 @@ smoke rhel update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -512,6 +613,7 @@ smoke archlinux update cache:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   cache:
     - *cache_src_get
     - *cache_build_set
@@ -522,6 +624,7 @@ basic debug:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -537,6 +640,7 @@ basic asan:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -553,7 +657,7 @@ basic valgrind:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
-  allow_failure: true
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -562,6 +666,7 @@ basic valgrind:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     TEST_MODE: valgrind
+    SAVE_ARTIFACTS: "True"
 
 # When building without rf and without zmq, we check no binary is generated
 
@@ -569,6 +674,7 @@ not rf and not zmq:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -583,38 +689,102 @@ not rf and not zmq:
     - launch_tests
     - exit $(find build/apps/ -executable -type f | wc -l)
 
+# Packaging
+
+package:
+  extends: .deb-package
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    KUBERNETES_MEMORY_REQUEST: 12Gi
+    KUBERNETES_MEMORY_LIMIT: 12Gi
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs: []
+
+install-package:
+  extends: .deb-install
+  stage: build and unit tests
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    PROJECT_NAME: srsran-project
+    RELEASE_VERSION: "99.9"
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
+  tags:
+    - ${INFRASTRUCTURE_TAG}
+  script:
+    - gnb --version
+  parallel:
+    matrix:
+      - OS_VERSION: "20.04"
+      - OS_VERSION: "22.04"
+      - OS_VERSION: "22.10"
+      - OS_VERSION: "23.04"
+  needs:
+    - package
+
 # Validate export on, enabled for test vector generation
 
 export on amd64:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
   variables:
     COMPILER: gcc
     TEST_MODE: none
     ENABLE_EXPORT: "True"
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "True"
 
 # Build + unit tests combinations
 
+ubuntu-23.04 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
 ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 10 minutes
+      start_in: 90 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -628,7 +798,8 @@ ubuntu-20.04 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 20 minutes
+      start_in: 120 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -642,7 +813,8 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 150 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -664,9 +836,11 @@ archlinux amd64 no isa:
   extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
+        ENABLE_WERROR: "False"
         <<: *basic_combinations
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "False"
@@ -676,10 +850,12 @@ archlinux amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
       when: delayed
-      start_in: 15 minutes
+      start_in: 30 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
+        ENABLE_WERROR: "False"
         <<: *basic_combinations
         INFRASTRUCTURE_TAG: aws-spot-amd64
         AUTO_DETECT_ISA: "True"
@@ -689,9 +865,11 @@ archlinux amd64 avx512:
   extends: .build_and_unit_arch
   rules:
     - if: $CI_DESCRIPTION =~ /Archlinux/
+  interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
+        ENABLE_WERROR: "False"
         <<: *basic_combinations
         INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
         AUTO_DETECT_ISA: "True"
@@ -706,25 +884,27 @@ archlinux amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   variables:
     ASSERT_LEVEL: PARANOID
     BUILD_TYPE: Debug
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
         COMPILER: gcc
         ENABLE_ASAN: "True"
         TEST_MODE: default
-      - OS: ubuntu-22.04
+      - OS: [ubuntu-23.04, ubuntu-22.04]
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
+        SAVE_ARTIFACTS: "True"
 
 sanitizers amd64 no isa:
   extends: .weekly sanitizers
@@ -739,12 +919,12 @@ sanitizers amd64 avx512:
     AUTO_DETECT_ISA: "True"
   parallel:
     matrix:
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: tsan
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
         COMPILER: gcc
         ENABLE_ASAN: "True"
@@ -769,6 +949,7 @@ build uhd alt:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   variables:
     TEST_MODE: none
     ASSERT_LEVEL: PARANOID
@@ -776,6 +957,9 @@ build uhd alt:
     AUTO_DETECT_ISA: "False"
   parallel:
     matrix:
+      - OS: ubuntu-23.04
+        COMPILER: [gcc, clang]
+        UHD_VERSION: "4.3.0.0"
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         UHD_VERSION: "4.2.0.0"
@@ -785,10 +969,70 @@ build uhd alt:
 
 # Build + unit tests combinations
 
+ubuntu-23.04 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.04 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "True"
+
+ubuntu-23.04 arm no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "False"
+
+ubuntu-23.04 arm neon:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: ubuntu-23.04
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-arm64
+        AUTO_DETECT_ISA: "True"
+
 ubuntu-22.04 amd64 no isa:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -800,6 +1044,9 @@ ubuntu-22.04 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -812,6 +1059,9 @@ ubuntu-22.04 arm no isa:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -824,7 +1074,8 @@ ubuntu-22.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 60 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-22.04
@@ -837,7 +1088,8 @@ ubuntu-20.04 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 90 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -850,7 +1102,8 @@ ubuntu-20.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 90 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -864,7 +1117,8 @@ ubuntu-20.04 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 90 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -877,7 +1131,8 @@ ubuntu-20.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 15 minutes
+      start_in: 90 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: ubuntu-20.04
@@ -890,7 +1145,8 @@ rhel-8 amd64 no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 120 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -903,7 +1159,8 @@ rhel-8 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 120 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -917,7 +1174,8 @@ rhel-8 arm no isa:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 120 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8
@@ -930,7 +1188,8 @@ rhel-8 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 30 minutes
+      start_in: 120 minutes
+  interruptible: false
   parallel:
     matrix:
       - OS: rhel-8

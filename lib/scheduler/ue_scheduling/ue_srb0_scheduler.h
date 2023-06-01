@@ -23,9 +23,9 @@
 #pragma once
 
 #include "../policy/ue_allocator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/slot_event_list.h"
 #include "ue_repository.h"
-#include "ue_sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include <queue>
 
@@ -68,7 +68,7 @@ private:
                        unsigned                   pdsch_time_res,
                        unsigned                   k1,
                        sch_mcs_index              mcs_idx,
-                       const prb_interval&        ue_grant_prbs,
+                       const crb_interval&        ue_grant_crbs,
                        const pdsch_config_params& pdsch_params,
                        unsigned                   tbs_bytes);
 

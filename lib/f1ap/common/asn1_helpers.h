@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/up_transport_layer_info.h"

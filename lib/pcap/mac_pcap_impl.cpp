@@ -91,6 +91,13 @@ void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_b
     // skip
     return;
   }
+
+  if (buf.length() > pcap_mac_max_pdu_len) {
+    srslog::fetch_basic_logger("ALL").warning(
+        "Dropped MAC PCAP PDU. PDU is too big. pdu_len={} max_size={}", buf.length(), pcap_mac_max_pdu_len);
+    return;
+  }
+
   span<const uint8_t> pdu = to_span(buf, span<uint8_t>(tmp_mem).first(buf.length()));
 
   uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};

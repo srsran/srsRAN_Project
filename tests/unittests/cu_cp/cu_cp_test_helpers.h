@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/cu_cp.h"
+#include "lib/cu_cp/cu_cp_impl.h"
 #include "test_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"
@@ -44,6 +44,13 @@ protected:
   cu_cp_test();
   ~cu_cp_test() override;
 
+  void attach_ue(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id, rnti_t crnti, du_index_t du_index);
+  void test_preamble_ue_creation(du_index_t          du_index,
+                                 gnb_du_ue_f1ap_id_t du_ue_id,
+                                 gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                 pci_t               pci,
+                                 rnti_t              crnti);
+  void receive_ngap_dl_info_transfer();
   bool check_minimal_paging_result();
   bool check_paging_result();
 

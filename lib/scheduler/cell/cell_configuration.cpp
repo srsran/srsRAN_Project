@@ -43,6 +43,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   ssb_cfg(msg.ssb_config),
   dmrs_typeA_pos(msg.dmrs_typeA_pos),
   pucch_guardbands(msg.pucch_guardbands),
+  zp_csi_rs_list(msg.zp_csi_rs_list),
   csi_meas_cfg(msg.csi_meas_cfg),
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),

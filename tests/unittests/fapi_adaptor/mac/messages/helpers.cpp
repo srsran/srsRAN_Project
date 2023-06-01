@@ -278,7 +278,7 @@ sib_information unittests::build_valid_sib1_information_pdu()
   info.pdsch_cfg.rnti        = to_rnti(3);
   info.pdsch_cfg.bwp_cfg     = &bwp_config;
   info.pdsch_cfg.coreset_cfg = &coreset_cfg;
-  info.pdsch_cfg.prbs        = {prb_interval{40, 60}};
+  info.pdsch_cfg.rbs         = vrb_interval{40, 60};
   info.pdsch_cfg.symbols     = {3, 10};
   info.pdsch_cfg.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   info.pdsch_cfg.n_id = generate_nid_pdsch();
@@ -337,7 +337,7 @@ ul_sched_info unittests::build_valid_pusch_pdu()
 
   pusch.rnti                       = to_rnti(29);
   pusch.bwp_cfg                    = &bwp_cfg;
-  pusch.prbs                       = {prb_interval(10, 20)};
+  pusch.rbs                        = vrb_interval(10, 20);
   pusch.symbols                    = {2, 12};
   pusch.mcs_descr.target_code_rate = 193;
   pusch.mcs_descr.modulation       = modulation_scheme::QAM256;

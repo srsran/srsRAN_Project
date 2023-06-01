@@ -69,4 +69,20 @@ enum csi_ssb_res_set_id_t {
   MAX_NOF_CSI_SSB_RESOURCES_PER_SET = 64,
 };
 
+/// \brief ZP-CSI-ResourceId is used to identify one ZP-CSI-Resource.
+/// \remark See TS 38.331, \c ZP-CSI-RS-ResourceId.
+enum zp_csi_rs_res_id_t : uint8_t {
+  MIN_ZP_CSI_RS_RESOURCE_ID   = 0,
+  MAX_ZP_CSI_RS_RESOURCE_ID   = 31,
+  MAX_NOF_ZP_CSI_RS_RESOURCES = 32
+};
+
+/// \brief ZP-CSI-ResourceSetId is used to identify one ZP-CSI-ResourceSet.
+/// \remark See TS 38.331, \c ZP-CSI-RS-ResourceSetId.
+enum zp_csi_rs_res_set_id_t : uint8_t {
+  MIN_ZP_CSI_RS_RESOURCE_SET_ID   = 0,
+  MAX_ZP_CSI_RS_RESOURCE_SET_ID   = 15,
+  MAX_NOF_ZP_CSI_RS_RESOURCE_SETS = 16,
+};
+
 } // namespace srsran

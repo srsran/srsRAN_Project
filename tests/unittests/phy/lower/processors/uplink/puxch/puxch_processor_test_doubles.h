@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "../../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_factories.h"
@@ -38,15 +38,16 @@ class puxch_processor_baseband_spy : public puxch_processor_baseband
 {
 public:
   struct entry_t {
-    const baseband_gateway_buffer* samples;
-    lower_phy_rx_symbol_context    context;
+    baseband_gateway_buffer_read_only samples;
+    lower_phy_rx_symbol_context       context;
   };
 
-  void process_symbol(const baseband_gateway_buffer& samples, const lower_phy_rx_symbol_context& context) override
+  void process_symbol(const baseband_gateway_buffer_reader& samples,
+                      const lower_phy_rx_symbol_context&    context) override
   {
     entries.emplace_back();
     entry_t& entry = entries.back();
-    entry.samples  = &samples;
+    entry.samples  = samples;
     entry.context  = context;
   }
 

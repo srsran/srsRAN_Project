@@ -80,26 +80,26 @@ static unsigned linear_search_over_mcs_table(double snr)
 TEST(test_lower_upper_bound, test)
 {
   // Lower bound.
-  ASSERT_EQ(0, map_snr_to_mcs_ul(ul_snr_mcs_table.front()));
-  ASSERT_EQ(0, map_snr_to_mcs_ul(ul_snr_mcs_table.front() - 0.1));
+  ASSERT_EQ(0, map_snr_to_mcs_ul(ul_snr_mcs_table.front(), srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(0, map_snr_to_mcs_ul(ul_snr_mcs_table.front() - 0.1, srsran::pusch_mcs_table::qam64));
 
   // Upper bound
-  ASSERT_EQ(28, map_snr_to_mcs_ul(ul_snr_mcs_table.back()));
-  ASSERT_EQ(28, map_snr_to_mcs_ul(ul_snr_mcs_table.back() + 0.1));
+  ASSERT_EQ(28, map_snr_to_mcs_ul(ul_snr_mcs_table.back(), srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(28, map_snr_to_mcs_ul(ul_snr_mcs_table.back() + 0.1, srsran::pusch_mcs_table::qam64));
 }
 
 TEST(test_manual_values, test_some_benchmark_values)
 {
-  ASSERT_EQ(1, map_snr_to_mcs_ul(ul_snr_mcs_table[1]));
-  ASSERT_EQ(1, map_snr_to_mcs_ul(-3.0));
-  ASSERT_EQ(9, map_snr_to_mcs_ul(ul_snr_mcs_table[9]));
-  ASSERT_EQ(9, map_snr_to_mcs_ul(4.5));
-  ASSERT_EQ(14, map_snr_to_mcs_ul(ul_snr_mcs_table[14]));
-  ASSERT_EQ(14, map_snr_to_mcs_ul(8.7));
-  ASSERT_EQ(19, map_snr_to_mcs_ul(ul_snr_mcs_table[19]));
-  ASSERT_EQ(19, map_snr_to_mcs_ul(12.55));
-  ASSERT_EQ(27, map_snr_to_mcs_ul(ul_snr_mcs_table[27]));
-  ASSERT_EQ(27, map_snr_to_mcs_ul(20.01));
+  ASSERT_EQ(1, map_snr_to_mcs_ul(ul_snr_mcs_table[1], srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(1, map_snr_to_mcs_ul(-3.0, srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(9, map_snr_to_mcs_ul(ul_snr_mcs_table[9], srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(9, map_snr_to_mcs_ul(4.5, srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(14, map_snr_to_mcs_ul(ul_snr_mcs_table[14], srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(14, map_snr_to_mcs_ul(8.7, srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(19, map_snr_to_mcs_ul(ul_snr_mcs_table[19], srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(19, map_snr_to_mcs_ul(12.55, srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(27, map_snr_to_mcs_ul(ul_snr_mcs_table[27], srsran::pusch_mcs_table::qam64));
+  ASSERT_EQ(27, map_snr_to_mcs_ul(20.01, srsran::pusch_mcs_table::qam64));
 }
 
 class snr_to_ul_mcs_tester : public ::testing::TestWithParam<double>
@@ -107,7 +107,8 @@ class snr_to_ul_mcs_tester : public ::testing::TestWithParam<double>
 
 TEST_P(snr_to_ul_mcs_tester, compare_bin_search_with_linear)
 {
-  ASSERT_EQ(linear_search_over_mcs_table(GetParam()), map_snr_to_mcs_ul(GetParam()).to_uint());
+  ASSERT_EQ(linear_search_over_mcs_table(GetParam()),
+            map_snr_to_mcs_ul(GetParam(), srsran::pusch_mcs_table::qam64).to_uint());
 }
 
 // Compare the binary search with linear search for a given interval.

@@ -76,14 +76,12 @@ protected:
     phy_dummy phy;
 
     srsran::srs_du::du_high_configuration du_cfg{};
-    du_cfg.du_mng_executor = &workers.ctrl_exec;
-    du_cfg.cell_executors  = &workers.cell_exec_mapper;
-    du_cfg.ue_executors    = &workers.ue_exec_mapper;
-    du_cfg.f1ap_notifier   = &du_msg_handler;
-    du_cfg.phy_adapter     = &phy;
-    du_cfg.timers          = &timers;
-    du_cfg.cells           = {config_helpers::make_default_du_cell_config()};
-    du_cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
+    du_cfg.exec_mapper   = &workers.exec_mapper;
+    du_cfg.f1ap_notifier = &du_msg_handler;
+    du_cfg.phy_adapter   = &phy;
+    du_cfg.timers        = &timers;
+    du_cfg.cells         = {config_helpers::make_default_du_cell_config()};
+    du_cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
 
     // create DU object
     du_obj = std::make_unique<srs_du::du_high>(std::move(du_cfg));

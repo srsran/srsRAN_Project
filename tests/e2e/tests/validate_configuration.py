@@ -22,7 +22,7 @@ from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.gnb_pb2_grpc import GNBStub
 
-from .steps.stub import RF_MAX_TIMEOUT
+from .steps.stub import RF_MAX_TIMEOUT, stop
 
 B200_CONFIG_FILE: str = "configs/gnb_rf_b200_tdd_n78_20mhz.yml"
 
@@ -69,3 +69,5 @@ def test_rf_b200_config(
         )
     )
     logging.info("GNB started")
+
+    stop(tuple(), gnb, epc, retina_data)

@@ -58,7 +58,7 @@ public:
   bool contains_rnti(rnti_t rnti) const { return ue_db.contains(rnti_table[rnti]); }
 
   /// Adds UE in MAC UL UE repository
-  bool add_ue(const mac_ue_create_request_message& request);
+  bool add_ue(const mac_ue_create_request& request);
 
   /// Add bearers to existing UE.
   bool addmod_bearers(du_ue_index_t ue_index, const std::vector<mac_logical_channel_config>& ul_logical_channels);

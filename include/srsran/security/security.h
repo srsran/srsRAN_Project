@@ -27,6 +27,7 @@
  *****************************************************************************/
 
 #include "srsran/adt/span.h"
+#include "srsran/ran/pci.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 #include <array>
@@ -83,6 +84,7 @@ inline integrity_algorithm integrity_algorithm_from_number(unsigned int_algo)
 /// Ref: TS 33.501 Sec. A.1.2
 enum class fc_value {
   algorithm_key_derivation = 0x69, ///< Algorithm key derivation functions (Sec. A.8)
+  k_ng_ran_star_derivation = 0x70, ///< KNG-RAN* derivation function for target gNB (Sec. A.11)
 };
 constexpr uint8_t to_number(fc_value fc)
 {
@@ -117,8 +119,8 @@ enum class ciphering_enabled { off = 0, on = 1 };
 
 using sec_mac = std::array<uint8_t, sec_mac_len>;
 
-using sec_as_key     = std::array<uint8_t, sec_key_len>;
-using sec_128_as_key = std::array<uint8_t, sec_128_key_len>;
+using sec_key     = std::array<uint8_t, sec_key_len>;
+using sec_128_key = std::array<uint8_t, sec_128_key_len>;
 
 /// Helper types to communicate the preferred algorithm list. NIA/NEA0...3.
 constexpr uint16_t nof_pref_algos    = 4;
@@ -129,22 +131,96 @@ using preferred_ciphering_algorithms = std::array<ciphering_algorithm, nof_pref_
 constexpr uint16_t nof_supported_algos = 3;
 using supported_algorithms             = std::array<bool, nof_supported_algos>;
 
+/// Security domain, whether applies to RRC or UP
+enum class sec_domain { rrc = 0, up = 1 };
+
 struct sec_128_as_config {
-  sec_128_as_key      k_128_rrc_int;
-  sec_128_as_key      k_128_rrc_enc;
-  sec_128_as_key      k_128_up_int;
-  sec_128_as_key      k_128_up_enc;
+  sec_domain          domain;
+  sec_128_key         k_128_int;
+  sec_128_key         k_128_enc;
+  integrity_algorithm integ_algo;
+  ciphering_algorithm cipher_algo;
+
+  bool operator==(const sec_128_as_config& rhs) const
+  {
+    if (integ_algo != rhs.integ_algo) {
+      return false;
+    }
+    if (cipher_algo != rhs.cipher_algo) {
+      return false;
+    }
+    if (domain != rhs.domain) {
+      return false;
+    }
+    if (k_128_int != rhs.k_128_int) {
+      return false;
+    }
+    if (k_128_enc != rhs.k_128_enc) {
+      return false;
+    }
+    return true;
+  }
+};
+
+struct sec_as_config {
+  sec_domain          domain;
+  sec_key             k_int;
+  sec_key             k_enc;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
 };
 
-struct sec_as_config {
-  sec_as_key          k_rrc_int;
-  sec_as_key          k_rrc_enc;
-  sec_as_key          k_up_int;
-  sec_as_key          k_up_enc;
+struct sec_selected_algos {
+  bool                algos_selected = false;
   integrity_algorithm integ_algo;
   ciphering_algorithm cipher_algo;
+};
+
+struct sec_as_keys {
+  sec_key k_rrc_int;
+  sec_key k_rrc_enc;
+  sec_key k_up_int;
+  sec_key k_up_enc;
+};
+
+using sec_short_mac_i = std::array<uint8_t, 2>;
+
+struct security_context {
+  srslog::basic_logger&          logger = srslog::fetch_basic_logger("SEC");
+  security::sec_key              k;
+  security::supported_algorithms supported_int_algos;
+  security::supported_algorithms supported_enc_algos;
+  sec_selected_algos             sel_algos;
+  sec_as_keys                    as_keys;
+
+  security_context()  = default;
+  ~security_context() = default;
+  security_context(const security_context& sec_ctxt) :
+    k(sec_ctxt.k),
+    supported_int_algos(sec_ctxt.supported_int_algos),
+    supported_enc_algos(sec_ctxt.supported_enc_algos),
+    sel_algos(sec_ctxt.sel_algos),
+    as_keys(sec_ctxt.as_keys)
+  {
+  }
+  security_context& operator=(const security_context& sec_ctxt)
+  {
+    if (this == &sec_ctxt) {
+      return *this;
+    }
+    k                   = sec_ctxt.k;
+    supported_int_algos = sec_ctxt.supported_int_algos;
+    supported_enc_algos = sec_ctxt.supported_enc_algos;
+    sel_algos           = sec_ctxt.sel_algos;
+    as_keys             = sec_ctxt.as_keys;
+    return *this;
+  }
+
+  bool select_algorithms(preferred_integrity_algorithms pref_inte_list, preferred_ciphering_algorithms pref_ciph_list);
+  void generate_as_keys();
+  sec_as_config     get_as_config(sec_domain domain);
+  sec_128_as_config get_128_as_config(sec_domain domain);
+  void              horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn);
 };
 
 /******************************************************************************
@@ -169,7 +245,7 @@ inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
   tail_byte &= (uint8_t)(0xff << bits);
 }
 
-inline std::string sec_as_key_to_string(const sec_as_key& key)
+inline std::string sec_as_key_to_string(const sec_key& key)
 {
   std::stringstream ss;
   for (auto val : key) {
@@ -184,87 +260,42 @@ inline std::string sec_as_key_to_string(const sec_as_key& key)
 
 /// Generic key derivation function
 /// Ref: TS 33.220 Sec. B.2
-void generic_kdf(sec_as_key&         key_out,
-                 const sec_as_key&   key_in,
-                 const fc_value      fc,
-                 span<const uint8_t> p0,
-                 span<const uint8_t> p1);
+void generic_kdf(sec_key&                   key_out,
+                 const sec_key&             key_in,
+                 const fc_value             fc,
+                 const span<const uint8_t>& p0,
+                 const span<const uint8_t>& p1);
 
 /// Algorithm key derivation function (RRC)
 /// Ref: TS 33.501 Sec. A.8
-void generate_k_rrc(sec_as_key&               k_rrc_enc,
-                    sec_as_key&               k_rrc_int,
-                    const sec_as_key&         k_gnb,
+void generate_k_rrc(sec_key&                  k_rrc_enc,
+                    sec_key&                  k_rrc_int,
+                    const sec_key&            k_gnb,
                     const ciphering_algorithm enc_alg_id,
                     const integrity_algorithm int_alg_id);
 
 /// Algorithm key derivation function (UP)
 /// Ref: TS 33.501 Sec. A.8
-void generate_k_up(sec_as_key&               k_up_enc,
-                   sec_as_key&               k_up_int,
-                   const sec_as_key&         k_gnb,
+void generate_k_up(sec_key&                  k_up_enc,
+                   sec_key&                  k_up_int,
+                   const sec_key&            k_gnb,
                    const ciphering_algorithm enc_alg_id,
                    const integrity_algorithm int_alg_id);
 
+/// K_NG-RAN* derivation function for target gNB
+/// Ref: TS 33.501 Sec. A.11
+void generate_k_ng_ran_star(sec_key&       k_star,
+                            const sec_key& k,
+                            const pci_t&   target_pci_,
+                            const uint32_t target_ssb_arfcn_);
+
 /// Truncate 256-bit key to 128-bit key using the least significant bits.
 /// Ref: TS 33.501 Sec. A.8
-sec_128_as_key truncate_key(const sec_as_key& key_in);
+sec_128_key truncate_key(const sec_key& key_in);
 
 /// Truncate 256-bit keys to 128-bit keys using the least significant bits,
 /// on a given security context.
 sec_128_as_config truncate_config(const sec_as_config& cfg_in);
-
-/******************************************************************************
- * Algorithm selection
- *****************************************************************************/
-inline bool select_algorithms(sec_as_config&                 sec_cfg,
-                              preferred_integrity_algorithms pref_inte_list,
-                              preferred_ciphering_algorithms pref_ciph_list,
-                              supported_algorithms           supp_inte_list,
-                              supported_algorithms           supp_ciph_list,
-                              const srslog::basic_logger&    logger)
-{
-  // Select preferred integrity algorithm.
-  bool inte_algo_found = false;
-  for (unsigned i = 0; i < nof_pref_algos; ++i) {
-    uint16_t algo_id = to_number(pref_inte_list[i]);
-    if (algo_id == 0) {
-      // Do not allow NIA0
-      logger.error("NIA0 selection not allowed");
-      break;
-    }
-    if (supp_inte_list[algo_id - 1]) {
-      inte_algo_found    = true;
-      sec_cfg.integ_algo = security::integrity_algorithm_from_number(algo_id);
-      break;
-    }
-  }
-  if (not inte_algo_found) {
-    logger.error("Could not select integrity protection algorithm");
-    return false;
-  }
-
-  // Select preferred ciphering algorithm.
-  bool ciph_algo_found = false;
-  for (unsigned i = 0; i < nof_pref_algos; ++i) {
-    uint16_t algo_id = to_number(pref_ciph_list[i]);
-    if (algo_id == 0) {
-      ciph_algo_found     = true;
-      sec_cfg.cipher_algo = security::ciphering_algorithm::nea0;
-      break;
-    }
-    if (supp_ciph_list[algo_id - 1]) {
-      ciph_algo_found     = true;
-      sec_cfg.cipher_algo = security::ciphering_algorithm_from_number(algo_id);
-      break;
-    }
-  }
-  if (not ciph_algo_found) {
-    logger.error("Could not select ciphering algorithm");
-    return false;
-  }
-  return true;
-}
 
 } // namespace security
 } // namespace srsran
@@ -378,4 +409,22 @@ struct formatter<srsran::security::preferred_ciphering_algorithms> {
     return format_to(ctx.out(), "NEA{}, NEA{}, NEA{}, NEA{}", algos[0], algos[1], algos[2], algos[3]);
   }
 };
+
+// Security domain
+template <>
+struct formatter<srsran::security::sec_domain> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::security::sec_domain domain, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"RRC", "UP"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(domain)]);
+  }
+};
+
 } // namespace fmt

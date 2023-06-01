@@ -24,37 +24,20 @@
 
 #include "f1ap_du_ue_config.h"
 #include "f1c_bearer.h"
-#include "srsran/adt/byte_buffer_slice_chain.h"
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
-
-struct f1ap_rx_pdu {
-  du_ue_index_t           ue_index = INVALID_DU_UE_INDEX;
-  lcid_t                  lcid     = INVALID_LCID;
-  byte_buffer_slice_chain pdu;
-};
-
-struct f1ap_initial_ul_rrc_msg {
-  asn1::f1ap::init_ul_rrc_msg_transfer_s init_msg;
-};
-
-struct f1ap_ul_rrc_msg {
-  asn1::f1ap::ul_rrc_msg_transfer_s ul_msg;
-};
 
 struct f1ap_rrc_delivery_report_msg {
   du_cell_index_t cell_index          = INVALID_DU_CELL_INDEX;
@@ -73,62 +56,13 @@ public:
   virtual void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) = 0;
 };
 
-struct du_setup_params {
-  // mandatory
-  uint64_t gnb_du_id;
-  uint8_t  rrc_version;
-
-  // optional
-  std::string gnb_du_name;
+struct f1ap_ue_context_modification_confirm {
+  bool success = false;
 };
 
-struct f1_setup_request_message {
-  asn1::f1ap::f1_setup_request_s msg;
-  unsigned                       max_setup_retries = 5;
-  /// Vector element index corresponds to DU Cell Index.
-  std::vector<nr_cell_global_id_t> du_cell_index_to_nr_cgi_lookup;
-};
+struct f1ap_ue_inactivity_notification_message {};
 
-struct f1_setup_response_message {
-  asn1::f1ap::f1_setup_resp_s msg;
-  bool                        success = false;
-};
-
-/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
-class f1ap_connection_manager
-{
-public:
-  virtual ~f1ap_connection_manager() = default;
-
-  /// \brief Initiates the F1 Setup procedure as per TS 38.473, Section 8.2.3.
-  /// \param[in] request The F1SetupRequest message to transmit.
-  /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a
-  /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3
-  /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
-  virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
-};
-
-struct f1ap_ue_context_release_request_message {
-  asn1::f1ap::ue_context_release_request_s msg;
-};
-
-struct f1ap_ue_context_modification_required_message {
-  asn1::f1ap::ue_context_mod_required_s msg;
-};
-
-struct f1ap_ue_context_modification_response_message {
-  asn1::f1ap::ue_context_mod_confirm_s confirm;
-  asn1::f1ap::ue_context_mod_refuse_s  refuse;
-  bool                                 success = false;
-};
-
-struct f1ap_ue_inactivity_notification_message {
-  asn1::f1ap::ue_inactivity_notif_s msg;
-};
-
-struct f1ap_notify_message {
-  asn1::f1ap::notify_s msg;
-};
+struct f1ap_notify_message {};
 
 struct f1ap_ue_delete_request {
   du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
@@ -149,12 +83,15 @@ public:
   /// \brief Removes UE Context from F1AP.
   virtual void handle_ue_deletion_request(du_ue_index_t ue_index) = 0;
 
+  /// \brief Initiates the UE Context Release Request (gNB-DU initiated) procedure as per TS 38.473 section 8.3.2.
+  virtual void handle_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
+
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
-  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in
+  /// \return Returns a f1ap_ue_context_modification_confirm struct with the success member set to 'true' in
   /// case of a successful outcome, 'false' otherwise.
-  virtual async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) = 0;
+  virtual async_task<f1ap_ue_context_modification_confirm>
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) = 0;
 
   /// \brief Indicate an UE activity event as per TS 38.473 section 8.3.6
   /// \param[in] msg The UE Inactivity Nofication message to transmit.

@@ -69,14 +69,16 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
 
     // init F1-U logger
-    srslog::fetch_basic_logger("F1-U", false).set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("F1-U", false).set_hex_dump_max_size(100);
+    srslog::fetch_basic_logger("DU-F1-U", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("DU-F1-U", false).set_hex_dump_max_size(100);
 
     // create tester and testee
     logger.info("Creating F1-U bearer");
-    tester          = std::make_unique<f1u_du_test_frame>();
-    drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(0, drb_id, *tester, *tester, timer_factory{timers, ue_worker});
+    tester            = std::make_unique<f1u_du_test_frame>();
+    f1u_config config = {};
+    config.t_notify   = f1u_ul_notif_time_ms;
+    drb_id_t drb_id   = drb_id_t::drb1;
+    f1u = std::make_unique<f1u_bearer_impl>(0, drb_id, config, *tester, *tester, timer_factory{timers, ue_worker});
   }
 
   void TearDown() override
@@ -96,6 +98,8 @@ protected:
   manual_task_worker                 ue_worker{128};
   std::unique_ptr<f1u_du_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>   f1u;
+
+  const uint32_t f1u_ul_notif_time_ms = 10;
 };
 
 TEST_F(f1u_du_test, create_new_entity)

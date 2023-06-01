@@ -24,6 +24,7 @@
 
 #include "srsran/adt/optional.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/sch_mcs.h"
 
 namespace srsran {
@@ -41,6 +42,6 @@ optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
 ///
 /// The objective of this function is to find the maximum MCS that can be used for a given SNR.
 /// TODO: revise this function once the SNR to BLER curves will have been prepared.
-sch_mcs_index map_snr_to_mcs_ul(double snr);
+sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table);
 
 } // namespace srsran

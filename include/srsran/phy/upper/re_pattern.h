@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/interval.h"
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
@@ -32,12 +33,8 @@ namespace srsran {
 
 /// Describes a resource element pattern within a resource grid.
 struct re_pattern {
-  /// Resource block where the pattern begins in frequency domain, the range is (0...274).
-  unsigned rb_begin{0};
-  /// Resource block where the pattern ends in frequency domain (excluded), the range is (1...275).
-  unsigned rb_end{1};
-  /// Resource block index jump.
-  unsigned rb_stride{1};
+  /// Physical resource block mask.
+  bounded_bitset<MAX_RB> prb_mask;
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
   re_prb_mask re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
@@ -47,31 +44,51 @@ struct re_pattern {
   re_pattern() = default;
 
   /// \brief Constructs an RE pattern from parameters.
-  ///
-  /// \param[in] rb_begin_  Start RB block index.
-  /// \param[in] rb_end_    End RB block index (excluded).
-  /// \param[in] rb_stride_ RB index jump.
-  /// \param[in] re_mask_   RE Mask.
-  /// \param[in] symbols_   Symbol mask.
-  re_pattern(unsigned                rb_begin_,
-             unsigned                rb_end_,
-             unsigned                rb_stride_,
+  /// \param[in] rb_begin  Start RB block index {0, ..., 274}.
+  /// \param[in] rb_end    End RB block index {0, ..., 275} (excluded).
+  /// \param[in] rb_stride RB index jump {1, ..., 274}.
+  /// \param[in] re_mask_  RE Mask.
+  /// \param[in] symbols_  Symbol mask.
+  /// \remark An assertion is triggered if \c rb_begin, \c rb_end or \c rb_stride value is not within the indicated
+  /// interval.
+  /// \remark An assertion is triggered if \c rb_end is lesser than \c rb_begin.
+  re_pattern(unsigned                rb_begin,
+             unsigned                rb_end,
+             unsigned                rb_stride,
              const re_prb_mask&      re_mask_,
              const symbol_slot_mask& symbols_) :
-    rb_begin(rb_begin_), rb_end(rb_end_), rb_stride(rb_stride_), re_mask(re_mask_), symbols(symbols_)
+    prb_mask(rb_end), re_mask(re_mask_), symbols(symbols_)
   {
-    // Do nothing.
+    static constexpr interval<unsigned, true> rb_begin_interval  = {0, MAX_RB - 1};
+    static constexpr interval<unsigned, true> rb_stride_interval = {1, MAX_RB - 1};
+    static constexpr interval<unsigned, true> rb_end_interval    = {1, MAX_RB};
+
+    srsran_assert(rb_begin_interval.contains(rb_begin),
+                  "The RB begin (i.e., {}) is out of range {}.",
+                  rb_begin,
+                  rb_begin_interval);
+    srsran_assert(
+        rb_end_interval.contains(rb_end), "The RB end (i.e., {}) is out of range {}.", rb_end, rb_end_interval);
+    srsran_assert(rb_stride_interval.contains(rb_stride),
+                  "The RB stride (i.e., {}) is out of range {}.",
+                  rb_stride,
+                  rb_stride_interval);
+    srsran_assert(
+        rb_begin < rb_end, "The RB begin (i.e., {}) must be smaller than RB end (i.e., {})", rb_begin, rb_end);
+
+    if (rb_stride == 1) {
+      prb_mask.fill(rb_begin, rb_end);
+    } else {
+      for (unsigned i_prb = rb_begin; i_prb < rb_end; i_prb += rb_stride) {
+        prb_mask.set(i_prb);
+      }
+    }
   }
 
   /// \brief Copy constructor.
   ///
   /// \param[in] other Provides the reference to other resource element pattern to copy.
-  re_pattern(const re_pattern& other) :
-    rb_begin(other.rb_begin),
-    rb_end(other.rb_end),
-    rb_stride(other.rb_stride),
-    re_mask(other.re_mask),
-    symbols(other.symbols)
+  re_pattern(const re_pattern& other) : prb_mask(other.prb_mask), re_mask(other.re_mask), symbols(other.symbols)
   {
     // Do nothing.
   }
@@ -110,6 +127,9 @@ private:
 public:
   /// Default constructor.
   re_pattern_list() = default;
+
+  /// Implicit construction from a single RE pattern.
+  re_pattern_list(const re_pattern& pattern) : list() { list.emplace_back(pattern); }
 
   /// \brief Create a pattern list from an initializer list of patterns.
   ///

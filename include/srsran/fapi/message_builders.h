@@ -37,6 +37,47 @@ namespace fapi {
 
 // :TODO: Review the builders documentation so it matches the UCI builder.
 
+/// Helper class to fill the transmission precoding and beamforming parameters specified in SCF-222 v4.0
+/// section 3.4.2.5.
+class tx_precoding_and_beamforming_pdu_builder
+{
+  tx_precoding_and_beamforming_pdu& pdu;
+
+public:
+  explicit tx_precoding_and_beamforming_pdu_builder(tx_precoding_and_beamforming_pdu& pdu_) : pdu(pdu_)
+  {
+    // Mark the tx precoding and beamforming pdu as used when this builder is called.
+    pdu.trp_scheme = 0U;
+  }
+
+  /// Sets the basic parameters for the fields of the tranmission precoding and beamforming PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.5, in table Tx precoding and beamforming PDU.
+  tx_precoding_and_beamforming_pdu_builder& set_basic_parameters(unsigned prg_size, unsigned dig_bf_interfaces)
+  {
+    pdu.prg_size          = prg_size;
+    pdu.dig_bf_interfaces = dig_bf_interfaces;
+
+    return *this;
+  }
+
+  /// Adds a PRG to the transmission precoding and beamforming PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.5, in table Tx precoding and beamforming PDU.
+  tx_precoding_and_beamforming_pdu_builder& add_prg(unsigned pm_index, span<const uint16_t> beam_index)
+  {
+    tx_precoding_and_beamforming_pdu::prgs_info& prg = pdu.prgs.emplace_back();
+
+    srsran_assert(pdu.dig_bf_interfaces == beam_index.size(),
+                  "Error number of beam indexes={} does not match the expected={}",
+                  beam_index.size(),
+                  pdu.dig_bf_interfaces);
+
+    prg.pm_index = pm_index;
+    prg.beam_index.assign(beam_index.begin(), beam_index.end());
+
+    return *this;
+  }
+};
+
 /// Helper class to fill in the DL SSB PDU parameters specified in SCF-222 v4.0 section 3.4.2.4.
 class dl_ssb_pdu_builder
 {
@@ -158,6 +199,14 @@ public:
     v3.beta_pss_profile_sss = static_cast<decltype(v3.beta_pss_profile_sss)>(beta_pss);
 
     return *this;
+  }
+
+  /// Returns a transmission precoding and beamforming PDU builder of this SSB PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+
+    return builder;
   }
 
 private:
@@ -290,6 +339,14 @@ public:
   {
     pdu.context = pdcch_context(ss_id, dci_format, harq_feedback_timing);
     return *this;
+  }
+
+  /// Returns a transmission precoding and beamforming PDU builder of this DL DCI PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+
+    return builder;
   }
 
 private:
@@ -768,6 +825,14 @@ public:
     return *this;
   }
 
+  /// Returns a transmission precoding and beamforming PDU builder of this PDSCH PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+
+    return builder;
+  }
+
   // :TODO: FAPIv4 MU-MIMO.
 
 private:
@@ -860,6 +925,14 @@ public:
     pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = static_cast<int16_t>(value);
 
     return *this;
+  }
+
+  /// Returns a transmission precoding and beamforming PDU builder of this CSI-RS PDU.
+  tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
+  {
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+
+    return builder;
   }
 };
 

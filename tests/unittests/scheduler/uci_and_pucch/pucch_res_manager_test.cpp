@@ -83,6 +83,32 @@ protected:
   };
 };
 
+TEST_F(test_pucch_resource_manager, common_res_available_intialization)
+{
+  for (unsigned r_pucch = 0; r_pucch != 16; ++r_pucch) {
+    ASSERT_TRUE(res_manager.is_common_resource_available(sl_tx, r_pucch));
+  }
+}
+
+TEST_F(test_pucch_resource_manager, common_res_available_reserve_and_check)
+{
+  const unsigned r_pucch = 13;
+  res_manager.reserve_common_resource(sl_tx, r_pucch);
+  for (unsigned r_pucch_it = 0; r_pucch_it != 16; ++r_pucch_it) {
+    if (r_pucch_it == r_pucch) {
+      continue;
+    }
+    ASSERT_TRUE(res_manager.is_common_resource_available(sl_tx, r_pucch_it));
+  }
+
+  // Increment slot point and invoke slot_indication(), which should reset the previous UE's resource allocation.
+  ++sl_tx;
+  res_manager.slot_indication(sl_tx);
+  for (unsigned r_pucch_it = 0; r_pucch_it != 16; ++r_pucch_it) {
+    ASSERT_TRUE(res_manager.is_common_resource_available(sl_tx, r_pucch_it));
+  }
+}
+
 // Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
 TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_1)
 {

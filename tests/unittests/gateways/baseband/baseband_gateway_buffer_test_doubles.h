@@ -21,19 +21,22 @@
  */
 
 #pragma once
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 
 /// \brief Read-only baseband buffer.
 ///
 /// Records all the baseband samples that pass through the baseband gateway spy classes.
-class baseband_gateway_buffer_read_only : public baseband_gateway_buffer
+class baseband_gateway_buffer_read_only : public baseband_gateway_buffer_reader
 {
 private:
-  unsigned                       nof_channels;
-  unsigned                       nof_samples;
-  std::vector<radio_sample_type> data;
+  unsigned          nof_channels;
+  unsigned          nof_samples;
+  std::vector<cf_t> data;
 
 public:
   // See interface for documentation.
@@ -43,23 +46,13 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation.
-  span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
+  span<const cf_t> get_channel_buffer(unsigned channel_idx) const override
   {
     report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
     report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
-    return span<radio_sample_type>(data).subspan(offset, nof_samples);
-  }
-
-  // See interface for documentation.
-  span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
-  {
-    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
-    report_fatal_error_if_not(
-        channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
-    unsigned offset = nof_samples * channel_idx;
-    return span<const radio_sample_type>(data).subspan(offset, nof_samples);
+    return span<const cf_t>(data).subspan(offset, nof_samples);
   }
 
   /// Creates a default empty buffer.
@@ -84,12 +77,22 @@ public:
     // Do nothing.
   }
 
-  /// Constructor from a parent class.
-  baseband_gateway_buffer_read_only(const baseband_gateway_buffer& other) noexcept :
+  /// Constructor from a reader interface.
+  baseband_gateway_buffer_read_only(const baseband_gateway_buffer_reader& other) noexcept :
     nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
   {
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
-      span<radio_sample_type> buffer = span<radio_sample_type>(data).subspan(nof_samples * channel, nof_samples);
+      span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
+      srsvec::copy(buffer, other[channel]);
+    }
+  }
+
+  /// Constructor from a writer interface.
+  baseband_gateway_buffer_read_only(baseband_gateway_buffer_writer& other) noexcept :
+    nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
+  {
+    for (unsigned channel = 0; channel != nof_channels; ++channel) {
+      span<cf_t> buffer = span<cf_t>(data).subspan(nof_samples * channel, nof_samples);
       srsvec::copy(buffer, other[channel]);
     }
   }

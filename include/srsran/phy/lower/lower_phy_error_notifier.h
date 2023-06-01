@@ -49,13 +49,6 @@ public:
   /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const resource_grid_context& context) = 0;
 
-  /// \brief Notifies an excess of resource grids to transmit.
-  ///
-  /// This error occurs when the number of pending resource grids to transmit reaches the limit.
-  ///
-  /// \param[in] context Context of the resource grid raising the error notification.
-  virtual void on_overflow_resource_grid(const resource_grid_context& context) = 0;
-
   /// \brief Notifies a PRACH request outside the slot window.
   ///
   /// This error occurs when a PRACH request for slot \f$n\f$ is received after slot \f$n\f$ started being
@@ -78,13 +71,6 @@ public:
   ///
   /// \param[in] context Context of the PUxCH request raising the error notification.
   virtual void on_puxch_request_late(const resource_grid_context& context) = 0;
-
-  /// \brief Notifies an excess of PUxCH requests.
-  ///
-  /// This error occurs when the number of pending PUxCH requests reaches the limit.
-  ///
-  /// \param[in] context Context of the PUxCH request raising the error notification.
-  virtual void on_puxch_request_overflow(const resource_grid_context& context) = 0;
 };
 
 } // namespace srsran

@@ -56,6 +56,7 @@ private:
   bool                                  enable_prach_processing;
   modulation_scheme                     data_modulation;
   unsigned                              nof_subcs;
+  unsigned                              nof_ports;
   std::mt19937                          rgen;
 
   // Pseudo-random data and symbol buffers.
@@ -76,7 +77,8 @@ public:
                        bool                                  enable_ul_processing_,
                        bool                                  enable_prach_processing_,
                        modulation_scheme                     data_modulation_,
-                       unsigned                              nof_subcs_) :
+                       unsigned                              nof_subcs_,
+                       unsigned                              nof_ports_) :
     logger(logger_),
     dl_rg_pool(std::move(dl_rg_pool_)),
     ul_rg_pool(std::move(ul_rg_pool_)),
@@ -92,6 +94,7 @@ public:
     enable_prach_processing(enable_prach_processing_),
     data_modulation(data_modulation_),
     nof_subcs(nof_subcs_),
+    nof_ports(nof_ports_),
     rgen(0)
   {
     srsran_assert(dl_rg_pool, "Invalid DL RG pool.");
@@ -103,6 +106,7 @@ public:
     srsran_assert(ssb_config.period_ms, "SSB period cannot be 0 ms.");
     srsran_assert(ssb_config.period_ms % 5 == 0, "SSB period ({}) must be multiple of 5 ms.", ssb_config.period_ms);
     srsran_assert(nof_subcs != 0, "Number of OFDM subcarriers cannot be zero.");
+    srsran_assert(nof_ports_ != 0, "Number of antenna ports cannot be zero.");
   }
 
   void handle_tti_boundary(const upper_phy_timing_context& context) override
@@ -208,11 +212,13 @@ public:
       data_modulator->modulate(data_symbols, data, data_modulation);
 
       span<cf_t> data_span(data_symbols);
-      unsigned   offset = 0;
-      for (unsigned i_symbol = 0; i_symbol != nsymb_per_slot; ++i_symbol) {
-        // Write data into the resource grid.
-        rg.put(0, i_symbol, 0, data_span.subspan(offset, nof_subcs));
-        offset += nof_subcs;
+      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+        unsigned offset = 0;
+        for (unsigned i_symbol = 0; i_symbol != nsymb_per_slot; ++i_symbol) {
+          // Write data into the resource grid.
+          rg.put(i_port, i_symbol, 0, data_span.subspan(offset, nof_subcs));
+          offset += nof_subcs;
+        }
       }
     }
 
@@ -358,5 +364,6 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
                                                 config.enable_ul_processing,
                                                 config.enable_prach_processing,
                                                 config.data_modulation,
-                                                nof_subcs);
+                                                nof_subcs,
+                                                config.max_nof_ports);
 }

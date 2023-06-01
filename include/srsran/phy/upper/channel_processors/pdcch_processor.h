@@ -22,15 +22,16 @@
 
 #pragma once
 
-#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/pdcch_context.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// \brief Describes the PDCCH processor interface.
 ///
@@ -60,16 +61,14 @@ public:
     unsigned cce_index;
     /// Indicates the number of CCE used by the PDCCH transmission as per TS38.211 Section 7.3.2.1 {1, 2, 4, 8, 16}.
     unsigned aggregation_level;
-    // Ignore precoding and beamforming.
-    // ...
     /// Ratio of PDCCH DM-RS EPRE to SSS EPRE in decibels.
     float dmrs_power_offset_dB;
     /// Ratio of PDCCH Data EPRE to SSS EPRE in decibels.
     float data_power_offset_dB;
     /// DCI payload as unpacked bits.
     static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> payload;
-    /// Port indexes the PDCCH transmission is mapped onto.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// CCE-to-REG mapping types as per TS38.211 Section 7.3.2.2.
@@ -147,9 +146,9 @@ public:
 
   /// \brief Processes a PDCCH transmission.
   ///
-  /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] pdu Provides the necessary parameters to process the PDCCH transmission.
-  virtual void process(resource_grid_writer& grid, const pdu_t& pdu) = 0;
+  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[in] pdu     Necessary parameters to process the PDCCH transmission.
+  virtual void process(resource_grid_mapper& mapper, const pdu_t& pdu) = 0;
 };
 
 /// \brief Describes the PDCCH processor validator interface.

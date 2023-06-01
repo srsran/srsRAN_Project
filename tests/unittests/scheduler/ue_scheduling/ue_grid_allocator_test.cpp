@@ -65,14 +65,14 @@ protected:
     for (lcid_t lcid : lcids_to_activate) {
       ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
 
     return ues[ue_index];
   }
 
   ue& add_ue(const sched_ue_creation_request_message& ue_creation_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req, harq_timeout_handler));
     return ues[ue_creation_req.ue_index];
   }
 
@@ -84,14 +84,15 @@ protected:
 
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.rnti = grant.user->crnti;
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.bwp_cfg =
-        &ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
+        &ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->generic_params;
     dummy_pdcch_alloc.next_ue_pdcch_alloc.ctx.coreset_cfg =
-        &*ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).pdcch_common.coreset0;
+        &*ue_cc.cfg().bwp(ue_cc.active_bwp_id()).dl_common->pdcch_common.coreset0;
   }
 
-  scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier   mac_notif;
+  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
+  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier             mac_notif;
+  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
   dummy_uci_allocator            dummy_uci_alloc;
@@ -111,7 +112,6 @@ TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_the
                        .ss_id          = to_search_space_id(1),
                        .time_res_index = 0,
                        .crbs           = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs(),
-                       .dci_fmt        = dci_dl_format::f1_0,
                        .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 
@@ -132,17 +132,17 @@ TEST_F(ue_grid_allocator_tester,
 
   ue& u = add_ue(ue_creation_req);
 
+  const crb_interval crbs =
+      get_coreset_crbs(ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back());
+
   ue_pdsch_grant grant{
       .user           = &u,
       .cell_index     = to_du_cell_index(0),
       .h_id           = to_harq_id(0),
       .ss_id          = to_search_space_id(2),
       .time_res_index = 0,
-      .crbs           = {get_coreset_crbs(
-                   ue_creation_req.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().coresets.back())
-                             .start(),
-                         cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().stop()},
-      .dci_fmt        = dci_dl_format::f1_0,
+      .crbs           = {crbs.start(),
+                         crbs.start() + cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()},
       .aggr_lvl       = aggregation_level::n4};
   set_allocator_responses(grant);
 

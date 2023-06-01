@@ -1,5 +1,32 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 /*!
 \mainpage
 
-\todo Write a nice introduction to srsran! And change the logo!
+The srsRAN Project is a complete 5G RAN solution, featuring an ORAN-native
+CU/DU developed by [SRS](https://www.srs.io/).
+
+The solution includes a complete L1/2/3 implementation with minimal external
+dependencies. Portable across processor architectures, the software has been
+optimized for x86 and ARM. srsRAN follows the 3GPP 5G system architecture
+implementing the functional splits between distributed unit (DU) and
+centralized unit (CU). The CU is further disaggregated into control plane
+(CU-CP) and user-plane (CU-UP).
+
+See the [srsRAN Project](https://www.srsran.com/) for information, guides and
+project news.
+
+This is the API documentation for srsRAN Project, generated from the source
+code by [Doxygen](https://www.doxygen.nl/). For application features, build
+instructions and user guides see the [srsRAN Project
+documentation](https://docs.srsran.com/projects/project).
+
 */

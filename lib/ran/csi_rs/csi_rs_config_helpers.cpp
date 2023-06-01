@@ -91,7 +91,7 @@ unsigned srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t         
   for (const csi_rs_resource_mapping_info& info : csi_rs_resource_mapping_within_slot) {
     if (info.nof_ports == nof_ports and info.cdm_type == cdm_type and info.density == density) {
       // As per Table 7.4.1.5.3-1, TS 38.211, rows 6 and 7 have the same nof_ports, cdm_type and density. The only way
-      // we can tell them apart is by checking the number of bits in the frequency allocation vector \c
+      // we can tell them apart is by checking the number of bits set to 1 in the frequency allocation vector \c
       // frequencyDomainAllocation, which is 2 and 6 bits for row 6 and 7, respectively, as per Section 7.4.1.5.3,
       // TS 38.211.
       if (info.row == 6U or info.row == 7U) {
@@ -99,6 +99,17 @@ unsigned srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t         
           return 7U;
         } else if (fd_alloc.count() == 4U) {
           return 6U;
+        }
+        continue;
+      }
+      // As per Table 7.4.1.5.3-1, TS 38.211, rows 4 and 5 have the same nof_ports, cdm_type and density. The only way
+      // we can tell them apart is by checking the size of the frequency allocation vector \c frequencyDomainAllocation,
+      // which is 3 and 6 bits for row 4 and row 5 respectively.
+      if (info.row == 4U or info.row == 5U) {
+        if (fd_alloc.size() == 3) {
+          return 4U;
+        } else if (fd_alloc.size() == 6) {
+          return 5U;
         }
         continue;
       }

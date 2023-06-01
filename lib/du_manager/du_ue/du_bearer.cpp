@@ -53,6 +53,22 @@ void du_srb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
+void du_srb_connector::disconnect()
+{
+  // Disconnect F1AP <-> RLC interface.
+  f1c_rx_sdu_notif.disconnect();
+  rlc_rx_sdu_notif.disconnect();
+
+  // Disconnect MAC <-> RLC interface.
+  mac_rx_sdu_notifier.disconnect();
+  rlc_tx_buffer_state_notif.disconnect();
+}
+
+void du_ue_srb::disconnect()
+{
+  connector.disconnect();
+}
+
 void du_drb_connector::connect(du_ue_index_t                       ue_index,
                                drb_id_t                            drb_id,
                                lcid_t                              lcid,
@@ -79,19 +95,20 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
   mac_tx_sdu_notifier.connect(*rlc_bearer.get_tx_lower_layer_interface());
 }
 
-void du_drb_connector::disconnect_rx()
+void du_drb_connector::disconnect()
 {
   // Disconnect F1-U <-> RLC interface.
   rlc_rx_sdu_notif.disconnect();
   f1u_rx_sdu_notif.disconnect();
 
-  // Disconnect MAC -> RLC interface.
+  // Disconnect MAC <-> RLC interface.
   mac_rx_sdu_notifier.disconnect();
+  rlc_tx_buffer_state_notif.disconnect();
 }
 
-void du_ue_drb::disconnect_rx()
+void du_ue_drb::disconnect()
 {
-  connector.disconnect_rx();
+  connector.disconnect();
 }
 
 std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t                       ue_index,
@@ -99,6 +116,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
                                                       drb_id_t                            drb_id,
                                                       lcid_t                              lcid,
                                                       const rlc_config&                   rlc_cfg,
+                                                      const f1u_config&                   f1u_cfg,
                                                       span<const up_transport_layer_info> uluptnl_info_list,
                                                       const du_manager_params&            du_params)
 {
@@ -118,12 +136,16 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   drb->drb_id  = drb_id;
   drb->lcid    = lcid;
   drb->rlc_cfg = rlc_cfg;
+  drb->f1u_cfg = f1u_cfg;
+
   drb->uluptnl_info_list.assign(uluptnl_info_list.begin(), uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   // > Create F1-U bearer.
   f1u_bearer* f1u_drb = du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
+      drb->drb_id,
+      drb->f1u_cfg,
       drb->dluptnl_info_list[0].gtp_teid.value(),
       drb->uluptnl_info_list[0].gtp_teid.value(),
       drb->connector.f1u_rx_sdu_notif,

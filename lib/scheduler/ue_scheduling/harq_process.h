@@ -39,6 +39,36 @@ namespace srsran {
 struct pdsch_information;
 struct pusch_information;
 
+/// \brief Handler of HARQ process timeouts.
+class harq_timeout_handler
+{
+public:
+  virtual ~harq_timeout_handler() = default;
+
+  virtual void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) = 0;
+};
+
+/// \brief UE-specific notifier of HARQ process timeouts.
+class ue_harq_timeout_notifier
+{
+public:
+  /// \brief Default constructor creates a no-op notifier.
+  ue_harq_timeout_notifier();
+
+  /// \brief Creates a notifier to a custom harq timeout handler.
+  ///
+  /// \param notifier_ The custom harq timeout handler.
+  /// \param ue_index_ The UE index.
+  ue_harq_timeout_notifier(harq_timeout_handler& handler_, du_ue_index_t ue_index_);
+
+  /// \brief Notifies a HARQ timeout.
+  void notify_harq_timeout(bool is_dl) { handler->handle_harq_timeout(ue_index, is_dl); }
+
+private:
+  harq_timeout_handler* handler;
+  du_ue_index_t         ue_index;
+};
+
 /// \brief Helper class to log HARQ events.
 class harq_logger
 {
@@ -109,9 +139,6 @@ public:
     /// State of the Transport Block.
     enum class state_t { empty, pending_retx, waiting_ack } state = state_t::empty;
 
-    /// Whether the Transport Block was ACKed.
-    bool ack_state = false;
-
     /// New Data Indicator. Its value should flip for every new Tx.
     bool ndi = false;
 
@@ -133,12 +160,10 @@ public:
   /// \brief HARQ process constructor.
   /// \param h_id HARQ process ID.
   /// \param max_ack_wait_in_slots_ number of slots above which the scheduler considers that the ACK/CRC went missing.
-  explicit harq_process(harq_id_t    h_id,
-                        harq_logger& logger_,
-                        unsigned     max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS) :
-    id(h_id), logger(logger_), max_ack_wait_in_slots(max_ack_wait_in_slots_), ack_wait_in_slots(max_ack_wait_in_slots_)
-  {
-  }
+  explicit harq_process(harq_id_t                h_id,
+                        harq_logger&             logger_,
+                        ue_harq_timeout_notifier timeout_notif          = {},
+                        unsigned                 max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// \brief Indicate the beginning of a new slot.
   void slot_indication(slot_point slot_tx);
@@ -193,6 +218,9 @@ protected:
   /// HARQ entity logger used by this HARQ process.
   harq_logger& logger;
 
+  /// Notifier used by this HARQ process when there is a timeout.
+  ue_harq_timeout_notifier timeout_notifier;
+
   /// Maximum value of time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
 
@@ -228,7 +256,7 @@ public:
     };
 
     dci_dl_rnti_config_type                                 dci_cfg_type;
-    prb_grant                                               prbs;
+    vrb_alloc                                               rbs;
     unsigned                                                nof_symbols;
     std::array<optional<tb_params>, base_type::MAX_NOF_TBS> tb;
   };
@@ -265,8 +293,8 @@ public:
                uint8_t                   dai);
 
   /// \brief Updates the ACK state of the HARQ process.
-  /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
-  int ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
+  /// \return True if harq was not empty and state was succesfully updated. False, otherwise.
+  bool ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -285,7 +313,7 @@ public:
   /// \brief Parameters relative to the last allocated PUSCH PDU for this HARQ process.
   struct alloc_params {
     dci_ul_rnti_config_type dci_cfg_type;
-    prb_grant               prbs;
+    vrb_alloc               rbs;
     pusch_mcs_table         mcs_table;
     sch_mcs_index           mcs;
     unsigned                tbs_bytes;
@@ -356,9 +384,10 @@ public:
   /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
   /// \param max_ack_wait_in_slots Duration in slots before a HARQ process acknowledgement is considered to have gone
   /// missing and that the HARQ can be reset.
-  explicit harq_entity(rnti_t   rnti,
-                       unsigned nof_dl_harq_procs,
-                       unsigned nof_ul_harq_procs     = 16,
+  explicit harq_entity(rnti_t                   rnti,
+                       unsigned                 nof_dl_harq_procs,
+                       unsigned                 nof_ul_harq_procs,
+                       ue_harq_timeout_notifier timeout_notif,
                        unsigned max_ack_wait_in_slots = detail::harq_process<true>::DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
@@ -172,7 +173,36 @@ struct bitset_builtin_helper<unsigned long long> {
   }
   static int count_ones(unsigned long long value) { return __builtin_popcountll(value); }
 };
+
 #endif
+
+/// \brief Knuth's swap of upper and lower sections of a bitset.
+/// \param m Mask of bits to swap.
+/// \param k shift amount.
+template <typename T, T m, int k>
+T swapbits(T p)
+{
+  T q = ((p >> k) ^ p) & m;
+  return p ^ q ^ (q << k);
+}
+
+/// \brief Knuth's 64-bit reverse. E.g. 0x0000000000000001 -> 0x8000000000000000.
+/// For more information see: https://matthewarcus.wordpress.com/2012/11/18/reversing-a-64-bit-word/
+/// \param n Number to reverse.
+/// \return Reversed number.
+inline uint64_t bit_reverse(uint64_t n)
+{
+  static const uint64_t m0 = 0x5555555555555555LLU;
+  static const uint64_t m1 = 0x0300c0303030c303LLU;
+  static const uint64_t m2 = 0x00c0300c03f0003fLLU;
+  static const uint64_t m3 = 0x00000ffc00003fffLLU;
+  n                        = ((n >> 1U) & m0) | (n & m0) << 1U;
+  n                        = swapbits<uint64_t, m1, 4>(n);
+  n                        = swapbits<uint64_t, m2, 8>(n);
+  n                        = swapbits<uint64_t, m3, 20>(n);
+  n                        = (n >> 34U) | (n << 30U);
+  return n;
+}
 
 } // namespace detail
 
@@ -216,24 +246,31 @@ int count_ones(Integer value)
 
 /// \brief Represents a dynamically-sized bitset with an upper bound capacity of N bits.
 ///
-/// The bounded_bitset is represented internally via an array of unsigned integers, with each integer storing a bitmap.
+/// The bounded_bitset is represented internally via an array of uint64_t, with each integer storing a bitmap.
 /// This class also offers many standard logic manipulation methods, like ::any(), operators &=, &, |=, |, etc. and
 /// utility methods to convert the bitset into strings or integers.
 ///
-/// Depending on the passed \c FirstBitIsLeftmost template argument, this class can represent the bits of the bitset in
-/// different orders.
-/// E.g. bounded_bitset<4, false> a;
-/// a.set(1);
-/// fmt::print("{:b}", a); // prints "0001".
-/// bounded_bitset<4, true> b;
+/// Depending on the passed \c LowestInfoBitIsMSB template argument, this class can represent the bits of the bitset in
+/// different orders. E.g.
+///
+/// bounded_bitset<6, false> a(5); // Bitset of 5 bits. LSB is Lowest Information Bit (bit 0).
+/// a.set(0);
+/// assert(a.to_uint64() == 0b1);
+/// bounded_bitset<6, true> b(5); // Bitset of 5 bits. MSB is Lowest Information Bit (bit 0).
 /// b.set(1);
-/// fmt::print("{:b}", b); // prints "1000".
+/// assert(a.to_uint64() == 0b1000);
+///
+/// The \c LowestInfoBitIsMSB template argument also affects the default string representation of the bitset. E.g.
+/// fmt::print("{:b}", a); // prints "00001".
+/// fmt::print("{:x}", a); // prints "1".
+/// fmt::print("{:b}", b); // prints "01000".
+/// fmt::print("{:x}", b); // prints "8".
 ///
 /// \tparam N Upper bound for bitset size in number of bits.
-/// \tparam FirstBitIsLeftmost Bit index order in memory. If set to (false / true), the bit index 0 corresponds to the
-/// (right-most / left-most) index of the bitset. Note that this argument has an effect on the underlying bitset memory
-/// layout.
-template <size_t N, bool FirstBitIsLeftmost = false>
+/// \tparam LowestInfoBitIsMSB Bit index order in memory. If set to (false / true), the bit index 0 (Lowest Information
+/// Bit) corresponds to either the LSB or MSB of the bitset. Note that this argument has an effect on the underlying
+/// bitset memory layout.
+template <size_t N, bool LowestInfoBitIsMSB = false>
 class bounded_bitset
 {
   using word_t                      = uint64_t;
@@ -260,7 +297,6 @@ public:
   {
     resize(end - begin);
     std::for_each(begin, end, [this, n = 0](bool value) mutable {
-      assert_within_bounds_(n, true);
       if (value) {
         set_(n);
       } else {
@@ -289,7 +325,7 @@ public:
     });
   }
 
-  static constexpr bool bit_order() noexcept { return FirstBitIsLeftmost; }
+  static constexpr bool bit_order() noexcept { return LowestInfoBitIsMSB; }
 
   static constexpr size_t max_size() noexcept { return N; }
 
@@ -428,7 +464,7 @@ public:
 
   /// \brief Toggle values of bits in bitset.
   /// \return Returns this object.
-  bounded_bitset<N, FirstBitIsLeftmost>& flip() noexcept
+  bounded_bitset<N, LowestInfoBitIsMSB>& flip() noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
       buffer[i] = ~buffer[i];
@@ -442,7 +478,7 @@ public:
   /// \param[in] endpos End bit index (excluding) where the bits stop being set.
   /// \param[in] value Set bit range values to either true or false.
   /// \return Returns a reference to this object.
-  bounded_bitset<N, FirstBitIsLeftmost>& fill(size_t startpos, size_t endpos, bool value = true)
+  bounded_bitset<N, LowestInfoBitIsMSB>& fill(size_t startpos, size_t endpos, bool value = true)
   {
     find_first_word_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
       if (value) {
@@ -456,15 +492,15 @@ public:
   }
 
   /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset. Unless
-  /// it is specified, the returned slice has the same template parameters "N" and "FirstBitIsLeftmost" of "this".
+  /// it is specified, the returned slice has the same template parameters "N" and "LowestInfoBitIsMSB" of "this".
   ///
   /// \param[in] startpos The bit index where the subview starts.
   /// \param[in] endpos The bit index where the subview stops.
   template <size_t N2 = N>
-  bounded_bitset<N2, FirstBitIsLeftmost> slice(size_t startpos, size_t endpos) const
+  bounded_bitset<N2, LowestInfoBitIsMSB> slice(size_t startpos, size_t endpos) const
   {
-    bounded_bitset<N2, FirstBitIsLeftmost> sliced(endpos - startpos);
-    if (FirstBitIsLeftmost) {
+    bounded_bitset<N2, LowestInfoBitIsMSB> sliced(endpos - startpos);
+    if (LowestInfoBitIsMSB) {
       std::swap(startpos, endpos);
       startpos = get_bitidx_(startpos) + 1;
       endpos   = get_bitidx_(endpos) + 1;
@@ -507,7 +543,7 @@ public:
       return -1;
     }
 
-    if (not FirstBitIsLeftmost) {
+    if (not LowestInfoBitIsMSB) {
       return find_first_(startpos, endpos, value);
     }
     return find_first_reversed_(startpos, endpos, value);
@@ -524,7 +560,7 @@ public:
   {
     static_assert(std::is_convertible<T, std::function<void(size_t)>>::value,
                   "The function must have void(size_t) signature.");
-    static_assert(!FirstBitIsLeftmost, "The for_each method is not yet available for reversed bitsets.");
+    static_assert(!LowestInfoBitIsMSB, "The for_each method is not yet available for reversed bitsets.");
 
     assert_range_bounds_(startpos, endpos);
 
@@ -675,7 +711,7 @@ public:
   {
     assert_range_bounds_(startpos, endpos);
 
-    if (FirstBitIsLeftmost) {
+    if (LowestInfoBitIsMSB) {
       int ret = find_first_(startpos, endpos, value);
       if (ret == -1) {
         return ret;
@@ -767,7 +803,7 @@ public:
 
   /// \brief Compares two bitsets.
   /// \return Returns true if both bitsets are equal in size and values of bits.
-  bool operator==(const bounded_bitset<N, FirstBitIsLeftmost>& other) const noexcept
+  bool operator==(const bounded_bitset<N, LowestInfoBitIsMSB>& other) const noexcept
   {
     if (size() != other.size()) {
       return false;
@@ -780,12 +816,12 @@ public:
     return true;
   }
 
-  bool operator!=(const bounded_bitset<N, FirstBitIsLeftmost>& other) const noexcept { return not(*this == other); }
+  bool operator!=(const bounded_bitset<N, LowestInfoBitIsMSB>& other) const noexcept { return not(*this == other); }
 
   /// \brief Applies bitwise OR operation lhs |= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise OR operation.
-  bounded_bitset<N, FirstBitIsLeftmost>& operator|=(const bounded_bitset<N, FirstBitIsLeftmost>& other)
+  bounded_bitset<N, LowestInfoBitIsMSB>& operator|=(const bounded_bitset<N, LowestInfoBitIsMSB>& other)
   {
     srsran_assert(other.size() == size(),
                   "ERROR: operator|= called for bitsets of different sizes ('{}'!='{}')",
@@ -800,7 +836,7 @@ public:
   /// \brief Applies bitwise AND operation lhs &= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise AND operation.
-  bounded_bitset<N, FirstBitIsLeftmost>& operator&=(const bounded_bitset<N, FirstBitIsLeftmost>& other)
+  bounded_bitset<N, LowestInfoBitIsMSB>& operator&=(const bounded_bitset<N, LowestInfoBitIsMSB>& other)
   {
     srsran_assert(other.size() == size(),
                   "ERROR: operator&= called for bitsets of different sizes ('{}'!='{}')",
@@ -814,38 +850,11 @@ public:
 
   /// \brief Flips values of bits in the bitset.
   /// \return Returns reference to this object, updated after the flip operation.
-  bounded_bitset<N, FirstBitIsLeftmost> operator~() const noexcept
+  bounded_bitset<N, LowestInfoBitIsMSB> operator~() const noexcept
   {
-    bounded_bitset<N, FirstBitIsLeftmost> ret(*this);
+    bounded_bitset<N, LowestInfoBitIsMSB> ret(*this);
     ret.flip();
     return ret;
-  }
-
-  /// \brief Formatting helper for bitset.
-  /// \tparam OutputIt Output fmt memory buffer type.
-  /// \param[in] mem_buffer Fmt memory buffer.
-  /// \return The memory buffer passed as argument.
-  template <typename OutputIt>
-  OutputIt to_string(OutputIt&& mem_buffer, bool reverse) const
-  {
-    if (size() == 0) {
-      return mem_buffer;
-    }
-
-    reverse = reverse ^ FirstBitIsLeftmost;
-
-    std::string s;
-    s.assign(size(), '0');
-    if (!reverse) {
-      for (size_t i = size(); i != 0; --i) {
-        fmt::format_to(mem_buffer, "{}", test(i - 1) ? '1' : '0');
-      }
-    } else {
-      for (size_t i = 0; i != size(); ++i) {
-        fmt::format_to(mem_buffer, "{}", test(i) ? '1' : '0');
-      }
-    }
-    return mem_buffer;
   }
 
   /// \brief Conversion of bounded_bitset to unsigned integer of 64 bits. If bitset size is larger than 64 bits, an
@@ -867,30 +876,77 @@ public:
     buffer[0] = v;
   }
 
-  /// \brief Formatting of bounded_bitset to hex format.
-  /// \tparam OutputIt Fmt memory buffer type.
-  /// \param[in] mem_buffer Fmt memory buffer.
-  /// \return The input fmt memory buffer.
-  template <typename OutputIt>
-  OutputIt to_hex(OutputIt&& mem_buffer) const noexcept
+  /// \brief Converts the bitset to an array of packed bits. Each element of the resulting array will contain a bitmap.
+  /// The LowInfoBitIsMSB template parameter defines the order of bits in the resulting array.
+  /// \tparam UnsignedInteger Value type of the array where packed bits will be stored. It must be an unsigned integer.
+  /// \param[in] packed_bits Array where packed bits will be stored. The array size must be equal or larger than the
+  /// bitset size (in bits) divided by \c sizeof(UnsignedInteger) * 8U (the number of bits per integer).
+  /// \return Returns the number of positions of \c packed_bits that were written during the function call.
+  template <typename UnsignedInteger>
+  size_t to_packed_bits(span<UnsignedInteger> packed_bits)
   {
-    if (size() == 0) {
-      return mem_buffer;
+    static_assert(sizeof(UnsignedInteger) <= sizeof(word_t), "ERROR: provided array type is too large");
+    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    static constexpr size_t steps_per_word      = sizeof(word_t) / sizeof(UnsignedInteger);
+    static constexpr size_t bits_per_integer    = sizeof(UnsignedInteger) * 8U;
+    static constexpr word_t integer_mask        = mask_lsb_ones<word_t>(bits_per_integer);
+    const unsigned          last_word_steps     = divide_ceil(size() % bits_per_word, bits_per_integer);
+    const unsigned          nof_words           = nof_words_();
+    const unsigned          nof_integers_packed = (nof_words - 1) * steps_per_word + last_word_steps;
+    srsran_assert(
+        packed_bits.size() >= nof_integers_packed, "ERROR: provided array size='{}' is too small", packed_bits.size());
+
+    size_t count = 0;
+    if (not LowestInfoBitIsMSB) {
+      for (unsigned i = 0; i != nof_words; ++i) {
+        unsigned nof_steps = i == nof_words - 1 ? last_word_steps : steps_per_word;
+        for (unsigned j = 0; j != nof_steps; ++j) {
+          packed_bits[count++] = (buffer[i] >> (j * steps_per_word)) & integer_mask;
+        }
+      }
+    } else {
+      for (unsigned i = 0; i != nof_words; ++i) {
+        word_t   w         = buffer[nof_words - i - 1];
+        unsigned nof_steps = steps_per_word;
+        if (i == nof_words - 1) {
+          w <<= (bits_per_word - (size() % bits_per_word));
+          nof_steps = last_word_steps;
+        }
+        for (unsigned j = 0; j != nof_steps; ++j) {
+          packed_bits[count++] = (w >> (bits_per_word - (j + 1) * bits_per_integer)) & integer_mask;
+        }
+      }
     }
-    // first word may not print 16 hex digits
-    int    i           = nof_words_() - 1;
-    size_t rem_symbols = divide_ceil((size() - (size() / bits_per_word) * bits_per_word), 4U);
-    fmt::format_to(mem_buffer, "{:0>{}x}", buffer[i], rem_symbols);
-    // remaining words will occupy 16 hex digits
-    for (--i; i >= 0; --i) {
-      fmt::format_to(mem_buffer, "{:0>16x}", buffer[i]);
+
+    return nof_integers_packed;
+  }
+
+  /// \brief Converts the bitset to an array of unpacked bits, i.e. an array where each element represents a single
+  /// boolean. The order of bits in the resulting array matches the bit information order in the bitset and the template
+  /// parameter \c LowInfoBitIsMSB has no effect. That means that \c unpacked_bits[i] will be equal to \c
+  /// bitset.test(i).
+  ///
+  /// \tparam UnsignedInteger Value type of the array where packed bits will be stored. It must be an
+  /// unsigned integer. \param[in] unpacked_bits Array where the unpacked bits will be stored. The array size must be
+  /// equal or larger than the bitset size (in bits). \return Returns the number of bits packed.
+  template <typename UnsignedInteger>
+  void to_unpacked_bits(span<UnsignedInteger> unpacked_bits)
+  {
+    static_assert(std::is_unsigned<UnsignedInteger>::value, "Only unsigned integers are supported");
+    srsran_assert(size() == unpacked_bits.size(),
+                  "ERROR: provided array size='{}' does not match bitset size='{}'",
+                  unpacked_bits.size(),
+                  size());
+
+    for (unsigned i = 0, ie = size(); i != ie; ++i) {
+      unpacked_bits[i] = test(i);
     }
-    return mem_buffer;
   }
 
 private:
   template <size_t N2, bool reversed2>
   friend class bounded_bitset;
+  friend struct fmt::formatter<bounded_bitset<N, LowestInfoBitIsMSB>>;
 
   std::array<word_t, (N - 1) / bits_per_word + 1> buffer   = {0};
   size_t                                          cur_size = 0;
@@ -904,7 +960,7 @@ private:
     }
   }
 
-  size_t get_bitidx_(size_t bitpos) const noexcept { return FirstBitIsLeftmost ? size() - 1 - bitpos : bitpos; }
+  size_t get_bitidx_(size_t bitpos) const noexcept { return LowestInfoBitIsMSB ? size() - 1 - bitpos : bitpos; }
 
   bool test_(size_t bitpos) const noexcept
   {
@@ -966,11 +1022,11 @@ private:
 
       if (i == startword) {
         size_t offset = startpos % bits_per_word;
-        w &= (FirstBitIsLeftmost) ? mask_msb_zeros<word_t>(offset) : mask_lsb_zeros<word_t>(offset);
+        w &= (LowestInfoBitIsMSB) ? mask_msb_zeros<word_t>(offset) : mask_lsb_zeros<word_t>(offset);
       }
       if (i == lastword) {
         size_t offset = (endpos - 1) % bits_per_word;
-        w &= (FirstBitIsLeftmost) ? mask_msb_ones<word_t>(offset + 1) : mask_lsb_ones<word_t>(offset + 1);
+        w &= (LowestInfoBitIsMSB) ? mask_msb_ones<word_t>(offset + 1) : mask_lsb_ones<word_t>(offset + 1);
       }
       if (w != 0) {
         return static_cast<int>(i * bits_per_word + find_first_msb_one(w));
@@ -1033,24 +1089,24 @@ private:
     return -1;
   }
 
-  /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided callback
-  /// returns true.
-  /// This helper function iterates through the bounded_bitset on a word-by-word basis. Note that operations over words
-  /// are generally faster than operations over individual bits.
-  /// For each iterated word, a mask of the selected bits is computed (which depends on the provided "start" and
-  /// "stop" bit indexes), and the provided callback is invoked. The callback receives as arguments the word index
-  /// and the selected-bit mask. If the callback returns true, the iteration stops and the function returns true.
+  /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided
+  /// callback returns true. This helper function iterates through the bounded_bitset on a word-by-word basis. Note
+  /// that operations over words are generally faster than operations over individual bits. For each iterated word, a
+  /// mask of the selected bits is computed (which depends on the provided "start" and "stop" bit indexes), and the
+  /// provided callback is invoked. The callback receives as arguments the word index and the selected-bit mask. If
+  /// the callback returns true, the iteration stops and the function returns true.
   ///
   /// \param start first bit index of the bounded_bitset.
   /// \param stop end bit index of the bounded_bitset.
-  /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
+  /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the
+  /// bitset.
   ///          When this callback returns true, the iteration is notify_stop.
   /// \return true if the provided callback returns true for a given word. False otherwise.
   template <typename C>
   bool find_first_word_(size_t start, size_t stop, const C& c) const
   {
     assert_range_bounds_(start, stop);
-    return find_first_word_(start, stop, c, std::integral_constant<bool, FirstBitIsLeftmost>{});
+    return find_first_word_(start, stop, c, std::integral_constant<bool, LowestInfoBitIsMSB>{});
   }
 
   template <typename C>
@@ -1081,36 +1137,98 @@ private:
     }
     return false;
   }
+
+  /// \brief Formatting helper to convert bitset to string of bits.
+  /// \tparam OutputIt Output fmt memory buffer type.
+  /// \param[out] mem_buffer Fmt memory buffer.
+  /// \return The memory buffer passed as argument.
+  template <typename OutputIt>
+  OutputIt to_string_of_bits(OutputIt&& mem_buffer, bool reverse) const
+  {
+    if (size() == 0) {
+      return mem_buffer;
+    }
+
+    reverse = reverse ^ LowestInfoBitIsMSB;
+
+    std::string s;
+    s.assign(size(), '0');
+    if (!reverse) {
+      for (size_t i = size(); i != 0; --i) {
+        fmt::format_to(mem_buffer, "{}", test(i - 1) ? '1' : '0');
+      }
+    } else {
+      for (size_t i = 0; i != size(); ++i) {
+        fmt::format_to(mem_buffer, "{}", test(i) ? '1' : '0');
+      }
+    }
+    return mem_buffer;
+  }
+
+  /// \brief Formatting helper to convert bitset to hexadecimal digits.
+  /// \tparam OutputIt Output fmt memory buffer type.
+  /// \param[out] mem_buffer Fmt memory buffer.
+  /// \return The memory buffer passed as argument.
+  template <typename OutputIt>
+  OutputIt to_string_of_hex(OutputIt&& mem_buffer, bool reverse) const
+  {
+    if (size() == 0) {
+      return mem_buffer;
+    }
+
+    if (not reverse) {
+      // first word may not print 16 hex digits
+      int    i          = nof_words_() - 1;
+      size_t rem_digits = divide_ceil((size() - (size() / bits_per_word) * bits_per_word), 4U);
+      fmt::format_to(mem_buffer, "{:0>{}x}", buffer[i], rem_digits);
+      // remaining words will occupy 16 hex digits each (4 bits per hex digit).
+      for (--i; i >= 0; --i) {
+        fmt::format_to(mem_buffer, "{:0>16x}", buffer[i]);
+      }
+    } else {
+      unsigned i = 0;
+      for (; i != nof_words_() - 1; ++i) {
+        uint64_t w = detail::bit_reverse(buffer[i]);
+        fmt::format_to(mem_buffer, "{:0>16x}", w);
+      }
+      // last word may not print 16 hex digits
+      size_t   rem_bits   = size() - (size() / bits_per_word) * bits_per_word;
+      size_t   rem_digits = divide_ceil(rem_bits, 4U);
+      uint64_t w          = detail::bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
+      fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
+    }
+    return mem_buffer;
+  }
 };
 
 /// \brief Bitwise AND operation result = lhs & rhs.
 /// \return new bounded_bitset that results from the Bitwise AND operation.
-template <size_t N, bool FirstBitIsRightmost>
-inline bounded_bitset<N, FirstBitIsRightmost> operator&(const bounded_bitset<N, FirstBitIsRightmost>& lhs,
-                                                        const bounded_bitset<N, FirstBitIsRightmost>& rhs) noexcept
+template <size_t N, bool LowestInfoBitIsMSB>
+inline bounded_bitset<N, LowestInfoBitIsMSB> operator&(const bounded_bitset<N, LowestInfoBitIsMSB>& lhs,
+                                                       const bounded_bitset<N, LowestInfoBitIsMSB>& rhs) noexcept
 {
-  bounded_bitset<N, FirstBitIsRightmost> res(lhs);
+  bounded_bitset<N, LowestInfoBitIsMSB> res(lhs);
   res &= rhs;
   return res;
 }
 
 /// \brief Bitwise AND operation result = lhs | rhs.
 /// \return new bounded_bitset that results from the Bitwise OR operation.
-template <size_t N, bool FirstBitIsRightmost>
-inline bounded_bitset<N, FirstBitIsRightmost> operator|(const bounded_bitset<N, FirstBitIsRightmost>& lhs,
-                                                        const bounded_bitset<N, FirstBitIsRightmost>& rhs) noexcept
+template <size_t N, bool LowestInfoBitIsMSB>
+inline bounded_bitset<N, LowestInfoBitIsMSB> operator|(const bounded_bitset<N, LowestInfoBitIsMSB>& lhs,
+                                                       const bounded_bitset<N, LowestInfoBitIsMSB>& rhs) noexcept
 {
-  bounded_bitset<N, FirstBitIsRightmost> res(lhs);
+  bounded_bitset<N, LowestInfoBitIsMSB> res(lhs);
   res |= rhs;
   return res;
 }
 
 /// \brief Flip bits from left to right.
 /// \return new bounded_bitset that results from the fliplr operation.
-template <size_t N, bool FirstBitIsRightmost>
-inline bounded_bitset<N, FirstBitIsRightmost> fliplr(const bounded_bitset<N, FirstBitIsRightmost>& other) noexcept
+template <size_t N, bool LowestInfoBitIsMSB>
+inline bounded_bitset<N, LowestInfoBitIsMSB> fliplr(const bounded_bitset<N, LowestInfoBitIsMSB>& other) noexcept
 {
-  bounded_bitset<N, FirstBitIsRightmost> ret(other.size());
+  bounded_bitset<N, LowestInfoBitIsMSB> ret(other.size());
   for (uint32_t i = 0; i < ret.size(); ++i) {
     if (other.test(i)) {
       ret.set(ret.size() - 1 - i);
@@ -1137,15 +1255,15 @@ inline bounded_bitset<N, FirstBitIsRightmost> fliplr(const bounded_bitset<N, Fir
 /// \param[in] slice_offset offset from where to slice each fold "O".
 /// \param[in] slice_length length of the slice taken from each fold "K".
 /// \return bitset of size slice_length with the or-accumulated folds.
-template <size_t N2, size_t N, bool FirstBitIsRightmost>
-inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded_bitset<N, FirstBitIsRightmost>& other,
-                                                                   size_t fold_length,
-                                                                   size_t slice_offset,
-                                                                   size_t slice_length) noexcept
+template <size_t N2, size_t N, bool LowestInfoBitIsMSB>
+inline bounded_bitset<N2, LowestInfoBitIsMSB> fold_and_accumulate(const bounded_bitset<N, LowestInfoBitIsMSB>& other,
+                                                                  size_t fold_length,
+                                                                  size_t slice_offset,
+                                                                  size_t slice_length) noexcept
 {
   srsran_assert(
       other.size() % fold_length == 0, "Invalid fold length={} for bitset of size={}", fold_length, other.size());
-  bounded_bitset<N2, FirstBitIsRightmost> ret(slice_length);
+  bounded_bitset<N2, LowestInfoBitIsMSB> ret(slice_length);
   for (size_t i = 0; i != other.size(); i += fold_length) {
     ret |= other.template slice<N2>(i + slice_offset, i + slice_offset + slice_length);
   }
@@ -1155,24 +1273,23 @@ inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded
 /// \brief Performs the fold and accumulate operation, but without slicing at the end.
 ///
 /// \tparam N2 maximum bitset size for returned bitset.
-/// \tparam FirstBitIsRightmost internal bit order representation of returned bitset.
+/// \tparam LowestInfoBitIsMSB internal bit order representation of returned bitset.
 /// \param[in] other original bitset from where folds are generated.
 /// \param[in] fold_length length of each fold bitset.
 /// \return bitset of size fold_length with the accumulated folds.
-template <size_t N2, size_t N, bool FirstBitIsRightmost>
-inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded_bitset<N, FirstBitIsRightmost>& other,
-                                                                   size_t fold_length) noexcept
+template <size_t N2, size_t N, bool LowestInfoBitIsMSB>
+inline bounded_bitset<N2, LowestInfoBitIsMSB> fold_and_accumulate(const bounded_bitset<N, LowestInfoBitIsMSB>& other,
+                                                                  size_t fold_length) noexcept
 {
-  return fold_and_accumulate<N2, N, FirstBitIsRightmost>(other, fold_length, 0, fold_length);
+  return fold_and_accumulate<N2, N, LowestInfoBitIsMSB>(other, fold_length, 0, fold_length);
 }
 
 } // namespace srsran
 
 namespace fmt {
-
-/// \brief Custom formatter for bounded_bitset<N, FirstBitIsLeftmost>
-template <size_t N, bool FirstBitIsRightmost>
-struct formatter<srsran::bounded_bitset<N, FirstBitIsRightmost>> {
+/// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB>
+template <size_t N, bool LowestInfoBitIsMSB>
+struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
   enum { hexadecimal, binary } mode = binary;
   enum { forward, reverse } order   = forward;
 
@@ -1194,13 +1311,13 @@ struct formatter<srsran::bounded_bitset<N, FirstBitIsRightmost>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::bounded_bitset<N, FirstBitIsRightmost>& s, FormatContext& ctx)
+  auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB>& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
-      return s.template to_hex(ctx.out());
+      return s.template to_string_of_hex(ctx.out(), order == reverse);
     }
-    return s.template to_string(ctx.out(), order == reverse);
+    return s.template to_string_of_bits(ctx.out(), order == reverse);
   }
 };
 } // namespace fmt

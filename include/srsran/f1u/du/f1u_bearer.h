@@ -29,8 +29,6 @@
 namespace srsran {
 namespace srs_du {
 
-constexpr uint32_t f1u_ul_notif_time_ms = 10;
-
 class f1u_bearer
 {
 public:

@@ -110,6 +110,13 @@ void scheduler_event_logger::enqueue_impl(const sr_event& sr)
   }
 }
 
+void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
+{
+  if (mode == debug) {
+    fmt::format_to(fmtbuf, "\n- CSI: ue={} rnti={:#x} cqi={}", csi.ue_index, csi.rnti, csi.wb_cqi);
+  }
+}
+
 void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
 {
   if (mode == debug) {

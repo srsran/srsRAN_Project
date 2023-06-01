@@ -43,6 +43,10 @@ TEST(PrachConfiguration, Fr1Paired)
       ASSERT_EQ(config.format, prach_format_type::three);
     } else if (prach_config_index < 108) {
       ASSERT_EQ(config.format, prach_format_type::A1);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
+    } else if (prach_config_index < 219) {
+      ASSERT_EQ(config.format, prach_format_type::B4);
     } else {
       ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
     }
@@ -72,11 +76,24 @@ TEST(PrachConfiguration, Fr1Paired)
       ASSERT_EQ(2U, config.x);
     } else if (prach_config_index < 108) {
       ASSERT_EQ(1U, config.x);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
+    } else if (prach_config_index < 200) {
+      ASSERT_EQ(16U, config.x);
+    } else if (prach_config_index < 202) {
+      ASSERT_EQ(8U, config.x);
+    } else if (prach_config_index < 205) {
+      ASSERT_EQ(4U, config.x);
+    } else if (prach_config_index < 209) {
+      ASSERT_EQ(2U, config.x);
+    } else if (prach_config_index < 219) {
+      ASSERT_EQ(1U, config.x);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
     }
 
     // Assert y.
+    static const std::set<unsigned> config_B4_y_1 = {199, 201, 204};
     if (prach_config_index < 16) {
       ASSERT_EQ(1, config.y);
     } else if (prach_config_index < 28) {
@@ -97,21 +114,38 @@ TEST(PrachConfiguration, Fr1Paired)
       ASSERT_EQ((prach_config_index - 87) % 2, config.y);
     } else if (prach_config_index < 108) {
       ASSERT_EQ(0, config.y);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
+    } else if (config_B4_y_1.count(prach_config_index) > 0) {
+      ASSERT_EQ(1, config.y);
+    } else if (prach_config_index < 219) {
+      ASSERT_EQ(0, config.y);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
     }
 
     // Assert subframe number.
-    static const std::set<unsigned> config_subframe_4_9   = {87, 89, 91, 92, 94, 100};
-    static const std::set<unsigned> config_subframe_4     = {88, 90, 93, 96, 98};
-    static const std::set<unsigned> config_subframe_1     = {95, 101};
-    static const std::set<unsigned> config_subframe_7     = {97, 102};
-    static const std::set<unsigned> config_subframe_1_6   = {99};
-    static const std::set<unsigned> config_subframe_2_7   = {103};
-    static const std::set<unsigned> config_subframe_1_4_7 = {104};
-    static const std::set<unsigned> config_subframe_even  = {105};
-    static const std::set<unsigned> config_subframe_all   = {106};
-    static const std::set<unsigned> config_subframe_odd   = {107};
+    static const std::set<unsigned> config_subframe_4_9 = {87, 89, 91, 92, 94, 100, 198, 200, 202, 204, 205, 214};
+    static const std::set<unsigned> config_subframe_4   = {
+          88,
+          90,
+          93,
+          96,
+          98,
+          199,
+          201,
+          203,
+          207,
+          210,
+    };
+    static const std::set<unsigned> config_subframe_1     = {95, 101, 206, 209};
+    static const std::set<unsigned> config_subframe_7     = {97, 102, 208, 211};
+    static const std::set<unsigned> config_subframe_1_6   = {99, 212};
+    static const std::set<unsigned> config_subframe_2_7   = {103, 213};
+    static const std::set<unsigned> config_subframe_1_4_7 = {104, 215};
+    static const std::set<unsigned> config_subframe_even  = {105, 216};
+    static const std::set<unsigned> config_subframe_all   = {106, 217};
+    static const std::set<unsigned> config_subframe_odd   = {107, 218};
 
     static const std::array<std::array<uint8_t, 1>, 4> repeat_sequence = {{{1}, {4}, {7}, {9}}};
     if (prach_config_index < 19) {
@@ -174,8 +208,6 @@ TEST(PrachConfiguration, Fr1Paired)
     }
 
     // Assert starting symbol.
-    static const std::set<unsigned> config_slots_1 = {87, 89, 91, 92, 94, 98, 99, 100};
-    static const std::set<unsigned> config_slots_2 = {107};
     if (prach_config_index < 108) {
       ASSERT_EQ(0, config.starting_symbol);
     } else {
@@ -183,11 +215,16 @@ TEST(PrachConfiguration, Fr1Paired)
     }
 
     // Assert number of PRACH slots within a subframe.
+    static const std::set<unsigned> config_slots_1 = {87, 89, 91, 92, 94, 98, 99, 100};
     if (prach_config_index < 87) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
     } else if (config_slots_1.count(prach_config_index)) {
       ASSERT_EQ(1, config.nof_prach_slots_within_subframe);
     } else if (prach_config_index < 108) {
+      ASSERT_EQ(2, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 219) {
       ASSERT_EQ(2, config.nof_prach_slots_within_subframe);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
@@ -198,6 +235,10 @@ TEST(PrachConfiguration, Fr1Paired)
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
     } else if (prach_config_index < 108) {
       ASSERT_EQ(6, config.nof_occasions_within_slot);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
+    } else if (prach_config_index < 219) {
+      ASSERT_EQ(1, config.nof_occasions_within_slot);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
     }
@@ -207,6 +248,10 @@ TEST(PrachConfiguration, Fr1Paired)
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
     } else if (prach_config_index < 108) {
       ASSERT_EQ(2, config.duration);
+    } else if (prach_config_index < 198) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
+    } else if (prach_config_index < 219) {
+      ASSERT_EQ(12, config.duration);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
     }
@@ -229,14 +274,18 @@ TEST(PrachConfiguration, Fr1Unpaired)
       ASSERT_EQ(config.format, prach_format_type::three);
     } else if (prach_config_index < 87) {
       ASSERT_EQ(config.format, prach_format_type::A1);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
+    } else if (prach_config_index < 169) {
+      ASSERT_EQ(config.format, prach_format_type::B4);
     } else {
       ASSERT_EQ(config.format, PRACH_CONFIG_RESERVED.format);
     }
 
     // Assert x.
-    static const std::set<unsigned> config_x_16 = {0, 28, 34, 40, 67};
-    static const std::set<unsigned> config_x_8  = {1, 29, 35, 41, 68};
-    static const std::set<unsigned> config_x_4  = {2, 30, 36, 42, 69};
+    static const std::set<unsigned> config_x_16 = {0, 28, 34, 40, 67, 145};
+    static const std::set<unsigned> config_x_8  = {1, 29, 35, 41, 68, 146};
+    static const std::set<unsigned> config_x_4  = {2, 30, 36, 42, 69, 147};
     static const std::set<unsigned> config_x_2  = {3, 4, 5, 6, 31, 32, 37, 38, 43, 44, 45, 46};
     if (config_x_16.count(prach_config_index)) {
       ASSERT_EQ(16, config.x);
@@ -251,6 +300,12 @@ TEST(PrachConfiguration, Fr1Unpaired)
     } else if (prach_config_index < 77) {
       ASSERT_EQ(2, config.x);
     } else if (prach_config_index < 87) {
+      ASSERT_EQ(1, config.x);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
+    } else if (prach_config_index < 155) {
+      ASSERT_EQ(2, config.x);
+    } else if (prach_config_index < 169) {
       ASSERT_EQ(1, config.x);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
@@ -281,37 +336,46 @@ TEST(PrachConfiguration, Fr1Unpaired)
       ASSERT_EQ(1, config.y);
     } else if (prach_config_index < 87) {
       ASSERT_EQ(0, config.y);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
+    } else if (prach_config_index < 155) {
+      ASSERT_EQ(1, config.y);
+    } else if (prach_config_index < 169) {
+      ASSERT_EQ(0, config.y);
     } else {
-      ASSERT_EQ(PRACH_CONFIG_RESERVED.x, config.x);
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.y, config.y);
     }
 
     // Assert subframe number.
-    static const std::set<unsigned> config_subframe_2 = {14, 54};
+    static const std::set<unsigned> config_subframe_1 = {155};
+    static const std::set<unsigned> config_subframe_2 = {14, 54, 156};
     static const std::set<unsigned> config_subframe_3 = {13, 53};
-    static const std::set<unsigned> config_subframe_4 = {5, 6, 12, 45, 46, 52};
+    static const std::set<unsigned> config_subframe_4 = {5, 6, 12, 45, 46, 52, 157};
     static const std::set<unsigned> config_subframe_5 = {11, 51};
     static const std::set<unsigned> config_subframe_6 = {10, 34, 35, 36, 37, 38, 39, 50};
-    static const std::set<unsigned> config_subframe_7 = {9, 28, 29, 30, 31, 32, 33, 49};
+    static const std::set<unsigned> config_subframe_7 = {9, 28, 29, 30, 31, 32, 33, 49, 158};
     static const std::set<unsigned> config_subframe_8 = {8, 48};
-    static const std::set<unsigned> config_subframe_9 = {
-        0, 1, 2, 3, 4, 7, 40, 41, 42, 43, 44, 47, 67, 68, 69, 70, 77, 78, 79};
+    static const std::set<unsigned> config_subframe_9 = {0,  1,  2,  3,  4,  7,   40,  41,  42,  43,  44,  47,  67, 68,
+                                                         69, 70, 77, 78, 79, 145, 146, 147, 148, 149, 159, 160, 161};
     static const std::set<unsigned> config_subframe_1_6         = {15, 16, 55, 56};
-    static const std::set<unsigned> config_subframe_4_9         = {17, 57, 71, 75, 81};
+    static const std::set<unsigned> config_subframe_4_9         = {17, 57, 71, 75, 81, 151, 152, 162};
     static const std::set<unsigned> config_subframe_3_8         = {18, 58};
     static const std::set<unsigned> config_subframe_2_7         = {19, 59};
-    static const std::set<unsigned> config_subframe_7_9         = {72, 73, 82};
-    static const std::set<unsigned> config_subframe_8_9         = {20, 60, 74, 80};
+    static const std::set<unsigned> config_subframe_7_9         = {72, 73, 82, 150, 163};
+    static const std::set<unsigned> config_subframe_8_9         = {20, 60, 74, 80, 153, 164};
     static const std::set<unsigned> config_subframe_4_8_9       = {21, 61};
     static const std::set<unsigned> config_subframe_3_4_9       = {22, 62};
     static const std::set<unsigned> config_subframe_7_8_9       = {23, 63};
-    static const std::set<unsigned> config_subframe_3_4_8_9     = {24, 64, 83, 84};
+    static const std::set<unsigned> config_subframe_3_4_8_9     = {24, 64, 83, 84, 165};
     static const std::set<unsigned> config_subframe_6_7_8_9     = {25};
     static const std::set<unsigned> config_subframe_1_4_6_9     = {26, 65};
-    static const std::set<unsigned> config_subframe_2_3_4_7_8_9 = {76};
-    static const std::set<unsigned> config_subframe_odd         = {27, 66, 85};
-    static const std::set<unsigned> config_subframe_all         = {86};
+    static const std::set<unsigned> config_subframe_2_3_4_7_8_9 = {76, 154};
+    static const std::set<unsigned> config_subframe_odd         = {27, 66, 85, 166};
+    static const std::set<unsigned> config_subframe_all         = {86, 167, 168};
 
-    if (config_subframe_2.count(prach_config_index)) {
+    if (config_subframe_1.count(prach_config_index)) {
+      ASSERT_EQ(span<const uint8_t>({1}), span<const uint8_t>(config.subframe));
+    } else if (config_subframe_2.count(prach_config_index)) {
       ASSERT_EQ(span<const uint8_t>({2}), span<const uint8_t>(config.subframe));
     } else if (config_subframe_3.count(prach_config_index)) {
       ASSERT_EQ(span<const uint8_t>({3}), span<const uint8_t>(config.subframe));
@@ -362,22 +426,33 @@ TEST(PrachConfiguration, Fr1Unpaired)
     }
 
     // Assert starting symbol.
+    static const std::set<unsigned> config_starting_symbol_2 = {147, 149, 150, 151, 160, 162, 163, 165, 166, 168};
     static const std::set<unsigned> config_starting_symbol_7 = {16, 37, 38, 39, 56, 71, 72, 78, 82, 86};
-    if (config_starting_symbol_7.count(prach_config_index)) {
+    if (config_starting_symbol_2.count(prach_config_index)) {
+      ASSERT_EQ(2, config.starting_symbol);
+    } else if (config_starting_symbol_7.count(prach_config_index)) {
       ASSERT_EQ(7, config.starting_symbol);
     } else if (prach_config_index < 87) {
+      ASSERT_EQ(0, config.starting_symbol);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.starting_symbol, config.starting_symbol);
+    } else if (prach_config_index < 169) {
       ASSERT_EQ(0, config.starting_symbol);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.starting_symbol, config.starting_symbol);
     }
 
     // Assert number of PRACH slots within a subframe.
-    static const std::set<unsigned> config_slots_2 = {67, 68, 74, 75, 77, 80, 84};
+    static const std::set<unsigned> config_slots_2 = {67, 68, 74, 75, 77, 80, 84, 145, 146, 152, 153, 161, 164, 167};
     if (prach_config_index < 67) {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
     } else if (config_slots_2.count(prach_config_index)) {
       ASSERT_EQ(2, config.nof_prach_slots_within_subframe);
     } else if (prach_config_index < 87) {
+      ASSERT_EQ(1, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
+    } else if (prach_config_index < 169) {
       ASSERT_EQ(1, config.nof_prach_slots_within_subframe);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_prach_slots_within_subframe, config.nof_prach_slots_within_subframe);
@@ -391,6 +466,10 @@ TEST(PrachConfiguration, Fr1Unpaired)
       ASSERT_EQ(3, config.nof_occasions_within_slot);
     } else if (prach_config_index < 87) {
       ASSERT_EQ(6, config.nof_occasions_within_slot);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
+    } else if (prach_config_index < 169) {
+      ASSERT_EQ(1, config.nof_occasions_within_slot);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.nof_occasions_within_slot, config.nof_occasions_within_slot);
     }
@@ -400,6 +479,10 @@ TEST(PrachConfiguration, Fr1Unpaired)
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
     } else if (prach_config_index < 87) {
       ASSERT_EQ(2, config.duration);
+    } else if (prach_config_index < 145) {
+      ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
+    } else if (prach_config_index < 169) {
+      ASSERT_EQ(12, config.duration);
     } else {
       ASSERT_EQ(PRACH_CONFIG_RESERVED.duration, config.duration);
     }

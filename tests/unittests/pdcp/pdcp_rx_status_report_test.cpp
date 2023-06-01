@@ -39,7 +39,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
 
   srsran::test_delimit_logger delimiter(
       "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-  init(GetParam(), pdcp_t_reordering::ms10);
+  init(GetParam());
 
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
@@ -109,7 +109,7 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
 
   srsran::test_delimit_logger delimiter(
       "RX build status report test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-  init(GetParam(), pdcp_t_reordering::ms10);
+  init(GetParam());
 
   pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
   pdcp_rx->set_state(init_state);

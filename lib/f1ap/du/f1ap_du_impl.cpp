@@ -198,26 +198,51 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 }
 
-async_task<f1ap_ue_context_modification_response_message>
-f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg)
+void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
+{
+  f1ap_du_ue* ue = ues.find(request.ue_index);
+  srsran_assert(ue != nullptr, "Attempt to initiate UE Context Release Request for non-existent UE.");
+
+  if (ue->context.marked_for_release) {
+    // UE context is already being released. Ignore the request.
+    logger.info(
+        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
+        request.ue_index);
+    return;
+  }
+
+  f1ap_message msg;
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+  auto& rel_req = msg.pdu.init_msg().value.ue_context_release_request();
+
+  rel_req->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue->context.gnb_du_ue_f1ap_id);
+  rel_req->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
+
+  // Set F1AP cause.
+  rel_req->cause.value.set_radio_network().value = (request.cause == rlf_cause::max_rlc_retxs_reached)
+                                                       ? cause_radio_network_opts::rl_fail_rlc
+                                                       : cause_radio_network_opts::rl_fail_others;
+  ue->f1ap_msg_notifier.on_new_message(msg);
+}
+
+async_task<f1ap_ue_context_modification_confirm>
+f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg)
 {
   // TODO: add procedure implementation
 
   f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_resp;
 
-  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_response_message{}, msg](
-                          coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx) mutable {
+  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_confirm{}](
+                          coro_context<async_task<f1ap_ue_context_modification_confirm>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
 
     if (ue_ctxt_mod_resp.has_value()) {
       logger.debug("Received PDU with successful outcome");
-      res.confirm = *ue_ctxt_mod_resp.value();
       res.success = true;
     } else {
       logger.debug("Received PDU with unsuccessful outcome");
-      res.refuse  = *ue_ctxt_mod_resp.error();
       res.success = false;
     }
 
@@ -407,16 +432,15 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
   for (const auto& asn_nr_cgi : msg->paging_cell_list.value) {
     const auto paging_cell_cgi = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
     const auto du_cell_it =
-        std::find_if(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(),
-                     ctxt.du_cell_index_to_nr_cgi_lookup.cend(),
-                     [&paging_cell_cgi](const nr_cell_global_id_t& cgi) { return paging_cell_cgi == cgi; });
+        std::find_if(ctxt.served_cells.cbegin(),
+                     ctxt.served_cells.cend(),
+                     [&paging_cell_cgi](const f1ap_du_cell_context& cell) { return paging_cell_cgi == cell.nr_cgi; });
     // Cell not served by this DU.
-    if (du_cell_it == ctxt.du_cell_index_to_nr_cgi_lookup.cend()) {
+    if (du_cell_it == ctxt.served_cells.cend()) {
       logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn, paging_cell_cgi.nci);
       continue;
     }
-    info.paging_cells.push_back(
-        to_du_cell_index(std::distance(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(), du_cell_it)));
+    info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
 }

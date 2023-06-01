@@ -17,9 +17,10 @@
 # the LICENSE file in the top-level directory of this distribution
 # and at http://www.gnu.org/licenses/.
 #
+
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -28,6 +29,7 @@ variables:
     options:
       - "zmq"
       - "rf"
+      - "android"
       - "none"
     value: "zmq"
   MARKERS:
@@ -47,6 +49,7 @@ variables:
       - warning
       - error
     value: "info"
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.5.2
 
 .prepare_test:
   before_script:
@@ -59,9 +62,8 @@ variables:
   stage: e2e
   resource_group: e2e
   timeout: 6h
-  interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.2.0
+    name: $RETINA_LAUNCHER_IMAGE
     entrypoint: ["/bin/sh", "-c"]
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
@@ -80,6 +82,7 @@ variables:
     reports:
       junit: tests/e2e/out.xml
   script:
+    - retina-delete-orchestration-network --user-name ^ci_ --regex
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
@@ -128,10 +131,10 @@ zmq:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     TESTBED: "zmq"
     MARKERS: "zmq and not smoke"
-    RETINA_ARGS: "gnb.all.pcap=False"
     E2E_LOG_LEVEL: "info"
   needs:
     - job: "smoke release update cache"
@@ -142,6 +145,7 @@ zmq-asan:
   variables:
     MARKERS: "smoke"
     RETINA_ARGS: "gnb.all.pcap=True"
+  interruptible: false
   needs:
     - job: "basic asan"
       artifacts: true
@@ -152,6 +156,7 @@ zmq-valgrind:
     MARKERS: "zmq_valgrind"
     E2E_LOG_LEVEL: "warning"
     RETINA_ARGS: "gnb.all.pcap=True"
+  interruptible: false
   needs:
     - job: "basic debug"
       artifacts: true
@@ -160,11 +165,11 @@ rf:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     TESTBED: "rf"
     MARKERS: "rf"
     E2E_LOG_LEVEL: "warning"
-    RETINA_ARGS: gnb.all.pcap=False
   needs:
     - job: "smoke release update cache"
       artifacts: true
@@ -173,6 +178,7 @@ rf-tsan:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -183,6 +189,7 @@ rf-asan:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_not_crash"
   needs:
@@ -193,5 +200,47 @@ rf-b200-config:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     MARKERS: "rf_b200"
+
+android:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      allow_failure: true
+  variables:
+    TESTBED: "android"
+    MARKERS: "android"
+    E2E_LOG_LEVEL: "warning"
+  needs:
+    - job: "smoke release update cache"
+      artifacts: true
+
+################################################################################
+# Garbage collector
+################################################################################
+
+.demolition:
+  extends:
+    - .prepare_test
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: always
+  interruptible: false
+  image:
+    name: $RETINA_LAUNCHER_IMAGE
+    entrypoint: ["/bin/sh", "-c"]
+  tags:
+    - on-prem-amd64
+  script:
+    - |
+      retina-garbage-collector --mode demolition
+
+retina setup:
+  stage: .pre
+  extends: .demolition
+
+retina post:
+  stage: .post
+  extends: .demolition

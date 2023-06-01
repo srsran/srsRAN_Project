@@ -24,7 +24,7 @@ include_directories(../../..)
 
 add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
 target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(du_manager_test_helpers srsran_du_manager srsran_support srslog f1ap_asn1)
+target_link_libraries(du_manager_test_helpers srsran_du_manager srsran_support srslog)
 
 add_executable(du_bearer_test du_bearer_test.cpp)
 target_link_libraries(du_bearer_test du_manager_test_helpers srsran_du_manager srsran_support srslog gtest gtest_main)
@@ -32,11 +32,10 @@ gtest_discover_tests(du_bearer_test)
 
 add_executable(ue_manager_test ue_manager_test.cpp)
 target_link_libraries(ue_manager_test
+        du_manager_test_helpers
         srsran_du_manager
         srsran_support
         srslog
-        f1ap_asn1
-        du_manager_test_helpers
         gtest
         gtest_main)
 target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
@@ -57,7 +56,7 @@ target_include_directories(du_manager_ue_creation_test PRIVATE ${CMAKE_SOURCE_DI
 target_link_libraries(du_manager_ue_creation_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_manager_ue_creation_test)
 
-add_executable(du_ue_config_test procedures/ue_configuration_test.cpp)
+add_executable(du_ue_config_test procedures/ue_configuration_test.cpp procedures/ue_deletion_test.cpp)
 target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ue_config_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ue_config_test)

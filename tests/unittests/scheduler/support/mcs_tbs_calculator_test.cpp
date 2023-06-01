@@ -22,8 +22,8 @@
 
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
+#include "lib/scheduler/support/sch_pdu_builder.h"
 #include "lib/scheduler/support/tbs_calculator.h"
-#include "lib/scheduler/ue_scheduling/ue_sch_pdu_builder.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pusch/ulsch_info.h"
@@ -54,7 +54,11 @@ public:
     cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
-    pdsch_cfg(get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cell_cfg, time_resource)){};
+    pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
+        ue_cell_cfg,
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource]))
+  {
+  }
 
 protected:
   const cell_configuration    cell_cfg;
@@ -100,7 +104,11 @@ public:
     cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
-    pusch_cfg(get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource)){};
+    pusch_cfg(get_pusch_config_f0_0_tc_rnti(
+        cell_cfg,
+        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource]))
+  {
+  }
 
 protected:
   const cell_configuration    cell_cfg;

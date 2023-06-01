@@ -87,15 +87,15 @@ protected:
   mac_scheduler_dummy_adapter sched_cfg_adapter;
 
   // MAC UE Creation Request Command.
-  mac_ue_create_request_message msg{};
+  mac_ue_create_request msg{};
 
   // Procedure objects.
-  async_task<mac_ue_create_response_message> proc;
+  async_task<mac_ue_create_response> proc;
 };
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_requests_and_awaits_mac_ul_configurator_result)
 {
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
   EXPECT_TRUE(mac_ul_unit_received_ue_create_command());
   EXPECT_EQ(mac_ul.last_ue_create_request->ue_index, msg.ue_index);
   EXPECT_FALSE(mac_dl_unit_received_ue_create_command());
@@ -105,7 +105,7 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_requests_and_awaits_m
 TEST_F(mac_ue_create_procedure_test,
        ue_creation_procedure_calls_and_awaits_mac_dl_configurator_after_mac_ul_result_is_received)
 {
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
   set_mac_ul_unit_result(true);
   EXPECT_TRUE(mac_dl_unit_received_ue_create_command());
   EXPECT_EQ(mac_dl.last_ue_create_request->ue_index, msg.ue_index);
@@ -114,7 +114,7 @@ TEST_F(mac_ue_create_procedure_test,
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_after_mac_dl_configurator_is_complete)
 {
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(true);
   EXPECT_TRUE(procedure_is_complete());
@@ -128,7 +128,7 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_there_
   // the result of MAC UL and DL units before we start the procedure.
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(true);
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
 
   EXPECT_TRUE(procedure_is_complete());
   EXPECT_TRUE(is_procedure_successful());
@@ -137,7 +137,7 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_completes_when_there_
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_mac_ul_configurator_fails)
 {
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
   set_mac_ul_unit_result(false);
 
   EXPECT_TRUE(not mac_dl_unit_received_ue_create_command());
@@ -148,7 +148,7 @@ TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_mac_ul_confi
 
 TEST_F(mac_ue_create_procedure_test, ue_creation_procedure_fails_if_mac_dl_configurator_fails)
 {
-  lazy_task_launcher<mac_ue_create_response_message> proc_launcher{proc};
+  lazy_task_launcher<mac_ue_create_response> proc_launcher{proc};
   set_mac_ul_unit_result(true);
   set_mac_dl_unit_result(false);
 

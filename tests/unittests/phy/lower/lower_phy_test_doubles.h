@@ -37,21 +37,13 @@ class lower_phy_error_notifier_spy : public lower_phy_error_notifier
 {
 private:
   std::vector<resource_grid_context> late_rg_errors;
-  std::vector<resource_grid_context> overflow_rg_errors;
   std::vector<prach_buffer_context>  prach_request_late_errors;
   std::vector<prach_buffer_context>  prach_request_overflow_errors;
   std::vector<resource_grid_context> puxch_request_late_errors;
-  std::vector<resource_grid_context> puxch_request_overflow_errors;
 
 public:
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override { late_rg_errors.push_back(context); }
-
-  // See interface for documentation.
-  void on_overflow_resource_grid(const resource_grid_context& context) override
-  {
-    overflow_rg_errors.push_back(context);
-  }
 
   // See interface for documentation.
   void on_prach_request_late(const prach_buffer_context& context) override
@@ -71,19 +63,9 @@ public:
     puxch_request_late_errors.push_back(context);
   }
 
-  // See interface for documentation.
-  void on_puxch_request_overflow(const resource_grid_context& context) override
-  {
-    puxch_request_overflow_errors.push_back(context);
-  }
-
-  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_late_resource_grid() interface.
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_pdxch_request_late() interface.
   /// \return A constant reference to the event list.
   const std::vector<resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
-
-  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_overflow_resource_grid() interface.
-  /// \return A constant reference to the event list.
-  const std::vector<resource_grid_context>& get_overflow_rg_errors() const { return overflow_rg_errors; }
 
   /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_prach_request_late() interface.
   /// \return A constant reference to the event list.
@@ -100,13 +82,6 @@ public:
   /// \return A constant reference to the event list.
   const std::vector<resource_grid_context>& get_puxch_request_late_errors() const { return puxch_request_late_errors; }
 
-  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_puxch_request_overflow() interface.
-  /// \return A constant reference to the event list.
-  const std::vector<resource_grid_context>& get_puxch_request_overflow_errors() const
-  {
-    return puxch_request_overflow_errors;
-  }
-
   /// \brief Gets the total number of errors of any kind.
   ///
   /// A use case to ensure no event happened:
@@ -117,20 +92,17 @@ public:
   /// \return The total number of events that have been registered.
   unsigned get_nof_errors() const
   {
-    return late_rg_errors.size() + overflow_rg_errors.size() + prach_request_late_errors.size() +
-           prach_request_overflow_errors.size() + puxch_request_late_errors.size() +
-           puxch_request_overflow_errors.size();
+    return late_rg_errors.size() + prach_request_late_errors.size() + prach_request_overflow_errors.size() +
+           puxch_request_late_errors.size();
   }
 
   /// Clears all the recorded errors.
   void clear_all_errors()
   {
     late_rg_errors.clear();
-    overflow_rg_errors.clear();
     prach_request_late_errors.clear();
     prach_request_overflow_errors.clear();
     puxch_request_late_errors.clear();
-    puxch_request_overflow_errors.clear();
   }
 };
 

@@ -43,8 +43,8 @@ ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_
 void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Create UE object outside the scheduler slot indication handler to minimize latency.
-  std::unique_ptr<ue> u =
-      std::make_unique<ue>(expert_cfg, *du_cells[ue_request.cfg.cells[0].serv_cell_cfg.cell_index].cfg, ue_request);
+  std::unique_ptr<ue> u = std::make_unique<ue>(
+      expert_cfg, *du_cells[ue_request.cfg.cells[0].serv_cell_cfg.cell_index].cfg, ue_request, metrics_handler);
 
   // Defer UE object addition to ue list to the slot indication handler.
   common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
@@ -151,7 +151,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
               crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
 
           // Notify metrics handler.
-          metrics_handler.handle_crc_indication(crc);
+          metrics_handler.handle_crc_indication(crc, units::bytes{(unsigned)tbs});
         });
   }
 }
@@ -160,26 +160,45 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits)
 {
-  for (unsigned dai = 0; dai != harq_bits.size(); ++dai) {
-    const mac_harq_ack_report_status ack_value = harq_bits[dai];
-    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, dai);
+  static constexpr unsigned dai_mod = 4;
+
+  for (unsigned harq_idx = 0; harq_idx != harq_bits.size(); ++harq_idx) {
+    const mac_harq_ack_report_status ack_value = harq_bits[harq_idx];
+    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, harq_idx % dai_mod);
     if (h_dl != nullptr) {
+      const units::bytes tbs{h_dl->last_alloc_params().tb[0]->tbs_bytes};
       // Log Event.
-      ev_logger.enqueue(
-          scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
-                                                 ue_cc.rnti(),
-                                                 ue_cc.cell_index,
-                                                 uci_sl,
-                                                 h_dl->id,
-                                                 ack_value,
-                                                 units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
+      ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
+          ue_cc.ue_index, ue_cc.rnti(), ue_cc.cell_index, uci_sl, h_dl->id, ack_value, tbs});
 
       if (ack_value != mac_harq_ack_report_status::dtx) {
         // Notify metric.
-        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack);
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack, tbs);
       }
     }
   }
+}
+
+void ue_event_manager::handle_csi(ue_cell&                                                              ue_cc,
+                                  const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi_bits)
+{
+  static const size_t cqi_payload_size = 4;
+  if (csi_bits.size() < cqi_payload_size) {
+    return;
+  }
+  // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
+  // encoding.
+  unsigned wb_cqi = (static_cast<unsigned>(csi_bits.test(0)) << 3) + (static_cast<unsigned>(csi_bits.test(1)) << 2) +
+                    (static_cast<unsigned>(csi_bits.test(2)) << 1) + (static_cast<unsigned>(csi_bits.test(3)));
+
+  // Forward CSI bits to UE.
+  ue_cc.set_latest_wb_cqi(wb_cqi);
+
+  // Log event.
+  ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), wb_cqi});
+
+  // Report the CSI metric.
+  metrics_handler.handle_csi_report(ue_cc.ue_index, csi_bits);
 }
 
 void ue_event_manager::handle_uci_indication(const uci_indication& ind)
@@ -187,91 +206,70 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
   srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0; i != ind.ucis.size(); ++i) {
-    if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(ind.ucis[i].pdu)) {
-      const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(ind.ucis[i].pdu);
-      // Process DL HARQ ACKs.
-      if (not pdu.harqs.empty()) {
-        cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
-              handle_harq_ind(ue_cc, uci_sl, harq_bits);
-            });
-      }
+    const uci_indication::uci_pdu& uci = ind.ucis[i];
 
-      // Process SRs.
-      if (pdu.sr_detected) {
-        common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
-          if (not ue_db.contains(ue_index)) {
-            log_invalid_ue_index(ue_index, "SR");
-            return;
+    cell_specific_events[ind.cell_index].emplace(
+        uci.ue_index, [this, uci_sl = ind.slot_rx, uci_pdu = uci.pdu](ue_cell& ue_cc) {
+          if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(uci_pdu);
+
+            // Process DL HARQ ACKs.
+            if (not pdu.harqs.empty()) {
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+            }
+
+            // Process SRs.
+            if (pdu.sr_detected) {
+              // Handle SR indication.
+              ue_db[ue_cc.ue_index].handle_sr_indication();
+
+              // Log SR event.
+              ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+            }
+
+            // Report the PUCCH SINR metric.
+            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
+
+          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(uci_pdu);
+
+            // Process DL HARQ ACKs.
+            if (pdu.harqs.size() > 0) {
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+            }
+
+            // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
+            if (pdu.csi_part1.size() > 0) {
+              handle_csi(ue_cc, pdu.csi_part1);
+            }
+
+          } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu)) {
+            const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(uci_pdu);
+
+            // Process DL HARQ ACKs.
+            if (pdu.harqs.size() > 0) {
+              handle_harq_ind(ue_cc, uci_sl, pdu.harqs);
+            }
+
+            // Process SRs.
+            const size_t sr_bit_position_with_1_sr_bit = 0;
+            if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
+              // Handle SR indication.
+              ue_db[ue_cc.ue_index].handle_sr_indication();
+
+              // Log SR event.
+              ev_logger.enqueue(scheduler_event_logger::sr_event{ue_cc.ue_index, ue_cc.rnti()});
+            }
+
+            // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
+            if (pdu.csi_part1.size() > 0) {
+              handle_csi(ue_cc, pdu.csi_part1);
+            }
+
+            // Report the PUCCH metric to the scheduler.
+            metrics_handler.handle_pucch_sinr(ue_cc.ue_index, pdu.ul_sinr);
           }
-          auto& u = ue_db[ue_index];
-
-          // Handle SR indication.
-          u.handle_sr_indication();
-
-          // Log SR event.
-          ev_logger.enqueue(scheduler_event_logger::sr_event{ue_index, u.crnti});
         });
-      }
-      // Report the PUCCH metric to the scheduler.
-      metrics_handler.handle_pucch_sinr(ind.ucis[i].ue_index, pdu.ul_sinr);
-    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu)) {
-      const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu);
-      // Process DL HARQ ACKs.
-      if (pdu.harqs.size() > 0) {
-        cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
-              handle_harq_ind(ue_cc, uci_sl, harq_bits);
-            });
-      }
-
-      // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
-      if (pdu.csi_part1.size() > 0) {
-        cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index,
-            [csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
-
-        metrics_handler.handle_csi_report(ind.ucis[i].ue_index, pdu.csi_part1);
-      }
-    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(ind.ucis[i].pdu)) {
-      const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(ind.ucis[i].pdu);
-      // Process DL HARQ ACKs.
-      if (pdu.harqs.size() > 0) {
-        cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
-              handle_harq_ind(ue_cc, uci_sl, harq_bits);
-            });
-      }
-
-      // Process SRs.
-      const size_t sr_bit_position_with_1_sr_bit = 0;
-      if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
-        common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
-          if (not ue_db.contains(ue_index)) {
-            log_invalid_ue_index(ue_index, "SR");
-            return;
-          }
-          auto& u = ue_db[ue_index];
-
-          // Handle SR indication.
-          u.handle_sr_indication();
-
-          // Log SR event.
-          ev_logger.enqueue(scheduler_event_logger::sr_event{ue_index, u.crnti});
-        });
-      }
-
-      // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
-      if (pdu.csi_part1.size() > 0) {
-        cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index,
-            [csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
-
-        metrics_handler.handle_csi_report(ind.ucis[i].ue_index, pdu.csi_part1);
-      }
-      // Report the PUCCH metric to the scheduler.
-      metrics_handler.handle_pucch_sinr(ind.ucis[i].ue_index, pdu.ul_sinr);
-    }
   }
 }
 

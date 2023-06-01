@@ -81,6 +81,7 @@ public:
 // DLT PCAP values for different layers
 constexpr uint16_t PCAP_NGAP_DLT = 152;
 constexpr uint16_t PCAP_E1AP_DLT = 153;
+constexpr uint16_t PCAP_F1AP_DLT = 154;
 
 /// @brief Interface class for writing a DLT PCAP to a file.
 class dlt_pcap

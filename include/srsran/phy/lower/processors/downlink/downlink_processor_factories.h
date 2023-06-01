@@ -46,8 +46,6 @@ struct downlink_processor_configuration {
   double center_frequency_Hz;
   /// Number of transmit ports.
   unsigned nof_tx_ports;
-  /// Initial slot index within the radio frame.
-  unsigned initial_slot_index;
   /// Number of slots notified in advance in the TTI boundary event.
   unsigned nof_slot_tti_in_advance;
 };

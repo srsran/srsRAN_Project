@@ -60,16 +60,14 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override;
 
   /// Creates UE in MAC and scheduler.
-  async_task<mac_ue_create_response_message>
-  handle_ue_create_request(const mac_ue_create_request_message& msg) override;
+  async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override;
 
   /// Deletes UE from MAC and scheduler.
-  async_task<mac_ue_delete_response_message>
-  handle_ue_delete_request(const mac_ue_delete_request_message& msg) override;
+  async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& msg) override;
 
   /// Reconfigures UE in MAC and scheduler.
-  async_task<mac_ue_reconfiguration_response_message>
-  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+  async_task<mac_ue_reconfiguration_response>
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
 
   void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {

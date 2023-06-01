@@ -22,8 +22,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
         add_executable(du_example
                 du_example.cpp
                 fapi_factory.cpp
-                phy_factory.cpp
-                radio_factory.cpp)
+                phy_factory.cpp)
 
         target_link_libraries(du_example
                 srsran_du_high
@@ -32,12 +31,11 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 phy_fapi_adaptor_factory
                 srsran_fapi
                 srsran_phy_support
-                srsran_lower_phy
                 srsran_upper_phy
                 srsran_signal_processors
                 srsran_channel_processors
                 srsran_channel_equalizer
-                srsran_radio)
+                srsran_ru_generic)
 
         target_include_directories(du_example PRIVATE ${CMAKE_SOURCE_DIR})
 endif (ZEROMQ_FOUND OR UHD_FOUND)

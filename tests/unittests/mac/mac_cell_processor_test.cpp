@@ -37,7 +37,7 @@ class mac_cell_processor_tester : public ::testing::TestWithParam<test_params>
 {
 protected:
   mac_cell_processor_tester() :
-    ue_mng(rnti_table),
+    ue_mng(mac_expert_config{10000, 10000}, rnti_table),
     mac_cell(test_helpers::make_default_mac_cell_config(),
              sched,
              ue_mng,
@@ -66,6 +66,8 @@ protected:
   void init(test_params params)
   {
     // Creates the next sched result based on test parameters.
+    sched.next_sched_result.success           = true;
+    sched.next_sched_result.dl.nof_dl_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
     sched.next_sched_result.dl.bc.sibs.resize(params.nof_sib_allocated);
     for (auto& sib_grant : sched.next_sched_result.dl.bc.sibs) {
       sib_grant.pdsch_cfg.rnti = SI_RNTI;

@@ -39,7 +39,7 @@ class rrc_security_mode_command_procedure
 {
 public:
   rrc_security_mode_command_procedure(rrc_ue_context_t&                           context_,
-                                      rrc_init_security_context                   sec_ctx,
+                                      security::security_context                  sec_ctx,
                                       rrc_ue_security_mode_command_proc_notifier& rrc_ue_notifier_,
                                       rrc_ue_event_manager&                       ev_mng_,
                                       srslog::basic_logger&                       logger_);
@@ -60,8 +60,7 @@ private:
   /// \remark Send RRC Security Mode Command, see section 5.3.3 in TS 38.331
   void send_rrc_security_mode_command();
 
-  rrc_ue_context_t&         context;
-  rrc_init_security_context sec_ctx;
+  rrc_ue_context_t& context;
 
   rrc_ue_security_mode_command_proc_notifier& rrc_ue;    // handler to the parent RRC UE object
   rrc_ue_event_manager&                       event_mng; // event manager for the RRC UE entity
@@ -69,8 +68,6 @@ private:
 
   rrc_transaction               transaction;
   eager_async_task<rrc_outcome> task;
-
-  security::sec_as_config sec_cfg = {};
 
   const std::chrono::milliseconds rrc_smc_timeout_ms{
       1000}; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires

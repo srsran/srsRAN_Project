@@ -28,6 +28,130 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& asn1_qos_flow_info_item,
+                                         const e1ap_qos_flow_qos_param_item&    qos_flow_info_item)
+{
+  asn1_qos_flow_info_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_info_item.qos_flow_id);
+
+  // qos flow level qos params
+  auto& qos_flow_level_params = qos_flow_info_item.qos_flow_level_qos_params;
+
+  // dynamic 5qi
+  if (qos_flow_level_params.qos_characteristics.dyn_5qi.has_value()) {
+    auto& dynamic_5qi = qos_flow_level_params.qos_characteristics.dyn_5qi.value();
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_dyn_5qi();
+    auto& asn1_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
+
+    asn1_dynamic_5qi.qos_prio_level                 = dynamic_5qi.qos_prio_level;
+    asn1_dynamic_5qi.packet_delay_budget            = dynamic_5qi.packet_delay_budget;
+    asn1_dynamic_5qi.packet_error_rate.per_scalar   = dynamic_5qi.packet_error_rate.per_scalar;
+    asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.packet_error_rate.per_exponent;
+    if (dynamic_5qi.five_qi.has_value()) {
+      asn1_dynamic_5qi.five_qi_present = true;
+      asn1_dynamic_5qi.five_qi         = five_qi_to_uint(dynamic_5qi.five_qi.value());
+    }
+    if (dynamic_5qi.delay_crit.has_value()) {
+      asn1_dynamic_5qi.delay_crit_present = true;
+      asn1::string_to_enum(asn1_dynamic_5qi.delay_crit, dynamic_5qi.delay_crit.value());
+    }
+    if (dynamic_5qi.averaging_win.has_value()) {
+      asn1_dynamic_5qi.averaging_win_present = true;
+      asn1_dynamic_5qi.averaging_win         = dynamic_5qi.averaging_win.value();
+    }
+    if (dynamic_5qi.max_data_burst_volume.has_value()) {
+      asn1_dynamic_5qi.max_data_burst_volume_present = true;
+      asn1_dynamic_5qi.max_data_burst_volume         = dynamic_5qi.max_data_burst_volume.value();
+    }
+  } else if (qos_flow_level_params.qos_characteristics.non_dyn_5qi.has_value()) /* non dynamic 5qi */ {
+    auto& non_dynamic_5qi = qos_flow_level_params.qos_characteristics.non_dyn_5qi.value();
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
+    auto& asn1_non_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
+
+    asn1_non_dynamic_5qi.five_qi = five_qi_to_uint(non_dynamic_5qi.five_qi);
+
+    if (non_dynamic_5qi.qos_prio_level.has_value()) {
+      asn1_non_dynamic_5qi.qos_prio_level_present = true;
+      asn1_non_dynamic_5qi.qos_prio_level         = non_dynamic_5qi.qos_prio_level.value();
+    }
+    if (non_dynamic_5qi.averaging_win.has_value()) {
+      asn1_non_dynamic_5qi.averaging_win_present = true;
+      asn1_non_dynamic_5qi.averaging_win         = non_dynamic_5qi.averaging_win.value();
+    }
+    if (non_dynamic_5qi.max_data_burst_volume.has_value()) {
+      asn1_non_dynamic_5qi.max_data_burst_volume_present = true;
+      asn1_non_dynamic_5qi.max_data_burst_volume         = non_dynamic_5qi.max_data_burst_volume.value();
+    }
+  } else {
+    srsran_assertion_failure("Neither non-dynamic nor dynamic 5QI value is set.");
+  }
+
+  // ng ran alloc retention prio
+  asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level =
+      qos_flow_level_params.ng_ran_alloc_retention_prio.prio_level;
+  asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap,
+                       qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_cap);
+  asn1::string_to_enum(
+      asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability,
+      qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability);
+
+  // gbr qos flow info
+  if (qos_flow_level_params.gbr_qos_flow_info.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info_present = true;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl =
+        qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_dl;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul =
+        qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_ul;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
+        qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_dl;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
+        qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_ul;
+    if (qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_dl.has_value()) {
+      asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present = true;
+      asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl =
+          qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_dl.value();
+    }
+    if (qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_ul.has_value()) {
+      asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul_present = true;
+      asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul =
+          qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_ul.value();
+    }
+  }
+
+  // reflective qos attribute
+  if (qos_flow_level_params.reflective_qos_attribute.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute_present = true;
+    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
+                         qos_flow_level_params.reflective_qos_attribute.value());
+  }
+
+  // add qos info
+  if (qos_flow_level_params.add_qos_info.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info_present = true;
+    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
+                         qos_flow_level_params.add_qos_info.value());
+  }
+
+  // paging policy ind
+  if (qos_flow_level_params.paging_policy_ind.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind_present = true;
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind =
+        qos_flow_level_params.paging_policy_ind.value();
+  }
+
+  // reflective qos ind
+  if (qos_flow_level_params.reflective_qos_ind.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind_present = true;
+    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
+                         qos_flow_level_params.reflective_qos_ind.value());
+  }
+
+  // qos flow map ind
+  if (qos_flow_info_item.qos_flow_map_ind.has_value()) {
+    asn1_qos_flow_info_item.qos_flow_map_ind_present = true;
+    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_map_ind, qos_flow_info_item.qos_flow_map_ind.value());
+  }
+}
+
 inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s& asn1_request,
                                                    const e1ap_bearer_context_setup_request&    request)
 {
@@ -128,127 +252,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
       // qos flow info to be setup
       for (const auto& qos_flow_info_item : drb_to_setup_item.qos_flow_info_to_be_setup) {
         asn1::e1ap::qos_flow_qos_param_item_s asn1_qos_flow_info_item;
-
-        asn1_qos_flow_info_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_info_item.qos_flow_id);
-
-        // qos flow level qos params
-        auto& qos_flow_level_params = qos_flow_info_item.qos_flow_level_qos_params;
-
-        // dynamic 5qi
-        if (qos_flow_level_params.qos_characteristics.dyn_5qi.has_value()) {
-          auto& dynamic_5qi = qos_flow_level_params.qos_characteristics.dyn_5qi.value();
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_dyn_5qi();
-          auto& asn1_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
-
-          asn1_dynamic_5qi.qos_prio_level                 = dynamic_5qi.qos_prio_level;
-          asn1_dynamic_5qi.packet_delay_budget            = dynamic_5qi.packet_delay_budget;
-          asn1_dynamic_5qi.packet_error_rate.per_scalar   = dynamic_5qi.packet_error_rate.per_scalar;
-          asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.packet_error_rate.per_exponent;
-          if (dynamic_5qi.five_qi.has_value()) {
-            asn1_dynamic_5qi.five_qi_present = true;
-            asn1_dynamic_5qi.five_qi         = five_qi_to_uint(dynamic_5qi.five_qi.value());
-          }
-          if (dynamic_5qi.delay_crit.has_value()) {
-            asn1_dynamic_5qi.delay_crit_present = true;
-            asn1::string_to_enum(asn1_dynamic_5qi.delay_crit, dynamic_5qi.delay_crit.value());
-          }
-          if (dynamic_5qi.averaging_win.has_value()) {
-            asn1_dynamic_5qi.averaging_win_present = true;
-            asn1_dynamic_5qi.averaging_win         = dynamic_5qi.averaging_win.value();
-          }
-          if (dynamic_5qi.max_data_burst_volume.has_value()) {
-            asn1_dynamic_5qi.max_data_burst_volume_present = true;
-            asn1_dynamic_5qi.max_data_burst_volume         = dynamic_5qi.max_data_burst_volume.value();
-          }
-        } else /* non dynamic 5qi */ {
-          auto& non_dynamic_5qi = qos_flow_level_params.qos_characteristics.non_dyn_5qi.value();
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
-          auto& asn1_non_dynamic_5qi =
-              asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
-
-          asn1_non_dynamic_5qi.five_qi = five_qi_to_uint(non_dynamic_5qi.five_qi);
-
-          if (non_dynamic_5qi.qos_prio_level.has_value()) {
-            asn1_non_dynamic_5qi.qos_prio_level_present = true;
-            asn1_non_dynamic_5qi.qos_prio_level         = non_dynamic_5qi.qos_prio_level.value();
-          }
-          if (non_dynamic_5qi.averaging_win.has_value()) {
-            asn1_non_dynamic_5qi.averaging_win_present = true;
-            asn1_non_dynamic_5qi.averaging_win         = non_dynamic_5qi.averaging_win.value();
-          }
-          if (non_dynamic_5qi.max_data_burst_volume.has_value()) {
-            asn1_non_dynamic_5qi.max_data_burst_volume_present = true;
-            asn1_non_dynamic_5qi.max_data_burst_volume         = non_dynamic_5qi.max_data_burst_volume.value();
-          }
-        }
-
-        // ng ran alloc retention prio
-        asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level =
-            qos_flow_level_params.ng_ran_alloc_retention_prio.prio_level;
-        asn1::string_to_enum(
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap,
-            qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_cap);
-        asn1::string_to_enum(
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability,
-            qos_flow_level_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability);
-
-        // gbr qos flow info
-        if (qos_flow_level_params.gbr_qos_flow_info.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info_present = true;
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl =
-              qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_dl;
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul =
-              qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_ul;
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
-              qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_dl;
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
-              qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_ul;
-          if (qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_dl.has_value()) {
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present = true;
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl =
-                qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_dl.value();
-          }
-          if (qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_ul.has_value()) {
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul_present = true;
-            asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul =
-                qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_ul.value();
-          }
-        }
-
-        // reflective qos attribute
-        if (qos_flow_level_params.reflective_qos_attribute.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute_present = true;
-          asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
-                               qos_flow_level_params.reflective_qos_attribute.value());
-        }
-
-        // add qos info
-        if (qos_flow_level_params.add_qos_info.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info_present = true;
-          asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
-                               qos_flow_level_params.add_qos_info.value());
-        }
-
-        // paging policy ind
-        if (qos_flow_level_params.paging_policy_ind.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind_present = true;
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.paging_policy_ind =
-              qos_flow_level_params.paging_policy_ind.value();
-        }
-
-        // reflective qos ind
-        if (qos_flow_level_params.reflective_qos_ind.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind_present = true;
-          asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
-                               qos_flow_level_params.reflective_qos_ind.value());
-        }
-
-        // qos flow map ind
-        if (qos_flow_info_item.qos_flow_map_ind.has_value()) {
-          asn1_qos_flow_info_item.qos_flow_map_ind_present = true;
-          asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_map_ind, qos_flow_info_item.qos_flow_map_ind.value());
-        }
-
+        fill_asn1_qos_flow_info_item(asn1_qos_flow_info_item, qos_flow_info_item);
         asn1_drb_to_setup_item.qos_flow_info_to_be_setup.push_back(asn1_qos_flow_info_item);
       }
 
@@ -554,6 +558,83 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
         }
 
         asn1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
+      }
+    }
+
+    if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list.empty()) {
+      asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list_present = true;
+
+      for (const auto& res_to_setup_mod_item :
+           request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
+        asn1::e1ap::pdu_session_res_to_setup_mod_item_s asn1_res_to_setup_mod_item;
+        asn1_res_to_setup_mod_item.pdu_session_id = pdu_session_id_to_uint(res_to_setup_mod_item.pdu_session_id);
+
+        // pdu session type
+        asn1::string_to_enum(asn1_res_to_setup_mod_item.pdu_session_type, res_to_setup_mod_item.pdu_session_type);
+
+        // s-nssai
+        asn1_res_to_setup_mod_item.snssai = snssai_to_e1ap_asn1(res_to_setup_mod_item.snssai);
+
+        // ng ul up transport layer information
+        up_transport_layer_info_to_asn1(asn1_res_to_setup_mod_item.ng_ul_up_tnl_info,
+                                        res_to_setup_mod_item.ng_ul_up_tnl_info);
+
+        // security indication
+        asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.confidentiality_protection_ind,
+                             res_to_setup_mod_item.security_ind.confidentiality_protection_ind);
+        asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind,
+                             res_to_setup_mod_item.security_ind.integrity_protection_ind);
+        if (res_to_setup_mod_item.security_ind.maximum_ipdatarate.has_value()) {
+          asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present = true;
+          asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate,
+                               res_to_setup_mod_item.security_ind.maximum_ipdatarate.value());
+        }
+
+        for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_list_ng_ran) {
+          asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;
+          asn1_drb_to_setup_mod_item.drb_id = drb_id_to_uint(drb_to_setup_mod_item.drb_id);
+
+          // sdap config
+          asn1_drb_to_setup_mod_item.sdap_cfg = sdap_config_to_e1ap_asn1(drb_to_setup_mod_item.sdap_cfg);
+
+          // pdcp config
+          asn1_drb_to_setup_mod_item.pdcp_cfg = pdcp_config_to_e1ap_asn1(drb_to_setup_mod_item.pdcp_cfg);
+
+          for (const auto& cell_group_info_item : drb_to_setup_mod_item.cell_group_info) {
+            asn1::e1ap::cell_group_info_item_s asn1_cell_group_info_item;
+
+            asn1_cell_group_info_item.cell_group_id = cell_group_info_item.cell_group_id;
+
+            if (cell_group_info_item.ul_cfg.has_value()) {
+              asn1_cell_group_info_item.ul_cfg_present = true;
+              asn1::string_to_enum(asn1_cell_group_info_item.ul_cfg, cell_group_info_item.ul_cfg.value());
+            }
+
+            if (cell_group_info_item.dl_tx_stop.has_value()) {
+              asn1_cell_group_info_item.dl_tx_stop_present = true;
+              asn1::string_to_enum(asn1_cell_group_info_item.dl_tx_stop, cell_group_info_item.dl_tx_stop.value());
+            }
+
+            if (cell_group_info_item.rat_type.has_value()) {
+              asn1_cell_group_info_item.rat_type_present = true;
+              asn1::string_to_enum(asn1_cell_group_info_item.rat_type, cell_group_info_item.rat_type.value());
+            }
+
+            asn1_drb_to_setup_mod_item.cell_group_info.push_back(asn1_cell_group_info_item);
+          }
+
+          // qos flow_map_info
+          for (const auto& qos_flow_info_item : drb_to_setup_mod_item.qos_flow_info_to_be_setup) {
+            asn1::e1ap::qos_flow_qos_param_item_s asn1_qos_flow_info_item;
+            fill_asn1_qos_flow_info_item(asn1_qos_flow_info_item, qos_flow_info_item);
+            asn1_drb_to_setup_mod_item.flow_map_info.push_back(asn1_qos_flow_info_item);
+          }
+
+          // TODO: DL/UL tunnel info missing?
+          asn1_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran.push_back(asn1_drb_to_setup_mod_item);
+        }
+
+        asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list.value.push_back(asn1_res_to_setup_mod_item);
       }
     }
   }

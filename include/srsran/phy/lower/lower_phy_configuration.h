@@ -52,6 +52,23 @@ struct lower_phy_sector_description {
   unsigned nof_rx_ports;
 };
 
+/// \brief Lower physical layer baseband gateway buffer size policy.
+///
+/// Determines the policy to select the baseband gateway buffer size.
+enum class lower_phy_baseband_buffer_size_policy : unsigned {
+  /// The buffer size matches the number of samples per slot.
+  slot = 0,
+  /// The buffer size matches the number of samples per half-slot.
+  half_slot,
+  /// The buffer size if equal to \ref baseband_gateway::get_transmitter_optimal_buffer_size for the transmitter and
+  /// \ref baseband_gateway::get_receiver_optimal_buffer_size for the receiver.
+  single_packet,
+  /// The buffer size is is equal to the greatest multiple of \ref baseband_gateway::get_transmitter_optimal_buffer_size
+  /// for the transmitter and \ref baseband_gateway::get_receiver_optimal_buffer_size for the receiver lesser than the
+  /// number of samples per slot.
+  optimal_slot,
+};
+
 /// Lower physical layer configuration.
 struct lower_phy_configuration {
   /// Subcarrier spacing for the overall PHY.
@@ -64,13 +81,6 @@ struct lower_phy_configuration {
   ///
   /// Sets the maximum allowed processing delay in slots.
   unsigned max_processing_delay_slots;
-  /// \brief Indicates the UL-to-DL slot context offset.
-  ///
-  /// Determines the time offset between the UL and DL processes in subframes or, equivalently, with a granularity of
-  /// one millisecond.
-  ///
-  /// An assertion is triggered if it is equal to zero.
-  unsigned ul_to_dl_subframe_offset;
   /// Sampling rate.
   sampling_rate srate;
   /// Time alignment offset.
@@ -83,6 +93,18 @@ struct lower_phy_configuration {
   /// \remark Positive values cause a reduction of the RF transmission delay with respect to the RF reception, while
   /// negative values increase it.
   int time_alignment_calibration;
+  /// \brief System time-based throttling.
+  ///
+  /// Determines a minimum baseband processor period time between downlink packets. It is expressed as a fraction of the
+  /// time equivalent to the number of samples in the baseband buffer. Set to 0.9 to ensure that the downlink packets
+  /// are processed with a minimum period of 90% of the buffer duration.
+  ///
+  /// Set to zero to disable this feature.
+  float system_time_throttling;
+  /// Baseband transmit buffer size policy.
+  lower_phy_baseband_buffer_size_policy baseband_tx_buffer_size_policy;
+  /// Baseband receive buffer size policy.
+  lower_phy_baseband_buffer_size_policy baseband_rx_buffer_size_policy;
   /// Amplitude control parameters, including baseband gain and clipping.
   amplitude_controller_clipping_config amplitude_config;
   /// Provides the sectors configuration.

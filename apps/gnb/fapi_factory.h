@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
+#include "srsran/fapi/slot_last_message_notifier.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 
 namespace srsran {

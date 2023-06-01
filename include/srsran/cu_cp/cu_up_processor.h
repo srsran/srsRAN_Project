@@ -104,7 +104,18 @@ public:
   virtual void stop()                   = 0;
 };
 
-class cu_up_processor_interface : public cu_up_processor_e1ap_interface, public cu_up_processor_controller
+class cu_up_ue_handler
+{
+public:
+  virtual ~cu_up_ue_handler() = default;
+
+  /// \brief Update the index of an UE.
+  virtual void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+};
+
+class cu_up_processor_interface : public cu_up_processor_e1ap_interface,
+                                  public cu_up_processor_controller,
+                                  public cu_up_ue_handler
 {
 public:
   virtual ~cu_up_processor_interface() = default;

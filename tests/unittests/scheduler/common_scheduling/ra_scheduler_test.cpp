@@ -26,6 +26,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -382,8 +383,8 @@ protected:
           const pusch_information& pusch           = it->pusch_cfg;
           uint8_t                  freq_assignment = ra_frequency_type1_get_riv(
               ra_frequency_type1_configuration{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                               pusch.prbs.prbs().start(),
-                                               pusch.prbs.prbs().length()});
+                                               pusch.rbs.type1().start(),
+                                               pusch.rbs.type1().length()});
           bool grant_matches = pusch.symbols == get_pusch_td_resource(grant.time_resource_assignment).symbols and
                                freq_assignment == grant.freq_resource_assignment and
                                *pusch.bwp_cfg == cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;

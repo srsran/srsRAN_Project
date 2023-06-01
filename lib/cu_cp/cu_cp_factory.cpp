@@ -21,7 +21,7 @@
  */
 
 #include "srsran/cu_cp/cu_cp_factory.h"
-#include "cu_cp.h"
+#include "cu_cp_impl.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;

@@ -266,11 +266,11 @@ public:
     return safe_execution([this, &sync_source, &clock_source]() { usrp->set_sync_source(clock_source, sync_source); });
 #endif
   }
-  bool set_rx_rate(double rate)
+  bool set_rx_rate(double& actual_rate, double rate)
   {
     logger.debug("Setting Rx Rate to {} MHz.", to_MHz(rate));
 
-    return safe_execution([this, rate]() {
+    return safe_execution([this, &actual_rate, rate]() {
       uhd::meta_range_t range = usrp->get_rx_rates();
 
       if (!radio_uhd_device_validate_freq_range(range, rate)) {
@@ -279,13 +279,15 @@ public:
       }
 
       usrp->set_rx_rate(rate);
+
+      actual_rate = usrp->get_rx_rate();
     });
   }
-  bool set_tx_rate(double rate)
+  bool set_tx_rate(double& actual_rate, double rate)
   {
     logger.debug("Setting Tx Rate to {} MHz.", to_MHz(rate));
 
-    return safe_execution([this, rate]() {
+    return safe_execution([this, &actual_rate, rate]() {
       uhd::meta_range_t range = usrp->get_tx_rates();
 
       if (!radio_uhd_device_validate_freq_range(range, rate)) {
@@ -294,6 +296,8 @@ public:
       }
 
       usrp->set_tx_rate(rate);
+
+      actual_rate = usrp->get_tx_rate();
     });
   }
   bool set_command_time(const uhd::time_spec_t& timespec)

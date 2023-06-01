@@ -23,10 +23,14 @@
 #include "../../../fapi/validators/helpers.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
 #include <gtest/gtest.h>
+#include <random>
 
 using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
+
+// Random generator.
+static std::mt19937 rgen;
 
 TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
 {
@@ -35,8 +39,11 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   unsigned sfn  = 1U;
   unsigned slot = 2U;
 
+  std::uniform_int_distribution<unsigned> nof_antenna_ports_dist(1, 4);
+  unsigned                                nof_antenna_ports = nof_antenna_ports_dist(rgen);
+
   uplink_processor::pusch_pdu pdu;
-  convert_pusch_fapi_to_phy(pdu, fapi_pdu, sfn, slot);
+  convert_pusch_fapi_to_phy(pdu, fapi_pdu, sfn, slot, nof_antenna_ports);
 
   const pusch_processor::pdu_t& phy_pdu = pdu.pdu;
   ASSERT_EQ(slot_point(to_numerology_value(fapi_pdu.scs), sfn, slot), phy_pdu.slot);
@@ -49,6 +56,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(fapi_pdu.qam_mod_order, phy_pdu.mcs_descr.modulation);
   ASSERT_EQ(fapi_pdu.nid_pusch, phy_pdu.n_id);
   ASSERT_EQ(fapi_pdu.num_layers, phy_pdu.nof_tx_layers);
+  ASSERT_EQ(nof_antenna_ports, phy_pdu.rx_ports.size());
 
   // DM-RS.
   for (unsigned i = 0; i != 14; ++i) {

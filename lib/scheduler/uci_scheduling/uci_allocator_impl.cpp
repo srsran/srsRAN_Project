@@ -141,15 +141,12 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
   if (uci_output.alloc_successful) {
     auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
     if (uci == nullptr) {
-      uci                   = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
-      uci->rnti             = crnti;
-      uci->harq_ack_counter = 0;
+      uci                             = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
+      uci->rnti                       = crnti;
+      uci->scheduled_dl_pdcch_counter = 0;
     }
-    // Set DAI if TDD is enabled.
-    if (slot_alloc.cfg.is_tdd()) {
-      uci_output.dai = uci->harq_ack_counter % DAI_MOD;
-      uci->harq_ack_counter++;
-    }
+    uci_output.dai = uci->scheduled_dl_pdcch_counter % DAI_MOD;
+    uci->scheduled_dl_pdcch_counter++;
   }
 
   return uci_output;
@@ -246,4 +243,14 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
 
   // Else, allocate the CSI on the PUCCH.
   pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, CSI_PART1_NOF_BITS);
+}
+
+uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc,
+                                                                  rnti_t                        crnti)
+{
+  auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
+  if (uci == nullptr) {
+    return 0;
+  }
+  return uci->scheduled_dl_pdcch_counter;
 }

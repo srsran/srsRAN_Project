@@ -49,7 +49,9 @@ const unsigned N_UB_SYNC_RASTER_2 = 14757;
 /// Lower-bound for GSCN within 3GHz-24.25GHz freq. range, as per Table 5.4.3.1-1, TS 38.104.
 const unsigned GSCN_LB_SYNC_RASTER_2 = 7499U;
 /// Lower-bound for GSCN for band n79 and bandwidth equal to or greater than 40MHz, as per Table 5.4.3.3-1, TS 38.104.
-const unsigned GSCN_LB_N_90_BW_40_MHZ = 8480U;
+const unsigned GSCN_LB_N_79_BW_40_MHZ = 8480U;
+/// Lower-bound for GSCN for band n104, as per Table 5.4.3.3-1, TS 38.104.
+const unsigned GSCN_LB_N_104 = 9882U;
 
 /// Contains the parameters defining the SSB position within the band; returned by the DU config generator.
 struct ssb_freq_location {

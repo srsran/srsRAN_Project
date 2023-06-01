@@ -64,8 +64,8 @@ protected:
 
   void run_slot()
   {
-    last_sched_res = sched->slot_indication(next_slot, to_du_cell_index(0));
-    TESTASSERT(last_sched_res != nullptr);
+    last_sched_res = &sched->slot_indication(next_slot, to_du_cell_index(0));
+    TESTASSERT(last_sched_res->success);
     test_scheduler_result_consistency(*cell_cfg, next_slot, *last_sched_res);
     ++next_slot;
   }

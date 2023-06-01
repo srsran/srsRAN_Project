@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "../../../../gateways/baseband/baseband_gateway_buffer_test_doubles.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
@@ -61,18 +61,22 @@ private:
 class downlink_processor_baseband_spy : public downlink_processor_baseband
 {
 public:
-  using entry_t = baseband_gateway_buffer_dynamic;
+  struct entry_t {
+    baseband_gateway_buffer_read_only buffer;
+    baseband_gateway_timestamp        timestamp;
+  };
 
-  void process(baseband_gateway_buffer& buffer) override
+  void process(baseband_gateway_buffer_writer& buffer, baseband_gateway_timestamp timestamp) override
   {
-    entries.emplace_back(baseband_gateway_buffer_dynamic(buffer.get_nof_channels(), buffer.get_nof_samples()));
-    entry_t& entry = entries.back();
-
     for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
       span<cf_t> samples = buffer.get_channel_buffer(i_channel);
       std::generate(samples.begin(), samples.end(), [this]() { return cf_t(sample_dist(rgen), sample_dist(rgen)); });
-      srsvec::copy(entry.get_channel_buffer(i_channel), samples);
     }
+
+    entries.emplace_back();
+    entry_t& entry  = entries.back();
+    entry.timestamp = timestamp;
+    entry.buffer    = baseband_gateway_buffer_read_only(buffer);
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }

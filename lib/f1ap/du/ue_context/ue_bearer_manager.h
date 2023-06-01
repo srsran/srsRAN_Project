@@ -31,6 +31,7 @@
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/nr_cgi.h"
 
 namespace srsran {
 namespace srs_du {
@@ -45,10 +46,10 @@ public:
   {
   }
 
-  void add_srb0_f1c_bearer(f1c_rx_sdu_notifier&        f1c_rx_sdu_notif,
-                           const asn1::f1ap::nr_cgi_s& pcell_cgi,
-                           const byte_buffer&          du_cu_rrc_container,
-                           f1ap_event_manager&         ev_mng);
+  void add_srb0_f1c_bearer(f1c_rx_sdu_notifier&       f1c_rx_sdu_notif,
+                           const nr_cell_global_id_t& pcell_cgi,
+                           const byte_buffer&         du_cu_rrc_container,
+                           f1ap_event_manager&        ev_mng);
 
   void add_f1c_bearer(srb_id_t srb_id, f1c_rx_sdu_notifier& rx_sdu_notif);
 

@@ -44,6 +44,9 @@ public:
 
   /// \brief Find UE context based on UE RNTI.
   virtual du_ue* find_rnti(rnti_t rnti) = 0;
+
+  /// \brief Handle detected Radio Link Failures.
+  virtual void handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) = 0;
 };
 
 } // namespace srs_du

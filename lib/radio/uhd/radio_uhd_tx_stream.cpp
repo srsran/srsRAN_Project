@@ -95,10 +95,10 @@ void radio_uhd_tx_stream::run_recv_async_msg()
   }
 }
 
-bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_samples,
-                                         baseband_gateway_buffer& buffs,
-                                         unsigned                 buffer_offset,
-                                         uhd::time_spec_t&        time_spec)
+bool radio_uhd_tx_stream::transmit_block(unsigned&                             nof_txd_samples,
+                                         const baseband_gateway_buffer_reader& buffs,
+                                         unsigned                              buffer_offset,
+                                         uhd::time_spec_t&                     time_spec)
 {
   // Prepare metadata.
   uhd::tx_metadata_t md = {};
@@ -197,7 +197,8 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   run_recv_async_msg();
 }
 
-void radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, const baseband_gateway_transmitter::metadata& tx_md)
+void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&         data,
+                                   const baseband_gateway_transmitter::metadata& tx_md)
 {
   // Protect stream transmitter.
   std::unique_lock<std::mutex> lock(stream_transmit_mutex);
@@ -241,7 +242,7 @@ void radio_uhd_tx_stream::stop()
     notifier.on_radio_rt_event(event_description);
 
     // Flatten buffers.
-    std::array<radio_sample_type, 4>             buffer;
+    std::array<cf_t, 4>                          buffer;
     static_vector<void*, RADIO_MAX_NOF_CHANNELS> buffs_flat_ptr(nof_channels);
     for (unsigned channel = 0; channel != nof_channels; ++channel) {
       buffs_flat_ptr[channel] = (void*)buffer.data();

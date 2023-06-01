@@ -21,6 +21,7 @@
  */
 
 #include "lib/du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -73,6 +74,12 @@ void PrintTo(const pucch_gen_params_opt2& value, ::std::ostream* os)
   return;
 }
 
+struct pucch_cfg_builder_params {
+  unsigned nof_res_f1_harq = 3;
+  unsigned nof_res_f2_harq = 6;
+  unsigned nof_res_sr      = 2;
+};
+
 } // namespace du_pucch_gen
 
 using namespace du_pucch_gen;
@@ -95,7 +102,7 @@ public:
   }
 
   // Allocate the resource on the grid.
-  void add_resource(const cell_pucch_resource& res)
+  void add_resource(const pucch_resource& res)
   {
     if (res.format == pucch_format::FORMAT_1) {
       srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(res.format_params), "Expected PUCCH Format 1");
@@ -177,7 +184,7 @@ public:
   }
 
   // Verify if the given resource collides in the grid with the previously allocated resources.
-  bool verify_collision(const cell_pucch_resource& res) const
+  bool verify_collision(const pucch_resource& res) const
   {
     if (res.format == pucch_format::FORMAT_1) {
       srsran_assert(variant_holds_alternative<pucch_format_1_cfg>(res.format_params), "Expected PUCCH Format 1");
@@ -336,17 +343,17 @@ TEST_F(test_pucch_res_generator, test_validator_too_many_resources)
   // Request an insane amount of resources.
   const unsigned  nof_res_f1 = 10000;
   const unsigned  nof_res_f2 = 10000;
-  pucch_f1_params params_f1{.nof_cyc_shifts         = srsran::srs_du::nof_cyclic_shifts::three,
+  pucch_f1_params params_f1{.nof_cyc_shifts         = nof_cyclic_shifts::three,
                             .occ_supported          = false,
                             .nof_symbols            = 7,
                             .intraslot_freq_hopping = true};
 
   pucch_f2_params params_f2{.nof_symbols            = 2,
                             .max_nof_rbs            = 2,
-                            .max_code_rate          = srsran::max_pucch_code_rate::dot_25,
+                            .max_code_rate          = max_pucch_code_rate::dot_25,
                             .intraslot_freq_hopping = false};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to the many resources requested, the function cannot accommodate the request and returns an empty list.
@@ -357,17 +364,15 @@ TEST_F(test_pucch_res_generator, test_validator_f2_1_symbol_with_freq_hop)
 {
   const unsigned  nof_res_f1 = 10;
   const unsigned  nof_res_f2 = 1;
-  pucch_f1_params params_f1{.nof_cyc_shifts         = srsran::srs_du::nof_cyclic_shifts::three,
+  pucch_f1_params params_f1{.nof_cyc_shifts         = nof_cyclic_shifts::three,
                             .occ_supported          = false,
                             .nof_symbols            = 7,
                             .intraslot_freq_hopping = true};
 
-  pucch_f2_params params_f2{.nof_symbols            = 1,
-                            .max_nof_rbs            = 2,
-                            .max_code_rate          = srsran::max_pucch_code_rate::dot_25,
-                            .intraslot_freq_hopping = true};
+  pucch_f2_params params_f2{
+      .nof_symbols = 1, .max_nof_rbs = 2, .max_code_rate = max_pucch_code_rate::dot_25, .intraslot_freq_hopping = true};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   // Due to requested intraslot_freq_hopping with 1 symbol, the function returns an empty list.
@@ -401,7 +406,7 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
                             .max_code_rate          = GetParam().max_code_rate,
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_number(nof_res_f1, nof_res_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);
@@ -413,91 +418,90 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    test_res_generation_given_number,
-    test_pucch_res_generator_params,
-    ::testing::Values(pucch_gen_params_opt1{.nof_res_f1                = 15,
-                                            .nof_res_f2                = 10,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::twelve,
-                                            .occ_supported             = false,
-                                            .f1_nof_symbols            = 7,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 2,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_25,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt1{.nof_res_f1                = 39,
-                                            .nof_res_f2                = 19,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::twelve,
-                                            .occ_supported             = false,
-                                            .f1_nof_symbols            = 7,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 2,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = true},
-                      pucch_gen_params_opt1{.nof_res_f1     = 39,
-                                            .nof_res_f2     = 19,
-                                            .nof_cyc_shifts = srsran::srs_du::nof_cyclic_shifts::no_cyclic_shift,
-                                            .occ_supported  = true,
-                                            .f1_nof_symbols = 7,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 2,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_25,
-                                            .f2_intraslot_freq_hopping = true},
-                      pucch_gen_params_opt1{.nof_res_f1     = 39,
-                                            .nof_res_f2     = 19,
-                                            .nof_cyc_shifts = srsran::srs_du::nof_cyclic_shifts::no_cyclic_shift,
-                                            .occ_supported  = true,
-                                            .f1_nof_symbols = 11,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 1,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = true},
-                      pucch_gen_params_opt1{.nof_res_f1                = 137,
-                                            .nof_res_f2                = 25,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::twelve,
-                                            .occ_supported             = true,
-                                            .f1_nof_symbols            = 14,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 1,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt1{.nof_res_f1                = 36,
-                                            .nof_res_f2                = 27,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::three,
-                                            .occ_supported             = true,
-                                            .f1_nof_symbols            = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 7,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = true},
-                      pucch_gen_params_opt1{.nof_res_f1                = 34,
-                                            .nof_res_f2                = 10,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::two,
-                                            .occ_supported             = false,
-                                            .f1_nof_symbols            = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 1,
-                                            .max_nof_rbs               = 7,
-                                            .max_payload_bits          = 11,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_08,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt1{.nof_res_f1     = 15,
-                                            .nof_res_f2     = 10,
-                                            .nof_cyc_shifts = srsran::srs_du::nof_cyclic_shifts::no_cyclic_shift,
-                                            .occ_supported  = false,
-                                            .f1_nof_symbols = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 7,
-                                            .max_payload_bits          = 11,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_08,
-                                            .f2_intraslot_freq_hopping = true}));
+INSTANTIATE_TEST_SUITE_P(test_res_generation_given_number,
+                         test_pucch_res_generator_params,
+                         ::testing::Values(pucch_gen_params_opt1{.nof_res_f1                = 15,
+                                                                 .nof_res_f2                = 10,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::twelve,
+                                                                 .occ_supported             = false,
+                                                                 .f1_nof_symbols            = 7,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 2,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_25,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt1{.nof_res_f1                = 39,
+                                                                 .nof_res_f2                = 19,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::twelve,
+                                                                 .occ_supported             = false,
+                                                                 .f1_nof_symbols            = 7,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 2,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = true},
+                                           pucch_gen_params_opt1{.nof_res_f1     = 39,
+                                                                 .nof_res_f2     = 19,
+                                                                 .nof_cyc_shifts = nof_cyclic_shifts::no_cyclic_shift,
+                                                                 .occ_supported  = true,
+                                                                 .f1_nof_symbols = 7,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 2,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_25,
+                                                                 .f2_intraslot_freq_hopping = true},
+                                           pucch_gen_params_opt1{.nof_res_f1     = 39,
+                                                                 .nof_res_f2     = 19,
+                                                                 .nof_cyc_shifts = nof_cyclic_shifts::no_cyclic_shift,
+                                                                 .occ_supported  = true,
+                                                                 .f1_nof_symbols = 11,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 1,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = true},
+                                           pucch_gen_params_opt1{.nof_res_f1                = 137,
+                                                                 .nof_res_f2                = 25,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::twelve,
+                                                                 .occ_supported             = true,
+                                                                 .f1_nof_symbols            = 14,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 1,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt1{.nof_res_f1                = 36,
+                                                                 .nof_res_f2                = 27,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::three,
+                                                                 .occ_supported             = true,
+                                                                 .f1_nof_symbols            = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = true},
+                                           pucch_gen_params_opt1{.nof_res_f1                = 34,
+                                                                 .nof_res_f2                = 10,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::two,
+                                                                 .occ_supported             = false,
+                                                                 .f1_nof_symbols            = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 1,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_payload_bits          = 11,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_08,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt1{.nof_res_f1     = 15,
+                                                                 .nof_res_f2     = 10,
+                                                                 .nof_cyc_shifts = nof_cyclic_shifts::no_cyclic_shift,
+                                                                 .occ_supported  = false,
+                                                                 .f1_nof_symbols = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_payload_bits          = 11,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_08,
+                                                                 .f2_intraslot_freq_hopping = true}));
 
 class test_pucch_res_generator_max_nof_rbs : public ::testing::TestWithParam<pucch_gen_params_opt2>
 {
@@ -526,7 +530,7 @@ TEST_P(test_pucch_res_generator_max_nof_rbs, test_pucch_res_given_max_rbs)
                             .max_code_rate          = GetParam().max_code_rate,
                             .intraslot_freq_hopping = GetParam().f2_intraslot_freq_hopping};
 
-  std::vector<cell_pucch_resource> res_list =
+  std::vector<pucch_resource> res_list =
       generate_pucch_res_list_given_rbs(max_nof_rbs_f1, max_nof_rbs_f2, params_f1, params_f2, bwp_size);
 
   ASSERT_TRUE(res_list.size() > 0);
@@ -542,58 +546,131 @@ TEST_P(test_pucch_res_generator_max_nof_rbs, test_pucch_res_given_max_rbs)
   ASSERT_TRUE(grid.get_tot_nof_used_rbs() > 0);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    test_res_generation_given_rbs,
-    test_pucch_res_generator_max_nof_rbs,
-    ::testing::Values(pucch_gen_params_opt2{.max_nof_rbs_f1            = 5,
-                                            .max_nof_rbs_f2            = 10,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::twelve,
-                                            .occ_supported             = false,
-                                            .f1_nof_symbols            = 7,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 2,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_25,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt2{.max_nof_rbs_f1            = 12,
-                                            .max_nof_rbs_f2            = 7,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::twelve,
-                                            .occ_supported             = true,
-                                            .f1_nof_symbols            = 14,
-                                            .f1_intraslot_freq_hopping = true,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 1,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt2{.max_nof_rbs_f1            = 5,
-                                            .max_nof_rbs_f2            = 16,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::three,
-                                            .occ_supported             = true,
-                                            .f1_nof_symbols            = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 7,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_15,
-                                            .f2_intraslot_freq_hopping = true},
-                      pucch_gen_params_opt2{.max_nof_rbs_f1            = 7,
-                                            .max_nof_rbs_f2            = 15,
-                                            .nof_cyc_shifts            = srsran::srs_du::nof_cyclic_shifts::two,
-                                            .occ_supported             = false,
-                                            .f1_nof_symbols            = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 1,
-                                            .max_nof_rbs               = 7,
-                                            .max_payload_bits          = 11,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_08,
-                                            .f2_intraslot_freq_hopping = false},
-                      pucch_gen_params_opt2{.max_nof_rbs_f1 = 5,
-                                            .max_nof_rbs_f2 = 10,
-                                            .nof_cyc_shifts = srsran::srs_du::nof_cyclic_shifts::no_cyclic_shift,
-                                            .occ_supported  = false,
-                                            .f1_nof_symbols = 9,
-                                            .f1_intraslot_freq_hopping = false,
-                                            .f2_nof_symbols            = 2,
-                                            .max_nof_rbs               = 7,
-                                            .max_payload_bits          = 11,
-                                            .max_code_rate             = srsran::max_pucch_code_rate::dot_25,
-                                            .f2_intraslot_freq_hopping = true}));
+INSTANTIATE_TEST_SUITE_P(test_res_generation_given_rbs,
+                         test_pucch_res_generator_max_nof_rbs,
+                         ::testing::Values(pucch_gen_params_opt2{.max_nof_rbs_f1            = 5,
+                                                                 .max_nof_rbs_f2            = 10,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::twelve,
+                                                                 .occ_supported             = false,
+                                                                 .f1_nof_symbols            = 7,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 2,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_25,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt2{.max_nof_rbs_f1            = 12,
+                                                                 .max_nof_rbs_f2            = 7,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::twelve,
+                                                                 .occ_supported             = true,
+                                                                 .f1_nof_symbols            = 14,
+                                                                 .f1_intraslot_freq_hopping = true,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 1,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt2{.max_nof_rbs_f1            = 5,
+                                                                 .max_nof_rbs_f2            = 16,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::three,
+                                                                 .occ_supported             = true,
+                                                                 .f1_nof_symbols            = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_15,
+                                                                 .f2_intraslot_freq_hopping = true},
+                                           pucch_gen_params_opt2{.max_nof_rbs_f1            = 7,
+                                                                 .max_nof_rbs_f2            = 15,
+                                                                 .nof_cyc_shifts            = nof_cyclic_shifts::two,
+                                                                 .occ_supported             = false,
+                                                                 .f1_nof_symbols            = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 1,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_payload_bits          = 11,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_08,
+                                                                 .f2_intraslot_freq_hopping = false},
+                                           pucch_gen_params_opt2{.max_nof_rbs_f1 = 5,
+                                                                 .max_nof_rbs_f2 = 10,
+                                                                 .nof_cyc_shifts = nof_cyclic_shifts::no_cyclic_shift,
+                                                                 .occ_supported  = false,
+                                                                 .f1_nof_symbols = 9,
+                                                                 .f1_intraslot_freq_hopping = false,
+                                                                 .f2_nof_symbols            = 2,
+                                                                 .max_nof_rbs               = 7,
+                                                                 .max_payload_bits          = 11,
+                                                                 .max_code_rate = srsran::max_pucch_code_rate::dot_25,
+                                                                 .f2_intraslot_freq_hopping = true}));
+
+///////////////
+
+class test_ue_pucch_config_builder : public ::testing::TestWithParam<pucch_cfg_builder_params>
+{
+protected:
+  test_ue_pucch_config_builder() :
+    f1_params(pucch_f1_params{.nof_cyc_shifts         = nof_cyclic_shifts::no_cyclic_shift,
+                              .occ_supported          = false,
+                              .nof_symbols            = 14,
+                              .intraslot_freq_hopping = true}),
+    f2_params(pucch_f2_params{.nof_symbols            = 2,
+                              .max_nof_rbs            = 2,
+                              .max_code_rate          = max_pucch_code_rate::dot_25,
+                              .intraslot_freq_hopping = false}),
+    pucch_cfg(test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}).init_ul_bwp.pucch_cfg.value()){};
+
+  bool verify_nof_res_and_idx(unsigned nof_f1_res_harq, unsigned nof_f2_res_harq, unsigned nof_res_sr)
+  {
+    bool test_result =
+        pucch_cfg.pucch_res_list.size() == nof_f1_res_harq + nof_f2_res_harq + nof_res_sr + max_cell_f2_res_csi;
+
+    test_result = test_result && pucch_cfg.pucch_res_set[0].pucch_res_id_list.size() == nof_f1_res_harq;
+    test_result = test_result && pucch_cfg.pucch_res_set[1].pucch_res_id_list.size() == nof_f2_res_harq;
+
+    for (unsigned res_idx : pucch_cfg.pucch_res_set[0].pucch_res_id_list) {
+      test_result = test_result && res_idx < nof_f1_res_harq;
+    }
+    for (unsigned res_idx : pucch_cfg.pucch_res_set[1].pucch_res_id_list) {
+      test_result = test_result && res_idx >= nof_f1_res_harq + nof_res_sr &&
+                    res_idx < nof_f1_res_harq + nof_res_sr + nof_f2_res_harq;
+    }
+
+    for (const auto& res : pucch_cfg.pucch_res_list) {
+      const pucch_format expected_format =
+          res.res_id < nof_f1_res_harq + nof_res_sr ? srsran::pucch_format::FORMAT_1 : srsran::pucch_format::FORMAT_2;
+      test_result = test_result && expected_format == res.format;
+    }
+
+    return test_result;
+  }
+
+  // Parameters that are passed by the routing to run the tests.
+  const unsigned        bwp_size{106};
+  const unsigned        nof_symbols_per_slot{14};
+  const unsigned        max_cell_f2_res_csi{1};
+  const pucch_f1_params f1_params;
+  const pucch_f2_params f2_params;
+  pucch_config          pucch_cfg;
+};
+
+TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
+{
+  // Generate the cell list of resources with many resources.
+  std::vector<pucch_resource> res_list = generate_pucch_res_list_given_number(20, 20, f1_params, f2_params, bwp_size);
+
+  // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
+  ue_pucch_config_builder(pucch_cfg,
+                          res_list,
+                          GetParam().nof_res_f1_harq,
+                          GetParam().nof_res_f2_harq,
+                          GetParam().nof_res_sr,
+                          max_cell_f2_res_csi);
+
+  ASSERT_TRUE(verify_nof_res_and_idx(GetParam().nof_res_f1_harq, GetParam().nof_res_f2_harq, GetParam().nof_res_sr));
+}
+
+INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
+                         test_ue_pucch_config_builder,
+                         ::testing::Values(pucch_cfg_builder_params{3, 6, 2},
+                                           pucch_cfg_builder_params{7, 3, 1},
+                                           pucch_cfg_builder_params{8, 8, 4},
+                                           pucch_cfg_builder_params{1, 1, 1},
+                                           pucch_cfg_builder_params{7, 7, 3}));

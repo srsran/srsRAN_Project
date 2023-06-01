@@ -39,7 +39,6 @@ struct ue_pdsch_grant {
   search_space_id   ss_id;
   unsigned          time_res_index;
   crb_interval      crbs;
-  dci_dl_format     dci_fmt;
   aggregation_level aggr_lvl = aggregation_level::n4;
   sch_mcs_index     mcs;
 };

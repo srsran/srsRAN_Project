@@ -1,21 +1,9 @@
 #
 # Copyright 2021-2023 Software Radio Systems Limited
 #
-# This file is part of srsRAN
-#
-# srsRAN is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of
-# the License, or (at your option) any later version.
-#
-# srsRAN is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# A copy of the GNU Affero General Public License can be found in
-# the LICENSE file in the top-level directory of this distribution
-# and at http://www.gnu.org/licenses/.
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
 #
 
 ########################################################################
@@ -33,9 +21,10 @@ project(srsran)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
+include(version) # sets version information
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
@@ -54,6 +43,7 @@ configure_file(
 ########################################################################
 
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
+option(ENABLE_WERROR         "Stop compilation on errors"               ON)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
 option(ENABLE_GCOV           "Enable code coverage"                     OFF)
@@ -66,9 +56,25 @@ option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
 option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              OFF)
+
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
+
+# Set maximum time to wait for a clean exit. 
+set(EXIT_TIMEOUT "AUTO" CACHE STRING "Timer to wait for a clean exit")
+
+if (ENABLE_WERROR)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    # Disable gcc's maybe uninitialized analysis as it raises false positives
+    if (CMAKE_COMPILER_IS_GNUCXX)
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-Wmaybe-uninitialized" HAS_MAYBE_UNINITIALIZED)
+        if (HAS_MAYBE_UNINITIALIZED)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=maybe-uninitialized")
+        endif()
+    endif()
+endif ()
 
 if (ENABLE_ASAN AND ENABLE_TSAN)
     message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
@@ -148,6 +154,11 @@ if(NOT ASSERT_LEVEL STREQUAL "MINIMAL")
     endif()
 endif()
 
+if(NOT EXIT_TIMEOUT STREQUAL "AUTO")
+    message(STATUS "Manually set exit timeout. timeout=${EXIT_TIMEOUT}s")
+    add_compile_definitions(TERM_TIMEOUT_S=${EXIT_TIMEOUT})
+endif()
+
 ########################################################################
 # Find dependencies
 ########################################################################
@@ -183,6 +194,11 @@ endif (ENABLE_FFTW)
 # Google Tests
 if (BUILD_TESTS)
     find_package(GTest REQUIRED)
+
+    # Alias gtest_discover_tests increase discovery the timeout.
+    function(gtest_discover_tests)
+        _gtest_discover_tests(${ARGV} DISCOVERY_TIMEOUT 15)
+    endfunction()
 endif (BUILD_TESTS)
 
 # Threads
@@ -326,3 +342,5 @@ else(ENABLE_EXPORT)
   # Remove any previous export file (if it exists), since it will become outdated.
   file(REMOVE "${CMAKE_BINARY_DIR}/srsran.cmake")
 endif(ENABLE_EXPORT)
+
+message(STATUS "Building srsRAN version ${SRSRAN_VERSION_STRING}")

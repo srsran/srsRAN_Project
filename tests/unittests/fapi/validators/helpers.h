@@ -76,6 +76,10 @@ srsran::fapi::slot_indication_message build_valid_slot_indication();
 /// \note Payload pointer is set to \c nullptr.
 srsran::fapi::tx_data_request_message build_valid_tx_data_request();
 
+/// Builds and returns a valid transmission precoding and beamforming PDU. Every parameter is within the range defined
+/// in SCF-222 v4.0 Section 3.4.2.5.
+srsran::fapi::tx_precoding_and_beamforming_pdu build_valid_tx_precoding_and_beamforming_pdu();
+
 /// Builds and returns a valid UCI.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.
 srsran::fapi::uci_indication_message build_valid_uci_indication();
@@ -171,6 +175,17 @@ protected:
     then_check_the_report(result, property.property, params.result);
   }
 
+  void execute_test_pdu(pdu_field_data<T>         property,
+                        test_case_data            params,
+                        std::function<T()>        builder,
+                        F                         validator,
+                        srsran::fapi::dl_pdu_type pdu_type)
+  {
+    T    pdu    = given_the_pdu(property, params, builder);
+    bool result = when_executing_the_validation(pdu, validator, pdu_type);
+    then_check_the_report(result, property.property, params.result);
+  }
+
 private:
   T given_the_pdu(pdu_field_data<T> property, test_case_data params, std::function<T()> builder)
   {
@@ -180,6 +195,8 @@ private:
   };
 
   virtual bool when_executing_the_validation(T pdu, F validator) { return true; };
+
+  virtual bool when_executing_the_validation(T pdu, F validator, srsran::fapi::dl_pdu_type pdu_type) { return true; };
 
   void then_check_the_report(bool result, const std::string& property, bool expected_result)
   {
@@ -262,6 +279,47 @@ private:
   bool when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator) override
   {
     return validator(pdu, base::report);
+  };
+
+  void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const
+  {
+    // In case of error, check the PDU type.
+    if (base::report.reports.size()) {
+      // Base class checks all the parameters but pdu_type, so it gets checked here. Base also checks that only one
+      // error report exists, so the last (or the first) of them can be used for the check.
+      const auto& rep = base::report.reports.back();
+      EXPECT_EQ(static_cast<unsigned>(pdu_type), static_cast<unsigned>(rep.pdu_type.value()));
+      EXPECT_EQ(static_cast<unsigned>(msg_type_id), static_cast<unsigned>(rep.message_type));
+    }
+  }
+};
+
+template <typename T, typename U>
+class validate_fapi_sub_pdu
+  : public validate_fapi_field<T, std::function<bool(T& pdu, srsran::fapi::validator_report& report, U pdu_type)>>
+{
+  using base = validate_fapi_field<T, std::function<bool(T& pdu, srsran::fapi::validator_report& report, U pdu_type)>>;
+
+public:
+  void execute_test(pdu_field_data<T>                                                               property,
+                    test_case_data                                                                  params,
+                    std::function<T()>                                                              builder,
+                    std::function<bool(T& pdu, srsran::fapi::validator_report& report, U pdu_type)> validator,
+                    message_type_id                                                                 msg_type_id,
+                    U                                                                               pdu_type)
+  {
+    base::execute_test_pdu(property, params, builder, validator, pdu_type);
+
+    check_pdu_params(params.result, msg_type_id, pdu_type);
+  }
+
+private:
+  virtual bool
+  when_executing_the_validation(T                                                                 pdu,
+                                std::function<bool(T& pdu, validator_report& report, U pdu_type)> validator,
+                                srsran::fapi::dl_pdu_type                                         pdu_type) override
+  {
+    return validator(pdu, base::report, pdu_type);
   };
 
   void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const

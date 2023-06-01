@@ -54,7 +54,6 @@ public:
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
@@ -65,7 +64,6 @@ public:
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
@@ -138,6 +136,11 @@ public:
                                     const ue_cell_configuration&  ue_cell_cfg) override
   {
   }
+
+  uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override
+  {
+    return 0;
+  }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
@@ -154,6 +157,14 @@ class scheduler_ue_metrics_dummy_notifier : public scheduler_ue_metrics_notifier
 {
 public:
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
+};
+
+class scheduler_harq_timeout_dummy_handler : public harq_timeout_handler
+{
+public:
+  du_ue_index_t last_ue_idx = INVALID_DU_UE_INDEX;
+
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override { last_ue_idx = ue_index; }
 };
 
 } // namespace srsran

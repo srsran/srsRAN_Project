@@ -28,6 +28,19 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+// Helper to create PDU from NGAP message
+template <class T>
+byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
+{
+  context_name = context_name == nullptr ? __FUNCTION__ : context_name;
+  byte_buffer   pdu{};
+  asn1::bit_ref bref{pdu};
+  if (msg.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
+    srslog::fetch_basic_logger("NGAP").error("Failed to pack message in {} - discarding it", context_name);
+  }
+  return pdu;
+}
+
 /// \brief  Convert CU-CP security result to NGAP security result.
 /// \param security_result The CU-CP security result.
 /// \return The NGAP security result.
@@ -229,6 +242,114 @@ inline std::string asn1_cause_to_string(const asn1::ngap::cause_c& cause)
   }
 
   return cause_str;
+}
+
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
+/// message.
+/// \param[out] resp The ASN1 NGAP Initial Context Setup Response message.
+/// \param[in] cu_cp_resp The CU-CP Initial Context Setup Response message.
+template <typename template_asn1_item>
+inline void pdu_session_res_setup_response_item_to_asn1(template_asn1_item&                             asn1_resp,
+                                                        const cu_cp_pdu_session_res_setup_response_item resp)
+{
+  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+
+  asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
+
+  // Add dLQosFlowPerTNLInformation
+  response_transfer.dl_qos_flow_per_tnl_info = cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(
+      resp.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info);
+
+  // Add AdditionalDLQosFlowPerTNLInformation
+  for (const auto& cu_cp_qos_flow_info :
+       resp.pdu_session_resource_setup_response_transfer.add_dl_qos_flow_per_tnl_info) {
+    asn1::ngap::qos_flow_per_tnl_info_item_s ngap_qos_flow_info;
+    ngap_qos_flow_info.qos_flow_per_tnl_info =
+        cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_info);
+    response_transfer.add_dl_qos_flow_per_tnl_info.push_back(ngap_qos_flow_info);
+  }
+
+  // Add QosFlowFailedToSetupList
+  for (const auto& failed_item : resp.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
+    asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item =
+        cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(failed_item);
+    response_transfer.qos_flow_failed_to_setup_list.push_back(asn1_failed_item);
+  }
+
+  // Add SecurityResult
+  if (resp.pdu_session_resource_setup_response_transfer.security_result.has_value()) {
+    response_transfer.security_result = cu_cp_security_result_to_ngap_security_result(
+        resp.pdu_session_resource_setup_response_transfer.security_result.value());
+  }
+
+  // Pack pdu_session_res_setup_resp_transfer_s
+  byte_buffer pdu = pack_into_pdu(response_transfer);
+
+  asn1_resp.pdu_session_res_setup_resp_transfer.resize(pdu.length());
+  std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_setup_resp_transfer.begin());
+}
+
+/// \brief Convert common type modify response item to ASN1 type message.
+/// \param[out] asn1_resp The ASN1 NGAP struct.
+/// \param[in] resp The common type struct.
+template <typename template_asn1_item>
+inline void pdu_session_res_modify_response_item_to_asn1(template_asn1_item& asn1_resp,
+                                                         const cu_cp_pdu_session_resource_modify_response_item resp)
+{
+  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+
+  asn1::ngap::pdu_session_res_modify_resp_transfer_s response_transfer;
+
+  // qos_flow_add_or_modify_resp_list
+  if (resp.transfer.qos_flow_add_or_modify_response_list.has_value()) {
+    for (const auto& qos_flow : resp.transfer.qos_flow_add_or_modify_response_list.value()) {
+      asn1::ngap::qos_flow_add_or_modify_resp_item_s asn1_item;
+      asn1_item.qos_flow_id = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      response_transfer.qos_flow_add_or_modify_resp_list.push_back(asn1_item);
+    }
+  }
+
+  // Pack pdu_session_res_modify_resp_transfer_s
+  byte_buffer pdu = pack_into_pdu(response_transfer);
+
+  asn1_resp.pdu_session_res_modify_resp_transfer.resize(pdu.length());
+  std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_modify_resp_transfer.begin());
+}
+
+/// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
+/// message.
+/// \param[out] resp The ASN1 NGAP Initial Context Setup Response message.
+/// \param[in] cu_cp_resp The CU-CP Initial Context Setup Response message.
+template <typename template_asn1_item>
+inline void pdu_session_res_setup_failed_item_to_asn1(template_asn1_item&                           asn1_resp,
+                                                      const cu_cp_pdu_session_res_setup_failed_item resp)
+{
+  asn1_resp.pdu_session_id = pdu_session_id_to_uint(resp.pdu_session_id);
+
+  asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
+  setup_unsuccessful_transfer.cause = cause_to_ngap_cause(resp.pdu_session_resource_setup_unsuccessful_transfer.cause);
+
+  // TODO: Add crit diagnostics
+
+  // Pack pdu_session_res_setup_unsuccessful_transfer_s
+  byte_buffer pdu = pack_into_pdu(setup_unsuccessful_transfer);
+
+  asn1_resp.pdu_session_res_setup_unsuccessful_transfer.resize(pdu.length());
+  std::copy(pdu.begin(), pdu.end(), asn1_resp.pdu_session_res_setup_unsuccessful_transfer.begin());
+}
+
+/// \brief Convert ASN.1 GUAMI to a common type.
+/// \param asn1_guami The ASN.1 GUAMI.
+/// \return The common type GUAMI.
+inline guami_t asn1_guami_to_guami(const asn1::ngap::guami_s& asn1_guami)
+{
+  guami_t guami;
+  guami.plmn          = asn1_guami.plmn_id.to_string();
+  guami.amf_region_id = asn1_guami.amf_region_id.to_number();
+  guami.amf_set_id    = asn1_guami.amf_set_id.to_number();
+  guami.amf_pointer   = asn1_guami.amf_pointer.to_number();
+
+  return guami;
 }
 
 } // namespace srs_cu_cp

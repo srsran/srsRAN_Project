@@ -102,10 +102,12 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
 
     for (const auto& pucch_region : msg.pucch_guardbands) {
-      VERIFY(not pucch_region.prbs.overlaps(prach_prbs),
-             "Configured PRACH occasion collides with PUCCH RBs ({} intersects {})",
-             pucch_region.prbs,
-             prach_prbs);
+      if (pucch_region.prbs.overlaps(prach_prbs))
+        fmt::print("Warning: Configured PRACH occasion collides with PUCCH RBs ({} intersects {}). Some interference "
+                   "between PUCCH and PRACH is expected.\n",
+                   pucch_region.prbs,
+                   prach_prbs);
+      break;
     }
   }
 

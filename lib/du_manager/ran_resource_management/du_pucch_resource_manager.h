@@ -23,6 +23,7 @@
 #pragma once
 
 #include "cell_group_config.h"
+#include "pucch_resource_generator.h"
 
 namespace srsran {
 namespace srs_du {
@@ -47,6 +48,9 @@ public:
   void dealloc_resources(cell_group_config& cell_grp_cfg);
 
 private:
+  // Parameters for PUCCH configuration passed by the user.
+  const pucch_builder_params        user_defined_pucch_cfg;
+  const std::vector<pucch_resource> default_pucch_res_list;
   const pucch_config                default_pucch_cfg;
   const optional<csi_report_config> default_csi_report_cfg;
 

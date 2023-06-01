@@ -29,13 +29,9 @@
 
 namespace srsran {
 
-struct lower_phy_configuration;
 class task_executor;
 class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
-
-std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config,
-                                            unsigned                 max_nof_prach_concurrent_requests);
 
 /// Upper PHY parameters to configure the upper PHY factory.
 struct upper_phy_params {

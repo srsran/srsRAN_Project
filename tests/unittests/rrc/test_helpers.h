@@ -22,9 +22,7 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/rrc/rrc_du.h"
 #include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
@@ -35,7 +33,10 @@ class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 public:
   dummy_rrc_pdu_notifier() = default;
 
-  void on_new_pdu(const rrc_pdu_message& msg) override { last_pdu = byte_buffer_slice{msg.pdu}; }
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  {
+    last_pdu = byte_buffer_slice{msg.pdu};
+  }
 
   byte_buffer_slice last_pdu;
 };
@@ -96,6 +97,11 @@ public:
     last_cu_cp_ue_context_release_command = msg;
   }
 
+  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
+  }
+
   srb_creation_message             last_srb_creation_message;
   bool                             srb1_created = false;
   bool                             srb2_created = false;
@@ -119,7 +125,35 @@ public:
     logger.info("Received UL NAS Transport message");
   }
 
+  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    logger.info("Received UE Context Release Request");
+  }
+
   bool initial_ue_msg_received = false;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+{
+public:
+  rrc_reestablishment_ue_context_t
+  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  {
+    logger.info("Received RRC Reestablishment Request from ueId={} with old_pci={} and old_c_rnti={}",
+                ue_index,
+                old_pci,
+                old_c_rnti);
+
+    return rrc_reestablishment_ue_context_t{};
+  }
+
+  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    logger.info("Received RRC Reestablishment Complete from ueId={} with old_ueId={}", ue_index, old_ue_index);
+  }
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

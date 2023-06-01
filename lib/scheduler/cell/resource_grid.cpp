@@ -208,15 +208,16 @@ cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configurat
 
 void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 {
-  clear();
-  slot = new_slot;
-}
-
-void cell_slot_resource_allocator::clear()
-{
+  // Clear previous results.
   result = {};
   dl_res_grid.clear();
   ul_res_grid.clear();
+
+  // Initiate new slot in the same position.
+  slot                     = new_slot;
+  result.success           = true;
+  result.dl.nof_dl_symbols = cfg.get_nof_dl_symbol_per_slot(new_slot);
+  result.ul.nof_ul_symbols = cfg.get_nof_ul_symbol_per_slot(new_slot);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

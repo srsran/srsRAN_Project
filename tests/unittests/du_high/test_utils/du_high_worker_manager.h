@@ -50,8 +50,11 @@ struct du_high_worker_manager {
   task_worker_executor ctrl_exec{ctrl_worker};
   static_vector<task_worker_executor, 2> cell_execs{{cell_workers[0]}, {cell_workers[1]}};
   static_vector<task_worker_executor, 2> ue_execs{{ue_workers[0]}, {ue_workers[1]}};
-  pcell_ue_executor_mapper               ue_exec_mapper{{&ue_execs[0], &ue_execs[1]}};
-  cell_executor_mapper                   cell_exec_mapper{{&cell_execs[0], &cell_execs[1]}, false};
+  du_high_executor_mapper_impl           exec_mapper{
+      std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{&cell_execs[0], &cell_execs[1]}),
+      std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{&ue_execs[0], &ue_execs[1]}),
+      ctrl_exec,
+      ctrl_exec};
 };
 
 } // namespace srsran

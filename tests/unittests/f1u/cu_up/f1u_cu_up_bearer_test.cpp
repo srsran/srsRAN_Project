@@ -86,8 +86,8 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
 
     // init F1-U logger
-    srslog::fetch_basic_logger("F1-U", false).set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("F1-U", false).set_hex_dump_max_size(100);
+    srslog::fetch_basic_logger("CU-F1-U", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("CU-F1-U", false).set_hex_dump_max_size(100);
 
     // create tester and testee
     logger.info("Creating F1-U bearer");
@@ -137,6 +137,9 @@ TEST_F(f1u_cu_up_test, tx_discard)
   constexpr uint32_t pdu_size = 10;
   constexpr uint32_t pdcp_sn  = 123;
 
+  // advance time by one to ensure timer is stopped and ignores this tick
+  tick();
+
   f1u->discard_sdu(pdcp_sn);
   // advance time just before the timer-based DL notification is triggered
   for (uint32_t t = 0; t < f1u_dl_notif_time_ms - 1; t++) {
@@ -172,6 +175,9 @@ TEST_F(f1u_cu_up_test, tx_discard)
 
   tester->tx_msg_list.pop_front();
   ASSERT_TRUE(tester->tx_msg_list.empty());
+
+  // advance time by one to ensure timer is stopped and ignores this tick
+  tick();
 
   f1u->discard_sdu(pdcp_sn + 7);
   // advance time just before the timer-based DL notification is triggered

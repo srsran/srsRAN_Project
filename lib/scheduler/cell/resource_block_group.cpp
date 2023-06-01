@@ -24,17 +24,17 @@
 
 using namespace srsran;
 
-nominal_rbg_size srsran::get_nominal_rbg_size(unsigned bwp_nof_prb, bool config_1_or_2)
+nominal_rbg_size srsran::get_nominal_rbg_size(unsigned bwp_nof_prb, bool is_config_1)
 {
   srsran_assert(bwp_nof_prb > 0 and bwp_nof_prb <= 275, "Invalid BWP size");
   if (bwp_nof_prb <= 36) {
-    return config_1_or_2 ? nominal_rbg_size::P2 : nominal_rbg_size::P4;
+    return is_config_1 ? nominal_rbg_size::P2 : nominal_rbg_size::P4;
   }
   if (bwp_nof_prb <= 72) {
-    return config_1_or_2 ? nominal_rbg_size::P4 : nominal_rbg_size::P8;
+    return is_config_1 ? nominal_rbg_size::P4 : nominal_rbg_size::P8;
   }
   if (bwp_nof_prb <= 144) {
-    return config_1_or_2 ? nominal_rbg_size::P8 : nominal_rbg_size::P16;
+    return is_config_1 ? nominal_rbg_size::P8 : nominal_rbg_size::P16;
   }
   return nominal_rbg_size::P16;
 }

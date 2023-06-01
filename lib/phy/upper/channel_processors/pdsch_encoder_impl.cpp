@@ -60,6 +60,6 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
     offset += rm_length;
 
     // Rate match the codeblock.
-    rate_matcher->rate_match(codeblock, tmp_encoded, descr_seg.get_metadata().tb_common);
+    rate_matcher->rate_match(codeblock, tmp_encoded, descr_seg.get_metadata());
   }
 }

@@ -25,10 +25,9 @@
 
 using namespace srsran;
 
-mac_dl_processor::mac_dl_processor(mac_common_config_t& cfg_, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
-  cfg(cfg_), logger(cfg.logger), ue_mng(rnti_table_), sched_obj(sched_)
+mac_dl_processor::mac_dl_processor(const mac_dl_config& mac_cfg, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
+  cfg(mac_cfg), ue_mng(cfg.mac_cfg, rnti_table_), sched_obj(sched_)
 {
-  (void)logger;
 }
 
 bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
@@ -60,7 +59,7 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
   cells[cell_index].reset();
 }
 
-async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
+async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request& request)
 {
   // > Allocate UE DL HARQ buffers.
   // Note: This is a large allocation, and therefore, should be done outside of the cell thread to avoid causing lates.
@@ -86,7 +85,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
   });
 }
 
-async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message& request)
+async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request& request)
 {
   return launch_async([this, request](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);

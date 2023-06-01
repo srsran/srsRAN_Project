@@ -85,6 +85,31 @@ protected:
     return nof_offsets * 2;
   }
 
+  bool verify_pucch_cfg(const pucch_config& pucch_cfg, optional<unsigned> csi_pucch_res)
+  {
+    const du_cell_config& du_cfg              = cell_cfg_list[0];
+    const unsigned        max_csi_f2_resource = 1U;
+    bool pucch_checker = pucch_cfg.pucch_res_list.size() == du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() +
+                                                                du_cfg.pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() +
+                                                                du_cfg.pucch_cfg.nof_sr_resources.to_uint() +
+                                                                max_csi_f2_resource;
+
+    // Check whether the SR resource point to the correct one (we give a range where the SR resource is located), each
+    // UE can have different values within this range.
+    pucch_checker =
+        pucch_checker and
+        pucch_cfg.sr_res_list.front().pucch_res_id >= du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() and
+        pucch_cfg.sr_res_list.front().pucch_res_id <
+            du_cfg.pucch_cfg.nof_ue_pucch_f1_res_harq.to_uint() + du_cfg.pucch_cfg.nof_sr_resources.to_uint();
+
+    // We always put the CSI PUCCH resource is always at the end of the list.
+    if (csi_pucch_res.has_value()) {
+      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size();
+    }
+
+    return pucch_checker;
+  }
+
   std::vector<du_cell_config>                                 cell_cfg_list;
   std::map<five_qi_t, du_qos_config>                          qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
@@ -141,6 +166,24 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
     }
     ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));
+
+    // Check if PUCCH config is correctly updated.
+    const serving_cell_config serving_cell_cfg = ue_res->cells[0].serv_cell_cfg;
+    optional<unsigned>        csi_pucch_res{};
+    const bool                has_csi_cfg =
+        serving_cell_cfg.csi_meas_cfg.has_value() and
+        not serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty() and
+        srsran::variant_holds_alternative<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+            serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+    if (has_csi_cfg) {
+      csi_pucch_res.emplace(srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                                serving_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type)
+                                .pucch_csi_res_list.front()
+                                .pucch_res_id);
+    }
+    ASSERT_TRUE(
+        verify_pucch_cfg(ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(), csi_pucch_res));
+
     next_ue_index = to_du_ue_index((unsigned)next_ue_index + 1);
   }
 

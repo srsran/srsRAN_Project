@@ -37,10 +37,7 @@ public:
   };
 
   void on_puxch_request_late(const resource_grid_context& context) override { request_late.emplace_back(context); }
-  void on_puxch_request_overflow(const resource_grid_context& context) override
-  {
-    request_overflow.emplace_back(context);
-  }
+
   void on_rx_symbol(const resource_grid_reader& grid, const lower_phy_rx_symbol_context& context) override
   {
     rx_symbol_entry entry = {&grid, context};
@@ -50,7 +47,8 @@ public:
   const std::vector<resource_grid_context>& get_request_late() const { return request_late; }
 
   const std::vector<resource_grid_context>& get_request_overflow() const { return request_overflow; }
-  const std::vector<rx_symbol_entry>&       get_rx_symbol() const { return rx_symbol; }
+
+  const std::vector<rx_symbol_entry>& get_rx_symbol() const { return rx_symbol; }
 
   unsigned get_nof_notifications() const { return request_late.size() + request_overflow.size() + rx_symbol.size(); }
 

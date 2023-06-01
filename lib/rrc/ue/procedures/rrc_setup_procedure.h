@@ -73,14 +73,14 @@ namespace srs_cu_cp {
 class rrc_setup_procedure
 {
 public:
-  rrc_setup_procedure(rrc_ue_context_t&                        context_,
-                      const asn1::rrc_nr::rrc_setup_request_s& request_,
-                      const byte_buffer&                       du_to_cu_container_,
-                      rrc_ue_setup_proc_notifier&              rrc_ue_notifier_,
-                      rrc_ue_du_processor_notifier&            du_processor_notifier_,
-                      rrc_ue_nas_notifier&                     nas_notifier_,
-                      rrc_ue_event_manager&                    ev_mng_,
-                      srslog::basic_logger&                    logger_);
+  rrc_setup_procedure(rrc_ue_context_t&                          context_,
+                      const asn1::rrc_nr::establishment_cause_e& cause_,
+                      const byte_buffer&                         du_to_cu_container_,
+                      rrc_ue_setup_proc_notifier&                rrc_ue_notifier_,
+                      rrc_ue_du_processor_notifier&              du_processor_notifier_,
+                      rrc_ue_nas_notifier&                       nas_notifier_,
+                      rrc_ue_event_manager&                      ev_mng_,
+                      srslog::basic_logger&                      logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -96,10 +96,10 @@ private:
   /// \remark Forward the Initial UE Message to the NGAP
   void send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg);
 
-  rrc_ue_context_t&                       context;
-  const asn1::rrc_nr::rrc_setup_request_s request;
-  const byte_buffer&                      du_to_cu_container;
-  const asn1::rrc_nr::pdcp_cfg_s          srb1_pdcp_cfg;
+  rrc_ue_context_t&                         context;
+  const asn1::rrc_nr::establishment_cause_e cause;
+  const byte_buffer&                        du_to_cu_container;
+  const asn1::rrc_nr::pdcp_cfg_s            srb1_pdcp_cfg;
 
   rrc_ue_setup_proc_notifier&   rrc_ue;                // handler to the parent RRC UE object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor

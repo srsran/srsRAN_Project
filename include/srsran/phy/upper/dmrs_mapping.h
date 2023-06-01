@@ -114,11 +114,10 @@ public:
                   dmrs_pattern.symbols.size());
 
     // Generate DMRS pattern.
-    dmrs_pattern.rb_begin  = bwp_start_rb;
-    dmrs_pattern.rb_end    = bwp_start_rb + bwp_size_rb;
-    dmrs_pattern.rb_stride = 1;
-    dmrs_pattern.re_mask   = get_dmrs_prb_mask(nof_cdm_groups_without_data);
-    dmrs_pattern.symbols   = symbol_mask;
+    dmrs_pattern.prb_mask.resize(bwp_start_rb + bwp_size_rb);
+    dmrs_pattern.prb_mask.fill(bwp_start_rb, bwp_start_rb + bwp_size_rb);
+    dmrs_pattern.re_mask = get_dmrs_prb_mask(nof_cdm_groups_without_data);
+    dmrs_pattern.symbols = symbol_mask;
 
     return dmrs_pattern;
   }

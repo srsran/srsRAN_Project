@@ -22,4 +22,4 @@ add_library(du_resource_manager
         du_ran_resource_manager_impl.cpp
         du_pucch_resource_manager.cpp
         pucch_resource_generator.cpp)
-target_link_libraries(du_resource_manager srsran_du_config_validators)
+target_link_libraries(du_resource_manager du_manager_converters srsran_du_config_validators mac_configuration_helpers)

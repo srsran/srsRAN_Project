@@ -233,7 +233,7 @@ public:
   dynamic_tensor(dynamic_tensor&& other) noexcept :
     dimensions_size(std::move(other.dimensions_size)), elements(std::move(other.elements))
   {
-    // Do nothing.
+    other.dimensions_size = {};
   }
 
   /// Reserves memory for the tensor.
@@ -272,6 +272,9 @@ public:
   {
     return std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
   }
+
+  /// Determines whether the tensor is empty.
+  bool empty() const { return size() == 0; }
 
 private:
   /// Tensor actual dimensions.

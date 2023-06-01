@@ -22,9 +22,7 @@
 
 #pragma once
 
-#include "../task_schedulers/ue_task_scheduler.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
@@ -44,10 +42,11 @@ public:
   {
   }
 
-  void on_new_pdu(const rrc_pdu_message& msg) override
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
+    f1ap_msg.old_ue_index        = old_ue_index;
     f1ap_msg.srb_id              = srb_id_t::srb0;
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
@@ -72,7 +71,14 @@ public:
 
   void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
   {
+    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
+  }
+
+  void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
+  {
+    srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU Processor task handler must not be nullptr");
+    du_processor_rrc_ue_handler->handle_rrc_reestablishment_context_modification_required(ue_index);
   }
 
 private:
@@ -123,7 +129,10 @@ class rrc_ue_pdcp_pdu_adapter : public rrc_pdu_notifier
 public:
   explicit rrc_ue_pdcp_pdu_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
 
-  void on_new_pdu(const rrc_pdu_message& msg) override { pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()}); }
+  void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
+  {
+    pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()});
+  }
 
 private:
   pdcp_tx_upper_data_interface& pdcp_handler;
@@ -163,7 +172,12 @@ private:
 class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void connect_ngap(ngap_nas_message_handler& ngap_nas_msg_handler_) { ngap_nas_msg_handler = &ngap_nas_msg_handler_; }
+  void connect_ngap(ngap_nas_message_handler&     ngap_nas_msg_handler_,
+                    ngap_control_message_handler& ngap_ctrl_msg_handler_)
+  {
+    ngap_nas_msg_handler  = &ngap_nas_msg_handler_;
+    ngap_ctrl_msg_handler = &ngap_ctrl_msg_handler_;
+  }
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
@@ -179,6 +193,8 @@ public:
     ngap_init_ue_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci);
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_init_ue_msg.tac = msg.cell.tac;
+
+    ngap_init_ue_msg.five_g_s_tmsi = msg.five_g_s_tmsi;
 
     ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
   }
@@ -198,8 +214,16 @@ public:
     ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }
 
+  void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) override
+  {
+    srsran_assert(ngap_ctrl_msg_handler != nullptr, "NGAP handler must not be nullptr");
+
+    ngap_ctrl_msg_handler->handle_ue_context_release_request(msg);
+  }
+
 private:
-  ngap_nas_message_handler* ngap_nas_msg_handler = nullptr;
+  ngap_nas_message_handler*     ngap_nas_msg_handler  = nullptr;
+  ngap_control_message_handler* ngap_ctrl_msg_handler = nullptr;
 
   /// \brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
   /// \param establishment_cause The RRC Establishment Cause.
@@ -246,6 +270,29 @@ private:
 
     return rrcestablishment_cause;
   }
+};
+
+/// Adapter between RRC UE and CU-CP
+class rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
+{
+public:
+  void connect_cu_cp(cu_cp_rrc_ue_interface& cu_cp_rrc_ue_) { cu_cp_rrc_ue_handler = &cu_cp_rrc_ue_; }
+
+  rrc_reestablishment_ue_context_t
+  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
+  }
+
+  void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
+  {
+    srsran_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_complete(ue_index, old_ue_index);
+  }
+
+private:
+  cu_cp_rrc_ue_interface* cu_cp_rrc_ue_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

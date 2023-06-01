@@ -39,7 +39,10 @@ target_link_libraries(srsran_pdsch_encoder srsran_channel_coding)
 add_library(srsran_pdsch_modulator STATIC pdsch_modulator_impl.cpp)
 target_link_libraries(srsran_pdsch_modulator srsran_channel_modulation srsran_sequence_generators srsvec srsran_upper_phy_support)
 
-add_library(srsran_pdsch_processor STATIC pdsch_processor_impl.cpp)
+add_library(srsran_pdsch_processor STATIC
+        pdsch_codeblock_processor.cpp
+        pdsch_processor_concurrent_impl.cpp
+        pdsch_processor_impl.cpp)
 target_link_libraries(srsran_pdsch_processor srsran_upper_phy_support)
 
 add_library(srsran_prach_detector STATIC

@@ -55,10 +55,13 @@ inline bool is_common_search_space(search_space_set_type ss_set)
   return ss_set != search_space_set_type::ue_specific;
 }
 
+/// SearchSpace Type.
+enum class search_space_type { common, ue_dedicated };
+
 /// SearchSpace configuration as per TS38.331, "SearchSpace".
 struct search_space_configuration {
   /// SearchSpace Type.
-  enum class type_t { common, ue_dedicated };
+  using type_t = search_space_type;
   /// SearchSpace Common Type DCI Formats.
   struct common_dci_format {
     bool f0_0_and_f1_0;

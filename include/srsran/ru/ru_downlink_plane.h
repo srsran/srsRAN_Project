@@ -29,12 +29,14 @@ namespace srsran {
 struct resource_grid_context;
 class resource_grid_reader;
 
-/// \brief Radio Unit downlink plane handler interface.
+/// \brief Radio Unit resource grid handler interface.
 ///
-/// Downlink plane handler interface of a radio unit used to transmit downlink data.
+/// The resource grid handler modulates and transmits the given downlink resource grid through the underlying radio
+/// device.
 class ru_downlink_plane_handler
 {
 public:
+  /// Default destructor.
   virtual ~ru_downlink_plane_handler() = default;
 
   /// \brief Handles the given downlink data to be transmitted.

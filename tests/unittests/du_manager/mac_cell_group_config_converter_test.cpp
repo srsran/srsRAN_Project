@@ -21,13 +21,13 @@
  */
 
 #include "lib/du_manager/converters/asn1_cell_group_config_helpers.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
-srs_du::cell_group_config make_initial_cell_group_config()
+static srs_du::cell_group_config make_initial_cell_group_config()
 {
   srs_du::cell_group_config dest_cell_grp_cfg{};
   dest_cell_grp_cfg.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();

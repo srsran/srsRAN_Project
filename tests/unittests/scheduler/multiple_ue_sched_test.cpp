@@ -20,16 +20,17 @@
  *
  */
 
-#include "lib/scheduler/logging/scheduler_result_logger.h"
-#include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/adt/optional.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pdcch/search_space.h"
+#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
@@ -125,7 +126,7 @@ protected:
     // Initialize.
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
-    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
   }
 
   void run_slot()
@@ -135,7 +136,7 @@ protected:
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
+    bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, current_slot, *bench->sched_res);
@@ -150,27 +151,7 @@ protected:
 
   sched_cell_configuration_request_message create_custom_cell_config_request() const
   {
-    cell_config_builder_params cell_cfg{};
-    if (params.duplx_mode == duplex_mode::TDD) {
-      // Band 40.
-      cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
-      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
-
-      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-          cell_cfg.channel_bw_mhz,
-          cell_cfg.scs_common,
-          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
-
-      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
-      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
-      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
-      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
-    }
-    cell_cfg.csi_rs_enabled = true;
-    return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
+    return test_helpers::make_default_sched_cell_configuration_request(create_custom_cell_cfg_builder_params());
   }
 
   unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
@@ -203,7 +184,7 @@ protected:
     return total_cw_tb_size_bytes;
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
+  cell_config_builder_params create_custom_cell_cfg_builder_params() const
   {
     cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
@@ -224,15 +205,21 @@ protected:
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
-    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg);
+    return cell_cfg;
+  }
+
+  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
+  {
+    const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
+    auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
 
     ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
     ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
-        test_helpers::make_test_ue_uplink_config(cell_cfg));
+        test_helpers::make_test_ue_uplink_config(cell_cfg_params));
 
     if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
       ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-          config_helpers::make_default_csi_meas_config(cell_cfg));
+          config_helpers::make_default_csi_meas_config(cell_cfg_params));
     }
 
     ue_creation_req.ue_index = ue_index;
@@ -250,6 +237,13 @@ protected:
     bench->sch.handle_ue_creation_request(ue_creation_req);
 
     bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}, {}, ue_creation_req};
+  }
+
+  void add_ue(const sched_ue_creation_request_message& ue_create_req)
+  {
+    bench->sch.handle_ue_creation_request(ue_create_req);
+
+    bench->ues[ue_create_req.ue_index] = sched_test_ue{ue_create_req.crnti, {}, {}, ue_create_req};
   }
 
   sched_test_ue& get_ue(du_ue_index_t ue_idx) { return bench->ues.at(ue_idx); }
@@ -281,6 +275,22 @@ protected:
     bench->sch.handle_ul_bsr_indication(msg);
   }
 
+  const pdcch_dl_information* find_ue_dl_pdcch(const sched_test_ue& u) const
+  {
+    const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
+                                                  bench->sched_res->dl.dl_pdcchs.end(),
+                                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    return it == bench->sched_res->dl.dl_pdcchs.end() ? nullptr : &*it;
+  }
+
+  const pdcch_ul_information* find_ue_ul_pdcch(const sched_test_ue& u) const
+  {
+    const pdcch_ul_information* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
+                                                  bench->sched_res->dl.ul_pdcchs.end(),
+                                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    return it == bench->sched_res->dl.ul_pdcchs.end() ? nullptr : &*it;
+  }
+
   const dl_msg_alloc* find_ue_pdsch(const sched_test_ue& u) const
   {
     const auto* it = std::find_if(bench->sched_res->dl.ue_grants.begin(),
@@ -303,46 +313,84 @@ protected:
 
   optional<slot_point> get_pusch_scheduled_slot(const sched_test_ue& u) const
   {
-    const auto* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
-                                  bench->sched_res->dl.ul_pdcchs.end(),
-                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
-    const auto& ue_ul_lst =
+    const pdcch_ul_information* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
+                                                  bench->sched_res->dl.ul_pdcchs.end(),
+                                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    const auto&                 ue_ul_lst =
         u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_td_alloc_list;
     const auto& cell_ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     const auto& ul_lst      = ue_ul_lst.empty() ? cell_ul_lst : ue_ul_lst;
 
-    return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : current_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
+    if (it == bench->sched_res->dl.ul_pdcchs.end()) {
+      return {};
+    }
+
+    switch (it->dci.type) {
+      case dci_ul_rnti_config_type::tc_rnti_f0_0:
+        return current_slot + ul_lst[it->dci.tc_rnti_f0_0.time_resource].k2;
+      case dci_ul_rnti_config_type::c_rnti_f0_0:
+        return current_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
+      case dci_ul_rnti_config_type::c_rnti_f0_1:
+        return current_slot + ul_lst[it->dci.c_rnti_f0_1.time_resource].k2;
+    }
+
+    return {};
   }
 
   optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
   {
-    const auto* it          = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
-                                  bench->sched_res->dl.dl_pdcchs.end(),
-                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
-    const auto& ue_dl_lst   = u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
-    const auto& cell_dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    const auto& dl_lst      = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
+    const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
+                                                  bench->sched_res->dl.dl_pdcchs.end(),
+                                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    const auto& ue_dl_lst          = u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
+    const auto& cell_dl_lst        = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    const auto& dl_lst             = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
 
-    return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : current_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
-  }
-
-  optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
-  {
-    const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
-                                  bench->sched_res->dl.dl_pdcchs.end(),
-                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
     if (it == bench->sched_res->dl.dl_pdcchs.end()) {
       return {};
     }
 
+    switch (it->dci.type) {
+      case dci_dl_rnti_config_type::c_rnti_f1_0:
+        return current_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
+      case dci_dl_rnti_config_type::tc_rnti_f1_0:
+        return current_slot + dl_lst[it->dci.tc_rnti_f1_0.time_resource].k0;
+      case dci_dl_rnti_config_type::c_rnti_f1_1:
+        return current_slot + dl_lst[it->dci.c_rnti_f1_1.time_resource].k0;
+      default:
+        break;
+    }
+
+    return {};
+  }
+
+  optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
+  {
+    const pdcch_dl_information* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
+                                                  bench->sched_res->dl.dl_pdcchs.end(),
+                                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+
+    if (it == bench->sched_res->dl.dl_pdcchs.end()) {
+      return {};
+    }
+
+    const auto& dl_to_ack_lst =
+        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
+
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
-    if (it->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
-      return current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+    switch (it->dci.type) {
+      case dci_dl_rnti_config_type::c_rnti_f1_0:
+        return current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+      case dci_dl_rnti_config_type::tc_rnti_f1_0:
+        return current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+      case dci_dl_rnti_config_type::c_rnti_f1_1:
+        return current_slot + dl_to_ack_lst[it->dci.c_rnti_f1_1.pdsch_harq_fb_timing_indicator.value()];
+      default:
+        break;
     }
-    return current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
+
+    return {};
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
@@ -398,6 +446,25 @@ protected:
     pdu.tb_crc_success = true;
 
     return pdu;
+  }
+
+  optional<search_space_configuration> get_ss_cfg(const sched_test_ue& u, search_space_id ss_id)
+  {
+    auto it = std::find_if(u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.begin(),
+                           u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end(),
+                           [ss_id](const search_space_configuration& cfg) { return cfg.id == ss_id; });
+    if (it != u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.end()) {
+      return *it;
+    }
+
+    it = std::find_if(bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.begin(),
+                      bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.end(),
+                      [ss_id](const search_space_configuration& cfg) { return cfg.id == ss_id; });
+    if (it != bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.end()) {
+      return *it;
+    }
+
+    return nullopt;
   }
 };
 
@@ -674,6 +741,277 @@ TEST_P(multiple_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch)
       }
     }
     ASSERT_TRUE(is_csi_muplxed_with_pdsch);
+  }
+}
+
+TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
+{
+  // Used to track BSR 0.
+  std::map<unsigned, bool>                 is_bsr_zero_sent;
+  std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
+
+  // Vector to keep track of ACKs to send.
+  std::vector<uci_indication> uci_ind_to_send;
+
+  // Pre-populate common UE creation request parameters.
+  const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
+  auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
+
+  auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
+                         ue_creation_req.cfg.lc_config_list.end(),
+                         [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
+  if (it == ue_creation_req.cfg.lc_config_list.end()) {
+    ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    it = ue_creation_req.cfg.lc_config_list.end() - 1;
+  }
+  it->lc_group = static_cast<lcg_id_t>(0);
+
+  // Set DCI format to 1_1 in SearchSpace#2.
+  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().type =
+      srsran::search_space_configuration::type_t::ue_dedicated;
+  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().ue_specific =
+      srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+
+  // Setup scheduler and add UEs.
+  setup_sched(create_expert_config(10), create_custom_cell_config_request());
+  // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
+  // Assumption: LCID is DRB1.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    // Initialize.
+    is_bsr_zero_sent[idx] = false;
+
+    ue_creation_req.ue_index = to_du_ue_index(idx);
+    ue_creation_req.crnti    = to_rnti(allocate_rnti());
+
+    add_ue(ue_creation_req);
+
+    push_buffer_state_to_dl_ue(
+        to_du_ue_index(idx),
+        test_rgen::uniform_int<unsigned>(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+        LCID_MIN_DRB);
+  }
+
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
+    run_slot();
+
+    std::vector<uci_indication> uci_ind_not_for_current_slot;
+    // Send ACKs if there are any to send.
+    for (const auto& ind : uci_ind_to_send) {
+      if (current_slot == ind.slot_rx) {
+        bench->sch.handle_uci_indication(ind);
+      } else {
+        uci_ind_not_for_current_slot.push_back(ind);
+      }
+    }
+    swap(uci_ind_to_send, uci_ind_not_for_current_slot);
+
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      sched_test_ue& test_ue = get_ue(to_du_ue_index(idx));
+
+      // Check whether DCI formats match the SearchSpace configuration and uses DCI format 1_1 for SS#2.
+      const auto* pdcch_grant = find_ue_dl_pdcch(test_ue);
+      if (pdcch_grant != nullptr) {
+        const auto& ss_cfg = get_ss_cfg(test_ue, pdcch_grant->ctx.context.ss_id);
+        ASSERT_TRUE(ss_cfg.has_value()) << fmt::format(
+            "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+        switch (ss_cfg->type) {
+          case search_space_configuration::type_t::common:
+            // Checking for only TC-RNTI and C-RNTI F1_0.
+            ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0 or
+                        pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0)
+                << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                               test_ue.crnti,
+                               pdcch_grant->ctx.context.ss_id);
+            break;
+          case search_space_configuration::type_t::ue_dedicated: {
+            if (ss_cfg->ue_specific == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
+              ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_0)
+                  << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                                 test_ue.crnti,
+                                 pdcch_grant->ctx.context.ss_id);
+            } else {
+              ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_dl_rnti_config_type::c_rnti_f1_1)
+                  << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                                 test_ue.crnti,
+                                 pdcch_grant->ctx.context.ss_id);
+            }
+            break;
+          }
+        }
+      }
+
+      // Perform task related to sending ACK back for scheduled PDSCH.
+      const auto& pdsch_slot = get_pdsch_scheduled_slot(test_ue);
+      if (pdsch_slot.has_value()) {
+        pdsch_scheduled_slot_in_future[idx] = pdsch_slot;
+      }
+      const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
+      if (ack_nack_slot.has_value()) {
+        uci_ind_to_send.push_back(build_harq_ack_pucch_f0_f1_uci_ind(to_du_ue_index(idx), ack_nack_slot.value()));
+      }
+
+      // Wait until last PDSCH scheduled slot has passed to send Buffer status 0.
+      const auto* grant = find_ue_pdsch(test_ue);
+      if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
+        ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].new_data)
+            << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
+        continue;
+      }
+
+      // Send Buffer status 0 upon receiving grants for all requested bytes.
+      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 &&
+          pdsch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pdsch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
+        is_bsr_zero_sent[idx] = true;
+        // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
+        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
+      }
+
+      // Update Buffer status maintained in test UE.
+      if (grant != nullptr && grant->pdsch_cfg.codewords[0].new_data) {
+        if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
+          // Accounting for MAC headers.
+          test_ue.dl_bsr_list.back().bs = 0;
+        } else {
+          test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
+        }
+      }
+    }
+  }
+}
+
+TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
+{
+  // Used to track BSR 0.
+  std::map<unsigned, bool>                 is_bsr_zero_sent;
+  std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
+
+  // Pre-populate common UE creation request parameters.
+  const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
+  auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
+
+  auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
+                         ue_creation_req.cfg.lc_config_list.end(),
+                         [](const auto& l) { return l.lcid == LCID_MIN_DRB; });
+  if (it == ue_creation_req.cfg.lc_config_list.end()) {
+    ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(LCID_MIN_DRB));
+    it = ue_creation_req.cfg.lc_config_list.end() - 1;
+  }
+  it->lc_group = static_cast<lcg_id_t>(0);
+
+  // Set DCI format to 1_1 in SearchSpace#2.
+  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().type =
+      srsran::search_space_configuration::type_t::ue_dedicated;
+  ue_creation_req.cfg.cells.begin()->serv_cell_cfg.init_dl_bwp.pdcch_cfg.value().search_spaces.back().ue_specific =
+      srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+
+  // Setup scheduler and add UEs.
+  setup_sched(create_expert_config(10), create_custom_cell_config_request());
+  // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
+  // Assumption: LCID is DRB1.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    // Initialize.
+    is_bsr_zero_sent[idx]               = false;
+    pusch_scheduled_slot_in_future[idx] = {};
+
+    ue_creation_req.ue_index = to_du_ue_index(idx);
+    ue_creation_req.crnti    = to_rnti(allocate_rnti());
+
+    add_ue(ue_creation_req);
+
+    notify_ul_bsr_from_ue(
+        to_du_ue_index(idx),
+        test_rgen::uniform_int<unsigned>(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+        static_cast<lcg_id_t>(0));
+  }
+
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
+    run_slot();
+
+    // CRC Indication to send if there PUSCH is scheduled in current slot.
+    ul_crc_indication crc_ind{};
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = current_slot;
+
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      auto& test_ue = get_ue(to_du_ue_index(idx));
+
+      // Check whether DCI formats match the SearchSpace configuration and uses DCI format 1_1 for SS#2.
+      const auto* pdcch_grant = find_ue_ul_pdcch(test_ue);
+      if (pdcch_grant != nullptr) {
+        const auto& ss_cfg = get_ss_cfg(test_ue, pdcch_grant->ctx.context.ss_id);
+        ASSERT_TRUE(ss_cfg.has_value()) << fmt::format(
+            "Condition failed for UE with CRNTI={:#x} and SS id={}", test_ue.crnti, pdcch_grant->ctx.context.ss_id);
+        switch (ss_cfg->type) {
+          case search_space_configuration::type_t::common:
+            // Checking for only TC-RNTI and C-RNTI F1_0.
+            ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_0 or
+                        pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::tc_rnti_f0_0)
+                << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                               test_ue.crnti,
+                               pdcch_grant->ctx.context.ss_id);
+            break;
+          case search_space_configuration::type_t::ue_dedicated: {
+            if (ss_cfg->ue_specific == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0) {
+              ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_0)
+                  << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                                 test_ue.crnti,
+                                 pdcch_grant->ctx.context.ss_id);
+            } else {
+              ASSERT_TRUE(pdcch_grant->dci.type == srsran::dci_ul_rnti_config_type::c_rnti_f0_1)
+                  << fmt::format("Condition failed for UE with CRNTI={:#x} and SS id={}",
+                                 test_ue.crnti,
+                                 pdcch_grant->ctx.context.ss_id);
+            }
+            break;
+          }
+        }
+      }
+
+      // Update the PUSCH scheduled slot scheduled in the future i.e. based on info got from PDCCH.
+      const auto& pusch_slot = get_pusch_scheduled_slot(test_ue);
+      if (pusch_slot.has_value()) {
+        pusch_scheduled_slot_in_future[idx] = pusch_slot;
+      }
+
+      // Wait until last PUSCH scheduled slot has passed to send BSR 0.
+      const auto* pusch = find_ue_pusch(test_ue);
+      if (is_bsr_zero_sent[idx] && pusch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pusch_scheduled_slot_in_future[idx].value()) {
+        ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
+            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
+        continue;
+      }
+
+      // Send BSR 0 upon receiving grants for all requested bytes.
+      const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
+      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 &&
+          pusch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pusch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
+        is_bsr_zero_sent[idx] = true;
+        // Notify BSR 0 to ensure scheduler does not schedule further for this UE.
+        notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
+      }
+
+      // Update Buffer status maintained in test UE.
+      if (pusch != nullptr && pusch->pusch_cfg.new_data) {
+        crc_ind.crcs.push_back(build_success_crc_pdu_indication(to_du_ue_index(idx), pusch->pusch_cfg.harq_id));
+        if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
+          // Accounting for MAC headers.
+          test_ue.ul_bsr_list.back().nof_bytes = 0;
+        } else {
+          test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
+        }
+      }
+    }
+
+    if (not crc_ind.crcs.empty()) {
+      bench->sch.handle_crc_indication(crc_ind);
+    }
   }
 }
 

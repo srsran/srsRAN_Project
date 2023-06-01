@@ -39,7 +39,7 @@ enum class dmrs_config_type { type1 = 1, type2, not_set };
 
 /// \brief Position for additional DM-RS in DL (see TS 38.211, Tables 7.4.1.1.2-3 and 7.4.1.1.2-4).
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
-enum class dmrs_additional_positions { pos0 = 0, pos1, pos2, pos3, not_set };
+enum class dmrs_additional_positions { pos0 = 0, pos1, pos2, pos3 };
 
 /// \brief The maximum number of OFDM symbols for DL front loaded DMRS. If set to len2, the UE determines the actual
 /// number of DM-RS symbols by the associated DCI. (see TS 38.214, clause 7.4.1.1.2).

@@ -21,6 +21,7 @@
  */
 
 #include "fapi_factory.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -46,7 +47,7 @@ std::unique_ptr<phy_fapi_adaptor> srsran::build_phy_fapi_adaptor(unsigned       
                                                                                               ul_pdu_repository,
                                                                                               dl_pdu_validator,
                                                                                               ul_pdu_validator);
-  report_fatal_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
+  report_error_if_not(adaptor_factory, "Invalid PHY adaptor factory.");
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
   phy_fapi_config.sector_id   = sector_id;
@@ -64,7 +65,7 @@ std::unique_ptr<mac_fapi_adaptor> srsran::build_mac_fapi_adaptor(unsigned       
                                                                  fapi::slot_last_message_notifier& last_msg_notifier)
 {
   std::unique_ptr<mac_fapi_adaptor_factory> adaptor_factory = create_mac_fapi_adaptor_factory();
-  report_fatal_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
+  report_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
 
   mac_fapi_adaptor_factory_config mac_fapi_config(sector_id, scs, gateway, last_msg_notifier);
   return adaptor_factory->create(mac_fapi_config);

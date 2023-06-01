@@ -102,6 +102,47 @@ cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setu
   return response;
 }
 
+void process_successful_pdu_resource_setup_mod_outcome(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
+                                    pdu_session_resource_setup_list,
+    const pdu_session_setup_result& result)
+{
+  e1ap_pdu_session_resource_setup_modification_item res_setup_item;
+  res_setup_item.pdu_session_id    = result.pdu_session_id;
+  res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
+  for (const auto& drb_setup_item : result.drb_setup_results) {
+    if (drb_setup_item.success) {
+      e1ap_drb_setup_item_ng_ran res_drb_setup_item;
+      res_drb_setup_item.drb_id = drb_setup_item.drb_id;
+
+      e1ap_up_params_item up_param_item;
+      up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
+      res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
+
+      for (const auto& flow_item : drb_setup_item.qos_flow_results) {
+        if (flow_item.success) {
+          e1ap_qos_flow_item res_flow_setup_item;
+          res_flow_setup_item.qos_flow_id = flow_item.qos_flow_id;
+          res_drb_setup_item.flow_setup_list.emplace(flow_item.qos_flow_id, res_flow_setup_item);
+        } else {
+          e1ap_qos_flow_failed_item res_flow_failed_item;
+          res_flow_failed_item.qos_flow_id = flow_item.qos_flow_id;
+          res_flow_failed_item.cause       = flow_item.cause;
+          res_drb_setup_item.flow_failed_list.emplace(flow_item.qos_flow_id, res_flow_failed_item);
+        }
+      }
+      res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, res_drb_setup_item);
+    } else {
+      e1ap_drb_failed_item_ng_ran asn1_drb_failed_item;
+      asn1_drb_failed_item.drb_id = drb_setup_item.drb_id;
+      asn1_drb_failed_item.cause  = drb_setup_item.cause;
+
+      res_setup_item.drb_failed_list_ng_ran.emplace(drb_setup_item.drb_id, asn1_drb_failed_item);
+    }
+  }
+  pdu_session_resource_setup_list.emplace(result.pdu_session_id, res_setup_item);
+}
+
 e1ap_bearer_context_setup_response
 cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg)
 {
@@ -123,43 +164,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   // 2. Handle bearer context setup request
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
     pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session);
-
     if (result.success) {
-      e1ap_pdu_session_resource_setup_modification_item res_setup_item;
-      res_setup_item.pdu_session_id    = result.pdu_session_id;
-      res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
-      for (const auto& drb_setup_item : result.drb_setup_results) {
-        if (drb_setup_item.success) {
-          e1ap_drb_setup_item_ng_ran res_drb_setup_item;
-          res_drb_setup_item.drb_id = drb_setup_item.drb_id;
-
-          e1ap_up_params_item up_param_item;
-          up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
-          res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
-
-          for (const auto& flow_item : drb_setup_item.qos_flow_results) {
-            if (flow_item.success) {
-              e1ap_qos_flow_item res_flow_setup_item;
-              res_flow_setup_item.qos_flow_id = flow_item.qos_flow_id;
-              res_drb_setup_item.flow_setup_list.emplace(flow_item.qos_flow_id, res_flow_setup_item);
-            } else {
-              e1ap_qos_flow_failed_item res_flow_failed_item;
-              res_flow_failed_item.qos_flow_id = flow_item.qos_flow_id;
-              res_flow_failed_item.cause       = flow_item.cause;
-              res_drb_setup_item.flow_failed_list.emplace(flow_item.qos_flow_id, res_flow_failed_item);
-            }
-          }
-          res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, res_drb_setup_item);
-        } else {
-          e1ap_drb_failed_item_ng_ran asn1_drb_failed_item;
-          asn1_drb_failed_item.drb_id = drb_setup_item.drb_id;
-          asn1_drb_failed_item.cause  = drb_setup_item.cause;
-
-          res_setup_item.drb_failed_list_ng_ran.emplace(drb_setup_item.drb_id, asn1_drb_failed_item);
-        }
-      }
-
-      response.pdu_session_resource_setup_list.emplace(result.pdu_session_id, res_setup_item);
+      process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
     } else {
       e1ap_pdu_session_resource_failed_item res_failed_item;
 
@@ -195,8 +201,11 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
-      logger.warning("Setup/Modification of PDU session id {} not supported", pdu_session_item.pdu_session_id);
-      // TODO: add handling
+      logger.debug("Setup/Modification of PDU session id {}", pdu_session_item.pdu_session_id);
+      pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session_item);
+      if (result.success) {
+        process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
+      }
     }
 
     // Traverse list of PDU sessions to be modified.
@@ -211,6 +220,8 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
       logger.info("Removing PDU session id {}", pdu_session_item);
       ue_ctxt->remove_pdu_session(pdu_session_item);
     }
+  } else {
+    logger.warning("Ignoring empty Bearer Context Modification Request.");
   }
 
   // 3. Create response

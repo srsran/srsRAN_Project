@@ -45,8 +45,9 @@ struct f1ap_ul_rrc_message {
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t  ue_index = ue_index_t::invalid;
-  srb_id_t    srb_id   = srb_id_t::nulltype;
+  ue_index_t  ue_index     = ue_index_t::invalid;
+  ue_index_t  old_ue_index = ue_index_t::invalid;
+  srb_id_t    srb_id       = srb_id_t::nulltype;
   byte_buffer rrc_container;
 };
 
@@ -60,16 +61,6 @@ public:
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
 };
 
-struct f1_setup_response_message {
-  asn1::f1ap::f1_setup_resp_s response;
-  asn1::f1ap::f1_setup_fail_s failure;
-  bool                        success = false;
-};
-
-struct f1_setup_request_message {
-  asn1::f1ap::f1_setup_request_s request;
-};
-
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -77,9 +68,9 @@ public:
   virtual ~f1ap_connection_manager() = default;
 
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
-  /// \param[in] msg The f1_setup_response_message to transmit.
+  /// \param[in] msg The common type F1 Setup Response Message to transmit.
   /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1_setup_response(const f1_setup_response_message& msg) = 0;
+  virtual void handle_f1_setup_response(const cu_cp_f1_setup_response& msg) = 0;
 };
 
 struct f1ap_ue_context_release_command {
@@ -170,12 +161,15 @@ public:
 
   /// \brief Notifies about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
+  virtual void on_f1_setup_request_received(const cu_cp_f1_setup_request& msg) = 0;
 
   /// \brief Notifies the DU processor to create a UE.
   /// \param[in] msg The received initial UL RRC message transfer message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
+
+  /// \brief Indicates the reception of a UE Context Release Request (gNB-DU initiated) as per TS 38.473 section 8.3.2.
+  virtual void on_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& req) = 0;
 
   /// \brief Get the DU index.
   /// \return The DU index.
@@ -187,6 +181,7 @@ class f1ap_du_management_notifier
 {
 public:
   virtual ~f1ap_du_management_notifier() = default;
+
   /// \brief Notifies about a successful F1 Removal procedure.
   /// The corresponding DU processor will be removed now.
   /// \param[in] du_index The index of the DU processor to delete.

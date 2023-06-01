@@ -43,6 +43,9 @@ set(SOURCES
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         support/mcs_calculator.cpp
+        support/rb_helper.cpp
+        support/dci_builder.cpp
+        support/sch_pdu_builder.cpp
         cell_scheduler.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp)

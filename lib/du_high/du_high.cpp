@@ -31,23 +31,20 @@
 using namespace srsran;
 using namespace srs_du;
 
-void assert_du_high_configuration_valid(const du_high_configuration& cfg)
-{
-  srsran_assert(cfg.du_mng_executor != nullptr, "Invalid DU manager executor");
-  srsran_assert(cfg.cell_executors != nullptr, "Invalid CELL executor mapper");
-  srsran_assert(cfg.ue_executors != nullptr, "Invalid UE executor mapper");
-}
-
 /// Cell slot handler that additionally increments the DU high timers.
 class du_high_slot_handler final : public mac_cell_slot_handler
 {
 public:
-  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
+  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_, task_executor& tick_exec_) :
+    timers(timers_), mac(mac_), tick_exec(tick_exec_)
+  {
+  }
   void handle_slot_indication(slot_point sl_tx) override
   {
     // Step timers by one millisecond.
     if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
-      timers.tick();
+      // The timer tick is handled in a separate execution context.
+      tick_exec.execute([this]() { timers.tick(); });
     }
 
     // Handle slot indication in MAC & Scheduler.
@@ -57,6 +54,7 @@ public:
 private:
   timer_manager& timers;
   mac_interface& mac;
+  task_executor& tick_exec;
 };
 
 class scheduler_ue_metrics_null_notifier final : public scheduler_ue_metrics_notifier
@@ -71,33 +69,35 @@ public:
 du_high::du_high(const du_high_configuration& config_) :
   cfg(config_),
   timers(*config_.timers),
-  f1ap_du_cfg_handler(timer_factory{*config_.timers, *config_.du_mng_executor}),
+  f1ap_du_cfg_handler(timer_factory{*config_.timers, config_.exec_mapper->du_control_executor()}),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
-  assert_du_high_configuration_valid(cfg);
-
   // Create layers
-  mac = create_mac(mac_config{*cfg.pcap,
-                              mac_ev_notifier,
-                              *cfg.ue_executors,
-                              *cfg.cell_executors,
-                              *cfg.du_mng_executor,
+  mac = create_mac(mac_config{mac_ev_notifier,
+                              cfg.exec_mapper->ue_mapper(),
+                              cfg.exec_mapper->cell_mapper(),
+                              cfg.exec_mapper->du_control_executor(),
                               *cfg.phy_adapter,
+                              cfg.mac_cfg,
+                              *cfg.pcap,
                               cfg.sched_cfg,
                               cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
   if (cfg.test_cfg.test_ue.has_value()) {
     mac = std::make_unique<mac_test_mode_adapter>(std::move(mac), *cfg.test_cfg.test_ue);
   }
 
-  f1ap = create_f1ap(
-      *cfg.f1ap_notifier, f1ap_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors, f1ap_paging_notifier);
-  du_manager =
-      create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells, cfg.qos},
-                                          {timers, *cfg.du_mng_executor, *cfg.ue_executors, *cfg.cell_executors},
-                                          {*f1ap, *f1ap},
-                                          {*config_.f1u_gw},
-                                          {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
-                                          {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
+  f1ap       = create_f1ap(*cfg.f1ap_notifier,
+                     f1ap_du_cfg_handler,
+                     cfg.exec_mapper->du_control_executor(),
+                     cfg.exec_mapper->ue_mapper(),
+                     f1ap_paging_notifier);
+  du_manager = create_du_manager(du_manager_params{
+      {"srsgnb", 1, 1, cfg.cells, cfg.qos},
+      {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
+      {*f1ap, *f1ap},
+      {*config_.f1u_gw},
+      {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
+      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
   mac_ev_notifier.connect(*du_manager);
@@ -105,7 +105,7 @@ du_high::du_high(const du_high_configuration& config_) :
   f1ap_paging_notifier.connect(mac->get_cell_paging_info_handler());
 
   // Cell slot handler.
-  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);
+  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, cfg.exec_mapper->du_timer_executor());
 
   // If test mode is enabled.
   if (cfg.test_cfg.test_ue.has_value()) {

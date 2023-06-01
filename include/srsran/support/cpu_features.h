@@ -39,6 +39,12 @@ enum class cpu_feature {
   avx512f,
   /// CPU supports AVX512BW instruction set.
   avx512bw,
+  /// CPU supports AVX512VL instruction set.
+  avx512vl,
+  /// CPU supports AVX512DQ instruction set.
+  avx512dq,
+  /// CPU supports AVX512CD instruction set.
+  avx512cd,
   /// CPU supports carry-less multiplication instruction PCLMUL.
   pclmul,
   /// CPU supports SSE 4.1.
@@ -64,6 +70,12 @@ constexpr const char* to_string(cpu_feature feature)
       return "avx512f";
     case cpu_feature::avx512bw:
       return "avx512bw";
+    case cpu_feature::avx512vl:
+      return "avx512vl";
+    case cpu_feature::avx512dq:
+      return "avx512dq";
+    case cpu_feature::avx512cd:
+      return "avx512cd";
     case cpu_feature::pclmul:
       return "pclmul";
     case cpu_feature::sse4_1:
@@ -95,6 +107,12 @@ inline bool cpu_supports_feature(cpu_feature feature)
       return __builtin_cpu_supports("avx512f");
     case cpu_feature::avx512bw:
       return __builtin_cpu_supports("avx512bw");
+    case cpu_feature::avx512vl:
+      return __builtin_cpu_supports("avx512vl");
+    case cpu_feature::avx512dq:
+      return __builtin_cpu_supports("avx512dq");
+    case cpu_feature::avx512cd:
+      return __builtin_cpu_supports("avx512cd");
     case cpu_feature::pclmul:
       return __builtin_cpu_supports("pclmul");
     case cpu_feature::sse4_1:

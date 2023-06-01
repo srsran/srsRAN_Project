@@ -2,7 +2,6 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
@@ -16,15 +15,13 @@ struct ul_ccch_indication_message;
 
 namespace srs_du {
 
-struct du_ue_delete_message {
-  du_ue_index_t ue_index;
-};
-
 /// Interface used to handle external events (e.g. UL CCCH).
-class du_manager_ccch_handler
+class du_manager_mac_event_handler
 {
 public:
-  virtual ~du_manager_ccch_handler()                                            = default;
+  virtual ~du_manager_mac_event_handler() = default;
+
+  /// \brief Handle UL CCCH message arrival.
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
@@ -66,9 +63,9 @@ public:
 };
 
 class du_manager_interface : public du_manager_interface_query,
-                             public du_manager_ccch_handler,
                              public du_manager_controller,
-                             public du_manager_configurator
+                             public du_manager_configurator,
+                             public du_manager_mac_event_handler
 {
 public:
   virtual ~du_manager_interface() = default;

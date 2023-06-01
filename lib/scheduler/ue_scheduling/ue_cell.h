@@ -57,7 +57,8 @@ public:
           rnti_t                            crnti_val,
           const scheduler_ue_expert_config& expert_cfg_,
           const cell_configuration&         cell_cfg_common_,
-          const serving_cell_config&        ue_serv_cell);
+          const serving_cell_config&        ue_serv_cell,
+          ue_harq_timeout_notifier          harq_timeout_notifier);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -75,21 +76,24 @@ public:
 
   unsigned get_latest_wb_cqi() const { return ue_metrics.latest_wb_cqi; }
 
-  void set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
+  void set_latest_wb_cqi(unsigned wb_cqi);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
-  grant_prbs_mcs required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
+  grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                  unsigned                                     pending_bytes) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
-  grant_prbs_mcs required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const;
+  grant_prbs_mcs required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                  unsigned                                     pending_bytes,
+                                  dci_ul_rnti_config_type                      type) const;
 
-  /// \brief Derive UL resource allocation type1 BWP configuration as per TS38.214, 6.1.2.2.2.
-  bwp_configuration alloc_type1_bwp_limits(dci_ul_format dci_fmt, search_space_configuration::type_t ss_type) const
+  uint8_t get_pdsch_rv(const dl_harq_process& h_dl) const
   {
-    return get_resource_alloc_type_1_ul_bwp_size(dci_fmt,
-                                                 ue_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
-                                                 ue_cfg.ul_bwp_common(active_bwp_id()).generic_params,
-                                                 ss_type);
+    return expert_cfg.pdsch_rv_sequence[h_dl.tb(0).nof_retxs % expert_cfg.pdsch_rv_sequence.size()];
+  }
+  uint8_t get_pusch_rv(const ul_harq_process& h_ul) const
+  {
+    return expert_cfg.pusch_rv_sequence[h_ul.tb().nof_retxs % expert_cfg.pusch_rv_sequence.size()];
   }
 
   /// \brief Handle CRC PDU indication.

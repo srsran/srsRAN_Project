@@ -52,7 +52,6 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
@@ -103,7 +102,6 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and unsuccessful retry

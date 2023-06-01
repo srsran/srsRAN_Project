@@ -65,6 +65,14 @@ void radio_zmq_rx_stream::stop()
   }
 }
 
+void radio_zmq_rx_stream::start(baseband_gateway_timestamp init_time)
+{
+  sample_count = init_time;
+  for (auto& channel : channels) {
+    channel->start();
+  }
+}
+
 void radio_zmq_rx_stream::wait_stop()
 {
   for (auto& channel : channels) {
@@ -72,7 +80,7 @@ void radio_zmq_rx_stream::wait_stop()
   }
 }
 
-baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gateway_buffer& data)
+baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gateway_buffer_writer& data)
 {
   // Make sure the number of data channels is coherent with the number of the stream channels.
   report_fatal_error_if_not(data.get_nof_channels() == channels.size(),
@@ -99,9 +107,4 @@ baseband_gateway_receiver::metadata radio_zmq_rx_stream::receive(baseband_gatewa
   sample_count += data.get_nof_samples();
 
   return ret;
-}
-
-unsigned radio_zmq_rx_stream::get_buffer_size() const
-{
-  return RECEIVE_BUFFER_SIZE;
 }

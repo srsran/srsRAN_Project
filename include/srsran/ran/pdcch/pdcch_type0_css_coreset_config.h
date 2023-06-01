@@ -26,7 +26,7 @@
 
 namespace srsran {
 
-enum class min_channel_bandwidth;
+enum class nr_band;
 
 /// Refer to "SS/PBCH block and CORESET multiplexing pattern", TS 38.213, Section 13.
 enum class ssb_coreset0_mplex_pattern { mplx_pattern1 = 0, mplx_pattern2, mplx_pattern3, mplex_invalid };
@@ -54,17 +54,18 @@ static constexpr pdcch_type0_css_coreset_description PDCCH_TYPE0_CSS_CORESET_RES
 /// The CORESET configuration is retrieved as per TS38.213 Tables 13-1, 13-2, 13-3, 13-4, 13-5, 13-6, 13-7, 13-8, 13-9
 /// and 13-10 depending on the subcarrier combination of the SS/PBCH block and PDCCH, and the minimum channel bandwidth.
 ///
-/// \param[in] minimum_bandwidth_MHz \brief Band minimum bandwidth in MHz as per TS38.104 Table 5.3.5-1 for FR 1
-///                                       and Table 5.3.5-2 for FR2.
-/// \param[in] ssb_scs                    SS/PBCH block subcarrier spacing.
-/// \param[in] pdcch_scs                  PDCCH subcarrier spacing.
-/// \param[in] coreset_zero_index         Parameter \c controlResourceSetZero as per TS38.331 PDCCH-ConfigSIB1.
-/// \param[in] subcarrier_offset          Offset between the CRB and the beginning of the SS/PBCH block.
+/// \param[in] band                    Band minimum bandwidth in MHz as per TS38.104 Table 5.3.5-1 for FR 1
+///                                    and Table 5.3.5-2 for FR2. This is ignored in case the band is restricted to
+///                                    operation with shared spectrum channel access.
+/// \param[in] ssb_scs                 SS/PBCH block subcarrier spacing.
+/// \param[in] pdcch_scs               PDCCH subcarrier spacing.
+/// \param[in] coreset_zero_index      Parameter \c controlResourceSetZero as per TS38.331 PDCCH-ConfigSIB1.
+/// \param[in] subcarrier_offset       Offset between the CRB and the beginning of the SS/PBCH block.
 /// \return A valid CORESET description if \c config is valid. Otherwise, \c PDCCH_TYPE0_CSS_CORESET_RESERVED.
-pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(min_channel_bandwidth minimum_bandwidth_MHz,
-                                                                subcarrier_spacing    ssb_scs,
-                                                                subcarrier_spacing    pdcch_scs,
-                                                                uint8_t               coreset_zero_index,
-                                                                uint8_t               subcarrier_offset);
+pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(nr_band            band,
+                                                                subcarrier_spacing ssb_scs,
+                                                                subcarrier_spacing pdcch_scs,
+                                                                uint8_t            coreset_zero_index,
+                                                                uint8_t            subcarrier_offset);
 
 } // namespace srsran

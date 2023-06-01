@@ -54,27 +54,31 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
   ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
-void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
+void f1ap_cu_impl::handle_f1_setup_response(const cu_cp_f1_setup_response& msg)
 {
   // Pack message into PDU
   f1ap_message f1ap_msg;
   if (msg.success) {
-    logger.debug("Sending F1SetupResponse");
-
     f1ap_msg.pdu.set_successful_outcome();
     f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
+    fill_asn1_f1_setup_response(f1ap_msg.pdu.successful_outcome().value.f1_setup_resp(), msg);
 
     // set values handled by F1
     f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = current_transaction_id;
 
     // send response
+    logger.debug("Sending F1SetupResponse");
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      f1ap_msg.pdu.to_json(js);
+      logger.debug("Containerized F1SetupResponse: {}", js.to_string());
+    }
     pdu_notifier.on_new_message(f1ap_msg);
   } else {
     logger.debug("Sending F1SetupFailure");
     f1ap_msg.pdu.set_unsuccessful_outcome();
     f1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
+    fill_asn1_f1_setup_failure(f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail(), msg);
     auto& setup_fail = f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
 
     // set values handled by F1
@@ -101,20 +105,28 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->srb_id.value                     = (uint8_t)msg.srb_id;
   dlrrc_msg->rrc_container.value              = msg.rrc_container.copy();
 
-  logger.debug("Sending DlRrcMessageTransfer");
+  if (msg.old_ue_index != ue_index_t::invalid) {
+    f1ap_ue_context& old_ue_ctxt             = ue_ctx_list[msg.old_ue_index];
+    dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
+    dlrrc_msg->old_gnb_du_ue_f1ap_id.value   = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
+
+    // Remove old UE context from F1
+    ue_ctx_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
+  }
+
   // Pack message into PDU
   f1ap_message f1ap_dl_rrc_msg;
   f1ap_dl_rrc_msg.pdu.set_init_msg();
   f1ap_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
   f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dlrrc_msg;
 
+  // send DL RRC message
+  logger.debug("Sending DlRrcMessageTransfer");
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1ap_dl_rrc_msg.pdu.to_json(js);
     logger.debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
   }
-
-  // send DL RRC message
   pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
 
@@ -150,7 +162,6 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
 {
   asn1::f1ap::paging_s paging = {};
 
-  logger.debug("Sending Paging");
   // Pack message into PDU
   f1ap_message paging_msg;
   paging_msg.pdu.set_init_msg();
@@ -158,19 +169,24 @@ void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
 
   fill_asn1_paging_message(paging_msg.pdu.init_msg().value.paging(), msg);
 
+  // send DL RRC message
+  logger.debug("Sending Paging");
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     paging_msg.pdu.to_json(js);
     logger.debug("Containerized Paging: {}", js.to_string());
   }
-
-  // send DL RRC message
   pdu_notifier.on_new_message(paging_msg);
 }
 
 void f1ap_cu_impl::handle_message(const f1ap_message& msg)
 {
   logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Containerized PDU: {}", js.to_string());
+  }
 
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
@@ -202,10 +218,7 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request: {
-      f1_setup_request_message req_msg = {};
-      req_msg.request                  = msg.value.f1_setup_request();
-      current_transaction_id           = msg.value.f1_setup_request()->transaction_id.value;
-      du_processor_notifier.on_f1_setup_request_received(req_msg);
+      handle_f1_setup_request(msg.value.f1_setup_request());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
       handle_initial_ul_rrc_message(msg.value.init_ul_rrc_msg_transfer());
@@ -216,9 +229,22 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
       handle_f1_removal_request(msg.value.f1_removal_request());
     } break;
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ue_context_release_request: {
+      handle_ue_context_release_request(msg.value.ue_context_release_request());
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
+}
+
+void f1ap_cu_impl::handle_f1_setup_request(const f1_setup_request_s& request)
+{
+  current_transaction_id = request->transaction_id.value;
+
+  cu_cp_f1_setup_request req_msg = {};
+  fill_f1_setup_request(req_msg, request);
+
+  du_processor_notifier.on_f1_setup_request_received(req_msg);
 }
 
 void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_s& msg)
@@ -327,4 +353,23 @@ void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_reques
 {
   du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
+}
+
+void f1ap_cu_impl::handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg)
+{
+  f1ap_ue_context& ue_ctxt = ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value)];
+
+  if (ue_ctxt.marked_for_release) {
+    // UE context is already being released. Ignore the request.
+    logger.info(
+        "ue={}: UE Context Release Request ignored. Cause: An UE Context Release procedure has already started.",
+        ue_ctxt.ue_index);
+    return;
+  }
+
+  f1ap_ue_context_release_request req;
+  req.ue_index = ue_ctxt.ue_index;
+  req.cause    = f1ap_cause_to_cause(msg->cause.value);
+
+  du_processor_notifier.on_du_initiated_ue_context_release_request(req);
 }

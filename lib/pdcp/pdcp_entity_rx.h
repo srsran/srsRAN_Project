@@ -50,13 +50,13 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
-/// Base class used for receiving RLC bearers.
-/// It provides interfaces for the RLC bearers, for the lower layers
-class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
-                       public pdcp_rx_status_provider,
-                       public pdcp_rx_lower_interface,
-                       public pdcp_rx_upper_control_interface,
-                       public pdcp_rx_metrics
+/// Base class used for receiving PDCP bearers.
+/// It provides interfaces for the PDCP bearers, for the higher and lower layers
+class pdcp_entity_rx final : public pdcp_entity_tx_rx_base,
+                             public pdcp_rx_status_provider,
+                             public pdcp_rx_lower_interface,
+                             public pdcp_rx_upper_control_interface,
+                             public pdcp_rx_metrics
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
@@ -66,17 +66,20 @@ public:
                  pdcp_rx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers);
 
+  void handle_pdu(byte_buffer_slice_chain buf) override;
+
+  /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
+  void reestablish(security::sec_128_as_config sec_cfg_) override;
+
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
-
-  void handle_pdu(byte_buffer_slice_chain buf) final;
 
   /// \brief Compiles a PDCP status report
   ///
   /// Ref: TS 38.323, Sec. 5.4.1, Sec. 6.2.3.1 and Sec. 6.3.{9,10}
   ///
   /// \return Control PDU for PDCP status report as a byte_buffer
-  byte_buffer compile_status_report() final;
+  byte_buffer compile_status_report() override;
 
   /*
    * Header helpers
@@ -95,24 +98,32 @@ public:
    */
   void enable_security(security::sec_128_as_config sec_cfg_) final
   {
+    srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
+                      (is_drb() && sec_cfg_.domain == security::sec_domain::up),
+                  "Invalid sec_domain={} for {} in {}",
+                  sec_cfg.domain,
+                  rb_type,
+                  rb_id);
     integrity_enabled = security::integrity_enabled::on;
     ciphering_enabled = security::ciphering_enabled::on;
     sec_cfg           = sec_cfg_;
-    logger.log_info("Security configured. NIA{} ({}) NEA{} ({})",
+    logger.log_info("Security configured. NIA{} ({}) NEA{} ({}) domain={}",
                     sec_cfg.integ_algo,
                     integrity_enabled,
                     sec_cfg.cipher_algo,
-                    ciphering_enabled);
-    logger.log_debug(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
-    logger.log_debug(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
-    logger.log_debug(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
-    logger.log_debug(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
+                    ciphering_enabled,
+                    sec_cfg.domain);
+    logger.log_debug(sec_cfg.k_128_int.data(), 16, "128 K_int");
+    logger.log_debug(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   }
 
   /*
    * Testing Helpers
    */
-  void set_state(pdcp_rx_state st_) { st = st_; }
+  void                        set_state(pdcp_rx_state st_) { st = st_; }
+  pdcp_rx_state               get_state() { return st; }
+  security::sec_128_as_config get_sec_config() { return sec_cfg; }
+  bool                        is_reordering_timer_running() { return reordering_timer.is_running(); }
 
 private:
   pdcp_bearer_logger   logger;
@@ -142,6 +153,8 @@ private:
   void handle_control_pdu(byte_buffer_slice_chain buf);
 
   void deliver_all_consecutive_counts();
+  void deliver_all_sdus();
+  void discard_all_sdus();
 
   bool        integrity_verify(byte_buffer_view buf, uint32_t count, const security::sec_mac& mac);
   byte_buffer cipher_decrypt(byte_buffer_slice_chain::const_iterator msg_begin,

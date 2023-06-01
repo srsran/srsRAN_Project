@@ -29,7 +29,7 @@ mac_ul_ue_manager::mac_ul_ue_manager(du_rnti_table& rnti_table_) :
 {
 }
 
-bool mac_ul_ue_manager::add_ue(const mac_ue_create_request_message& request)
+bool mac_ul_ue_manager::add_ue(const mac_ue_create_request& request)
 {
   srsran_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
 

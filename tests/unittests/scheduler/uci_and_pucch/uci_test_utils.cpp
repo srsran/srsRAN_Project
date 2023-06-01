@@ -160,7 +160,7 @@ test_bench::test_bench(const test_bench_params& params) :
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, harq_timeout_handler));
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
   slot_indication(sl_tx);
@@ -194,7 +194,7 @@ void test_bench::add_ue()
   }
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
-  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req, harq_timeout_handler));
   last_allocated_rnti = ue_req.crnti;
 }
 
@@ -204,4 +204,12 @@ void test_bench::slot_indication(slot_point slot_tx)
   mac_logger.set_context(slot_tx.sfn(), slot_tx.slot_index());
   test_logger.set_context(slot_tx.sfn(), slot_tx.slot_index());
   res_grid.slot_indication(slot_tx);
+}
+
+void test_bench::fill_all_grid(slot_point slot_tx)
+{
+  cell_slot_resource_allocator& pucch_slot_alloc = res_grid[slot_tx];
+  pucch_slot_alloc.ul_res_grid.fill(grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                               ofdm_symbol_range{0, 14},
+                                               cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs});
 }

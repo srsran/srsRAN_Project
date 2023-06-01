@@ -23,6 +23,8 @@
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_helper.h"
 #include "srsran/phy/support/mask_types.h"
+#include "srsran/phy/upper/re_pattern.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "srsran/support/math_utils.h"
 
 using namespace srsran;
@@ -47,41 +49,54 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
       sequence, *prg, M_SQRT1_2 * config.amplitude, config.reference_point_k_rb, NOF_DMRS_PER_RB, config.rb_mask);
 }
 
-void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                    grid,
-                                        span<const cf_t>                         sequence,
-                                        const bounded_bitset<MAX_RB * NRE>&      rg_subc_mask,
-                                        unsigned                                 symbol,
-                                        const static_vector<uint8_t, MAX_PORTS>& ports)
-{
-  // Put signal for each port.
-  for (unsigned port_idx : ports) {
-    grid.put(port_idx, symbol, 0, rg_subc_mask, sequence);
-  }
-}
-
-void dmrs_pdcch_processor_impl::map(srsran::resource_grid_writer&                 grid,
-                                    const srsran::dmrs_pdcch_processor::config_t& config)
+void dmrs_pdcch_processor_impl::mapping(resource_grid_mapper&   mapper,
+                                        const re_buffer_reader& d_pdcch,
+                                        const config_t&         config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {false, true, false, false, false, true, false, false, false, true, false, false};
 
-  // Count number of DMRS.
-  unsigned count_dmrs = config.rb_mask.count() * NOF_DMRS_PER_RB;
+  // Create PDCCH mapping pattern.
+  re_pattern pattern;
+  pattern.prb_mask = config.rb_mask;
+  pattern.symbols.fill(config.start_symbol_index, config.start_symbol_index + config.duration);
+  pattern.re_mask = re_mask;
 
-  // Create RG OFDM symbol mask. Identical for all OFDM symbols.
-  bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);
+  // Actual mapping.
+  mapper.map(d_pdcch, pattern, config.precoding);
+}
+
+void dmrs_pdcch_processor_impl::map(resource_grid_mapper& mapper, const dmrs_pdcch_processor::config_t& config)
+{
+  srsran_assert(config.precoding.get_nof_layers() == 1,
+                "Number of layers (i.e., {}) must be one.",
+                config.precoding.get_nof_layers());
+  srsran_assert(config.precoding.get_nof_ports() >= 1,
+                "Number of ports (i.e., {}) must be equal to or greater than one.",
+                config.precoding.get_nof_ports());
+  srsran_assert(config.precoding.get_nof_prg() >= 1,
+                "Number of PRG (i.e., {}) must be equal to or greater than one.",
+                config.precoding.get_nof_prg());
+
+  // Number of DM-RS per symbol.
+  unsigned nof_dmrs_symbol = config.rb_mask.count() * NOF_DMRS_PER_RB;
+
+  // Storage of modulated PDCCH data.
+  static_re_buffer<1, MAX_NOF_DMRS> d_pdcch(1, config.duration * nof_dmrs_symbol);
 
   // Generate and map for each symbol of the PDCCH transmission.
-  for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.duration;
+  for (unsigned i_symbol     = config.start_symbol_index,
+                i_symbol_end = config.start_symbol_index + config.duration,
+                i_re         = 0;
        i_symbol != i_symbol_end;
-       ++i_symbol) {
-    // Temporal allocation of the sequence.
-    span<cf_t> sequence = span<cf_t>(temp_sequence).first(count_dmrs);
+       ++i_symbol, i_re += nof_dmrs_symbol) {
+    // Get view for the current symbol.
+    span<cf_t> sequence = d_pdcch.get_slice(0).subspan(i_re, nof_dmrs_symbol);
 
     // Generate sequence.
     sequence_generation(sequence, i_symbol, config);
-
-    // Map sequence in symbols.
-    mapping(grid, sequence, rg_subc_mask, i_symbol, config.ports);
   }
+
+  // Map sequence.
+  mapping(mapper, d_pdcch, config);
 }

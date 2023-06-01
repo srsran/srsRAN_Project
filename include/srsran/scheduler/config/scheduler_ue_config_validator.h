@@ -22,12 +22,14 @@
 
 #pragma once
 
-#include "../../../../lib/scheduler/cell/cell_configuration.h"
 #include "srsran/adt/expected.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
+
+class cell_configuration;
+
 namespace config_validators {
 
 /// \brief Validates \c sched_ue_creation_request_message used to create a UE.

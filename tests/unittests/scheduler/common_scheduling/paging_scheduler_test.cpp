@@ -28,6 +28,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pcch/pcch_configuration.h"
 #include <gtest/gtest.h>
 #include <random>
 #include <unordered_map>
@@ -218,9 +219,21 @@ protected:
 
 TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 {
+  const std::vector<srsran::pcch_config::nof_po_per_pf> possible_ns_values = {srsran::pcch_config::nof_po_per_pf::one,
+                                                                              srsran::pcch_config::nof_po_per_pf::two,
+                                                                              srsran::pcch_config::nof_po_per_pf::four};
+  const std::vector<srsran::pcch_config::nof_pf_per_drx_cycle> possible_nof_pf_per_drx_values = {
+      srsran::pcch_config::nof_pf_per_drx_cycle::oneT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::halfT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::quarterT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::oneEighthT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::oneSixteethT};
+
   auto cell_cfg_request = create_custom_cell_config_request();
   // Modify to have more than one Paging occasion per PF.
-  cell_cfg_request.dl_cfg_common.pcch_cfg.ns = srsran::pcch_config::nof_po_per_pf::four;
+  cell_cfg_request.dl_cfg_common.pcch_cfg.ns = possible_ns_values[get_random_uint(0, possible_ns_values.size() - 1)];
+  cell_cfg_request.dl_cfg_common.pcch_cfg.nof_pf =
+      possible_nof_pf_per_drx_values[get_random_uint(0, possible_nof_pf_per_drx_values.size() - 1)];
   // >> PDCCH-Config.
   cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.emplace();
   // >> Add CORESET#1.
@@ -255,12 +268,18 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 
 TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0)
 {
+  const std::vector<srsran::pcch_config::nof_pf_per_drx_cycle> possible_nof_pf_per_drx_values = {
+      srsran::pcch_config::nof_pf_per_drx_cycle::halfT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::quarterT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::oneEighthT,
+      srsran::pcch_config::nof_pf_per_drx_cycle::oneSixteethT};
   auto sched_cell_cfg = create_custom_cell_config_request();
   // In default config Paging Search Space is set to 1. Therefore, modify it to be equal to 0 for this test case.
   sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(0);
   // Since we support CORESET multiplexing pattern 1. The value of N (Number of Paging Frames per DRX Cycle) can be 2,
   // 4, 8, 16).
-  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsran::pcch_config::nof_pf_per_drx_cycle::halfT;
+  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf =
+      possible_nof_pf_per_drx_values[get_random_uint(0, possible_nof_pf_per_drx_values.size() - 1)];
 
   setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries), sched_cell_cfg);
 

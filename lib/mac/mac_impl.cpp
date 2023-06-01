@@ -26,17 +26,24 @@
 
 namespace srsran {
 
-mac_impl::mac_impl(const mac_config& mac_cfg) :
-  cfg(mac_cfg.ul_ccch_notifier,
-      mac_cfg.ul_exec_mapper,
-      mac_cfg.dl_exec_mapper,
-      mac_cfg.ctrl_exec,
-      mac_cfg.phy_notifier,
-      mac_cfg.pcap),
+mac_impl::mac_impl(const mac_config& params) :
+  cfg(params.ul_ccch_notifier,
+      params.ue_exec_mapper,
+      params.cell_exec_mapper,
+      params.ctrl_exec,
+      params.phy_notifier,
+      params.pcap),
   sched_cfg_adapter(cfg),
   sched_obj(create_scheduler(
-      scheduler_config{mac_cfg.sched_cfg, sched_cfg_adapter.get_sched_notifier(), mac_cfg.metric_notifier})),
-  dl_unit(cfg, *sched_obj, rnti_table),
+      scheduler_config{params.sched_cfg, sched_cfg_adapter.get_sched_notifier(), params.metric_notifier})),
+  dl_unit(mac_dl_config{cfg.ue_exec_mapper,
+                        cfg.cell_exec_mapper,
+                        cfg.ctrl_exec,
+                        cfg.phy_notifier,
+                        params.mac_cfg,
+                        params.pcap},
+          *sched_obj,
+          rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),
   rach_hdl(*sched_obj, rnti_table),
   ctrl_unit(cfg, ul_unit, dl_unit, rach_hdl, rnti_table, sched_cfg_adapter)

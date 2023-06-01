@@ -50,8 +50,3 @@ target_link_libraries(e2ap_asn1 asn1_utils)
 add_library(ngap_asn1 STATIC ngap/common.cpp ngap/ngap_ies.cpp ngap/ngap_pdu_contents.cpp ngap/ngap.cpp)
 target_compile_options(ngap_asn1 PRIVATE "-Os")
 target_link_libraries(ngap_asn1 asn1_utils)
-
-# RRC NR ASN1 helpers
-add_library(rrc_nr_asn1_helpers STATIC rrc_nr/tdd_cfg_helper.cpp)
-target_compile_options(rrc_nr_asn1_helpers PRIVATE "-Os")
-target_link_libraries(rrc_nr_asn1_helpers rrc_nr_asn1 asn1_utils)

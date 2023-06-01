@@ -131,7 +131,7 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "t-Reordering expiration metrics test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::ms10);
+    init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);
 

@@ -37,10 +37,7 @@ public:
   };
 
   // See interface for documentation.
-  unsigned get_buffer_size() const override { return buffer_size; }
-
-  // See interface for documentation.
-  void transmit(baseband_gateway_buffer& data, const baseband_gateway_transmitter::metadata& md) override
+  void transmit(const baseband_gateway_buffer_reader& data, const baseband_gateway_transmitter::metadata& md) override
   {
     entries.emplace_back();
     entry_t& entry  = entries.back();
@@ -51,8 +48,6 @@ public:
 
   void set_stream_id(unsigned stream_id_) { stream_id = stream_id_; }
 
-  void set_buffer_size(unsigned buffer_size_) { buffer_size = buffer_size_; }
-
   /// Gets all transmit entries.
   const std::vector<entry_t>& get_entries() const { return entries; }
 
@@ -60,8 +55,7 @@ public:
   void clear() { entries.clear(); }
 
 private:
-  unsigned             buffer_size = 0;
-  unsigned             stream_id   = UINT32_MAX;
+  unsigned             stream_id = UINT32_MAX;
   std::vector<entry_t> entries;
 };
 

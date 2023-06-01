@@ -64,6 +64,20 @@ public:
   /// \brief Notifies the NGAP to initiate a NG Setup Procedure.
   /// \param[in] request The NG Setup Request.
   virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
+
+  /// \brief Notify the NGAP to request a UE release e.g. due to inactivity.
+  /// \param[in] msg The UE Context Release Request.
+  virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& request) = 0;
+};
+
+/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
+class cu_cp_rrc_ue_context_trasfer_notifier
+{
+public:
+  virtual ~cu_cp_rrc_ue_context_trasfer_notifier() = default;
+
+  /// \brief Notifies the RRC UE to return the RRC Reestablishment UE context.
+  virtual rrc_reestablishment_ue_context_t on_rrc_ue_context_transfer() = 0;
 };
 
 /// Interface used to handle DU specific procedures
@@ -168,6 +182,26 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
+/// Interface for an RRC UE entity to communicate with the CU-CP.
+class cu_cp_rrc_ue_interface
+{
+public:
+  virtual ~cu_cp_rrc_ue_interface() = default;
+
+  /// \brief Handle the reception of an RRC Reestablishment Request by transfering UE Contexts at the RRC.
+  /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
+  /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  /// \returns The RRC Reestablishment UE context for the old UE.
+  virtual rrc_reestablishment_ue_context_t
+  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) = 0;
+
+  /// \brief Handle the reception of an RRC Reestablishment Complete by transfering and removing UE contexts.
+  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  /// \param[in] old_ue_index The old UE index of the UE that sent the Reestablishment Request.
+  virtual void handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+};
+
 class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_cu_up_handler,
@@ -175,7 +209,8 @@ class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_e1ap_handler,
                         public cu_cp_ng_interface,
                         public cu_cp_ngap_connection_handler,
-                        public cu_cp_ngap_paging_handler
+                        public cu_cp_ngap_paging_handler,
+                        public cu_cp_rrc_ue_interface
 {
 public:
   virtual ~cu_cp_interface() = default;
@@ -188,6 +223,7 @@ public:
   virtual cu_cp_ng_interface&            get_cu_cp_ng_interface()            = 0;
   virtual cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() = 0;
   virtual cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler()     = 0;
+  virtual cu_cp_rrc_ue_interface&        get_cu_cp_rrc_ue_interface()        = 0;
 
   virtual void start() = 0;
 };

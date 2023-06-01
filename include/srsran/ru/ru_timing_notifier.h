@@ -26,10 +26,11 @@
 
 namespace srsran {
 
-/// Radio Unit timing notifier interface.
+/// Radio Unit interface to notify timing related events.
 class ru_timing_notifier
 {
 public:
+  /// Default destructor.
   virtual ~ru_timing_notifier() = default;
 
   /// \brief Notifies a new TTI boundary event.
@@ -38,6 +39,16 @@ public:
   ///
   /// \param[in] slot Current slot.
   virtual void on_tti_boundary(slot_point slot) = 0;
+
+  /// \brief Notifies that an uplink half slot has been received and processed by the Radio Unit.
+  ///
+  /// \param[in] slot Current slot.
+  virtual void on_ul_half_slot_boundary(slot_point slot) = 0;
+
+  /// \brief Notifies that an uplink full slot has been received and processed by the Radio Unit.
+  ///
+  /// \param[in] slot Current slot.
+  virtual void on_ul_full_slot_boundary(slot_point slot) = 0;
 };
 
 } // namespace srsran

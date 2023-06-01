@@ -111,10 +111,10 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_dl_oks_and_noks)
   unsigned nof_nacks = test_rgen::uniform_int<unsigned>(1, 100);
 
   for (unsigned i = 0; i != nof_acks; ++i) {
-    metrics.handle_dl_harq_ack(test_ue_index, true);
+    metrics.handle_dl_harq_ack(test_ue_index, true, units::bytes{1});
   }
   for (unsigned i = 0; i != nof_nacks; ++i) {
-    metrics.handle_dl_harq_ack(test_ue_index, false);
+    metrics.handle_dl_harq_ack(test_ue_index, false, units::bytes{1});
   }
 
   this->get_next_metric();
@@ -140,11 +140,11 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_ul_oks_and_noks)
   crc_pdu.ue_index       = test_ue_index;
   crc_pdu.tb_crc_success = true;
   for (unsigned i = 0; i != nof_acks; ++i) {
-    metrics.handle_crc_indication(crc_pdu);
+    metrics.handle_crc_indication(crc_pdu, units::bytes{1});
   }
   crc_pdu.tb_crc_success = false;
   for (unsigned i = 0; i != nof_nacks; ++i) {
-    metrics.handle_crc_indication(crc_pdu);
+    metrics.handle_crc_indication(crc_pdu, units::bytes{1});
   }
 
   this->get_next_metric();
@@ -161,12 +161,10 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_ul_oks_and_noks)
   ASSERT_EQ(ue_metrics.ul_nof_nok, 0) << "Nof DL NOKs not reset";
 }
 
-TEST_F(scheduler_metrics_handler_tester, compute_mcs_and_brate)
+TEST_F(scheduler_metrics_handler_tester, compute_mcs)
 {
   sch_mcs_index dl_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
   sch_mcs_index ul_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
-
-  unsigned tot_dl_tbs = 0, tot_ul_tbs = 0;
 
   sched_result  res;
   dl_msg_alloc& dl_msg  = res.dl.ue_grants.emplace_back();
@@ -176,12 +174,8 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs_and_brate)
   ul_msg.pusch_cfg.rnti = to_rnti(0x4601);
 
   for (unsigned i = 0; i != report_period.count(); ++i) {
-    cw.mcs_index     = dl_mcs;
-    cw.tb_size_bytes = test_rgen::uniform_int<unsigned>(1, 1000);
-    tot_dl_tbs += cw.tb_size_bytes;
-    ul_msg.pusch_cfg.mcs_index     = ul_mcs;
-    ul_msg.pusch_cfg.tb_size_bytes = test_rgen::uniform_int<unsigned>(1, 1000);
-    tot_ul_tbs += ul_msg.pusch_cfg.tb_size_bytes;
+    cw.mcs_index               = dl_mcs;
+    ul_msg.pusch_cfg.mcs_index = ul_mcs;
     run_slot(res);
   }
 
@@ -189,14 +183,51 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs_and_brate)
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_mcs, dl_mcs);
   ASSERT_EQ(ue_metrics.ul_mcs, ul_mcs);
-  ASSERT_NEAR(ue_metrics.dl_brate_kbps, static_cast<double>(tot_dl_tbs * 8U) / report_period.count(), 0.001);
-  ASSERT_NEAR(ue_metrics.ul_brate_kbps, static_cast<double>(tot_ul_tbs * 8U) / report_period.count(), 0.001);
 
   this->get_next_metric();
   ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_mcs, 0) << "DL MCS not reset";
   ASSERT_EQ(ue_metrics.ul_mcs, 0) << "UL MCS not reset";
-  ASSERT_EQ(ue_metrics.dl_brate_kbps, 0) << "DL bit rate not reset";
-  ASSERT_EQ(ue_metrics.ul_brate_kbps, 0) << "UL bit rate not reset";
+}
+
+TEST_F(scheduler_metrics_handler_tester, compute_bitrate)
+{
+  units::bytes dl_tbs{test_rgen::uniform_int<unsigned>(1, 1000)};
+  units::bytes ul_tbs{test_rgen::uniform_int<unsigned>(1, 1000)};
+
+  // Slot with bytes ACKed.
+  metrics.handle_dl_harq_ack(test_ue_index, true, dl_tbs);
+  ul_crc_pdu_indication crc_pdu;
+  crc_pdu.rnti           = to_rnti(0x4601);
+  crc_pdu.ue_index       = test_ue_index;
+  crc_pdu.tb_crc_success = true;
+  metrics.handle_crc_indication(crc_pdu, ul_tbs);
+
+  this->get_next_metric();
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report[0];
+  ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+  ASSERT_EQ(ue_metrics.pci, pci_t{0});
+  ASSERT_EQ(ue_metrics.dl_brate_kbps, static_cast<double>(dl_tbs.value() * 8) / report_period.count());
+  ASSERT_EQ(ue_metrics.ul_brate_kbps, static_cast<double>(ul_tbs.value() * 8) / report_period.count());
+
+  // Slot with no ACKs.
+  this->get_next_metric();
+  ue_metrics = metrics_notif.last_report[0];
+  ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+  ASSERT_EQ(ue_metrics.dl_brate_kbps, 0) << "DL bitrate not reset";
+  ASSERT_EQ(ue_metrics.ul_brate_kbps, 0) << "UL bitrate not reset";
+
+  // Slot with bytes NACKed.
+  metrics.handle_dl_harq_ack(test_ue_index, false, dl_tbs);
+  crc_pdu.rnti           = to_rnti(0x4601);
+  crc_pdu.ue_index       = test_ue_index;
+  crc_pdu.tb_crc_success = false;
+  metrics.handle_crc_indication(crc_pdu, ul_tbs);
+
+  this->get_next_metric();
+  ue_metrics = metrics_notif.last_report[0];
+  ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+  ASSERT_EQ(ue_metrics.dl_brate_kbps, 0) << "NACKs should not count for bitrate";
+  ASSERT_EQ(ue_metrics.ul_brate_kbps, 0) << "NACKs should not count for bitrate";
 }

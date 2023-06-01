@@ -43,8 +43,7 @@ public:
   ///                     single bit.
   /// \param[in]  cfg     Configuration parameters.
   /// \remark The sizes of \c input and \c output determine the behavior of the rate matching algorithm.
-  virtual void
-  rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
+  virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata& cfg) = 0;
 };
 
 } // namespace srsran

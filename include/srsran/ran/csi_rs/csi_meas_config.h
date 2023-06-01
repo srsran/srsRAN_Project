@@ -336,4 +336,36 @@ struct csi_meas_config {
   bool operator!=(const csi_meas_config& rhs) const { return !(rhs == *this); }
 };
 
+/// \brief Configuration of ZP-CSI-RS-Resource as per TS38.331.
+struct zp_csi_rs_resource {
+  /// ZP CSI-RS resource configuration ID.
+  zp_csi_rs_res_id_t id;
+  /// \brief OFDM symbol and subcarrier occupancy of the ZP-CSI-RS resource within a slot.
+  csi_rs_resource_mapping res_mapping;
+  /// Periodicity and slot offset for periodic/semi-persistent ZP-CSI-RS.
+  optional<csi_resource_periodicity> period;
+  optional<unsigned>                 offset;
+
+  bool operator==(const zp_csi_rs_resource& other) const
+  {
+    return id == other.id && res_mapping == other.res_mapping && period == other.period && offset == other.offset;
+  }
+  bool operator!=(const zp_csi_rs_resource& other) const { return !(*this == other); }
+};
+
+/// \brief Configuration of ZP-CSI-RS-ResourceSet as per TS38.331.
+struct zp_csi_rs_resource_set {
+  static constexpr size_t MAX_NOF_ZP_CSI_RS_RESOURCES_PER_SET = 16;
+
+  zp_csi_rs_res_set_id_t id;
+  /// The list of ZP-CSI-RS-ResourceId identifying the ZP-CSI-RS-Resource elements belonging to this set.
+  static_vector<zp_csi_rs_res_set_id_t, MAX_NOF_ZP_CSI_RS_RESOURCES_PER_SET> zp_csi_rs_res_list;
+
+  bool operator==(const zp_csi_rs_resource_set& other) const
+  {
+    return id == other.id && zp_csi_rs_res_list == other.zp_csi_rs_res_list;
+  }
+  bool operator!=(const zp_csi_rs_resource_set& other) const { return !(*this == other); }
+};
+
 } // namespace srsran

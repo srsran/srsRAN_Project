@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "ngap_types.h"
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 
@@ -112,12 +112,25 @@ public:
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
+struct ngap_initial_context_failure_message {
+  asn1::ngap::cause_c                                                          cause;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item> pdu_session_res_failed_to_setup_items;
+  optional<asn1::ngap::crit_diagnostics_s>                                     crit_diagnostics;
+};
+
+struct ngap_initial_context_response_message {
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
+  optional<asn1::ngap::crit_diagnostics_s>                                       crit_diagnostics;
+};
+
 struct ngap_initial_ue_message {
   ue_index_t                               ue_index = ue_index_t::invalid;
   byte_buffer                              nas_pdu;
   asn1::ngap::rrc_establishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                     nr_cgi;
   uint32_t                                 tac;
+  optional<cu_cp_five_g_s_tmsi>            five_g_s_tmsi;
 };
 
 struct ngap_ul_nas_transport_message {
@@ -152,12 +165,6 @@ public:
   virtual void handle_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
 };
 
-struct ngap_pdu_session_res_item {
-  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
-  byte_buffer      pdu_session_res;
-};
-using ngap_pdu_session_res_list = std::vector<ngap_pdu_session_res_item>;
-
 /// Interface to notify about NAS PDUs and messages.
 class ngap_rrc_ue_pdu_notifier
 {
@@ -190,12 +197,19 @@ public:
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
 
+  /// \brief Notify about the reception of a new PDU Session Resource Modify Request.
+  virtual async_task<cu_cp_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) = 0;
+
   /// \brief Notify about the reception of a new PDU Session Resource Release Command.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
 
   /// \brief Notify about the reception of a new UE Context Release Command.
-  virtual void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
+  /// \param[in] command the UE Context Release Command.
+  /// \returns The UE Context Release Complete.
+  virtual cu_cp_ue_context_release_complete
+  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
 };
 
 /// Interface to control the NGAP.

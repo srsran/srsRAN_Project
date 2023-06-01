@@ -70,11 +70,11 @@ static void test_conversion_ok()
   TESTASSERT_EQ(dmrs_cfg.dmrs_ports.to_uint64(), fapi_pdu.dmrs_ports);
 
   // Frequency allocation.
-  const prb_grant& prb_cfg = pdu.pdsch_cfg.prbs;
+  const vrb_alloc& prb_cfg = pdu.pdsch_cfg.rbs;
   TESTASSERT(fapi_pdu.resource_alloc == fapi::resource_allocation_type::type_1);
   TESTASSERT(fapi_pdu.vrb_to_prb_mapping == fapi::vrb_to_prb_mapping_type::non_interleaved);
-  TESTASSERT_EQ(prb_cfg.prbs().start(), fapi_pdu.rb_start);
-  TESTASSERT_EQ(prb_cfg.prbs().length(), fapi_pdu.rb_size);
+  TESTASSERT_EQ(prb_cfg.type1().start(), fapi_pdu.rb_start);
+  TESTASSERT_EQ(prb_cfg.type1().length(), fapi_pdu.rb_size);
 
   // CSI-RS rm.
   const static_vector<uint16_t, 16>& csi_rm = fapi_pdu.pdsch_maintenance_v3.csi_for_rm;

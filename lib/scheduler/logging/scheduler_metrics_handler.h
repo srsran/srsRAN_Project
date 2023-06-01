@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../ue_scheduling/harq_process.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
@@ -30,7 +31,7 @@
 namespace srsran {
 
 ///\brief Handler of scheduler slot metrics.
-class scheduler_metrics_handler
+class scheduler_metrics_handler : public harq_timeout_handler
 {
   using msecs = std::chrono::milliseconds;
   using usecs = std::chrono::microseconds;
@@ -45,13 +46,18 @@ public:
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index);
 
-  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu);
+  /// \brief Register CRC indication.
+  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Register CSI report (CQI) metric.
   void handle_csi_report(du_ue_index_t                                                         ue_index,
                          const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi);
 
-  void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack);
+  /// \brief Register HARQ-ACK UCI indication.
+  void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
+
+  /// \brief Register HARQ timeout.
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override;
 
   /// \brief Register PUCCH SINR.
   void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);

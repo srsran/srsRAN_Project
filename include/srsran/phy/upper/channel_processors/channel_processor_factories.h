@@ -54,6 +54,7 @@ namespace srsran {
 class prach_generator_factory;
 class ulsch_demultiplex_factory;
 class uci_decoder_factory;
+class task_executor;
 
 class pbch_encoder_factory
 {
@@ -153,6 +154,15 @@ std::shared_ptr<pdsch_processor_factory>
 create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        encoder_factory,
                                   std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
                                   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory);
+
+std::shared_ptr<pdsch_processor_factory>
+create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>    segmenter_factory,
+                                             std::shared_ptr<ldpc_encoder_factory>         encoder_factory,
+                                             std::shared_ptr<ldpc_rate_matcher_factory>    rate_matcher_factory,
+                                             std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
+                                             std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory,
+                                             task_executor&                                executor,
+                                             unsigned                                      nof_concurrent_threads);
 
 class prach_detector_factory
 {

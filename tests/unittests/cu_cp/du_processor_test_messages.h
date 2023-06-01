@@ -30,10 +30,13 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
-f1_setup_request_message generate_valid_f1_setup_request();
+void generate_valid_f1_setup_request(cu_cp_f1_setup_request& f1_setup_request);
 
 /// \brief Generate a dummy F1 Setup Request base to extend.
-f1_setup_request_message generate_f1_setup_request_base();
+void generate_f1_setup_request_base(cu_cp_f1_setup_request& f1_setup_request);
+
+/// \brief Generate a dummy F1 Setup Request with unsupported number of cells.
+void generate_f1_setup_request_with_too_many_cells(cu_cp_f1_setup_request& f1_setup_request);
 
 /// \brief Generate a dummy UE Creation Message.
 /// \param[in] c_rnti The C-RNTI to use.
@@ -52,6 +55,9 @@ cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(uns
 
 /// \brief Generate a dummy PDU Session Resource Release Command.
 cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release();
+
+/// \brief Generate a dummy PDU Session Resource Modification Request.
+cu_cp_pdu_session_resource_modify_request generate_pdu_session_resource_modification();
 
 /// \brief Generate a dummy E1AP Bearer Context Setup Response.
 e1ap_bearer_context_setup_response generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,

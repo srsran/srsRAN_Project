@@ -29,12 +29,14 @@ using namespace srs_du;
 
 f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
-  f1_setup_request_message           request_msg  = {};
-  du_setup_params                    setup_params = {};
-  du_cell_config                     cell         = config_helpers::make_default_du_cell_config();
-  std::vector<const du_cell_config*> cells        = {&cell};
-  fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
-  request_msg.du_cell_index_to_nr_cgi_lookup.push_back(cell.nr_cgi);
+  f1_setup_request_message      request_msg = {};
+  du_manager_params::ran_params ran_params;
+  ran_params.gnb_du_name = "srsgnb";
+  ran_params.gnb_du_id   = 1;
+  ran_params.rrc_version = 1;
+  du_cell_config cell    = config_helpers::make_default_du_cell_config();
+  ran_params.cells       = {cell};
+  fill_f1_setup_request(request_msg, ran_params);
 
   return request_msg;
 }

@@ -52,7 +52,7 @@ void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT(disconnect_drbs());
 
   // > Remove UE from MAC.
-  CORO_AWAIT_VALUE(const mac_ue_delete_response_message mac_resp, launch_mac_ue_delete());
+  CORO_AWAIT_VALUE(const mac_ue_delete_response mac_resp, launch_mac_ue_delete());
   if (not mac_resp.result) {
     proc_logger.log_proc_failure("Failed to remove UE from MAC.");
   }
@@ -68,9 +68,9 @@ void ue_deletion_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-async_task<mac_ue_delete_response_message> ue_deletion_procedure::launch_mac_ue_delete()
+async_task<mac_ue_delete_response> ue_deletion_procedure::launch_mac_ue_delete()
 {
-  mac_ue_delete_request_message mac_msg{};
+  mac_ue_delete_request mac_msg{};
   mac_msg.ue_index   = ue->ue_index;
   mac_msg.rnti       = ue->rnti;
   mac_msg.cell_index = ue->pcell_index;
@@ -85,11 +85,15 @@ async_task<void> ue_deletion_procedure::disconnect_drbs()
 
   return dispatch_and_resume_on(
       du_params.services.ue_execs.executor(msg.ue_index), du_params.services.du_mng_exec, [this]() {
+        // > Disconnect DRBs.
         for (auto& drb_pair : ue->bearers.drbs()) {
           du_ue_drb& drb = *drb_pair.second;
+          drb.disconnect();
+        }
 
-          // > Disconnect DRBs from F1-U and remove F1-U bearer.
-          drb.disconnect_rx();
+        // > Disconnect SRBs.
+        for (du_ue_srb& srb : ue->bearers.srbs()) {
+          srb.disconnect();
         }
       });
 }

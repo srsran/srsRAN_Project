@@ -201,32 +201,45 @@ public:
   using const_iterator = const T*;
 
   dyn_array() = default;
-  explicit dyn_array(uint32_t new_size) : size_(new_size), cap_(new_size) { data_ = new T[size_]; }
-  dyn_array(const dyn_array<T>& other) : dyn_array(&other[0], other.size_) {}
-  dyn_array(const T* ptr, uint32_t nof_items)
+  explicit dyn_array(uint32_t new_size) : size_(new_size), cap_(new_size)
   {
-    size_ = nof_items;
-    cap_  = nof_items;
-    data_ = new T[cap_];
-    std::copy(ptr, ptr + size_, data_);
-  }
-  ~dyn_array()
-  {
-    if (data_ != NULL) {
-      delete[] data_;
+    if (size_ > 0) {
+      data_ = new T[size_];
     }
   }
-  uint32_t      size() const { return size_; }
-  uint32_t      capacity() const { return cap_; }
-  T&            operator[](uint32_t idx) { return data_[idx]; }
-  const T&      operator[](uint32_t idx) const { return data_[idx]; }
+  dyn_array(const dyn_array<T>& other) : dyn_array(other.data(), other.size()) {}
+  dyn_array(const T* ptr, uint32_t nof_items) : size_(nof_items), cap_(nof_items)
+  {
+    if (size_ > 0) {
+      data_ = new T[cap_];
+      std::copy(ptr, ptr + size_, data_);
+    }
+  }
+  ~dyn_array() { delete[] data_; }
+  uint32_t size() const { return size_; }
+  uint32_t capacity() const { return cap_; }
+  T&       operator[](uint32_t idx)
+  {
+    srsran_assert(idx < size(), "out-of-bounds access to dyn_array ({} >= {})", idx, size());
+    return data_[idx];
+  }
+  const T& operator[](uint32_t idx) const
+  {
+    srsran_assert(idx < size(), "out-of-bounds access to dyn_array ({} >= {})", idx, size());
+    return data_[idx];
+  }
   dyn_array<T>& operator=(const dyn_array<T>& other)
   {
     if (this == &other) {
       return *this;
     }
-    resize(other.size());
-    std::copy(&other[0], &other[size_], data_);
+    if (cap_ < other.size()) {
+      delete[] data_;
+      data_ = new T[other.size()];
+      cap_  = other.size();
+    }
+    size_ = other.size();
+    std::copy(other.data(), other.data() + other.size(), data());
     return *this;
   }
   void resize(uint32_t new_size, uint32_t new_cap = 0)
@@ -235,6 +248,9 @@ public:
       return;
     }
     if (cap_ >= new_size) {
+      if (new_size > size_) {
+        std::fill(data_ + size_, data_ + new_size, T());
+      }
       size_ = new_size;
       return;
     }
@@ -243,17 +259,14 @@ public:
     cap_        = new_size > new_cap ? new_size : new_cap;
     if (cap_ > 0) {
       data_ = new T[cap_];
-      if (old_data != NULL) {
-        srsran_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
-        std::copy(&old_data[0], &old_data[size_], data_);
+      if (old_data != nullptr) {
+        std::copy(old_data, old_data + size_, data_);
       }
     } else {
-      data_ = NULL;
+      data_ = nullptr;
     }
     size_ = new_size;
-    if (old_data != NULL) {
-      delete[] old_data;
-    }
+    delete[] old_data;
   }
   iterator erase(iterator it)
   {
@@ -277,14 +290,14 @@ public:
     data_[size() - 1] = elem;
   }
   void           clear() { resize(0); }
-  T&             back() { return data_[size() - 1]; }
-  const T&       back() const { return data_[size() - 1]; }
-  T*             data() { return &data_[0]; }
-  const T*       data() const { return &data_[0]; }
-  iterator       begin() { return &data_[0]; }
-  iterator       end() { return &data_[size()]; }
-  const_iterator begin() const { return &data_[0]; }
-  const_iterator end() const { return &data_[size()]; }
+  T&             back() { return (*this)[size() - 1]; }
+  const T&       back() const { return (*this)[size() - 1]; }
+  T*             data() { return data_; }
+  const T*       data() const { return data_; }
+  iterator       begin() { return data_; }
+  iterator       end() { return data_ + size(); }
+  const_iterator begin() const { return data_; }
+  const_iterator end() const { return data_ + size(); }
 
 private:
   T*       data_ = nullptr;

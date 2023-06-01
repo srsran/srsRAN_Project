@@ -241,4 +241,29 @@ void calculate_addmodremlist_diff(toAddModList&       add_diff_list,
       add_diff_list, rem_diff_list, prev_list, next_list, [](const elem_type& e) { return e; }, id_func);
 }
 
+/// \brief Sets up the setup/release ASN.1 object based on the difference between prev and next.
+///
+/// \param setup_rel Setup/release ASN.1 object.
+/// \param prev Previous optional value.
+/// \param next New optional value.
+/// \tparam ConvertElem Function to convert element of \c OptionalElem to element of \c Asn1Type.
+/// \return Whether changes were made to Setup/Release ASN.1 object.
+template <typename Asn1Type, typename OptionalElem, typename ConvertElem>
+bool calculate_setup_release(asn1::setup_release_c<Asn1Type>& setup_rel,
+                             const optional<OptionalElem>&    prev,
+                             const optional<OptionalElem>&    next,
+                             const ConvertElem&               convert_func)
+{
+  if (next.has_value()) {
+    if (not prev.has_value() or *prev != *next) {
+      setup_rel.set_setup() = convert_func(*next);
+    }
+  } else if (prev.has_value()) {
+    setup_rel.set_release();
+  } else {
+    setup_rel.set(asn1::setup_release_opts::nulltype);
+  }
+  return setup_rel.type().value != asn1::setup_release_opts::nulltype;
+}
+
 } // namespace srsran

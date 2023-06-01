@@ -204,7 +204,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-m benchmark mode] [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D "
              "LDPC type] [-M rate "
-             "dematcher type] [-P profile] [-s silent]\n",
+             "dematcher type] [-P profile]\n",
              prog);
   fmt::print("\t-m Benchmark mode. [Default {}]\n", to_string(benchmark_mode));
   fmt::print("\t\t {:<20}It does not print any result.\n", to_string(benchmark_modes::silent));

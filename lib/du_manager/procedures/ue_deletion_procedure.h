@@ -44,7 +44,7 @@ public:
   static const char* name() { return "UE Delete"; }
 
 private:
-  async_task<mac_ue_delete_response_message> launch_mac_ue_delete();
+  async_task<mac_ue_delete_response> launch_mac_ue_delete();
 
   async_task<void> disconnect_drbs();
 

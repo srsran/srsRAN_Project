@@ -49,6 +49,12 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   proc_logger.log_proc_started();
 
+  if (request.drbs_to_setup.empty() and request.srbs_to_setup.empty() and request.drbs_to_rem.empty() and
+      request.scells_to_setup.empty() and request.scells_to_rem.empty()) {
+    proc_logger.log_proc_failure("No SCells, DRBs or SRBs to setup or release");
+    CORO_EARLY_RETURN(make_ue_config_failure());
+  }
+
   prev_cell_group = ue->resources.value();
   if (ue->resources.update(ue->pcell_index, request).release_required) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
@@ -59,14 +65,14 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT(update_mac_mux_and_demux());
+  CORO_AWAIT_VALUE(mac_ue_reconfiguration_response mac_res, update_mac_mux_and_demux());
 
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
 
   proc_logger.log_proc_completed();
 
-  CORO_RETURN(make_ue_config_response());
+  CORO_RETURN(mac_res.result ? make_ue_config_response() : make_ue_config_failure());
 }
 
 void ue_configuration_procedure::update_ue_context()
@@ -131,9 +137,19 @@ void ue_configuration_procedure::update_ue_context()
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
     srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
 
+    // Find the F1-U configuration for this DRB.
+    auto f1u_cfg_it = du_params.ran.qos.find(drbtoadd.five_qi);
+    srsran_assert(f1u_cfg_it != du_params.ran.qos.end(), "Undefined F1-U bearer config for 5QI={}", drbtoadd.five_qi);
+
     // Create DU DRB instance.
-    std::unique_ptr<du_ue_drb> drb = create_drb(
-        ue->ue_index, ue->pcell_index, drbtoadd.drb_id, it->lcid, it->rlc_cfg, drbtoadd.uluptnl_info_list, du_params);
+    std::unique_ptr<du_ue_drb> drb = create_drb(ue->ue_index,
+                                                ue->pcell_index,
+                                                drbtoadd.drb_id,
+                                                it->lcid,
+                                                it->rlc_cfg,
+                                                f1u_cfg_it->second.f1u,
+                                                drbtoadd.uluptnl_info_list,
+                                                du_params);
     if (drb == nullptr) {
       logger.warning("Failed to create DRB-Id={}.", drbtoadd.drb_id);
       continue;
@@ -147,10 +163,10 @@ void ue_configuration_procedure::clear_old_ue_context()
   drbs_to_rem.clear();
 }
 
-async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_mux_and_demux()
+async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_mac_mux_and_demux()
 {
   // Create Request to MAC to reconfigure existing UE.
-  mac_ue_reconfiguration_request_message mac_ue_reconf_req;
+  mac_ue_reconfiguration_request mac_ue_reconf_req;
   mac_ue_reconf_req.ue_index           = request.ue_index;
   mac_ue_reconf_req.crnti              = ue->rnti;
   mac_ue_reconf_req.pcell_index        = ue->pcell_index;

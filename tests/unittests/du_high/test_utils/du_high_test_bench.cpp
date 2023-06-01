@@ -162,15 +162,13 @@ du_high_test_bench::du_high_test_bench() :
     init_loggers();
 
     du_high_configuration cfg{};
-    cfg.du_mng_executor = &workers.ctrl_exec;
-    cfg.cell_executors  = &workers.cell_exec_mapper;
-    cfg.ue_executors    = &workers.ue_exec_mapper;
-    cfg.f1ap_notifier   = &cu_notifier;
-    cfg.phy_adapter     = &phy;
-    cfg.timers          = &timers;
-    cfg.cells           = {config_helpers::make_default_du_cell_config()};
-    cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
-    cfg.pcap            = &pcap;
+    cfg.exec_mapper   = &workers.exec_mapper;
+    cfg.f1ap_notifier = &cu_notifier;
+    cfg.phy_adapter   = &phy;
+    cfg.timers        = &timers;
+    cfg.cells         = {config_helpers::make_default_du_cell_config()};
+    cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
+    cfg.pcap          = &pcap;
 
     return cfg;
   }()),

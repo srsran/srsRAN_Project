@@ -131,17 +131,37 @@ struct dl_pdcch_pdu_parameters_v4 {
   //: TODO: mu_mimo
 };
 
+/// Precoding and beamforming PDU.
+struct tx_precoding_and_beamforming_pdu {
+  /// Maximum number of digital beamforming interfaces supported. Implementation defined.
+  static constexpr unsigned MAX_NUM_SUPPORTED_DIGITAL_BEAMFORMING_INTERFACES = 4U;
+  /// Maximum number of PRGs supported. Implementation defined.
+  static constexpr unsigned MAX_NUM_PRGS = 1U;
+
+  /// Physical resource groups information.
+  struct prgs_info {
+    uint16_t                                                                  pm_index;
+    static_vector<uint16_t, MAX_NUM_SUPPORTED_DIGITAL_BEAMFORMING_INTERFACES> beam_index;
+  };
+
+  /// Setting this variable to a value other than 0 marks the struct as not being used.
+  uint8_t                                trp_scheme = 1U;
+  uint16_t                               prg_size;
+  uint8_t                                dig_bf_interfaces;
+  static_vector<prgs_info, MAX_NUM_PRGS> prgs;
+};
+
 /// Downlink DCI PDU configuration.
 struct dl_dci_pdu {
-  rnti_t   rnti;
-  uint16_t nid_pdcch_data;
-  uint16_t nrnti_pdcch_data;
-  uint8_t  cce_index;
-  uint8_t  aggregation_level;
-  //: TODO: beamforming info
-  uint8_t     beta_pdcch_1_0;
-  int8_t      power_control_offset_ss_profile_nr;
-  dci_payload payload;
+  rnti_t                           rnti;
+  uint16_t                         nid_pdcch_data;
+  uint16_t                         nrnti_pdcch_data;
+  uint8_t                          cce_index;
+  uint8_t                          aggregation_level;
+  tx_precoding_and_beamforming_pdu preconding_and_beamforming;
+  uint8_t                          beta_pdcch_1_0;
+  int8_t                           power_control_offset_ss_profile_nr;
+  dci_payload                      payload;
   // Vendor specific parameters.
   optional<pdcch_context> context;
 };
@@ -296,7 +316,7 @@ struct dl_pdsch_pdu {
   uint8_t                                              start_symbol_index;
   uint8_t                                              nr_of_symbols;
   // :TODO: PTRS
-  // :TODO: beamforming
+  tx_precoding_and_beamforming_pdu         preconding_and_beamforming;
   uint8_t                                  power_control_offset_profile_nr;
   nzp_csi_rs_epre_to_ssb                   power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
@@ -332,8 +352,8 @@ struct dl_csi_rs_pdu {
   uint16_t                          scramb_id;
   uint8_t                           power_control_offset_profile_nr;
   nzp_csi_rs_epre_to_ssb            power_control_offset_ss_profile_nr;
-  //: TODO: beamforming struct
-  dl_csi_rs_maintenance_v3 csi_rs_maintenance_v3;
+  tx_precoding_and_beamforming_pdu  preconding_and_beamforming;
+  dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4
 };
 
@@ -373,15 +393,15 @@ enum class bch_payload_type : uint8_t { mac_full, phy_timing_info, phy_full };
 
 /// Downlink SSB PDU information.
 struct dl_ssb_pdu {
-  pci_t                 phys_cell_id;
-  beta_pss_profile_type beta_pss_profile_nr;
-  uint8_t               ssb_block_index;
-  uint8_t               ssb_subcarrier_offset;
-  ssb_offset_to_pointA  ssb_offset_pointA;
-  bch_payload_type      bch_payload_flag;
-  dl_ssb_bch_payload    bch_payload;
-  //: TODO: beamforming
-  dl_ssb_maintenance_v3 ssb_maintenance_v3;
+  pci_t                            phys_cell_id;
+  beta_pss_profile_type            beta_pss_profile_nr;
+  uint8_t                          ssb_block_index;
+  uint8_t                          ssb_subcarrier_offset;
+  ssb_offset_to_pointA             ssb_offset_pointA;
+  bch_payload_type                 bch_payload_flag;
+  dl_ssb_bch_payload               bch_payload;
+  tx_precoding_and_beamforming_pdu preconding_and_beamforming;
+  dl_ssb_maintenance_v3            ssb_maintenance_v3;
   //: TODO: params v4 - MU-MIMO
 };
 

@@ -1,0 +1,21 @@
+#
+# Copyright 2021-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+set_directory_properties(PROPERTIES LABELS "serdes")
+
+add_executable(ofh_uplane_packet_builder_static_impl_test ofh_uplane_packet_builder_static_impl_test.cpp)
+target_link_libraries(ofh_uplane_packet_builder_static_impl_test srsran_ru_ofh srsran_support srsran_phy_support srslog gtest gtest_main)
+gtest_discover_tests(ofh_uplane_packet_builder_static_impl_test)
+
+add_executable(ofh_cplane_packet_builder_impl_test ofh_cplane_packet_builder_impl_test.cpp)
+target_link_libraries(ofh_cplane_packet_builder_impl_test srsran_ofh_message_serdes srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_cplane_packet_builder_impl_test)
+
+add_executable(ofh_uplane_packet_decoder_static_impl ofh_uplane_packet_decoder_static_impl_test.cpp)
+target_link_libraries(ofh_uplane_packet_decoder_static_impl srsran_ofh_message_serdes srsran_support gtest gtest_main)
+gtest_discover_tests(ofh_uplane_packet_decoder_static_impl)

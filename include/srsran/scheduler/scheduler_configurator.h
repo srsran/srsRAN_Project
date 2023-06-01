@@ -90,6 +90,9 @@ struct sched_cell_configuration_request_message {
   /// List of PUCCH guardbands;
   std::vector<sched_grid_resource> pucch_guardbands;
 
+  /// List of zp-CSI-RS resources;
+  static_vector<zp_csi_rs_resource, MAX_NOF_ZP_CSI_RS_RESOURCES> zp_csi_rs_list;
+
   /// CSI-RS scheduling parameters.
   optional<csi_meas_config> csi_meas_cfg;
 };

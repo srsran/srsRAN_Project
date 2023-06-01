@@ -34,18 +34,18 @@ protected:
     auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
 
     // check ue id idx value
-    if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (4211117727 % 1024)) {
+    if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (279089024671 % 1024)) {
       test_logger.error("UE ID idx value mismatch {} != {}",
                         paging_msg->ue_id_idx_value.value.idx_len10().to_number(),
-                        (4211117727 % 1024));
+                        (279089024671 % 1024));
       return false;
     }
 
     // check paging id
-    if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 4211117727) {
+    if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
       test_logger.error("Paging ID mismatch {} != {}",
                         paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number(),
-                        4211117727);
+                        279089024671);
       return false;
     }
 

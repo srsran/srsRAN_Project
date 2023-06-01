@@ -97,15 +97,13 @@ async_task<void> du_ue_manager::stop()
       }
 
       for (auto& srb : (*ue_it)->bearers.srbs()) {
-        srb.connector.mac_rx_sdu_notifier.disconnect();
-        srb.connector.rlc_rx_sdu_notif.disconnect();
-        srb.connector.f1c_rx_sdu_notif.disconnect();
+        srb.disconnect();
       }
 
       for (auto& drb_pair : (*ue_it)->bearers.drbs()) {
         du_ue_drb& drb = *drb_pair.second;
 
-        drb.disconnect_rx();
+        drb.disconnect();
       }
     }
 
@@ -184,4 +182,15 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
     logger.debug("ue={}: Freeing UE context", ue_index);
     CORO_RETURN();
   });
+}
+
+void du_ue_manager::handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause)
+{
+  if (find_ue(ue_index) == nullptr) {
+    logger.warning("Discarding RLF for unknown UE index={}", ue_index);
+    return;
+  }
+
+  // Start F1AP UE Release Request (gNB-initiated) procedure with cause set to RLF.
+  cfg.f1ap.ue_mng.handle_ue_context_release_request(srs_du::f1ap_ue_context_release_request{ue_index, cause});
 }

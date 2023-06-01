@@ -41,7 +41,7 @@ void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   send_srb_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
-void rrc_ue_impl::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
+void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg, ue_index_t old_ue_index)
 {
   // pack DL CCCH msg
   byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
@@ -52,7 +52,7 @@ void rrc_ue_impl::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_dcch_msg, to_c_str(fmtbuf2));
 
   // send down the stack
-  send_srb_pdu(srb_id_t::srb1, std::move(pdu));
+  send_srb_pdu(srb_id, std::move(pdu), old_ue_index);
 }
 
 void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
@@ -69,8 +69,19 @@ void rrc_ue_impl::send_rrc_reject(uint8_t reject_wait_time_secs)
   send_dl_ccch(dl_ccch_msg);
 }
 
-void rrc_ue_impl::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
+void rrc_ue_impl::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu, ue_index_t old_ue_index)
 {
-  logger.debug(pdu.begin(), pdu.end(), "ue={} C-RNTI={} TX SRB{} PDU", context.ue_index, context.c_rnti, srb_id);
-  srbs[srb_id_to_uint(srb_id)].pdu_notifier->on_new_pdu({std::move(pdu)});
+  rrc_pdu_notifier* srb_notifier = srbs[srb_id_to_uint(srb_id)].pdu_notifier;
+  if (srb_notifier == nullptr) {
+    logger.error(pdu.begin(),
+                 pdu.end(),
+                 "ue={} C-RNTI={} TX {} PDU notifier not connected. Dropping PDU.",
+                 context.ue_index,
+                 context.c_rnti,
+                 srb_id);
+    return;
+  }
+  logger.debug(pdu.begin(), pdu.end(), "ue={} C-RNTI={} TX {} PDU", context.ue_index, context.c_rnti, srb_id);
+
+  srbs[srb_id_to_uint(srb_id)].pdu_notifier->on_new_pdu({std::move(pdu)}, old_ue_index);
 }

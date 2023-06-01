@@ -28,8 +28,8 @@
 
 using namespace srsran;
 
-std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config,
-                                                    unsigned                 max_nof_prach_concurrent_requests)
+inline std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config,
+                                                           unsigned                 max_nof_prach_concurrent_requests)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.
@@ -98,11 +98,14 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const gnb_appconfig&        
                                                     task_executor*                        pucch_executor,
                                                     task_executor*                        pusch_executor,
                                                     task_executor*                        prach_executor,
+                                                    task_executor*                        pdsch_codeblock_executor,
                                                     upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
   downlink_processor_factory_sw_config dl_proc_config;
-  dl_proc_config.ldpc_encoder_type   = "auto";
-  dl_proc_config.crc_calculator_type = "auto";
+  dl_proc_config.ldpc_encoder_type             = "auto";
+  dl_proc_config.crc_calculator_type           = "auto";
+  dl_proc_config.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;
+  dl_proc_config.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
 
   // Create downlink processor factory.
   std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);

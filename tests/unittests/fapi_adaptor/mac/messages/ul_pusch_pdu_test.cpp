@@ -69,11 +69,11 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   ASSERT_EQ(pusch_cfg.pusch_dmrs_id, fapi_pdu.pusch_dmrs_identity);
 
   // Frequency allocation.
-  const prb_grant& prb_cfg = pusch_cfg.prbs;
+  const vrb_alloc& prb_cfg = pusch_cfg.rbs;
   ASSERT_TRUE(fapi_pdu.resource_alloc == fapi::resource_allocation_type::type_1);
   ASSERT_TRUE(fapi_pdu.vrb_to_prb_mapping == fapi::vrb_to_prb_mapping_type::non_interleaved);
-  ASSERT_EQ(prb_cfg.prbs().start(), fapi_pdu.rb_start);
-  ASSERT_EQ(prb_cfg.prbs().length(), fapi_pdu.rb_size);
+  ASSERT_EQ(prb_cfg.type1().start(), fapi_pdu.rb_start);
+  ASSERT_EQ(prb_cfg.type1().length(), fapi_pdu.rb_size);
   ASSERT_EQ(pusch_cfg.intra_slot_freq_hopping, fapi_pdu.intra_slot_frequency_hopping);
   ASSERT_EQ(pusch_cfg.tx_direct_current_location, fapi_pdu.tx_direct_current_location);
   ASSERT_EQ(pusch_cfg.ul_freq_shift_7p5khz, fapi_pdu.uplink_frequency_shift_7p5kHz);

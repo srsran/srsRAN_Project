@@ -50,14 +50,12 @@ public:
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwpid,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override;
 
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwpid,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override;
 

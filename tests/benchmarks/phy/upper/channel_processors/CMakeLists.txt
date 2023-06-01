@@ -30,7 +30,8 @@ target_link_libraries(pdsch_processor_benchmark
         srsran_sched
         srslog
         srsvec)
-add_test(pdsch_processor_benchmark pdsch_processor_benchmark -s -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min)
+add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t generic)
+add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t concurrent)
 
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
 target_link_libraries(pusch_processor_benchmark
@@ -41,4 +42,4 @@ target_link_libraries(pusch_processor_benchmark
         srsran_sched
         srslog
         srsvec)
-add_test(pusch_processor_benchmark pusch_processor_benchmark -s -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)
+add_test(pusch_processor_benchmark pusch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)

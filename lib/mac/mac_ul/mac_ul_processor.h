@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "mac_ul_ue_manager.h"
 #include "pdu_rx_handler.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/support/async/execute_on.h"
@@ -46,7 +45,7 @@ public:
   {
   }
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& request) override
+  async_task<bool> add_ue(const mac_ue_create_request& request) override
   {
     // Update UE executor to match new PCell.
     task_executor& ul_exec = cfg.ue_exec_mapper.rebind_executor(request.ue_index, request.cell_index);
@@ -73,7 +72,7 @@ public:
         });
   }
 
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  async_task<void> remove_ue(const mac_ue_delete_request& msg) override
   {
     return dispatch_and_resume_on(cfg.ue_exec_mapper.executor(msg.ue_index),
                                   cfg.ctrl_exec,

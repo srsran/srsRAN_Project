@@ -32,7 +32,8 @@ namespace fapi_adaptor {
 void convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
                                const fapi::ul_pusch_pdu&    fapi_pdu,
                                uint16_t                     sfn,
-                               uint16_t                     slot);
+                               uint16_t                     slot,
+                               uint16_t                     num_rx_ant);
 
 } // namespace fapi_adaptor
 } // namespace srsran

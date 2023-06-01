@@ -30,10 +30,19 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
+struct ngap_ue_context_t {
+  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+};
+
 class cu_cp_ue : public du_ue, public ngap_ue
 {
 public:
-  cu_cp_ue(const ue_index_t ue_index_, const rnti_t c_rnti_) : ue_index(ue_index_), c_rnti(c_rnti_) {}
+  cu_cp_ue(const ue_index_t ue_index_, const pci_t pci_, const rnti_t c_rnti_) :
+    ue_index(ue_index_), pci(pci_), c_rnti(c_rnti_)
+  {
+  }
 
   // generic_ue
 
@@ -50,6 +59,9 @@ public:
 
   /// \brief Get the RRC UE control message notifier of the UE.
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() override { return *rrc_ue_notifier; }
+
+  /// \brief Get the PCI of the UE.
+  pci_t get_pci() override { return pci; };
 
   /// \brief Get the C-RNTI of the UE.
   rnti_t get_c_rnti() override { return c_rnti; }
@@ -87,19 +99,22 @@ public:
   }
 
   /// \brief Get the AMF UE ID of the UE.
-  amf_ue_id_t get_amf_ue_id() override { return amf_ue_id; }
+  amf_ue_id_t get_amf_ue_id() override { return ngap_ue_context.amf_ue_id; }
 
   /// \brief Get the RAN UE ID of the UE.
-  ran_ue_id_t get_ran_ue_id() override { return ran_ue_id; }
+  ran_ue_id_t get_ran_ue_id() override { return ngap_ue_context.ran_ue_id; }
 
   /// \brief Get the aggregate maximum bit rate DL of the UE.
-  uint64_t get_aggregate_maximum_bit_rate_dl() override { return aggregate_maximum_bit_rate_dl; }
+  uint64_t get_aggregate_maximum_bit_rate_dl() override { return ngap_ue_context.aggregate_maximum_bit_rate_dl; }
+
+  /// \brief Get the NGAP UE Context.
+  ngap_ue_context_t get_ngap_ue_context() { return ngap_ue_context; }
 
   /// \brief Set the aggregate maximum bit rate DL of the UE.
   /// \param[in] aggregate_maximum_bit_rate_dl Aggregate maximum bit rate DL.
   void set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl_) override
   {
-    aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
+    ngap_ue_context.aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
   }
 
   bool du_ue_created   = false;
@@ -107,7 +122,7 @@ public:
 
   /// \brief Set the RAN UE ID of the UE.
   /// \param[in] ran_ue_id_ RAN UE ID of the UE.
-  void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ran_ue_id = ran_ue_id_; }
+  void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ngap_ue_context.ran_ue_id = ran_ue_id_; }
 
   /// \brief Set the RRC UE PDU notifier of the UE.
   /// \param[in] rrc_ue_pdu_notifier_ RRC UE PDU notifier for the UE.
@@ -132,7 +147,11 @@ public:
 
   /// \brief Set the AMF UE ID in the UE.
   /// \param[in] amf_ue_id The AMF UE ID to set.
-  void set_amf_ue_id(amf_ue_id_t amf_ue_id_) { amf_ue_id = amf_ue_id_; }
+  void set_amf_ue_id(amf_ue_id_t amf_ue_id_) { ngap_ue_context.amf_ue_id = amf_ue_id_; }
+
+  /// \brief Set the NGAP UE Context.
+  /// \param[in] ue_context The NGAP UE Context.
+  void set_ngap_ue_context(ngap_ue_context_t ue_context) { ngap_ue_context = ue_context; }
 
 private:
   // common context
@@ -140,6 +159,7 @@ private:
 
   // du ue context
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
+  pci_t           pci         = INVALID_PCI;
   rnti_t          c_rnti      = INVALID_RNTI;
 
   std::map<srb_id_t, cu_srb_context>            srbs;
@@ -147,9 +167,7 @@ private:
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
 
   // ngap ue context
-  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+  ngap_ue_context_t ngap_ue_context;
 
   ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
   ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
@@ -164,6 +182,11 @@ public:
 
   // common
 
+  /// \brief Get the UE index of the UE.
+  /// \param[in] pci The PCI of the cell the UE is/was connected to.
+  /// \param[in] c_rnti The RNTI of the UE.
+  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override;
+
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   ue_configuration get_ue_config() override { return ue_config; }
@@ -173,9 +196,10 @@ public:
   /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
   /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
   /// \param[in] du_index Index of the DU.
+  /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  du_ue* add_ue(du_index_t du_index, rnti_t rnti) override;
+  du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) override;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
@@ -185,15 +209,6 @@ public:
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
   du_ue* find_du_ue(ue_index_t ue_index) override;
-
-  /// \brief Find the index the DU UE with the given RNTI.
-  /// \param[in] rnti RNTI of the UE to be found.
-  /// \return Index of the DU UE if found, invalid index otherwise.
-  ue_index_t get_ue_index(rnti_t rnti) override;
-
-  /// \brief Get the number of UEs connected to DUs.
-  /// \return Number of UEs.
-  size_t get_nof_du_ues() override { return rnti_to_ue_index.size(); }
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
@@ -252,6 +267,11 @@ public:
   /// \param[in] amf_ue_id The AMF UE ID for the UE.
   void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) override;
 
+  /// \brief Transfer the NGAP UE context to a new UE e.g. in case of a reestablishment.
+  /// \param[in] new_ue_index The index of the new UE.
+  /// \param[in] old_ue_index The index of the old UE.
+  void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) override;
+
 private:
   /// \brief Get the next available UE index.
   /// \return The UE index.
@@ -261,25 +281,30 @@ private:
   /// \return The RAN UE ID.
   ran_ue_id_t get_next_ran_ue_id();
 
-  /// \brief Find the RAN UE ID by a given UE NGAP ID.
-  /// \param[in] ue_index The UE NGAP ID used to find the RAN UE ID.
+  /// \brief Find the RAN UE ID by a given UE index.
+  /// \param[in] ue_index The UE index used to find the RAN UE ID.
   /// \return The RAN UE ID.
   ran_ue_id_t find_ran_ue_id(ue_index_t ue_index);
+
+  /// \brief Find the AMF UE ID by a given UE index.
+  /// \param[in] ue_index The UE index used to find the AMF UE ID.
+  /// \return The AMF UE ID.
+  amf_ue_id_t find_amf_ue_id(ue_index_t ue_index);
 
   void clear_ue()
   {
     // TODO
   }
 
-  srslog::basic_logger&  logger = srslog::fetch_basic_logger("CU-UE-MNG");
+  srslog::basic_logger&  logger = srslog::fetch_basic_logger("CU-UEMNG");
   const ue_configuration ue_config;
 
   std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 
   // ue index lookups
-  std::unordered_map<rnti_t, ue_index_t>      rnti_to_ue_index;      // ue_indexes indexed by rntis
-  std::unordered_map<ran_ue_id_t, ue_index_t> ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
-  std::unordered_map<amf_ue_id_t, ue_index_t> amf_ue_id_to_ue_index; // ue_indexes indexed by amf_ue_ids
+  std::map<std::tuple<pci_t, rnti_t>, ue_index_t> pci_rnti_to_ue_index;  // ue_indexes indexed by pci and rnti
+  std::unordered_map<ran_ue_id_t, ue_index_t>     ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
+  std::unordered_map<amf_ue_id_t, ue_index_t>     amf_ue_id_to_ue_index; // ue_indexes indexed by amf_ue_ids
 };
 
 } // namespace srs_cu_cp

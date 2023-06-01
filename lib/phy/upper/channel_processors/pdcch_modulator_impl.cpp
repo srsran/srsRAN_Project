@@ -21,6 +21,8 @@
  */
 
 #include "pdcch_modulator_impl.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/sc_prod.h"
 
@@ -53,41 +55,38 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
   }
 }
 
-void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config)
+void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_reader& d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {true, false, true, true, true, false, true, true, true, false, true, true};
 
-  // Create RG OFDM symbol mask. Identical for all OFDM symbols.
-  bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);
+  // Create PDCCH mapping pattern.
+  re_pattern pattern;
+  pattern.prb_mask = config.rb_mask;
+  pattern.symbols.fill(config.start_symbol_index, config.start_symbol_index + config.duration);
+  pattern.re_mask = re_mask;
 
-  // Repeat the same process for all ports.
-  for (uint8_t port_idx : config.ports) {
-    // As the resource element buffer advances for every symbol, it needs to be renewed for every port.
-    span<const cf_t> d_buffer = d_pdcch;
+  // Create single layer, single port precoding.
+  precoding_configuration precoding = make_single_port();
 
-    // For each symbol in the CORESET map the resource elements.
-    for (unsigned symbol_idx       = config.start_symbol_index,
-                  end_symbol_index = config.start_symbol_index + config.duration;
-         symbol_idx != end_symbol_index;
-         ++symbol_idx) {
-      d_buffer = grid.put(port_idx, symbol_idx, 0, rg_subc_mask, d_buffer);
-    }
-  }
+  // Actual mapping.
+  mapper.map(d_pdcch, pattern, precoding);
 }
 
-void pdcch_modulator_impl::modulate(srsran::resource_grid_writer&            grid,
-                                    srsran::span<const uint8_t>              data,
-                                    const srsran::pdcch_modulator::config_t& config)
+void pdcch_modulator_impl::modulate(resource_grid_mapper&            mapper,
+                                    span<const uint8_t>              data,
+                                    const pdcch_modulator::config_t& config)
 {
+  std::array<uint8_t, MAX_BITS> temp_b_hat;
+
   // Apply scrambling.
   span<uint8_t> b_hat = span<uint8_t>(temp_b_hat).first(data.size());
   scramble(b_hat, data, config);
 
   // Apply modulation mapping.
-  span<cf_t> d_pdcch = span<cf_t>(temp_d_pdcch).first(data.size() / 2);
-  modulate(d_pdcch, b_hat, config.scaling);
+  static_re_buffer<1, MAX_RE> d_pdcch(1, data.size() / 2);
+  modulate(d_pdcch.get_slice(0), b_hat, config.scaling);
 
   // Map to resource elements.
-  map(grid, d_pdcch, config);
+  map(mapper, d_pdcch, config);
 }

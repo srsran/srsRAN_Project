@@ -38,14 +38,16 @@ namespace srsran {
 struct scheduler_ue_expert_config {
   /// Range of allowed MCS indices for DL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> dl_mcs;
-  unsigned                      initial_cqi;
+  /// Sequence of redundancy versions used for PDSCH scheduling. Possible values: {0, 1, 2, 3}.
+  std::vector<uint8_t> pdsch_rv_sequence;
   /// Range of allowed MCS indices for UL UE scheduling. To use a fixed mcs, set the minimum mcs equal to the maximum.
   interval<sch_mcs_index, true> ul_mcs;
-  unsigned                      max_nof_harq_retxs;
+  /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.
+  std::vector<uint8_t> pusch_rv_sequence;
+  unsigned             initial_cqi;
+  unsigned             max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
-  /// Maximum consecutive PUSCH KOs, before scheduler de-prioritizes UE.
-  unsigned max_consecutive_pusch_kos;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
   double initial_ul_sinr;
   /// Enable multiplexing of CSI-RS and PDSCH.

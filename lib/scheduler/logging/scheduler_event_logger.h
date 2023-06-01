@@ -66,6 +66,11 @@ public:
     du_ue_index_t ue_index;
     rnti_t        rnti;
   };
+  struct csi_report_event {
+    du_ue_index_t ue_index;
+    rnti_t        rnti;
+    unsigned      wb_cqi;
+  };
   struct bsr_event {
     du_ue_index_t          ue_index;
     rnti_t                 rnti;
@@ -119,6 +124,7 @@ private:
   void enqueue_impl(const sr_event& sr);
   void enqueue_impl(const bsr_event& bsr);
   void enqueue_impl(const harq_ack_event& harq_ev);
+  void enqueue_impl(const csi_report_event& csi);
   void enqueue_impl(const crc_event& crc_ev);
   void enqueue_impl(const dl_mac_ce_indication& mac_ce);
   void enqueue_impl(const dl_buffer_state_indication_message& bs);

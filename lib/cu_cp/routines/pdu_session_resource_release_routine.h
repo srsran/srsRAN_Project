@@ -37,7 +37,7 @@ public:
   pdu_session_resource_release_routine(const cu_cp_pdu_session_resource_release_command& release_cmd_,
                                        du_processor_e1ap_control_notifier&               e1ap_ctrl_notif_,
                                        du_processor_f1ap_ue_context_notifier&            f1ap_ue_ctxt_notif_,
-                                       drb_manager&                                      rrc_ue_drb_manager_,
+                                       up_resource_manager&                              rrc_ue_up_resource_manager_,
                                        srslog::basic_logger&                             logger_);
 
   void operator()(coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx);
@@ -52,11 +52,9 @@ private:
 
   const cu_cp_pdu_session_resource_release_command release_cmd;
 
-  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
-
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
-  drb_manager&                           rrc_ue_drb_manager;    // to get RRC DRB config
+  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU
+  up_resource_manager&                   rrc_ue_up_resource_manager; // to get RRC DRB config
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests

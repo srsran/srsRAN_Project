@@ -243,7 +243,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
   uint32_t       tx_next_start  = 262143;
   uint32_t       n_sdus         = 20;
   pdcp_max_count max_count{tx_next_notify, tx_next_max};
-  init(GetParam(), pdcp_discard_timer::ms10, max_count);
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::ms10, max_count);
 
   auto test_max_count = [this, n_sdus](uint32_t tx_next) {
     // Set state of PDCP entiy

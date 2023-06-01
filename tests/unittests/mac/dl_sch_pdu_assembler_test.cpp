@@ -152,7 +152,7 @@ public:
 class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
-  mac_dl_sch_assembler_tester() : ue_mng(rnti_table), dl_bearers(2), dl_sch_enc(ue_mng)
+  mac_dl_sch_assembler_tester() : ue_mng(mac_expert_config{10000, 10000}, rnti_table), dl_bearers(2), dl_sch_enc(ue_mng)
   {
     srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -181,12 +181,12 @@ public:
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }
 
 protected:
-  byte_buffer                   msg3_pdu;
-  mac_ue_create_request_message req = test_helpers::make_default_ue_creation_request();
-  du_rnti_table                 rnti_table;
-  mac_dl_ue_manager             ue_mng;
-  std::vector<dummy_dl_bearer>  dl_bearers;
-  dl_sch_pdu_assembler          dl_sch_enc;
+  byte_buffer                  msg3_pdu;
+  mac_ue_create_request        req = test_helpers::make_default_ue_creation_request();
+  du_rnti_table                rnti_table;
+  mac_dl_ue_manager            ue_mng;
+  std::vector<dummy_dl_bearer> dl_bearers;
+  dl_sch_pdu_assembler         dl_sch_enc;
 };
 
 TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)

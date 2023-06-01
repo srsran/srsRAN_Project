@@ -33,8 +33,9 @@ namespace srs_du {
 struct f1ap_ue_context {
   const du_ue_index_t       ue_index;
   const gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id;
-  gnb_cu_ue_f1ap_id_t       gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
-  rnti_t                    rnti              = rnti_t::INVALID_RNTI;
+  gnb_cu_ue_f1ap_id_t       gnb_cu_ue_f1ap_id  = gnb_cu_ue_f1ap_id_t::invalid;
+  rnti_t                    rnti               = rnti_t::INVALID_RNTI;
+  bool                      marked_for_release = false;
 
   f1ap_ue_context(du_ue_index_t ue_index_, gnb_du_ue_f1ap_id_t du_f1ap_ue_id_) :
     ue_index(ue_index_), gnb_du_ue_f1ap_id(du_f1ap_ue_id_)

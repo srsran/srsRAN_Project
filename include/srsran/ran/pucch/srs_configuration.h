@@ -166,7 +166,7 @@ struct srs_config {
 
   struct srs_resource {
     /// \brief Number of ports for SRS.
-    enum class nof_srs_ports { port1, ports2, ports4 };
+    enum class nof_srs_ports { port1 = 1, ports2 = 2, ports4 = 4 };
 
     /// \brief The PTRS port index for a SRS resource for non-codebook based UL MIMO.
     enum class ptrs_port_index { n0, n1, not_set };

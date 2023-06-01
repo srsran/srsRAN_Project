@@ -88,8 +88,6 @@ class upper_phy_impl : public upper_phy
     // See interface for documentation.
     void handle_tti_boundary(const upper_phy_timing_context& context) override
     {
-      // Advance the timing in the softbuffer pool.
-      softbuffer_pool.run_slot(context.slot);
       // Propagate the event.
       notifier.get().on_tti_boundary(context.slot);
     }
@@ -98,7 +96,11 @@ class upper_phy_impl : public upper_phy
     void handle_ul_half_slot_boundary(const upper_phy_timing_context& context) override {}
 
     // See interface for documentation.
-    void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override {}
+    void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override
+    {
+      // Advance the timing in the softbuffer pool.
+      softbuffer_pool.run_slot(context.slot);
+    }
 
     void set_upper_phy_notifier(upper_phy_timing_notifier& n) { notifier = std::ref(n); }
   };

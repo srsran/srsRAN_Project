@@ -32,6 +32,11 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     f1ap_du_ue&                                   ue_) :
   ue(ue_)
 {
+  if (ue.context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    // If this is the first message with a GNB-CU-UE-F1AP-ID, update the UE context.
+    ue.context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value);
+  }
+
   create_du_request(msg);
   if (msg->rrc_container_present) {
     rrc_container = msg->rrc_container.value.copy();

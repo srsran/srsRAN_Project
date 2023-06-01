@@ -23,16 +23,17 @@
 #pragma once
 
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
-#include "srsran/rrc/drb_manager.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/srslog/srslog.h"
 
 namespace srsran {
 
 namespace srs_cu_cp {
 struct rrc_ue_cfg_t {
-  srslog::basic_logger&              logger = srslog::fetch_basic_logger("RRC");
-  asn1::rrc_nr::pdcp_cfg_s           srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
-  srsran::srs_cu_cp::drb_manager_cfg drb_cfg; ///< DRB manager configuration holds the bearer configs for all FiveQIs.
+  srslog::basic_logger&    logger = srslog::fetch_basic_logger("RRC");
+  asn1::rrc_nr::pdcp_cfg_s srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
+  srsran::srs_cu_cp::up_resource_manager_cfg
+      up_cfg; ///< DRB manager configuration holds the bearer configs for all FiveQIs.
 };
 
 } // namespace srs_cu_cp

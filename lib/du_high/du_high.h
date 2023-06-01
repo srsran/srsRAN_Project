@@ -28,9 +28,6 @@
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/mac/mac.h"
-#include "srsran/mac/mac_cell_result.h"
-#include "srsran/rlc/rlc_rx.h"
-#include "srsran/rlc/rlc_tx.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include <memory>
 

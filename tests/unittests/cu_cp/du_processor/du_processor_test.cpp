@@ -35,10 +35,11 @@ using namespace asn1::f1ap;
 TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sent)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Check response is F1SetupResponse
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::successful_outcome);
@@ -49,11 +50,11 @@ TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sen
 TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing du served cells list
-  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_base();
-  f1_setup_request_msg.request->gnb_du_served_cells_list_present = false;
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_f1_setup_request_base(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -64,12 +65,12 @@ TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejecte
 TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing gnb du sys info
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
-  f1_setup_request_msg.request->gnb_du_served_cells_list.value[0]->gnb_du_served_cells_item().gnb_du_sys_info_present =
-      false;
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
+  f1_setup_request.gnb_du_served_cells_list.begin()->gnb_du_sys_info.reset();
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -80,22 +81,11 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with too many cells
-  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_base();
-  f1_setup_request_msg.request->gnb_du_served_cells_list_present = true;
-  f1_setup_request_msg.request->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
-  f1_setup_request_msg.request->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
-
-  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS + 1;
-       du_cell_idx_int++) {
-    f1_setup_request_msg.request->gnb_du_served_cells_list.value.push_back({});
-    f1_setup_request_msg.request->gnb_du_served_cells_list.value.back().load_info_obj(
-        ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-    f1_setup_request_msg.request->gnb_du_served_cells_list.value.back()->gnb_du_served_cells_item() =
-        generate_served_cells_item(du_cell_idx_int, du_cell_idx_int);
-  }
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_f1_setup_request_with_too_many_cells(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Check the generated PDU is indeed the F1 Setup failure
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
@@ -110,10 +100,11 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
   ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
@@ -128,10 +119,11 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
   ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 1);
@@ -146,10 +138,11 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
   ue_creation_message ue_creation_msg = generate_ue_creation_message(INVALID_RNTI, 12345678);
@@ -164,10 +157,11 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
   ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
@@ -188,14 +182,15 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -212,7 +207,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
@@ -235,10 +230,11 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_deleted)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Generate ue_creation message
   ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
@@ -262,14 +258,15 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
+  cu_cp_f1_setup_request f1_setup_request;
+  generate_valid_f1_setup_request(f1_setup_request);
 
   // Pass message to DU processor
-  du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+  du_processor_obj->handle_f1_setup_request(f1_setup_request);
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -286,7 +283,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-UEMNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);

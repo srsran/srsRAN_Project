@@ -44,6 +44,11 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
 
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}, proc=\"UE Context Release\": Started.", ue.context.ue_index);
+
+  // Mark UE context for release, so that any UE Context Release Request coming from lower layers due to RLF is ignored.
+  ue.context.marked_for_release = true;
+
   if (msg->rrc_container_present) {
     // If the UE CONTEXT RELEASE COMMAND message contains the RRC-Container IE, the gNB-DU shall send the RRC
     // container to the UE via the SRB indicated by the SRB ID IE.
@@ -65,9 +70,13 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
   }
 
   // Wait for pending RRC messages to be flushed.
+  logger.debug("ue={}, proc=\"UE Context Release\": Waiting for {} milliseconds to flush pending RRC messages.",
+               ue.context.ue_index,
+               ue_release_timeout.count());
   CORO_AWAIT(async_wait_for(release_wait_timer, ue_release_timeout));
 
   // Remove UE from DU manager.
+  logger.debug("ue={}, proc=\"UE Context Release\": Initiate UE release in lower layers.", ue.context.ue_index);
   CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index}));
 
   // Note: UE F1AP context deleted at this point.
@@ -91,5 +100,6 @@ void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()
   resp->gnb_du_ue_f1ap_id->value = msg->gnb_du_ue_f1ap_id->value;
   resp->gnb_cu_ue_f1ap_id->value = msg->gnb_cu_ue_f1ap_id->value;
 
+  logger.debug("ue={}, proc=\"UE Context Release\": Finished successfully.", ue.context.ue_index);
   cu_msg_notifier.on_new_message(f1ap_msg);
 }

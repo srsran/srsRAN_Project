@@ -29,49 +29,15 @@
 namespace srsran {
 namespace srs_du {
 
-/// Defines the number of different Initial Cyclic Shifts that can be used for PUCCH Format 1, as per \c PUCCH-format1,
-/// in \c PUCCH-Config, TS 38.331. We assume the CS are evenly distributed, which means we can only have a divisor of 12
-/// possible cyclic shifts.
-enum class nof_cyclic_shifts { no_cyclic_shift = 1, two = 2, three = 3, four = 4, six = 6, twelve = 12 };
-
-inline unsigned format1_cp_step_to_uint(nof_cyclic_shifts opt)
-{
-  return static_cast<unsigned>(opt);
-}
-
-/// Collects the parameters for PUCCH Format 1 that can be configured.
-struct pucch_f1_params {
-  /// Number of possible Initial Cyclic Shifts, equally spaced within the range {0,...,11}, as per \c PUCCH-format1, in
-  /// \c PUCCH-Config, TS 38.331.
-  nof_cyclic_shifts nof_cyc_shifts{nof_cyclic_shifts::no_cyclic_shift};
-  /// Indicates whether OCCs (as per \c PUCCH-format1, in \c PUCCH-Config, TS 38.331) are supported.
-  bool                             occ_supported{false};
-  bounded_integer<unsigned, 4, 14> nof_symbols{14};
-  bool                             intraslot_freq_hopping{false};
-};
-
-/// Collects the parameters for PUCCH Format 2 that can be configured.
-struct pucch_f2_params {
-  bounded_integer<unsigned, 1, 2> nof_symbols{1};
-  unsigned                        max_nof_rbs{1};
-  /// Maximum payload in bits that can be carried by PUCCH Format 2. When this field is set, \c max_nof_rbs is ignored
-  /// and the maximum number of RBs is computed according to \ref get_pucch_format2_max_nof_prbs.
-  optional<unsigned>  max_payload_bits;
-  max_pucch_code_rate max_code_rate{max_pucch_code_rate::dot_25};
-  /// For intraslot-freq-hopping, \c nof_symbols must be set to 2.
-  bool intraslot_freq_hopping{false};
-};
-
-/// Parameters for the generated PUCCH resource.
-struct cell_pucch_resource {
-  /// Identifies the PUCCH resources within the cell's list.
-  unsigned cell_res_id;
-  unsigned starting_prb;
-  /// Only set for intra-slot frequency hopping.
-  optional<unsigned>                                                                        second_hop_prb;
-  pucch_format                                                                              format;
-  variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
-};
+/// The following values have to be set according to the \ref pucch_resource_manager capabilities.
+/// Maximum number of PUCCH F1 resources per UE for HARQ-ACK reporting.
+constexpr unsigned max_ue_f1_res_harq = 8;
+/// Maximum number of PUCCH F2 resources per UE for HARQ-ACK reporting.
+constexpr unsigned max_ue_f2_res_harq = 8;
+/// Maximum number of PUCCH F1 resources per cell for SR.
+constexpr unsigned max_cell_f1_res_sr = 4;
+/// Maximum number of PUCCH F2 resources per cell for CSI.
+constexpr unsigned max_cell_f2_res_csi = 1;
 
 /// \brief Generates the list of cell PUCCH resources (Format 1 and 2) given the available PRBs.
 ///
@@ -88,12 +54,11 @@ struct cell_pucch_resource {
 /// \remark The function returns an empty list in the following cases: (i) If the given number of RBs is not enough to
 /// allocate at least 1 resource. (ii) If the RBs occupancy is larger than the BWP size. (iii) If F2 intra-slot
 /// frequency hopping is enabled with only 1 symbol.
-std::vector<cell_pucch_resource> generate_pucch_res_list_given_rbs(unsigned max_pucch_f1_rbs,
-                                                                   unsigned max_pucch_f2_rbs,
-
-                                                                   pucch_f1_params f1_params,
-                                                                   pucch_f2_params f2_params,
-                                                                   unsigned        bwp_size_rbs);
+std::vector<pucch_resource> generate_pucch_res_list_given_rbs(unsigned        max_pucch_f1_rbs,
+                                                              unsigned        max_pucch_f2_rbs,
+                                                              pucch_f1_params f1_params,
+                                                              pucch_f2_params f2_params,
+                                                              unsigned        bwp_size_rbs);
 
 /// \brief Generates the list of cell PUCCH resources (Format 1 and 2) given the number of requested resources.
 ///
@@ -105,13 +70,40 @@ std::vector<cell_pucch_resource> generate_pucch_res_list_given_rbs(unsigned max_
 /// \param[in] f1_params PUCCH F1 resource parameters.
 /// \param[in] f1_params PUCCH F2 resource parameters.
 /// \param[in] bwp_size_rbs Size of the BWP in RBs.
-/// \return The list of PUCCH resources for a cell.
+/// \return The list of PUCCH resources for a cell. The list has the PUCCH Format 1 resources in front of the list, and
+/// the PUCCH Format 2 in the back of the list.
 /// \remark The function returns an empty list in the following cases: (i) If overall the RBs occupancy is larger than
 /// the BWP size. (ii) If F2 intra-slot frequency hopping is enabled with only 1 symbol.
-std::vector<cell_pucch_resource> generate_pucch_res_list_given_number(unsigned        nof_res_f1,
-                                                                      unsigned        nof_res_f2,
-                                                                      pucch_f1_params f1_params,
-                                                                      pucch_f2_params f2_params,
-                                                                      unsigned        bwp_size_rbs);
+std::vector<pucch_resource> generate_pucch_res_list_given_number(unsigned        nof_res_f1,
+                                                                 unsigned        nof_res_f2,
+                                                                 pucch_f1_params f1_params,
+                                                                 pucch_f2_params f2_params,
+                                                                 unsigned        bwp_size_rbs);
+
+/// \brief Generates the list of PUCCH resources for a given UE.
+///
+/// This function generates the list of PUCCH F1 and F2 resources for a given UE, including the resources for HARQ-ACK
+/// reporting, SR and CSI. It also updates the PUCCH resource sets accordingly. This function overwrites the default
+/// \c pucch_config passed as a input function.
+/// The returned UE PUCCH resource list contains:
+/// - nof_ue_pucch_f1_res_harq PUCCH F1 resources for HARQ-ACK.
+/// - nof_ue_pucch_f2_res_harq PUCCH F2 resources for HARQ-ACK.
+/// - nof_cell_pucch_f1_res_sr PUCCH F1 resources for SR (only 1 of this will be used by the UE).
+/// - nof_cell_pucch_f2_res_csi PUCCH F2 resources for CSI.
+///
+/// \param[in,out] pucch_cfg default \c pucch_config that will be overwritten by this function.
+/// \param[in] res_list cell PUCCH resource list from which the function picks the UE PUCCH resources.
+/// \param[in] nof_ue_pucch_f1_res_harq desired number of UE PUCCH F1 resources (HARQ-ACK) in UE configuration.
+/// \param[in] nof_ue_pucch_f2_res_harq desired number of UE PUCCH F2 resources (HARQ-ACK) in UE configuration.
+/// \param[in] nof_cell_pucch_f1_res_sr number of PUCCH F1 resources for SR available in the cell.
+/// \param[in] nof_cell_pucch_f2_res_csi number of PUCCH F2 resources for CSI available in the cell.
+/// \remark In the current implementation, \c nof_cell_pucch_f2_res_csi is expected to be 1.
+/// \return true if the building is successful, false otherwise.
+bool ue_pucch_config_builder(pucch_config&                                     pucch_cfg,
+                             const std::vector<pucch_resource>&                res_list,
+                             bounded_integer<unsigned, 1, max_ue_f1_res_harq>  nof_ue_pucch_f1_res_harq,
+                             bounded_integer<unsigned, 1, max_ue_f2_res_harq>  nof_ue_pucch_f2_res_harq,
+                             bounded_integer<unsigned, 1, max_cell_f1_res_sr>  nof_cell_pucch_f1_res_sr,
+                             bounded_integer<unsigned, 1, max_cell_f2_res_csi> nof_cell_pucch_f2_res_csi = 1);
 } // namespace srs_du
 } // namespace srsran

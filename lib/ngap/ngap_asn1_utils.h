@@ -106,7 +106,7 @@ inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::ngap_pdu_c& pdu)
   return {default_error_t{}};
 }
 
-inline void copy_asn1_key(security::sec_as_key& key_out, const asn1::fixed_bitstring<256, false, true>& key_in)
+inline void copy_asn1_key(security::sec_key& key_out, const asn1::fixed_bitstring<256, false, true>& key_in)
 {
   for (uint32_t i = 0; i < key_in.nof_octets(); ++i) {
     key_out[i] = key_in.data()[key_in.nof_octets() - 1 - i];

@@ -25,23 +25,33 @@
 
 using namespace srsran;
 
-mac_dl_ue_manager::mac_dl_ue_manager(du_rnti_table& rnti_table_) : rnti_table(rnti_table_) {}
+mac_dl_ue_manager::mac_dl_ue_manager(const mac_expert_config& mac_cfg, du_rnti_table& rnti_table_) :
+  rnti_table(rnti_table_), rlf_handler(mac_cfg.max_consecutive_dl_kos, mac_cfg.max_consecutive_ul_kos)
+{
+}
 
-bool mac_dl_ue_manager::add_ue(const mac_ue_create_request_message& request,
-                               std::vector<std::vector<uint8_t>>    dl_harq_buffers)
+bool mac_dl_ue_manager::add_ue(const mac_ue_create_request& request, std::vector<std::vector<uint8_t>> dl_harq_buffers)
 {
   std::lock_guard<std::mutex> lock(ue_mutex[request.ue_index]);
-  return add_ue_nolock(request.ue_index, request.crnti, request.ul_ccch_msg, std::move(dl_harq_buffers)) and
+  return add_ue_nolock(request.ue_index,
+                       request.crnti,
+                       request.ul_ccch_msg,
+                       std::move(dl_harq_buffers),
+                       *request.rlf_notifier) and
          addmod_bearers_nolock(request.ue_index, request.bearers);
 }
 
 bool mac_dl_ue_manager::remove_ue(du_ue_index_t ue_index)
 {
+  // Remove UE from RLF detector.
+  rlf_handler.rem_ue(ue_index);
+
   std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
   if (not ue_db.contains(ue_index)) {
     return false;
   }
   ue_db.erase(ue_index);
+
   return true;
 }
 
@@ -68,15 +78,15 @@ bool mac_dl_ue_manager::remove_bearers(du_ue_index_t ue_index, span<const lcid_t
 bool mac_dl_ue_manager::add_ue_nolock(du_ue_index_t                     ue_index,
                                       rnti_t                            crnti,
                                       const byte_buffer*                ul_ccch_msg,
-                                      std::vector<std::vector<uint8_t>> dl_harq_buffers)
+                                      std::vector<std::vector<uint8_t>> dl_harq_buffers,
+                                      mac_ue_radio_link_notifier&       rlf_notifier)
 {
   if (ue_db.contains(ue_index)) {
     return false;
   }
-  ue_db.emplace(ue_index);
+
+  ue_db.emplace(ue_index, ue_index, crnti);
   auto& u        = ue_db[ue_index];
-  u.ue_index     = ue_index;
-  u.rnti         = crnti;
   u.harq_buffers = std::move(dl_harq_buffers);
   if (ul_ccch_msg != nullptr) {
     // Store Msg3.
@@ -84,6 +94,10 @@ bool mac_dl_ue_manager::add_ue_nolock(du_ue_index_t                     ue_index
         ul_ccch_msg->length() >= UE_CON_RES_ID_LEN, "Invalid UL-CCCH message length ({} < 6)", ul_ccch_msg->length());
     std::copy(ul_ccch_msg->begin(), ul_ccch_msg->begin() + UE_CON_RES_ID_LEN, u.msg3_subpdu.begin());
   }
+
+  // Register UE in RLF detector.
+  rlf_handler.add_ue(ue_index, rlf_notifier);
+
   return true;
 }
 

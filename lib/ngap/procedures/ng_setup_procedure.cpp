@@ -21,16 +21,19 @@
  */
 
 #include "ng_setup_procedure.h"
+#include "../ngap_asn1_converters.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
-ng_setup_procedure::ng_setup_procedure(const ng_setup_request&   request_,
+ng_setup_procedure::ng_setup_procedure(ngap_context_t&           context_,
+                                       const ng_setup_request&   request_,
                                        ngap_message_notifier&    amf_notif_,
                                        ngap_transaction_manager& ev_mng_,
                                        timer_factory             timers,
                                        srslog::basic_logger&     logger_) :
+  context(context_),
   request(request_),
   amf_notifier(amf_notif_),
   ev_mng(ev_mng_),
@@ -116,6 +119,11 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
     logger.debug("Received PDU with successful outcome");
     res.msg     = transaction_sink.response();
     res.success = true;
+
+    for (const auto& guami_item : res.msg->served_guami_list.value) {
+      context.served_guami_list.push_back(asn1_guami_to_guami(guami_item.guami));
+    }
+
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
     logger.error("Received PDU with unsuccessful outcome cause={}", get_cause_str(ng_fail->cause.value));

@@ -24,7 +24,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
 #include "../support/prbs_calculator.h"
-#include "../ue_scheduling/ue_sch_pdu_builder.h"
+#include "../support/sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
 using namespace srsran;
@@ -36,10 +36,11 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
                  rnti_t                            crnti_val,
                  const scheduler_ue_expert_config& expert_cfg_,
                  const cell_configuration&         cell_cfg_common_,
-                 const serving_cell_config&        ue_serv_cell) :
+                 const serving_cell_config&        ue_serv_cell,
+                 ue_harq_timeout_notifier          harq_timeout_notifier) :
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
-  harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS),
+  harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell)
@@ -55,24 +56,17 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
+void ue_cell::set_latest_wb_cqi(unsigned wb_cqi)
 {
-  static const size_t cqi_payload_size = 4;
-  if (payload.size() < cqi_payload_size) {
-    return;
-  }
-  // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
-  // encoding.
-  ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
-                             (static_cast<unsigned>(payload.test(1)) << 2) +
-                             (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));
+  ue_metrics.latest_wb_cqi = wb_cqi;
 }
 
-grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
+grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                         unsigned                                     pending_bytes) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cfg, time_resource);
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cfg, pdsch_td_cfg);
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
@@ -91,8 +85,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pendin
 
   sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
 
-  dmrs_information dmrs_info = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  dmrs_information dmrs_info = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
@@ -101,24 +94,28 @@ grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pendin
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers});
 
-  const bwp_downlink_common& bwp_dl_cmn = ue_cfg.dl_bwp_common(active_bwp_id());
+  const bwp_downlink_common& bwp_dl_cmn = *ue_cfg.bwp(active_bwp_id()).dl_common;
   return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
 }
 
-grant_prbs_mcs
-ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const
+grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                         unsigned                                     pending_bytes,
+                                         dci_ul_rnti_config_type                      type) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  const bwp_uplink_common& bwp_ul_cmn = ue_cfg.ul_bwp_common(active_bwp_id());
+  const bwp_uplink_common& bwp_ul_cmn = *ue_cfg.bwp(active_bwp_id()).ul_common;
 
   pusch_config_params pusch_cfg;
   switch (type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cfg, bwp_ul_cmn, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg);
+      break;
+    case dci_ul_rnti_config_type::c_rnti_f0_1:
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -131,16 +128,13 @@ ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul
     mcs = expert_cfg.ul_mcs.start();
   } else {
     // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(ul_snr);
+    mcs = map_snr_to_mcs_ul(ul_snr, pusch_cfg.mcs_table);
     mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
   }
 
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 
-  const unsigned nof_symbols = static_cast<unsigned>(
-      cfg()
-          .cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource]
-          .symbols.length());
+  const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   nof_symbols,

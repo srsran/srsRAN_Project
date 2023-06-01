@@ -35,13 +35,11 @@ class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:
   // See interface for the documentation.
-  void rate_match(span<uint8_t>                                 output,
-                  span<const uint8_t>                           input,
-                  const codeblock_metadata::tb_common_metadata& cfg) override;
+  void rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata& cfg) override;
 
 private:
   /// Initializes the rate matcher internal state.
-  void init(const codeblock_metadata::tb_common_metadata& cfg);
+  void init(const codeblock_metadata& cfg);
 
   /// \brief Carries out bit selection, as per TS38.212 Section 5.4.2.1.
   ///
@@ -65,6 +63,12 @@ private:
   unsigned rv = 0;
   /// Modulation scheme.
   unsigned modulation_order = 1;
+  /// Base graph.
+  ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
+  /// Number of systematic bits (including filler bits) in the codeblock.
+  unsigned nof_systematic_bits = 0;
+  /// Number of filler bits.
+  unsigned nof_filler_bits = 0;
   /// Buffer length.
   unsigned buffer_length = 0;
   /// Shift \f$ k_0 \f$ as defined in TS38.212 Table 5.4.2.1-2

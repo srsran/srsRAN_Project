@@ -59,7 +59,7 @@ grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const sib_in
 ///
 /// \param rar RAR allocation parameters.
 /// \return Parameters of the grant.
-grant_info get_pdsch_grant_info(const rar_information& rar);
+grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const rar_information& rar);
 
 /// Extract PDSCH grant info of Paging allocation.
 ///
@@ -72,7 +72,7 @@ grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_pag
 ///
 /// \param ue_grant UE PDSCH grant parameters.
 /// \return Parameters of the grant.
-grant_info get_pdsch_grant_info(const dl_msg_alloc& ue_grant);
+grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_msg_alloc& ue_grant);
 
 /// \brief Creates a list with the grants allocated in a cell DL resource grid. This includes PDCCHs, PDSCHs and SSB.
 std::vector<test_grant_info> get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res);

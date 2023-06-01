@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
+#include "../ngap_context.h"
 #include "ngap_transaction_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
@@ -34,7 +35,8 @@ namespace srs_cu_cp {
 class ng_setup_procedure
 {
 public:
-  ng_setup_procedure(const ng_setup_request&   request_,
+  ng_setup_procedure(ngap_context_t&           context_,
+                     const ng_setup_request&   request_,
                      ngap_message_notifier&    amf_notif_,
                      ngap_transaction_manager& ev_mng_,
                      timer_factory             timers,
@@ -52,6 +54,7 @@ private:
   /// Creates procedure result to send back to procedure caller.
   ng_setup_response create_ng_setup_result();
 
+  ngap_context_t&           context;
   const ng_setup_request    request;
   ngap_message_notifier&    amf_notifier;
   ngap_transaction_manager& ev_mng;

@@ -20,11 +20,15 @@
  *
  */
 
+/// \file Defines the parameters that define the PUCCH struct and enums. These parameters are derived from the related
+/// ones given in TS 38.331, \c PUCCH-Config.
+
 #pragma once
 
 #include "pucch_mapping.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/adt/variant.h"
 #include "srsran/ran/sr_configuration.h"
 #include <cstdint>
 #include <vector>
@@ -157,24 +161,16 @@ struct pucch_format_4_cfg {
 
 /// \c PUCCH-Resource, in \c PUCCH-Config, TS 38.331.
 struct pucch_resource {
-  unsigned     res_id;
-  unsigned     starting_prb;
-  unsigned     second_hop_prb;
-  bool         intraslot_freq_hopping;
-  pucch_format format;
-  union {
-    pucch_format_0_cfg   format_0;
-    pucch_format_1_cfg   format_1;
-    pucch_format_2_3_cfg format_2;
-    pucch_format_2_3_cfg format_3;
-    pucch_format_4_cfg   format_4;
-  };
+  unsigned                                                                                  res_id;
+  unsigned                                                                                  starting_prb;
+  optional<unsigned>                                                                        second_hop_prb;
+  pucch_format                                                                              format;
+  variant<pucch_format_0_cfg, pucch_format_1_cfg, pucch_format_2_3_cfg, pucch_format_4_cfg> format_params;
 
   bool operator==(const pucch_resource& rhs) const
   {
     return res_id == rhs.res_id && starting_prb == rhs.starting_prb && second_hop_prb == rhs.second_hop_prb &&
-           intraslot_freq_hopping == rhs.intraslot_freq_hopping && format == rhs.format && format_0 == rhs.format_0 &&
-           format_1 == rhs.format_1 && format_2 == rhs.format_2 && format_3 == rhs.format_3 && format_4 == rhs.format_4;
+           format == rhs.format && format_params == rhs.format_params;
   }
   bool operator!=(const pucch_resource& rhs) const { return !(rhs == *this); }
 };

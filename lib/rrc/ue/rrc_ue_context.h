@@ -22,9 +22,8 @@
 
 #pragma once
 
-#include "drb_manager_impl.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
-#include "srsran/rrc/drb_manager.h"
+#include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc_cell_context.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/rrc/rrc_ue_config.h"
@@ -44,26 +43,22 @@ public:
                    const rnti_t           c_rnti_,
                    const rrc_cell_context cell_,
                    const rrc_ue_cfg_t&    cfg_) :
-    ue_index(ue_index_),
-    c_rnti(c_rnti_),
-    cell(cell_),
-    cfg(cfg_),
-    drb_mng(std::make_unique<drb_manager_impl>(cfg_.drb_cfg))
+    ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_), up_mng(create_up_resource_manager(cfg_.up_cfg))
   {
   }
 
-  drb_manager& get_drb_manager() { return *drb_mng; }
+  up_resource_manager& get_up_manager() { return *up_mng; }
 
   const ue_index_t                       ue_index; // UE index assigned by the DU processor
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell
   const rrc_ue_cfg_t&                    cfg;
   rrc_state                              state = rrc_state::idle;
-  std::unique_ptr<drb_manager>           drb_mng;
-  guami                                  current_guami; // current GUAMI
-  uint64_t                               setup_ue_id = -1;
+  std::unique_ptr<up_resource_manager>   up_mng;
+  optional<uint32_t>                     five_g_tmsi;
+  uint64_t                               setup_ue_id;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
-  security::sec_as_config                sec_cfg;
+  security::security_context             sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s>    capabilities;
 };
 

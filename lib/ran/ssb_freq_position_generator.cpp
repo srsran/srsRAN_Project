@@ -3,26 +3,40 @@
 
 using namespace srsran;
 
+// GSCN set for band n34, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 3.
+static const std::array<unsigned, 3> gscn_band_n34_ssb_caseA = {5032, 5043, 5054};
+
+// GSCN set for band n38, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 2.
+static const std::array<unsigned, 10> gscn_band_n38_ssb_caseA =
+    {6432, 6443, 6457, 6468, 6479, 6493, 6507, 6518, 6532, 6543};
+
+// GSCN set for band n39, SSB case A, as per TS 38.104, Table 5.4.3.3-1, Note 4.
+static const std::array<unsigned, 14> gscn_band_n39_ssb_caseA =
+    {4707, 4715, 4718, 4729, 4732, 4743, 4747, 4754, 4761, 4768, 4772, 4782, 4786, 4793};
+
+// GSCN set for band n46, as per TS 38.104, Table 5.4.3.3-1, Note 5.
 static const std::array<unsigned, 32> gscn_band_n46 = {
     // clang-format off
-      8996, 9010, 9024, 9038, 9051, 9065, 9079, 9093, 9107, 9121, 9218, 9232, 9246, 9260, 9274, 9288,
-      9301, 9315, 9329, 9343, 9357, 9371, 9385, 9402, 9416, 9430, 9444, 9458, 9472, 9485, 9499, 9513
+  8996, 9010, 9024, 9038, 9051, 9065, 9079, 9093, 9107, 9121, 9218, 9232, 9246, 9260, 9274, 9288, 9301, 9315, 9329,
+  9343, 9357, 9371, 9385, 9402, 9416, 9430, 9444, 9458, 9472, 9485, 9499, 9513
     // clang-format on
 };
 
+// GSCN set for band n96, as per TS 38.104, Table 5.4.3.3-1, Note 6.
 static const std::array<unsigned, 59> gscn_band_n96 = {
     // clang-format off
-      9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784, 9798,
-      9812, 9826, 9840, 9853, 9867, 9881, 9895, 9909, 9923, 9937, 9951, 9964, 9978, 9992, 10006, 10020, 10034, 10048,
-      10062, 10076, 10090, 10103,10117, 10131, 10145, 10159, 10173, 10187, 10201, 10214, 10228, 10242, 10256, 10270,
-      10284, 10298, 10312, 10325, 10339, 10353
+  9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784, 9798,
+  9812, 9826, 9840, 9853, 9867, 9881, 9895, 9909, 9923, 9937, 9951, 9964, 9978, 9992, 10006, 10020, 10034, 10048, 10062,
+  10076, 10090, 10103,10117, 10131, 10145, 10159, 10173, 10187, 10201, 10214, 10228, 10242, 10256, 10270, 10284, 10298,
+  10312, 10325, 10339, 10353
     // clang-format on
 };
 
+// GSCN set for band n102, as per TS 38.104, Table 5.4.3.3-1, Note 9.
 static const std::array<unsigned, 25> gscn_band_n102 = {
     // clang-format off
-      9535, 9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784,
-      9798, 9812, 9826, 9840, 9853, 9867
+  9535, 9548, 9562, 9576, 9590, 9603, 9617, 9631, 9645, 9659, 9673, 9687, 9701, 9714, 9728, 9742, 9756, 9770, 9784,
+  9798, 9812, 9826, 9840, 9853, 9867
     // clang-format on
 };
 
@@ -103,10 +117,23 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
   if (dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ) {
     N_raster = static_cast<unsigned>(std::floor(ss_ref_l_bound_hz / N_SIZE_SYNC_RASTER_1_HZ));
   } else if (dl_arfcn >= MIN_ARFCN_3_GHZ_24_5_GHZ && dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ) {
-    // Band n79 has a different sync raster step size and need to be handled separately.
-    if (band == nr_band::n79) {
-      N_raster = GSCN_LB_N_90_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
-      while (get_ss_ref_hz(N_raster, 0) >= ss_ref_l_bound_hz) {
+    // For BW >= 40MHz, Band n79 has a different sync raster step size and need to be handled separately.
+    const bool is_band_40mhz_or_above = (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 216U) or
+                                        (scs_common == subcarrier_spacing::kHz30 and n_rbs >= 106U) or
+                                        (scs_common == subcarrier_spacing::kHz60 and n_rbs >= 51U);
+
+    // For bands n79 and n104, the sync raster has a specific step and need to be handled separately, as per
+    // Table 5.4.3.3-1, TS 38.104, ver. 17.8.0. In the following, we compute the starting point of parameter N for the
+    // sync-raster, so that the resulting GSCN (i) is compatible with the raster step and starting point and (ii) the
+    // SSB lowest subcarrier is greater than pointA.
+    if (band == nr_band::n79 and is_band_40mhz_or_above) {
+      N_raster = GSCN_LB_N_79_BW_40_MHZ - GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
+        increase_N_raster();
+      }
+    } else if (band == nr_band::n104) {
+      N_raster = GSCN_LB_N_104 - GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
         increase_N_raster();
       }
     } else {
@@ -182,8 +209,8 @@ unsigned ssb_freq_position_generator::find_M_raster()
 void ssb_freq_position_generator::increase_N_raster()
 {
   const bool is_band_40mhz_or_above = (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 216U) or
-                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 106U) or
-                                      (scs_common == subcarrier_spacing::kHz15 and n_rbs >= 51U);
+                                      (scs_common == subcarrier_spacing::kHz30 and n_rbs >= 106U) or
+                                      (scs_common == subcarrier_spacing::kHz60 and n_rbs >= 51U);
 
   // N_raster increase as per Table 5.4.3.3-1, TS 38.104, ver.17.8.0.
   if (band == nr_band::n79 and is_band_40mhz_or_above) {
@@ -197,7 +224,9 @@ void ssb_freq_position_generator::increase_N_raster()
 
 ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 {
-  if (band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102) {
+  // Handle bands with special raster separately.
+  if (band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102 or
+      (ssb_case == ssb_pattern_case::A and (band == nr_band::n34 or band == nr_band::n38 or band == nr_band::n39))) {
     return get_next_ssb_location_special_raster();
   }
 
@@ -258,36 +287,62 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 
 ssb_freq_location ssb_freq_position_generator::get_next_ssb_location_special_raster()
 {
-  srsran_assert(band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102,
+  srsran_assert(band == nr_band::n34 or band == nr_band::n38 or band == nr_band::n39 or band == nr_band::n46 or
+                    band == nr_band::n96 or band == nr_band::n102,
                 "Special sync. raster is only for bands n46, n96, and n102");
 
   ssb_freq_location ssb{.is_valid = false};
 
   // Helper that retrieves the size from the specific std::array depending on the band.
   const auto get_gscn_list_size = [band_ = band]() {
-    if (band_ == nr_band::n46) {
-      return gscn_band_n46.size();
-    } else if (band_ == nr_band::n96) {
-      return gscn_band_n96.size();
-    } else if (band_ == nr_band::n102) {
-      return gscn_band_n102.size();
+    switch (band_) {
+      case nr_band::n34:
+        return gscn_band_n34_ssb_caseA.size();
+      case nr_band::n38:
+        return gscn_band_n38_ssb_caseA.size();
+      case nr_band::n39:
+        return gscn_band_n39_ssb_caseA.size();
+      case nr_band::n46:
+        return gscn_band_n46.size();
+      case nr_band::n96:
+        return gscn_band_n96.size();
+      case nr_band::n102:
+        return gscn_band_n102.size();
+      default:
+        return static_cast<size_t>(0);
     }
-    return static_cast<size_t>(0);
   };
 
   // Helper that retrieves the element from the specific std::array depending on the band.
   const auto get_gscn_list_item = [band_ = band](size_t idx) {
-    if (band_ == nr_band::n46) {
-      srsran_assert(idx < gscn_band_n46.size(), "GSCN list index exceeds its size");
-      return gscn_band_n46[idx];
-    } else if (band_ == nr_band::n96) {
-      srsran_assert(idx < gscn_band_n96.size(), "GSCN list index exceeds its size");
-      return gscn_band_n96[idx];
-    } else if (band_ == nr_band::n102) {
-      srsran_assert(idx < gscn_band_n102.size(), "GSCN list index exceeds its size");
-      return gscn_band_n102[idx];
+    switch (band_) {
+      case nr_band::n34: {
+        srsran_assert(idx < gscn_band_n34_ssb_caseA.size(), "GSCN list index exceeds its size");
+        return gscn_band_n34_ssb_caseA[idx];
+      }
+      case nr_band::n38: {
+        srsran_assert(idx < gscn_band_n38_ssb_caseA.size(), "GSCN list index exceeds its size");
+        return gscn_band_n38_ssb_caseA[idx];
+      }
+      case nr_band::n39: {
+        srsran_assert(idx < gscn_band_n39_ssb_caseA.size(), "GSCN list index exceeds its size");
+        return gscn_band_n39_ssb_caseA[idx];
+      }
+      case nr_band::n46: {
+        srsran_assert(idx < gscn_band_n46.size(), "GSCN list index exceeds its size");
+        return gscn_band_n46[idx];
+      }
+      case nr_band::n96: {
+        srsran_assert(idx < gscn_band_n96.size(), "GSCN list index exceeds its size");
+        return gscn_band_n96[idx];
+      }
+      case nr_band::n102: {
+        srsran_assert(idx < gscn_band_n102.size(), "GSCN list index exceeds its size");
+        return gscn_band_n102[idx];
+      }
+      default:
+        return 0U;
     }
-    return 0U;
   };
 
   if (gscn_raster_idx >= get_gscn_list_size()) {

@@ -76,6 +76,7 @@ private:
   scheduler_event_logger&    event_logger;
   scheduler_metrics_handler& metrics;
   scheduler_result_logger    result_logger;
+  srslog::basic_logger&      logger;
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;

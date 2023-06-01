@@ -27,17 +27,20 @@ using namespace srs_du;
 
 f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
                                  drb_id_t             drb_id_,
+                                 const f1u_config&    config,
                                  f1u_rx_sdu_notifier& rx_sdu_notifier_,
                                  f1u_tx_pdu_notifier& tx_pdu_notifier_,
                                  timer_factory        timers) :
-  logger("F1-U", {ue_index, drb_id_}),
+  logger("DU-F1-U", {ue_index, drb_id_}),
+  cfg(config),
   rx_sdu_notifier(rx_sdu_notifier_),
   tx_pdu_notifier(tx_pdu_notifier_),
   ul_notif_timer(timers.create_timer())
 {
-  ul_notif_timer.set(std::chrono::milliseconds(f1u_ul_notif_time_ms),
-                     [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
+  ul_notif_timer.set(std::chrono::milliseconds(cfg.t_notify), [this](timer_id_t tid) { on_expired_ul_notif_timer(); });
   ul_notif_timer.run();
+
+  logger.log_info("F1-U bearer configured. {}", cfg);
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
@@ -137,11 +140,10 @@ void f1u_bearer_impl::fill_data_delivery_status(nru_ul_message& msg)
 
 void f1u_bearer_impl::on_expired_ul_notif_timer()
 {
-  logger.log_debug("UL notification timer expired");
   nru_ul_message msg = {};
   fill_data_delivery_status(msg);
   if (msg.data_delivery_status.has_value()) {
-    logger.log_debug("Sending data delivery status");
+    logger.log_debug("Sending data delivery status due to expired UL notification timer");
     tx_pdu_notifier.on_new_pdu(std::move(msg));
   }
 }

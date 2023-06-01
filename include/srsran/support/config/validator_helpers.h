@@ -55,4 +55,12 @@ bool has_unique_ids(const Range& r, IdType ValueType::*id_field)
   return has_unique_ids(r, [id_field](const auto& e) { return e.*id_field; });
 }
 
+/// \brief Check if all elements of a range are unique.
+template <typename Range>
+bool are_all_unique(const Range& r)
+{
+  return has_unique_ids(
+      r, [](const auto& e) -> const auto& { return e; });
+}
+
 } // namespace srsran

@@ -30,13 +30,17 @@ static const unsigned TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE = 100000;
 static mac_rx_data_indication create_test_pdu_with_bsr(slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id)
 {
   // - 8-bit R/LCID MAC subheader.
-  // - MAC CE with Short BSR.
+  // - MAC CE with Long BSR.
   //
   // |   |   |   |   |   |   |   |   |
   // | R | R |         LCID          |  Octet 1
-  // |  LCG ID   |    Buffer Size    |  Octet 2
+  // |              L                |  Octet 2
+  // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
+  // |         Buffer Size 1         |  Octet 4
   return mac_rx_data_indication{
-      sl_rx, to_du_cell_index(0), mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, byte_buffer{0x3d, 0x1f}}}};
+      sl_rx,
+      to_du_cell_index(0),
+      mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, byte_buffer{0x3e, 0x02, 0x01, 0xff}}}};
 }
 
 /// \brief Adapter for the MAC SDU TX builder that auto fills the DL buffer state update.
@@ -179,10 +183,9 @@ mac_test_mode_adapter::adapt_bearers(const std::vector<mac_logical_channel_confi
   return test_ue_adapted_bearers;
 }
 
-async_task<mac_ue_create_response_message>
-mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_message& cfg)
+async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request& cfg)
 {
-  mac_ue_create_request_message cfg_adapted = cfg;
+  mac_ue_create_request cfg_adapted = cfg;
   if (cfg_adapted.crnti == test_ue.rnti) {
     // It is the test UE.
 
@@ -193,11 +196,11 @@ mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_mess
     cfg_adapted.bearers = adapt_bearers(cfg.bearers);
   }
 
-  return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response_message>>& ctx) mutable {
+  return launch_async([this, cfg_adapted](coro_context<async_task<mac_ue_create_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     // Create the UE in mac instance.
-    CORO_AWAIT_VALUE(mac_ue_create_response_message ret,
+    CORO_AWAIT_VALUE(mac_ue_create_response ret,
                      mac_adapted->get_ue_configurator().handle_ue_create_request(cfg_adapted));
 
     if (test_ue.rnti == cfg_adapted.crnti) {
@@ -218,8 +221,8 @@ mac_test_mode_adapter::handle_ue_create_request(const mac_ue_create_request_mess
   });
 }
 
-async_task<mac_ue_reconfiguration_response_message>
-mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)
+async_task<mac_ue_reconfiguration_response>
+mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg)
 {
   if (cfg.crnti == test_ue.rnti) {
     // If it is the test UE.
@@ -235,8 +238,7 @@ mac_test_mode_adapter::handle_ue_reconfiguration_request(const mac_ue_reconfigur
   return mac_adapted->get_ue_configurator().handle_ue_reconfiguration_request(cfg);
 }
 
-async_task<mac_ue_delete_response_message>
-mac_test_mode_adapter::handle_ue_delete_request(const mac_ue_delete_request_message& cfg)
+async_task<mac_ue_delete_response> mac_test_mode_adapter::handle_ue_delete_request(const mac_ue_delete_request& cfg)
 {
   return mac_adapted->get_ue_configurator().handle_ue_delete_request(cfg);
 }

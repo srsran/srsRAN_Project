@@ -68,9 +68,9 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned i
 
   ng_ran_bearer_context_setup_req.resize(1);
 
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_res_to_setup_item = {};
-  pdu_session_res_to_setup_item.pdu_session_id                              = 1;
-  pdu_session_res_to_setup_item.pdu_session_type                            = asn1::e1ap::pdu_session_type_e::ipv4;
+  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_res_to_setup_item;
+  pdu_session_res_to_setup_item.pdu_session_id   = 1;
+  pdu_session_res_to_setup_item.pdu_session_type = asn1::e1ap::pdu_session_type_e::ipv4;
   pdu_session_res_to_setup_item.snssai.sst.from_number(1);
   pdu_session_res_to_setup_item.security_ind.integrity_protection_ind =
       asn1::e1ap::integrity_protection_ind_e::not_needed;
@@ -103,8 +103,8 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned i
   cell_group_info_item.cell_group_id                      = 0;
   drb_to_setup_item_ng_ran.cell_group_info.push_back(cell_group_info_item);
 
-  asn1::e1ap::qos_flow_qos_param_item_s qo_s_flow_qos_param_item = {};
-  qo_s_flow_qos_param_item.qos_flow_id                           = 1;
+  asn1::e1ap::qos_flow_qos_param_item_s qo_s_flow_qos_param_item{};
+  qo_s_flow_qos_param_item.qos_flow_id = 1;
   qo_s_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
   auto& qos_characteristics   = qo_s_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
   qos_characteristics.five_qi = 9;

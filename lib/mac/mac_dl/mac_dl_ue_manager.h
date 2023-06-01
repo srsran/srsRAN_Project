@@ -22,8 +22,10 @@
 
 #pragma once
 
+#include "rlf_detector.h"
 #include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
 #include "srsran/scheduler/harq_id.h"
@@ -39,7 +41,7 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 class mac_dl_ue_manager
 {
 public:
-  mac_dl_ue_manager(du_rnti_table& rnti_table_);
+  mac_dl_ue_manager(const mac_expert_config& mac_cfg, du_rnti_table& rnti_table_);
 
   /// Check if UE with provided C-RNTI exists.
   /// \param rnti C-RNTI of the UE.
@@ -88,7 +90,7 @@ public:
     return u.dl_bearers.contains(lcid) ? u.dl_bearers[lcid] : nullptr;
   }
 
-  bool add_ue(const mac_ue_create_request_message& request, std::vector<std::vector<uint8_t>> dl_harq_buffers);
+  bool add_ue(const mac_ue_create_request& request, std::vector<std::vector<uint8_t>> dl_harq_buffers);
 
   bool remove_ue(du_ue_index_t ue_index);
 
@@ -109,19 +111,28 @@ public:
     return ue_db[ue_index].harq_buffers[h_id];
   }
 
+  /// \brief Handle received UE CRC.
+  void report_crc(du_ue_index_t ue_index, bool crc) { rlf_handler.handle_crc(ue_index, crc); }
+
+  /// \brief Handle received UE HARQ-ACK.
+  void report_ack(du_ue_index_t ue_index, bool ack) { rlf_handler.handle_ack(ue_index, ack); }
+
 private:
   struct ue_item {
-    rnti_t                              rnti     = INVALID_RNTI;
     du_ue_index_t                       ue_index = MAX_NOF_DU_UES;
+    rnti_t                              rnti     = INVALID_RNTI;
     slotted_vector<mac_sdu_tx_builder*> dl_bearers;
     ue_con_res_id_t                     msg3_subpdu;
     std::vector<std::vector<uint8_t>>   harq_buffers;
+
+    explicit ue_item(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
   };
 
   bool add_ue_nolock(du_ue_index_t                     ue_index,
                      rnti_t                            crnti,
                      const byte_buffer*                ul_ccch_msg,
-                     std::vector<std::vector<uint8_t>> dl_harq_buffers);
+                     std::vector<std::vector<uint8_t>> dl_harq_buffers,
+                     mac_ue_radio_link_notifier&       rlf_notifier);
 
   bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_config> dl_logical_channels);
 
@@ -130,6 +141,8 @@ private:
   mutable std::array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 
   du_ue_list<ue_item> ue_db;
+
+  rlf_detector rlf_handler;
 };
 
 } // namespace srsran

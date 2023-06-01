@@ -69,11 +69,8 @@ slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searc
                                                  subcarrier_spacing        scs_common,
                                                  unsigned                  ssb_index)
 {
-  const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.band, scs_common);
-  srsran_assert(min_channel_bw < min_channel_bandwidth::MHz40, "Bands with minimum channel BW 40MHz not supported.");
-
   pdcch_type0_css_coreset_description coreset0_param =
-      pdcch_type0_css_coreset_get(min_channel_bw,
+      pdcch_type0_css_coreset_get(cell_cfg.dl_carrier.band,
                                   cell_cfg.ssb_cfg.scs,
                                   scs_common,
                                   coreset0,

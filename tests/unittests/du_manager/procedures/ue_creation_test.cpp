@@ -22,7 +22,7 @@
 
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_creation_procedure.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -156,13 +156,13 @@ TEST_F(du_manager_ue_creation_tester,
   // > Create first UE.
   set_sr_offset(ue_idx1, to_du_cell_index(0), sr_offset1);
   start_procedure(ue_idx1, to_rnti(0x4601));
-  mac_ue_create_request_message req1 = *this->mac.last_ue_create_msg;
+  mac_ue_create_request req1 = *this->mac.last_ue_create_msg;
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container_validity());
   du_ue_index_t ue_res_idx1 = *cell_res_alloc.last_ue_index;
   // > Create second UE.
   set_sr_offset(ue_idx2, to_du_cell_index(0), sr_offset2);
   start_procedure(ue_idx2, to_rnti(0x4602));
-  mac_ue_create_request_message req2 = *this->mac.last_ue_create_msg;
+  mac_ue_create_request req2 = *this->mac.last_ue_create_msg;
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container_validity());
   du_ue_index_t ue_res_idx2 = *cell_res_alloc.last_ue_index;
 

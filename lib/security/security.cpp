@@ -21,18 +21,123 @@
  */
 
 #include "srsran/security/security.h"
+#include "srsran/ran/pci.h"
 #include "srsran/security/ssl.h"
+#include "srsran/support/error_handling.h"
 #include <arpa/inet.h>
 
 using namespace srsran;
 using namespace srsran::security;
 
+bool security_context::select_algorithms(preferred_integrity_algorithms pref_inte_list,
+                                         preferred_ciphering_algorithms pref_ciph_list)
+{
+  // Select preferred integrity algorithm.
+  bool inte_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_inte_list[i]);
+    if (algo_id == 0) {
+      // Do not allow NIA0
+      logger.error("NIA0 selection not allowed");
+      break;
+    }
+    if (supported_int_algos[algo_id - 1]) {
+      inte_algo_found      = true;
+      sel_algos.integ_algo = security::integrity_algorithm_from_number(algo_id);
+      break;
+    }
+  }
+  if (not inte_algo_found) {
+    logger.error("Could not select integrity protection algorithm");
+    return false;
+  }
+
+  // Select preferred ciphering algorithm.
+  bool ciph_algo_found = false;
+  for (unsigned i = 0; i < nof_pref_algos; ++i) {
+    uint16_t algo_id = to_number(pref_ciph_list[i]);
+    if (algo_id == 0) {
+      ciph_algo_found       = true;
+      sel_algos.cipher_algo = security::ciphering_algorithm::nea0;
+      break;
+    }
+    if (supported_enc_algos[algo_id - 1]) {
+      ciph_algo_found       = true;
+      sel_algos.cipher_algo = security::ciphering_algorithm_from_number(algo_id);
+      break;
+    }
+  }
+  if (not ciph_algo_found) {
+    logger.error("Could not select ciphering algorithm");
+    return false;
+  }
+  sel_algos.algos_selected = true;
+  return true;
+}
+
+void security_context::generate_as_keys()
+{
+  srsran_sanity_check(sel_algos.algos_selected, "Tried to generate AS keys, but no algo is selected");
+  // Generate K_rrc_enc and K_rrc_int
+  security::generate_k_rrc(as_keys.k_rrc_enc, as_keys.k_rrc_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
+
+  // Generate K_up_enc and K_up_int
+  security::generate_k_up(as_keys.k_up_enc, as_keys.k_up_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
+
+  logger.debug("K_gNB {}", security::sec_as_key_to_string(k));
+  logger.debug("RRC Integrity Key {}", security::sec_as_key_to_string(as_keys.k_rrc_int));
+  logger.debug("RRC Encryption Key {}", security::sec_as_key_to_string(as_keys.k_rrc_enc));
+  logger.debug("UP Encryption Key {}", security::sec_as_key_to_string(as_keys.k_up_enc));
+  logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(as_keys.k_up_int));
+}
+
+void security_context::horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn)
+{
+  logger.info("Regenerating KgNB with PCI={}, SSB-ARFCN={}", target_pci, target_ssb_arfcn);
+  logger.info("Old K_gNB (k_gnb) {}", security::sec_as_key_to_string(k));
+
+  // Generate K_NG-RAN*
+  sec_key k_ng_ran_star;
+  generate_k_ng_ran_star(k_ng_ran_star, k, target_pci, target_ssb_arfcn);
+
+  // K_NG-RAN* becomes K_gNB
+  k = k_ng_ran_star;
+
+  generate_as_keys();
+}
+
+sec_128_as_config security_context::get_128_as_config(sec_domain domain)
+{
+  return truncate_config(get_as_config(domain));
+}
+
+sec_as_config security_context::get_as_config(sec_domain domain)
+{
+  srsran_sanity_check(sel_algos.algos_selected, "Tried to get AS config, but no algorithms are selected");
+  sec_as_config as_cfg;
+  as_cfg.domain = domain;
+  switch (domain) {
+    case sec_domain::rrc:
+      as_cfg.k_int = as_keys.k_rrc_int;
+      as_cfg.k_enc = as_keys.k_rrc_enc;
+      break;
+    case sec_domain::up:
+      as_cfg.k_int = as_keys.k_up_int;
+      as_cfg.k_enc = as_keys.k_up_enc;
+      break;
+    default:
+      srsran_assertion_failure("Unsupported sec_domain={}", domain);
+  }
+  as_cfg.integ_algo  = sel_algos.integ_algo;
+  as_cfg.cipher_algo = sel_algos.cipher_algo;
+  return as_cfg;
+}
 /******************************************************************************
  * Key Generation
  *****************************************************************************/
-void srsran::security::generate_k_rrc(sec_as_key&               k_rrc_enc,
-                                      sec_as_key&               k_rrc_int,
-                                      const sec_as_key&         k_gnb,
+void srsran::security::generate_k_rrc(sec_key&                  k_rrc_enc,
+                                      sec_key&                  k_rrc_int,
+                                      const sec_key&            k_gnb,
                                       const ciphering_algorithm enc_alg_id,
                                       const integrity_algorithm int_alg_id)
 {
@@ -56,9 +161,9 @@ void srsran::security::generate_k_rrc(sec_as_key&               k_rrc_enc,
   generic_kdf(k_rrc_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsran::security::generate_k_up(sec_as_key&               k_up_enc,
-                                     sec_as_key&               k_up_int,
-                                     const sec_as_key&         k_gnb,
+void srsran::security::generate_k_up(sec_key&                  k_up_enc,
+                                     sec_key&                  k_up_int,
+                                     const sec_key&            k_gnb,
                                      const ciphering_algorithm enc_alg_id,
                                      const integrity_algorithm int_alg_id)
 {
@@ -82,11 +187,40 @@ void srsran::security::generate_k_up(sec_as_key&               k_up_enc,
   generic_kdf(k_up_int, k_gnb, fc_value::algorithm_key_derivation, algo_distinguisher, algorithm_identity);
 }
 
-void srsran::security::generic_kdf(sec_as_key&         key_out,
-                                   const sec_as_key&   key_in,
-                                   const fc_value      fc,
-                                   span<const uint8_t> p0,
-                                   span<const uint8_t> p1)
+void srsran::security::generate_k_ng_ran_star(sec_key&       k_star,
+                                              const sec_key& k,
+                                              const pci_t&   target_pci_,
+                                              const uint32_t target_ssb_arfcn_)
+{
+  // PCI
+  std::vector<uint8_t> target_pci;
+  target_pci.resize(2);
+  target_pci[0] = (target_pci_ >> 8U) & 0xffU;
+  target_pci[1] = target_pci_ & 0xffU;
+
+  // ARFCN, can be two or three bytes
+  std::vector<uint8_t> target_ssb_arfcn;
+  if (target_ssb_arfcn_ < pow(2, 16)) {
+    target_ssb_arfcn.resize(2);
+    target_ssb_arfcn[0] = (target_ssb_arfcn_ >> 8U) & 0xffU;
+    target_ssb_arfcn[1] = target_ssb_arfcn_ & 0xffU;
+  } else if (target_ssb_arfcn_ < pow(2, 24)) {
+    target_ssb_arfcn.resize(3);
+    target_ssb_arfcn[0] = (target_ssb_arfcn_ >> 16U) & 0xffU;
+    target_ssb_arfcn[1] = (target_ssb_arfcn_ >> 8U) & 0xffU;
+    target_ssb_arfcn[2] = target_ssb_arfcn_ & 0xffU;
+  } else {
+    report_error("Invalid ARFCN in K_NG-RAN* derivation");
+  }
+
+  generic_kdf(k_star, k, fc_value::k_ng_ran_star_derivation, target_pci, target_ssb_arfcn);
+}
+
+void srsran::security::generic_kdf(sec_key&                   key_out,
+                                   const sec_key&             key_in,
+                                   const fc_value             fc,
+                                   const span<const uint8_t>& p0,
+                                   const span<const uint8_t>& p1)
 {
   union p_len {
     uint16_t                                  length_value;
@@ -121,9 +255,9 @@ void srsran::security::generic_kdf(sec_as_key&         key_out,
   sha256(key_in.data(), key_in.size(), s.data(), s.size(), key_out.data(), 0);
 }
 
-sec_128_as_key srsran::security::truncate_key(const sec_as_key& key_in)
+sec_128_key srsran::security::truncate_key(const sec_key& key_in)
 {
-  sec_128_as_key key_out = {};
+  sec_128_key key_out = {};
   static_assert(sec_key_len > 0, "sec_key_len too small");
   static_assert(sec_128_key_len > 0, "sec_128_key_len too small");
   static_assert(sec_128_key_len <= sec_key_len, "sec_128_key_len is larger than sec_key_len");
@@ -134,10 +268,9 @@ sec_128_as_key srsran::security::truncate_key(const sec_as_key& key_in)
 sec_128_as_config srsran::security::truncate_config(const sec_as_config& cfg_in)
 {
   sec_128_as_config cfg_out = {};
-  cfg_out.k_128_rrc_int     = truncate_key(cfg_in.k_rrc_int);
-  cfg_out.k_128_rrc_enc     = truncate_key(cfg_in.k_rrc_enc);
-  cfg_out.k_128_up_int      = truncate_key(cfg_in.k_up_int);
-  cfg_out.k_128_up_enc      = truncate_key(cfg_in.k_up_enc);
+  cfg_out.domain            = cfg_in.domain;
+  cfg_out.k_128_int         = truncate_key(cfg_in.k_int);
+  cfg_out.k_128_enc         = truncate_key(cfg_in.k_enc);
   cfg_out.integ_algo        = cfg_in.integ_algo;
   cfg_out.cipher_algo       = cfg_in.cipher_algo;
   return cfg_out;

@@ -27,6 +27,7 @@
 namespace srsran {
 
 struct dl_msg_alloc;
+struct dl_paging_allocation;
 struct sib_information;
 struct rar_information;
 
@@ -77,6 +78,24 @@ void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const dl_msg_alloc&
 /// \param[in] mac_pdu Grant MAC PDU.
 /// \param[in] nof_csi_pdus Number of CSI-RS PDUs colliding with this PDSCH PDU.
 void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu, unsigned nof_csi_pdus);
+
+/// \brief Helper function that converts from a Paging MAC PDU to a PDSCH FAPI PDU.
+///
+/// \param[out] fapi_pdu PDSCH FAPI PDU that will store the converted data.
+/// \param[in] mac_pdu Paging MAC PDU.
+/// \param[in] nof_csi_pdus Number of CSI-RS PDUs colliding with this PDSCH PDU.
+void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&         fapi_pdu,
+                               const dl_paging_allocation& mac_pdu,
+                               unsigned                    nof_csi_pdus);
+
+/// \brief Helper function that converts from a Paging MAC PDU to a PDSCH FAPI PDU.
+///
+/// \param[out] builder PDSCH FAPI builder that helps to fill the PDU.
+/// \param[in] mac_pdu Paging MAC PDU.
+/// \param[in] nof_csi_pdus Number of CSI-RS PDUs colliding with this PDSCH PDU.
+void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
+                               const dl_paging_allocation& mac_pdu,
+                               unsigned                    nof_csi_pdus);
 
 } // namespace fapi_adaptor
 } // namespace srsran

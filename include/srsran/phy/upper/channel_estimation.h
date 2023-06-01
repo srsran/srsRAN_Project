@@ -212,12 +212,24 @@ public:
   {
     channel_state_information csi = {};
 
-    srsran_assert(nof_rx_ports == 1, "For now, only one Rx port is supported.");
-    srsran_assert(nof_tx_layers == 1, "For now, only one Tx layer is supported.");
-    csi.epre_dB        = get_epre_dB(0, 0);
-    csi.rsrp_dB        = get_rsrp_dB(0, 0);
-    csi.sinr_dB        = get_snr_dB(0, 0);
-    csi.time_alignment = get_time_alignment(0, 0);
+    // CSI is reported as a linear average of the results for all Rx ports.
+    for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
+      csi.epre_dB += get_epre(i_rx_port, 0);
+      csi.rsrp_dB += get_rsrp(i_rx_port, 0);
+      csi.sinr_dB += get_snr(i_rx_port, 0);
+      csi.time_alignment += get_time_alignment(i_rx_port, 0);
+    }
+
+    csi.epre_dB /= static_cast<float>(nof_rx_ports);
+    csi.rsrp_dB /= static_cast<float>(nof_rx_ports);
+    csi.sinr_dB /= static_cast<float>(nof_rx_ports);
+    csi.time_alignment /= nof_rx_ports;
+
+    // Convert to dB.
+    csi.epre_dB = convert_power_to_dB(csi.epre_dB);
+    csi.rsrp_dB = convert_power_to_dB(csi.rsrp_dB);
+    csi.sinr_dB = convert_power_to_dB(csi.sinr_dB);
+
     return csi;
   }
 

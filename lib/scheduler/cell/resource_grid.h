@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../support/bwp_helpers.h"
-#include "../support/rb_find_algorithm.h"
+#include "../support/rb_helper.h"
 #include "cell_configuration.h"
 #include "resource_grid_util.h"
 #include "srsran/adt/circular_array.h"
@@ -229,10 +229,6 @@ struct cell_slot_resource_allocator {
 
   /// Sets new slot.
   void slot_indication(slot_point sl);
-
-private:
-  /// Clears all allocations.
-  void clear();
 };
 
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of

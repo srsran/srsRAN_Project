@@ -35,7 +35,7 @@ namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "{:s}", test_case.context.config);
+  fmt::print(os, "{}", test_case.context.config);
   return os;
 }
 

@@ -260,7 +260,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
-    // apply modification
+    // F1-U apply modification
     f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
                           drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);

@@ -21,22 +21,24 @@
  */
 
 #include "rrc_ue_test_messages.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-security::sec_as_key srsran::srs_cu_cp::make_sec_as_key(std::string hex_str)
+security::sec_key srsran::srs_cu_cp::make_sec_key(std::string hex_str)
 {
-  byte_buffer          key_buf = make_byte_buffer(hex_str);
-  security::sec_as_key key     = {};
+  byte_buffer       key_buf = make_byte_buffer(hex_str);
+  security::sec_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }
 
-security::sec_128_as_key srsran::srs_cu_cp::make_sec_128_as_key(std::string hex_str)
+security::sec_128_key srsran::srs_cu_cp::make_sec_128_key(std::string hex_str)
 {
-  byte_buffer              key_buf = make_byte_buffer(hex_str);
-  security::sec_128_as_key key     = {};
+  byte_buffer           key_buf = make_byte_buffer(hex_str);
+  security::sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
 }
@@ -92,4 +94,59 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   args.non_crit_ext = non_crit_ext;
 
   return args;
+}
+
+byte_buffer srsran::srs_cu_cp::generate_invalid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti)
+{
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+
+  asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
+  auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
+  auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
+  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
+  rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0);
+  rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
+  rrc_reest_req.rrc_reest_request.spare.from_number(0);
+
+  const asn1::SRSASN_CODE ret = ul_ccch_msg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+
+  return pdu;
+}
+
+byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_rnti)
+{
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+
+  asn1::rrc_nr::ul_ccch_msg_s ul_ccch_msg{};
+  auto&                       ccch_c1          = ul_ccch_msg.msg.set_c1();
+  auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
+  rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
+  rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0); // TODO: Add valid short mac i
+  rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
+  rrc_reest_req.rrc_reest_request.spare.from_number(0);
+
+  const asn1::SRSASN_CODE ret = ul_ccch_msg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+
+  return pdu;
+}
+
+byte_buffer srsran::srs_cu_cp::generate_rrc_reestablishment_complete_pdu()
+{
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+
+  asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg{};
+  ul_dcch_msg.msg.set_c1().set_rrc_reest_complete();
+  ul_dcch_msg.msg.c1().rrc_reest_complete().crit_exts.set_rrc_reest_complete();
+
+  const asn1::SRSASN_CODE ret = ul_dcch_msg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+
+  return pdu;
 }

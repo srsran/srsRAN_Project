@@ -93,12 +93,34 @@ srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t             
 
   for (drb_id_t drb_id : drbs_to_addmod) {
     req.drbs_to_setup.emplace_back();
-    req.drbs_to_setup.back().drb_id = drb_id;
-    req.drbs_to_setup.back().mode   = drb_rlc_mode::am;
+    req.drbs_to_setup.back().drb_id  = drb_id;
+    req.drbs_to_setup.back().mode    = drb_rlc_mode::am;
+    req.drbs_to_setup.back().five_qi = uint_to_five_qi(9);
     req.drbs_to_setup.back().uluptnl_info_list.resize(1);
     req.drbs_to_setup.back().uluptnl_info_list[0].gtp_teid   = int_to_gtp_teid(0);
     req.drbs_to_setup.back().uluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"};
   }
 
   return req;
+}
+
+du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
+  du_cells(cells.begin(), cells.end()),
+  worker(128),
+  du_mng_exec(worker),
+  ue_exec_mapper(worker),
+  cell_exec_mapper(worker),
+  params{{"srsgnb", 1, 1, du_cells},
+         {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
+         {f1ap, f1ap},
+         {f1u_gw},
+         {mac, f1ap, f1ap},
+         {mac, mac}},
+  logger(srslog::fetch_basic_logger("DU-MNG"))
+{
+  logger.set_level(srslog::basic_levels::debug);
+
+  srslog::init();
+
+  params.ran.qos = config_helpers::make_default_du_qos_config_list();
 }

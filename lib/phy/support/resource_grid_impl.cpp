@@ -21,6 +21,7 @@
  */
 
 #include "resource_grid_impl.h"
+#include "srsran/adt/interval.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_assert.h"
@@ -94,9 +95,13 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
                                          const bounded_bitset<NRE * MAX_RB>& mask,
                                          span<const cf_t>                    symbols)
 {
-  assert(l < nof_symb);
-  assert(mask.size() <= nof_subc);
-  assert(port < nof_ports);
+  interval<unsigned, false> l_range(0, nof_symb);
+  interval<unsigned, true>  mask_size_range(1, nof_subc);
+  interval<unsigned, false> port_range(0, nof_ports);
+  srsran_assert(l_range.contains(l), "Symbol index (i.e., {}) is out of the range {}.", l_range, l_range);
+  srsran_assert(
+      mask_size_range.contains(mask.size()), "Mask size (i.e., {}) is out of range {}.", mask.size(), mask_size_range);
+  srsran_assert(port_range.contains(port), "Port identifier (i.e., {}) is out of range {}.", port, port_range);
 
   // Get view of the OFDM symbol subcarriers.
   span<cf_t> symb = rg_buffer.get_view<dim_symbol>({l, port});

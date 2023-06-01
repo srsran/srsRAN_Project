@@ -23,6 +23,7 @@
 #include "pdcch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -102,8 +103,11 @@ TEST_P(PdcchProcessorFixture, FromVector)
 
   ASSERT_TRUE(validator->is_valid(test_case.config));
 
+  // Create mapper.
+  resource_grid_mapper mapper(grid);
+
   // Process.
-  processor->process(grid, test_case.config);
+  processor->process(mapper, test_case.config);
 
   // Load output golden data
   const std::vector<resource_grid_writer_spy::expected_entry_t> expected = test_case.data.read();

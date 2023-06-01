@@ -68,6 +68,9 @@ pucch_resource_manager::pucch_resource_manager()
       ue_rec.pucch_res_id = -1;
       ue_rec.allocated_ue = INVALID_RNTI;
     }
+    for (auto& res : res_counter.used_common_resources) {
+      res = false;
+    }
   };
 
   std::for_each(resource_slots.begin(), resource_slots.end(), reset_slot_record);
@@ -75,6 +78,9 @@ pucch_resource_manager::pucch_resource_manager()
 
 void pucch_resource_manager::slot_indication(slot_point slot_tx)
 {
+  // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
+  srsran_sanity_check(not last_sl_ind.valid() or slot_tx == last_sl_ind + 1, "Detected a skipped slot");
+
   // Update Slot.
   last_sl_ind = slot_tx;
 
@@ -91,6 +97,21 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
     ue_rec.pucch_res_id = -1;
     ue_rec.allocated_ue = INVALID_RNTI;
   }
+  for (auto& res : res_counter.used_common_resources) {
+    res = false;
+  }
+}
+
+bool pucch_resource_manager::is_common_resource_available(slot_point sl, size_t r_pucch)
+{
+  srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
+  return not get_slot_resource_counter(sl).used_common_resources[r_pucch];
+}
+
+void pucch_resource_manager::reserve_common_resource(slot_point sl, size_t r_pucch)
+{
+  srsran_assert(r_pucch < 16, "r_PUCCH must be less than 16");
+  get_slot_resource_counter(sl).used_common_resources[r_pucch] = true;
 }
 
 pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_available(slot_point          slot_harq,

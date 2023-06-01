@@ -23,6 +23,7 @@
 #pragma once
 
 #include "lib/rrc/ue/rrc_ue_impl.h"
+#include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rrc/rrc_du_factory.h"
@@ -42,8 +43,10 @@ class rrc_ue_test_helper
 protected:
   void init()
   {
-    task_sched_handle    = std::make_unique<dummy_ue_task_scheduler>(timers, ctrl_worker);
-    rrc_pdu_notifier     = std::make_unique<dummy_rrc_pdu_notifier>();
+    task_sched_handle = std::make_unique<dummy_ue_task_scheduler>(timers, ctrl_worker);
+    for (std::unique_ptr<dummy_rrc_pdu_notifier>& srb : rrc_srb_pdu_notifiers) {
+      srb = std::make_unique<dummy_rrc_pdu_notifier>();
+    }
     tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>();
     rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>();
 
@@ -52,8 +55,8 @@ protected:
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
     rrc_ue_create_msg.du_to_cu_container.resize(1);
-    for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-      rrc_ue_create_msg.srbs[i].pdu_notifier    = rrc_pdu_notifier.get();
+    for (uint32_t i = 0; i < srb_id_to_uint(srb_id_t::srb2); i++) { // don't automatically create SRB2
+      rrc_ue_create_msg.srbs[i].pdu_notifier    = rrc_srb_pdu_notifiers[i].get();
       rrc_ue_create_msg.srbs[i].tx_sec_notifier = tx_security_notifier.get();
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
@@ -61,6 +64,7 @@ protected:
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
+                                           rrc_ue_cu_cp_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -76,14 +80,40 @@ protected:
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_srb0_pdu_type()
   {
     // generated PDU must not be empty
-    EXPECT_GT(rrc_pdu_notifier->last_pdu.length(), 0);
+    EXPECT_GT(rrc_srb_pdu_notifiers[0]->last_pdu.length(), 0);
 
     // Unpack received PDU
-    byte_buffer                 rx_pdu{rrc_pdu_notifier->last_pdu.begin(), rrc_pdu_notifier->last_pdu.end()};
-    asn1::cbit_ref              bref(rx_pdu);
+    byte_buffer    rx_pdu{rrc_srb_pdu_notifiers[0]->last_pdu.begin(), rrc_srb_pdu_notifiers[0]->last_pdu.end()};
+    asn1::cbit_ref bref(rx_pdu);
     asn1::rrc_nr::dl_ccch_msg_s dl_ccch;
     EXPECT_EQ(dl_ccch.unpack(bref), asn1::SRSASN_SUCCESS);
     return dl_ccch.msg.c1().type();
+  }
+
+  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb1_pdu_type()
+  {
+    // generated PDU must not be empty
+    EXPECT_GT(rrc_srb_pdu_notifiers[1]->last_pdu.length(), 0);
+
+    // Unpack received PDU
+    byte_buffer    rx_pdu{rrc_srb_pdu_notifiers[1]->last_pdu.begin(), rrc_srb_pdu_notifiers[1]->last_pdu.end()};
+    asn1::cbit_ref bref(rx_pdu);
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+    EXPECT_EQ(dl_dcch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_dcch.msg.c1().type();
+  }
+
+  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb2_pdu_type()
+  {
+    // generated PDU must not be empty
+    EXPECT_GT(rrc_srb_pdu_notifiers[2]->last_pdu.length(), 0);
+
+    // Unpack received PDU
+    byte_buffer    rx_pdu{rrc_srb_pdu_notifiers[2]->last_pdu.begin(), rrc_srb_pdu_notifiers[2]->last_pdu.end()};
+    asn1::cbit_ref bref(rx_pdu);
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+    EXPECT_EQ(dl_dcch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_dcch.msg.c1().type();
   }
 
   rrc_ue_init_security_context_handler* get_rrc_ue_security_handler()
@@ -102,16 +132,47 @@ protected:
     reject_users = false;
   }
 
+  void create_srb2()
+  {
+    rrc_ue->connect_srb_notifier(
+        srb_id_t::srb2, *rrc_srb_pdu_notifiers[2].get(), tx_security_notifier.get(), rx_security_notifier.get());
+  }
+
   void receive_setup_request()
   {
     // inject RRC setup into UE object
     rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
+  void receive_invalid_reestablishment_request(pci_t pci, rnti_t c_rnti)
+  {
+    // inject RRC Reestablishment Request into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_invalid_rrc_reestablishment_request_pdu(pci, c_rnti));
+  }
+
+  void receive_valid_reestablishment_request(pci_t pci, rnti_t c_rnti)
+  {
+    // inject RRC Reestablishment Request into UE object
+    rrc_ue->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(generate_valid_rrc_reestablishment_request_pdu(pci, c_rnti));
+  }
+
+  void receive_reestablishment_complete()
+  {
+    // inject RRC Reestablishment complete
+    rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(generate_rrc_reestablishment_complete_pdu());
+  }
+
   void receive_setup_complete()
   {
     // inject RRC setup complete
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
+  }
+
+  void send_dl_info_transfer(byte_buffer nas_msg)
+  {
+    dl_nas_transport_message msg{std::move(nas_msg)};
+    // inject RRC setup complete
+    rrc_ue->handle_dl_nas_transport_message(msg);
   }
 
   void check_srb1_exists() { ASSERT_EQ(rrc_ue_ev_notifier.srb1_created, true); }
@@ -141,7 +202,7 @@ protected:
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_smc_complete_pdu});
   }
 
-  void check_smc_pdu() { ASSERT_EQ(rrc_pdu_notifier->last_pdu, rrc_smc_pdu); }
+  void check_smc_pdu() { ASSERT_EQ(rrc_srb_pdu_notifiers[1]->last_pdu, rrc_smc_pdu); }
 
   void check_initial_ue_message_sent() { ASSERT_TRUE(rrc_ue_ngap_notifier.initial_ue_msg_received); }
 
@@ -166,10 +227,9 @@ protected:
       ASSERT_EQ(tx_security_notifier->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
       ASSERT_EQ(rx_security_notifier->last_sec_cfg.integ_algo, sec_cfg.integ_algo);
       ASSERT_EQ(rx_security_notifier->last_sec_cfg.cipher_algo, sec_cfg.cipher_algo);
-      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
-      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
-      ASSERT_EQ(tx_security_notifier->last_sec_cfg.k_128_rrc_enc, sec_cfg.k_128_rrc_enc);
-      ASSERT_EQ(tx_security_notifier->last_sec_cfg.k_128_rrc_int, sec_cfg.k_128_rrc_int);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_enc, sec_cfg.k_128_enc);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.k_128_int, sec_cfg.k_128_int);
+      ASSERT_EQ(rx_security_notifier->last_sec_cfg.domain, sec_cfg.domain);
     }
   }
 
@@ -191,7 +251,7 @@ protected:
       return;
     }
 
-    ASSERT_EQ(rrc_pdu_notifier->last_pdu, byte_buffer_slice{dl_dcch_msg_pdu});
+    ASSERT_EQ(rrc_srb_pdu_notifiers[1]->last_pdu, byte_buffer_slice{dl_dcch_msg_pdu});
   }
 
   void receive_ue_capability_information(uint8_t transaction_id)
@@ -216,7 +276,7 @@ protected:
     rrc_ue->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(ul_dcch_msg_pdu);
   }
 
-  void check_rrc_reconfig_pdu() { ASSERT_EQ(rrc_pdu_notifier->last_pdu, rrc_reconfig_pdu); }
+  void check_rrc_reconfig_pdu() { ASSERT_EQ(rrc_srb_pdu_notifiers[1]->last_pdu, rrc_reconfig_pdu); }
 
   void receive_reconfig_complete()
   {
@@ -228,15 +288,16 @@ private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
-  dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;
-  dummy_rrc_ue_ngap_adapter                       rrc_ue_ngap_notifier;
-  timer_manager                                   timers;
-  std::unique_ptr<dummy_rrc_pdu_notifier>         rrc_pdu_notifier;
-  std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier;
-  std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier;
-  std::unique_ptr<dummy_ue_task_scheduler>        task_sched_handle;
-  std::unique_ptr<rrc_ue_interface>               rrc_ue;
-  manual_task_worker                              ctrl_worker{64};
+  dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
+  dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
+  dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;
+  timer_manager                                          timers;
+  std::array<std::unique_ptr<dummy_rrc_pdu_notifier>, 3> rrc_srb_pdu_notifiers;
+  std::unique_ptr<dummy_rrc_tx_security_notifier>        tx_security_notifier;
+  std::unique_ptr<dummy_rrc_rx_security_notifier>        rx_security_notifier;
+  std::unique_ptr<dummy_ue_task_scheduler>               task_sched_handle;
+  std::unique_ptr<rrc_ue_interface>                      rrc_ue;
+  manual_task_worker                                     ctrl_worker{64};
 
   bool reject_users = true;
 

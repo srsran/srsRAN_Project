@@ -30,15 +30,14 @@ f1ap_ue_creation_response srsran::srs_du::create_f1ap_ue(const f1ap_ue_creation_
                                                          const f1ap_du_context&          du_ctx,
                                                          f1ap_event_manager&             ev_mng)
 {
-  f1ap_du_ue& u                                          = ues.add_ue(req.ue_index);
-  u.context.rnti                                         = req.c_rnti;
-  const asn1::f1ap::gnb_du_served_cells_item_s& ue_pcell = du_ctx.served_cells[req.pcell_index];
+  f1ap_du_ue& u                        = ues.add_ue(req.ue_index);
+  u.context.rnti                       = req.c_rnti;
+  const f1ap_du_cell_context& ue_pcell = du_ctx.served_cells[req.pcell_index];
 
   // Create an F1c bearer for each requested SRB.
   for (const f1c_bearer_to_addmod& srb : req.f1c_bearers_to_add) {
     if (srb.srb_id == srb_id_t::srb0) {
-      u.bearers.add_srb0_f1c_bearer(
-          *srb.rx_sdu_notifier, ue_pcell.served_cell_info.nr_cgi, req.du_cu_rrc_container, ev_mng);
+      u.bearers.add_srb0_f1c_bearer(*srb.rx_sdu_notifier, ue_pcell.nr_cgi, req.du_cu_rrc_container, ev_mng);
     } else {
       u.bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
     }

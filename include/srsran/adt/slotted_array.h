@@ -350,7 +350,7 @@ private:
 
 /// \brief Container representing a vector of optional elements. It has the following characteristics:
 /// - composed by two vectors, one "elements vector" for storing the container's elements and one "indexing vector" to
-/// convert external indexes to a index position in the first "elements vector",
+/// convert external indexes to an index position in the first "elements vector",
 /// - Index-based lookup of elements, based internally on two vector index lookups,
 /// - The iteration is in order of indexes and correctly skips absent elements,
 /// - Unstable - Pointer/References/Iterators do not remain valid during addition/removal of elements in the container,

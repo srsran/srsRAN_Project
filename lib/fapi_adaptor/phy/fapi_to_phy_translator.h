@@ -98,6 +98,8 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   public:
     slot_based_upper_phy_controller();
 
+    explicit slot_based_upper_phy_controller(slot_point slot_);
+
     slot_based_upper_phy_controller(downlink_processor_pool& dl_processor_pool,
                                     resource_grid_pool&      rg_pool,
                                     slot_point               slot_,

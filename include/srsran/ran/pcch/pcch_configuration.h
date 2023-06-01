@@ -49,7 +49,7 @@ struct pcch_config {
   /// \brief Number of paging occasions per paging frame.
   enum class nof_po_per_pf { four = 4, two = 2, one = 1 };
   /// Number of paging frames per DRX cycle. nAndPagingFrameOffset in TS 38.331 in divided into \c nof_pf and \c
-  /// paging_frame_offset. e.g. for value oneEighthT nof. paging frames per DRX cycle is 8.
+  /// paging_frame_offset. e.g. for value oneEighthT and DRX value of 32 RF gives nof. paging frames per DRX cycle is 4.
   enum class nof_pf_per_drx_cycle { oneT = 1, halfT = 2, quarterT = 4, oneEighthT = 8, oneSixteethT = 16 };
 
   /// \brief Points out the type of first PDCCH monitoring occasion for paging of each PO of the PF.

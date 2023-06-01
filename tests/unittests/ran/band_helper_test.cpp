@@ -621,9 +621,9 @@ TEST(test_get_min_channel_bw, invalid_cases)
   ASSERT_EQ(min_channel_bandwidth::MHz10, band_helper::get_min_channel_bw(nr_band::n78, subcarrier_spacing::kHz60));
   ASSERT_EQ(min_channel_bandwidth::invalid, band_helper::get_min_channel_bw(nr_band::n78, subcarrier_spacing::kHz120));
 
-  ASSERT_EQ(min_channel_bandwidth::MHz40, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz15));
-  ASSERT_EQ(min_channel_bandwidth::MHz40, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz30));
-  ASSERT_EQ(min_channel_bandwidth::MHz40, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz60));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz15));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz30));
+  ASSERT_EQ(min_channel_bandwidth::MHz10, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz60));
   ASSERT_EQ(min_channel_bandwidth::invalid, band_helper::get_min_channel_bw(nr_band::n79, subcarrier_spacing::kHz120));
 
   ASSERT_EQ(min_channel_bandwidth::MHz20, band_helper::get_min_channel_bw(nr_band::n102, subcarrier_spacing::kHz15));

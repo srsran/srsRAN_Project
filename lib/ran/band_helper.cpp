@@ -688,6 +688,12 @@ static error_type<std::string> validate_band_n90(uint32_t arfcn, subcarrier_spac
 
 nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
+  // As per Table 5.4.2.3-1, TS 38.104, v17.8.0, band n28 has an additional ARFCN value outside the interval of step 20.
+  const uint32_t arfcn_n28 = 155608U;
+  if (arfcn == arfcn_n28) {
+    return nr_band::n28;
+  }
+
   for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
     if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and
@@ -713,8 +719,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   }
 
   if (band == nr_band::n90) {
-    return validate_band_n90(arfcn, scs) ? error_type<std::string>{}
-                                         : error_type<std::string>{fmt::format("Band is not valid")};
+    return validate_band_n90(arfcn, scs);
   }
 
   if (band == nr_band::n96) {
@@ -798,6 +803,18 @@ uint32_t srsran::band_helper::freq_to_nr_arfcn(double freq)
   }
   return static_cast<uint32_t>(((freq - params.F_REF_Offs_MHz * 1e6) / 1e3 / params.delta_F_global_kHz) +
                                params.N_REF_Offs);
+}
+
+bool srsran::band_helper::is_band_for_shared_spectrum(nr_band band)
+{
+  // As per TS 38.104, Table 5.2-1, only bands where Note 3 or Note 4 apply.
+  return band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102;
+}
+
+bool srsran::band_helper::is_band_40mhz_min_ch_bw_equivalent(nr_band band)
+{
+  // As per TS 38.101, Table 5.2-1, only bands where Note 17 applies.
+  return band == nr_band::n79 or band == nr_band::n104;
 }
 
 ssb_pattern_case srsran::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
@@ -1024,7 +1041,8 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
     }
     case nr_band::n46:
     case nr_band::n77:
-    case nr_band::n78: {
+    case nr_band::n78:
+    case nr_band::n79: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz10;
       } else {
@@ -1038,17 +1056,6 @@ min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, s
     case nr_band::n100: {
       if (scs == subcarrier_spacing::kHz15) {
         return min_channel_bandwidth::MHz5;
-      } else {
-        return min_channel_bandwidth::invalid;
-      }
-    }
-    // NOTE: In Rel. 17 the requirements for minimum supported BW for n79 have been updated. However, this entry is
-    // still as per Rel.15; this is because the minimum channel BW affects the choice of Coreset0 parameters, as per
-    // TS 38.213, Section 13; upgrading the minimum channel BW to Rel.17 would cause Rel. 15 UEs not to find the
-    // Coreset0 anymore.
-    case nr_band::n79: {
-      if (scs <= subcarrier_spacing::kHz60) {
-        return min_channel_bandwidth::MHz40;
       } else {
         return min_channel_bandwidth::invalid;
       }
@@ -1099,22 +1106,48 @@ double band_helper::get_ss_ref_from_gscn(unsigned gscn)
     // As per Table 5.4.3.1-1, TS 38.104, case 3000MHz – 24250MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
     const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_3GHZ_24_5GHZ);
-    ss_ref         = (3000 + N * 1.44) * 1e6;
+    ss_ref         = (3000000 + N * 1440) * 1e3;
   } else if (gscn < MAX_GSCN_FREQ_24_5GHZ_100GHZ) {
     // As per Table 5.4.3.1-1, TS 38.104, case 24250MHz – 100000MHz, get parameter N from GSCN and use N to compute
     // \f$SS_{ref}\f$.
     const double N = static_cast<double>(gscn - MIN_GSCN_FREQ_24_5GHZ_100GHZ);
-    ss_ref         = (24250.08 + N * 17.28) * 1e6;
+    ss_ref         = (24250080 + N * 17280) * 1e3;
   }
 
   return ss_ref;
 }
 
 // Compute the maximum value of row index of Table 13-11, TS 38.213 that can be addressed for a specific configuration.
-static unsigned
-get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb, min_channel_bandwidth min_channel_bw)
+static unsigned get_max_coreset0_index(nr_band band, subcarrier_spacing scs_common, subcarrier_spacing scs_ssb)
 {
-  if (min_channel_bw == min_channel_bandwidth::MHz5 || min_channel_bw == min_channel_bandwidth::MHz10) {
+  const min_channel_bandwidth min_channel_bw         = band_helper::get_min_channel_bw(band, scs_common);
+  const bool                  is_for_shared_spectrum = band_helper::is_band_for_shared_spectrum(band);
+
+  // As per TS 38.101, Table 5.2-1, band n79 and n104 use Table 13-5 and Table 13-6, regardless of the minimum
+  // channel BW.
+  const bool is_40mhz_min_ch_bw_equivalent = band_helper::is_band_40mhz_min_ch_bw_equivalent(band);
+
+  // Check first if the band is for shared spectrum channel access, as per Table 5.2-1, TS 38.104, ver. 17.8.0 and
+  // Section 13, TS 38.213, ver.17.5.0.
+  if (is_for_shared_spectrum) {
+    if ((scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz15) or
+        (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30)) {
+      return 7;
+    }
+    return 0;
+  }
+
+  // Next, continue with the bands with is_40mhz_min_ch_bw_equivalent == true, as these use Table 13-5 and Table 13-6,
+  // regardless of the minimum channel BW.
+  if (min_channel_bw == min_channel_bandwidth::MHz40 or is_40mhz_min_ch_bw_equivalent) {
+    if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz15) {
+      return 8;
+    } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30) {
+      return 9;
+    }
+  }
+  // Finally, process the bands with minimum channel BW 5MHz or 10MHz.
+  else if (min_channel_bw == min_channel_bandwidth::MHz5 || min_channel_bw == min_channel_bandwidth::MHz10) {
     if (scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz15) {
       return 14;
     } else if (scs_ssb == subcarrier_spacing::kHz15 and scs_common == subcarrier_spacing::kHz30) {
@@ -1123,12 +1156,6 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
       return 8;
     } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30) {
       return 15;
-    }
-  } else if (min_channel_bw == min_channel_bandwidth::MHz40) {
-    if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz15) {
-      return 8;
-    } else if (scs_ssb == subcarrier_spacing::kHz30 and scs_common == subcarrier_spacing::kHz30) {
-      return 9;
     }
   }
   return 0;
@@ -1165,10 +1192,6 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
 {
   srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
                 "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
-  if (scs_ssb == subcarrier_spacing::kHz15) {
-    srsran_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
-                  "Bands n34, n38 and n39 not currently supported with SSB 15kHz subcarrier spacing");
-  }
 
   optional<ssb_coreset0_freq_location> result;
 
@@ -1216,19 +1239,18 @@ optional<unsigned> srsran::band_helper::get_coreset0_index(nr_band              
                                                            uint8_t               ss0_idx,
                                                            optional<unsigned>    nof_coreset0_symb)
 {
-  const min_channel_bandwidth min_ch_bw = band_helper::get_min_channel_bw(band, scs_common);
   // CRB index where the first SSB's subcarrier is located.
   const unsigned crbs_ssb =
       scs_common == subcarrier_spacing::kHz15 ? offset_to_point_A.to_uint() : offset_to_point_A.to_uint() / 2;
 
   // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
-  const unsigned max_cset0_idx = get_max_coreset0_index(scs_common, scs_ssb, min_ch_bw);
+  const unsigned max_cset0_idx = get_max_coreset0_index(band, scs_common, scs_ssb);
 
   // Iterate over the coreset0_indices and corresponding configurations.
   unsigned           max_nof_avail_rbs = 0;
   optional<unsigned> chosen_cset0_idx;
   for (int cset0_idx = static_cast<int>(max_cset0_idx); cset0_idx >= 0; --cset0_idx) {
-    auto coreset0_cfg = pdcch_type0_css_coreset_get(min_ch_bw, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+    auto coreset0_cfg = pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
     if (max_nof_avail_rbs > coreset0_cfg.nof_rb_coreset) {
       // No point in continuing search for this and lower CORESET#0s.
       break;
@@ -1276,8 +1298,7 @@ unsigned srsran::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
                                                                         ssb_subcarrier_offset k_ssb)
 {
   // Coreset0 configuration for the provided CORESET#0 index.
-  auto cset0_cfg = pdcch_type0_css_coreset_get(
-      band_helper::get_min_channel_bw(band, scs_common), scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
+  auto cset0_cfg = pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, cset0_idx, k_ssb.to_uint());
 
   const interval<unsigned> ssb_prbs   = get_ssb_crbs(scs_common, scs_ssb, offset_to_point_A, k_ssb);
   const unsigned           crb_ssb_0  = get_ssb_crb_0(scs_common, offset_to_point_A.to_uint());

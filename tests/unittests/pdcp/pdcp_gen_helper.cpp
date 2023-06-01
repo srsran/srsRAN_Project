@@ -20,10 +20,12 @@
  *
  */
 
-#include "lib/pdcp/pdcp_entity_impl.h"
+#include "lib/pdcp/pdcp_entity_tx.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/timers.h"
 #include <cstdlib>
 #include <getopt.h>
 #include <queue>
@@ -100,6 +102,7 @@ int main(int argc, char** argv)
   srslog::init();
   srslog::basic_logger& logger = srslog::fetch_basic_logger("PDCP", false);
   logger.set_level(srslog::basic_levels::debug);
+  logger.set_hex_dump_max_size(1500);
 
   pdcp_sn_size sn_size = args.sn_size == "12" ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
   logger.info("Creating PDCP TX ({} bit)", sn_size);
@@ -112,15 +115,18 @@ int main(int argc, char** argv)
   config.rb_type                = pdcp_rb_type::drb;
   config.rlc_mode               = pdcp_rlc_mode::am;
   config.sn_size                = sn_size;
+  config.direction              = pdcp_security_direction::downlink;
   config.discard_timer          = pdcp_discard_timer::ms10;
   config.status_report_required = false;
 
-  // Set security keys
   security::sec_128_as_config sec_cfg = {};
-  sec_cfg.k_128_rrc_int               = k_128_int;
-  sec_cfg.k_128_up_int                = k_128_int;
-  sec_cfg.k_128_rrc_enc               = k_128_enc;
-  sec_cfg.k_128_up_enc                = k_128_enc;
+
+  // Set security domain
+  sec_cfg.domain = security::sec_domain::up; // DRB
+
+  // Set security keys
+  sec_cfg.k_128_int = k_128_int;
+  sec_cfg.k_128_enc = k_128_enc;
 
   // Set encription/integrity algorithms
   sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
@@ -129,7 +135,7 @@ int main(int argc, char** argv)
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx =
-      std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, frame, frame, timer_factory{timers, worker});
+      std::make_unique<pdcp_entity_tx>(0, drb_id_t::drb1, config, frame, frame, timer_factory{timers, worker});
   pdcp_tx_state st = {args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->enable_security(sec_cfg);

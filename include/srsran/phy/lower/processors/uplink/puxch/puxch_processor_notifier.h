@@ -40,15 +40,9 @@ public:
 
   /// \brief Notifies a PUxCH request outside the slot window.
   ///
-  /// See \ref lower_phy_error_notifier::on_late_resource_grid for more information.
+  /// See \ref lower_phy_error_notifier::on_pdxch_request_late for more information.
   /// \param[in] context PUxCH context.
   virtual void on_puxch_request_late(const resource_grid_context& context) = 0;
-
-  /// \brief Notifies an excess of PUxCH requests.
-  ///
-  /// See \ref lower_phy_error_notifier::on_overflow_resource_grid for more information.
-  /// \param[in] context PUxCH context.
-  virtual void on_puxch_request_overflow(const resource_grid_context& context) = 0;
 
   /// \brief Notifies the completion of the PUxCH request processing.
   ///

@@ -34,7 +34,7 @@
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/resource_block.h"
-#include "srsran/scheduler/prb_grant.h"
+#include "srsran/scheduler/vrb_alloc.h"
 #include <bitset>
 
 namespace srsran {

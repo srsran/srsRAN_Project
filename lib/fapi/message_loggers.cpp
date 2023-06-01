@@ -101,14 +101,28 @@ static void log_pdsch_pdu(const dl_pdsch_pdu& pdu, fmt::memory_buffer& buffer)
 
 static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
 {
-  fmt::format_to(buffer,
-                 "\n\t- CSI-RS prbs={}:{} row={} symbL0={} symbL1={} scramb_id={}",
-                 pdu.start_rb,
-                 pdu.num_rbs,
-                 pdu.row,
-                 pdu.symb_L0,
-                 pdu.symb_L1,
-                 pdu.scramb_id);
+  if (pdu.type == csi_rs_type::CSI_RS_NZP) {
+    fmt::format_to(buffer,
+                   "\n\t- NZP-CSI-RS crbs={}:{} row={} symbL0={} symbL1={} scramb_id={}",
+                   pdu.start_rb,
+                   pdu.num_rbs,
+                   pdu.row,
+                   pdu.symb_L0,
+                   pdu.symb_L1,
+                   pdu.scramb_id);
+    return;
+  }
+
+  if (pdu.type == csi_rs_type::CSI_RS_ZP) {
+    fmt::format_to(buffer,
+                   "\n\t- ZP-CSI-RS crbs={}:{} row={} symbL0={} symbL1={}",
+                   pdu.start_rb,
+                   pdu.num_rbs,
+                   pdu.row,
+                   pdu.symb_L0,
+                   pdu.symb_L1);
+    return;
+  }
 }
 
 void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)

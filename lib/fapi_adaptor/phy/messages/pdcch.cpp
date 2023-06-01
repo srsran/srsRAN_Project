@@ -21,6 +21,7 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
@@ -58,7 +59,7 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu&
   }
 
   // :TODO: Fill this in the future.
-  dci.ports = {0};
+  dci.precoding = make_single_port();
 
   // Fill PDCCH context for logging.
   proc_pdu.context = fapi_pdu.dl_dci[i_dci].context;

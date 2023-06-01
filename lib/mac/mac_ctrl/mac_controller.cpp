@@ -70,20 +70,18 @@ mac_cell_controller& mac_controller::get_cell_controller(du_cell_index_t cell_in
   return dl_unit.get_cell_controller(cell_index);
 }
 
-async_task<mac_ue_create_response_message>
-mac_controller::handle_ue_create_request(const mac_ue_create_request_message& msg)
+async_task<mac_ue_create_response> mac_controller::handle_ue_create_request(const mac_ue_create_request& msg)
 {
   return launch_async<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit, sched_cfg);
 }
 
-async_task<mac_ue_delete_response_message>
-mac_controller::handle_ue_delete_request(const mac_ue_delete_request_message& msg)
+async_task<mac_ue_delete_response> mac_controller::handle_ue_delete_request(const mac_ue_delete_request& msg)
 {
   return launch_async<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit, sched_cfg);
 }
 
-async_task<mac_ue_reconfiguration_response_message>
-mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
+async_task<mac_ue_reconfiguration_response>
+mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg)
 {
   return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit, sched_cfg);
 }

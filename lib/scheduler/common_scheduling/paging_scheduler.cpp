@@ -21,12 +21,15 @@
  */
 
 #include "paging_scheduler.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
@@ -62,16 +65,25 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
       // PDCCH monitoring occasions for paging are same as for RMSI. See TS 38.304, clause 7.1.
-      sib1_period = std::max(ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period),
-                             sib1_rtx_periodicity_to_value(expert_cfg.si.sib1_retx_period));
+      // NOTE: We currently support only SS/PBCH and CORESET multiplexing patter 1.
+      if (cell_cfg.dl_cfg_common.pcch_cfg.nof_pf == pcch_config::nof_pf_per_drx_cycle::oneT) {
+        srsran_assertion_failure(
+            "Invalid nof. Paging frames per DRX Cycle for SS/PBCH and CORESET multiplexing patter 1.");
+      }
+      // As per TS 38.304, clause 7.1, For Ns = 2, PO is either in the first half frame (i_s = 0) or the second half
+      // frame (i_s = 1) of the PF.  This is possible only when using ssb periodicity of 5ms which is in turn possible
+      // only when using SS/PBCH and CORESET multiplexing patter 2 or 3.
+      srsran_assert(
+          cell_cfg.dl_cfg_common.pcch_cfg.ns == pcch_config::nof_po_per_pf::one,
+          "Number of Paging Occasions per Paging Frame must be 1 for SS/PBCH and CORESET multiplexing patter 1.");
       for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
           continue;
         }
-        // NOTE:
-        // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and Paging.
+        // For Ns = 1, there is only one PO which starts from the first PDCCH monitoring occasion for paging in the PF.
+        // TS 38.304, clause 7.1. Hence, n0 slot must be use and not n0 + 1 slot.
         type0_pdcch_css_slots[i_ssb] =
-            precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+            precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
       if (ss_cfg.cs_id != to_coreset_id(0) and
@@ -158,11 +170,13 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     const auto&    pg_info   = pg_it.second.info;
     const unsigned drx_cycle = pg_info.paging_drx.has_value() ? pg_info.paging_drx.value() : default_paging_cycle;
 
-    const unsigned t_div_n     = drx_cycle / nof_pf_per_drx_cycle;
-    const unsigned ue_id_mod_n = pg_info.ue_identity_index_value % nof_pf_per_drx_cycle;
+    // N value used in equation found at TS 38.304, clause 7.1.
+    const unsigned N           = drx_cycle / nof_pf_per_drx_cycle;
+    const unsigned t_div_n     = drx_cycle / N;
+    const unsigned ue_id_mod_n = pg_info.ue_identity_index_value % N;
 
     // Check for paging frame.
-    // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See Ts 38.304, clause 7.1.
+    // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See TS 38.304, clause 7.1.
     if (((pdcch_slot.sfn() + paging_frame_offset) % drx_cycle) != (t_div_n * ue_id_mod_n)) {
       continue;
     }
@@ -170,7 +184,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     // Index (i_s), indicating the index of the PO.
     // i_s = floor (UE_ID/N) mod Ns.
     const unsigned i_s = static_cast<unsigned>(std::floor(static_cast<double>(pg_info.ue_identity_index_value) /
-                                                          static_cast<double>(nof_pf_per_drx_cycle))) %
+                                                          static_cast<double>(N))) %
                          nof_po_per_pf;
 
     for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
@@ -262,6 +276,10 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
   //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configure paging
   //   search space taking this into account when defining SearchSpace > 0 for paging.
 
+  // - [Implementation defined] PDCCH Monitoring Occasions (PMO) are pre-computed over max of nof. slots in radio frame
+  // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
+  const auto periodicity_in_slots = std::max(ss_cfg.monitoring_slot_period, pdcch_slot.nof_slots_per_frame());
+
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
     // Do not schedule the paging for the SSB indices that are not used.
@@ -272,7 +290,7 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
     // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
     //  message are repeated in all transmitted beams.
 
-    if (pdcch_slot.slot_index() == type2_pdcch_css_slots[ssb_idx][i_s].slot_index()) {
+    if (pdcch_slot.to_uint() % periodicity_in_slots == type2_pdcch_css_slots[ssb_idx][i_s].to_uint()) {
       // All conditions are satisfied.
       return true;
     }
@@ -294,15 +312,14 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
     return false;
   }
 
-  // - [Implementation defined] When pagingSearchSpace = 0, the UE monitors the SearchSpaceSet 0 for Paging in 2
-  //   consecutive slots, starting from n0 for multiplexing pattern 1.
-  //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for Paging in (n0 + 1) slot to make
-  //   space for SSB. This simplification is taken from SIB1 scheduler.
+  // SearchSpace#0 periodicity is always 20 ms when using multiplexing pattern 1. See TS 38.213, clause 13.
+  // TODO: Populate SS#0 periodicity based on config when other multiplexing patterns are supported.
+  static const unsigned ss0_periodicity_in_ms = 20;
 
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
-  // NOTE2: SIB1 period is since Search Space #0 is used by both Paging and SIB1.
-  const unsigned paging_period_slots = sib1_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
+  const unsigned paging_period_slots =
+      ss0_periodicity_in_ms * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -354,7 +371,7 @@ bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocat
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
       return false;
     }
@@ -401,7 +418,7 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
       logger.warning("Not enough PDSCH space for Paging");
       return false;
@@ -412,7 +429,7 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_pdcch_common(res_grid[0], rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.warning("Could not allocated Paging's DCI in PDCCH");
+    logger.warning("Could not allocate Paging's DCI in PDCCH");
     return false;
   }
 
@@ -440,22 +457,9 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
                                          const dmrs_information&               dmrs_info,
                                          unsigned                              tbs)
 {
-  const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
-
-  auto& dci = pdcch.dci;
   // Fill Paging DCI.
-  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
-  dci.p_rnti_f1_0 = {};
-  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
-  dci.p_rnti_f1_0.N_rb_dl_bwp = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common).length();
-  dci.p_rnti_f1_0.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
-  dci.p_rnti_f1_0.frequency_resource       = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.p_rnti_f1_0.N_rb_dl_bwp, paging_prbs.start(), paging_prbs.length()});
-  dci.p_rnti_f1_0.time_resource = time_resource;
-  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
-  // TODO: Verify if interleaved is suitable for Paging.
-  dci.p_rnti_f1_0.vrb_to_prb_mapping       = 0;
-  dci.p_rnti_f1_0.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
+  build_dci_f1_0_p_rnti(
+      pdcch.dci, cell_cfg.dl_cfg_common.init_dl_bwp, crbs_grant, time_resource, expert_cfg.pg.paging_mcs_index);
 
   // Add Paging UE info to list of Paging information to pass to lower layers.
   for (const auto& pg_info : ues_paging_info) {
@@ -469,23 +473,13 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = pg_grant.pdsch_cfg;
-  pdsch.rnti               = pdcch.ctx.rnti;
-  pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
-  pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
-  pdsch.symbols            = pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
-  pdsch.prbs               = paging_prbs;
-  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
-  pdsch.n_id = cell_cfg.pci;
-
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.mcs_index         = dci.p_rnti_f1_0.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = dci.p_rnti_f1_0.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type2;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  build_pdsch_f1_0_p_rnti(pdsch,
+                          cell_cfg,
+                          tbs,
+                          pdcch.dci.p_rnti_f1_0,
+                          crbs_grant,
+                          pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].symbols,
+                          dmrs_info);
 }
 
 void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)
@@ -497,8 +491,10 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   std::vector<slot_point> pdcch_monitoring_occasions;
   // Initialize slot point to 0.
   slot_point sl = slot_point{to_numerology_value(scs_common), 0};
-  // Compute all PDCCH Monitoring Occasions in a frame.
-  for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num += ss_duration) {
+  // - [Implementation defined] Compute all PDCCH Monitoring Occasions (PMO) over max of nof. slots in radio frame
+  // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
+  const auto periodicity_in_slots = std::max(ss_periodicity, sl.nof_slots_per_frame());
+  for (unsigned slot_num = 0; slot_num < periodicity_in_slots; slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
     if (not cell_cfg.is_fully_dl_enabled(ref_sl)) {

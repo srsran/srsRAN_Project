@@ -70,7 +70,7 @@ private:
   // Structs with the info about the PUCCH resources.
   struct pucch_res_alloc_cfg {
     // True if the struct has a valid config.
-    bool       has_config{false};
+    unsigned   pucch_res_indicator;
     grant_info first_hop_res;
     // Contains grant only if intra-slot freq-hopping is active.
     grant_info second_hop_res;
@@ -81,9 +81,8 @@ private:
   };
 
   // Allocates the PUCCH (common) resource for HARQ-(N)-ACK.
-  pucch_res_alloc_cfg alloc_pucch_common_res_harq(unsigned&                      pucch_res_indicator,
-                                                  cell_slot_resource_allocator&  pucch_alloc,
-                                                  const dci_context_information& dci_info);
+  optional<pucch_res_alloc_cfg> alloc_pucch_common_res_harq(cell_slot_resource_allocator&  pucch_alloc,
+                                                            const dci_context_information& dci_info);
 
   // Helper that allocates a NEW PUCCH HARQ grant (Format 1).
   pucch_harq_ack_grant allocate_new_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,

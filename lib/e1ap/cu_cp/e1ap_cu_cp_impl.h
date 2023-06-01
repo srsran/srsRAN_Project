@@ -70,6 +70,9 @@ public:
 
   void handle_connection_loss() override {}
 
+  // e1ap ue handler functions
+  void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
 private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.

@@ -44,6 +44,8 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
+  ue_ctxt.marked_for_release = true;
+
   // Send command to DU.
   send_ue_context_release_command();
 

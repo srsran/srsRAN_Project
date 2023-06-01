@@ -147,7 +147,7 @@ void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac
   groups[group_index]->get_feedback_handler().handle_dl_mac_ce_indication(mac_ce);
 }
 
-const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
+const sched_result& scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", cell_index);
   cell_scheduler& cell = *cells[cell_index];
@@ -161,7 +161,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.run_slot(sl_tx);
 
   // Return result for the slot.
-  return &cell.last_result();
+  return cell.last_result();
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)

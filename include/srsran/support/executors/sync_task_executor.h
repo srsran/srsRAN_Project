@@ -28,6 +28,7 @@
 
 namespace srsran {
 
+template <typename Exec>
 class sync_task_executor final : public task_executor
 {
   struct setter_deleter {
@@ -45,13 +46,12 @@ class sync_task_executor final : public task_executor
   };
 
 public:
-  sync_task_executor() = default;
-  sync_task_executor(task_executor& exec_) : exec(&exec_) {}
+  explicit sync_task_executor(Exec exec_) : exec(std::move(exec_)) {}
   bool execute(unique_task task) override
   {
     done = false;
     std::unique_ptr<bool, setter_deleter> unique_setter(&done, setter_deleter{this});
-    bool ret = exec->execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
+    bool ret = get(exec).execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
 
     // wait for condition variable to be set.
     std::unique_lock<std::mutex> lock(mutex);
@@ -64,11 +64,35 @@ public:
   bool defer(unique_task task) override { return execute(std::move(task)); }
 
 private:
-  task_executor* exec = nullptr;
+  template <typename U>
+  U& get(U* u)
+  {
+    return *u;
+  }
+
+  template <typename U>
+  U& get(std::unique_ptr<U> u)
+  {
+    return *u;
+  }
+
+  template <typename U>
+  U& get(U& u)
+  {
+    return u;
+  }
+
+  Exec exec;
 
   std::mutex              mutex;
   std::condition_variable cvar;
   bool                    done = false;
 };
+
+template <typename Exec>
+std::unique_ptr<task_executor> make_sync_executor(Exec&& exec)
+{
+  return std::make_unique<sync_task_executor<Exec>>(std::forward<Exec>(exec));
+}
 
 } // namespace srsran

@@ -30,6 +30,7 @@
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
+#include "srsran/ran/precoding/precoding_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/srsvec/copy.h"
@@ -115,7 +116,7 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "n_rnti={}", pdu.dci.n_rnti);
     helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", pdu.dci.dmrs_power_offset_dB);
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.dci.data_power_offset_dB);
-    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.dci.ports));
+    helper.format_if_verbose(ctx, "precoding={}", pdu.dci.precoding);
     return ctx.out();
   }
 };

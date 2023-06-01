@@ -71,10 +71,12 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   // Check if all the symbols are present in the grid.
   span<const uplink_slot_pdu_entry> pdus = ul_pdu_repository.get_pdus(context.slot);
 
-  srsran_assert(!pdus.empty(),
-                "Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
-                "processed in the slot={}",
-                context.slot);
+  if (pdus.empty()) {
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
+    logger.warning("Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
+                   "processed in the slot.");
+    return;
+  }
 
   const uplink_slot_pdu_entry& first_entry = pdus.front();
   unsigned                     nof_symbols =

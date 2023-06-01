@@ -35,7 +35,8 @@ class ue
 public:
   ue(const scheduler_ue_expert_config&        expert_cfg_,
      const cell_configuration&                cell_cfg_common_,
-     const sched_ue_creation_request_message& req);
+     const sched_ue_creation_request_message& req,
+     harq_timeout_handler&                    harq_timeout_notifier_);
   ue(const ue&)            = delete;
   ue(ue&&)                 = delete;
   ue& operator=(const ue&) = delete;
@@ -152,6 +153,9 @@ private:
 
   /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<scheduling_request_to_addmod> sched_request_configs;
+
+  /// Notifier used by HARQ processes to signal timeouts due to undetected HARQ ACKs/CRCs.
+  ue_harq_timeout_notifier harq_timeout_notif;
 
   srslog::basic_logger& logger;
 

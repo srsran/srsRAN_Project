@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../support/rb_helper.h"
 #include "srsran/adt/expected.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
@@ -53,8 +54,11 @@ public:
   const ssb_configuration ssb_cfg;
   dmrs_typeA_position     dmrs_typeA_pos;
 
-  /// List of PUCCH guardbands;
+  /// List of PUCCH guardbands.
   const std::vector<sched_grid_resource> pucch_guardbands;
+
+  /// List of zp-CSI-RS resources.
+  static_vector<zp_csi_rs_resource, MAX_NOF_ZP_CSI_RS_RESOURCES> zp_csi_rs_list;
 
   /// CSI-RS scheduling parameters.
   optional<csi_meas_config> csi_meas_cfg;

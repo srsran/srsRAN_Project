@@ -86,7 +86,7 @@ struct pdcch_config {
 struct pdsch_config {
   /// \brief Interleaving unit configurable between 2 and 4 PRBs.
   /// \remark See TS 38.211, clause 7.3.1.6.
-  enum class vrb_to_prb_interleaver { n2, n4 };
+  enum class vrb_to_prb_interleaver { n2 = 2, n4 = 4 };
 
   /// \brief Resource allocation type of to DCI format 1_1.
   /// \remark See TS 38.214, clause 5.1.2.2.
@@ -96,8 +96,6 @@ struct pdsch_config {
   /// \remark See TS 38.214, clause 5.1.2.1.
   enum class pdsch_aggregation_factor { n2, n4, n8 };
 
-  /// \brief Maximum number of code words a single DCI may schedule.
-  /// \remark See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
@@ -133,13 +131,18 @@ struct pdsch_config {
   /// Indicates which MCS table the UE shall use for PDSCH. (see TS 38.214 [19], clause 5.1.3.1). The field mcs-Table
   /// applies to DCI format 1_0 and DCI format 1_1.
   pdsch_mcs_table mcs_table{pdsch_mcs_table::qam64};
-  /// This changes the number of MCS/RV/NDI bits in the DCI message from 1 to 2.
-  optional<max_no_codeword_scheduled_by_dci> nof_cw_sched_by_dci;
+  /// Maximum number of code words a single DCI may schedule. This changes the number of MCS/RV/NDI bits in the DCI
+  /// message from 1 to 2. See TS 38.331, "maxNrofCodeWordsScheduledByDCI".
+  bool is_max_cw_sched_by_dci_is_two{false};
   /// Indicates the PRB bundle type and bundle size(s). If dynamic is chosen, the actual bundleSizeSet1 or
   /// bundleSizeSet2 to use is indicated via DCI. Constraints on bundleSize(Set) setting depending on
   /// vrb-ToPRB-Interleaver and rbg-Size settings are described in TS 38.214, clause 5.1.2.3. If a bundleSize(Set)
   /// value is absent, the UE applies the value n2. The field prb-BundlingType applies to DCI format 1_1.
   prb_bundling prb_bndlg;
+  /// \brief List of zp-CSI-RS-Resources.
+  static_vector<zp_csi_rs_resource, MAX_NOF_ZP_CSI_RS_RESOURCES> zp_csi_rs_res_list;
+  /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
+  optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 
   // TODO: Remaining.
 
@@ -150,8 +153,9 @@ struct pdsch_config {
            pdsch_mapping_type_b_dmrs == rhs.pdsch_mapping_type_b_dmrs && vrb_to_prb_itlvr == rhs.vrb_to_prb_itlvr &&
            tci_states == rhs.tci_states && res_alloc == rhs.res_alloc && aggr_factor == rhs.aggr_factor &&
            pdsch_td_alloc_list == rhs.pdsch_td_alloc_list && rate_match_pattrn == rhs.rate_match_pattrn &&
-           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table && nof_cw_sched_by_dci == rhs.nof_cw_sched_by_dci &&
-           prb_bndlg == rhs.prb_bndlg;
+           rbg_sz == rhs.rbg_sz && mcs_table == rhs.mcs_table &&
+           is_max_cw_sched_by_dci_is_two == rhs.is_max_cw_sched_by_dci_is_two && prb_bndlg == rhs.prb_bndlg &&
+           zp_csi_rs_res_list == rhs.zp_csi_rs_res_list and p_zp_csi_rs_res == rhs.p_zp_csi_rs_res;
   }
   bool operator!=(const pdsch_config& rhs) const { return !(rhs == *this); }
 };
@@ -183,7 +187,7 @@ struct bwp_uplink_dedicated {
 struct pusch_serving_cell_config {
   struct pusch_code_block_group_transmission {
     /// Maximum number of code-block-groups (CBGs) per TB. See TS 38.213, clause 9.1.
-    enum class max_code_block_groups_per_transport_block { n2, n4, n6, n8 };
+    enum class max_code_block_groups_per_transport_block { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
 
     max_code_block_groups_per_transport_block max_cgb_per_tb;
   };
@@ -202,7 +206,8 @@ struct uplink_config {
 /// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
 struct pdsch_code_block_group_transmission {
   /// \c maxCodeBlockGroupsPerTransportBlock.
-  enum class max_code_block_groups_per_tb { n2, n4, n6, n8 };
+  /// \remark Maximum number of code-block-groups (CBGs) per TB. In case of multiple CW, the maximum CBG is 4.
+  enum class max_code_block_groups_per_tb { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
 
   max_code_block_groups_per_tb max_cbg_per_tb;
   bool                         code_block_group_flush_indicator;

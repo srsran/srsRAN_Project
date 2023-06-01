@@ -117,6 +117,20 @@ struct non_dyn_5qi_descriptor_t {
 };
 
 struct qos_characteristics_t {
+  five_qi_t get_five_qi() const
+  {
+    if (non_dyn_5qi.has_value()) {
+      return non_dyn_5qi.value().five_qi;
+    } else if (dyn_5qi.has_value()) {
+      if (dyn_5qi.value().five_qi.has_value()) {
+        return dyn_5qi.value().five_qi.value();
+      }
+    } else {
+      srsran_assertion_failure("Invalid QoS characteristics. Either dynamic or non-dynamic 5QI must be set");
+    }
+    return five_qi_t::invalid;
+  }
+
   optional<dyn_5qi_descriptor_t>     dyn_5qi;
   optional<non_dyn_5qi_descriptor_t> non_dyn_5qi;
 };

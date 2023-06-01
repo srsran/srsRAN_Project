@@ -33,7 +33,8 @@ TEST_F(f1ap_du_test, when_sdu_is_received_then_sdu_is_forwarded_to_tx_pdu_notifi
 {
   // Run Test Preamble.
   run_f1_setup_procedure();
-  ue_test_context* ue                  = run_f1ap_ue_create(to_du_ue_index(0));
+  ue_test_context* ue = run_f1ap_ue_create(to_du_ue_index(0));
+  run_ue_context_setup_procedure(ue->ue_index, generate_ue_context_setup_request({}));
   this->msg_notifier.last_f1ap_msg.pdu = {};
 
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 4000));

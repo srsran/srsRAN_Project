@@ -127,7 +127,8 @@ long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
 /// \return The actual buffer size level in Bytes.
 uint32_t srsran::buff_size_field_to_bytes(size_t buff_size_index, bsr_format format)
 {
-  static const uint32_t max_offset = 1; // make the reported value bigger than the 2nd biggest
+  // Difference between the 2nd largest and the largest UL buffer size in bytes (Implementation-defined).
+  static constexpr uint32_t max_offset = 150000;
 
   // early exit
   if (buff_size_index == 0) {

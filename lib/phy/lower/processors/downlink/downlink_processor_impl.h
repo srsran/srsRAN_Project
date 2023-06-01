@@ -23,7 +23,7 @@
 #pragma once
 #include "downlink_processor_baseband_impl.h"
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"

@@ -353,7 +353,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
     if (asn1_ng_ran_bearer_context_mod_request.pdu_session_res_to_setup_mod_list_present) {
       for (const auto& asn1_res_to_setup_mod_item :
            asn1_ng_ran_bearer_context_mod_request.pdu_session_res_to_setup_mod_list.value) {
-        e1ap_pdu_session_res_to_setup_mod_item pdu_session_res_to_setup_mod_item;
+        e1ap_pdu_session_res_to_setup_item pdu_session_res_to_setup_mod_item;
 
         // pdu session id
         pdu_session_res_to_setup_mod_item.pdu_session_id =
@@ -377,7 +377,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
         // pdu session res ambr
         if (asn1_res_to_setup_mod_item.pdu_session_res_ambr_present) {
-          pdu_session_res_to_setup_mod_item.pdu_session_res_ambr = asn1_res_to_setup_mod_item.pdu_session_res_ambr;
+          pdu_session_res_to_setup_mod_item.pdu_session_res_dl_ambr = asn1_res_to_setup_mod_item.pdu_session_res_ambr;
         }
 
         // ng ul up tnl info
@@ -411,7 +411,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
         // drb to setup mod list ng ran
         for (const auto& asn1_drb_to_setup_mod_item_ng_ran : asn1_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran) {
-          e1ap_drb_to_setup_mod_item_ng_ran drb_to_setup_mod_item_ng_ran;
+          e1ap_drb_to_setup_item_ng_ran drb_to_setup_mod_item_ng_ran;
 
           // drb id
           drb_to_setup_mod_item_ng_ran.drb_id = uint_to_drb_id(asn1_drb_to_setup_mod_item_ng_ran.drb_id);
@@ -427,7 +427,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
                                        asn1_drb_to_setup_mod_item_ng_ran.cell_group_info);
 
           // flow map info
-          e1ap_asn1_to_flow_map_info(drb_to_setup_mod_item_ng_ran.flow_map_info,
+          e1ap_asn1_to_flow_map_info(drb_to_setup_mod_item_ng_ran.qos_flow_info_to_be_setup,
                                      asn1_drb_to_setup_mod_item_ng_ran.flow_map_info);
 
           // drb data forwarding info request
@@ -447,7 +447,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
                 e1ap_asn1_to_pdcp_sn_status_info(asn1_drb_to_setup_mod_item_ng_ran.pdcp_sn_status_info);
           }
 
-          pdu_session_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran.emplace(
+          pdu_session_res_to_setup_mod_item.drb_to_setup_list_ng_ran.emplace(
               uint_to_drb_id(asn1_drb_to_setup_mod_item_ng_ran.drb_id), drb_to_setup_mod_item_ng_ran);
         }
 

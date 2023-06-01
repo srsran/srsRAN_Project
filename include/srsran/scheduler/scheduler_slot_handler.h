@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "prb_grant.h"
 #include "sched_consts.h"
 #include "scheduler_dci.h"
+#include "vrb_alloc.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
@@ -153,7 +153,7 @@ struct pdsch_information {
   rnti_t                                                 rnti;
   const bwp_configuration*                               bwp_cfg;
   const coreset_configuration*                           coreset_cfg;
-  prb_grant                                              prbs;
+  vrb_alloc                                              rbs;
   ofdm_symbol_range                                      symbols;
   static_vector<pdsch_codeword, MAX_CODEWORDS_PER_PDSCH> codewords;
   dmrs_information                                       dmrs;
@@ -193,13 +193,15 @@ struct dl_msg_alloc {
     unsigned k1;
     /// Chosen search space id
     search_space_id ss_id;
+    /// Number of times the HARQ process has been retransmitted.
+    unsigned nof_retxs;
   } context;
 };
 
 struct pusch_information {
   rnti_t                   rnti;
   const bwp_configuration* bwp_cfg;
-  prb_grant                prbs;
+  vrb_alloc                rbs;
   ofdm_symbol_range        symbols;
   /// \brief For resource allocation type 1, it indicates if intra-slot frequency hopping is enabled, as per TS38.212
   /// Section 7.3.1.1.
@@ -354,6 +356,9 @@ struct csi_rs_info {
 };
 
 struct dl_sched_result {
+  /// Number of DL symbols active for this slot.
+  unsigned nof_dl_symbols;
+
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
   static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
 
@@ -385,6 +390,10 @@ struct ul_sched_info {
   struct decision_context {
     du_ue_index_t   ue_index;
     search_space_id ss_id;
+    /// Chosen k2 delay between UL PDCCH annd PUSCH.
+    unsigned k2;
+    /// Number of times the HARQ process has been retransmitted.
+    unsigned nof_retxs;
   } context;
 };
 
@@ -428,6 +437,8 @@ struct pucch_info {
 };
 
 struct ul_sched_result {
+  /// Number of UL symbols active for this slot.
+  unsigned nof_ul_symbols;
   /// PUSCH grants allocated in the current slot.
   static_vector<ul_sched_info, MAX_PUSCH_PDUS_PER_SLOT> puschs;
   /// PRACH occasions within the given slot.
@@ -438,6 +449,7 @@ struct ul_sched_result {
 
 /// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
+  bool            success;
   dl_sched_result dl;
   ul_sched_result ul;
 };
@@ -446,7 +458,7 @@ class scheduler_slot_handler
 {
 public:
   virtual ~scheduler_slot_handler()                                                         = default;
-  virtual const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
+  virtual const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran

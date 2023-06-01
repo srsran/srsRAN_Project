@@ -50,13 +50,14 @@ public:
                     du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
+                    rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
   // message handlers
-  void handle_f1_setup_request(const f1_setup_request_message& msg) override;
+  void handle_f1_setup_request(const cu_cp_f1_setup_request& request) override;
 
   // getter functions
 
@@ -66,10 +67,11 @@ public:
   f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
   f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
 
-  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(); };
+  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(context.du_index); };
 
-  // du_processor_rrc_message_handler
+  // du_processor_f1ap_interface
   ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
+  void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
 
   rrc_amf_connection_handler&
   get_rrc_amf_connection_handler() override; /// Pass handle to AMF connection handler within RRC
@@ -78,19 +80,26 @@ public:
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
   void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
   async_task<cu_cp_pdu_session_resource_setup_response>
   handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  async_task<cu_cp_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) override;
   async_task<cu_cp_pdu_session_resource_release_response>
-       handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
-  void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
+  cu_cp_ue_context_release_complete
+  handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;
 
   // du_processor inactivity handler
   void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
+
+  // du_processor ue handler
+  void remove_ue(ue_index_t ue_index) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -108,6 +117,7 @@ public:
   du_processor_paging_handler&     get_du_processor_paging_handler() override { return *this; }
   du_processor_inactivity_handler& get_du_processor_inactivity_handler() override { return *this; }
   du_processor_statistics_handler& get_du_processor_statistics_handler() override { return *this; }
+  du_processor_ue_handler&         get_du_processor_ue_handler() override { return *this; }
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.
@@ -126,11 +136,11 @@ private:
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
-  void send_f1_setup_response(const du_processor_context& du_ctxt, uint16_t transaction_id);
+  void send_f1_setup_response(const du_processor_context& du_ctxt);
 
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
-  void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
+  void send_f1_setup_failure(cause_t cause);
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
@@ -142,6 +152,7 @@ private:
   du_processor_ngap_control_notifier&  ngap_ctrl_notifier;
   rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
+  rrc_ue_reestablishment_notifier&     rrc_ue_cu_cp_notifier;
   du_processor_ue_task_scheduler&      task_sched;
   du_processor_ue_manager&             ue_manager;
   du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;

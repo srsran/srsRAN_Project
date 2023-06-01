@@ -52,12 +52,11 @@ public:
 
     // Prepare uplink processor configuration.
     lower_phy_uplink_processor_impl::configuration proc_config;
-    proc_config.sector_id          = config.sector_id;
-    proc_config.scs                = config.scs;
-    proc_config.cp                 = config.cp;
-    proc_config.rate               = config.rate;
-    proc_config.nof_rx_ports       = config.nof_rx_ports;
-    proc_config.initial_slot_index = config.initial_slot_index;
+    proc_config.sector_id    = config.sector_id;
+    proc_config.scs          = config.scs;
+    proc_config.cp           = config.cp;
+    proc_config.rate         = config.rate;
+    proc_config.nof_rx_ports = config.nof_rx_ports;
 
     return std::make_unique<lower_phy_uplink_processor_impl>(
         prach_proc_factory->create(), puxch_proc_factory->create(puxch_proc_config), proc_config);

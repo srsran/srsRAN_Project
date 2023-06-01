@@ -50,7 +50,7 @@ static constexpr size_t MAX_PAGING_RECORDS_PER_PAGING_PDU = 32;
 static constexpr size_t MAX_PAGING_PDUS_PER_SLOT = 1;
 
 /// [Implementation defined] Maximum number of CSI-RS PDUs scheduler per slot.
-static constexpr size_t MAX_CSI_RS_PDUS_PER_SLOT = 2;
+static constexpr size_t MAX_CSI_RS_PDUS_PER_SLOT = 16;
 
 /// [Implementation defined] This corresponds to maximum number of PDCCH PDUs that can be scheduled per slot.
 static constexpr size_t MAX_DL_PDCCH_PDUS_PER_SLOT =

@@ -55,7 +55,7 @@ private:
   static_vector<std::unique_ptr<radio_uhd_tx_stream>, RADIO_MAX_NOF_PORTS> tx_streams;
   /// Vector or receive streams.
   static_vector<std::unique_ptr<radio_uhd_rx_stream>, RADIO_MAX_NOF_PORTS> rx_streams;
-  double                                                                   sampling_rate_hz;
+  double                                                                   actual_sampling_rate_Hz;
   /// Protects the stream start.
   std::mutex stream_start_mutex;
   /// Indicates if the reception streams require start.
@@ -101,8 +101,12 @@ private:
   bool set_rx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency);
 
   /// \brief Start receive streams.
+  /// \param[in] init_time Time in which the stream shall start.
   /// \return True if no exception is caught. Otherwise false.
-  bool start_rx_stream();
+  bool start_rx_stream(baseband_gateway_timestamp init_time);
+
+public:
+  baseband_gateway_timestamp read_current_time() override;
 
 public:
   /// Constructs a radio session based on UHD.
@@ -121,11 +125,19 @@ public:
   baseband_gateway& get_baseband_gateway() override { return *this; }
 
   // See interface for documentation.
-  void start() override;
+  void start(baseband_gateway_timestamp init_time) override;
 
   // See interface for documentation.
   void stop() override;
 
+private:
+  // See interface for documentation.
+  unsigned int get_transmitter_optimal_buffer_size(unsigned stream_id) const override;
+
+  // See interface for documentation.
+  unsigned int get_receiver_optimal_buffer_size(unsigned stream_id) const override;
+
+public:
   // See interface for documentation.
   baseband_gateway_transmitter& get_transmitter(unsigned stream_id) override;
 

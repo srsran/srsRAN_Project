@@ -40,19 +40,20 @@ class rx_payload_buffer_pool
 {
   /// Maximum number of payloads contained by the pool.
   static const size_t MAX_NUM_PAYLOAD = 4096U;
+  static const size_t MAX_BUFFER_SIZE = MAX_RB * 156 * 8;
 
 public:
   /// Returns the next available buffer from the pool.
   span<uint8_t> acquire_payload_buffer(size_t size)
   {
+    srsran_assert(size <= MAX_BUFFER_SIZE, "Buffer size (i.e., {}) exceeds maximum {}.", size, pool[index].size());
     unsigned i = index++ % MAX_NUM_PAYLOAD;
-    pool[i].resize(size);
-    return pool[i];
+    return span<uint8_t>(pool[i]).first(size);
   }
 
 private:
   /// Buffer pool.
-  circular_array<std::vector<uint8_t>, MAX_NUM_PAYLOAD> pool;
+  circular_array<std::array<uint8_t, MAX_BUFFER_SIZE>, MAX_NUM_PAYLOAD> pool;
   /// Index used to retrieve the next container.
   unsigned index = 0;
 };

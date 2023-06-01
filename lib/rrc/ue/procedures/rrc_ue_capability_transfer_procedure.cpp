@@ -96,5 +96,5 @@ void rrc_ue_capability_transfer_procedure::send_rrc_ue_capability_enquiry()
   dl_dcch_msg.msg.set_c1().set_ue_cap_enquiry();
   ue_cap_enquiry_s& rrc_ue_cap_enquiry = dl_dcch_msg.msg.c1().set_ue_cap_enquiry();
   fill_asn1_rrc_ue_capability_enquiry(rrc_ue_cap_enquiry, transaction.id());
-  rrc_ue.on_new_dl_dcch(dl_dcch_msg);
+  rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
 }

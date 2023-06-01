@@ -30,12 +30,12 @@ namespace srsran {
 class mac_ue_delete_procedure
 {
 public:
-  explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
-                                   mac_common_config_t&                 cfg_,
-                                   mac_ctrl_configurator&               mac_ctrl_,
-                                   mac_ul_configurator&                 mac_ul_,
-                                   mac_dl_configurator&                 mac_dl_,
-                                   mac_scheduler_configurator&          sched_configurator_) :
+  explicit mac_ue_delete_procedure(const mac_ue_delete_request& msg,
+                                   mac_common_config_t&         cfg_,
+                                   mac_ctrl_configurator&       mac_ctrl_,
+                                   mac_ul_configurator&         mac_ul_,
+                                   mac_dl_configurator&         mac_dl_,
+                                   mac_scheduler_configurator&  sched_configurator_) :
     req(msg),
     cfg(cfg_),
     logger(cfg.logger),
@@ -46,7 +46,7 @@ public:
   {
   }
 
-  void operator()(coro_context<async_task<mac_ue_delete_response_message>>& ctx)
+  void operator()(coro_context<async_task<mac_ue_delete_response>>& ctx)
   {
     CORO_BEGIN(ctx);
 
@@ -69,19 +69,19 @@ public:
     log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
 
     // 4. Signal end of procedure and pass response
-    CORO_RETURN(mac_ue_delete_response_message{true});
+    CORO_RETURN(mac_ue_delete_response{true});
   }
 
   static const char* name() { return "UE Delete Request"; }
 
 private:
-  mac_ue_delete_request_message req;
-  mac_common_config_t&          cfg;
-  srslog::basic_logger&         logger;
-  mac_ctrl_configurator&        ctrl_mac;
-  mac_ul_configurator&          ul_mac;
-  mac_dl_configurator&          dl_mac;
-  mac_scheduler_configurator&   sched_configurator;
+  mac_ue_delete_request       req;
+  mac_common_config_t&        cfg;
+  srslog::basic_logger&       logger;
+  mac_ctrl_configurator&      ctrl_mac;
+  mac_ul_configurator&        ul_mac;
+  mac_dl_configurator&        dl_mac;
+  mac_scheduler_configurator& sched_configurator;
 };
 
 } // namespace srsran

@@ -87,7 +87,7 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_writer& grid, const pdu_t& pdu) override;
+  void process(resource_grid_mapper& grid, const pdu_t& pdu) override;
 };
 
 } // namespace srsran

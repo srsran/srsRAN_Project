@@ -36,12 +36,7 @@ public:
     lower_phy_rx_symbol_context context;
   };
 
-  void on_late_resource_grid(const resource_grid_context& context) override { request_late.emplace_back(context); }
-
-  void on_overflow_resource_grid(const resource_grid_context& context) override
-  {
-    request_overflow.emplace_back(context);
-  }
+  void on_pdxch_request_late(const resource_grid_context& context) override { request_late.emplace_back(context); }
 
   const std::vector<resource_grid_context>& get_request_late() const { return request_late; }
 

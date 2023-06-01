@@ -27,11 +27,44 @@
 using namespace srsran;
 using namespace srsvec;
 
+namespace details {
+
+#if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
+using simd_conv_func_type = simd_s_t (*)(simd_f_t a, simd_f_t b);
+
+template <bool R = false>
+struct simd_conversion_helper {
+  simd_conv_func_type convert = srsran_simd_convert_2f_s;
+};
+
+template <>
+struct simd_conversion_helper<true> {
+  simd_conv_func_type convert = srsran_simd_convert_2f_s_round;
+};
+#endif
+
+using gen_conv_func_type = int16_t (*)(float);
+
+template <bool R = false>
+struct gen_conversion_helper {
+  gen_conv_func_type convert = [](float a) { return (int16_t)a; };
+};
+
+template <>
+struct gen_conversion_helper<true> {
+  gen_conv_func_type convert = [](float a) { return static_cast<int16_t>(std::round(a)); };
+};
+
+} // namespace details
+
+template <bool ROUND = false>
 static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned len)
 {
   unsigned i = 0;
 
 #if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
+  details::simd_conversion_helper<ROUND> conversion_helper;
+
   simd_f_t s = srsran_simd_f_set1(scale);
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
@@ -41,7 +74,7 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
       simd_f_t sa = srsran_simd_f_mul(a, s);
       simd_f_t sb = srsran_simd_f_mul(b, s);
 
-      simd_s_t i16 = srsran_simd_convert_2f_s(sa, sb);
+      simd_s_t i16 = conversion_helper.convert(sa, sb);
 
       srsran_simd_s_store(&z[i], i16);
     }
@@ -53,15 +86,15 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
       simd_f_t sa = srsran_simd_f_mul(a, s);
       simd_f_t sb = srsran_simd_f_mul(b, s);
 
-      simd_s_t i16 = srsran_simd_convert_2f_s(sa, sb);
+      simd_s_t i16 = conversion_helper.convert(sa, sb);
 
       srsran_simd_s_storeu(&z[i], i16);
     }
   }
 #endif /* SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE */
-
+  details::gen_conversion_helper<ROUND> gen_conversion_helper;
   for (; i < len; i++) {
-    z[i] = (int16_t)(x[i] * scale);
+    z[i] = gen_conversion_helper.convert(x[i] * scale);
   }
 }
 
@@ -103,6 +136,13 @@ void srsran::srsvec::convert(span<const cf_t> x, float scale, span<int16_t> z)
   convert_fi_simd((const float*)x.data(), z.data(), scale, z.size());
 }
 
+void srsran::srsvec::convert_round(span<const cf_t> x, float scale, span<int16_t> z)
+{
+  assert(2 * x.size() == z.size());
+
+  convert_fi_simd</*ROUND =*/true>((const float*)x.data(), z.data(), scale, z.size());
+}
+
 void srsran::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t> z)
 {
   assert(2 * x.size() == z.size());
@@ -142,6 +182,13 @@ void srsran::srsvec::convert(span<const float> x, float scale, span<int16_t> z)
   assert(x.size() == z.size());
 
   convert_fi_simd(x.data(), z.data(), scale, z.size());
+}
+
+void srsran::srsvec::convert_round(span<const float> x, float scale, span<int16_t> z)
+{
+  assert(x.size() == z.size());
+
+  convert_fi_simd</*ROUND =*/true>(x.data(), z.data(), scale, z.size());
 }
 
 void srsran::srsvec::convert(span<const int16_t> x, float scale, span<float> z)

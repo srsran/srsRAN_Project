@@ -21,12 +21,9 @@
  */
 #pragma once
 
-#include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/lower/lower_phy_configuration.h"
-#include "srsran/phy/lower/modulation/modulation_factories.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
-#include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_factories.h"
 #include <memory>
 

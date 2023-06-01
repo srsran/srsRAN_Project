@@ -30,7 +30,22 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// \brief Handles the setup of PDU session resources from the RRC viewpoint.
+/// \brief Handles the setup of PDU session resources from the CU-CP point of view.
+///
+/// The routine combines several (sub-)procedures involving the CU-UP and the DU.
+/// Depending on the current state of the UE and bearer context it may involve:
+/// * Initiate or modifiy the CU-UPs bearer context over E1AP
+/// * Modify the DU's UE context over F1AP
+/// * Modify the CU-UPs bearer context over E1AP (update TEIDs, etc)
+/// * Modify the UE's configuration over RRC signaling
+///
+/// All procedure are executed sequentially and their outcome and the contained values
+/// in the result messages may affect the next procedure's request content.
+/// The general paradigm of execution is that when processing the result message of
+/// one procedure in handle_procedure_response() the content for the subsequent request
+/// is already pre-filled based on the processed result. This avoid storing extra
+/// state information that needs to be stored and processed elsewhere.
+
 /// TODO Add seqdiag
 class pdu_session_resource_setup_routine
 {
@@ -41,7 +56,7 @@ public:
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
                                      du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
-                                     drb_manager&                                    rrc_ue_drb_manager_,
+                                     up_resource_manager&                            rrc_ue_up_resource_manager_,
                                      srslog::basic_logger&                           logger_);
 
   void operator()(coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx);
@@ -50,8 +65,7 @@ public:
 
 private:
   void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
-  void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
-  bool valid_5qi(const qos_flow_setup_request_item& flow);
+  void fill_initial_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
   cu_cp_pdu_session_resource_setup_response handle_pdu_session_resource_setup_result(bool success);
 
@@ -59,12 +73,12 @@ private:
   const ue_configuration                         ue_cfg;
   const srsran::security::sec_as_config          security_cfg;
 
-  std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
+  up_config_update next_config;
 
-  du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier&        f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
-  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;       // to trigger RRC Reconfiguration at UE
-  drb_manager&                                  rrc_ue_drb_manager;    // to get RRC DRB config
+  du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;         // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier&        f1ap_ue_ctxt_notifier;      // to trigger UE context modification at DU
+  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;            // to trigger RRC Reconfiguration at UE
+  up_resource_manager&                          rrc_ue_up_resource_manager; // to get RRC DRB config
   srslog::basic_logger&                         logger;
 
   // (sub-)routine requests

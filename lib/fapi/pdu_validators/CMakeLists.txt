@@ -23,6 +23,7 @@ set(SOURCES
         dl_pdcch_pdu.cpp
         dl_pdsch_pdu.cpp
         dl_ssb_pdu.cpp
+        tx_precoding_and_beamforming_pdu.cpp
         uci_pdus.cpp
         ul_prach_pdu.cpp
         ul_pucch_pdu.cpp

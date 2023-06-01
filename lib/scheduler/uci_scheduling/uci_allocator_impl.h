@@ -57,6 +57,8 @@ public:
                                     rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) override;
 
+  uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
+
 private:
   // \brief Information cached by the UCI scheduler relative to the UCIs scheduled in the cell resource grid. Store
   // here any information that does not need to be stored in the PUCCH and PUSCH PDUs and does not need to be sent to
@@ -65,8 +67,8 @@ private:
     struct ue_uci {
       /// RNTI of this UCI.
       rnti_t rnti = rnti_t::INVALID_RNTI;
-      /// Number of HARQs currently scheduled for this UE UCI.
-      unsigned harq_ack_counter = 0;
+      /// Number of DL PDCCH(s) scheduled for which UCI falls in same slot.
+      unsigned scheduled_dl_pdcch_counter = 0;
     };
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };

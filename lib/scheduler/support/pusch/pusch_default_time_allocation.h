@@ -25,6 +25,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/dmrs.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 namespace srsran {
 
@@ -67,5 +68,16 @@ pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index
 /// \return A list of valid PUSCH time-domain allocation configurations to choose from.
 span<const pusch_time_domain_resource_allocation>
 pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs);
+
+/// \brief Determines the time domain resource allocation table to be used for PUSCH as per TS 38.214, clause 6.1.2.1.1.
+///
+/// \param ss_cfg Search Space configuration.
+/// \param active_bwp_ul_common Active BWP UL common configuration.
+/// \param active_bwp_ul_ded Active BWP UL UE-dedicated configuration.
+/// \return A list of valid PUSCH time-domain allocation configurations to choose from.
+span<const pusch_time_domain_resource_allocation>
+get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_cfg,
+                                  const bwp_uplink_common&          active_bwp_ul_common,
+                                  const bwp_uplink_dedicated*       active_bwp_ul_ded);
 
 } // namespace srsran

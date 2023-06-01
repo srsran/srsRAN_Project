@@ -21,6 +21,7 @@
  */
 
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
+#include "../cell/cell_configuration.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/support/config/validator_helpers.h"
 
@@ -72,6 +73,17 @@ error_type<std::string> srsran::config_validators::validate_pucch_cfg(const sche
              res_idx,
              pucch_res_set_idx);
     }
+  }
+
+  // Verify each resource format matches the corresponding parameters.
+  for (auto res : pucch_cfg.pucch_res_list) {
+    const bool format_match_format_params =
+        (res.format == pucch_format::FORMAT_0 and variant_holds_alternative<pucch_format_0_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_1 and variant_holds_alternative<pucch_format_1_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_2 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_3 and variant_holds_alternative<pucch_format_2_3_cfg>(res.format_params)) or
+        (res.format == pucch_format::FORMAT_4 and variant_holds_alternative<pucch_format_4_cfg>(res.format_params));
+    VERIFY(format_match_format_params, "PUCCH res id {} format does not match the PUCCH format parameters", res.res_id);
   }
 
   // Check PUCCH Formats for each PUCCH Resource Set.
@@ -143,12 +155,47 @@ error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sche
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     const auto& init_dl_bwp = cell.serv_cell_cfg.init_dl_bwp;
     if (init_dl_bwp.pdsch_cfg.has_value()) {
-      const auto& dl_lst = init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
+      const pdsch_config& pdsch_cfg = init_dl_bwp.pdsch_cfg.value();
+      const auto&         dl_lst    = pdsch_cfg.pdsch_td_alloc_list;
       for (const auto& pdsch : dl_lst) {
         VERIFY(pdsch.k0 <= SCHEDULER_MAX_K0, "k0={} value exceeds maximum supported k0", pdsch.k0);
       }
+
+      VERIFY(not pdsch_cfg.zp_csi_rs_res_list.empty() == pdsch_cfg.p_zp_csi_rs_res.has_value(),
+             "Only periodic ZP-CSI-RS-ResourceId is supported");
+      if (not pdsch_cfg.zp_csi_rs_res_list.empty()) {
+        VERIFY(has_unique_ids(pdsch_cfg.zp_csi_rs_res_list, &zp_csi_rs_resource::id),
+               "Duplication of ZP-CSI-RS-ResourceId");
+        VERIFY(pdsch_cfg.p_zp_csi_rs_res->id == (zp_csi_rs_res_set_id_t)0,
+               "Only ZP-CSI-RS-ResourceId=0 is allowed for periodic ZP-CSI-RS");
+        VERIFY(are_all_unique(pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list), "Duplication of ZP-CSI-RS-ResourceId");
+
+        VERIFY(cell.serv_cell_cfg.csi_meas_cfg.has_value(),
+               "CSI-MeasConfig must be configured if ZP-CSI-RS is configured");
+        const auto& csi_cfg = cell.serv_cell_cfg.csi_meas_cfg.value();
+        for (const auto& csi_im : csi_cfg.csi_im_res_list) {
+          bool found = std::any_of(pdsch_cfg.zp_csi_rs_res_list.begin(),
+                                   pdsch_cfg.zp_csi_rs_res_list.end(),
+                                   [&csi_im](const zp_csi_rs_resource& zp) {
+                                     return zp.period == csi_im.csi_res_period and
+                                            zp.offset == csi_im.csi_res_offset and
+                                            zp.res_mapping.freq_band_start_rb == csi_im.freq_band_start_rb and
+                                            zp.res_mapping.freq_band_nof_rb == csi_im.freq_band_nof_rb and
+                                            zp.res_mapping.first_ofdm_symbol_in_td ==
+                                                csi_im.csi_im_res_element_pattern->symbol_location;
+                                   });
+          VERIFY(found,
+                 "CSI-IM does not overlap with ZP-CSI-RS. CSI-IM: {{period={} offset={} band=[{}, {}) symbol={}}}",
+                 csi_im.csi_res_period,
+                 csi_im.csi_res_offset,
+                 csi_im.freq_band_start_rb,
+                 csi_im.freq_band_nof_rb,
+                 csi_im.csi_im_res_element_pattern->symbol_location);
+        }
+      }
     }
   }
+
   // TODO: Validate other parameters.
   return {};
 }

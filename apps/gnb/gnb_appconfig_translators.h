@@ -22,16 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
-#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_qos_config.h"
-#include "srsran/phy/lower/lower_phy_configuration.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/phy/upper/upper_phy_factories.h"
-#include "srsran/radio/radio_configuration.h"
+#include "srsran/ru/ru_configuration.h"
 #include <map>
 #include <vector>
 
@@ -51,17 +47,16 @@ std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const
 /// Converts and returns the given gnb application QoS configuration to a DU configuration.
 std::map<five_qi_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
 
+/// Converts and returns the given gnb application configuration to a mac expert configuration.
+mac_expert_config generate_mac_expert_config(const gnb_appconfig& config);
+
 /// Converts and returns the given gnb application configuration to a scheduler expert configuration.
 scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to an upper PHY configuration.
 std::vector<upper_phy_config> generate_du_low_config(const gnb_appconfig& config);
 
-/// Converts and returns the given gnb application configuration to a lower PHY configuration.
-lower_phy_configuration generate_ru_config(const gnb_appconfig& config);
-
-/// Converts and returns the given gnb application configuration to a radio configuration and validates it.
-radio_configuration::radio generate_radio_config(const gnb_appconfig&                  config,
-                                                 const radio_configuration::validator& validator);
+/// Converts and returns the given gnb application configuration to a Radio Unit configuration.
+ru_configuration generate_ru_config(const gnb_appconfig& config);
 
 } // namespace srsran

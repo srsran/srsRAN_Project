@@ -33,11 +33,11 @@ void mac_test_ue::add_bearer(lcid_t lcid)
   bearers[lcid].bearer.dl_bearer = &bearers[lcid].dl_notifier;
 }
 
-mac_ue_create_request_message mac_test_ue::make_ue_create_request()
+mac_ue_create_request mac_test_ue::make_ue_create_request()
 {
-  mac_ue_create_request_message msg = make_default_ue_creation_request();
-  msg.ue_index                      = ue_index;
-  msg.crnti                         = rnti;
+  mac_ue_create_request msg = make_default_ue_creation_request();
+  msg.ue_index              = ue_index;
+  msg.crnti                 = rnti;
   for (const auto& b : bearers) {
     msg.bearers.push_back(b.bearer);
   }

@@ -67,26 +67,27 @@ protected:
 /// Test the RRC setup with connected AMF
 TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
 {
-  const char* sk_gnb_cstr    = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
-  const char* k_rrc_enc_cstr = "4ea96992c8c7e82977231ad001309062ae9f31ead90a4d0842af6cd25cb44dc4";
-  const char* k_rrc_int_cstr = "aeeb5e0ae02c6188ecb1625c4a9e022fdfc2a1fc845b44b44443ac9a3bda667c";
+  const char* sk_gnb_cstr = "45cbc3f8a81193fd5c5229300d59edf812e998a115ec4e0ce903ba89367e2628";
+  const char* k_enc_cstr  = "4ea96992c8c7e82977231ad001309062ae9f31ead90a4d0842af6cd25cb44dc4";
+  const char* k_int_cstr  = "aeeb5e0ae02c6188ecb1625c4a9e022fdfc2a1fc845b44b44443ac9a3bda667c";
 
   // Pack hex strings into srsgnb types
-  security::sec_as_key sk_gnb    = make_sec_as_key(sk_gnb_cstr);
-  security::sec_as_key k_rrc_enc = make_sec_as_key(k_rrc_enc_cstr);
-  security::sec_as_key k_rrc_int = make_sec_as_key(k_rrc_int_cstr);
+  security::sec_key sk_gnb = make_sec_key(sk_gnb_cstr);
+  security::sec_key k_enc  = make_sec_key(k_enc_cstr);
+  security::sec_key k_int  = make_sec_key(k_int_cstr);
 
   // Create expected SRB1 sec config
   security::sec_as_config sec_cfg         = {};
+  sec_cfg.domain                          = security::sec_domain::rrc;
   sec_cfg.integ_algo                      = security::integrity_algorithm::nia2;
   sec_cfg.cipher_algo                     = security::ciphering_algorithm::nea0;
-  sec_cfg.k_rrc_enc                       = k_rrc_enc;
-  sec_cfg.k_rrc_int                       = k_rrc_int;
+  sec_cfg.k_enc                           = k_enc;
+  sec_cfg.k_int                           = k_int;
   security::sec_128_as_config sec_128_cfg = security::truncate_config(sec_cfg);
 
   // Initialize security context and capabilities.
-  rrc_init_security_context init_sec_ctx = {};
-  init_sec_ctx.k                         = sk_gnb;
+  security::security_context init_sec_ctx = {};
+  init_sec_ctx.k                          = sk_gnb;
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 
@@ -116,7 +117,7 @@ TEST_F(rrc_ue_smc, when_key_provided_smc_generated)
 TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
 {
   // Initialize security context and capabilities.
-  rrc_init_security_context init_sec_ctx = {};
+  security::security_context init_sec_ctx = {};
   std::fill(init_sec_ctx.supported_int_algos.begin(), init_sec_ctx.supported_int_algos.end(), true);
   std::fill(init_sec_ctx.supported_enc_algos.begin(), init_sec_ctx.supported_enc_algos.end(), true);
 

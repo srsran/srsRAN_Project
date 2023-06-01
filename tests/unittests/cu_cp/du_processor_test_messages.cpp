@@ -30,22 +30,38 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-f1_setup_request_message srsran::srs_cu_cp::generate_valid_f1_setup_request()
+void srsran::srs_cu_cp::generate_valid_f1_setup_request(cu_cp_f1_setup_request& f1_setup_request)
 {
-  f1ap_message             f1setup_msg          = generate_f1_setup_request();
-  f1_setup_request_message f1_setup_request_msg = {};
-  f1_setup_request_msg.request                  = f1setup_msg.pdu.init_msg().value.f1_setup_request();
-  return f1_setup_request_msg;
+  f1ap_message f1setup_msg = generate_f1_setup_request(0);
+  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
-f1_setup_request_message srsran::srs_cu_cp::generate_f1_setup_request_base()
+void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f1_setup_request)
 {
-  f1ap_message f1setup_msg                                                              = generate_f1_setup_request();
+  f1ap_message f1setup_msg                                                              = generate_f1_setup_request(0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list->clear();
-  f1_setup_request_message f1_setup_request_msg = {};
-  f1_setup_request_msg.request                  = f1setup_msg.pdu.init_msg().value.f1_setup_request();
-  return f1_setup_request_msg;
+  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
+}
+
+void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(cu_cp_f1_setup_request& f1_setup_request)
+{
+  f1ap_message f1setup_msg  = generate_f1_setup_request(0);
+  auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
+  f1_setup_req->gnb_du_served_cells_list->clear();
+
+  f1_setup_req->gnb_du_served_cells_list_present = true;
+  f1_setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
+  f1_setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
+
+  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS + 1;
+       du_cell_idx_int++) {
+    f1_setup_req->gnb_du_served_cells_list.value.push_back({});
+    f1_setup_req->gnb_du_served_cells_list.value.back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    f1_setup_req->gnb_du_served_cells_list.value.back()->gnb_du_served_cells_item() =
+        generate_served_cells_item(du_cell_idx_int, du_cell_idx_int);
+  }
+  fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
 ue_creation_message srsran::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_id)
@@ -78,7 +94,9 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
   cu_cp_pdu_session_resource_setup_request req;
   req.ue_index = uint_to_ue_index(0);
 
-  for (uint32_t i = 0; i < num_pdu_sessions; ++i) {
+  req.ue_aggregate_maximum_bit_rate_dl = 1000;
+
+  for (unsigned i = 0; i < num_pdu_sessions; ++i) {
     pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(i + 1);
 
     cu_cp_pdu_session_res_setup_item item;
@@ -93,12 +111,12 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
     item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
     item.pdu_session_type                          = "ipv4";
 
-    for (uint32_t k = 0; k < num_qos_flows; ++k) {
+    for (unsigned k = 0; k < num_qos_flows; ++k) {
       qos_flow_setup_request_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(k + 1);
+      qos_item.qos_flow_id = uint_to_qos_flow_id(i + k + 1);
 
       non_dyn_5qi_descriptor_t non_dyn_5qi;
-      non_dyn_5qi.five_qi                                                = uint_to_five_qi(9);
+      non_dyn_5qi.five_qi                                                = uint_to_five_qi(9); // all with same FiveQI
       qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
       qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
@@ -129,6 +147,34 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
 
   return cmd;
 };
+
+cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification()
+{
+  cu_cp_pdu_session_resource_modify_request request;
+  request.ue_index = uint_to_ue_index(0);
+
+  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+
+  qos_flow_add_or_mod_item qos_item;
+  qos_item.qos_flow_id = uint_to_qos_flow_id(2);
+  {
+    non_dyn_5qi_descriptor_t non_dyn_5qi;
+    non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(7);
+    qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi                    = non_dyn_5qi;
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+    qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  }
+
+  cu_cp_pdu_session_res_modify_request_transfer transfer;
+  transfer.qos_flow_add_or_modify_request_list.emplace(qos_item.qos_flow_id, qos_item);
+
+  modify_item.transfer = transfer;
+  request.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id, modify_item);
+
+  return request;
+}
 
 e1ap_bearer_context_setup_response
 srsran::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,

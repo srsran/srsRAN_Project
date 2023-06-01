@@ -199,6 +199,9 @@ ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_
 
   init_context_setup_req->allowed_nssai->push_back(allowed_nssai);
 
+  init_context_setup_req->masked_imeisv_present = true;
+  init_context_setup_req->masked_imeisv.value.from_string("0123456700ffff01");
+
   return ngap_msg;
 }
 
@@ -216,6 +219,59 @@ ngap_message srsran::srs_cu_cp::generate_valid_initial_context_setup_request_mes
   return ngap_msg;
 }
 
+ngap_message
+srsran::srs_cu_cp::generate_valid_initial_context_setup_request_message_with_pdu_session(amf_ue_id_t amf_ue_id,
+                                                                                         ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = generate_valid_initial_context_setup_request_message(amf_ue_id, ran_ue_id);
+
+  auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
+  init_context_setup_req->pdu_session_res_setup_list_cxt_req_present = true;
+
+  asn1::ngap::pdu_session_res_setup_item_cxt_req_s pdu_session_item;
+  pdu_session_item.pdu_session_id = 1U;
+  pdu_session_item.s_nssai.sst.from_number(1U);
+  pdu_session_item.pdu_session_res_setup_request_transfer = make_byte_buffer(
+      "0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00");
+
+  init_context_setup_req->pdu_session_res_setup_list_cxt_req.value.push_back(pdu_session_item);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t amf_ue_id)
+{
+  ngap_message ngap_msg = {};
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+
+  auto& ue_context_release_cmd = ngap_msg.pdu.init_msg().value.ue_context_release_cmd();
+  ue_context_release_cmd->ue_ngap_ids.value.set_amf_ue_ngap_id() = amf_ue_id_to_uint(amf_ue_id);
+  auto& cause = ue_context_release_cmd->cause.value.set_radio_network();
+  cause       = asn1::ngap::cause_radio_network_opts::options::radio_conn_with_ue_lost;
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_ue_id_t amf_ue_id,
+                                                                                               ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = {};
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+
+  auto& ue_context_release_cmd = ngap_msg.pdu.init_msg().value.ue_context_release_cmd();
+  auto& ue_id_pair             = ue_context_release_cmd->ue_ngap_ids.value.set_ue_ngap_id_pair();
+  ue_id_pair.amf_ue_ngap_id    = amf_ue_id_to_uint(amf_ue_id);
+  ue_id_pair.ran_ue_ngap_id    = ran_ue_id_to_uint(ran_ue_id);
+  auto& cause                  = ue_context_release_cmd->cause.value.set_radio_network();
+  cause                        = asn1::ngap::cause_radio_network_opts::options::radio_conn_with_ue_lost;
+
+  return ngap_msg;
+}
+
 ngap_message srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
                                                                                        ran_ue_id_t ran_ue_id)
 {
@@ -227,6 +283,26 @@ ngap_message srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_m
   init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(0);
+
+  return ngap_msg;
+}
+
+ngap_message
+srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_message_with_pdu_session(amf_ue_id_t amf_ue_id,
+                                                                                           ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = generate_invalid_initial_context_setup_request_message(amf_ue_id, ran_ue_id);
+
+  auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
+  init_context_setup_req->pdu_session_res_setup_list_cxt_req_present = true;
+
+  asn1::ngap::pdu_session_res_setup_item_cxt_req_s pdu_session_item;
+  pdu_session_item.pdu_session_id = 1U;
+  pdu_session_item.s_nssai.sst.from_number(1U);
+  pdu_session_item.pdu_session_res_setup_request_transfer = make_byte_buffer(
+      "0000040082000a0c400000003040000000008b000a01f00a3213020000049a00860001000088000700010000091c00");
+
+  init_context_setup_req->pdu_session_res_setup_list_cxt_req.value.push_back(pdu_session_item);
 
   return ngap_msg;
 }

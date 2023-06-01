@@ -1,0 +1,133 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "6"
+    file: .gitlab/ci-shared/setup/all.yml
+
+stages:
+  - private
+  - public
+
+update agpl main:
+  stage: private
+  rules:
+    - if: $ON_TAG
+      allow_failure: true
+  interruptible: false
+  variables:
+    GIT_STRATEGY: none
+    BRANCH: agpl_main
+  image: ubuntu:22.04
+  before_script:
+    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
+    - git config --global user.name "${CODEBOT_USERNAME}"
+    - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
+  script:
+    - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
+    - cd /${CI_PROJECT_NAME}
+    - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
+    - .gitlab/ci/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH}
+
+generate testvector tar gz:
+  stage: private
+  rules:
+    - if: $ON_TAG
+  interruptible: false
+  image: ubuntu:22.04
+  script:
+    - find . -name "*.tar.gz" -exec tar -rvf phy_testvectors.tar.gz {} \;
+  artifacts:
+    paths:
+      - phy_testvectors.tar.gz
+    expire_in: "7 days"
+
+push:
+  stage: public
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  interruptible: false
+  image: alpine:3.16.0 # sh entrypoint
+  variables:
+    GIT_STRATEGY: none
+    PRIVATE_BRANCH: agpl_main
+    PUBLIC_REPO: srsran/srsRAN_Project
+    PUBLIC_BRANCH: main
+  before_script:
+    - apk add git
+  script:
+    # Download private repo and add public as origin
+    - git clone --branch $PRIVATE_BRANCH https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
+    - cd /${CI_PROJECT_NAME}
+    - git remote add github_public https://${PUBLIC_TOKEN}@github.com/${PUBLIC_REPO}.git
+    # Push code to github main
+    - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
+
+release:
+  stage: public
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  interruptible: false
+  image: alpine:3.16.0 # sh entrypoint
+  needs:
+    - job: push
+      optional: false
+      artifacts: false
+    - job: generate testvector tar gz
+      optional: false
+      artifacts: true
+  variables:
+    GIT_STRATEGY: none
+    ARTIFACT: phy_testvectors.tar.gz
+    PUBLIC_NAME: srsRAN Project
+    PUBLIC_REPO: srsran/srsRAN_Project
+    PUBLIC_BRANCH: main
+  before_script:
+    - apk add git curl jq
+  script:
+    # Expected private tag name: X.Y. Ex: 23.4
+    # Public tag name: release_X_Y. Ex: release_23_4
+    - export PUBLIC_TAG=release_${CI_COMMIT_TAG//./_}
+    # Public release name: $PUBLIC_NAME X_Y. Ex: srsRAN Project 23.4
+    - export PUBLIC_RELEASE_NAME=${PUBLIC_NAME} ${CI_COMMIT_TAG}
+    # Public release notes: tag message
+    - export PUBLIC_RELEASE_NOTES=${CI_COMMIT_TAG_MESSAGE}
+
+    # Download public repo
+    - git clone --branch $PUBLIC_BRANCH https://${PUBLIC_TOKEN}@github.com/${PUBLIC_REPO}.git srsran
+    - cd srsran
+
+    # Push tag
+    - git tag ${PUBLIC_TAG} origin/${PUBLIC_BRANCH}
+    - git push origin ${PUBLIC_TAG}
+
+    # Create release
+    - |
+      RELEASE_ID=$(curl -L \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${PUBLIC_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/${PUBLIC_REPO}/releases \
+        -d "{\"tag_name\":\"${PUBLIC_TAG}\",\"target_commitish\":\"${PUBLIC_BRANCH}\",\"name\":\"${PUBLIC_RELEASE_NAME}\",\"body\":\"${PUBLIC_RELEASE_NOTES}\",\"draft\":false,\"prerelease\":false,\"generate_release_notes\":false}" | jq '.id')
+
+    # Push testvector.tar.gz to release
+    - |
+      curl -L \
+        -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${PUBLIC_TOKEN}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        -H "Content-Type: application/octet-stream" \
+        https://uploads.github.com/repos/${PUBLIC_REPO}/releases/${RELEASE_ID}/assets?name=${ARTIFACT} \
+        --data-binary "@${CI_PROJECT_DIR}/${ARTIFACT}"

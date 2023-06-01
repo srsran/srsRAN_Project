@@ -75,5 +75,17 @@ struct f1ap_ue_context_update_response {
   byte_buffer                 du_to_cu_rrc_container;
 };
 
+/// \brief Handled causes for RLF.
+enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached };
+
+/// \brief Request Command for F1AP UE CONTEXT Release Request.
+struct f1ap_ue_context_release_request {
+  du_ue_index_t ue_index;
+  rlf_cause     cause;
+};
+
+/// \brief Request Command for F1AP UE CONTEXT Modification Required.
+struct f1ap_ue_context_modification_required {};
+
 } // namespace srs_du
 } // namespace srsran

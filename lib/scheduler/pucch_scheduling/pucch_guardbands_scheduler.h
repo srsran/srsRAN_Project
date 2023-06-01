@@ -30,16 +30,16 @@ class cell_configuration;
 struct cell_resource_allocator;
 struct cell_slot_resource_allocator;
 
-/// This class implements a scheduler that pre-reserve the PUCCH resouces on the scheduler grid, to prevent the PUSCH
-/// allocator from using them. The pre-reserve the PUCCH are hereby referred as PUCCH guardbands.
+/// This class implements a scheduler that pre-reserve the PUCCH resources' REs on the scheduler grid, to prevent the
+/// PUSCH allocator from using them. The pre-reserved REs are hereby referred as PUCCH guardbands.
 class pucch_guardbands_scheduler
 {
 public:
   explicit pucch_guardbands_scheduler(const cell_configuration& cell_cfg_);
 
-  /// \brief Run the PUCCH guardbands scheduler.
+  /// \brief Runs the PUCCH guardbands scheduler.
   ///
-  /// When called for the first time, this function pre-reserves the PUCCH over the entire grid, until the last
+  /// When called for the first time, this function pre-reserves the PUCCH's REs over the entire grid, until the last
   /// (farthest in the future) usable slot. From the second time onwards, the scheduler pre-reserves the PUCCH for the
   /// last usable slot of the grid.
   /// \param[out,in] res_alloc resource grid.

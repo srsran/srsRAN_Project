@@ -63,7 +63,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
   return result;
 }
 
-void pdcch_processor_impl::process(srsran::resource_grid_writer& grid, const pdcch_processor::pdu_t& pdu)
+void pdcch_processor_impl::process(resource_grid_mapper& mapper, const pdcch_processor::pdu_t& pdu)
 {
   const coreset_description& coreset = pdu.coreset;
   const dci_description&     dci     = pdu.dci;
@@ -93,10 +93,10 @@ void pdcch_processor_impl::process(srsran::resource_grid_writer& grid, const pdc
   modulator_config.n_id                      = dci.n_id_pdcch_data;
   modulator_config.n_rnti                    = dci.n_rnti;
   modulator_config.scaling                   = convert_dB_to_amplitude(dci.data_power_offset_dB);
-  modulator_config.ports                     = dci.ports;
+  modulator_config.precoding                 = dci.precoding;
 
   // Modulate.
-  modulator->modulate(grid, encoded, modulator_config);
+  modulator->modulate(mapper, encoded, modulator_config);
 
   unsigned reference_point_k_rb =
       coreset.cce_to_reg_mapping == cce_to_reg_mapping_type::CORESET0 ? coreset.bwp_start_rb : 0;
@@ -111,8 +111,8 @@ void pdcch_processor_impl::process(srsran::resource_grid_writer& grid, const pdc
   dmrs_pdcch_config.duration                       = coreset.duration;
   dmrs_pdcch_config.n_id                           = dci.n_id_pdcch_dmrs;
   dmrs_pdcch_config.amplitude                      = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
-  dmrs_pdcch_config.ports                          = dci.ports;
+  dmrs_pdcch_config.precoding                      = dci.precoding;
 
   // Generate DMRS.
-  dmrs->map(grid, dmrs_pdcch_config);
+  dmrs->map(mapper, dmrs_pdcch_config);
 }

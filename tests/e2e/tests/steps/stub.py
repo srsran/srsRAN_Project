@@ -14,7 +14,10 @@ from contextlib import suppress
 from typing import Dict, Sequence, Tuple
 
 import grpc
-from retina.protocol.base_pb2 import Empty, PingRequest, StartInfo, String, UEDefinition, UInteger
+import pytest
+from retina.launcher.artifacts import RetinaTestData
+from retina.launcher.public import stop_stub
+from retina.protocol.base_pb2 import Empty, PingRequest, PingResponse, StartInfo, String, UEDefinition, UInteger
 from retina.protocol.epc_pb2 import IPerfResponse
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -44,6 +47,25 @@ def start_and_attach(
     """
     Start stubs & wait until attach
     """
+    start_network(ue_array, gnb, epc, gnb_startup_timeout, epc_startup_timeout, gnb_pre_cmd, gnb_post_cmd)
+    logging.info("GNB [%s] started", id(gnb))
+
+    return ue_start_and_attach(ue_array, gnb, epc, ue_startup_timeout=ue_startup_timeout, attach_timeout=attach_timeout)
+
+
+# pylint: disable=too-many-arguments,too-many-locals
+def start_network(
+    ue_array: Sequence[UEStub],
+    gnb: GNBStub,
+    epc: EPCStub,
+    gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
+    epc_startup_timeout: int = EPC_STARTUP_TIMEOUT,
+    gnb_pre_cmd: str = "",
+    gnb_post_cmd: str = "",
+):
+    """
+    Start Network (EPC + gNB)
+    """
 
     ue_def_for_gnb = UEDefinition()
     for ue_stub in ue_array:
@@ -70,8 +92,6 @@ def start_and_attach(
     )
     logging.info("GNB [%s] started", id(gnb))
 
-    return ue_start_and_attach(ue_array, gnb, epc, ue_startup_timeout=ue_startup_timeout, attach_timeout=attach_timeout)
-
 
 def ue_start_and_attach(
     ue_array: Sequence[UEStub],
@@ -96,22 +116,31 @@ def ue_start_and_attach(
 
     # Attach in parallel
     ue_attach_task_dict: Dict[UEStub, grpc.Future] = {
-        ue_stub: ue_stub.WainUntilAttached.future(UInteger(value=attach_timeout)) for ue_stub in ue_array
+        ue_stub: ue_stub.WaitUntilAttached.future(UInteger(value=attach_timeout)) for ue_stub in ue_array
     }
+    for ue_stub, task in ue_attach_task_dict.items():
+        task.add_done_callback(lambda _task, _ue_stub=ue_stub: _log_attached_ue(_task, _ue_stub))
 
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {
-        ue_stub: task.result() for ue_stub, task in ue_attach_task_dict.items()
-    }
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo] = {}
+    with suppress(grpc.RpcError):
+        ue_attach_info_dict = {
+            ue_stub: task.result() for ue_stub, task in ue_attach_task_dict.items()  # Waiting for attach
+        }
 
-    for ue_stub, ue_attach_info in ue_attach_info_dict.items():
+    if not ue_attach_info_dict:
+        pytest.fail("Attach timeout reached")
+
+    return ue_attach_info_dict
+
+
+def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
+    with suppress(grpc.RpcError):
         logging.info(
             "UE [%s] attached: \n%s%s ",
             id(ue_stub),
             ue_stub.GetDefinition(Empty()).subscriber,
-            ue_attach_info,
+            future.result(),
         )
-
-    return ue_attach_info_dict
 
 
 def ping(
@@ -123,6 +152,8 @@ def ping(
     Ping command between an UE and a EPC
     """
 
+    ping_success = True
+
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Launch both ping in parallel: ue -> epc and epc -> ue
@@ -130,15 +161,24 @@ def ping(
         epc_to_ue = epc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
 
         # Wait both ping to end
-        ue_to_epc_result = ue_to_epc.result()
-        epc_to_ue_result = epc_to_ue.result()
+        ue_to_epc_result: PingResponse = ue_to_epc.result()
+        epc_to_ue_result: PingResponse = epc_to_ue.result()
 
-        # Print status
-        logging.info("Ping [%s] UE -> EPC: %s", ue_attached_info.ipv4, ue_to_epc_result)
-        logging.info("Ping [%s] EPC -> UE: %s", ue_attached_info.ipv4, epc_to_ue_result)
+        # Wait both ping to end & print result
+        _print_ping_result(f"[{ue_attached_info.ipv4}] UE -> EPC", ue_to_epc_result)
+        _print_ping_result(f"[{ue_attached_info.ipv4}] EPC -> UE", epc_to_ue_result)
 
-        # Validate both ping results
-        assert all(map(lambda r: r.status, (ue_to_epc_result, epc_to_ue_result))) is True, "Ping failed!"
+        ping_success &= ue_to_epc_result.status and epc_to_ue_result.status
+
+    if not ping_success:
+        pytest.fail("Ping. Some packages got lost.")
+
+
+def _print_ping_result(msg: str, result: PingResponse):
+    log_fn = logging.info
+    if not result.status:
+        log_fn = logging.error
+    log_fn("Ping %s: %s", msg, result)
 
 
 def iperf(
@@ -245,3 +285,48 @@ def _iperf_dir_to_str(direction):
         IPerfDir.UPLINK: "uplink",
         IPerfDir.BIDIRECTIONAL: "bidirectional",
     }[direction]
+
+
+def stop(
+    ue_array: Sequence[UEStub],
+    gnb: GNBStub,
+    epc: EPCStub,
+    retina_data: RetinaTestData,
+    ue_stop_timeout: int = 0,  # Auto
+    gnb_stop_timeout: int = 0,
+    epc_stop_timeout: int = 0,
+):
+    """
+    Stop ue(s), gnb and epc
+    """
+    error_msg_array = []
+    error_msg_array.append(stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout))
+    error_msg_array.append(stop_stub(epc, "EPC", retina_data, epc_stop_timeout))
+    for index, ue_stub in enumerate(ue_array):
+        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+
+    error_msg_array = list(filter(bool, error_msg_array))
+    if error_msg_array:
+        pytest.fail(
+            f"Stop stage. {error_msg_array[0]}"
+            + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
+        )
+
+
+def ue_stop(
+    ue_array: Sequence[UEStub],
+    retina_data: RetinaTestData,
+    ue_stop_timeout: int = 0,  # Auto
+):
+    """
+    Stop an array of UEs to detach from already running gnb and epc
+    """
+    error_msg_array = []
+    for index, ue_stub in enumerate(ue_array):
+        error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+    error_msg_array = list(filter(bool, error_msg_array))
+    if error_msg_array:
+        pytest.fail(
+            f"UE Stop. {error_msg_array[0]}"
+            + (("\nFull list of errors:\n - " + "\n - ".join(error_msg_array)) if len(error_msg_array) > 1 else "")
+        )

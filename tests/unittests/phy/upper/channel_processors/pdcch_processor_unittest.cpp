@@ -25,6 +25,9 @@
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
+#include "srsran/ran/precoding/precoding_formatters.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -129,15 +132,18 @@ int main()
                   bit = dist_payload(rgen);
                 }
                 dci.payload.resize(dist_payload_sz(rgen));
-                dci.ports.emplace_back(dist_port_idx(rgen));
+                dci.precoding = make_single_port();
 
                 // Reset spy classes.
                 encoder->reset();
                 modulator->reset();
                 dmrs->reset();
 
+                // Create mapper.
+                resource_grid_mapper mapper(grid);
+
                 // Process PDU.
-                pdcch->process(grid, pdu);
+                pdcch->process(mapper, pdu);
 
                 // Calculate ideal allocation mask.
                 bounded_bitset<MAX_RB> rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
@@ -158,9 +164,9 @@ int main()
                 TESTASSERT_EQ(modulator_entry.config.n_id, dci.n_id_pdcch_data);
                 TESTASSERT_EQ(modulator_entry.config.n_rnti, dci.n_rnti);
                 TESTASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
-                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci.ports), const_span<uint8_t>(modulator_entry.config.ports));
+                TESTASSERT_EQ(pdu.dci.precoding, modulator_entry.config.precoding);
                 TESTASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
-                TESTASSERT_EQ((void*)modulator_entry.grid_ptr, (void*)&grid);
+                TESTASSERT_EQ((void*)modulator_entry.mapper, (void*)&mapper);
 
                 // Check PDCCH DMRS inputs.
                 TESTASSERT_EQ(dmrs->get_nof_entries(), 1);
@@ -173,7 +179,7 @@ int main()
                 TESTASSERT_EQ(dmrs_entry.config.duration, coreset.duration);
                 TESTASSERT_EQ(dmrs_entry.config.n_id, dci.n_id_pdcch_dmrs);
                 TESTASSERT_EQ(dmrs_entry.config.amplitude, convert_dB_to_amplitude(dci.dmrs_power_offset_dB));
-                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci.ports), const_span<uint8_t>(dmrs_entry.config.ports));
+                TESTASSERT_EQ(pdu.dci.precoding, dmrs_entry.config.precoding);
               }
             }
           }

@@ -25,20 +25,21 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "5"
+    ref: "6"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
+  - local: .gitlab/ci/release.yml
 
 stages:
   - ci
@@ -46,6 +47,8 @@ stages:
   - build and unit tests
   - e2e
   - documentation
+  - private
+  - public
 
 variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
@@ -122,6 +125,7 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
+  resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   variables:
     ANALYZER: clang-tidy
     ANALYZER_ARGS: --tidy-config .clang-tidy
@@ -129,12 +133,8 @@ clang-tidy:
 cppcheck:
   extends: .codechecker
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-      variables:
-        ARTIFACT_EXTRA_PATH: "/index.html"
     - if: $CI_DESCRIPTION =~ /Nightly/
+  interruptible: false
   variables:
     ANALYZER: cppcheck
     ANALYZER_ARGS: --cppcheck-max-template-recursion 10
@@ -142,19 +142,15 @@ cppcheck:
 clangsa:
   extends: .codechecker
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-      variables:
-        ARTIFACT_EXTRA_PATH: "/index.html"
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: manual
       allow_failure: true
+  interruptible: false      
   variables:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
 
-coverity:
+.coverity_base:
   image: $CR_REGISTRY_URI/coverity_image/2022.6.0:1.0.0
   stage: static
   needs: []
@@ -163,8 +159,7 @@ coverity:
     KUBERNETES_MEMORY_REQUEST: 13Gi
   tags:
     - ${INFRASTRUCTURE_TAG}
-  rules:
-    - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   script:
     - |
       mkdir -p build
@@ -174,12 +169,30 @@ coverity:
       tar czvf srsgnb.tgz cov-int
       ver=$(git rev-parse HEAD)
 
-      curl --form token=$COVERITY_TOKEN \
+      curl --form token=$COV_TOKEN \
         --form email=nils@srs.io \
         --form file=@srsgnb.tgz \
         --form version=$ver \
-        --form description="srsGNB dev build" \
-        https://scan.coverity.com/builds?project=srsRAN_5G
+        --form description="srsRAN Project dev build" \
+        https://scan.coverity.com/builds?project=${PROJECT_NAME}
+
+coverity-dev:
+  extends: .coverity_base
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G"
+    - export DESCRIPTION="srsRAN Project dev build"
+    - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
+
+coverity-agpl:
+  extends: .coverity_base
+  rules:
+    - if: $CI_DESCRIPTION =~ /AGPL-COVERITY/
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G_agpl"
+    - export DESCRIPTION="srsRAN Project AGPL build"
+    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
 
 e2e tests tox:
   stage: static
@@ -340,6 +353,7 @@ promote code:
   stage: .post
   rules:
     - if: $GRADUATION_BRANCH
+  interruptible: false
   variables:
     GIT_STRATEGY: none
   image: alpine:3.16.0 # sh entrypoint
@@ -375,6 +389,7 @@ disable current schedule:
   rules:
     - if: $GRADUATION_BRANCH
       when: always
+  interruptible: false
   variables:
     ENABLE: "false"
     BRANCH: $CI_COMMIT_REF_NAME
@@ -386,6 +401,7 @@ enable schedule on graduation branch:
   extends: .enable-schedule-by-branch
   rules:
     - if: $GRADUATION_BRANCH
+  interruptible: false
   variables:
     ENABLE: "true"
     BRANCH: $GRADUATION_BRANCH

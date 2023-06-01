@@ -21,6 +21,7 @@
  */
 
 #include "test_helpers.h"
+#include "../rrc/rrc_ue_test_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

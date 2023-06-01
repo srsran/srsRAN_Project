@@ -33,7 +33,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                  ue_index,
                                  timer_factory             timers,
                                  f1u_bearer_disconnector&  disconnector_,
                                  uint32_t                  ul_teid_) :
-  logger("F1-U", {ue_index, drb_id_}),
+  logger("CU-F1-U", {ue_index, drb_id_}),
   tx_pdu_notifier(tx_pdu_notifier_),
   rx_delivery_notifier(rx_delivery_notifier_),
   rx_sdu_notifier(rx_sdu_notifier_),
@@ -43,7 +43,6 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                  ue_index,
 {
   dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),
                      [this](timer_id_t tid) { on_expired_dl_notif_timer(); });
-  dl_notif_timer.run();
 }
 
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
@@ -96,11 +95,18 @@ void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
   // attach discard blocks (if any)
   fill_discard_blocks(msg);
 
+  // stop backoff timer
+  dl_notif_timer.stop();
+
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
 void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
 {
+  // start backoff timer
+  if (!dl_notif_timer.is_running()) {
+    dl_notif_timer.run();
+  }
   if (discard_blocks.empty()) {
     discard_blocks.push_back(nru_pdcp_sn_discard_block{});
     nru_pdcp_sn_discard_block& block = discard_blocks.back();
@@ -135,8 +141,6 @@ void f1u_bearer_impl::fill_discard_blocks(nru_dl_message& msg)
     msg.dl_user_data.discard_blocks = std::move(discard_blocks);
     discard_blocks                  = {};
   }
-  // restart UL notification timer
-  dl_notif_timer.run();
 }
 
 void f1u_bearer_impl::on_expired_dl_notif_timer()
@@ -148,7 +152,13 @@ void f1u_bearer_impl::on_expired_dl_notif_timer()
 void f1u_bearer_impl::flush_discard_blocks()
 {
   nru_dl_message msg = {};
+
+  // attach discard blocks (if any)
   fill_discard_blocks(msg);
+
+  // stop backoff timer
+  dl_notif_timer.stop();
+
   if (msg.dl_user_data.discard_blocks.has_value()) {
     logger.log_debug("Sending discard blocks");
     tx_pdu_notifier.on_new_pdu(std::move(msg));

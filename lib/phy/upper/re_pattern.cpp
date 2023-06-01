@@ -24,40 +24,18 @@
 
 using namespace srsran;
 
-// Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes.
-#define re_pattern_assert()                                                                                            \
-  do {                                                                                                                 \
-    srsran_assert(rb_begin < MAX_RB, "RB begin ({}) is out-of-range", rb_begin);                                       \
-    srsran_assert(rb_end > 0 && rb_end <= MAX_RB, "RB end ({}) is out-of-range", rb_end);                              \
-    srsran_assert(rb_stride > 0, "RB stride ({}) is out-of-range", rb_stride);                                         \
-  } while (false)
-
 void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
-  // Verify attributes and inputs.
-  re_pattern_assert();
-  srsran_assert(
-      mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
-
   // Skip if the symbol is not set to true.
   if (!symbols.test(symbol)) {
     return;
   }
 
-  // Create a mask for the maximum bandwidth.
-  bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
+  // Generate a RE mask for the entire bandwidth.
+  bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
-  // Fill RB mask.
-  if (rb_stride == 1) {
-    rb_mask.fill(rb_begin, rb_end);
-  } else {
-    for (unsigned i_rb = rb_begin; i_rb < rb_end; i_rb += rb_stride) {
-      rb_mask.set(i_rb);
-    }
-  }
-
-  // Apply the RE mask to all.
-  bounded_bitset<MAX_RB* NRE> pattern_re_mask = rb_mask.kronecker_product<NRE>(re_mask);
+  // Append zeros or discard bits to match the input mask size.
+  pattern_re_mask.resize(mask.size());
 
   // The following logical operation shall result in:
   // - true if mask is true or re_mask is true,
@@ -67,30 +45,16 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
 
 void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
-  // Verify attributes and inputs.
-  re_pattern_assert();
-  srsran_assert(
-      mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
-
   // Skip if the symbol is not used.
   if (!symbols.test(symbol)) {
     return;
   }
 
-  // Create a mask for the maximum bandwidth.
-  bounded_bitset<MAX_RB> rb_mask(mask.size() / NRE);
+  // Generate a RE mask for the entire bandwidth.
+  bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
-  // Fill RB mask.
-  if (rb_stride == 1) {
-    rb_mask.fill(rb_begin, rb_end);
-  } else {
-    for (unsigned i_rb = rb_begin; i_rb < rb_end; i_rb += rb_stride) {
-      rb_mask.set(i_rb);
-    }
-  }
-
-  // Apply the RE mask to all.
-  bounded_bitset<MAX_RB* NRE> pattern_re_mask = rb_mask.kronecker_product<NRE>(re_mask);
+  // Append zeros or discard bits to match the input mask size.
+  pattern_re_mask.resize(mask.size());
 
   // The following logical operation shall result in:
   // - true if mask is true and re_mask is false,
@@ -103,9 +67,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
   // Iterate all given patterns.
   for (re_pattern& p : list) {
     // Skip if RB allocation parameters do NOT match.
-    if (p.rb_begin != pattern.rb_begin || p.rb_end != pattern.rb_end || p.rb_stride != pattern.rb_stride) {
-      continue;
-    }
+    bool prb_match = (p.prb_mask == pattern.prb_mask);
 
     // Check if symbol mask matches.
     bool lmatch = (pattern.symbols == p.symbols);
@@ -113,20 +75,32 @@ void re_pattern_list::merge(const re_pattern& pattern)
     // Check if RE mask matches.
     bool kmatch = (pattern.re_mask == p.re_mask);
 
-    // If OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no merging
-    // is required.
-    if (kmatch && lmatch) {
+    // If PRB, OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no
+    // merging is required.
+    if (prb_match && kmatch && lmatch) {
+      return;
+    }
+
+    // OFDM symbols and subcarriers mask match, combine PRB.
+    if (lmatch && kmatch) {
+      bounded_bitset<MAX_RB> temp_prb_mask = pattern.prb_mask;
+      if (p.prb_mask.size() < temp_prb_mask.size()) {
+        p.prb_mask.resize(temp_prb_mask.size());
+      } else if (p.prb_mask.size() > temp_prb_mask.size()) {
+        temp_prb_mask.resize(p.prb_mask.size());
+      }
+      p.prb_mask |= temp_prb_mask;
       return;
     }
 
     // If OFDM symbols mask matches, combine subcarrier mask.
-    if (lmatch) {
+    if (prb_match && lmatch) {
       p.re_mask |= pattern.re_mask;
       return;
     }
 
     // If subcarriers mask matches, combine OFDM symbols mask.
-    if (kmatch) {
+    if (prb_match && kmatch) {
       p.symbols |= pattern.symbols;
       return;
     }

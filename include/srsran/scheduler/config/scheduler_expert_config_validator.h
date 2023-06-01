@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include <string>
 

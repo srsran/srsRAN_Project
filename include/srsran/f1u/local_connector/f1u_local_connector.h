@@ -58,7 +58,10 @@ struct f1u_du_bearer {
 class f1u_local_connector final : public srs_du::f1u_du_gateway, public f1u_cu_up_gateway
 {
 public:
-  f1u_local_connector() : logger(srslog::fetch_basic_logger("F1-U")) {}
+  f1u_local_connector() :
+    logger_cu(srslog::fetch_basic_logger("CU-F1-U")), logger_du(srslog::fetch_basic_logger("DU-F1-U"))
+  {
+  }
 
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
@@ -72,6 +75,8 @@ public:
   void                                   disconnect_cu_bearer(uint32_t ul_teid) override;
 
   srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
+                                       drb_id_t                     drb_id,
+                                       srs_du::f1u_config           config,
                                        uint32_t                     dl_teid,
                                        uint32_t                     ul_teid,
                                        srs_du::f1u_rx_sdu_notifier& du_rx,
@@ -79,7 +84,8 @@ public:
   void                remove_du_bearer(uint32_t dl_teid) override;
 
 private:
-  srslog::basic_logger&                       logger;
+  srslog::basic_logger&                       logger_cu;
+  srslog::basic_logger&                       logger_du;
   std::unordered_map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
   std::unordered_map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
   std::mutex                                  map_mutex; // shared mutex for access to cu_map and du_map

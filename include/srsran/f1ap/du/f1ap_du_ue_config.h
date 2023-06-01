@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/du/f1c_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_bearer.h"

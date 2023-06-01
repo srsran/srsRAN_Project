@@ -24,7 +24,7 @@
 #include "downlink_processor_notifier_test_doubles.h"
 #include "pdxch/pdxch_processor_notifier_test_doubles.h"
 #include "pdxch/pdxch_processor_test_doubles.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
 #include "fmt/ostream.h"
@@ -43,7 +43,7 @@ std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
 
 std::ostream& operator<<(std::ostream& os, const pdxch_processor_baseband::symbol_context& context)
 {
-  fmt::print(os, "{} {} {}", context.slot, context.symbol, context.sector);
+  fmt::print(os, "{} {} {}", context.slot, context.sector, context.symbol);
   return os;
 }
 
@@ -89,7 +89,7 @@ bool operator==(span<const cf_t> left, span<const cf_t> right)
   return std::equal(left.begin(), left.end(), right.begin(), right.end());
 }
 
-bool operator==(const baseband_gateway_buffer& left, const baseband_gateway_buffer& right)
+bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gateway_buffer_reader& right)
 {
   if (left.get_nof_channels() != right.get_nof_channels()) {
     return false;
@@ -148,14 +148,13 @@ protected:
     cyclic_prefix      cp           = std::get<3>(GetParam());
 
     // Prepare configurations.
-    config.sector_id           = dist_sector_id(rgen);
+    config.sector_id           = 0;
     config.scs                 = scs;
     config.cp                  = cp;
     config.rate                = srate;
     config.bandwidth_prb       = dist_bandwidth_prb(rgen);
     config.center_frequency_Hz = dist_center_freq_Hz(rgen);
     config.nof_tx_ports        = nof_tx_ports;
-    config.initial_slot_index  = 0;
 
     // Create processor.
     ul_processor = ul_proc_factory->create(config);
@@ -170,7 +169,6 @@ protected:
 
   static constexpr unsigned                                    nof_frames_test = 10;
   static std::mt19937                                          rgen;
-  static std::uniform_int_distribution<unsigned>               dist_sector_id;
   static std::uniform_int_distribution<unsigned>               dist_bandwidth_prb;
   static std::uniform_real_distribution<double>                dist_center_freq_Hz;
   static std::shared_ptr<pdxch_processor_factory_spy>          pdxch_proc_factory;
@@ -184,7 +182,6 @@ protected:
 };
 
 std::mt19937                                      LowerPhyDownlinkProcessorFixture::rgen(0);
-std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
 std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
 std::uniform_real_distribution<double>            LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
 std::shared_ptr<pdxch_processor_factory_spy>      LowerPhyDownlinkProcessorFixture::pdxch_proc_factory        = nullptr;
@@ -257,7 +254,8 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
 
   downlink_processor_baseband& dl_proc_baseband = ul_processor->get_baseband();
 
-  for (unsigned i_frame = 0, i_slot_frame = config.initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
+  baseband_gateway_timestamp timestamp = 0;
+  for (unsigned i_frame = 0, i_slot_frame = 0; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
       for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
@@ -274,7 +272,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
           amplitude_control_spy->clear();
 
           // Process baseband.
-          dl_proc_baseband.process(buffer);
+          dl_proc_baseband.process(buffer.get_writer(), timestamp);
 
           // Prepare expected PDxCH baseband entry context.
           pdxch_processor_baseband::symbol_context pdxch_context;
@@ -294,10 +292,9 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
           for (unsigned i_port = 0, i_port_end = config.nof_tx_ports; i_port != i_port_end; ++i_port) {
             // Make sure the amplitude controller input match with the PDxCH processor output.
             ASSERT_EQ(span<const cf_t>(amplitude_controller_entries[i_port].input),
-                      span<const cf_t>(pdxch_proc_entry.samples.get_channel_buffer(i_port)));
+                      span<const cf_t>(pdxch_proc_entry.samples[i_port]));
             // Make sure the amplitude controller output match with the resultant buffer contents.
-            ASSERT_EQ(span<const cf_t>(amplitude_controller_entries[i_port].output),
-                      span<const cf_t>(buffer.get_channel_buffer(i_port)));
+            ASSERT_EQ(span<const cf_t>(amplitude_controller_entries[i_port].output), buffer[i_port]);
           }
 
           // No PDxCH notifications.
@@ -310,6 +307,9 @@ TEST_P(LowerPhyDownlinkProcessorFixture, Flow)
           } else {
             ASSERT_EQ(tti_boundary_entries.size(), 0);
           }
+
+          // Increment timestamp.
+          timestamp += cp_size + base_symbol_size;
         }
       }
     }

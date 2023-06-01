@@ -35,7 +35,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
   unsigned subpdu_len = subpdu_reader.length();
   if (subpdu_len == 0) {
-    srslog::fetch_basic_logger("MAC", true).warning("Invalid UL MAC PDU. Cause: Empty subPDU.");
+    srslog::fetch_basic_logger("MAC", true).info("Invalid UL MAC PDU. Cause: Empty subPDU.");
     return false;
   }
   payload_view = {};
@@ -47,7 +47,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   header_length = 1;
 
   if (not lcid_val.is_valid_lcid()) {
-    srslog::fetch_basic_logger("MAC").warning("Invalid UL MAC PDU. Cause: Unrecognized lcid={}.", lcid_val);
+    srslog::fetch_basic_logger("MAC").info("Invalid UL MAC PDU. Cause: Unrecognized lcid={}.", lcid_val);
     return false;
   }
 
@@ -56,7 +56,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
     // Variable-sized MAC CEs or SDUs
 
     if (subpdu_len < (F_bit ? 3 : 2)) {
-      srslog::fetch_basic_logger("MAC").warning(
+      srslog::fetch_basic_logger("MAC").info(
           "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode length prefix.");
       return false;
     }
@@ -74,7 +74,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
     }
 
     if (subpdu_len < header_length + sdu_length) {
-      srslog::fetch_basic_logger("MAC").warning(
+      srslog::fetch_basic_logger("MAC").info(
           "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
           subpdu_len - header_length,
           sdu_length);
@@ -92,7 +92,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
       sdu_length = lcid_val.sizeof_ce();
 
       if (subpdu_len < header_length + sdu_length) {
-        srslog::fetch_basic_logger("MAC").warning(
+        srslog::fetch_basic_logger("MAC").info(
             "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
             subpdu_len - header_length,
             sdu_length);

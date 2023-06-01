@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/support/srsran_assert.h"
 #include <condition_variable>
 #include <mutex>
 
@@ -33,11 +34,13 @@ private:
   enum class states {
     /// Indicates it failed to initialize.
     UNINITIALIZED = 0,
-    /// Indicates it has been successfully initialized and it is waiting for request.
+    /// The channel has been successfully initialised and it is waiting to start.
+    WAIT_START,
+    /// The channel waits for a request.
     WAIT_REQUEST,
-    /// Indicates it has been successfully initialized and it is waiting for data to transmit.
+    /// The channel waits for data to transmit.
     WAIT_DATA,
-    /// Signals a stop to the asynchronous thread.
+    /// Waits for the asynchronous thread to notify a stop.
     WAIT_STOP,
     /// Indicates it is notify_stop.
     STOPPED
@@ -58,6 +61,15 @@ public:
   void init_successful()
   {
     std::unique_lock<std::mutex> lock(mutex);
+    srsran_assert(state == states::UNINITIALIZED, "Invalid state.");
+    state = states::WAIT_START;
+  }
+
+  /// Notifies the asynchronous processing has started.
+  void on_start()
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    srsran_assert(state == states::WAIT_START, "Invalid state.");
     state = states::WAIT_REQUEST;
   }
 
@@ -111,6 +123,13 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     state = states::STOPPED;
     cvar.notify_all();
+  }
+
+  /// Gets if the channel has been successfully initialised.
+  bool is_initiated() const
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    return state > states::UNINITIALIZED;
   }
 
   /// Indicates whether the current state is operational.

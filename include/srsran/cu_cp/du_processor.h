@@ -31,7 +31,6 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/rrc/rrc.h"
-#include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
 #include <string>
 
@@ -39,7 +38,6 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Forward declared messages.
-struct f1_setup_request_message;
 struct rrc_ue_creation_message;
 
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
@@ -95,12 +93,16 @@ public:
 
   /// \brief Handle the reception of a F1 Setup Request message and transmit the F1 Setup Response or F1 Setup Failure.
   /// \param[in] msg The received F1 Setup Request message.
-  virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
+  virtual void handle_f1_setup_request(const cu_cp_f1_setup_request& request) = 0;
 
   /// \brief Create a new UE context.
   /// \param[in] msg The UE creation message.
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
+
+  /// \brief Handle the reception of a F1AP UE Context Release Request and notify NGAP.
+  /// \param[in] req The F1AP UE Context Release Request.
+  virtual void handle_du_initiated_ue_context_release_request(const f1ap_ue_context_release_request& request) = 0;
 
   /// \brief Get the F1AP message handler interface of the DU processor object.
   /// \return The F1AP message handler interface of the DU processor object.
@@ -187,6 +189,10 @@ public:
   /// \brief Handle a UE Context Release Command
   /// \param[in] cmd The UE Context Release Command.
   virtual void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+
+  /// \brief Handle a required reestablishment context modification.
+  /// \param[in] ue_index The index of the UE that needs the context modification.
+  virtual void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) = 0;
 };
 
 /// Interface to notify an RRC UE about control messages.
@@ -194,10 +200,6 @@ class du_processor_rrc_ue_control_message_notifier
 {
 public:
   virtual ~du_processor_rrc_ue_control_message_notifier() = default;
-
-  /// \brief Notify the RRC UE about an update of the GUAMI.
-  /// \param[in] msg The new GUAMI.
-  virtual void on_new_guami(const guami& msg) = 0;
 
   /// \brief Notify the RRC UE to trigger a UE capability transfer procedure.
   /// \param[in] msg The new request msg containing the RAT type, etc.
@@ -209,7 +211,8 @@ public:
   virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Notify the RRC UE to Release an UE.
-  virtual void on_rrc_ue_release() = 0;
+  /// \returns The location info of the UE.
+  virtual cu_cp_user_location_info_nr on_rrc_ue_release() = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -222,13 +225,18 @@ public:
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
 
+  /// \brief Handle the reception of a new PDU Session Resource Modify Request.
+  virtual async_task<cu_cp_pdu_session_resource_modify_response>
+  handle_new_pdu_session_resource_modify_request(const cu_cp_pdu_session_resource_modify_request& msg) = 0;
+
   /// \brief Handle the reception of a new PDU Session Resource Release Command.
   virtual async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) = 0;
 
   /// \brief Handle a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  virtual cu_cp_ue_context_release_complete
+  handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.
@@ -324,6 +332,15 @@ public:
   virtual void handle_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
+class du_processor_ue_handler
+{
+public:
+  virtual ~du_processor_ue_handler() = default;
+
+  /// \brief Removes a UE from the RRC and DU Processor.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+};
+
 /// Methods to get statistics of the DU processor.
 class du_processor_statistics_handler
 {
@@ -342,7 +359,8 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_paging_handler,
                                public du_processor_inactivity_handler,
-                               public du_processor_statistics_handler
+                               public du_processor_statistics_handler,
+                               public du_processor_ue_handler
 
 {
 public:
@@ -356,6 +374,7 @@ public:
   virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
   virtual du_processor_inactivity_handler& get_du_processor_inactivity_handler() = 0;
   virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
+  virtual du_processor_ue_handler&         get_du_processor_ue_handler()         = 0;
 };
 
 } // namespace srs_cu_cp

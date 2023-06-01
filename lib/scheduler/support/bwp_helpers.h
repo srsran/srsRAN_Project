@@ -53,24 +53,6 @@ inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
   return {prb_to_crb(bwp_cfg, prbs.start()), prb_to_crb(bwp_cfg, prbs.stop())};
 }
 
-/// \brief Convert CRB into PRB given the CRB assignment limits.
-/// The CRB and PRB are assumed to use the same numerology as reference.
-/// \param crb_lims CRB limits set based on the active BWP configuration and SearchSpace configuration.
-/// \param crb CRB to be converted to PRB.
-/// \return Calculated PRB.
-inline unsigned crb_to_prb(crb_interval crb_lims, unsigned crb)
-{
-  srsran_sanity_check(
-      crb_lims.contains(crb) or crb == crb_lims.stop(), "CRB={} falls outside BWP limits={}", crb, crb_lims);
-  return crb - crb_lims.start();
-}
-
-/// \brief Convert an interval CRBs to an interval PRBs, given the CRB assignment limits.
-inline prb_interval crb_to_prb(crb_interval crb_lims, crb_interval crbs)
-{
-  return prb_interval{crb_to_prb(crb_lims, crbs.start()), crb_to_prb(crb_lims, crbs.stop())};
-}
-
 /// \brief Convert CRB within a BWP into a PRB.
 /// The CRB and PRB are assumed to use the same numerology as reference.
 /// \param bwp_cfg BWP configuration of the respective CRB.
@@ -86,62 +68,6 @@ inline unsigned crb_to_prb(const bwp_configuration& bwp_cfg, unsigned crb)
 inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval crbs)
 {
   return crb_to_prb(bwp_cfg.crbs, crbs);
-}
-
-/// \brief Fetch DL BWP configuration for resource allocation type 1 based on SearchSpace type and DCI format.
-/// \param dci_type DL DCI format.
-/// \param init_dl_bwp Initial DL BWP configuration.
-/// \param active_dl_bwp Active DL BWP configuration.
-/// \param ss_type SearchSpace configuration.
-/// \param cs_cfg CORESET configuration corresponding to SerachSpace.
-/// \return Calculated BWP configuration.
-inline bwp_configuration get_resource_alloc_type_1_dl_bwp_size(dci_dl_rnti_config_type           dci_type,
-                                                               const bwp_downlink_common&        init_dl_bwp,
-                                                               const bwp_downlink_common&        active_dl_bwp,
-                                                               const search_space_configuration& ss_cfg,
-                                                               const coreset_configuration&      cs_cfg)
-{
-  // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-  if (dci_type == dci_dl_rnti_config_type::si_f1_0 || dci_type == dci_dl_rnti_config_type::ra_f1_0 ||
-      dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 || dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 ||
-      dci_type == dci_dl_rnti_config_type::p_rnti_f1_0) {
-    bwp_configuration bwp_cfg = init_dl_bwp.generic_params;
-    if (ss_cfg.type == search_space_configuration::type_t::common) {
-      if (init_dl_bwp.pdcch_common.coreset0.has_value()) {
-        bwp_cfg.crbs = get_coreset0_crbs(init_dl_bwp.pdcch_common);
-      }
-      // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks.
-      if (ss_cfg.cs_id != to_coreset_id(0)) {
-        bwp_cfg.crbs = {get_coreset_crbs(cs_cfg).start(), bwp_cfg.crbs.stop()};
-      }
-      return bwp_cfg;
-    }
-    // UE Search Space.
-    return active_dl_bwp.generic_params;
-  }
-  report_fatal_error("Unsupported DL DCI format={}", dci_type);
-}
-
-/// \brief Fetch UL BWP configuration for resource allocation type 1 based on SearchSpace type and DCI format.
-/// \param dci_type DL DCI format.
-/// \param init_ul_bwp Initial UL BWP configuration.
-/// \param active_ul_bwp Active UL BWP configuration.
-/// \param ss_type SearchSpace type.
-/// \return Calculated BWP configuration.
-inline bwp_configuration get_resource_alloc_type_1_ul_bwp_size(dci_ul_format                      dci_fmt,
-                                                               const bwp_configuration&           init_ul_bwp,
-                                                               const bwp_configuration&           active_ul_bwp,
-                                                               search_space_configuration::type_t ss_type)
-{
-  // See TS 38.214, 6.1.2.2.2, Uplink resource allocation type 1.
-  if (dci_fmt == dci_ul_format::f0_0) {
-    if (ss_type == search_space_configuration::type_t::common) {
-      return init_ul_bwp;
-    }
-    // UE Search Space.
-    return active_ul_bwp;
-  }
-  report_fatal_error("Unsupported UL DCI format={}", dci_fmt);
 }
 
 } // namespace srsran

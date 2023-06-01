@@ -80,8 +80,11 @@ public:
   // See interface for documentation.
   baseband_gateway_receiver& get_receiver(unsigned stream_id) override;
 
+  // See interface documentation.
+  baseband_gateway_timestamp read_current_time() override;
+
   // See interface for documentation.
-  void start() override;
+  void start(baseband_gateway_timestamp init_time) override;
 
   // See interface for documentation.
   void stop() override;

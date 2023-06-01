@@ -26,13 +26,26 @@
 
 using namespace srsran;
 
+class dummy_harq_timeout_handler : public harq_timeout_handler
+{
+public:
+  du_ue_index_t last_ue_index  = INVALID_DU_UE_INDEX;
+  bool          last_dir_is_dl = false;
+
+  void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl) override
+  {
+    last_ue_index  = ue_index;
+    last_dir_is_dl = is_dl;
+  }
+};
+
 /// Tester for different combinations of max HARQ retxs, ack wait timeouts, and k1s.
 class dl_harq_process_tester : public ::testing::Test
 {
 protected:
   dl_harq_process_tester(unsigned max_ack_timeout_slots = 16) :
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_timeout_slots)
+    h_dl(to_harq_id(0), dl_logger, {}, max_ack_timeout_slots)
   {
     srslog::fetch_basic_logger("SCHED").set_level(srslog::basic_levels::debug);
 
@@ -63,7 +76,7 @@ TEST_F(dl_harq_process_tester, reset_of_empty_harq_is_no_op)
 TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
 {
   slot_point    sl_tx{0, 0};
-  prb_interval  prbs{5, 10};
+  vrb_interval  vrbs{5, 10};
   unsigned      k1 = 4, max_harq_retxs = 5, tbs_bytes = 1000;
   sch_mcs_index mcs = 10;
 
@@ -81,10 +94,10 @@ TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
   pdsch.codewords[0].mcs_table     = srsran::pdsch_mcs_table::qam64;
   pdsch.codewords[0].mcs_index     = mcs;
   pdsch.codewords[0].tb_size_bytes = tbs_bytes;
-  pdsch.prbs                       = prbs;
+  pdsch.rbs                        = vrbs;
   h_dl.save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
   ASSERT_EQ(h_dl.last_alloc_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);
-  ASSERT_EQ(h_dl.last_alloc_params().prbs.prbs(), prbs);
+  ASSERT_EQ(h_dl.last_alloc_params().rbs.type1(), vrbs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->mcs, mcs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->tbs_bytes, tbs_bytes);
 }
@@ -100,7 +113,7 @@ TEST_F(dl_harq_process_tester, retx_of_empty_harq_asserts)
 
 TEST_F(dl_harq_process_tester, ack_of_empty_harq_is_noop)
 {
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) < 0) << "ACK of empty HARQ should fail";
+  ASSERT_FALSE(h_dl.ack_info(0, mac_harq_ack_report_status::ack)) << "ACK of empty HARQ should fail";
 }
 
 class dl_harq_process_timeout_tester : public dl_harq_process_tester
@@ -117,10 +130,10 @@ TEST_F(dl_harq_process_timeout_tester, when_max_retx_exceeded_and_nack_is_receiv
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   h_dl.slot_indication(++sl_tx);
   ASSERT_FALSE(h_dl.has_pending_retx(0));
-  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack), 0);
+  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack));
   h_dl.new_retx(sl_tx, k1, 0);
   h_dl.slot_indication(++sl_tx);
-  ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack), 0);
+  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack));
   ASSERT_TRUE(h_dl.empty());
   ASSERT_FALSE(h_dl.has_pending_retx());
 }
@@ -148,7 +161,7 @@ protected:
     max_ack_wait_slots(std::get<1>(GetParam())),
     k1(std::get<2>(GetParam())),
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_wait_slots)
+    h_dl(to_harq_id(0), dl_logger, {}, max_ack_wait_slots)
   {
     srslog::init();
   }
@@ -179,7 +192,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
     ASSERT_FALSE(h_dl.has_pending_retx());
     slot_indication();
   }
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack));
   ASSERT_TRUE(h_dl.empty()) << "HARQ was not reset after ACK";
   ASSERT_FALSE(h_dl.has_pending_retx()) << "HARQ was not reset after ACK";
 }
@@ -222,7 +235,7 @@ TEST_P(dl_harq_process_param_tester, harq_newtxs_flip_ndi)
   }
 
   bool prev_ndi = h_dl.tb(0).ndi;
-  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+  ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack));
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   ASSERT_NE(prev_ndi, h_dl.tb(0).ndi);
 }
@@ -241,7 +254,7 @@ protected:
     max_ack_wait_slots(12),
     k1(1),
     dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
-    h_dl(to_harq_id(0), dl_logger, max_ack_wait_slots)
+    h_dl(to_harq_id(0), dl_logger, {timeout_handler, to_du_ue_index(0)}, max_ack_wait_slots)
   {
     srslog::init();
   }
@@ -260,9 +273,10 @@ protected:
   const unsigned shortened_ack_wait_slots{10};
   const unsigned k1;
 
-  harq_logger     dl_logger;
-  dl_harq_process h_dl;
-  slot_point      sl_tx{0, 0};
+  harq_logger                dl_logger;
+  dummy_harq_timeout_handler timeout_handler;
+  dl_harq_process            h_dl;
+  slot_point                 sl_tx{0, 0};
 };
 
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
@@ -272,18 +286,21 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     // Notify HARQ process with DTX (ACK not decoded).
     if (i == dtx_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx));
     }
 
-    // Before reaching the ack_wait_slots, the HARQ should be neither empty nor having pending TX.
+    // Before reaching the ack_wait_slots, the HARQ should be neither empty nor have pending reTX.
     if (i < shortened_ack_wait_slots + k1) {
       ASSERT_FALSE(h_dl.empty());
       ASSERT_FALSE(h_dl.has_pending_retx());
+      ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX);
     }
-    // Once the shortened_ack_wait_slots has passed, expect pending transmissions.
+    // Once the shortened_ack_wait_slots has passed, expect pending reTXs.
     else {
       ASSERT_FALSE(h_dl.empty());
       ASSERT_TRUE(h_dl.has_pending_retx());
+      ASSERT_EQ(timeout_handler.last_ue_index, to_du_ue_index(0));
+      ASSERT_TRUE(timeout_handler.last_dir_is_dl);
     }
     slot_indication();
   }
@@ -297,10 +314,10 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_ack)
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == dtx_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx));
     }
     if (i == ack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack));
     }
 
     // Before ACK, the process is waiting for an ACK.
@@ -325,7 +342,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_ack_dtx)
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == ack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack));
     }
     if (i == dtx_slot) {
       h_dl.ack_info(0, mac_harq_ack_report_status::dtx);
@@ -342,6 +359,8 @@ TEST_F(dl_harq_process_param_tester_dtx, test_ack_dtx)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
 
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
@@ -352,10 +371,10 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == dtx_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx));
     }
     if (i == nack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack));
     }
 
     // Before NACK, the process is waiting for an ACK.
@@ -370,6 +389,8 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }
 
 TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
@@ -380,7 +401,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
   h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == nack_slot) {
-      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack) >= 0);
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack));
     }
     if (i == dtx_slot) {
       h_dl.ack_info(0, mac_harq_ack_report_status::dtx);
@@ -397,4 +418,6 @@ TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
     }
     slot_indication();
   }
+
+  ASSERT_EQ(timeout_handler.last_ue_index, INVALID_DU_UE_INDEX) << "Timeout should not expire";
 }

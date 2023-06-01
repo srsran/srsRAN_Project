@@ -170,14 +170,6 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_resource_allocator& res_grid
   }
 
   for (const cached_prach_occasion& cached_prach : cached_prachs) {
-    for (unsigned sl_idx = 0; sl_idx < prach_length_slots; ++sl_idx) {
-      // Check if any of the grants (over multiple slots) of the preamble collides with other allocations.
-      if (res_grid[sl + sl_idx].ul_res_grid.collides(cached_prach.grant_list[sl_idx])) {
-        logger.warning("Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
-        continue;
-      }
-    }
-
     if (is_long_preamble(prach_cfg.format)) {
       // Reserve RBs and symbols of the PRACH occasion in the resource grid for each grant (over multiple slots) of the
       // preamble.

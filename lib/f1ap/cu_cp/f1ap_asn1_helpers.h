@@ -22,12 +22,132 @@
 
 #pragma once
 
+#include "../common/asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/lcid.h"
 
 namespace srsran {
 namespace srs_cu_cp {
+
+/// \brief Convert the F1 Setup Request from ASN.1 to common type.
+/// \param[out] request The common type struct to store the result.
+/// \param[in] asn1_request The ASN.1 type F1 Setup Request.
+inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f1ap::f1_setup_request_s& asn1_request)
+{
+  // GNB DU ID
+  request.gnb_du_id = asn1_request->gnb_du_id.value.value;
+
+  // GNB DU name
+  if (asn1_request->gnb_du_name_present) {
+    request.gnb_du_name = asn1_request->gnb_du_name.value.to_string();
+  }
+
+  // GNB DU served cells list
+  if (asn1_request->gnb_du_served_cells_list_present) {
+    for (const auto& asn1_served_cell_item : asn1_request->gnb_du_served_cells_list.value) {
+      auto& asn1_served_cell = asn1_served_cell_item.value().gnb_du_served_cells_item();
+
+      cu_cp_du_served_cells_item served_cell;
+
+      // served cell info
+      // NR CGI
+      served_cell.served_cell_info.nr_cgi = cgi_from_asn1(asn1_served_cell.served_cell_info.nr_cgi);
+
+      // NR PCI
+      served_cell.served_cell_info.nr_pci = asn1_served_cell.served_cell_info.nr_pci;
+
+      // 5GS TAC
+      if (asn1_served_cell.served_cell_info.five_gs_tac_present) {
+        served_cell.served_cell_info.five_gs_tac = asn1_served_cell.served_cell_info.five_gs_tac.to_number();
+      }
+
+      // cfg EPS TAC
+      if (asn1_served_cell.served_cell_info.cfg_eps_tac_present) {
+        served_cell.served_cell_info.cfg_eps_tac = asn1_served_cell.served_cell_info.cfg_eps_tac.to_number();
+      }
+
+      // served PLMNs
+      for (const auto& asn1_plmn : asn1_served_cell.served_cell_info.served_plmns) {
+        served_cell.served_cell_info.served_plmns.push_back(asn1_plmn.plmn_id.to_string());
+      }
+
+      // NR mode info
+      served_cell.served_cell_info.nr_mode_info = asn1_served_cell.served_cell_info.nr_mode_info.type().to_string();
+
+      // meas timing cfg
+      served_cell.served_cell_info.meas_timing_cfg = byte_buffer(served_cell.served_cell_info.meas_timing_cfg.begin(),
+                                                                 served_cell.served_cell_info.meas_timing_cfg.end());
+
+      // GNB DU sys info
+      if (asn1_served_cell.gnb_du_sys_info_present) {
+        cu_cp_gnb_du_sys_info gnb_du_sys_info;
+
+        // MIB msg
+        gnb_du_sys_info.mib_msg = asn1_served_cell.gnb_du_sys_info.mib_msg.copy();
+
+        // SIB1 msg
+        gnb_du_sys_info.sib1_msg = asn1_served_cell.gnb_du_sys_info.sib1_msg.copy();
+
+        served_cell.gnb_du_sys_info = gnb_du_sys_info;
+      }
+
+      request.gnb_du_served_cells_list.push_back(served_cell);
+    }
+  }
+
+  // GNB DU RRC version
+  request.gnb_du_rrc_version = asn1_request->gnb_du_rrc_version.value.latest_rrc_version.to_number();
+
+  // TODO: Add optional fields
+}
+
+/// \brief Convert the F1 Setup Response from common type to ASN.1.
+/// \param[out] asn1_response The F1 Setup Response ASN.1 struct to store the result.
+/// \param[in] msg The common type F1 Setup Response.
+inline void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&   asn1_response,
+                                        const cu_cp_f1_setup_response& response)
+{
+  // fill CU common info
+  if (response.gnb_cu_name.has_value()) {
+    asn1_response->gnb_cu_name_present = true;
+    asn1_response->gnb_cu_name->from_string(response.gnb_cu_name.value());
+  }
+  asn1_response->gnb_cu_rrc_version.value.latest_rrc_version.from_number(response.gnb_cu_rrc_version);
+
+  // activate all DU cells
+  if (response.cells_to_be_activ_list.size() > 0) {
+    asn1_response->cells_to_be_activ_list_present = true;
+    for (const auto& du_cell : response.cells_to_be_activ_list) {
+      asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_number(plmn_string_to_bcd(du_cell.nr_cgi.plmn));
+      resp_cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_number(du_cell.nr_cgi.nci);
+
+      if (du_cell.nr_pci.has_value()) {
+        resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;
+        resp_cell->cells_to_be_activ_list_item().nr_pci         = du_cell.nr_pci.value();
+      }
+
+      asn1_response->cells_to_be_activ_list.value.push_back(resp_cell);
+    }
+  }
+}
+
+/// \brief Convert the F1 Setup Failure from common type to ASN.1.
+/// \param[out] asn1_failure The F1 Setup Failure ASN.1 struct to store the result.
+/// \param[in] msg The common type F1 Setup Failure.
+inline void fill_asn1_f1_setup_failure(asn1::f1ap::f1_setup_fail_s&   asn1_failure,
+                                       const cu_cp_f1_setup_response& failure)
+{
+  if (failure.cause.has_value()) {
+    asn1_failure->cause.value = cause_to_f1ap_cause(failure.cause.value());
+  } else {
+    asn1_failure->cause.value.radio_network();
+  }
+
+  // TODO: Add optional values
+}
 
 /// \brief Convert the UE Context Modification Request from common type to ASN.1.
 /// \param[out] asn1_request The ASN.1 struct to store the result.
@@ -557,11 +677,13 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
 inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu_cp_paging_message& paging)
 {
   // Add ue id idx value
+  uint64_t five_g_s_tmsi = five_g_s_tmsi_struct_to_number(paging.ue_paging_id);
+
   // UE Identity Index value is defined as: UE_ID 5G-S-TMSI mod 1024  (see TS 38.304 section 7.1)
-  asn1_paging->ue_id_idx_value.value.set_idx_len10().from_number(paging.ue_paging_id.five_g_tmsi % 1024);
+  asn1_paging->ue_id_idx_value.value.set_idx_len10().from_number(five_g_s_tmsi % 1024);
 
   // Add paging id
-  asn1_paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(paging.ue_paging_id.five_g_tmsi);
+  asn1_paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(five_g_s_tmsi);
 
   // Add paging drx
   if (paging.paging_drx.has_value()) {

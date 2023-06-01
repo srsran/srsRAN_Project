@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
 
@@ -30,12 +31,16 @@ namespace srsran {
 class paging_pdu_assembler
 {
 public:
-  paging_pdu_assembler() = default;
+  paging_pdu_assembler(ticking_ring_buffer_pool& pdu_pool_) : pdu_pool(pdu_pool_) {}
 
   /// \brief Encode Paging MAC PDU from Paging grant information.
   /// \param[in] pg Paging grant information.
   /// \return Encoded Paging MAC PDU.
-  static span<const uint8_t> encode_paging_pdu(const dl_paging_allocation& pg);
+  span<const uint8_t> encode_paging_pdu(const dl_paging_allocation& pg);
+
+private:
+  /// Buffer pool holding Paging PDUs.
+  ticking_ring_buffer_pool& pdu_pool;
 };
 
 } // namespace srsran

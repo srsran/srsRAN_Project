@@ -22,12 +22,13 @@
 
 #include "asn1_csi_meas_config_helpers.h"
 #include "../../asn1/asn1_diff_utils.h"
+#include "srsran/asn1/rrc_nr/serving_cell.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;
 using namespace asn1::rrc_nr;
 
-asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_rs_resource_mapping& cfg)
+static asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_rs_resource_mapping& cfg)
 {
   csi_rs_res_map_s out{};
   if (cfg.fd_alloc.size() == 4) {
@@ -125,9 +126,9 @@ asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_r
   return out;
 }
 
-void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_and_offset_c& out,
-                                                   const csi_resource_periodicity&   periodicity,
-                                                   const unsigned                    offset)
+static void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_and_offset_c& out,
+                                                          const csi_resource_periodicity&   periodicity,
+                                                          const unsigned                    offset)
 {
   switch (periodicity) {
     case csi_resource_periodicity::slots4: {
@@ -198,6 +199,29 @@ void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_and_offse
     default:
       srsran_assertion_failure("Invalid CSI-RS periodicity={}", periodicity);
   }
+}
+
+asn1::rrc_nr::zp_csi_rs_res_s srsran::srs_du::make_asn1_zp_csi_rs_resource(const zp_csi_rs_resource& cfg)
+{
+  zp_csi_rs_res_s out{};
+  out.zp_csi_rs_res_id = static_cast<uint8_t>(cfg.id);
+  out.res_map          = make_asn1_nzp_csi_rs_resource_mapping(cfg.res_mapping);
+  if (cfg.period.has_value() and cfg.offset.has_value()) {
+    out.periodicity_and_offset_present = true;
+    make_asn1_csi_resource_periodicity_and_offset(out.periodicity_and_offset, cfg.period.value(), cfg.offset.value());
+  }
+  return out;
+}
+
+asn1::rrc_nr::zp_csi_rs_res_set_s srsran::srs_du::make_asn1_zp_csi_rs_resource_set(const zp_csi_rs_resource_set& cfg)
+{
+  zp_csi_rs_res_set_s out{};
+  out.zp_csi_rs_res_set_id = cfg.id;
+  out.zp_csi_rs_res_id_list.resize(cfg.zp_csi_rs_res_list.size());
+  for (unsigned i = 0; i != cfg.zp_csi_rs_res_list.size(); ++i) {
+    out.zp_csi_rs_res_id_list[i] = static_cast<uint8_t>(cfg.zp_csi_rs_res_list[i]);
+  }
+  return out;
 }
 
 asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_resource& cfg)
@@ -350,7 +374,7 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
   return out;
 }
 
-asn1::rrc_nr::csi_im_res_set_s make_asn1_csi_im_resource_set(const csi_im_resource_set& cfg)
+static asn1::rrc_nr::csi_im_res_set_s make_asn1_csi_im_resource_set(const csi_im_resource_set& cfg)
 {
   csi_im_res_set_s out{};
   out.csi_im_res_set_id = cfg.res_set_id;
@@ -360,7 +384,7 @@ asn1::rrc_nr::csi_im_res_set_s make_asn1_csi_im_resource_set(const csi_im_resour
   return out;
 }
 
-asn1::rrc_nr::csi_ssb_res_set_s make_asn1_csi_ssb_resource_set(const csi_ssb_resource_set& cfg)
+static asn1::rrc_nr::csi_ssb_res_set_s make_asn1_csi_ssb_resource_set(const csi_ssb_resource_set& cfg)
 {
   csi_ssb_res_set_s out{};
   out.csi_ssb_res_set_id = cfg.res_set_id;
@@ -370,7 +394,7 @@ asn1::rrc_nr::csi_ssb_res_set_s make_asn1_csi_ssb_resource_set(const csi_ssb_res
   return out;
 }
 
-asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resource_config& cfg)
+static asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resource_config& cfg)
 {
   csi_res_cfg_s out{};
   out.csi_res_cfg_id = cfg.res_cfg_id;
@@ -411,9 +435,9 @@ asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resource_con
   return out;
 }
 
-void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_and_offset_c& out,
-                                                 const csi_report_periodicity&        periodicity,
-                                                 const unsigned                       offset)
+static void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_and_offset_c& out,
+                                                        const csi_report_periodicity&        periodicity,
+                                                        const unsigned                       offset)
 {
   switch (periodicity) {
     case csi_report_periodicity::slots4: {
@@ -471,7 +495,7 @@ void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_and_offs
   }
 }
 
-void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
+static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
 {
   if (variant_holds_alternative<codebook_config::type1>(cfg.codebook_type)) {
     const auto& tp1_cfg_val = variant_get<codebook_config::type1>(cfg.codebook_type);
@@ -761,14 +785,14 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
   }
 }
 
-void make_asn1_port_index_each_rank(span<uint8_t> out, span<const unsigned> cfg)
+static void make_asn1_port_index_each_rank(span<uint8_t> out, span<const unsigned> cfg)
 {
   for (unsigned idx = 0; idx < cfg.size(); idx++) {
     out[idx] = cfg[idx];
   }
 }
 
-asn1::rrc_nr::port_idx_for8_ranks_c
+static asn1::rrc_nr::port_idx_for8_ranks_c
 make_asn1_port_index_for_8_ranks(const csi_report_config::port_index_for_8_ranks& cfg)
 {
   port_idx_for8_ranks_c out{};
@@ -851,7 +875,7 @@ make_asn1_port_index_for_8_ranks(const csi_report_config::port_index_for_8_ranks
   return out;
 }
 
-asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_config& cfg)
+static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_config& cfg)
 {
   csi_report_cfg_s out;
   out.report_cfg_id = cfg.report_cfg_id;
@@ -1163,7 +1187,8 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
   return out;
 }
 
-asn1::rrc_nr::csi_aperiodic_trigger_state_s make_asn1_aperiodic_trigger_state(const csi_aperiodic_trigger_state& cfg)
+static asn1::rrc_nr::csi_aperiodic_trigger_state_s
+make_asn1_aperiodic_trigger_state(const csi_aperiodic_trigger_state& cfg)
 {
   csi_aperiodic_trigger_state_s out{};
   for (const auto& report_cfg_info : cfg.associated_report_cfg_info_list) {
@@ -1202,7 +1227,7 @@ asn1::rrc_nr::csi_aperiodic_trigger_state_s make_asn1_aperiodic_trigger_state(co
   return out;
 }
 
-asn1::rrc_nr::csi_semi_persistent_on_pusch_trigger_state_s
+static asn1::rrc_nr::csi_semi_persistent_on_pusch_trigger_state_s
 make_asn1_semi_persistent_on_pusch_trigger_state(const csi_semi_persistent_on_pusch_trigger_state& cfg)
 {
   csi_semi_persistent_on_pusch_trigger_state_s out{};

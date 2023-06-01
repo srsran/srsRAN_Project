@@ -18,9 +18,11 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(up_resource_manager)
+
 set(SOURCES
       cu_cp_factory.cpp
-      cu_cp.cpp
+      cu_cp_impl.cpp
       cu_up_processor_impl.cpp
       cu_up_processor_factory.cpp
       du_processor_impl.cpp
@@ -31,9 +33,12 @@ set(SOURCES
       routine_managers/du_processor_routine_manager.cpp
       routines/initial_cu_cp_setup_routine.cpp
       routines/initial_cu_up_processor_setup_routine.cpp
+      routines/pdu_session_routine_helpers.cpp
       routines/pdu_session_resource_setup_routine.cpp
       routines/pdu_session_resource_release_routine.cpp
+      routines/pdu_session_resource_modification_routine.cpp
       routines/ue_context_release_routine.cpp
+      routines/reestablishment_context_modification_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp

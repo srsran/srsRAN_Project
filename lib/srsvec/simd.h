@@ -1910,6 +1910,45 @@ static inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
+static inline simd_s_t srsran_simd_convert_2f_s_round(simd_f_t a, simd_f_t b)
+{
+#ifdef HAVE_AVX512
+  __m512 aa = _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b),
+      b);
+  __m512 bb = _mm512_permutex2var_ps(
+      a,
+      _mm512_setr_epi32(0x04, 0x05, 0x06, 0x07, 0x0c, 0x0d, 0x0e, 0x0f, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f),
+      b);
+  __m512i ai = _mm512_cvt_roundps_epi32(aa, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+  __m512i bi = _mm512_cvt_roundps_epi32(bb, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+  return _mm512_packs_epi32(ai, bi);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_AVX2
+  __m256  aa = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x20), _MM_FROUND_NINT);
+  __m256  bb = _mm256_round_ps(_mm256_permute2f128_ps(a, b, 0x31), _MM_FROUND_NINT);
+  __m256i ai = _mm256_cvtps_epi32(aa);
+  __m256i bi = _mm256_cvtps_epi32(bb);
+  return _mm256_packs_epi32(ai, bi);
+#else
+#ifdef HAVE_SSE
+  __m128  aa = _mm_round_ps(a, _MM_FROUND_NINT);
+  __m128  bb = _mm_round_ps(b, _MM_FROUND_NINT);
+  __m128i ai = _mm_cvtps_epi32(aa);
+  __m128i bi = _mm_cvtps_epi32(bb);
+  return _mm_packs_epi32(ai, bi);
+#else
+#ifdef HAVE_NEON
+  int32x4_t ai = vcvtnq_s32_f32(a);
+  int32x4_t bi = vcvtnq_s32_f32(b);
+  return (simd_s_t)vcombine_s16(vqmovn_s32(ai), vqmovn_s32(bi));
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
+#endif /* HAVE_AVX2 */
+#endif /* HAVE_AVX512 */
+}
+
 #endif /* SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_C16_SIZE */
 
 #if SRSRAN_SIMD_B_SIZE

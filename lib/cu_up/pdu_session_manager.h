@@ -61,7 +61,7 @@ struct pdu_session_setup_result {
 struct pdu_session_modification_result {
   bool                          success        = false;                     // True if PDU session could be set up.
   pdu_session_id_t              pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
-  cause_t                       cause;                                      // Cause if setup was unsuccessful.
+  cause_t                       cause;                                      // Cause if modification was unsuccessful.
   std::vector<drb_setup_result> drb_setup_results;
   std::vector<drb_setup_result> drb_modification_results;
 };

@@ -36,8 +36,6 @@ class radio_zmq_tx_stream : public baseband_gateway_transmitter, public radio_zm
 private:
   /// Alignment timeout. Waits this time before padding zeros.
   const std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
-  /// Desired transmit number of samples.
-  static constexpr unsigned TRANSMIT_BUFFER_SIZE = 1920;
   /// Radio notification handler interface.
   radio_notification_handler& notification_handler;
   /// Indicates whether the class was initialized successfully.
@@ -76,10 +74,10 @@ public:
   // See interface for documentation.
   bool align(baseband_gateway_timestamp timestamp, std::chrono::milliseconds timeout) override;
 
-  unsigned get_buffer_size() const override;
-
   // See interface for documentation.
-  void transmit(baseband_gateway_buffer& data, const metadata& md) override;
+  void transmit(const baseband_gateway_buffer_reader& data, const metadata& md) override;
+
+  void start(baseband_gateway_timestamp init_time);
 
   void stop();
 

@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include "srsran/f1ap/du/f1ap_du.h"
-#include "srsran/support/async/async_task.h"
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 
 namespace srsran {
 namespace srs_du {
@@ -40,7 +39,7 @@ public:
 
 private:
   async_task<f1_setup_response_message> start_f1_setup_request();
-  void                                  handle_f1_setup_response(const asn1::f1ap::f1_setup_resp_s& resp);
+  void                                  handle_f1_setup_response(const f1_setup_response_message& resp);
 
   const du_manager_params& params;
   du_cell_manager&         cell_mng;

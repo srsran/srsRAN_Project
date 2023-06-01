@@ -47,12 +47,12 @@ struct pdcp_tx_state {
 
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
-class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
-                       public pdcp_tx_status_handler,
-                       public pdcp_tx_upper_data_interface,
-                       public pdcp_tx_upper_control_interface,
-                       public pdcp_tx_lower_interface,
-                       public pdcp_tx_metrics
+class pdcp_entity_tx final : public pdcp_entity_tx_rx_base,
+                             public pdcp_tx_status_handler,
+                             public pdcp_tx_upper_data_interface,
+                             public pdcp_tx_upper_control_interface,
+                             public pdcp_tx_lower_interface,
+                             public pdcp_tx_metrics
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
@@ -61,7 +61,7 @@ public:
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers_) :
-    pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
+    pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.rlc_mode, cfg_.sn_size),
     logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
     lower_dn(lower_dn_),
@@ -69,14 +69,20 @@ public:
     timers(timers_)
   {
     // Validate configuration
-    if (is_um() && (cfg.discard_timer != pdcp_discard_timer::not_configured &&
-                    cfg.discard_timer != pdcp_discard_timer::infinity)) {
-      report_error("RLC UM with discard timer is not supported. {}", cfg);
+    if (is_srb() && (cfg.sn_size != pdcp_sn_size::size12bits)) {
+      report_error("PDCP SRB with invalid sn_size. {}", cfg);
     }
+    if (is_srb() && is_um()) {
+      report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
+    }
+
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);
   }
+
+  /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
+  void reestablish(security::sec_128_as_config sec_cfg) override;
 
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
@@ -86,7 +92,7 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_transmit_notification(uint32_t highest_sn) final
+  void handle_transmit_notification(uint32_t highest_sn) override
   {
     logger.log_debug("Handling transmit notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
@@ -98,7 +104,7 @@ public:
     }
   }
 
-  void handle_delivery_notification(uint32_t highest_sn) final
+  void handle_delivery_notification(uint32_t highest_sn) override
   {
     logger.log_debug("Handling delivery notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
@@ -142,25 +148,36 @@ public:
    */
   void enable_security(security::sec_128_as_config sec_cfg_) final
   {
+    srsran_assert((is_srb() && sec_cfg_.domain == security::sec_domain::rrc) ||
+                      (is_drb() && sec_cfg_.domain == security::sec_domain::up),
+                  "Invalid sec_domain={} for {} in {}",
+                  sec_cfg.domain,
+                  rb_type,
+                  rb_id);
     integrity_enabled = security::integrity_enabled::on;
     ciphering_enabled = security::ciphering_enabled::on;
     sec_cfg           = sec_cfg_;
-    logger.log_info("Security configured: NIA{} ({}) NEA{} ({})",
+    logger.log_info("Security configured: NIA{} ({}) NEA{} ({}) domain={}",
                     sec_cfg.integ_algo,
                     integrity_enabled,
                     sec_cfg.cipher_algo,
-                    ciphering_enabled);
-    logger.log_debug(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
-    logger.log_debug(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
-    logger.log_debug(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
-    logger.log_debug(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
+                    ciphering_enabled,
+                    sec_cfg.domain);
+    logger.log_debug(sec_cfg.k_128_int.data(), 16, "128 K_int");
+    logger.log_debug(sec_cfg.k_128_enc.data(), 16, "128 K_enc");
   };
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
   void send_status_report();
 
   /// Performs data recovery, as specified in TS 38.323, Sec. 5.5.
-  void data_recovery() final;
+  void data_recovery() override;
+
+  /// Discard all PDUs, delivery information and discard timers.
+  void discard_all_pdus();
+
+  /// Retransmits all PDUs. Integrity protection and ciphering is re-applied.
+  void retransmit_all_pdus();
 
 private:
   pdcp_bearer_logger   logger;
@@ -182,7 +199,7 @@ private:
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
-  byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, byte_buffer buf, uint32_t count);
+  byte_buffer apply_ciphering_and_integrity_protection(byte_buffer hdr, const byte_buffer& sdu, uint32_t count);
   void        integrity_generate(security::sec_mac& mac, byte_buffer_view buf, uint32_t count);
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
@@ -193,7 +210,8 @@ private:
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
   struct discard_info {
-    byte_buffer  buf;
+    uint32_t     count;
+    byte_buffer  sdu;
     unique_timer discard_timer;
   };
 
@@ -203,14 +221,6 @@ private:
   /// Currently, this is only supported when using RLC AM, as only AM has the ability to stop the timers.
   std::map<uint32_t, discard_info> discard_timers_map;
   class discard_callback;
-
-  /*
-   * RB helpers
-   */
-  bool is_srb() const { return cfg.rb_type == pdcp_rb_type::srb; }
-  bool is_drb() const { return cfg.rb_type == pdcp_rb_type::drb; }
-  bool is_um() const { return cfg.rlc_mode == pdcp_rlc_mode::um; }
-  bool is_am() const { return cfg.rlc_mode == pdcp_rlc_mode::am; }
 };
 
 class pdcp_entity_tx::discard_callback

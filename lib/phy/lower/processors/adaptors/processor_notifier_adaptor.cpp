@@ -44,16 +44,10 @@ void processor_notifier_adaptor::uplink_adaptor::on_full_slot(const lower_phy_ti
   timing_notifier->on_ul_full_slot_boundary(context);
 }
 
-void processor_notifier_adaptor::pdxch_adaptor::on_late_resource_grid(const resource_grid_context& context)
+void processor_notifier_adaptor::pdxch_adaptor::on_pdxch_request_late(const resource_grid_context& context)
 {
   srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
   error_notifier->on_late_resource_grid(context);
-}
-
-void processor_notifier_adaptor::pdxch_adaptor::on_overflow_resource_grid(const resource_grid_context& context)
-{
-  srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
-  error_notifier->on_overflow_resource_grid(context);
 }
 
 void processor_notifier_adaptor::prach_adaptor::on_prach_request_late(const prach_buffer_context& context)
@@ -79,12 +73,6 @@ void processor_notifier_adaptor::puxch_adaptor::on_puxch_request_late(const reso
 {
   srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
   error_notifier->on_puxch_request_late(context);
-}
-
-void processor_notifier_adaptor::puxch_adaptor::on_puxch_request_overflow(const resource_grid_context& context)
-{
-  srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
-  error_notifier->on_puxch_request_overflow(context);
 }
 
 void processor_notifier_adaptor::puxch_adaptor::on_rx_symbol(const resource_grid_reader&        grid,

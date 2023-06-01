@@ -50,7 +50,7 @@ struct du_cell_context {
   du_index_t          du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
   nr_cell_global_id_t cgi;                                   /// global cell ID
   uint32_t            tac;                                   /// tracking area code
-  uint16_t            pci;                                   /// Physical cell ID
+  pci_t               pci;                                   /// Physical cell ID
   du_sys_info         sys_info;                              /// System information provided by DU
 };
 

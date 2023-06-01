@@ -65,6 +65,11 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 {
 }
 
+fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(slot_point slot_) :
+  slot(slot_), dl_processor(dummy_dl_processor)
+{
+}
+
 fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(
     downlink_processor_pool& dl_processor_pool,
     resource_grid_pool&      rg_pool,
@@ -162,11 +167,17 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
-        if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP) {
+        if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP && pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_ZP) {
           logger.warning(
-              "Only NZP-CSI-RS PDU type is supported. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+              "Only NZP-CSI-RS and ZP-CSI-RS PDU types are supported. Skipping DL_TTI.request message in {}.{}.",
+              msg.sfn,
+              msg.slot);
 
           return {};
+        }
+        // ZP-CSI does not need any further work to do.
+        if (pdu.csi_rs_pdu.type == csi_rs_type::CSI_RS_ZP) {
+          break;
         }
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
         convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
@@ -237,6 +248,10 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
                    msg.slot);
     return;
   }
+
+  // Configure the slot controller to manage the downlink processor and resource grid for this downlink slot.
+  current_slot_controller =
+      slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, current_slot_controller.get_slot(), sector_id);
 
   const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(
       msg, dl_pdu_validator, logger, scs_common, carrier_cfg.dl_grid_size[to_numerology_value(scs_common)]);
@@ -330,7 +345,7 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
       }
       case fapi::ul_pdu_type::PUSCH: {
         uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
-        convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
+        convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
           logger.warning(
               "Unsupported PUSCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
@@ -444,16 +459,16 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
     return;
   }
 
-  // Skip if there is no PDSCH PDU in the repository. This may be caused by a PDU not supported in the
-  // DL_TTI.request.
-  if (pdsch_pdu_repository.empty()) {
-    return;
-  }
-
   if (msg.pdus.size() != pdsch_pdu_repository.size()) {
     logger.warning("Invalid TX_Data.request. Message contains ({}) payload PDUs but expected ({})",
                    msg.pdus.size(),
                    pdsch_pdu_repository.size());
+    return;
+  }
+
+  // Skip if there is no PDSCH PDU in the repository. This may be caused by a PDU not supported in the
+  // DL_TTI.request.
+  if (pdsch_pdu_repository.empty()) {
     return;
   }
 
@@ -470,7 +485,11 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
-  current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, slot, sector_id);
+  // On new slot, create a controller that only manages the slot. In case that a DL_TTI.request is received, a new slot
+  // controller will be created and will be responsible for managing the downlink processor and resource grid for the
+  // downlink slot. In case that an UL_TTI.request is received, the slot controller will only manage the slot, giving
+  // access to the current slot.
+  current_slot_controller = slot_based_upper_phy_controller(slot);
   pdsch_pdu_repository.clear();
   ul_pdu_repository.clear_slot(slot);
 }

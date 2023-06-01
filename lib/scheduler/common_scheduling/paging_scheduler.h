@@ -145,8 +145,6 @@ private:
   /// Array of Type0-PDCCH CSS monitoring slots (1 per beam) that will be used for Paging scheduling if
   /// pagingSearchSpace is 0 [TS 38.213, Section 13].
   std::array<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_slots;
-  /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
-  unsigned sib1_period;
 
   /// Array of Type2-PDCCH CSS monitoring slots that will be used for Paging scheduling if pagingSearchSpace > 0.
   /// NOTE1: nrofPDCCH-MonitoringOccasionPerSSB-InPO is always 1. See \c

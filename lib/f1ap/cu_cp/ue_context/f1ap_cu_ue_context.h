@@ -35,6 +35,7 @@ struct f1ap_ue_context {
   const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
   gnb_du_ue_f1ap_id_t       du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
   f1ap_srb_notifiers        srbs;
+  bool                      marked_for_release = false;
 
   f1ap_ue_transaction_manager ev_mng;
 

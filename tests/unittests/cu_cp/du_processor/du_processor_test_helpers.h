@@ -64,6 +64,7 @@ protected:
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
   dummy_du_processor_ngap_control_notifier              ngap_ctrl_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
+  dummy_rrc_ue_cu_cp_adapter                            rrc_ue_cu_cp_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   manual_task_worker                                    ctrl_worker{128};
   std::unique_ptr<du_processor_interface>               du_processor_obj;

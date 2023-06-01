@@ -81,6 +81,8 @@ protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
   void init(pdcp_sn_size       sn_size_,
+            pdcp_rb_type       rb_type_      = pdcp_rb_type::drb,
+            pdcp_rlc_mode      rlc_mode_     = pdcp_rlc_mode::am,
             pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10,
             pdcp_max_count     max_count     = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard})
   {
@@ -91,26 +93,36 @@ protected:
 
     // Set TX config
     config.sn_size                = sn_size;
-    config.rb_type                = pdcp_rb_type::drb;
-    config.rlc_mode               = pdcp_rlc_mode::am;
+    config.rb_type                = rb_type_;
+    config.rlc_mode               = rlc_mode_;
     config.direction              = pdcp_security_direction::downlink;
     config.discard_timer          = discard_timer;
     config.max_count              = max_count;
     config.status_report_required = true;
 
+    // RB_id and security domain
+    rb_id_t rb_id;
+    switch (rb_type_) {
+      case pdcp_rb_type::srb:
+        sec_cfg.domain = security::sec_domain::rrc;
+        rb_id          = srb_id_t::srb1;
+        break;
+      case pdcp_rb_type::drb:
+        sec_cfg.domain = security::sec_domain::up;
+        rb_id          = drb_id_t::drb1;
+        break;
+    }
+
     // Set security keys
-    sec_cfg.k_128_rrc_int = k_128_int;
-    sec_cfg.k_128_up_int  = k_128_int;
-    sec_cfg.k_128_rrc_enc = k_128_enc;
-    sec_cfg.k_128_up_enc  = k_128_enc;
+    sec_cfg.k_128_int = k_128_int;
+    sec_cfg.k_128_enc = k_128_enc;
 
     // Set encription/integrity algorithms
     sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
     sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
     // Create RLC entities
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(
-        0, srb_id_t::srb1, config, test_frame, test_frame, timer_factory{timers, worker});
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker});
     pdcp_tx->set_status_provider(&test_frame);
   }
 

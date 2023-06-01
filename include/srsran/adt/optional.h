@@ -40,6 +40,8 @@ constexpr nullopt_t nullopt{0};
 
 namespace detail {
 
+struct non_trivial_oper_tag {};
+
 /// Storage of an optional internal value and empty/has_value flag.
 template <typename T>
 struct base_optional_storage {
@@ -74,28 +76,27 @@ struct base_optional_storage {
     U    val;
   };
 
-  constexpr base_optional_storage() noexcept = default;
+  constexpr base_optional_storage() noexcept : payload(), has_val(false) {}
   template <typename... Args>
   explicit base_optional_storage(in_place_t tag, Args&&... args) :
     payload(tag, std::forward<Args>(args)...), has_val(true)
   {
   }
-  explicit base_optional_storage(bool has_val_, const storage_type<storageT>& payload_) noexcept(
-      std::is_nothrow_copy_constructible<T>::value) :
-    has_val(has_val_)
+  explicit base_optional_storage(const base_optional_storage<T>& other, non_trivial_oper_tag /**/) noexcept :
+    has_val(other.has_val)
   {
-    if (has_val_) {
-      construct_(payload_.val);
+    if (other.has_val) {
+      construct_(other.payload.val);
     }
   }
-  explicit base_optional_storage(bool has_val_, storage_type<storageT>&& payload_) noexcept(
-      std::is_nothrow_move_constructible<T>::value) :
-    has_val(has_val_)
+  explicit base_optional_storage(base_optional_storage<T>&& other, non_trivial_oper_tag /**/) noexcept :
+    has_val(other.has_val)
   {
-    if (has_val_) {
-      construct_(std::move(payload_.val));
+    if (other.has_val) {
+      construct_(std::move(other.payload.val));
     }
   }
+
   base_optional_storage(const base_optional_storage<T>&)                = default;
   base_optional_storage(base_optional_storage<T>&&) noexcept            = default;
   base_optional_storage& operator=(const base_optional_storage<T>&)     = default;
@@ -182,7 +183,7 @@ public:
   optional_storage()  = default;
   ~optional_storage() = default;
   optional_storage(const optional_storage& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
-    base_optional_storage<T>(other.has_val, other.payload)
+    base_optional_storage<T>(other, non_trivial_oper_tag{})
   {
   }
   optional_storage(optional_storage&&) noexcept            = default;
@@ -206,7 +207,7 @@ public:
   ~optional_storage()                       = default;
   optional_storage(const optional_storage&) = default;
   optional_storage(optional_storage&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
-    base_optional_storage<T>(other.has_val, std::move(other.payload))
+    base_optional_storage<T>(std::move(other), non_trivial_oper_tag{})
   {
   }
   optional_storage& operator=(const optional_storage&) = default;
@@ -229,11 +230,11 @@ public:
   optional_storage()  = default;
   ~optional_storage() = default;
   optional_storage(const optional_storage& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
-    base_optional_storage<T>(other.has_val, other.payload)
+    base_optional_storage<T>(other, non_trivial_oper_tag{})
   {
   }
   optional_storage(optional_storage&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
-    base_optional_storage<T>(other.has_val, std::move(other.payload))
+    base_optional_storage<T>(std::move(other), non_trivial_oper_tag{})
   {
   }
 

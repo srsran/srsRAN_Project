@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/support/srsran_test.h"
 
@@ -28,10 +28,11 @@ using namespace srsran;
 
 static void test_table_13_1()
 {
-  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
+  // Choose 2 bands with different minimum channel BW for SCS 15kHz.
+  for (nr_band band : {nr_band::n7, nr_band::n77}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          minimum_bandwidth, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, config_index, 0);
+      pdcch_type0_css_coreset_description description =
+          pdcch_type0_css_coreset_get(band, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, config_index, 0);
 
       // Assert pattern.
       if (config_index < 15) {
@@ -76,58 +77,96 @@ static void test_table_13_1()
   }
 }
 
+static void test_table_13_1_A()
+{
+  for (unsigned config_index = 0; config_index != 16; ++config_index) {
+    pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+        nr_band::n46, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, config_index, 0);
+
+    // Assert pattern.
+    if (config_index < 8) {
+      TESTASSERT(description.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1);
+    } else {
+      TESTASSERT(description.pattern == PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern);
+    }
+
+    // Assert CORESET bandwidth.
+    if (config_index < 8) {
+      TESTASSERT_EQ(96, description.nof_rb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_rb_coreset, description.nof_rb_coreset);
+    }
+
+    // Assert number of symbols.
+    if (config_index < 4) {
+      TESTASSERT_EQ(1, description.nof_symb_coreset);
+    } else if (config_index < 8) {
+      TESTASSERT_EQ(2, description.nof_symb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_symb_coreset, description.nof_symb_coreset);
+    }
+
+    // Assert offset.
+    if (config_index < 8) {
+      TESTASSERT_EQ(static_cast<int8_t>(10 + 2 * (config_index % 4)), description.offset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
+    }
+  }
+}
+
 static void test_table_13_2()
 {
-  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
-    for (unsigned config_index = 0; config_index != 16; ++config_index) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          minimum_bandwidth, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, config_index, 0);
+  // There is no NR band with 5MHz minimum channel BW for SCS 30kHz.
+  for (unsigned config_index = 0; config_index != 16; ++config_index) {
+    pdcch_type0_css_coreset_description description =
+        pdcch_type0_css_coreset_get(nr_band::n7, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, config_index, 0);
 
-      // Assert pattern.
-      if (config_index < 14) {
-        TESTASSERT(description.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1);
-      } else {
-        TESTASSERT(description.pattern == PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern);
-      }
+    // Assert pattern.
+    if (config_index < 14) {
+      TESTASSERT(description.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1);
+    } else {
+      TESTASSERT(description.pattern == PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern);
+    }
 
-      // Assert CORESET bandwidth.
-      if (config_index < 8) {
-        TESTASSERT_EQ(24, description.nof_rb_coreset);
-      } else if (config_index < 14) {
-        TESTASSERT_EQ(48, description.nof_rb_coreset);
-      } else {
-        TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_rb_coreset, description.nof_rb_coreset);
-      }
+    // Assert CORESET bandwidth.
+    if (config_index < 8) {
+      TESTASSERT_EQ(24, description.nof_rb_coreset);
+    } else if (config_index < 14) {
+      TESTASSERT_EQ(48, description.nof_rb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_rb_coreset, description.nof_rb_coreset);
+    }
 
-      // Assert number of symbols.
-      if (config_index < 4 || config_index == 10 || config_index == 11) {
-        TESTASSERT_EQ(2, description.nof_symb_coreset);
-      } else if (config_index < 8 || config_index == 12 || config_index == 13) {
-        TESTASSERT_EQ(3, description.nof_symb_coreset);
-      } else if (config_index < 10) {
-        TESTASSERT_EQ(1, description.nof_symb_coreset);
-      } else {
-        TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_symb_coreset, description.nof_symb_coreset);
-      }
+    // Assert number of symbols.
+    if (config_index < 4 || config_index == 10 || config_index == 11) {
+      TESTASSERT_EQ(2, description.nof_symb_coreset);
+    } else if (config_index < 8 || config_index == 12 || config_index == 13) {
+      TESTASSERT_EQ(3, description.nof_symb_coreset);
+    } else if (config_index < 10) {
+      TESTASSERT_EQ(1, description.nof_symb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_symb_coreset, description.nof_symb_coreset);
+    }
 
-      // Assert offset.
-      if (config_index < 8) {
-        TESTASSERT_EQ(static_cast<int8_t>((config_index % 4) + 5), description.offset);
-      } else if (config_index < 14) {
-        TESTASSERT_EQ(static_cast<int8_t>(((config_index - 14) % 2) * 2 + 18), description.offset);
-      } else {
-        TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
-      }
+    // Assert offset.
+    if (config_index < 8) {
+      TESTASSERT_EQ(static_cast<int8_t>((config_index % 4) + 5), description.offset);
+    } else if (config_index < 14) {
+      TESTASSERT_EQ(static_cast<int8_t>(((config_index - 14) % 2) * 2 + 18), description.offset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
     }
   }
 }
 
 static void test_table_13_3()
 {
-  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
+  // Choose 2 bands with different minimum channel BW for SCS 15kHz.
+  for (nr_band band : {nr_band::n7, nr_band::n77}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          minimum_bandwidth, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
+      pdcch_type0_css_coreset_description description =
+          pdcch_type0_css_coreset_get(band, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
 
       // Assert pattern.
       if (config_index < 9) {
@@ -170,47 +209,88 @@ static void test_table_13_3()
 
 static void test_table_13_4()
 {
-  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
-    for (unsigned config_index = 0; config_index != 16; ++config_index) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          minimum_bandwidth, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
+  // There is no NR band with 5MHz minimum channel BW for SCS 30kHz.
+  for (unsigned config_index = 0; config_index != 16; ++config_index) {
+    pdcch_type0_css_coreset_description description =
+        pdcch_type0_css_coreset_get(nr_band::n7, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
 
-      // Assert pattern.
+    // Assert pattern.
+    TESTASSERT(description.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1);
+
+    // Assert CORESET bandwidth.
+    if (config_index < 10) {
+      TESTASSERT_EQ(24, description.nof_rb_coreset);
+    } else {
+      TESTASSERT_EQ(48, description.nof_rb_coreset);
+    }
+
+    // Assert number of symbols.
+    if (config_index < 5) {
+      TESTASSERT_EQ(2, description.nof_symb_coreset);
+    } else if (config_index < 10) {
+      TESTASSERT_EQ(3, description.nof_symb_coreset);
+    } else if (config_index < 13) {
+      TESTASSERT_EQ(1, description.nof_symb_coreset);
+    } else {
+      TESTASSERT_EQ(2, description.nof_symb_coreset);
+    }
+
+    // Assert offset.
+    if (config_index < 10) {
+      TESTASSERT_EQ(static_cast<int8_t>(config_index % 5), description.offset);
+    } else {
+      TESTASSERT_EQ(static_cast<int8_t>(12 + ((config_index - 10) % 3) * 2), description.offset);
+    }
+  }
+}
+
+static void test_table_13_4_A()
+{
+  // Choose 2 bands with different minimum channel BW for SCS 15kHz.
+
+  for (unsigned config_index = 0; config_index != 16; ++config_index) {
+    pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+        nr_band::n46, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
+
+    // Assert pattern.
+    if (config_index < 8) {
       TESTASSERT(description.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1);
+    } else {
+      TESTASSERT(description.pattern == PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern);
+    }
 
-      // Assert CORESET bandwidth.
-      if (config_index < 10) {
-        TESTASSERT_EQ(24, description.nof_rb_coreset);
-      } else {
-        TESTASSERT_EQ(48, description.nof_rb_coreset);
-      }
+    // Assert CORESET bandwidth.
+    if (config_index < 8) {
+      TESTASSERT_EQ(48, description.nof_rb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_rb_coreset, description.nof_rb_coreset);
+    }
 
-      // Assert number of symbols.
-      if (config_index < 5) {
-        TESTASSERT_EQ(2, description.nof_symb_coreset);
-      } else if (config_index < 10) {
-        TESTASSERT_EQ(3, description.nof_symb_coreset);
-      } else if (config_index < 13) {
-        TESTASSERT_EQ(1, description.nof_symb_coreset);
-      } else {
-        TESTASSERT_EQ(2, description.nof_symb_coreset);
-      }
+    // Assert number of symbols.
+    if (config_index < 4) {
+      TESTASSERT_EQ(1, description.nof_symb_coreset);
+    } else if (config_index < 8) {
+      TESTASSERT_EQ(2, description.nof_symb_coreset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.nof_symb_coreset, description.nof_symb_coreset);
+    }
 
-      // Assert offset.
-      if (config_index < 10) {
-        TESTASSERT_EQ(static_cast<int8_t>(config_index % 5), description.offset);
-      } else {
-        TESTASSERT_EQ(static_cast<int8_t>(12 + ((config_index - 10) % 3) * 2), description.offset);
-      }
+    // Assert offset.
+    if (config_index < 8) {
+      TESTASSERT_EQ(static_cast<int8_t>(config_index % 4), description.offset);
+    } else {
+      TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
     }
   }
 }
 
 static void test_table_13_5()
 {
+  // Choose a band with has minimum channel BW 40MHz or equivalent (As per TS 38.101, Table 5.2-1, only bands where Note
+  // 17 applies, i.e., n79 or n104).
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-        min_channel_bandwidth::MHz40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
+        srsran::nr_band::n79, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
 
     // Assert pattern.
     if (config_index < 9) {
@@ -250,9 +330,11 @@ static void test_table_13_5()
 
 static void test_table_13_6()
 {
+  // Choose a band with has minimum channel BW 40MHz or equivalent (As per TS 38.101, Table 5.2-1, only bands where Note
+  // 17 applies, i.e., n79 or n104).
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-        min_channel_bandwidth::MHz40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
+        nr_band::n79, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
 
     // Assert pattern.
     if (config_index < 10) {
@@ -292,11 +374,8 @@ static void test_table_13_7()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
-                                                                                    subcarrier_spacing::kHz120,
-                                                                                    subcarrier_spacing::kHz60,
-                                                                                    config_index,
-                                                                                    subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+          nr_band::n257, subcarrier_spacing::kHz120, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 8) {
@@ -353,11 +432,8 @@ static void test_table_13_8()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
-                                                                                    subcarrier_spacing::kHz120,
-                                                                                    subcarrier_spacing::kHz120,
-                                                                                    config_index,
-                                                                                    subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+          nr_band::n257, subcarrier_spacing::kHz120, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {
@@ -406,11 +482,8 @@ static void test_table_13_9()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
-                                                                                    subcarrier_spacing::kHz240,
-                                                                                    subcarrier_spacing::kHz60,
-                                                                                    config_index,
-                                                                                    subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+          nr_band::n257, subcarrier_spacing::kHz240, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {
@@ -447,11 +520,8 @@ static void test_table_13_10()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
-                                                                                    subcarrier_spacing::kHz240,
-                                                                                    subcarrier_spacing::kHz120,
-                                                                                    config_index,
-                                                                                    subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+          nr_band::n257, subcarrier_spacing::kHz240, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {
@@ -499,9 +569,11 @@ static void test_table_13_10()
 int main()
 {
   test_table_13_1();
+  test_table_13_1_A();
   test_table_13_2();
   test_table_13_3();
   test_table_13_4();
+  test_table_13_4_A();
   test_table_13_5();
   test_table_13_6();
   test_table_13_7();

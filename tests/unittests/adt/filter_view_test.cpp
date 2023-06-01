@@ -30,8 +30,9 @@ void test_array_filter()
   std::array<bool, 10> a{};
   a[2] = true;
 
-  int count = 0;
-  for (bool v : views::filter(a, [](bool b) { return b; })) {
+  int  count       = 0;
+  auto filter_func = [](bool b) { return b; };
+  for (bool v : views::filter(a, filter_func)) {
     TESTASSERT(v == true);
     count++;
   }

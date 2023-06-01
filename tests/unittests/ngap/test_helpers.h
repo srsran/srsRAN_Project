@@ -32,6 +32,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/async/async_task_loop.h"
+#include <gtest/gtest.h>
 #include <unordered_map>
 
 namespace srsran {
@@ -119,6 +120,8 @@ public:
   void             set_ue_config(ue_configuration ue_config_) { ue_config = ue_config_; }
   ue_configuration get_ue_config() override { return ue_config; }
 
+  ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) override { return ue_index_t::invalid; }
+
   ngap_ue* add_ue(ue_index_t                          ue_index,
                   ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
                   ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
@@ -171,18 +174,6 @@ public:
 
   size_t get_nof_ngap_ues() override { return ues.size(); }
 
-  void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) override
-  {
-    if (ue_index == ue_index_t::invalid) {
-      logger.error("Invalid ue_index={}", ue_index);
-      return;
-    }
-
-    ues.at(ue_index).set_amf_ue_id(amf_ue_id);
-    // Add AMF UE ID to lookup
-    amf_ue_id_to_ue_index.emplace(amf_ue_id, ue_index);
-  }
-
   ue_index_t get_ue_index(ran_ue_id_t ran_ue_id) override
   {
     if (ran_ue_id_to_ue_index.find(ran_ue_id) == ran_ue_id_to_ue_index.end()) {
@@ -201,6 +192,46 @@ public:
     return amf_ue_id_to_ue_index[amf_ue_id];
   }
 
+  void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) override
+  {
+    if (ue_index == ue_index_t::invalid) {
+      logger.error("Invalid ue_index={}", ue_index);
+      return;
+    }
+
+    ues.at(ue_index).set_amf_ue_id(amf_ue_id);
+    // Add AMF UE ID to lookup
+    amf_ue_id_to_ue_index.emplace(amf_ue_id, ue_index);
+  }
+
+  void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) override
+  {
+    // Update ue index at lookups
+    ran_ue_id_to_ue_index.at(find_ran_ue_id(old_ue_index)) = new_ue_index;
+    amf_ue_id_to_ue_index.at(find_amf_ue_id(old_ue_index)) = new_ue_index;
+
+    // transfer UE NGAP IDs to new UE
+    auto& old_ue = ues.at(old_ue_index);
+    auto& new_ue = ues.at(new_ue_index);
+    new_ue.set_ran_ue_id(old_ue.get_ran_ue_id());
+    new_ue.set_amf_ue_id(old_ue.get_amf_ue_id());
+
+    // transfer aggregate maximum bit rate dl
+    new_ue.set_aggregate_maximum_bit_rate_dl(old_ue.get_aggregate_maximum_bit_rate_dl());
+
+    logger.debug(
+        "Transferred NGAP UE context from ueId={} (ran_ue_id={} amf_ue_id={}) to ueId={} (ran_ue_id={} amf_ue_id={})",
+        old_ue_index,
+        old_ue.get_ran_ue_id(),
+        old_ue.get_amf_ue_id(),
+        new_ue_index,
+        new_ue.get_ran_ue_id(),
+        new_ue.get_amf_ue_id());
+
+    // Remove old ue
+    ues.erase(old_ue_index);
+  }
+
 private:
   ran_ue_id_t get_next_ran_ue_id()
   {
@@ -214,6 +245,32 @@ private:
 
     logger.error("No RAN UE ID available");
     return ran_ue_id_t::invalid;
+  }
+
+  ran_ue_id_t find_ran_ue_id(ue_index_t ue_index)
+  {
+    unsigned ran_ue_id_uint = ran_ue_id_to_uint(ran_ue_id_t::min);
+    for (auto const& it : ran_ue_id_to_ue_index) {
+      if (it.second == ue_index) {
+        return uint_to_ran_ue_id(ran_ue_id_uint);
+      }
+      ran_ue_id_uint++;
+    }
+    logger.error("RAN UE ID for ue_index={} not found", ue_index);
+    return ran_ue_id_t::invalid;
+  }
+
+  amf_ue_id_t find_amf_ue_id(ue_index_t ue_index)
+  {
+    unsigned amf_ue_id_uint = amf_ue_id_to_uint(amf_ue_id_t::min);
+    for (auto const& it : amf_ue_id_to_ue_index) {
+      if (it.second == ue_index) {
+        return uint_to_amf_ue_id(amf_ue_id_uint);
+      }
+      amf_ue_id_uint++;
+    }
+    logger.error("AMF UE ID for ue_index={} not found", ue_index);
+    return amf_ue_id_t::invalid;
   }
 
   ue_configuration ue_config;
@@ -238,6 +295,12 @@ public:
   void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received message");
+
+    // Verify correct packing of outbound PDU.
+    byte_buffer   pack_buffer;
+    asn1::bit_ref bref(pack_buffer);
+    ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
+
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       msg.pdu.to_json(js);
@@ -328,12 +391,28 @@ public:
       CORO_BEGIN(ctx);
 
       if (last_request.pdu_session_res_setup_items.size() == 0) {
-        res.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(1),
-                                                          cu_cp_pdu_session_res_setup_failed_item{});
+        cu_cp_pdu_session_res_setup_failed_item failed_item;
+        failed_item.pdu_session_id                                         = uint_to_pdu_session_id(1);
+        failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+        res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
       } else {
         res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
       }
 
+      CORO_RETURN(res);
+    });
+  }
+
+  async_task<cu_cp_pdu_session_resource_modify_response>
+  on_new_pdu_session_resource_modify_request(cu_cp_pdu_session_resource_modify_request& request) override
+  {
+    logger.info("Received a new pdu session resource modify request");
+
+    last_modify_request = std::move(request);
+
+    return launch_async([res = cu_cp_pdu_session_resource_modify_response{}](
+                            coro_context<async_task<cu_cp_pdu_session_resource_modify_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
       CORO_RETURN(res);
     });
   }
@@ -355,15 +434,21 @@ public:
     });
   }
 
-  void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
+  cu_cp_ue_context_release_complete
+  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
 
     last_command = command;
+
+    cu_cp_ue_context_release_complete release_complete;
+    // TODO: Add values
+    return release_complete;
   }
 
   cu_cp_ue_context_release_command           last_command;
   cu_cp_pdu_session_resource_setup_request   last_request;
+  cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;
 
 private:

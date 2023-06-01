@@ -53,6 +53,7 @@ const int pdu_size_snlen18 = 9;
 // 12 bits
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count0_snlen12      = {0x80, 0x00, 0x28, 0xb7, 0xe0, 0xc5, 0x10, 0x48};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count1_snlen12      = {0x80, 0x01, 0x34, 0x68, 0xae, 0x56, 0xdc, 0x2c};
+const std::array<uint8_t, pdu_size_snlen12> pdu1_count2_snlen12      = {0x80, 0x02, 0x78, 0x72, 0x65, 0xa9, 0x09, 0xdb};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count2047_snlen12   = {0x87, 0xff, 0x39, 0xb4, 0x2c, 0x50, 0x9f, 0xf6};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count2048_snlen12   = {0x88, 0x00, 0xe3, 0x37, 0xfe, 0x24, 0xc3, 0xe9};
 const std::array<uint8_t, pdu_size_snlen12> pdu1_count4095_snlen12   = {0x8f, 0xff, 0x1a, 0x08, 0xbe, 0xa4, 0x32, 0x86};
@@ -71,6 +72,8 @@ const std::array<uint8_t, pdu_size_snlen18> pdu1_count0_snlen18 =
     {0x80, 0x00, 0x00, 0x28, 0xb7, 0x87, 0xb7, 0x5f, 0xd7};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count1_snlen18 =
     {0x80, 0x00, 0x01, 0x34, 0x68, 0x44, 0x26, 0xcc, 0xe5};
+const std::array<uint8_t, pdu_size_snlen18> pdu1_count2_snlen18 =
+    {0x80, 0x00, 0x02, 0x78, 0x72, 0xfc, 0xdf, 0xba, 0xa9};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count131071_snlen18 =
     {0x81, 0xff, 0xff, 0x74, 0x2f, 0xce, 0x85, 0x95, 0xc4};
 const std::array<uint8_t, pdu_size_snlen18> pdu1_count131072_snlen18 =
@@ -108,6 +111,9 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
         return true;
       case 1:
         exp_pdu = byte_buffer{pdu1_count1_snlen12};
+        return true;
+      case 2:
+        exp_pdu = byte_buffer{pdu1_count2_snlen12};
         return true;
       case 2047:
         exp_pdu = byte_buffer{pdu1_count2047_snlen12};
@@ -152,6 +158,9 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
         return true;
       case 1:
         exp_pdu = byte_buffer{pdu1_count1_snlen18};
+        return true;
+      case 2:
+        exp_pdu = byte_buffer{pdu1_count2_snlen18};
         return true;
       case 131071:
         exp_pdu = byte_buffer{pdu1_count131071_snlen18};

@@ -25,7 +25,6 @@
 #include "srsran/f1u/cu_up/f1u_bearer.h"
 #include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {

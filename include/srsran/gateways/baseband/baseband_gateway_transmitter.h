@@ -26,7 +26,7 @@
 
 namespace srsran {
 
-class baseband_gateway_buffer;
+class baseband_gateway_buffer_reader;
 
 /// Baseband gateway - transmission interface.
 class baseband_gateway_transmitter : public baseband_gateway_base
@@ -38,14 +38,11 @@ public:
     baseband_gateway_timestamp ts;
   };
 
-  /// Gets the optimal transmitter buffer size.
-  virtual unsigned get_buffer_size() const = 0;
-
   /// \brief Transmits a set of baseband samples at the time instant provided in the metadata.
   /// \param[in] data     Buffer of baseband samples to transmit.
   /// \param[in] metadata Additional parameters for transmission.
   /// \remark The data buffers must have the same number of channels as the stream.
-  virtual void transmit(baseband_gateway_buffer& data, const metadata& metadata) = 0;
+  virtual void transmit(const baseband_gateway_buffer_reader& data, const metadata& metadata) = 0;
 };
 
 } // namespace srsran

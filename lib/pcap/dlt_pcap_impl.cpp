@@ -26,11 +26,12 @@
 
 namespace srsran {
 
-constexpr uint16_t pcap_ngap_max_len = 2000;
+constexpr uint16_t pcap_dlt_max_pdu_len = 9000;
 
-dlt_pcap_impl::dlt_pcap_impl(unsigned dlt_, std::string layer_name) : dlt(dlt_), worker(layer_name + "-PCAP", 1024)
+dlt_pcap_impl::dlt_pcap_impl(unsigned dlt_, const std::string& layer_name_) :
+  dlt(dlt_), layer_name(layer_name_), worker(layer_name_ + "-PCAP", 1024)
 {
-  tmp_mem.resize(pcap_ngap_max_len);
+  tmp_mem.resize(pcap_dlt_max_pdu_len);
 }
 
 dlt_pcap_impl::~dlt_pcap_impl()
@@ -66,7 +67,7 @@ void dlt_pcap_impl::push_pdu(srsran::byte_buffer pdu)
 {
   auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
   if (not worker.push_task(fn)) {
-    srslog::fetch_basic_logger("ALL").warning("Dropped NGAP PCAP PDU. Cause: worker task is full");
+    srslog::fetch_basic_logger("ALL").warning("Dropped {} PCAP PDU. Worker task is full", layer_name);
   }
 }
 
@@ -75,7 +76,7 @@ void dlt_pcap_impl::push_pdu(srsran::const_span<uint8_t> pdu)
   byte_buffer buffer{pdu};
   auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
   if (not worker.push_task(fn)) {
-    srslog::fetch_basic_logger("ALL").warning("Dropped NGAP PCAP PDU. Cause: worker task is full");
+    srslog::fetch_basic_logger("ALL").warning("Dropped {} PCAP PDU. Worker task is full", layer_name);
   }
 }
 
@@ -83,6 +84,12 @@ void dlt_pcap_impl::write_pdu(srsran::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
+    return;
+  }
+
+  if (buf.length() > pcap_dlt_max_pdu_len) {
+    srslog::fetch_basic_logger("ALL").warning(
+        "Dropped {} PCAP PDU. PDU is too big. pdu_len={} max_size={}", layer_name, buf.length(), pcap_dlt_max_pdu_len);
     return;
   }
 

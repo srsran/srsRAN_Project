@@ -69,7 +69,7 @@ public:
         (ce_dims.nof_prb > 0) && (ce_dims.nof_prb <= MAX_RB), "Invalid number of PRB (i.e. {}).", ce_dims.nof_prb);
     srsran_assert((ce_dims.nof_symbols > 0) && (ce_dims.nof_symbols <= MAX_NSYMB_PER_SLOT),
                   "Invalid number of OFDM symbols.");
-    srsran_assert(ce_dims.nof_rx_ports == 1, "Only one receive port is currently supported.");
+    srsran_assert(ce_dims.nof_rx_ports > 0, "The number of receive ports cannot be zero.");
     srsran_assert(ce_dims.nof_tx_layers == 1, "Only one transmit layer is currently supported.");
   }
 

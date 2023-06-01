@@ -10,25 +10,22 @@
 Attach / Detach Tests
 """
 import logging
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import Empty
 from retina.protocol.epc_pb2_grpc import EPCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters
-from .steps.stub import iperf_start, iperf_wait_until_finish, start_and_attach, ue_start_and_attach
+from .steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach, ue_stop
 
 HIGH_BITRATE = int(15e6)
 BITRATE_THRESHOLD: float = 0.1
-
-ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
 
 
 @mark.parametrize(
@@ -47,10 +44,10 @@ ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s-artifacts:%s"
     ),
 )
 @mark.parametrize(
-    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    "band, common_scs, bandwidth, always_download_artifacts",
     (
-        param(3, 15, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
-        param(41, 30, 50, HIGH_BITRATE, True, marks=mark.zmq, id=ZMQ_ID),
+        param(3, 15, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(41, 30, 50, False, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
 # pylint: disable=too-many-arguments
@@ -67,7 +64,6 @@ def test_zmq(
     common_scs: int,
     bandwidth: int,
     always_download_artifacts: bool,
-    bitrate: int,
     protocol: IPerfProto,
     direction: IPerfDir,
 ):
@@ -84,8 +80,9 @@ def test_zmq(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=30,
-        bitrate=bitrate,
+        bitrate=HIGH_BITRATE,
         protocol=protocol,
         direction=direction,
         global_timing_advance=0,
@@ -104,10 +101,10 @@ def test_zmq(
     ),
 )
 @mark.parametrize(
-    "band, common_scs, bandwidth",
+    "band, common_scs, bandwidth, always_download_artifacts",
     (
-        param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, True, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
+        param(41, 30, 10, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-artifacts:%s"),
     ),
 )
 # pylint: disable=too-many-arguments
@@ -123,6 +120,7 @@ def test_rf_udp(
     band: int,
     common_scs: int,
     bandwidth: int,
+    always_download_artifacts: bool,
     direction: IPerfDir,
 ):
     """
@@ -138,6 +136,7 @@ def test_rf_udp(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
         iperf_duration=120,
         protocol=IPerfProto.UDP,
         bitrate=HIGH_BITRATE,
@@ -145,7 +144,7 @@ def test_rf_udp(
         global_timing_advance=-1,
         time_alignment_calibration="auto",
         log_search=False,
-        always_download_artifacts=True,
+        always_download_artifacts=always_download_artifacts,
     )
 
 
@@ -159,6 +158,7 @@ def _attach_and_detach_multi_ues(
     band: int,
     common_scs: int,
     bandwidth: int,
+    sample_rate: Optional[int],
     iperf_duration: int,
     bitrate: int,
     protocol: IPerfProto,
@@ -167,6 +167,7 @@ def _attach_and_detach_multi_ues(
     time_alignment_calibration: Union[int, str],
     log_search: bool,
     always_download_artifacts: bool,
+    reattach_count: int = 1,
 ):
     logging.info("Attach / Detach Test")
 
@@ -176,8 +177,10 @@ def _attach_and_detach_multi_ues(
         band=band,
         common_scs=common_scs,
         bandwidth=bandwidth,
+        sample_rate=sample_rate,
         global_timing_advance=global_timing_advance,
         time_alignment_calibration=time_alignment_calibration,
+        pcap=False,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -185,7 +188,8 @@ def _attach_and_detach_multi_ues(
         log_search=log_search,
     )
 
-    ue_attach_info_dict = start_and_attach(ue_array, gnb, epc)
+    start_network(ue_array, gnb, epc)
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, epc)
 
     ue_array_to_iperf = ue_array[::2]
     ue_array_to_attach = ue_array[1::2]
@@ -209,11 +213,13 @@ def _attach_and_detach_multi_ues(
         )
 
     # Stop and attach half of the UEs while the others are connecting and doing iperf
-    for ue_stub in ue_array_to_attach:
-        ue_stub.Stop(Empty())
-        logging.info("UE [%s] has stopped", id(ue_stub))
-    ue_start_and_attach(ue_array_to_attach, gnb, epc)
+    for _ in range(reattach_count):
+        ue_stop(ue_array_to_attach, retina_data)
+        ue_attach_info_dict = ue_start_and_attach(ue_array_to_attach, gnb, epc)
+    # final stop will be triggered by teardown
 
     # Stop and validate iperfs
     for ue_attached_info, task, iperf_request in iperf_array:
         iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, BITRATE_THRESHOLD)
+
+    stop(ue_array, gnb, epc, retina_data)

@@ -204,12 +204,6 @@ public:
 
   void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
-  virtual void on_new_guami(const guami& msg) override
-  {
-    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->handle_new_guami(msg);
-  }
-
   virtual async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
@@ -223,7 +217,7 @@ public:
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
-  virtual void on_rrc_ue_release() override
+  virtual cu_cp_user_location_info_nr on_rrc_ue_release() override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
     return rrc_ue_handler->handle_rrc_ue_release();

@@ -25,7 +25,7 @@
 #include "puxch/puxch_processor_notifier_test_doubles.h"
 #include "puxch/puxch_processor_test_doubles.h"
 #include "uplink_processor_notifier_test_doubles.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_factories.h"
 #include "fmt/ostream.h"
@@ -103,7 +103,7 @@ bool operator==(span<const cf_t> left, span<const cf_t> right)
   return std::equal(left.begin(), left.end(), right.begin(), right.end());
 }
 
-bool operator==(const baseband_gateway_buffer& left, const baseband_gateway_buffer& right)
+bool operator==(const baseband_gateway_buffer_reader& left, const baseband_gateway_buffer_reader& right)
 {
   if (left.get_nof_channels() != right.get_nof_channels()) {
     return false;
@@ -162,14 +162,13 @@ protected:
     cyclic_prefix      cp           = std::get<3>(GetParam());
 
     // Prepare configurations.
-    config.sector_id           = dist_sector_id(rgen);
+    config.sector_id           = 0;
     config.scs                 = scs;
     config.cp                  = cp;
     config.rate                = srate;
     config.bandwidth_prb       = dist_bandwidth_prb(rgen);
     config.center_frequency_Hz = dist_center_freq_Hz(rgen);
     config.nof_rx_ports        = nof_rx_ports;
-    config.initial_slot_index  = 0;
 
     // Create processor.
     ul_processor = ul_proc_factory->create(config);
@@ -184,7 +183,6 @@ protected:
 
   static constexpr unsigned                                  nof_frames_test = 10;
   static std::mt19937                                        rgen;
-  static std::uniform_int_distribution<unsigned>             dist_sector_id;
   static std::uniform_int_distribution<unsigned>             dist_bandwidth_prb;
   static std::uniform_real_distribution<double>              dist_center_freq_Hz;
   static std::uniform_real_distribution<float>               dist_sample;
@@ -199,7 +197,6 @@ protected:
 };
 
 std::mt19937                                        LowerPhyUplinkProcessorFixture::rgen(0);
-std::uniform_int_distribution<unsigned>             LowerPhyUplinkProcessorFixture::dist_sector_id(0, 16);
 std::uniform_int_distribution<unsigned>             LowerPhyUplinkProcessorFixture::dist_bandwidth_prb(1, MAX_RB);
 std::uniform_real_distribution<double>              LowerPhyUplinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
 std::uniform_real_distribution<float>               LowerPhyUplinkProcessorFixture::dist_sample(-1, 1);
@@ -244,7 +241,8 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
 
   uplink_processor_baseband& ul_proc_baseband = ul_processor->get_baseband();
 
-  for (unsigned i_frame = 0, i_slot_frame = config.initial_slot_index; i_frame != nof_frames_test; ++i_frame) {
+  baseband_gateway_timestamp timestamp = 0;
+  for (unsigned i_frame = 0, i_slot_frame = 0; i_frame != nof_frames_test; ++i_frame) {
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
       for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
@@ -256,7 +254,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
 
           // Fill buffer.
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-            span<cf_t> port_buffer = buffer.get_channel_buffer(i_port);
+            span<cf_t> port_buffer = buffer[i_port];
             std::generate(
                 port_buffer.begin(), port_buffer.end(), []() { return cf_t(dist_sample(rgen), dist_sample(rgen)); });
           }
@@ -269,7 +267,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           puxch_proc_spy->clear();
 
           // Process baseband.
-          ul_proc_baseband.process(buffer);
+          ul_proc_baseband.process(buffer.get_reader(), timestamp);
 
           // Prepare expected PRACH baseband entry context.
           prach_processor_baseband::symbol_context prach_context;
@@ -289,7 +287,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           ASSERT_EQ(prach_proc_entries.size(), 1);
           auto& prach_proc_entry = prach_proc_entries.back();
           ASSERT_EQ(prach_proc_entry.context, prach_context);
-          ASSERT_EQ(span<const cf_t>(prach_proc_entry.samples), span<const cf_t>(buffer.get_channel_buffer(0)));
+          ASSERT_EQ(span<const cf_t>(prach_proc_entry.samples), span<const cf_t>(buffer[0]));
 
           // Assert PUxCH processor call.
           auto& puxch_proc_entries = puxch_proc_spy->get_baseband_entries();
@@ -314,6 +312,9 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           } else {
             ASSERT_EQ(full_slot_entries.size(), 0);
           }
+
+          // Increment timestamp.
+          timestamp += cp_size + base_symbol_size;
         }
       }
     }

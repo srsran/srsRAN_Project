@@ -1,0 +1,95 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "ofh_data_flow_uplane_downlink_data.h"
+#include "sequence_identifier_generator.h"
+#include "srsran/ofh/compression/iq_compressor.h"
+#include "srsran/ofh/ecpri/ecpri_packet_builder.h"
+#include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
+#include "srsran/ofh/ofh_uplane_message_builder.h"
+
+namespace srsran {
+struct resource_grid_context;
+
+namespace ether {
+class eth_frame_pool;
+}
+
+namespace ofh {
+
+/// Open Fronthaul data flow for User-Plane downlink data implementation configuration.
+struct data_flow_uplane_downlink_data_impl_config {
+  /// Number of symbols.
+  unsigned nof_symbols;
+  /// RU bandwidth in PRBs.
+  unsigned ru_nof_prbs;
+  /// VLAN frame parameters.
+  ether::vlan_frame_params vlan_params;
+  /// Compression parameters.
+  ru_compression_params compr_params;
+  /// Logger
+  srslog::basic_logger* logger = nullptr;
+  /// Ethernet frame pool.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool;
+  /// VLAN frame builder.
+  std::unique_ptr<ether::vlan_frame_builder> eth_builder;
+  /// eCPRI packet builder.
+  std::unique_ptr<ecpri::packet_builder> ecpri_builder;
+  /// IQ compressor.
+  std::unique_ptr<iq_compressor> compressor_sel;
+  /// User-Plane message builder.
+  std::unique_ptr<uplane_message_builder> up_builder;
+};
+
+/// Open Fronthaul data flow for User-Plane downlink data implementation.
+class data_flow_uplane_downlink_data_impl : public data_flow_uplane_downlink_data
+{
+public:
+  explicit data_flow_uplane_downlink_data_impl(data_flow_uplane_downlink_data_impl_config&& config);
+
+  /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
+  void enqueue_section_type_1_message(const resource_grid_context& context,
+                                      const resource_grid_reader&  grid,
+                                      unsigned                     eaxc) override;
+
+private:
+  /// Enqueues an User-Plane message burst.
+  void enqueue_section_type_1_message_symbol_burst(const resource_grid_context& context,
+                                                   const resource_grid_reader&  grid,
+                                                   unsigned                     eaxc);
+
+  /// Enqueues an User-Plane message symbol with the given context and grid.
+  unsigned enqueue_section_type_1_message_symbol(const resource_grid_context& context,
+                                                 const resource_grid_reader&  grid,
+                                                 unsigned                     symbol_id,
+                                                 unsigned                     start_prb,
+                                                 unsigned                     nof_prb,
+                                                 unsigned                     eaxc,
+                                                 span<uint8_t>                buffer);
+
+private:
+  const unsigned                             nof_symbols;
+  const unsigned                             ru_nof_prbs;
+  const ether::vlan_frame_params             vlan_params;
+  const ru_compression_params                compr_params;
+  sequence_identifier_generator              up_seq_gen;
+  srslog::basic_logger&                      logger;
+  std::shared_ptr<ether::eth_frame_pool>     frame_pool_ptr;
+  ether::eth_frame_pool&                     frame_pool;
+  std::unique_ptr<iq_compressor>             compressor_sel;
+  std::unique_ptr<ether::vlan_frame_builder> eth_builder;
+  std::unique_ptr<ecpri::packet_builder>     ecpri_builder;
+  std::unique_ptr<uplane_message_builder>    up_builder;
+};
+
+} // namespace ofh
+} // namespace srsran

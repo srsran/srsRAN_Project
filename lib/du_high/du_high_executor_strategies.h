@@ -22,11 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/circular_array.h"
-#include "srsran/adt/span.h"
-#include "srsran/du_high/du_high_cell_executor_mapper.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
-#include "srsran/support/executors/sync_task_executor.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
@@ -99,18 +95,12 @@ public:
   /// \brief Creates a cell_executor_mapper instance.
   /// \param cell_execs_ List of task executors that will be used by the MAC DL and scheduler.
   /// \param blocking_slot_ind sets whether slot indication tasks are processed synchronously or asynchronously
-  explicit cell_executor_mapper(const std::initializer_list<task_executor*>& cell_execs_, bool blocking_slot_ind) :
-    cell_execs(cell_execs_.begin(), cell_execs_.end())
+  explicit cell_executor_mapper(const std::initializer_list<task_executor*>& cell_execs_,
+                                const std::initializer_list<task_executor*>& slot_execs_ = {}) :
+    cell_execs(cell_execs_.begin(), cell_execs_.end()), slot_execs(slot_execs_.begin(), slot_execs_.end())
   {
     srsran_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
-    if (blocking_slot_ind) {
-      // synchronours slot indication mode.
-      srslog::fetch_basic_logger("MAC").debug("Synchronous slot indication processing selected for L2");
-      for (task_executor* exec : cell_execs) {
-        blocking_slot_execs.push_back(std::make_unique<sync_task_executor>(*exec));
-        slot_execs.push_back(blocking_slot_execs.back().get());
-      }
-    } else {
+    if (slot_execs.empty()) {
       slot_execs = cell_execs;
     }
   }
@@ -132,10 +122,36 @@ private:
   /// \c cell_execs or point to a sync_task_executor adapter stored in \c blocking_slot_execs, depending on whether
   /// slot indication tasks are processed synchronously or asynchronously.
   std::vector<task_executor*> slot_execs;
+};
 
-  /// \brief Task executor adapter that forces processed tasks to run synchronously. This member is only used when
-  /// the mode of blocking slot_indications tasks was selected.
-  std::vector<std::unique_ptr<sync_task_executor>> blocking_slot_execs;
+/// \brief Task Executor Mapper for DU-high.
+class du_high_executor_mapper_impl final : public du_high_executor_mapper
+{
+public:
+  explicit du_high_executor_mapper_impl(std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_,
+                                        std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_,
+                                        task_executor&                                du_ctrl_exec_,
+                                        task_executor&                                timer_exec_) :
+    cell_mapper_ptr(std::move(cell_mapper_)),
+    ue_mapper_ptr(std::move(ue_mapper_)),
+    du_ctrl_exec(&du_ctrl_exec_),
+    timer_exec(&timer_exec_)
+  {
+  }
+
+  du_high_cell_executor_mapper& cell_mapper() override { return *cell_mapper_ptr; }
+
+  du_high_ue_executor_mapper& ue_mapper() override { return *ue_mapper_ptr; }
+
+  task_executor& du_control_executor() override { return *du_ctrl_exec; }
+
+  task_executor& du_timer_executor() override { return *timer_exec; }
+
+private:
+  std::unique_ptr<du_high_cell_executor_mapper> cell_mapper_ptr;
+  std::unique_ptr<du_high_ue_executor_mapper>   ue_mapper_ptr;
+  task_executor*                                du_ctrl_exec;
+  task_executor*                                timer_exec;
 };
 
 } // namespace srsran

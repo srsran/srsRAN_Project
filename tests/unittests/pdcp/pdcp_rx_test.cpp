@@ -114,7 +114,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
   auto test_rx_in_order = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::ms10);
+    init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);
 
@@ -154,7 +154,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::ms10);
+    init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);
 
@@ -195,7 +195,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to 0. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::ms0);
+    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms0);
 
     pdcp_rx->enable_security(sec_cfg);
 
@@ -235,7 +235,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
   auto test_rx_t_reorder = [this](uint32_t count) {
     srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to infinity. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
-    init(GetParam(), pdcp_t_reordering::infinity);
+    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::infinity);
 
     pdcp_rx->enable_security(sec_cfg);
 
@@ -314,7 +314,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
   pdcp_max_count max_count{rx_next_notify, rx_next_max};
 
   auto test_max_count = [this, n_sdus, max_count](uint32_t count) {
-    init(GetParam(), pdcp_t_reordering::ms10, max_count);
+    init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_t_reordering::ms10, max_count);
     // Set state of PDCP entiy
     // Do not enable integrity or ciphering, to make it easier to generate test vectors.
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};

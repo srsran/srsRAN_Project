@@ -61,6 +61,8 @@ public:
   e1ap_message_handler&        get_e1ap_message_handler() override { return *e1ap; };
   e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() override { return *e1ap; }
 
+  void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index) override;
+
 private:
   // E1AP senders
 

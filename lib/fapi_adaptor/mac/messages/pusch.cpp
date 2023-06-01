@@ -87,11 +87,11 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
                               dmrs_cfg.num_dmrs_cdm_grps_no_data,
                               dmrs_cfg.dmrs_ports.to_uint64());
 
-  const prb_grant& prbs = pusch_pdu.prbs;
-  if (prbs.is_alloc_type0()) {
+  const vrb_alloc& rbs = pusch_pdu.rbs;
+  if (rbs.is_type0()) {
     static_vector<uint8_t, fapi::ul_pusch_pdu::RB_BITMAP_SIZE_IN_BYTES> rb_map;
     rb_map.resize(fapi::ul_pusch_pdu::RB_BITMAP_SIZE_IN_BYTES, 0U);
-    const rbg_bitmap& mac_rbg_map = prbs.rbgs();
+    const rbg_bitmap& mac_rbg_map = rbs.type0();
     for (unsigned i = 0, e = mac_rbg_map.size(); i != e; ++i) {
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
@@ -99,9 +99,9 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
     builder.set_allocation_in_frequency_type_0_parameters(
         {rb_map}, pusch_pdu.tx_direct_current_location, pusch_pdu.ul_freq_shift_7p5khz);
   } else {
-    const prb_interval& prb_int = prbs.prbs();
-    builder.set_allocation_in_frequency_type_1_parameters(prb_int.start(),
-                                                          prb_int.length(),
+    const vrb_interval& vrb_int = rbs.type1();
+    builder.set_allocation_in_frequency_type_1_parameters(vrb_int.start(),
+                                                          vrb_int.length(),
                                                           pusch_pdu.intra_slot_freq_hopping,
                                                           pusch_pdu.tx_direct_current_location,
                                                           pusch_pdu.ul_freq_shift_7p5khz);

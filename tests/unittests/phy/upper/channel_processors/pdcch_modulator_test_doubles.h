@@ -33,17 +33,17 @@ private:
   struct entry_t {
     config_t              config;
     std::vector<uint8_t>  bits;
-    resource_grid_writer* grid_ptr;
+    resource_grid_mapper* mapper;
   };
   std::vector<entry_t> entries;
 
 public:
-  void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) override
+  void modulate(resource_grid_mapper& mapper, span<const uint8_t> data, const config_t& config) override
   {
     entry_t e = {};
     e.config  = config;
     e.bits.resize(data.size());
-    e.grid_ptr = &grid;
+    e.mapper = &mapper;
     std::copy(data.begin(), data.end(), e.bits.begin());
     entries.emplace_back(e);
   }

@@ -84,7 +84,7 @@ public:
   using iterator       = iter_impl<value_type>;
   using const_iterator = iter_impl<const value_type>;
 
-  filter_view(Range&& r_, FilterFunc&& pred_) : r(std::forward<Range>(r_)), pred(std::forward<FilterFunc>(pred_)) {}
+  filter_view(Range r_, FilterFunc pred_) : r(std::forward<Range>(r_)), pred(std::forward<FilterFunc>(pred_)) {}
 
   iterator       begin() { return iterator{*this, r.begin()}; }
   iterator       end() { return iterator{*this, r.end()}; }

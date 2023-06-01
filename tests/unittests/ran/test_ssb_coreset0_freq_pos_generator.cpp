@@ -30,8 +30,8 @@ using namespace srsran;
 // Helper that compares the SSB and Coreset0 parameters returned by du_config_generator.
 static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_freq_location& rhs)
 {
-  bool result = lhs.is_valid && rhs.is_valid && lhs.k_ssb.to_uint() == rhs.k_ssb.to_uint() &&
-                lhs.offset_to_point_A.to_uint() == rhs.offset_to_point_A.to_uint();
+  const bool result = lhs.is_valid && rhs.is_valid && lhs.k_ssb.to_uint() == rhs.k_ssb.to_uint() &&
+                      lhs.offset_to_point_A.to_uint() == rhs.offset_to_point_A.to_uint();
   return result;
 }
 
@@ -41,12 +41,13 @@ static bool verify_ssb_is_within_ch_band(unsigned           dl_arfcn,
                                          double             ss_ref,
                                          subcarrier_spacing scs_ssb)
 {
-  double f_ssb_0_Hz  = ss_ref - static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
-  double f_ssb_ub_Hz = ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
+  const double f_ssb_0_Hz = ss_ref - static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
+  const double f_ssb_ub_Hz =
+      ss_ref + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2) - 1;
 
-  double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  double point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
-  double bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
+  const double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
+  const double point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
+  const double bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ - 1;
 
   return f_ssb_0_Hz >= point_A_hz and f_ssb_ub_Hz <= bw_ub_hz;
 }
@@ -58,11 +59,11 @@ static bool verify_ssb_is_within_ch_band(unsigned           dl_arfcn,
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_3)
 {
-  unsigned           dl_arfcn   = 365000;
-  nr_band            nr_band    = nr_band::n3;
-  unsigned           n_rbs      = 52;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+  const unsigned           dl_arfcn   = 365000;
+  const nr_band            nr_band    = nr_band::n3;
+  const unsigned           n_rbs      = 52;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -101,16 +102,16 @@ TEST(ssb_freq_position_generation_test, band_3)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_7)
 {
-  unsigned           dl_arfcn   = 531720;
-  nr_band            nr_band    = nr_band::n7;
-  unsigned           n_rbs      = 25;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+  const unsigned           dl_arfcn   = 531720;
+  const nr_band            nr_band    = nr_band::n7;
+  const unsigned           n_rbs      = 25;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
-  ssb_freq_location expected{true, 0, 0};
-  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  const ssb_freq_location expected{true, 0, 0};
+  const ssb_freq_location test = cfg_generator.get_next_ssb_location();
   ASSERT_TRUE(compare_ssb_freq_location(expected, test));
   ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
@@ -121,11 +122,11 @@ TEST(ssb_freq_position_generation_test, band_7)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_25)
 {
-  unsigned           dl_arfcn   = 391180;
-  nr_band            nr_band    = nr_band::n25;
-  unsigned           n_rbs      = 38;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+  const unsigned           dl_arfcn   = 391180;
+  const nr_band            nr_band    = nr_band::n25;
+  const unsigned           n_rbs      = 38;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -190,11 +191,11 @@ TEST(ssb_freq_position_generation_test, band_25)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_41)
 {
-  unsigned           dl_arfcn   = 520002;
-  nr_band            nr_band    = nr_band::n41;
-  unsigned           n_rbs      = 52;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+  const unsigned           dl_arfcn   = 520002;
+  const nr_band            nr_band    = nr_band::n41;
+  const unsigned           n_rbs      = 52;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -229,11 +230,11 @@ TEST(ssb_freq_position_generation_test, band_41)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_41_different_scs)
 {
-  unsigned           dl_arfcn   = 520008;
-  nr_band            nr_band    = nr_band::n41;
-  unsigned           n_rbs      = 38;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
+  const unsigned           dl_arfcn   = 520008;
+  const nr_band            nr_band    = nr_band::n41;
+  const unsigned           n_rbs      = 38;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz15;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -292,11 +293,11 @@ TEST(ssb_freq_position_generation_test, band_41_different_scs)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_66)
 {
-  unsigned           dl_arfcn   = 435740;
-  nr_band            nr_band    = nr_band::n66;
-  unsigned           n_rbs      = 51;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+  const unsigned           dl_arfcn   = 435740;
+  const nr_band            nr_band    = nr_band::n66;
+  const unsigned           n_rbs      = 51;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -367,16 +368,16 @@ TEST(ssb_freq_position_generation_test, band_66)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_46)
 {
-  unsigned           dl_arfcn   = 769332;
-  nr_band            nr_band    = nr_band::n46;
-  unsigned           n_rbs      = 51;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+  const unsigned           dl_arfcn   = 769332;
+  const nr_band            nr_band    = nr_band::n46;
+  const unsigned           n_rbs      = 51;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
-  ssb_freq_location expected{true, 8, 0};
-  ssb_freq_location test = cfg_generator.get_next_ssb_location();
+  const ssb_freq_location expected{true, 8, 0};
+  const ssb_freq_location test = cfg_generator.get_next_ssb_location();
   ASSERT_TRUE(compare_ssb_freq_location(expected, test));
   ASSERT_TRUE(verify_ssb_is_within_ch_band(dl_arfcn, n_rbs, scs_common, test.ss_ref, scs_ssb));
 
@@ -387,11 +388,11 @@ TEST(ssb_freq_position_generation_test, band_46)
 // Test all possible SSB position within a given band returned by the config generator.
 TEST(ssb_freq_position_generation_test, band_46_bw_40mhz)
 {
-  unsigned           dl_arfcn   = 780668;
-  nr_band            nr_band    = nr_band::n46;
-  unsigned           n_rbs      = 106;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
-  subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
+  const unsigned           dl_arfcn   = 780668;
+  const nr_band            nr_band    = nr_band::n46;
+  const unsigned           n_rbs      = 106;
+  const subcarrier_spacing scs_common = subcarrier_spacing::kHz30;
+  const subcarrier_spacing scs_ssb    = subcarrier_spacing::kHz30;
 
   ssb_freq_position_generator cfg_generator{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
@@ -451,7 +452,7 @@ struct cfg_gen_input_params {
   subcarrier_spacing scs_ssb;
   uint8_t            ss0_idx;
 
-  optional<band_helper::ssb_coreset0_freq_location> generate_ssb_coreset0_location()
+  optional<band_helper::ssb_coreset0_freq_location> const generate_ssb_coreset0_location()
   {
     return band_helper::get_ssb_coreset0_freq_location(dl_arfcn, band, n_rbs, scs_common, scs_ssb, ss0_idx);
   }
@@ -485,8 +486,8 @@ class coreset0_index_generation_test : public ::testing::TestWithParam<cset0_tes
 
 TEST_P(coreset0_index_generation_test, coreset0_params_are_valid)
 {
-  cset0_test_params  params    = GetParam();
-  optional<unsigned> cset0_idx = params.get_coreset0_index();
+  cset0_test_params        params    = GetParam();
+  const optional<unsigned> cset0_idx = params.get_coreset0_index();
   ASSERT_EQ(params.expected_cset0_idx, cset0_idx);
 }
 
@@ -519,8 +520,8 @@ protected:
 // Test whether the position of SSB and Coreset0/SS0 indices are correctly generated.
 TEST_P(ssb_coreset0_param_generator_test, test_du_ssb_coreset0_idx)
 {
-  test_params                                       params = GetParam();
-  optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
+  test_params                                             params = GetParam();
+  const optional<band_helper::ssb_coreset0_freq_location> ssb_coreset0_alloc =
       params.input_params.generate_ssb_coreset0_location();
   ASSERT_EQ(params.expected_result, ssb_coreset0_alloc);
 }
@@ -536,8 +537,17 @@ INSTANTIATE_TEST_SUITE_P(
             band_helper::ssb_coreset0_freq_location{0, 0, 531630, 0, 0},
             cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
         test_params{
+            band_helper::ssb_coreset0_freq_location{40, 6, 156010, 13, 0},
+            cfg_gen_input_params{156100, nr_band::n28, 106, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
+        test_params{
+            band_helper::ssb_coreset0_freq_location{42, 6, 153610, 13, 0},
+            cfg_gen_input_params{155608, nr_band::n28, 216, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}},
+        test_params{
             band_helper::ssb_coreset0_freq_location{8, 7, 643296, 3, 0},
             cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30}},
+        test_params{
+            band_helper::ssb_coreset0_freq_location{26, 0, 712608, 6, 0},
+            cfg_gen_input_params{713328, nr_band::n79, 106, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},
         test_params{
             band_helper::ssb_coreset0_freq_location{28, 6, 435650, 14, 0},
             cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}},

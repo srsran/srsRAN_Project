@@ -36,13 +36,13 @@ namespace security {
  *****************************************************************************/
 
 template <typename It>
-byte_buffer security_nea1(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end,
-                          uint32_t              msg_len)
+byte_buffer security_nea1(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end,
+                          uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   S3G_STATE state, *state_ptr;
@@ -103,24 +103,24 @@ byte_buffer security_nea1(const sec_128_as_key& key,
 }
 
 template <typename It>
-byte_buffer security_nea1(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end)
+byte_buffer security_nea1(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end)
 {
   return security_nea1(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
 template <typename It>
-byte_buffer security_nea2(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end,
-                          uint32_t              msg_len)
+byte_buffer security_nea2(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end,
+                          uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   aes_context   ctx;
@@ -163,24 +163,24 @@ byte_buffer security_nea2(const sec_128_as_key& key,
 }
 
 template <typename It>
-byte_buffer security_nea2(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end)
+byte_buffer security_nea2(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end)
 {
   return security_nea2(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }
 
 template <typename It>
-byte_buffer security_nea3(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end,
-                          uint32_t              msg_len)
+byte_buffer security_nea3(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end,
+                          uint32_t           msg_len)
 {
   static_assert(std::is_same<typename It::value_type, uint8_t>::value, "Iterator value type is not uint8_t");
   uint8_t iv[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -245,12 +245,12 @@ byte_buffer security_nea3(const sec_128_as_key& key,
 }
 
 template <typename It>
-byte_buffer security_nea3(const sec_128_as_key& key,
-                          uint32_t              count,
-                          uint8_t               bearer,
-                          security_direction    direction,
-                          It                    msg_begin,
-                          It                    msg_end)
+byte_buffer security_nea3(const sec_128_key& key,
+                          uint32_t           count,
+                          uint8_t            bearer,
+                          security_direction direction,
+                          It                 msg_begin,
+                          It                 msg_end)
 {
   return security_nea3(key, count, bearer, direction, msg_begin, msg_end, std::distance(msg_begin, msg_end) * 8);
 }

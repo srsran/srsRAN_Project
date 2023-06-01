@@ -60,7 +60,7 @@ std::ostream& operator<<(std::ostream& os, cyclic_prefix value)
 
 namespace {
 
-using PuschProcessorParams = std::tuple<subcarrier_spacing, cyclic_prefix, modulation_scheme, bool, unsigned>;
+using PuschProcessorParams = std::tuple<subcarrier_spacing, cyclic_prefix, modulation_scheme, bool, unsigned, unsigned>;
 
 class PuschProcessorFixture : public ::testing::TestWithParam<PuschProcessorParams>
 {
@@ -100,7 +100,7 @@ protected:
     proc_factory_config.uci_dec_factory                      = uci_dec_factory_spy;
     proc_factory_config.ch_estimate_dimensions.nof_prb       = MAX_RB;
     proc_factory_config.ch_estimate_dimensions.nof_symbols   = MAX_NSYMB_PER_SLOT;
-    proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = 1;
+    proc_factory_config.ch_estimate_dimensions.nof_rx_ports  = MAX_PORTS;
     proc_factory_config.ch_estimate_dimensions.nof_tx_layers = 1;
     std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
         create_pusch_processor_factory_sw(proc_factory_config);
@@ -139,6 +139,7 @@ protected:
     modulation_scheme  modulation         = std::get<2>(GetParam());
     bool               codeword_present   = std::get<3>(GetParam());
     unsigned           nof_harq_ack_bits  = std::get<4>(GetParam());
+    unsigned           nof_rx_ports       = std::get<5>(GetParam());
 
     unsigned numerology             = to_numerology_value(scs);
     unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
@@ -174,7 +175,7 @@ protected:
 
     pdu.n_id          = n_id_dist(rgen);
     pdu.nof_tx_layers = 1;
-    pdu.rx_ports.resize(1);
+    pdu.rx_ports.resize(nof_rx_ports);
     std::generate(pdu.rx_ports.begin(), pdu.rx_ports.end(), []() { return rx_port_dist(rgen); });
     pdu.dmrs                        = dmrs_type::TYPE1;
     pdu.scrambling_id               = scrambling_id_dist(rgen);
@@ -526,17 +527,24 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
 }
 
 // Creates test suite that combines all possible parameters.
-INSTANTIATE_TEST_SUITE_P(PuschProcessor,
-                         PuschProcessorFixture,
-                         ::testing::Combine(::testing::Values(subcarrier_spacing::kHz15,
-                                                              subcarrier_spacing::kHz30,
-                                                              subcarrier_spacing::kHz60),
-                                            ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
-                                            ::testing::Values(modulation_scheme::QPSK,
-                                                              modulation_scheme::QAM16,
-                                                              modulation_scheme::QAM64,
-                                                              modulation_scheme::QAM256),
-                                            ::testing::Values(true, false),
-                                            ::testing::Values(0, 1, 2, 10)));
+INSTANTIATE_TEST_SUITE_P(
+    PuschProcessor,
+    PuschProcessorFixture,
+    ::testing::Combine(
+        // Subcarrier spacing.
+        ::testing::Values(subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, subcarrier_spacing::kHz60),
+        // Cyclic Prefix.
+        ::testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
+        // Modulation scheme.
+        ::testing::Values(modulation_scheme::QPSK,
+                          modulation_scheme::QAM16,
+                          modulation_scheme::QAM64,
+                          modulation_scheme::QAM256),
+        // PUSCH codeword present.
+        ::testing::Values(true, false),
+        // Number of HARQ-ACK bits.
+        ::testing::Values(0, 1, 2, 10),
+        // Number of receive antenna ports.
+        ::testing::Values(1, 2, 4)));
 
 } // namespace

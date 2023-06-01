@@ -149,13 +149,15 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   modulation_scheme    mod       = test_data.mod_scheme;
   unsigned             rm_length = test_data.rm_length;
   std::vector<uint8_t> matched(rm_length);
-  unsigned             n_ref = test_data.is_lbrm ? test_data.n_ref : 0;
+  unsigned             n_ref           = test_data.is_lbrm ? test_data.n_ref : 0;
+  unsigned             nof_filler_bits = test_data.nof_filler;
 
-  std::vector<uint8_t>                   codeblock = test_data.full_cblock.read();
-  codeblock_metadata::tb_common_metadata rm_cfg    = {};
-  rm_cfg.rv                                        = test_data.rv;
-  rm_cfg.mod                                       = mod;
-  rm_cfg.Nref                                      = n_ref;
+  std::vector<uint8_t> codeblock     = test_data.full_cblock.read();
+  codeblock_metadata   rm_cfg        = {};
+  rm_cfg.tb_common.rv                = test_data.rv;
+  rm_cfg.tb_common.mod               = mod;
+  rm_cfg.tb_common.Nref              = n_ref;
+  rm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
 
   matcher->rate_match(matched, codeblock, rm_cfg);
 
@@ -170,11 +172,8 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   std::transform(matched_bm.cbegin(), matched_bm.cend(), llrs.begin(), bit_to_llrs);
 
   std::vector<log_likelihood_ratio> dematched(codeblock.size());
-  unsigned                          nof_filler_bits = test_data.nof_filler;
 
-  codeblock_metadata rdm_cfg          = {rm_cfg, {}};
-  rdm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
-  dematcher->rate_dematch(dematched, llrs, true, rdm_cfg);
+  dematcher->rate_dematch(dematched, llrs, true, rm_cfg);
 
   // To check the dematcher output, we need to apply the rate matcher to it and compare with the output
   // obtained in the first part of the test. First, transform LLRs into hard bits.

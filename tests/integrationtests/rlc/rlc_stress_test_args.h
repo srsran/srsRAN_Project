@@ -264,11 +264,12 @@ inline security::sec_128_as_config get_security_config_from_args(const stress_te
 {
   security::sec_128_as_config sec_cfg = {};
 
+  // Set security domain
+  sec_cfg.domain = security::sec_domain::up; // DRB
+
   // Set security keys
-  sec_cfg.k_128_rrc_int = k_128_int;
-  sec_cfg.k_128_up_int  = k_128_int;
-  sec_cfg.k_128_rrc_enc = k_128_enc;
-  sec_cfg.k_128_up_enc  = k_128_enc;
+  sec_cfg.k_128_int = k_128_int;
+  sec_cfg.k_128_enc = k_128_enc;
 
   // Set encryption/integrity algorithms
   sec_cfg.integ_algo  = static_cast<security::integrity_algorithm>(args.pdcp_integrity_algo);

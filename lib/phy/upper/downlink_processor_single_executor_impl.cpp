@@ -21,6 +21,7 @@
  */
 
 #include "downlink_processor_single_executor_impl.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -58,7 +59,9 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   increase_pending_pdus();
 
   executor.execute([this, pdu]() {
-    pdcch_proc->process(*current_grid, pdu);
+    resource_grid_mapper mapper(*current_grid);
+
+    pdcch_proc->process(mapper, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();
   });

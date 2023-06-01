@@ -221,18 +221,15 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   bearer_context_setup_req->ue_inactivity_timer_present = true;
   bearer_context_setup_req->ue_inactivity_timer.value   = 60;
 
-  bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
-  bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
-  bearer_context_setup_req->sys_bearer_context_setup_request.value.set_ng_ran_bearer_context_setup_request();
-
   auto& ng_ran_bearer_context_setup_req =
-      bearer_context_setup_req->sys_bearer_context_setup_request.value.ng_ran_bearer_context_setup_request();
+      bearer_context_setup_req->sys_bearer_context_setup_request.value.set_ng_ran_bearer_context_setup_request();
 
   ng_ran_bearer_context_setup_req.resize(1);
+  auto& pdu_session_res_list = ng_ran_bearer_context_setup_req[0]->pdu_session_res_to_setup_list();
 
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_res_to_setup_item = {};
-  pdu_session_res_to_setup_item.pdu_session_id                              = 1;
-  pdu_session_res_to_setup_item.pdu_session_type                            = asn1::e1ap::pdu_session_type_e::ipv4;
+  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_res_to_setup_item;
+  pdu_session_res_to_setup_item.pdu_session_id   = 1;
+  pdu_session_res_to_setup_item.pdu_session_type = asn1::e1ap::pdu_session_type_e::ipv4;
   pdu_session_res_to_setup_item.snssai.sst.from_number(1);
   pdu_session_res_to_setup_item.security_ind.integrity_protection_ind =
       asn1::e1ap::integrity_protection_ind_e::not_needed;
@@ -241,13 +238,12 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   pdu_session_res_to_setup_item.pdu_session_res_dl_ambr_present = true;
   pdu_session_res_to_setup_item.pdu_session_res_dl_ambr         = 100000000U;
 
-  pdu_session_res_to_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel();
-  auto& gtp_tunnel = pdu_session_res_to_setup_item.ng_ul_up_tnl_info.gtp_tunnel();
+  auto& gtp_tunnel = pdu_session_res_to_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel();
   gtp_tunnel.transport_layer_address.from_string("01111111000000000000000000000001");
   gtp_tunnel.gtp_teid.from_string("00000036");
 
-  asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup_item_ng_ran;
-  drb_to_setup_item_ng_ran.drb_id = 4;
+  asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup_item_ng_ran = {};
+  drb_to_setup_item_ng_ran.drb_id                                 = 4;
 
   drb_to_setup_item_ng_ran.sdap_cfg.default_drb = asn1::e1ap::default_drb_e::true_value;
   drb_to_setup_item_ng_ran.sdap_cfg.sdap_hdr_ul = asn1::e1ap::sdap_hdr_ul_e::present;
@@ -265,8 +261,8 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   cell_group_info_item.cell_group_id                      = 0;
   drb_to_setup_item_ng_ran.cell_group_info.push_back(cell_group_info_item);
 
-  asn1::e1ap::qos_flow_qos_param_item_s qos_flow_qos_param_item = {};
-  qos_flow_qos_param_item.qos_flow_id                           = 1;
+  asn1::e1ap::qos_flow_qos_param_item_s qos_flow_qos_param_item{};
+  qos_flow_qos_param_item.qos_flow_id = 1;
   qos_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.set_non_dyn_5qi();
   auto& qos_characteristics   = qos_flow_qos_param_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
   qos_characteristics.five_qi = 9;
@@ -282,7 +278,7 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
 
   pdu_session_res_to_setup_item.drb_to_setup_list_ng_ran.push_back(drb_to_setup_item_ng_ran);
 
-  ng_ran_bearer_context_setup_req[0].value().pdu_session_res_to_setup_list().push_back(pdu_session_res_to_setup_item);
+  pdu_session_res_list.push_back(pdu_session_res_to_setup_item);
 
   return bearer_context_setup_request;
 }

@@ -341,16 +341,12 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
     e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
     e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
-
-    if (!bearer_context_mod_response_msg.pdu_session_resource_setup_list.empty() &&
-        !bearer_context_mod_response_msg.pdu_session_resource_modified_list.empty()) {
-      e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp_present = true;
-      fill_asn1_bearer_context_modification_response(
-          e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp.value,
-          bearer_context_mod_response_msg);
-    }
-    // send response
+    e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp_present = true;
+    fill_asn1_bearer_context_modification_response(
+        e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp.value,
+        bearer_context_mod_response_msg);
     logger.debug("ue={} Sending BearerContextModificationResponse", ue_ctxt.ue_index);
+    // send response
     pdu_notifier.on_new_message(e1ap_msg);
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.value =

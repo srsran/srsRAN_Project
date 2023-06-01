@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "../mac_ctrl/srs_sched_config_adapter.h"
@@ -30,14 +29,24 @@
 #include "mac_dl_ue_manager.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_config.h"
 #include "srsran/support/async/execute_on.h"
 
 namespace srsran {
 
+struct mac_dl_config {
+  du_high_ue_executor_mapper&   ue_exec_mapper;
+  du_high_cell_executor_mapper& cell_exec_mapper;
+  task_executor&                ctrl_exec;
+  mac_result_notifier&          phy_notifier;
+  mac_expert_config             mac_cfg;
+  mac_pcap&                     pcap;
+};
+
 class mac_dl_processor final : public mac_dl_configurator
 {
 public:
-  explicit mac_dl_processor(mac_common_config_t& cfg_, mac_scheduler& sched_, du_rnti_table& rnti_table_);
+  explicit mac_dl_processor(const mac_dl_config& mac_cfg, mac_scheduler& sched_, du_rnti_table& rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 
@@ -50,10 +59,10 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return *cells[cell_index]; }
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
-  async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
+  async_task<bool> add_ue(const mac_ue_create_request& request) override;
 
   /// Deletes UE context in MAC MUX.
-  async_task<void> remove_ue(const mac_ue_delete_request_message& request) override;
+  async_task<void> remove_ue(const mac_ue_delete_request& request) override;
 
   /// Add/Modify UE bearers in the MUX.
   async_task<bool> addmod_bearers(du_ue_index_t                                  ue_index,
@@ -74,8 +83,7 @@ public:
   }
 
 private:
-  mac_common_config_t&  cfg;
-  srslog::basic_logger& logger;
+  mac_dl_config cfg;
 
   std::array<std::unique_ptr<mac_cell_processor>, MAX_NOF_DU_CELLS> cells;
 

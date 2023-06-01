@@ -37,6 +37,7 @@ srsran::srs_cu_cp::create_du_processor(const du_processor_config_t         du_pr
                                        du_processor_ngap_control_notifier& ngap_ctrl_notifier_,
                                        rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                        rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
+                                       rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
                                        du_processor_ue_task_scheduler&     task_sched_,
                                        du_processor_ue_manager&            ue_manager_,
                                        task_executor&                      ctrl_exec_)
@@ -49,6 +50,7 @@ srsran::srs_cu_cp::create_du_processor(const du_processor_config_t         du_pr
                                                           ngap_ctrl_notifier_,
                                                           rrc_ue_nas_pdu_notifier_,
                                                           rrc_ue_ngap_ctrl_notifier_,
+                                                          rrc_ue_cu_cp_notifier_,
                                                           task_sched_,
                                                           ue_manager_,
                                                           ctrl_exec_);

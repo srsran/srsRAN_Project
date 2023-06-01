@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/rrc/rrc_config.h"

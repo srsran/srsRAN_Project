@@ -26,7 +26,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
-asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
+asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, pci_t nrpci)
 {
   asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
   served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
@@ -61,7 +61,7 @@ asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_
   return served_cells_item;
 }
 
-f1ap_message srsran::srs_cu_cp::generate_f1_setup_request()
+f1ap_message srsran::srs_cu_cp::generate_f1_setup_request(pci_t pci)
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -77,7 +77,7 @@ f1ap_message srsran::srs_cu_cp::generate_f1_setup_request()
   setup_req->gnb_du_served_cells_list->resize(1);
   setup_req->gnb_du_served_cells_list.value[0].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
   setup_req->gnb_du_served_cells_list.value[0].value().gnb_du_served_cells_item() =
-      generate_served_cells_item(12345678, 0);
+      generate_served_cells_item(12345678, pci);
 
   return msg;
 }
@@ -546,4 +546,20 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   paging_msg.assist_data_for_paging = assist_data_for_paging;
 
   return paging_msg;
+}
+
+f1ap_message srsran::srs_cu_cp::generate_ue_context_release_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                    gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  f1ap_message msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+
+  auto& release_req                    = msg.pdu.init_msg().value.ue_context_release_request();
+  release_req->gnb_cu_ue_f1ap_id.value = (unsigned)cu_ue_id;
+  release_req->gnb_du_ue_f1ap_id.value = (unsigned)du_ue_id;
+  release_req->cause.value.set_radio_network();
+  release_req->cause.value.radio_network().value = asn1::f1ap::cause_radio_network_e::rl_fail_others;
+
+  return msg;
 }

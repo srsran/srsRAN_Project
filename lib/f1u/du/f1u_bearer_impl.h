@@ -24,6 +24,7 @@
 
 #include "f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/lcid.h"
@@ -40,6 +41,7 @@ class f1u_bearer_impl final : public f1u_bearer,
 public:
   f1u_bearer_impl(uint32_t             ue_index,
                   drb_id_t             drb_id_,
+                  const f1u_config&    config,
                   f1u_rx_sdu_notifier& rx_sdu_notifier_,
                   f1u_tx_pdu_notifier& tx_pdu_notifier_,
                   timer_factory        timers);
@@ -56,7 +58,11 @@ public:
   void on_expired_ul_notif_timer();
 
 private:
-  f1u_bearer_logger    logger;
+  f1u_bearer_logger logger;
+
+  /// Config storage
+  const f1u_config cfg;
+
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
 

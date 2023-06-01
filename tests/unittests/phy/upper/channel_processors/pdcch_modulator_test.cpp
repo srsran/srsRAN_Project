@@ -22,6 +22,7 @@
 
 #include "pdcch_modulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
 
 using namespace srsran;
 
@@ -49,11 +50,14 @@ int main()
     // Create resource grid spy.
     resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
 
+    // Create resource grid mapper.
+    resource_grid_mapper mapper(grid);
+
     // Load input codeword from a testvector
     const std::vector<uint8_t> test_codeword = test_case.data.read();
 
     // Modulate.
-    pdcch->modulate(grid, test_codeword, test_case.config);
+    pdcch->modulate(mapper, test_codeword, test_case.config);
 
     // Load output golden data
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

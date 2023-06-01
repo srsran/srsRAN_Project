@@ -92,6 +92,7 @@ const radio_configuration::radio radio_base_config = {base_clock_sources,
                                                       {base_rx_stream},
                                                       1.92e6,
                                                       radio_configuration::over_the_wire_format::DEFAULT,
+                                                      "",
                                                       "none"};
 
 struct test_case_t {

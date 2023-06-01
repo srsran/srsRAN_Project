@@ -20,9 +20,9 @@
  *
  */
 
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_test.h"
@@ -43,6 +43,8 @@ struct test_description {
   double tx_gain_db;
   /// Provides a list for all the transmit ports addresses.
   std::vector<std::string> tx_addresses;
+  /// Sampling rate in hertz.
+  double sample_rate_hz;
   /// Indicates the receive center frequency for all ports.
   double rx_freq_hz;
   /// Indicates the receive gain for all ports in decibels.
@@ -99,7 +101,8 @@ static void test(const test_description& config, radio_factory& factory, task_ex
     }
     radio_config.rx_streams.push_back(stream_config);
   }
-  radio_config.log_level = config.log_level;
+  radio_config.log_level        = config.log_level;
+  radio_config.sampling_rate_hz = config.sample_rate_hz;
 
   // Notifier.
   radio_notifier_spy radio_notifier;
@@ -110,6 +113,14 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
   // Get data plane.
   baseband_gateway& data_plane = session->get_baseband_gateway();
+
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = session->read_current_time();
+  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_hz);
+
+  // Start processing.
+  session->start(start_time);
 
   // Prepare transmit buffer
   baseband_gateway_buffer_dynamic tx_buffer(config.nof_channels, config.block_size);
@@ -125,16 +136,16 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
       // Generate transmit random data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
-        span<radio_sample_type> buffer = tx_buffer.get_channel_buffer(channel_id);
-        for (radio_sample_type& sample : buffer) {
+        span<cf_t> buffer = tx_buffer[channel_id];
+        for (cf_t& sample : buffer) {
           sample = {dist(tx_rgen), dist(tx_rgen)};
         }
       }
 
       // Transmit stream buffer.
       baseband_gateway_transmitter::metadata tx_md;
-      tx_md.ts = block_id * config.block_size;
-      transmitter.transmit(tx_buffer, tx_md);
+      tx_md.ts = start_time + block_id * config.block_size;
+      transmitter.transmit(tx_buffer.get_reader(), tx_md);
     }
 
     // Receive for each stream the same buffer.
@@ -143,15 +154,15 @@ static void test(const test_description& config, radio_factory& factory, task_ex
       baseband_gateway_receiver& receiver = data_plane.get_receiver(stream_id);
 
       // Receive.
-      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer);
-      TESTASSERT_EQ(md.ts, block_id * config.block_size);
+      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer.get_writer());
+      TESTASSERT_EQ(md.ts, start_time + block_id * config.block_size);
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
-        span<const radio_sample_type> buffer = rx_buffer.get_channel_buffer(channel_id);
-        for (const radio_sample_type& sample : buffer) {
-          radio_sample_type expected_sample = {dist(rx_rgen), dist(rx_rgen)};
-          float             error           = std::abs(sample - expected_sample);
+        span<const cf_t> buffer = rx_buffer[channel_id];
+        for (const cf_t& sample : buffer) {
+          cf_t  expected_sample = {dist(rx_rgen), dist(rx_rgen)};
+          float error           = std::abs(sample - expected_sample);
           TESTASSERT(error < ASSERT_MAX_ERROR,
                      "Error ({}) exceeds maximum ({}). Unmatched data {}!={}",
                      error,
@@ -198,33 +209,35 @@ int main()
 
   {
     test_description test_config;
-    test_config.nof_streams  = 1;
-    test_config.nof_channels = 1;
-    test_config.tx_freq_hz   = 3.5e9;
-    test_config.tx_gain_db   = 60.0;
-    test_config.tx_addresses = get_zmq_ports(1);
-    test_config.rx_freq_hz   = 3.5e9;
-    test_config.rx_gain_db   = 60.0;
-    test_config.rx_addresses = get_zmq_ports(1);
-    test_config.log_level    = log_level;
-    test_config.block_size   = 1024;
-    test_config.nof_blocks   = 10;
+    test_config.nof_streams    = 1;
+    test_config.nof_channels   = 1;
+    test_config.sample_rate_hz = 1.92e6;
+    test_config.tx_freq_hz     = 3.5e9;
+    test_config.tx_gain_db     = 60.0;
+    test_config.tx_addresses   = get_zmq_ports(1);
+    test_config.rx_freq_hz     = 3.5e9;
+    test_config.rx_gain_db     = 60.0;
+    test_config.rx_addresses   = get_zmq_ports(1);
+    test_config.log_level      = log_level;
+    test_config.block_size     = 1024;
+    test_config.nof_blocks     = 10;
     test(test_config, *factory, *async_task_executor);
   }
 
   {
     test_description test_config;
-    test_config.nof_streams  = 2;
-    test_config.nof_channels = 2;
-    test_config.tx_freq_hz   = 3.5e9;
-    test_config.tx_gain_db   = 60.0;
-    test_config.tx_addresses = get_zmq_ports(4);
-    test_config.rx_freq_hz   = 3.5e9;
-    test_config.rx_gain_db   = 60.0;
-    test_config.rx_addresses = get_zmq_ports(4);
-    test_config.log_level    = log_level;
-    test_config.block_size   = 128;
-    test_config.nof_blocks   = 10;
+    test_config.nof_streams    = 2;
+    test_config.nof_channels   = 2;
+    test_config.sample_rate_hz = 3.84e6;
+    test_config.tx_freq_hz     = 3.5e9;
+    test_config.tx_gain_db     = 60.0;
+    test_config.tx_addresses   = get_zmq_ports(4);
+    test_config.rx_freq_hz     = 3.5e9;
+    test_config.rx_gain_db     = 60.0;
+    test_config.rx_addresses   = get_zmq_ports(4);
+    test_config.log_level      = log_level;
+    test_config.block_size     = 128;
+    test_config.nof_blocks     = 10;
     test(test_config, *factory, *async_task_executor);
   }
 

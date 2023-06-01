@@ -23,13 +23,14 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes a DMRS for PDCCH processor interface.
 class dmrs_pdcch_processor
@@ -53,8 +54,8 @@ public:
     unsigned n_id;
     /// Provides the linear signal amplitude to conform with the transmission power.
     float amplitude;
-    /// Port indexes the PDSCH transmission is mapped onto.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.
@@ -62,9 +63,9 @@ public:
 
   /// \brief Generates and maps DMRS for PDCCH according to TS 38.211 section 7.4.1.3.
   ///
-  /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] config Provides the required configuration to generate and map the signal.
-  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
+  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[in] config  Required configuration to generate and map the signal.
+  virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
 };
 
 } // namespace srsran

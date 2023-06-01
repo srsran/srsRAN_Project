@@ -26,7 +26,8 @@
 #include "lib/scheduler/support/ssb_helpers.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -53,7 +54,6 @@ public:
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
@@ -64,7 +64,6 @@ public:
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
@@ -486,9 +485,8 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs, ui
     for (uint8_t k_ssb_val = 0; k_ssb_val < 12; k_ssb_val += 2) {
       // Test all possible combinations of coreset0 position.
       for (uint8_t coreset0 = 0; coreset0 < coreset0_max; ++coreset0) {
-        static const min_channel_bandwidth        min_channel_bw = min_channel_bandwidth::MHz5;
         const pdcch_type0_css_coreset_description coreset0_param =
-            pdcch_type0_css_coreset_get(min_channel_bw, scs, scs, coreset0, k_ssb_val);
+            pdcch_type0_css_coreset_get(nr_band::n7, scs, scs, coreset0, k_ssb_val);
 
         // If the Coreset 0 exceeds the BPW limit, skip this configuration.
         TESTASSERT(coreset0_param.offset >= 0, "FR2 not supported in this test");

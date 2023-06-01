@@ -1,0 +1,97 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/ofh/compression/compression_params.h"
+#include "srsran/ofh/ofh_message_properties.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/slot_point.h"
+
+namespace srsran {
+namespace ofh {
+
+/// Open Fronthaul Control-Plane section fields common to section types 0, 1, 3 and 5.
+struct cplane_common_section_0_1_3_5_fields {
+  /// Section identifier.
+  uint16_t section_id;
+  /// Starting PRB of data section.
+  uint16_t prb_start;
+  /// Number of contiguous PRBs per data section.
+  unsigned nof_prb;
+  /// Resource element mask.
+  uint16_t re_mask;
+  /// Number of symbols.
+  uint8_t nof_symbols;
+};
+
+/// Open Fronthaul Control-Plane DL/UL radio channel section fields.
+struct cplane_dl_ul_radio_channel_section_fields {
+  cplane_common_section_0_1_3_5_fields common_fields;
+};
+
+/// Open Fronthaul Control-Plane idle/guard period section fields.
+struct cplane_idle_guard_period_section_fields {
+  cplane_common_section_0_1_3_5_fields common_fields;
+};
+
+/// Open Fronthaul Control-Plane radio application header.
+struct cplane_radio_application_header {
+  /// Data direction.
+  data_direction direction;
+  /// Filter index.
+  filter_index_type filter_index;
+  /// Start symbol identifier.
+  uint8_t start_symbol;
+  /// Slot point.
+  slot_point slot;
+};
+
+/// Open Fronthaul Control-Plane section type 1 parameters.
+struct cplane_section_type1_parameters {
+  /// Control-Plane radio application header.
+  cplane_radio_application_header radio_hdr;
+  /// Control-Plane DL/UL radio channel section fields.
+  cplane_dl_ul_radio_channel_section_fields section_fields;
+  /// Compression parameters.
+  ru_compression_params comp_params;
+};
+
+/// FFT/iFFT size being used for IQ data processing, part of frameStructure field.
+enum class cplane_fft_size : uint8_t {
+  fft_noop = 0,
+  fft_128  = 0x07,
+  fft_256  = 0x08,
+  fft_512  = 0x09,
+  fft_1024 = 0x0a,
+  fft_2048 = 0x0b,
+  fft_4096 = 0x0c,
+  fft_1536 = 0x0d,
+  fft_3072 = 0x0e
+};
+
+/// Open Fronthaul Control-Plane section type 0 parameters.
+struct cplane_section_type0_parameters {
+  /// Control-Plane radio application header.
+  cplane_radio_application_header radio_hdr;
+  /// Control-Plane idle/guard period section fields.
+  cplane_idle_guard_period_section_fields section_fields;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
+  /// Cyclic prefix.
+  cyclic_prefix cp;
+  /// FFT/iFFT size being used for all IQ data processing related to this message.
+  cplane_fft_size fft_size;
+  /// Time offset from the start of the slot to the start of cyclic prefix, see O-RAN.WG4.CUS, 7.5.2.12.
+  uint16_t time_offset;
+};
+
+} // namespace ofh
+} // namespace srsran

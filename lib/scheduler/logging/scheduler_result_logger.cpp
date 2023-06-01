@@ -49,7 +49,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
-        auto& dci = pdcch.dci.c_rnti_f1_0;
+        const auto& dci = pdcch.dci.c_rnti_f1_0;
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
@@ -58,13 +58,25 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                        dci.modulation_coding_scheme);
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
-        auto& dci = pdcch.dci.tc_rnti_f1_0;
+        const auto& dci = pdcch.dci.tc_rnti_f1_0;
         fmt::format_to(fmtbuf,
                        " dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.new_data_indicator ? 1 : 0,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme);
+      } break;
+      case dci_dl_rnti_config_type::c_rnti_f1_1: {
+        const auto& dci = pdcch.dci.c_rnti_f1_1;
+        fmt::format_to(fmtbuf,
+                       " dci: h_id={} ndi={} rv={} mcs={}",
+                       dci.harq_process_number,
+                       dci.tb1_new_data_indicator ? 1 : 0,
+                       dci.tb1_redundancy_version,
+                       dci.tb1_modulation_coding_scheme);
+        if (dci.downlink_assignment_index.has_value()) {
+          fmt::format_to(fmtbuf, " dai={}", *dci.downlink_assignment_index);
+        }
       } break;
       default:
         break;
@@ -82,7 +94,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    to_nof_cces(pdcch.ctx.cces.aggr_lvl));
     switch (pdcch.dci.type) {
       case dci_ul_rnti_config_type::c_rnti_f0_0: {
-        auto& dci = pdcch.dci.c_rnti_f0_0;
+        const auto& dci = pdcch.dci.c_rnti_f0_0;
         fmt::format_to(fmtbuf,
                        " h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
@@ -91,8 +103,18 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                        dci.modulation_coding_scheme);
       } break;
       case dci_ul_rnti_config_type::tc_rnti_f0_0: {
-        auto& dci = pdcch.dci.tc_rnti_f0_0;
+        const auto& dci = pdcch.dci.tc_rnti_f0_0;
         fmt::format_to(fmtbuf, "h_id=0 ndi=1 rv={} mcs={}", dci.redundancy_version, dci.modulation_coding_scheme);
+      } break;
+      case dci_ul_rnti_config_type::c_rnti_f0_1: {
+        const auto& dci = pdcch.dci.c_rnti_f0_1;
+        fmt::format_to(fmtbuf,
+                       " h_id={} ndi={} rv={} mcs={} dai={}",
+                       dci.harq_process_number,
+                       dci.new_data_indicator ? 1 : 0,
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme,
+                       dci.first_dl_assignment_index);
       } break;
       default:
         break;
@@ -115,9 +137,9 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
     for (const sib_information& sib : result.dl.bc.sibs) {
       fmt::format_to(fmtbuf,
-                     "\n- SI{} PDSCH: prb={} symb={} tbs={} mcs={} rv={}",
+                     "\n- SI{} PDSCH: rb={} symb={} tbs={} mcs={} rv={}",
                      sib.si_indicator == sib_information::sib1 ? "B1" : "",
-                     sib.pdsch_cfg.prbs.prbs(),
+                     sib.pdsch_cfg.rbs,
                      sib.pdsch_cfg.symbols,
                      sib.pdsch_cfg.codewords[0].tb_size_bytes,
                      sib.pdsch_cfg.codewords[0].mcs_index,
@@ -127,9 +149,9 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const rar_information& rar : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- RAR PDSCH: ra-rnti={:#x} prb={} symb={} tbs={} mcs={} rv={} grants ({}): ",
+                   "\n- RAR PDSCH: ra-rnti={:#x} rb={} symb={} tbs={} mcs={} rv={} grants ({}): ",
                    rar.pdsch_cfg.rnti,
-                   rar.pdsch_cfg.prbs.prbs(),
+                   rar.pdsch_cfg.rbs,
                    rar.pdsch_cfg.symbols,
                    rar.pdsch_cfg.codewords[0].tb_size_bytes,
                    rar.pdsch_cfg.codewords[0].mcs_index,
@@ -137,24 +159,26 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    rar.grants.size());
     for (const rar_ul_grant& grant : rar.grants) {
       fmt::format_to(fmtbuf,
-                     "{}tc-rnti={:#x}: rapid={} ta={}",
+                     "{}tc-rnti={:#x}: rapid={} ta={} time_res={}",
                      (&grant == &rar.grants.front()) ? "" : ", ",
                      grant.temp_crnti,
                      grant.rapid,
-                     grant.ta);
+                     grant.ta,
+                     grant.time_resource_assignment);
     }
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} prb={} symb={} tbs={} mcs={} rv={} k1={}",
+                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} rb={} symb={} tbs={} mcs={} rv={} nrtx={} k1={}",
                    ue_dl_grant.context.ue_index,
                    ue_dl_grant.pdsch_cfg.rnti,
                    ue_dl_grant.pdsch_cfg.harq_id,
-                   ue_dl_grant.pdsch_cfg.prbs.prbs(),
+                   ue_dl_grant.pdsch_cfg.rbs,
                    ue_dl_grant.pdsch_cfg.symbols,
                    ue_dl_grant.pdsch_cfg.codewords[0].tb_size_bytes,
                    ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
+                   ue_dl_grant.context.nof_retxs,
                    ue_dl_grant.context.k1);
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
       fmt::format_to(fmtbuf,
@@ -166,8 +190,8 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- PCCH: prb={}, symb={}, tbs={}, mcs={}, rv={}",
-                   pg.pdsch_cfg.prbs.prbs(),
+                   "\n- PCCH: rb={} symb={} tbs={} mcs={} rv={}",
+                   pg.pdsch_cfg.rbs,
                    pg.pdsch_cfg.symbols,
                    pg.pdsch_cfg.codewords[0].tb_size_bytes,
                    pg.pdsch_cfg.codewords[0].mcs_index,
@@ -188,15 +212,17 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     if (ul_info.context.ue_index != INVALID_DU_UE_INDEX) {
       fmt::format_to(fmtbuf, "ue={} c-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     } else {
-      fmt::format_to(fmtbuf, "tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
+      fmt::format_to(fmtbuf, "ue={} tc-rnti={:#x} ", ul_info.context.ue_index, ul_info.pusch_cfg.rnti);
     }
     fmt::format_to(fmtbuf,
-                   "h_id={} prb={} symb={} tbs={} rv={}",
+                   "h_id={} rb={} symb={} tbs={} rv={} nrtx={} k2={}",
                    ul_info.pusch_cfg.harq_id,
-                   ul_info.pusch_cfg.prbs.prbs(),
+                   ul_info.pusch_cfg.rbs,
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
-                   ul_info.pusch_cfg.rv_index);
+                   ul_info.pusch_cfg.rv_index,
+                   ul_info.context.nof_retxs,
+                   ul_info.context.k2);
     if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,
                      " uci: harq_bits={} csi-1_bits={} csi-2_bits={}",
@@ -257,28 +283,28 @@ void scheduler_result_logger::log_info(const sched_result& result)
   if (log_broadcast) {
     for (const sib_information& sib_info : result.dl.bc.sibs) {
       fmt::format_to(fmtbuf,
-                     "{}SI{}: prb={} tbs={}",
+                     "{}SI{}: rb={} tbs={}",
                      fmtbuf.size() == 0 ? "" : ", ",
                      sib_info.si_indicator == sib_information::sib1 ? "B1" : "",
-                     sib_info.pdsch_cfg.prbs.prbs(),
+                     sib_info.pdsch_cfg.rbs,
                      sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     }
   }
   for (const rar_information& rar_info : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "{}RAR: ra-rnti={:#x} prb={} tbs={}",
+                   "{}RAR: ra-rnti={:#x} rb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    rar_info.pdsch_cfg.rnti,
-                   rar_info.pdsch_cfg.prbs.prbs(),
+                   rar_info.pdsch_cfg.rbs,
                    rar_info.pdsch_cfg.codewords[0].tb_size_bytes);
   }
   for (const dl_msg_alloc& ue_msg : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "{}DL: ue={} c-rnti={:#x} prb={} h_id={} ss_id={} k1={} rv={} tbs={}",
+                   "{}DL: ue={} c-rnti={:#x} rb={} h_id={} ss_id={} k1={} rv={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.context.ue_index,
                    ue_msg.pdsch_cfg.rnti,
-                   ue_msg.pdsch_cfg.prbs.prbs(),
+                   ue_msg.pdsch_cfg.rbs,
                    ue_msg.pdsch_cfg.harq_id,
                    ue_msg.context.ss_id,
                    ue_msg.context.k1,
@@ -287,21 +313,22 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} prb={} rv={} tbs={}",
+                   "{}UL: ue={} rnti={:#x} h_id={} ss_id={} rb={} k2={} rv={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.context.ue_index,
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.harq_id,
                    ue_msg.context.ss_id,
-                   ue_msg.pusch_cfg.prbs.prbs(),
+                   ue_msg.pusch_cfg.rbs,
+                   ue_msg.context.k2,
                    ue_msg.pusch_cfg.rv_index,
                    ue_msg.pusch_cfg.tb_size_bytes);
   }
   for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,
-                   "{}PG: prb={} tbs={}",
+                   "{}PG: rb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
-                   pg_info.pdsch_cfg.prbs.prbs(),
+                   pg_info.pdsch_cfg.rbs,
                    pg_info.pdsch_cfg.codewords[0].tb_size_bytes);
     for (const paging_ue_info& ue : pg_info.paging_ue_list) {
       fmt::format_to(fmtbuf,

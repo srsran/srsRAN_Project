@@ -23,6 +23,7 @@
 #pragma once
 
 #include "lib/du_manager/du_ue/du_ue_manager_repository.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -107,14 +108,14 @@ public:
 
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
-  wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
-  optional<f1ap_ue_creation_request>                                      last_ue_create;
-  f1ap_ue_creation_response                                               next_ue_create_response;
-  optional<f1ap_ue_configuration_request>                                 last_ue_config;
-  f1ap_ue_configuration_response                                          next_ue_config_response;
-  optional<du_ue_index_t>                                                 last_ue_deleted;
-  optional<f1ap_ue_context_release_request_message>                       last_ue_release{};
-  wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
+  wait_manual_event_tester<f1_setup_response_message>            wait_f1_setup;
+  optional<f1ap_ue_creation_request>                             last_ue_create;
+  f1ap_ue_creation_response                                      next_ue_create_response;
+  optional<f1ap_ue_configuration_request>                        last_ue_config;
+  f1ap_ue_configuration_response                                 next_ue_config_response;
+  optional<du_ue_index_t>                                        last_ue_deleted;
+  optional<f1ap_ue_context_release_request>                      last_ue_release_req;
+  wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
 
   async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
@@ -136,8 +137,13 @@ public:
 
   void handle_ue_deletion_request(du_ue_index_t ue_index) override { last_ue_deleted = ue_index; }
 
-  async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request& msg) override
+  {
+    last_ue_release_req = msg;
+  }
+
+  async_task<f1ap_ue_context_modification_confirm>
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) override
   {
     return wait_ue_mod.launch();
   }
@@ -188,6 +194,8 @@ public:
   bool next_bearer_is_created = true;
 
   srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
+                                       drb_id_t                     drb_id,
+                                       srs_du::f1u_config           config,
                                        uint32_t                     dl_teid,
                                        uint32_t                     ul_teid,
                                        srs_du::f1u_rx_sdu_notifier& du_rx,
@@ -231,30 +239,31 @@ public:
 
   mac_cell_dummy mac_cell;
 
-  optional<mac_ue_create_request_message>                           last_ue_create_msg{};
-  optional<mac_ue_reconfiguration_request_message>                  last_ue_reconf_msg{};
-  optional<mac_ue_delete_request_message>                           last_ue_delete_msg{};
-  byte_buffer                                                       last_pushed_ul_ccch_msg;
-  wait_manual_event_tester<mac_ue_create_response_message>          wait_ue_create;
-  wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
-  wait_manual_event_tester<mac_ue_delete_response_message>          wait_ue_delete;
+  optional<mac_ue_create_request>                           last_ue_create_msg{};
+  optional<mac_ue_reconfiguration_request>                  last_ue_reconf_msg{};
+  optional<mac_ue_delete_request>                           last_ue_delete_msg{};
+  optional<mac_dl_buffer_state_indication_message>          last_dl_bs;
+  byte_buffer                                               last_pushed_ul_ccch_msg;
+  wait_manual_event_tester<mac_ue_create_response>          wait_ue_create;
+  wait_manual_event_tester<mac_ue_reconfiguration_response> wait_ue_reconf;
+  wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
 
   void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
   void                 remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
 
-  async_task<mac_ue_create_response_message> handle_ue_create_request(const mac_ue_create_request_message& msg) override
+  async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override
   {
     last_ue_create_msg = msg;
     return wait_ue_create.launch();
   }
-  async_task<mac_ue_reconfiguration_response_message>
-  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  async_task<mac_ue_reconfiguration_response>
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override
   {
     last_ue_reconf_msg = msg;
     return wait_ue_reconf.launch();
   }
-  async_task<mac_ue_delete_response_message> handle_ue_delete_request(const mac_ue_delete_request_message& msg) override
+  async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& msg) override
   {
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
@@ -264,7 +273,10 @@ public:
     last_pushed_ul_ccch_msg = std::move(pdu);
   }
 
-  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override
+  {
+    last_dl_bs = dl_bs;
+  }
 
   void handle_paging_information(const paging_information& msg) override {}
 };
@@ -304,24 +316,7 @@ f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index
 class du_manager_test_bench
 {
 public:
-  du_manager_test_bench(span<const du_cell_config> cells) :
-    du_cells(cells.begin(), cells.end()),
-    worker(128),
-    du_mng_exec(worker),
-    ue_exec_mapper(worker),
-    cell_exec_mapper(worker),
-    params{{"srsgnb", 1, 1, du_cells},
-           {timers, du_mng_exec, ue_exec_mapper, cell_exec_mapper},
-           {f1ap, f1ap},
-           {f1u_gw},
-           {mac, f1ap, f1ap},
-           {mac, mac}},
-    logger(srslog::fetch_basic_logger("DU-MNG"))
-  {
-    logger.set_level(srslog::basic_levels::debug);
-
-    srslog::init();
-  }
+  du_manager_test_bench(span<const du_cell_config> cells);
 
   std::vector<du_cell_config>            du_cells;
   timer_manager                          timers;

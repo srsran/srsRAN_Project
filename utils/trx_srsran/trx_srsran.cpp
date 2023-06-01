@@ -20,9 +20,9 @@
  *
  */
 
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
 #include "srsran/gateways/baseband/baseband_gateway_transmitter.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/srsran_assert.h"
@@ -62,24 +62,24 @@ public:
   int64_t get_rx_overflow_count() const { return rx_overflow_count; }
 };
 
-class baseband_gateway_buffer_trx : public baseband_gateway_buffer
+class baseband_gateway_buffer_trx : public baseband_gateway_buffer_reader, public baseband_gateway_buffer_writer
 {
 private:
-  radio_sample_type** buffer;
-  unsigned            nof_samples;
-  unsigned            nof_channels;
+  cf_t**   buffer;
+  unsigned nof_samples;
+  unsigned nof_channels;
 
 public:
   /// Constructs the buffer from a read-only buffer for the transmitter.
   baseband_gateway_buffer_trx(const void** psamples, int nof_samples_, int nof_channels_) :
-    buffer((radio_sample_type**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
+    buffer((cf_t**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
   {
     // Do nothing.
   }
 
   /// Constructs the buffer from a buffer for the receiver.
   baseband_gateway_buffer_trx(void** psamples, int nof_samples_, int nof_channels_) :
-    buffer((radio_sample_type**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
+    buffer((cf_t**)(psamples)), nof_samples(nof_samples_), nof_channels(nof_channels_)
   {
     // Do nothing.
   }
@@ -91,19 +91,16 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation
-  span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
-  {
-    return span<radio_sample_type>(buffer[channel_idx], nof_samples);
-  }
+  span<cf_t> get_channel_buffer(unsigned channel_idx) override { return span<cf_t>(buffer[channel_idx], nof_samples); }
 
   // See interface for documentation
-  span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
+  span<const cf_t> get_channel_buffer(unsigned channel_idx) const override
   {
-    return span<radio_sample_type>(buffer[channel_idx], nof_samples);
+    return span<cf_t>(buffer[channel_idx], nof_samples);
   }
 };
 
-class baseband_gateway_buffer_zeros : public baseband_gateway_buffer
+class baseband_gateway_buffer_zeros : public baseband_gateway_buffer_reader
 {
 private:
   unsigned nof_channels;
@@ -129,16 +126,7 @@ public:
   unsigned get_nof_samples() const override { return nof_samples; }
 
   // See interface for documentation
-  span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
-  {
-    return span<radio_sample_type>(data).first(nof_samples);
-  }
-
-  // See interface for documentation
-  span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
-  {
-    return span<radio_sample_type>(data).first(nof_samples);
-  }
+  span<const cf_t> get_channel_buffer(unsigned) const override { return span<const cf_t>(data).first(nof_samples); }
 };
 
 std::mutex        baseband_gateway_buffer_zeros::data_mutex;

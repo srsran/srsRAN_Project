@@ -22,14 +22,10 @@
 
 #pragma once
 
-#include "../common/e1ap_types.h"
 #include "e1ap_cu_cp_bearer_context_update.h"
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/expected.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/common/e1ap_common.h"
-#include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -117,11 +113,21 @@ public:
   virtual void on_e1_setup_request_received(const cu_up_e1_setup_request& msg) = 0;
 };
 
+class e1ap_ue_handler
+{
+public:
+  virtual ~e1ap_ue_handler() = default;
+
+  /// \brief Update the context of an UE.
+  virtual void update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index) = 0;
+};
+
 /// Combined entry point for E1AP handling.
 class e1ap_interface : public e1ap_message_handler,
                        public e1ap_event_handler,
                        public e1ap_connection_manager,
-                       public e1ap_bearer_context_manager
+                       public e1ap_bearer_context_manager,
+                       public e1ap_ue_handler
 {
 public:
   virtual ~e1ap_interface() = default;

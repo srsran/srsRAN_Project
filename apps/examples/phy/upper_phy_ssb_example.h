@@ -77,7 +77,7 @@ public:
     std::string log_level;
     /// Specifies the maximum number of PRBs.
     unsigned max_nof_prb;
-    /// Specifies the maximum number of transmit ports.
+    /// Specifies the maximum number of antenna ports.
     unsigned max_nof_ports;
     /// Specifies the resource grid pool size.
     unsigned rg_pool_size;

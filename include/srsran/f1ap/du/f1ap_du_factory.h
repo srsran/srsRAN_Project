@@ -1,7 +1,7 @@
 #pragma once
 
 #include "f1ap_du.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include <memory>
 
 namespace srsran {

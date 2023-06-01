@@ -49,7 +49,7 @@ using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 
 /// Calculates Nominal RBG size (P) based on the BWP number of PRBs and configuration type.
 /// \remark See TS 38.214, Table 5.1.2.2.1-1 and 6.1.2.2.1-1.
-nominal_rbg_size get_nominal_rbg_size(unsigned bwp_nof_prb, bool config_1_or_2);
+nominal_rbg_size get_nominal_rbg_size(unsigned bwp_nof_prb, bool is_config_1);
 
 /// Calculates the total number of RBGs for a bandwidth part.
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.

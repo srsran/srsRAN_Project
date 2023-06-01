@@ -59,6 +59,7 @@ private:
   du_ue* find_ue(du_ue_index_t ue_index) override;
   du_ue* find_rnti(rnti_t rnti) override;
   void   remove_ue(du_ue_index_t ue_index) override;
+  void   handle_radio_link_failure(du_ue_index_t ue_index, rlf_cause cause) override;
 
   du_manager_params&       cfg;
   du_ran_resource_manager& cell_res_alloc;

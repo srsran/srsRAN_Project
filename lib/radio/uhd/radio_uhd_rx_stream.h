@@ -24,8 +24,8 @@
 
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_multi_usrp.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsran/gateways/baseband/baseband_gateway_receiver.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/radio/radio_configuration.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include <mutex>
@@ -66,10 +66,10 @@ private:
   /// \param[in] buffer_offset Indicates the data offset in the reception buffers.
   /// \param[in] metadata Provides the reception metadata.
   /// \return True if no exception is caught. Otherwise false.
-  bool receive_block(unsigned&                nof_rxd_samples,
-                     baseband_gateway_buffer& buffs,
-                     unsigned                 buffer_offset,
-                     uhd::rx_metadata_t&      metadata);
+  bool receive_block(unsigned&                       nof_rxd_samples,
+                     baseband_gateway_buffer_writer& buffs,
+                     unsigned                        buffer_offset,
+                     uhd::rx_metadata_t&             metadata);
 
 public:
   /// Describes the necessary parameters to create an UHD transmit stream.
@@ -99,11 +99,11 @@ public:
   /// \return True if no exception is caught. Otherwise false.
   bool start(const uhd::time_spec_t& time_spec);
 
-  // See interface for documentation.
-  unsigned get_buffer_size() const override;
+  /// Gets the optimal transmitter buffer size.
+  unsigned get_buffer_size() const;
 
   // See interface for documentation.
-  metadata receive(baseband_gateway_buffer& data) override;
+  metadata receive(baseband_gateway_buffer_writer& data) override;
 
   /// \brief Stops the reception stream.
   /// \return True if no exception is caught. Otherwise false.

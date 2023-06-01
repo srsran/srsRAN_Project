@@ -26,7 +26,6 @@
 #include "srsran/f1u/cu_up/f1u_rx_pdu_handler.h"
 #include "srsran/f1u/cu_up/f1u_tx_pdu_notifier.h"
 #include "srsran/f1u/du/f1u_rx_pdu_handler.h"
-#include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 
 namespace srsran {
@@ -37,7 +36,7 @@ public:
   void on_new_pdu(nru_dl_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("F1-U").warning("Cannot handle NR-U DL message: DU handler not attached.");
+      srslog::fetch_basic_logger("DU-F1-U").warning("Cannot handle NR-U DL message: DU handler not attached.");
       return;
     }
     handler->handle_pdu(std::move(msg));
@@ -67,7 +66,7 @@ public:
   void on_new_pdu(nru_ul_message msg) override
   {
     if (handler == nullptr) {
-      srslog::fetch_basic_logger("F1-U").warning("Cannot handle NR-U UL message: CU handler not attached.");
+      srslog::fetch_basic_logger("DU-F1-U").info("Cannot handle NR-U UL message: CU handler not attached.");
       return;
     }
     handler->handle_pdu(std::move(msg));

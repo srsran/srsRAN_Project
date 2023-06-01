@@ -25,6 +25,7 @@
 #include "du_ue_adapters.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/f1u/du/f1u_config.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
@@ -52,6 +53,9 @@ struct du_srb_connector {
                f1c_bearer&                         f1_bearer,
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);
+
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief Connector of the MAC, RLC and F1 for a given DU UE DRB bearer.
@@ -72,8 +76,8 @@ struct du_drb_connector {
                rlc_entity&                         rlc_bearer,
                mac_ue_control_information_handler& mac_ue_info_handler);
 
-  /// \brief Disconnect DRB from MAC Rx and F1-U Rx ports.
-  void disconnect_rx();
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief SRB instance in DU manager. It contains SRB configuration information, RLC entity and adapters between
@@ -85,6 +89,9 @@ struct du_ue_srb {
   du_srb_connector            connector;
 
   lcid_t lcid() const { return srb_id_to_lcid(srb_id); }
+
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief DRB instance in DU manager. It contains DRB configuration information, RLC entity and adapters between
@@ -96,11 +103,12 @@ struct du_ue_drb {
   std::vector<up_transport_layer_info>                          dluptnl_info_list;
   rlc_config                                                    rlc_cfg;
   std::unique_ptr<rlc_entity>                                   rlc_bearer;
+  f1u_config                                                    f1u_cfg;
   std::unique_ptr<f1u_bearer, std::function<void(f1u_bearer*)>> drb_f1u;
   du_drb_connector                                              connector;
 
-  /// \brief Disconnect DRB from MAC Rx and F1-U Rx ports.
-  void disconnect_rx();
+  /// \brief Disconnect DRB MAC, RLC and F1-U notifiers.
+  void disconnect();
 };
 
 /// \brief Creates a DRB instance.
@@ -109,6 +117,7 @@ std::unique_ptr<du_ue_drb> create_drb(du_ue_index_t                       ue_ind
                                       drb_id_t                            drb_id,
                                       lcid_t                              lcid,
                                       const rlc_config&                   rlc_cfg,
+                                      const f1u_config&                   f1u_cfg,
                                       span<const up_transport_layer_info> uluptnl_info_list,
                                       const du_manager_params&            du_params);
 

@@ -73,7 +73,6 @@ static std::string log_level = "warning";
 // Program parameters.
 static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
 static unsigned                                  max_processing_delay_slots = 2;
-static unsigned                                  ul_to_dl_subframe_offset   = 1;
 static cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
 static double                                    dl_center_freq             = 3489.42e6;
 static double                                    ssb_center_freq            = 3488.16e6;
@@ -246,14 +245,6 @@ static void stop_execution()
   if (radio != nullptr) {
     radio->stop();
   }
-
-  // Stop the timing handler. It stops blocking notifier and allows the PHY to free run.
-  upper_phy->stop();
-
-  // Stop lower PHY.
-  if (lower_phy_instance != nullptr) {
-    lower_phy_instance->get_controller().stop();
-  }
 }
 
 static void signal_handler(int sig)
@@ -277,6 +268,7 @@ static void usage(std::string prog)
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print("\t-u Enable uplink processing [Default {}]\n", enable_ul_processing);
   fmt::print("\t-p Enable PRACH processing [Default {}]\n", enable_prach_processing);
+  fmt::print("\t-a Number of antenna ports [Default {}]\n", nof_ports);
   fmt::print(
       "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
   fmt::print("\t-h Print this message.\n");
@@ -287,7 +279,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:cduph")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:T:L:v:b:m:a:cduph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -320,6 +312,11 @@ static void parse_args(int argc, char** argv)
         break;
       case 'p':
         enable_prach_processing = true;
+        break;
+      case 'a':
+        if (optarg != nullptr) {
+          nof_ports = std::strtol(optarg, nullptr, 10);
+        }
         break;
       case 'm':
         if (optarg != nullptr) {
@@ -404,24 +401,25 @@ lower_phy_configuration create_lower_phy_configuration(task_executor*           
                                                        lower_phy_timing_notifier*    timing_notifier)
 {
   lower_phy_configuration phy_config;
-  phy_config.srate                      = srate;
-  phy_config.scs                        = scs;
-  phy_config.max_processing_delay_slots = max_processing_delay_slots;
-  phy_config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
-  phy_config.time_alignment_calibration = 0;
-  phy_config.ta_offset                  = n_ta_offset::n0;
-  phy_config.cp                         = cp;
-  phy_config.dft_window_offset          = 0.5F;
-  phy_config.bb_gateway                 = &radio->get_baseband_gateway();
-  phy_config.rx_symbol_notifier         = rx_symbol_notifier;
-  phy_config.timing_notifier            = timing_notifier;
-  phy_config.error_notifier             = error_notifier;
-  phy_config.prach_async_executor       = nullptr;
-  phy_config.rx_task_executor           = rx_task_executor;
-  phy_config.tx_task_executor           = tx_task_executor;
-  phy_config.ul_task_executor           = ul_task_executor;
-  phy_config.dl_task_executor           = dl_task_executor;
-  phy_config.prach_async_executor       = prach_task_executor;
+  phy_config.srate                          = srate;
+  phy_config.scs                            = scs;
+  phy_config.max_processing_delay_slots     = max_processing_delay_slots;
+  phy_config.time_alignment_calibration     = 0;
+  phy_config.system_time_throttling         = 0.0F;
+  phy_config.ta_offset                      = n_ta_offset::n0;
+  phy_config.cp                             = cp;
+  phy_config.dft_window_offset              = 0.5F;
+  phy_config.bb_gateway                     = &radio->get_baseband_gateway();
+  phy_config.rx_symbol_notifier             = rx_symbol_notifier;
+  phy_config.timing_notifier                = timing_notifier;
+  phy_config.error_notifier                 = error_notifier;
+  phy_config.rx_task_executor               = rx_task_executor;
+  phy_config.tx_task_executor               = tx_task_executor;
+  phy_config.ul_task_executor               = ul_task_executor;
+  phy_config.dl_task_executor               = dl_task_executor;
+  phy_config.prach_async_executor           = prach_task_executor;
+  phy_config.baseband_rx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
+  phy_config.baseband_tx_buffer_size_policy = lower_phy_baseband_buffer_size_policy::half_slot;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
@@ -470,7 +468,8 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor>                                dl_task_executor;
   std::unique_ptr<task_executor>                                prach_task_executor;
   if (thread_profile_name == "single") {
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy", std::make_unique<task_worker>("low_phy", 4)));
 
     async_task_executor = make_task_executor(*workers["async_thread"]);
@@ -486,7 +485,8 @@ int main(int argc, char** argv)
     low_ul_affinity.set(0);
     low_dl_affinity.set(1);
 
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(std::make_pair("low_phy_ul",
                                    std::make_unique<task_worker>("low_phy_ul", 128, low_ul_priority, low_ul_affinity)));
     workers.emplace(std::make_pair("low_phy_dl",
@@ -510,7 +510,8 @@ int main(int argc, char** argv)
     low_tx_affinity.set(1);
     low_ul_affinity.set(2);
     low_dl_affinity.set(3);
-    workers.emplace(std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", nof_sectors + 1)));
+    workers.emplace(
+        std::make_pair("async_thread", std::make_unique<task_worker>("async_thread", 2 * nof_sectors * nof_ports)));
     workers.emplace(
         std::make_pair("low_rx", std::make_unique<task_worker>("low_rx", 1, low_rx_priority, low_rx_affinity)));
     workers.emplace(
@@ -633,9 +634,14 @@ int main(int argc, char** argv)
   signal(SIGQUIT, signal_handler);
   signal(SIGKILL, signal_handler);
 
+  // Calculate starting time.
+  double                     delay_s      = 0.1;
+  baseband_gateway_timestamp current_time = radio->read_current_time();
+  baseband_gateway_timestamp start_time = current_time + static_cast<uint64_t>(delay_s * radio_config.sampling_rate_hz);
+
   // Start processing.
-  radio->start();
-  lower_phy_instance->get_controller().start();
+  radio->start(start_time);
+  lower_phy_instance->get_controller().start(start_time);
 
   // Receive and transmit per block basis.
   for (unsigned slot_count = 0; slot_count != duration_slots && !stop; ++slot_count) {
@@ -645,6 +651,14 @@ int main(int argc, char** argv)
 
   // Stop execution.
   stop_execution();
+
+  // Stop the timing handler. It stops blocking notifier and allows the PHY to free run.
+  upper_phy->stop();
+
+  // Stop lower PHY.
+  if (lower_phy_instance != nullptr) {
+    lower_phy_instance->get_controller().stop();
+  }
 
   // Stop workers.
   for (auto& worker : workers) {

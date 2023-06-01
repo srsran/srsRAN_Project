@@ -73,28 +73,4 @@ inline crb_interval get_coreset0_crbs(const pdcch_config_common& pdcch_cfg)
   return {rb_start, rb_start + get_coreset_nof_prbs(*pdcch_cfg.coreset0)};
 }
 
-inline bool search_space_supports_dl_dci_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
-{
-  if (ss_cfg.type == search_space_configuration::type_t::common) {
-    switch (dci_fmt) {
-      case dci_dl_format::f1_0:
-        return ss_cfg.common.f0_0_and_f1_0;
-      case dci_dl_format::f2_0:
-        return ss_cfg.common.f2_0;
-      default:
-        srsran_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
-    }
-  } else {
-    switch (dci_fmt) {
-      case dci_dl_format::f1_0:
-        return ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
-      case dci_dl_format::f1_1:
-        return ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
-      default:
-        srsran_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
-    }
-  }
-  return false;
-}
-
 } // namespace srsran

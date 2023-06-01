@@ -25,7 +25,7 @@
 #include "du/ue_context/f1ap_du_ue_manager.h"
 #include "f1ap_du_context.h"
 #include "srsran/asn1/f1ap/f1ap.h"
-#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 
 #include <memory>
@@ -61,8 +61,9 @@ public:
   void                           handle_ue_deletion_request(du_ue_index_t ue_index) override;
 
   // F1AP UE context manager functions
-  async_task<f1ap_ue_context_modification_response_message>
-       handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override;
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request& request) override;
+  async_task<f1ap_ue_context_modification_confirm>
+       handle_ue_context_modification_required(const f1ap_ue_context_modification_required& msg) override;
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
   void handle_notify(const f1ap_notify_message& msg) override {}
 

@@ -40,6 +40,7 @@ public:
                              du_processor_f1ap_ue_context_notifier&  f1ap_ue_ctxt_notif_,
                              du_processor_rrc_du_ue_notifier&        rrc_du_notifier_,
                              du_processor_ue_manager&                ue_manager_,
+                             up_resource_manager&                    ue_up_resource_manager_,
                              srslog::basic_logger&                   logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -49,10 +50,11 @@ public:
 private:
   const cu_cp_ue_context_release_command command;
 
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
-  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;       // to remove UE from RRC
-  du_processor_ue_manager&               ue_manager;            // to remove UE context from DU processor
+  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;     // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier;  // to trigger UE context modification at DU
+  du_processor_rrc_du_ue_notifier&       rrc_du_notifier;        // to remove UE from RRC
+  du_processor_ue_manager&               ue_manager;             // to remove UE context from DU processor
+  up_resource_manager&                   ue_up_resource_manager; // to figure out if there is an active E1 context
   srslog::basic_logger&                  logger;
 
   // (sub-)routine requests

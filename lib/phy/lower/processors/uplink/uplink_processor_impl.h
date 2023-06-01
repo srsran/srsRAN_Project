@@ -22,7 +22,7 @@
 
 #pragma once
 #include "srsran/adt/tensor.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
@@ -51,8 +51,6 @@ public:
     sampling_rate rate;
     /// Number of receive ports.
     unsigned nof_rx_ports;
-    /// Initial slot index within the radio frame.
-    unsigned initial_slot_index;
   };
 
   /// \brief Constructs a software generic lower PHY uplink processor that can process PRACH and PUxCH.
@@ -78,24 +76,59 @@ public:
   uplink_processor_baseband& get_baseband() override;
 
 private:
+  /// States.
+  enum class fsm_states {
+    /// The processor is waiting to receive the next subframe boundary.
+    alignment,
+    /// The processor baseband buffering is synchronized and it is collecting samples.
+    collecting
+  };
+
   // See interface for documentation.
-  void process(const baseband_gateway_buffer& samples) override;
+  void process(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp) override;
 
-  /// Processes a new symbol.
-  void process_new_symbol();
+  /// \brief Processes samples in alignment state.
+  /// \param[in] samples   Input baseband samples.
+  /// \param[in] timestamp Time instant in which the first sample within \c samples was received.
+  void process_alignment(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp);
 
+  /// \brief Processes a symbol boundary.
+  /// \param[in] samples   Input baseband samples.
+  /// \param[in] timestamp Time instant in which the first sample within \c samples was received.
+  void process_symbol_boundary(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp);
+
+  /// \brief Collects symbol samples.
+  /// \param[in] samples   Input baseband samples.
+  /// \param[in] timestamp Time instant in which the first sample within \c samples was received.
+  void process_collecting(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp);
+
+  /// Finite state machine state.
+  fsm_states state = fsm_states::alignment;
   /// Sector identifier.
   unsigned sector_id;
+  /// Subcarrier spacing.
+  subcarrier_spacing scs;
   /// Number of receive ports.
   unsigned nof_rx_ports;
+  /// Number of slots per subframe.
+  unsigned nof_slots_per_subframe;
   /// Number of symbols per slot.
   unsigned nof_symbols_per_slot;
+  /// Number of samples per subframe.
+  unsigned nof_samples_per_subframe;
   /// Number of symbols per subframe.
   unsigned nof_symbols_per_subframe;
-  /// Current number of buffered samples.
-  unsigned current_nof_samples;
+  /// \brief Write index for the \ref temp_buffer holding OFDM symbols.
+  ///
+  /// Sample index within the \c temp_buffer data, it points the writing position within the buffered signal. It is
+  /// used to copy the samples aligned with the requested timestamp into the destination buffer.
+  unsigned temp_buffer_write_index;
   /// Current symbol index within the slot.
   unsigned current_symbol_index;
+  /// Current symbol size.
+  unsigned current_symbol_size;
+  /// Current symbol timestamp.
+  baseband_gateway_timestamp current_symbol_timestamp;
   /// Current slot point.
   slot_point current_slot;
   /// List of the symbol sizes in number samples for each symbol within the subframe.

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/srslog/srslog.h"
+#include <signal.h>
 
 namespace srsran {
 
@@ -44,7 +45,10 @@ template <typename... Args>
 {
   srslog::flush();
   fmt::print(stderr, "srsGNB ERROR: {}", fmt::format(reason_fmt, std::forward<Args>(args)...));
-  std::exit(1);
+
+  // Disable backtrace for SIGABRT.
+  signal(SIGABRT, SIG_DFL);
+  std::abort();
 }
 
 /// \brief Reports a fatal error and handles the application shutdown. This function is intended to be used for
@@ -58,5 +62,8 @@ template <typename... Args>
 /// \brief Verifies if condition is true. If not, report a fatal error and close application.
 #define report_fatal_error_if_not(condition, fmtstr, ...)                                                              \
   (void)((condition) || (report_fatal_error(fmtstr, ##__VA_ARGS__), 0))
+
+/// \brief Verifies if condition is true. If not, report an error and close application.
+#define report_error_if_not(condition, fmtstr, ...) (void)((condition) || (report_error(fmtstr, ##__VA_ARGS__), 0))
 
 } // namespace srsran

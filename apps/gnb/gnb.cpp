@@ -20,11 +20,14 @@
  *
  */
 
+#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
+#include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
+#include "srsran/support/version/version.h"
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
@@ -55,22 +58,17 @@
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
-#include "radio_notifier_sample.h"
-#include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
-#include "srsran/phy/adapters/phy_error_adapter.h"
-#include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
-#include "srsran/phy/adapters/phy_timing_adapter.h"
-#include "srsran/phy/lower/lower_phy_controller.h"
-#include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
-#include "srsran/radio/radio_factory.h"
+#include "srsran/ru/ru_adapters.h"
+#include "srsran/ru/ru_controller.h"
+#include "srsran/ru/ru_generic_factory.h"
+#include "srsran/ru/ru_ofh_factory.h"
+
+#include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
 #include <atomic>
-#include <csignal>
 #include <unordered_map>
 
 using namespace srsran;
@@ -85,7 +83,6 @@ using namespace srsran;
 ///
 /// \cond
 
-/// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static std::string config_file;
 
 static std::atomic<bool> is_running = {true};
@@ -95,7 +92,9 @@ const std::string                          srsgnb_version = "0.1";
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
-  app.set_version_flag("-v,--version", "srsGNB version " + srsgnb_version);
+  fmt::memory_buffer buffer;
+  format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
+  app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false);
 }
 
@@ -147,17 +146,30 @@ public:
 struct worker_manager {
   worker_manager(const gnb_appconfig& appcfg)
   {
-    lower_phy_thread_profile lower_phy_profile = lower_phy_thread_profile::blocking;
-    if (appcfg.rf_driver_cfg.device_driver != "zmq") {
-      lower_phy_profile = appcfg.expert_phy_cfg.lphy_executor_profile;
+    optional<lower_phy_thread_profile> lower_phy_profile;
+    std::string                        driver = "";
+    if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
+      const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
+      driver                          = sdr_cfg.device_driver;
+
+      lower_phy_profile =
+          (driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
     }
 
-    create_executors(
-        appcfg.rf_driver_cfg.device_driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
+    if (appcfg.expert_phy_cfg.nof_pdsch_threads > 1) {
+      create_worker_pool("pdsch",
+                         appcfg.expert_phy_cfg.nof_pdsch_threads,
+                         2 * MAX_CBS_PER_PDU,
+                         os_thread_realtime_priority::max() - 10);
+    }
+
+    create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
   }
 
   void stop()
   {
+    du_cell_worker->stop();
+    gnb_ctrl_worker->stop();
     for (auto& worker : workers) {
       worker.second->stop();
     }
@@ -183,8 +195,10 @@ struct worker_manager {
   std::unique_ptr<task_executor> cu_up_exec;
   std::unique_ptr<task_executor> gtpu_pdu_exec;
   std::unique_ptr<task_executor> du_ctrl_exec;
+  std::unique_ptr<task_executor> du_timer_exec;
   std::unique_ptr<task_executor> du_ue_exec;
   std::unique_ptr<task_executor> du_cell_exec;
+  std::unique_ptr<task_executor> du_slot_exec;
   std::unique_ptr<task_executor> lower_phy_tx_exec;
   std::unique_ptr<task_executor> lower_phy_rx_exec;
   std::unique_ptr<task_executor> lower_phy_dl_exec;
@@ -194,13 +208,22 @@ struct worker_manager {
   std::unique_ptr<task_executor> upper_pusch_exec;
   std::unique_ptr<task_executor> upper_pucch_exec;
   std::unique_ptr<task_executor> upper_prach_exec;
+  std::unique_ptr<task_executor> upper_pdsch_exec;
   std::unique_ptr<task_executor> radio_exec;
+  std::unique_ptr<task_executor> ru_printer_exec;
+  std::unique_ptr<task_executor> ru_timing_exec;
+  std::unique_ptr<task_executor> ru_tx_exec;
+  std::unique_ptr<task_executor> ru_rx_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  optional<pcell_ue_executor_mapper>                              ue_exec_mapper;
-  optional<cell_executor_mapper>                                  cell_exec_mapper;
+  std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
 private:
+  using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+  using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
+
+  std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
+  std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
 
@@ -222,18 +245,25 @@ private:
     srsran_assert(ret.second, "Unable to create worker pool {}.", name);
   }
 
-  void create_executors(bool blocking_mode_active, lower_phy_thread_profile lower_phy_profile, unsigned nof_ul_workers)
+  void create_executors(bool                               blocking_mode_active,
+                        optional<lower_phy_thread_profile> lower_phy_profile,
+                        unsigned                           nof_ul_workers)
   {
     static const uint32_t task_worker_queue_size = 2048;
 
     // Instantiate workers
-    create_worker("gnb_ctrl", task_worker_queue_size);
     create_worker("gnb_ue", 512);
-    create_worker("du_cell",
-                  task_worker_queue_size,
-                  os_thread_realtime_priority::max() - 2,
-                  os_sched_affinity_bitmask{},
-                  std::chrono::microseconds{10});
+    gnb_ctrl_worker = std::make_unique<du_cell_worker_type>("gnb_ctrl",
+                                                            std::array<unsigned, 2>{64, task_worker_queue_size},
+                                                            std::chrono::microseconds{100},
+                                                            os_thread_realtime_priority::max() - 2,
+                                                            os_sched_affinity_bitmask{});
+    du_cell_worker  = std::make_unique<du_cell_worker_type>("du_cell",
+                                                           std::array<unsigned, 2>{8, task_worker_queue_size},
+                                                           std::chrono::microseconds{10},
+                                                           os_thread_realtime_priority::max() - 2,
+                                                           os_sched_affinity_bitmask{});
+
     if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
@@ -242,16 +272,25 @@ private:
       create_worker_pool(
           "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
+
+    if (!blocking_mode_active && lower_phy_profile && *lower_phy_profile == lower_phy_thread_profile::blocking) {
+      create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
+    }
+
     create_worker("radio", task_worker_queue_size);
+    create_worker("ru_stats_worker", 1);
 
     // Instantiate task executors
-    cu_cp_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
-    cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-    du_ctrl_exec  = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
-    du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_cell_exec  = std::make_unique<task_worker_executor>(*workers.at("du_cell"));
+    cu_cp_exec      = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    cu_up_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    gtpu_pdu_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
+    du_ctrl_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
+    du_timer_exec   = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
+    du_ue_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    du_cell_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
+    ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_stats_worker"));
     if (blocking_mode_active) {
+      du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
       task_worker& phy_worker = *workers.at("phy_worker");
       lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
       lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
@@ -263,6 +302,7 @@ private:
       upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
       upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
     } else {
+      du_slot_exec     = make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
       lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
       upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_phy_dl"));
       upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
@@ -270,85 +310,77 @@ private:
       upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
     }
 
-    switch (lower_phy_profile) {
-      case lower_phy_thread_profile::blocking: {
-        fmt::print("Lower PHY in executor blocking mode.\n");
-        task_worker& phy_worker = *workers.at("phy_worker");
-        lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-        lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-        lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
-        lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
-        break;
-      }
-      case lower_phy_thread_profile::single: {
-        fmt::print("Lower PHY in single executor mode.\n");
-        create_worker("lower_phy", 128, os_thread_realtime_priority::max());
-        task_worker& lower_phy_worker = *workers.at("lower_phy");
-        lower_phy_tx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-        lower_phy_rx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-        lower_phy_dl_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-        lower_phy_ul_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-        break;
-      }
-      case lower_phy_thread_profile::dual: {
-        fmt::print("Lower PHY in dual executor mode.\n");
-        create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max());
-        create_worker("lower_phy_ul", 2, os_thread_realtime_priority::max() - 1);
-        lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-        lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-        lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-        lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-        break;
-      }
-      case lower_phy_thread_profile::quad: {
-        fmt::print("Lower PHY in quad executor mode.\n");
-        create_worker("lower_phy_tx", 128, os_thread_realtime_priority::max());
-        create_worker("lower_phy_rx", 1, os_thread_realtime_priority::max() - 2);
-        create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max() - 1);
-        create_worker("lower_phy_ul", 128, os_thread_realtime_priority::max() - 3);
-        lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_tx"));
-        lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_rx"));
-        lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-        lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-        break;
+    if (worker_pools.count("pdsch")) {
+      upper_pdsch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("pdsch"));
+    }
+
+    if (lower_phy_profile) {
+      switch (*lower_phy_profile) {
+        case lower_phy_thread_profile::blocking: {
+          fmt::print("Lower PHY in executor blocking mode.\n");
+          task_worker& phy_worker = *workers.at("phy_worker");
+          lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
+          lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
+          lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
+          lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
+          break;
+        }
+        case lower_phy_thread_profile::single: {
+          fmt::print("Lower PHY in single executor mode.\n");
+          create_worker("lower_phy", 128, os_thread_realtime_priority::max());
+          task_worker& lower_phy_worker = *workers.at("lower_phy");
+          lower_phy_tx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
+          lower_phy_rx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
+          lower_phy_dl_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
+          lower_phy_ul_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
+          break;
+        }
+        case lower_phy_thread_profile::dual: {
+          fmt::print("Lower PHY in dual executor mode.\n");
+          create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max());
+          create_worker("lower_phy_ul", 2, os_thread_realtime_priority::max() - 1);
+          lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
+          lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
+          lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
+          lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
+          break;
+        }
+        case lower_phy_thread_profile::quad: {
+          fmt::print("Lower PHY in quad executor mode.\n");
+          create_worker("lower_phy_tx", 128, os_thread_realtime_priority::max());
+          create_worker("lower_phy_rx", 1, os_thread_realtime_priority::max() - 2);
+          create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max() - 1);
+          create_worker("lower_phy_ul", 128, os_thread_realtime_priority::max() - 3);
+          lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_tx"));
+          lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_rx"));
+          lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
+          lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
+          break;
+        }
       }
     }
 
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
 
+    // RU executors.
+    create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1, os_sched_affinity_bitmask(0));
+    ru_timing_exec = std::make_unique<task_worker_executor>(*workers.at("ru_timing"));
+    create_worker("ru_tx", 128, os_thread_realtime_priority::max() - 3, os_sched_affinity_bitmask(1));
+    ru_tx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_tx"));
+    create_worker("ru_rx", 1, os_thread_realtime_priority::max() - 2, os_sched_affinity_bitmask(3));
+    ru_rx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_rx"));
+
     // Executor mappers.
-    ue_exec_mapper.emplace(pcell_ue_executor_mapper{du_ue_exec.get()});
-    cell_exec_mapper.emplace(cell_executor_mapper{{du_cell_exec.get()}, blocking_mode_active});
+    du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
+        std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{du_cell_exec.get()},
+                                               std::initializer_list<task_executor*>{du_slot_exec.get()}),
+        std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
+        *du_ctrl_exec,
+        *du_timer_exec);
   }
 };
 
 } // namespace
-
-static lower_phy_configuration create_lower_phy_configuration(baseband_gateway*             bb_gateway,
-                                                              lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                              lower_phy_timing_notifier*    timing_notifier,
-                                                              lower_phy_error_notifier*     error_notifier,
-                                                              task_executor&                tx_executor,
-                                                              task_executor&                rx_executor,
-                                                              task_executor&                dl_executor,
-                                                              task_executor&                ul_executor,
-                                                              task_executor&                prach_executor,
-                                                              const gnb_appconfig&          app_cfg)
-{
-  lower_phy_configuration phy_config = generate_ru_config(app_cfg);
-
-  phy_config.bb_gateway           = bb_gateway;
-  phy_config.error_notifier       = error_notifier;
-  phy_config.rx_symbol_notifier   = rx_symbol_notifier;
-  phy_config.timing_notifier      = timing_notifier;
-  phy_config.tx_task_executor     = &tx_executor;
-  phy_config.rx_task_executor     = &rx_executor;
-  phy_config.dl_task_executor     = &dl_executor;
-  phy_config.ul_task_executor     = &ul_executor;
-  phy_config.prach_async_executor = &prach_executor;
-
-  return phy_config;
-}
 
 static void local_signal_handler()
 {
@@ -403,20 +435,72 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
   fapi_config.ul_grid_size             = {};
   fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
 
+  // Number of transmit and receive antenna ports.
+  fapi_config.num_tx_ant = config.common_cell_cfg.nof_antennas_dl;
+  fapi_config.num_rx_ant = config.common_cell_cfg.nof_antennas_ul;
+
   return fapi_config;
 }
 
-static std::unique_ptr<radio_session>
-build_radio(task_executor& executor, radio_notification_handler& radio_handler, const gnb_appconfig& config)
+/// Resolves the generic Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_generic_executors_and_notifiers(ru_generic_configuration&           config,
+                                                         const log_appconfig&                log_cfg,
+                                                         worker_manager&                     workers,
+                                                         ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                         ru_timing_notifier&                 timing_notifier)
 {
-  std::unique_ptr<radio_factory> factory = create_radio_factory(config.rf_driver_cfg.device_driver);
-  if (!factory) {
-    return nullptr;
+  srslog::basic_logger& rf_logger = srslog::fetch_basic_logger("RF", false);
+  rf_logger.set_level(srslog::str_to_basic_level(log_cfg.radio_level));
+
+  config.rf_logger                             = &rf_logger;
+  config.radio_exec                            = workers.radio_exec.get();
+  config.lower_phy_config.tx_task_executor     = workers.lower_phy_tx_exec.get();
+  config.lower_phy_config.rx_task_executor     = workers.lower_phy_rx_exec.get();
+  config.lower_phy_config.dl_task_executor     = workers.lower_phy_dl_exec.get();
+  config.lower_phy_config.ul_task_executor     = workers.lower_phy_ul_exec.get();
+  config.lower_phy_config.prach_async_executor = workers.lower_prach_exec.get();
+  config.statistics_printer_executor           = workers.ru_printer_exec.get();
+  config.timing_notifier                       = &timing_notifier;
+  config.symbol_notifier                       = &symbol_notifier;
+}
+
+/// Resolves the Open Fronthaul Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_ofh_executors_and_notifiers(ru_ofh_configuration&               config,
+                                                     const log_appconfig&                log_cfg,
+                                                     worker_manager&                     workers,
+                                                     ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                     ru_timing_notifier&                 timing_notifier)
+{
+  srslog::basic_logger& ofh_logger = srslog::fetch_basic_logger("OFH", false);
+  ofh_logger.set_level(srslog::str_to_basic_level(log_cfg.ofh_level));
+
+  config.logger             = &ofh_logger;
+  config.rt_timing_executor = workers.ru_timing_exec.get();
+  config.timing_notifier    = &timing_notifier;
+  config.rx_symbol_notifier = &symbol_notifier;
+
+  // Configure sector.
+  ru_ofh_sector_configuration& sector_cfg = config.sector_configs.front();
+  sector_cfg.receiver_executor            = workers.ru_rx_exec.get();
+  sector_cfg.transmitter_executor         = workers.ru_tx_exec.get();
+}
+
+/// Resolves the Radio Unit dependencies and adds them to the configuration.
+static void configure_ru_executors_and_notifiers(ru_configuration&                   config,
+                                                 const log_appconfig&                log_cfg,
+                                                 worker_manager&                     workers,
+                                                 ru_uplink_plane_rx_symbol_notifier& symbol_notifier,
+                                                 ru_timing_notifier&                 timing_notifier)
+{
+  if (variant_holds_alternative<ru_ofh_configuration>(config.config)) {
+    configure_ru_ofh_executors_and_notifiers(
+        variant_get<ru_ofh_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
+
+    return;
   }
 
-  // Create radio configuration. Assume 1 sector per stream.
-  radio_configuration::radio radio_config = generate_radio_config(config, factory->get_configuration_validator());
-  return factory->create(radio_config, executor, radio_handler);
+  configure_ru_generic_executors_and_notifiers(
+      variant_get<ru_generic_configuration>(config.config), log_cfg, workers, symbol_notifier, timing_notifier);
 }
 
 int main(int argc, char** argv)
@@ -470,13 +554,13 @@ int main(int argc, char** argv)
   }
 
   // Set component-specific logging options.
-  for (const auto& id : {"DU", "DU-MNG", "UE-MNG", "DU-F1"}) {
+  for (const auto& id : {"DU", "DU-MNG", "UE-MNG"}) {
     auto& du_logger = srslog::fetch_basic_logger(id, false);
     du_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.du_level));
     du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
 
-  for (const auto& id : {"CU-CP", "CU-UE-MNG", "CU-CP-F1", "CU-CP-E1"}) {
+  for (const auto& id : {"CU-CP", "CU-UEMNG", "CU-CP-E1"}) {
     auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);
     cu_cp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
     cu_cp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
@@ -503,9 +587,22 @@ int main(int argc, char** argv)
   rlc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rlc_level));
   rlc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  auto& f1u_logger = srslog::fetch_basic_logger("F1-U", false);
-  f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
-  f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  auto& du_f1ap_logger = srslog::fetch_basic_logger("DU-F1", false);
+  auto& cu_f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1", false);
+  du_f1ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1ap_level));
+  du_f1ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  cu_f1ap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1ap_level));
+  cu_f1ap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  for (const auto& id : {"CU-F1-U", "DU-F1-U"}) {
+    auto& f1u_logger = srslog::fetch_basic_logger(id, false);
+    f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
+    f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
+
+  auto& sec_logger = srslog::fetch_basic_logger("SEC", false);
+  sec_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sec_level));
+  sec_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
   pdcp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.pdcp_level));
@@ -526,9 +623,6 @@ int main(int argc, char** argv)
   auto& gtpu_logger = srslog::fetch_basic_logger("GTPU", false);
   gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
   gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
-
-  auto& rf_logger = srslog::fetch_basic_logger("RF", false);
-  rf_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.radio_level));
 
   auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
   fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
@@ -561,6 +655,10 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.e1ap.enabled) {
     e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename.c_str());
   }
+  std::unique_ptr<dlt_pcap> f1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_F1AP_DLT, "F1AP");
+  if (gnb_cfg.pcap_cfg.f1ap.enabled) {
+    f1ap_p->open(gnb_cfg.pcap_cfg.f1ap.filename.c_str());
+  }
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
@@ -568,7 +666,7 @@ int main(int argc, char** argv)
 
   worker_manager workers{gnb_cfg};
 
-  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
+  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1", *f1ap_p), f1ap_du_to_cu_adapter("DU-F1", *f1ap_p);
   e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
@@ -589,15 +687,17 @@ int main(int argc, char** argv)
       std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
-  gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
-  std::unique_ptr<sctp_network_gateway> sctp_gateway =
-      create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
+  std::unique_ptr<sctp_network_gateway> sctp_gateway = {};
+  if (not gnb_cfg.amf_cfg.no_core) {
+    gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
+    sctp_gateway = create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
 
-  // Connect NGAP adapter to SCTP network gateway.
-  ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
-
-  gnb_logger.info("AMF connection established");
-
+    // Connect NGAP adapter to SCTP network gateway.
+    ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
+    gnb_logger.info("AMF connection established");
+  } else {
+    gnb_logger.info("Bypassing AMF connection");
+  }
   // Create CU-UP config.
   srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
@@ -637,57 +737,43 @@ int main(int argc, char** argv)
   cu_cp_obj->start();
   gnb_logger.info("CU-CP started successfully");
 
-  std::unique_ptr<radio_notification_handler> radio_event_logger;
-  if (rf_logger.warning.enabled()) {
-    radio_event_logger = std::make_unique<radio_notification_handler_logger>(nullptr, rf_logger);
+  // Radio Unit instantiation block.
+  ru_configuration ru_cfg = generate_ru_config(gnb_cfg);
+
+  upper_ru_ul_adapter     ru_ul_adapt;
+  upper_ru_timing_adapter ru_timing_adapt;
+
+  configure_ru_executors_and_notifiers(ru_cfg, gnb_cfg.log_cfg, workers, ru_ul_adapt, ru_timing_adapt);
+
+  std::unique_ptr<radio_unit> ru_object;
+  if (variant_holds_alternative<ru_ofh_configuration>(ru_cfg.config)) {
+    ru_object = create_ofh_ru(variant_get<ru_ofh_configuration>(ru_cfg.config));
+  } else {
+    ru_object = create_generic_ru(variant_get<ru_generic_configuration>(ru_cfg.config));
   }
+  report_error_if_not(ru_object, "Unable to create Radio Unit.");
+  gnb_logger.info("Radio Unit created successfully");
 
-  // Create radio.
-  radio_notification_handler_counter radio_event_counter(std::move(radio_event_logger));
-  auto                               radio = build_radio(*workers.radio_exec, radio_event_counter, gnb_cfg);
-  if (radio == nullptr) {
-    report_error("Unable to create radio session.\n");
-  }
-  gnb_logger.info("Radio driver '{}' created successfully", gnb_cfg.rf_driver_cfg.device_driver);
+  upper_ru_dl_rg_adapter      ru_dl_rg_adapt;
+  upper_ru_ul_request_adapter ru_ul_request_adapt;
+  ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
+  ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
-  // Create lower and upper PHY adapters.
-  phy_error_adapter             phy_err_printer("info");
-  phy_rx_symbol_adapter         phy_rx_adapter;
-  phy_rg_gateway_adapter        rg_gateway_adapter;
-  phy_timing_adapter            phy_time_adapter;
-  phy_rx_symbol_request_adapter phy_rx_symbol_req_adapter;
-
-  // Create lower PHY.
-  lower_phy_configuration   lower_phy_config = create_lower_phy_configuration(&radio->get_baseband_gateway(),
-                                                                            &phy_rx_adapter,
-                                                                            &phy_time_adapter,
-                                                                            &phy_err_printer,
-                                                                            *workers.lower_phy_tx_exec,
-                                                                            *workers.lower_phy_rx_exec,
-                                                                            *workers.lower_phy_dl_exec,
-                                                                            *workers.lower_phy_ul_exec,
-                                                                            *workers.lower_prach_exec,
-                                                                            gnb_cfg);
-  static constexpr unsigned max_nof_prach_concurrent_requests = 11;
-  auto                      lower = create_lower_phy(lower_phy_config, max_nof_prach_concurrent_requests);
-  report_fatal_error_if_not(lower, "Unable to create lower PHY.");
-  gnb_logger.info("Lower PHY created successfully");
-
+  // Upper PHY instantiation block.
   auto upper = create_upper_phy(gnb_cfg,
-                                &rg_gateway_adapter,
+                                &ru_dl_rg_adapt,
                                 workers.upper_dl_exec.get(),
                                 workers.upper_pucch_exec.get(),
                                 workers.upper_pusch_exec.get(),
                                 workers.upper_prach_exec.get(),
-                                &phy_rx_symbol_req_adapter);
-  report_fatal_error_if_not(upper, "Unable to create upper PHY.");
+                                workers.upper_pdsch_exec.get(),
+                                &ru_ul_request_adapt);
+  report_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");
 
-  // Make connections between upper and lower PHYs.
-  phy_rx_adapter.connect(&upper->get_rx_symbol_handler());
-  phy_time_adapter.connect(&upper->get_timing_handler());
-  rg_gateway_adapter.connect(&lower->get_rg_handler());
-  phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
+  // Make connections between upper and RU.
+  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
+  ru_timing_adapt.connect(upper->get_timing_handler());
 
   // Create FAPI adaptors.
   std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
@@ -706,7 +792,7 @@ int main(int argc, char** argv)
                                             upper->get_uplink_pdu_validator(),
                                             generate_prach_config_tlv(du_cfg),
                                             generate_carrier_config_tlv(gnb_cfg));
-  report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
+  report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
 
@@ -718,21 +804,21 @@ int main(int argc, char** argv)
   if (gnb_cfg.log_cfg.fapi_level == "debug") {
     // Create gateway loggers and intercept MAC adaptor calls.
     logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
-    report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
+    report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
     mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_dummy);
 
     // Create notification loggers.
     logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
-    report_fatal_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
+    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
     logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(mac_adaptor->get_slot_time_notifier());
-    report_fatal_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+    report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.
     phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
     phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
     mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
-    report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
+    report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
   }
@@ -748,18 +834,17 @@ int main(int argc, char** argv)
   phy_dummy phy(mac_adaptor->get_cell_result_notifier());
 
   srs_du::du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor               = workers.du_ctrl_exec.get();
-  du_hi_cfg.ue_executors                  = &*workers.ue_exec_mapper;
-  du_hi_cfg.cell_executors                = &*workers.cell_exec_mapper;
+  du_hi_cfg.exec_mapper                   = workers.du_high_exec_mapper.get();
   du_hi_cfg.f1ap_notifier                 = &f1ap_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.timers                        = &app_timers;
   du_hi_cfg.cells                         = du_cfg;
-  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
-  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
   du_hi_cfg.pcap                          = mac_p.get();
+  du_hi_cfg.mac_cfg                       = generate_mac_expert_config(gnb_cfg);
+  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
+  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
@@ -789,44 +874,37 @@ int main(int argc, char** argv)
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
   // Start processing.
-  gnb_logger.info("Starting lower PHY...");
-  radio->start();
-  lower->get_controller().start();
-  gnb_logger.info("Lower PHY started successfully");
+  gnb_logger.info("Starting Radio Unit...");
+  ru_object->get_controller().start();
+  gnb_logger.info("Radio Unit started successfully");
 
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
 
-  unsigned count = 0;
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if ((++count) == 10) {
-      radio_event_counter.print();
-      count = 0;
-    }
   }
 
   console.on_app_stopping();
 
   ngap_p->close();
   e1ap_p->close();
+  f1ap_p->close();
   mac_p->close();
 
-  gnb_logger.info("Stopping radio...");
-  radio->stop();
-  gnb_logger.info("Radio notify_stop successfully");
-
-  gnb_logger.info("Stopping lower PHY...");
-  lower->get_controller().stop();
-  gnb_logger.info("Lower PHY notify_stop successfully");
+  gnb_logger.info("Stopping Radio Unit...");
+  ru_object->get_controller().stop();
+  gnb_logger.info("Radio Unit notify_stop successfully");
 
   gnb_logger.info("Closing DU-high...");
   du_obj.stop();
   gnb_logger.info("DU-high closed successfully");
 
-  gnb_logger.info("Closing network connections...");
-  ngap_adapter->disconnect_gateway();
-  gnb_logger.info("Network connections closed successfully");
+  if (not gnb_cfg.amf_cfg.no_core) {
+    gnb_logger.info("Closing network connections...");
+    ngap_adapter->disconnect_gateway();
+    gnb_logger.info("Network connections closed successfully");
+  }
 
   gnb_logger.info("Stopping executors...");
   workers.stop();

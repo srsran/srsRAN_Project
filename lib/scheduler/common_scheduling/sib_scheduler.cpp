@@ -21,14 +21,15 @@
  */
 
 #include "sib_scheduler.h"
-#include "../support/config_helpers.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
+#include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/ran/sib_configuration.h"
 
 using namespace srsran;
@@ -125,10 +126,14 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
   {
+    const crb_interval crb_lims =
+        pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0));
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
-        coreset0_bwp_cfg, cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
-    sib1_crbs = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
+        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+        crb_lims,
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
+    sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
       logger.error("Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);
@@ -170,25 +175,15 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
-  auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
-  prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
 
   // Fill SIB1 DCI.
-  sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
-  sib1_pdcch.dci.si_f1_0             = {};
-  dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
-  dci.N_rb_dl_bwp                    = coreset0_bwp_cfg.crbs.length();
-  dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_prbs.start(), sib1_prbs.length()});
-  dci.time_resource = time_resource;
-  // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
-  // TODO: Verify if interleaved is suitable for SIB1.
-  dci.vrb_to_prb_mapping       = 0;
-  dci.modulation_coding_scheme = expert_cfg.sib1_mcs_index.to_uint();
-  // Redundancy version for first transmission.
-  // TODO: Check what is the best RV for SIB1.
-  dci.redundancy_version           = 0;
-  dci.system_information_indicator = sib1_si_indicator;
+  auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
+  build_dci_f1_0_si_rnti(sib1_pdcch.dci,
+                         cell_cfg.dl_cfg_common.init_dl_bwp,
+                         sib1_crbs_grant,
+                         time_resource,
+                         expert_cfg.sib1_mcs_index,
+                         sib1_si_indicator);
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
@@ -196,22 +191,12 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;
-  pdsch.rnti               = sib1_pdcch.ctx.rnti;
-  pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
-  pdsch.coreset_cfg        = sib1_pdcch.ctx.coreset_cfg;
-  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
-  pdsch.prbs    = sib1_prbs;
-  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
-  pdsch.n_id = cell_cfg.pci;
-
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.rv_index          = dci.redundancy_version;
-  cw.mcs_index         = dci.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = sib1_pdcch.dci.si_f1_0.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type0;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  build_pdsch_f1_0_si_rnti(
+      pdsch,
+      cell_cfg,
+      tbs,
+      sib1_pdcch.dci.si_f1_0,
+      sib1_crbs_grant,
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
+      dmrs_info);
 }

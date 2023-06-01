@@ -25,6 +25,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_modify_procedure.h"
 #include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
@@ -40,7 +41,6 @@ ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
                      ngap_message_notifier&      ngap_notifier_,
                      task_executor&              ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
-  ngap_cfg(ngap_cfg_),
   cu_cp_paging_notifier(cu_cp_paging_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
@@ -48,6 +48,10 @@ ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
+  context.gnb_id        = ngap_cfg_.gnb_id;
+  context.ran_node_name = ngap_cfg_.ran_node_name;
+  context.plmn          = ngap_cfg_.plmn;
+  context.tac           = ngap_cfg_.tac;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -73,7 +77,7 @@ async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_
 {
   logger.info("Sending NgSetupRequest");
   return launch_async<ng_setup_procedure>(
-      request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
+      context, request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
@@ -103,6 +107,13 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
   init_ue_msg->ue_context_request_present = true;
   init_ue_msg->ue_context_request.value   = asn1::ngap::ue_context_request_opts::options::requested;
+
+  if (msg.five_g_s_tmsi.has_value()) {
+    init_ue_msg->five_g_s_tmsi_present = true;
+    init_ue_msg->five_g_s_tmsi.value.amf_set_id.from_number(context.current_guami.amf_set_id);
+    init_ue_msg->five_g_s_tmsi.value.amf_pointer.from_number(context.current_guami.amf_pointer);
+    init_ue_msg->five_g_s_tmsi.value.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
+  }
 
   // TODO: Add missing optional values
 
@@ -190,6 +201,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_setup_request:
       handle_pdu_session_resource_setup_request(msg.value.pdu_session_res_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_modify_request:
+      handle_pdu_session_resource_modify_request(msg.value.pdu_session_res_modify_request());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_release_cmd:
       handle_pdu_session_resource_release_command(msg.value.pdu_session_res_release_cmd());
       break;
@@ -253,9 +267,9 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
 
   // start routine
-  task_sched.schedule_async_task(
-      ue_index,
-      launch_async<ngap_initial_context_setup_procedure>(ue_index, request, ue_manager, ngap_notifier, logger));
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_initial_context_setup_procedure>(
+                                     context, ue_index, request, ue_manager, ngap_notifier, logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
@@ -263,7 +277,10 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest", ue_index);
+    logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   request->ran_ue_ngap_id.value,
+                   request->amf_ue_ngap_id.value);
     return;
   }
 
@@ -277,7 +294,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_index;
-  msg.serving_plmn = ngap_cfg.plmn;
+  msg.serving_plmn = context.plmn;
   fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
@@ -292,12 +309,44 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   }
 }
 
+void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
+{
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping PduSessionResourceModifyRequest (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   request->ran_ue_ngap_id.value,
+                   request->amf_ue_ngap_id.value);
+    return;
+  }
+
+  logger.info("ue={} Received PduSessionResourceModifyRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
+
+  if (request->ran_paging_prio_present) {
+    logger.debug("Not handling RAN paging prio");
+  }
+
+  // Convert to common type
+  cu_cp_pdu_session_resource_modify_request msg;
+  msg.ue_index = ue_index;
+  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req.value);
+
+  // start routine
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_pdu_session_resource_modify_procedure>(
+                                     msg, *ue, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
+}
+
 void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)
 {
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id.value));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand", ue_index);
+    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand (ran_ue_id={}, amf_ue_id={})",
+                   ue_index,
+                   command->ran_ue_ngap_id.value,
+                   command->amf_ue_ngap_id.value);
     return;
   }
 
@@ -336,7 +385,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand", ue_index);
+    // TS 38.413 section 8.3.3 doesn't specify abnormal conditions, so we just drop the message
+    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand (amf_ue_id={})", ue_index, amf_ue_id);
     return;
   }
 
@@ -352,7 +402,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   fill_cu_cp_ue_context_release_command(msg, cmd);
 
   // Notify DU processor about UE Context Release Command
-  ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
+  cu_cp_ue_context_release_complete ue_context_release_complete =
+      ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
 
   // Send UE Context Release Complete
   ngap_message ngap_msg = {};
@@ -360,18 +411,16 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ngap_msg.pdu.set_successful_outcome();
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
 
-  // TODO: Add optional fields to UE context Release Complete
-  // fill_asn1_ue_context_release_complete(ngap_msg.pdu.successful_outcome().value.ue_context_release_complete(),
-  // response);
+  auto& asn1_ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
+  asn1_ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  asn1_ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
-  auto& ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
-  ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+  fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
-  logger.info("Sending UeContextReleaseComplete");
+  logger.info("ue={} Sending UeContextReleaseComplete", ue_index);
   ngap_notifier.on_new_message(ngap_msg);
 }
 
@@ -448,6 +497,11 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
     return;
   }
 
+  if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
+    logger.debug("ue={} does not have an AMF UE ID - ignoring release request", msg.ue_index);
+    return;
+  }
+
   ngap_message ngap_msg;
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE_REQUEST);
@@ -457,11 +511,23 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
   ue_context_release_request->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
   ue_context_release_request->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(ue->get_amf_ue_id());
 
+  // Add PDU Session IDs
+  if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
+    ue_context_release_request->pdu_session_res_list_cxt_rel_req_present = true;
+    for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
+      asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
+      pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
+      ue_context_release_request->pdu_session_res_list_cxt_rel_req.value.push_back(pdu_session_item);
+    }
+  }
+
   ue_context_release_request->cause.value.set_radio_network();
-  ue_context_release_request->cause.value.radio_network() =
-      asn1::ngap::cause_radio_network_opts::options::user_inactivity;
+  // TODO: Add sub causes to common type
+  // ue_context_release_request->cause.value.radio_network() =
+  //     asn1::ngap::cause_radio_network_opts::options::user_inactivity;
 
   // Forward message to AMF
+  logger.info("ue={} Sending UeContextReleaseRequest", msg.ue_index);
   ngap_notifier.on_new_message(ngap_msg);
 }
 

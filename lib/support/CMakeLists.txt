@@ -20,6 +20,7 @@
 
 add_subdirectory(build_info)
 add_subdirectory(io_broker)
+add_subdirectory(version)
 
 set(SOURCES
         backtrace.cpp

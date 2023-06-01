@@ -22,7 +22,7 @@
 
 #include "lib/du_manager/converters/asn1_cell_group_config_helpers.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
@@ -248,9 +248,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pdsch_cfg_conversion)
   });
   dest_pdsch_cfg.tci_states.erase(dest_pdsch_cfg.tci_states.begin());
 
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions.value() = dmrs_additional_positions::pos0;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0               = 10;
-  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1               = 20;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos0;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id0       = 10;
+  dest_pdsch_cfg.pdsch_mapping_type_a_dmrs.value().scrambling_id1       = 20;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
@@ -420,15 +420,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id                 = 12,
-                           .starting_prb           = 40,
-                           .second_hop_prb         = 50,
-                           .intraslot_freq_hopping = true,
-                           .format                 = pucch_format::FORMAT_3};
-  res_basic.format                    = pucch_format::FORMAT_2;
-  res_basic.format_3.nof_symbols      = 1;
-  res_basic.format_4.starting_sym_idx = 13;
-  res_basic.format_4.occ_length       = srsran::pucch_f4_occ_len::n2;
+  pucch_resource res_basic{.res_id = 12, .starting_prb = 40, .second_hop_prb = 50, .format = pucch_format::FORMAT_3};
+  res_basic.format = pucch_format::FORMAT_2;
+  res_basic.format_params.emplace<pucch_format_2_3_cfg>(pucch_format_2_3_cfg{.nof_symbols = 1, .starting_sym_idx = 13});
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
 
   // Remove first element.

@@ -28,7 +28,7 @@ using namespace srsran;
 
 TEST(harq_entity, when_harq_entity_is_created_all_harqs_are_empty)
 {
-  harq_entity harq_ent(to_rnti(0x4601), 16, 16, 4);
+  harq_entity harq_ent(to_rnti(0x4601), 16, 16, {}, 4);
 
   ASSERT_EQ(harq_ent.nof_dl_harqs(), 16);
   ASSERT_EQ(harq_ent.nof_ul_harqs(), 16);
@@ -43,7 +43,7 @@ TEST(harq_entity, when_harq_entity_is_created_all_harqs_are_empty)
 TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_harq)
 {
   unsigned    nof_harqs = 8;
-  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, 4);
+  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, {}, 4);
   slot_point  sl_tx{0, 0};
   unsigned    ack_delay = 4;
 
@@ -58,7 +58,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
 TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
 {
   unsigned    nof_harqs = 8, max_ack_wait_slots = 4;
-  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, max_ack_wait_slots);
+  harq_entity harq_ent(to_rnti(0x4601), nof_harqs, nof_harqs, {}, max_ack_wait_slots);
   slot_point  sl_tx{0, 0};
   unsigned    ack_delay = 4;
 
@@ -92,7 +92,7 @@ protected:
   }
 
   const unsigned nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
-  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs};
+  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs, nof_harqs, {}};
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
@@ -167,7 +167,7 @@ protected:
   }
 
   const unsigned        nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
-  harq_entity           harq_ent{to_rnti(0x4601), nof_harqs};
+  harq_entity           harq_ent{to_rnti(0x4601), nof_harqs, nof_harqs, {}};
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
   slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
@@ -228,3 +228,52 @@ INSTANTIATE_TEST_SUITE_P(
                     test_2_harq_bits_params{.ack = {{0, 0}, {2, 2}}, .outcome = {NACKed, NACKed}},
                     test_2_harq_bits_params{.ack = {{2, 2}, {2, 1}}, .outcome = {DTX_timeout, ACKed}},
                     test_2_harq_bits_params{.ack = {{2, 2}, {2, 2}}, .outcome = {DTX_timeout, DTX_timeout}}));
+
+class harq_entity_harq_5bit_tester : public ::testing::Test
+{
+protected:
+  harq_entity_harq_5bit_tester()
+  {
+    logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+  }
+
+  void run_slot()
+  {
+    logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    harq_ent.slot_indication(next_slot);
+    ++next_slot;
+  }
+
+  const unsigned nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
+  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs, nof_harqs, {}};
+
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
+
+  slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
+};
+
+TEST_F(harq_entity_harq_5bit_tester, when_5_harq_bits_received_then_all_5_active_harqs_are_updated)
+{
+  const unsigned active_harqs = 5, dai_mod = 4, k1 = 4;
+
+  std::vector<dl_harq_process*> h_dls(active_harqs);
+  for (unsigned i = 0; i != active_harqs; ++i) {
+    h_dls[i] = harq_ent.find_empty_dl_harq();
+    h_dls[i]->new_tx(next_slot, k1, max_harq_retxs, i % dai_mod);
+  }
+  slot_point pucch_slot = next_slot + k1;
+
+  while (next_slot != pucch_slot) {
+    run_slot();
+  }
+
+  // ACK received.
+  for (unsigned i = 0; i != active_harqs; ++i) {
+    ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, i % dai_mod), nullptr);
+  }
+
+  for (unsigned i = 0; i != h_dls.size(); ++i) {
+    ASSERT_TRUE(h_dls[i]->empty());
+  }
+}

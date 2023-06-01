@@ -24,7 +24,7 @@
 
 #include "radio_zmq_rx_channel_fsm.h"
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "srsran/radio/radio_notification_handler.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_queue.h"
@@ -58,9 +58,9 @@ private:
   /// Logger.
   srslog::basic_logger& logger;
   /// Stores transmit buffer.
-  blocking_queue<radio_sample_type> circular_buffer;
+  blocking_queue<cf_t> circular_buffer;
   /// Transmission buffer.
-  std::vector<radio_sample_type> buffer;
+  std::vector<cf_t> buffer;
   /// Notification handler.
   radio_notification_handler& notification_handler;
   /// Asynchronous task executor.
@@ -104,7 +104,9 @@ public:
 
   void run_async();
 
-  void receive(span<radio_sample_type> buffer);
+  void receive(span<cf_t> buffer);
+
+  void start();
 
   void stop();
 

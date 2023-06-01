@@ -256,6 +256,70 @@ INSTANTIATE_TEST_SUITE_P(
                          info_.param.pucch_input_params.n_cces);
     });
 
+///////   Test multiple allocation of common PUCCH resources    ///////
+
+class test_pucch_harq_common_multiple_allocation : public ::testing::Test
+{
+public:
+  test_pucch_harq_common_multiple_allocation() : t_bench(test_bench_params{.pucch_res_common = 0, .n_cces = 1}){};
+
+protected:
+  // Parameters that are passed by the routing to run the tests.
+  test_bench t_bench;
+};
+
+// Tests the allocation of multiple resources.
+TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_double_alloc)
+{
+  const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+
+  // If we allocate the same UE twice, the scheduler is expected to allocate a different PUCCH common resource.
+  const pucch_harq_ack_grant pucch_test_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+  ASSERT_NE(pucch_test_1.pucch_res_indicator, pucch_test.pucch_res_indicator);
+}
+
+// Tests the allocation of multiple resources.
+TEST_F(test_pucch_harq_common_multiple_allocation, test_pucch_out_of_resources)
+{
+  // For this specific n_cce value (1) and for d_pri = {0,...,7}, we get 8 r_pucch values. This is the maximum number of
+  // UEs we can allocate.
+  for (unsigned n_ue = 0; n_ue != 8; ++n_ue) {
+    const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+    ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+  }
+
+  // If we allocate an extra UE, the scheduler is expected to fail.
+  const pucch_harq_ack_grant pucch_test_1 = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+  ASSERT_TRUE(pucch_test_1.pucch_pdu == nullptr);
+}
+
+// Tests the allocation of multiple resources.
+TEST_F(test_pucch_harq_common_multiple_allocation, test_on_full_grid)
+{
+  const pucch_harq_ack_grant pucch_test_benchmark = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+
+  // Increase the slot; this is to verify the PUCCH allocation over a full grid yields the same PUCCH PDU as over an
+  // empty one.
+  t_bench.slot_indication(++t_bench.sl_tx);
+
+  // Fill the entire grid and verify the PUCCH gets allocated anyway.
+  t_bench.fill_all_grid(t_bench.sl_tx + t_bench.k1);
+
+  // If we allocate an extra UE, the scheduler is expected to fail.
+  const pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
+  ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
+  ASSERT_EQ(0, pucch_test.pucch_res_indicator);
+  ASSERT_TRUE(assess_ul_pucch_info(*pucch_test_benchmark.pucch_pdu, *pucch_test.pucch_pdu));
+}
+
 ///////   Test allocation of PUCCH SR resources    ///////
 
 class test_pucch_sr_allocator : public ::testing::Test

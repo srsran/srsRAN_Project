@@ -36,7 +36,7 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
   socket_type(config.socket_type),
   logger(srslog::fetch_basic_logger(config.channel_id_str, false)),
   circular_buffer(config.buffer_size),
-  buffer(config.buffer_size * sizeof(radio_sample_type)),
+  buffer(config.buffer_size * sizeof(cf_t)),
   notification_handler(notification_handler_),
   async_executor(async_executor_)
 {
@@ -113,11 +113,6 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
 
   // Indicate the initialization was successful.
   state_fsm.init_successful();
-
-  // Start processing.
-  if (not async_executor.defer([this]() { run_async(); })) {
-    logger.error("Unable to initiate radio zmq tx async task");
-  }
 }
 
 radio_zmq_tx_channel::~radio_zmq_tx_channel()
@@ -184,7 +179,7 @@ void radio_zmq_tx_channel::send_response()
   }
 
   // Otherwise, send samples over socket.
-  int nbytes = count * sizeof(radio_sample_type);
+  int nbytes = count * sizeof(cf_t);
   int n      = zmq_send(sock, (void*)buffer.data(), nbytes, 0);
 
   // Check if an error occurred.
@@ -227,7 +222,7 @@ void radio_zmq_tx_channel::run_async()
   }
 }
 
-void radio_zmq_tx_channel::transmit_samples(span<radio_sample_type> data)
+void radio_zmq_tx_channel::transmit_samples(span<const cf_t> data)
 {
   unsigned count = 0;
   while (count < data.size() && state_fsm.is_running()) {
@@ -291,7 +286,7 @@ bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds t
   return false;
 }
 
-void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
+void radio_zmq_tx_channel::transmit(span<const cf_t> data)
 {
   logger.debug("Requested to transmit {} samples.", data.size());
 
@@ -306,6 +301,17 @@ void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
 
   // Notify transmission.
   transmit_alignment_cvar.notify_all();
+}
+
+void radio_zmq_tx_channel::start(uint64_t init_time)
+{
+  sample_count = init_time;
+
+  // Start processing.
+  state_fsm.on_start();
+  if (not async_executor.defer([this]() { run_async(); })) {
+    logger.error("Unable to initiate radio zmq tx async task");
+  }
 }
 
 void radio_zmq_tx_channel::stop()

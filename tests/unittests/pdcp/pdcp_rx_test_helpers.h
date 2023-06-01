@@ -69,6 +69,8 @@ protected:
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
   void init(pdcp_sn_size      sn_size_,
+            pdcp_rb_type      rb_type_     = pdcp_rb_type::drb,
+            pdcp_rlc_mode     rlc_mode_    = pdcp_rlc_mode::am,
             pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10,
             pdcp_max_count    max_count    = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
   {
@@ -77,19 +79,30 @@ protected:
     sn_size = sn_size_;
 
     // Set Rx config
-    config.rb_type               = pdcp_rb_type::drb;
-    config.rlc_mode              = pdcp_rlc_mode::am;
+    config.rb_type               = rb_type_;
+    config.rlc_mode              = rlc_mode_;
     config.sn_size               = sn_size;
     config.direction             = pdcp_security_direction::downlink;
     config.out_of_order_delivery = false;
     config.t_reordering          = t_reordering;
     config.max_count             = max_count;
 
+    // RB_id and security domain
+    rb_id_t rb_id;
+    switch (rb_type_) {
+      case pdcp_rb_type::srb:
+        sec_cfg.domain = security::sec_domain::rrc;
+        rb_id          = srb_id_t::srb1;
+        break;
+      case pdcp_rb_type::drb:
+        sec_cfg.domain = security::sec_domain::up;
+        rb_id          = drb_id_t::drb1;
+        break;
+    }
+
     // Set security keys
-    sec_cfg.k_128_rrc_int = k_128_int;
-    sec_cfg.k_128_up_int  = k_128_int;
-    sec_cfg.k_128_rrc_enc = k_128_enc;
-    sec_cfg.k_128_up_enc  = k_128_enc;
+    sec_cfg.k_128_int = k_128_int;
+    sec_cfg.k_128_enc = k_128_enc;
 
     // Set encription/integrity algorithms
     sec_cfg.integ_algo  = security::integrity_algorithm::nia1;
@@ -97,8 +110,8 @@ protected:
 
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
-    pdcp_rx    = std::make_unique<pdcp_entity_rx>(
-        0, srb_id_t::srb1, config, *test_frame, *test_frame, timer_factory{timers, worker});
+    pdcp_rx =
+        std::make_unique<pdcp_entity_rx>(0, rb_id, config, *test_frame, *test_frame, timer_factory{timers, worker});
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();

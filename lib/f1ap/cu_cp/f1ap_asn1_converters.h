@@ -216,6 +216,15 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   asn1::string_to_enum(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability,
                        qos_info.drb_qos.alloc_and_retention_prio.pre_emption_vulnerability);
 
+  // assert valid conversion result
+  srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap !=
+                    asn1::f1ap::pre_emption_cap_e::nulltype,
+                "Invalid preemption type");
+
+  srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability !=
+                    asn1::f1ap::pre_emption_vulnerability_opts::nulltype,
+                "Invalid preemption type");
+
   // gbr qos info
   if (qos_info.drb_qos.gbr_qos_info.has_value()) {
     asn1_drb_info.drb_qos.gbr_qos_flow_info_present = true;
@@ -271,6 +280,14 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   }
 
   return asn1_qos_info;
+}
+
+/// \brief Calculate the 5G-S-TMSI from the common type 5G-S-TMSI struct.
+inline uint64_t five_g_s_tmsi_struct_to_number(const cu_cp_five_g_s_tmsi& five_g_s_tmsi)
+{
+  // 5G-S-TMSI is a 48 bit string consisting of <aMFSetId (10 bit)><aMFPointer (6 bit)><5G-TMSI (32 bit)>
+  return ((uint64_t)five_g_s_tmsi.amf_set_id << 38) + ((uint64_t)five_g_s_tmsi.amf_pointer << 32) +
+         five_g_s_tmsi.five_g_tmsi;
 }
 
 } // namespace srs_cu_cp

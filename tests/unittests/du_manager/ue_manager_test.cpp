@@ -189,7 +189,7 @@ TEST_F(du_ue_manager_tester,
 
   // Until MAC completes UE creation, F1AP and MAC should not receive request to delete UE.
   ASSERT_FALSE(mac_dummy.last_ue_delete_msg.has_value());
-  ASSERT_FALSE(f1ap_dummy.last_ue_release.has_value());
+  ASSERT_FALSE(f1ap_dummy.last_ue_release_req.has_value());
   mac_completes_ue_creation(true);
   ASSERT_TRUE(mac_dummy.last_ue_delete_msg.has_value());
   ASSERT_EQ(get_last_ue_index(), mac_dummy.last_ue_delete_msg->ue_index);

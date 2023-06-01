@@ -113,9 +113,42 @@
             ],
             "code_owner_approval_required": false,
             "name": "main"
+        },
+        {
+            "allow_force_push": false,
+            "allowed_to_merge": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "allowed_to_push": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ],
+            "code_owner_approval_required": false,
+            "name": "agpl_main"
         }
     ],
-    "protectedtags": [],
+    "protectedtags": [
+        {
+            "name": "*",
+            "create_access_levels": [
+                {
+                    "access_level": 40,
+                    "access_level_description": "Maintainers",
+                    "group_id": null,
+                    "user_id": null
+                }
+            ]
+        }
+    ],
     "pushrules": {
         "prevent_secrets": true
     },

@@ -173,6 +173,7 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
   pdu.ssb_maintenance_v3.L_max                       = 4;
   pdu.ssb_maintenance_v3.beta_pss_profile_sss        = std::numeric_limits<int16_t>::min();
   pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = std::numeric_limits<int16_t>::min();
+  pdu.preconding_and_beamforming                     = build_valid_tx_precoding_and_beamforming_pdu();
 
   return pdu;
 }
@@ -207,6 +208,7 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   dci.aggregation_level                  = 2;
   dci.power_control_offset_ss_profile_nr = 0;
   dci.payload                            = {1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0};
+  dci.preconding_and_beamforming         = build_valid_tx_precoding_and_beamforming_pdu();
 
   pdu.maintenance_v3.info.emplace_back();
   dl_pdcch_pdu_maintenance_v3::maintenance_info& dci_v3 = pdu.maintenance_v3.info.back();
@@ -252,6 +254,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
   pdu.dl_dmrs_symb_pos                   = 0;
+  pdu.preconding_and_beamforming         = build_valid_tx_precoding_and_beamforming_pdu();
 
   // Maintenance v3.
   pdu.pdsch_maintenance_v3.trans_type = srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
@@ -294,6 +297,7 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;
   pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
   pdu.csi_rs_maintenance_v3.csi_rs_pdu_index                = 0;
+  pdu.preconding_and_beamforming                            = build_valid_tx_precoding_and_beamforming_pdu();
 
   return pdu;
 }
@@ -1164,4 +1168,16 @@ srsran::fapi::crc_indication_message unittest::build_valid_crc_indication()
   pdu.rsrp                     = 10;
 
   return msg;
+}
+
+srsran::fapi::tx_precoding_and_beamforming_pdu unittest::build_valid_tx_precoding_and_beamforming_pdu()
+{
+  srsran::fapi::tx_precoding_and_beamforming_pdu pdu;
+
+  pdu.trp_scheme        = 0U;
+  pdu.prg_size          = 1U;
+  pdu.dig_bf_interfaces = 2U;
+  pdu.prgs              = {{3U, {5U, 6U}}};
+
+  return pdu;
 }

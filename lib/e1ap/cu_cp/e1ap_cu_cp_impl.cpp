@@ -358,3 +358,17 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
       }
   }
 }
+
+void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_index)
+{
+  if (!ue_ctxt_list.contains(old_ue_index)) {
+    logger.debug("Ue context for ue={} not found.", old_ue_index);
+    return;
+  }
+
+  auto& old_ue                 = ue_ctxt_list[old_ue_index];
+  auto& new_ue_ctxt            = ue_ctxt_list.add_ue(ue_index, old_ue.cu_cp_ue_e1ap_id);
+  new_ue_ctxt.cu_up_ue_e1ap_id = old_ue.cu_up_ue_e1ap_id;
+
+  ue_ctxt_list.remove_ue(old_ue_index);
+}

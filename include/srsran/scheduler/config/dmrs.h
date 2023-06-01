@@ -32,15 +32,18 @@ namespace srsran {
 /// Used to configure downlink demodulation reference signals for PDSCH.
 /// \remark See TS 38.331, DMRS-DownlinkConfig.
 struct dmrs_downlink_config {
-  /// Selection of the DMRS type to be used for DL (see TS 38.211, clause 7.4.1.1.1). If the field is absent, the
-  /// UE uses DMRS type 1.
-  optional<dmrs_config_type> type;
+  /// Selection of the DMRS type to be used for DL.
+  /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value type2 to UE. If false, the field
+  /// is absent in NR RRC and the UE uses DMRS type 1.
+  bool is_dmrs_type2{false};
   /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211. If the field is absent,
   /// the UE applies the value pos2.
-  optional<dmrs_additional_positions> additional_positions;
-  /// The maximum number of OFDM symbols for DL front loaded DMRS. If the field is absent, the UE applies value len1. If
-  /// set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
-  optional<dmrs_max_length> max_length;
+  dmrs_additional_positions additional_positions{dmrs_additional_positions::pos2};
+  /// The maximum number of OFDM symbols for DL front loaded DMRS.
+  /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value len2 to UE. If false, the field
+  /// is absent in NR RRC and the UE applies value len1.
+  /// If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
+  bool is_max_length_len2{false};
   /// DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).
   /// When the field is absent the UE applies the value Physical cell ID (physCellId) configured for this serving cell.
   optional<uint16_t> scrambling_id0;
@@ -49,8 +52,9 @@ struct dmrs_downlink_config {
 
   bool operator==(const dmrs_downlink_config& rhs) const
   {
-    return type == rhs.type && additional_positions == rhs.additional_positions && max_length == rhs.max_length &&
-           scrambling_id0 == rhs.scrambling_id0 && scrambling_id1 == rhs.scrambling_id1;
+    return is_dmrs_type2 == rhs.is_dmrs_type2 && additional_positions == rhs.additional_positions &&
+           is_max_length_len2 == rhs.is_max_length_len2 && scrambling_id0 == rhs.scrambling_id0 &&
+           scrambling_id1 == rhs.scrambling_id1;
   }
   bool operator!=(const dmrs_downlink_config& rhs) const { return !(rhs == *this); }
 };
@@ -104,7 +108,7 @@ struct dmrs_uplink_config {
   bool is_dmrs_type2{false};
   /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3). If the field is not set, the UE applies the
   /// value pos2.
-  dmrs_additional_positions additional_positions{dmrs_additional_positions::not_set};
+  dmrs_additional_positions additional_positions{dmrs_additional_positions::pos2};
   /// Configures uplink PTRS.
   optional<ptrs_uplink_config> ptrs;
   /// The maximum number of OFDM symbols for UL front loaded DMRS.

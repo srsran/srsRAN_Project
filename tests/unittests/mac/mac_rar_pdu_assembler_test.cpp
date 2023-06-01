@@ -25,6 +25,7 @@
 #include "srsran/adt/circular_array.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsran;
@@ -136,7 +137,7 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
   }
 }
 
-void test_rar_assembler_multiple_random_ul_grants()
+TEST(rar_assembler_test, multiple_random_ul_grants)
 {
   constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
   test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
@@ -152,7 +153,7 @@ void test_rar_assembler_multiple_random_ul_grants()
 
 /// In this test, we verify that the RAR PDU assembler is able to store past RAR PDUs for a short period of time,
 /// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
-void test_rar_assembler_maintains_old_results()
+TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 {
   constexpr static size_t MAX_RAR_GRANT_SIZE = 64;
 
@@ -179,10 +180,4 @@ void test_rar_assembler_maintains_old_results()
     previous_rars[i] = make_random_rar_info(nof_ul_grants_per_rar(gen));
     previous_pdus[i] = assembler.encode_rar_pdu(previous_rars[i]);
   }
-}
-
-int main()
-{
-  test_rar_assembler_multiple_random_ul_grants();
-  test_rar_assembler_maintains_old_results();
 }

@@ -25,6 +25,7 @@ add_subdirectory(channel_coding)
 add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(equalization)
+add_subdirectory(precoding)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 

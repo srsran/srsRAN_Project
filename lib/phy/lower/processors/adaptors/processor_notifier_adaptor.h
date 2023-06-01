@@ -118,10 +118,7 @@ private:
     void connect_error_notifier(lower_phy_error_notifier& notifier) { error_notifier = &notifier; }
 
     // See interface for documentation.
-    void on_late_resource_grid(const resource_grid_context& context) override;
-
-    // See interface for documentation.
-    void on_overflow_resource_grid(const resource_grid_context& context) override;
+    void on_pdxch_request_late(const resource_grid_context& context) override;
 
   private:
     /// Error notifier.
@@ -166,9 +163,6 @@ private:
 
     // See interface for documentation.
     void on_puxch_request_late(const resource_grid_context& context) override;
-
-    // See interface for documentation.
-    void on_puxch_request_overflow(const resource_grid_context& context) override;
 
     // See interface for documentation.
     void on_rx_symbol(const resource_grid_reader& grid, const lower_phy_rx_symbol_context& context) override;

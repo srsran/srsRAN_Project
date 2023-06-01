@@ -47,7 +47,7 @@ private:
   void clear_old_ue_context();
 
   /// \brief Update MAC MUX and DEMUX tables of the respective UE, given the newly added/modified/removed bearers.
-  async_task<mac_ue_reconfiguration_response_message> update_mac_mux_and_demux();
+  async_task<mac_ue_reconfiguration_response> update_mac_mux_and_demux();
 
   f1ap_ue_context_update_response make_ue_config_response();
   f1ap_ue_context_update_response make_ue_config_failure();

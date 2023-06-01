@@ -24,4 +24,4 @@ set(SOURCES serving_cell_config_factory.cpp
         scheduler_cell_config_validator.cpp
         scheduler_ue_config_validator.cpp)
 add_library(sched_config STATIC ${SOURCES})
-target_link_libraries(sched_config srsran_ran)
+target_link_libraries(sched_config srsran_ran du_resource_manager)

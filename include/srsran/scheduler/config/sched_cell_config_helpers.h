@@ -22,13 +22,14 @@
 
 #pragma once
 
+#include "srsran/du/du_cell_config.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 namespace config_helpers {
 
 /// Builds the list of PUCCH guardbands.
-std::vector<sched_grid_resource> build_pucch_guardbands_list(const uplink_config& ul_cfg);
+std::vector<sched_grid_resource> build_pucch_guardbands_list(const pucch_builder_params& ul_cfg, unsigned bwp_size);
 
 } // namespace config_helpers
 } // namespace srsran

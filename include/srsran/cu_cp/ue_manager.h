@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -55,6 +56,9 @@ public:
   /// \brief Get the RRC UE control message notifier of the UE.
   virtual du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() = 0;
 
+  /// \brief Get the PCI of the UE.
+  virtual pci_t get_pci() = 0;
+
   /// \brief Get the C-RNTI of the UE.
   virtual rnti_t get_c_rnti() = 0;
 
@@ -83,6 +87,11 @@ public:
   /// \brief Get the CU-CP UE configuration stored in the UE manager.
   /// \return The CU-CP UE configuration.
   virtual ue_configuration get_ue_config() = 0;
+
+  /// \brief Get the UE index of a UE by a given pci and rnti.
+  /// \param[in] pci The PCI of the cell the UE is/was connected to.
+  /// \param[in] c_rnti The RNTI of the UE.
+  virtual ue_index_t get_ue_index(pci_t pci, rnti_t c_rnti) = 0;
 };
 
 /// DU Processor UE manager interface.
@@ -94,9 +103,10 @@ public:
   /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
   /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
   /// \param[in] du_index Index of the DU.
+  /// \param[in] pci PCI of the cell that the UE is connected to.
   /// \param[in] rnti RNTI of the UE to be added.
   /// \return Pointer to the newly added DU UE if successful, nullptr otherwise.
-  virtual du_ue* add_ue(du_index_t du_index, rnti_t rnti) = 0;
+  virtual du_ue* add_ue(du_index_t du_index, pci_t pci, rnti_t rnti) = 0;
 
   /// \brief Remove the DU UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
@@ -106,15 +116,6 @@ public:
   /// \param[in] ue_index Index of the UE to be found.
   /// \return Pointer to the DU UE if found, nullptr otherwise.
   virtual du_ue* find_du_ue(ue_index_t ue_index) = 0;
-
-  /// \brief Find the index the DU UE with the given RNTI.
-  /// \param[in] rnti RNTI of the UE to be found.
-  /// \return Index of the DU UE if found, invalid index otherwise.
-  virtual ue_index_t get_ue_index(rnti_t rnti) = 0;
-
-  /// \brief Get the number of UEs connected to the DU.
-  /// \return Number of UEs.
-  virtual size_t get_nof_du_ues() = 0;
 
   /// \brief Get the number of UEs connected to a specific DU.
   /// \return Number of UEs.
@@ -181,6 +182,9 @@ public:
   /// \return Number of UEs.
   virtual size_t get_nof_ngap_ues() = 0;
 
+  // Hide -Woverloaded-virtual warning by indicating to the compiler that we want all get_ue_index functions
+  using common_ue_manager::get_ue_index;
+
   /// \brief Get the UE index of the UE for the given RAN UE ID.
   /// \param[in] ran_ue_id RAN UE ID of the UE.
   /// \return Index of the UE if found, invalid index otherwise.
@@ -195,6 +199,11 @@ public:
   /// \param[in] ue_index Index of the UE.
   /// \param[in] amf_ue_id The AMF UE ID for the UE.
   virtual void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) = 0;
+
+  /// \brief Transfer the NGAP UE context to a new UE e.g. in case of a reestablishment.
+  /// \param[in] new_ue_index The index of the new UE.
+  /// \param[in] old_ue_index The index of the old UE.
+  virtual void transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t old_ue_index) = 0;
 };
 
 } // namespace srs_cu_cp

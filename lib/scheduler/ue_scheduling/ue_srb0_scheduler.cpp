@@ -21,12 +21,11 @@
  */
 
 #include "ue_srb0_scheduler.h"
-#include "../support/config_helpers.h"
+#include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/tbs_calculator.h"
-#include "ue_dci_builder.h"
-#include "ue_sch_pdu_builder.h"
 
 using namespace srsran;
 
@@ -43,10 +42,6 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
-  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-    // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
-    initial_active_dl_bwp.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  }
 }
 
 void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -146,11 +141,14 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Find available symbol x RB resources.
   const unsigned pending_bytes = u.pending_dl_srb0_newtx_bytes();
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_time_res);
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
 
-  prb_bitmap     used_crbs        = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_cfg.symbols);
+  prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
+      initial_active_dl_bwp.scs,
+      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
+      pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
-  crb_interval   unused_crbs      = find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
+  crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
   // Try to find least MCS to fit SRB0 message.
   // See 38.214, table 5.1.3.1-1: MCS index table 1 for PDSCH.
   sch_mcs_index mcs_idx = 0;
@@ -161,8 +159,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   while (mcs_idx <= expert_cfg.max_msg4_mcs) {
     // See 38.214, clause 5.1.3.1 - the UE shall use I_MCS and Table 5.1.3.1-1 to determine the modulation order (Qm)
     // and Target code rate (R) used in the physical downlink shared channel.
-    sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs_idx);
-    prbs_tbs                       = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
+    const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_mcs_table::qam64, mcs_idx);
+    prbs_tbs                             = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                        static_cast<unsigned>(pdsch_cfg.symbols.length()),
                                                        calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
                                                        pdsch_cfg.nof_oh_prb,
@@ -188,12 +186,11 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     return false;
   }
 
-  crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
-  prb_interval ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
-  if (ue_grant_prbs.length() < prbs_tbs.nof_prbs) {
+  crb_interval ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
+  if (ue_grant_crbs.length() < prbs_tbs.nof_prbs) {
     logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: Not enough PRBs ({} < {})",
                  u.crnti,
-                 ue_grant_prbs.length(),
+                 ue_grant_crbs.length(),
                  prbs_tbs.nof_prbs);
     return false;
   }
@@ -208,7 +205,9 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Allocate PUCCH resources.
   unsigned             k1          = 4;
   pucch_harq_ack_grant pucch_grant = {};
-  for (const auto k1_candidate : ue_pcell.cfg().get_k1_candidates()) {
+  // Minimum k1 value supported is 4.
+  static const std::array<uint8_t, 5> dci_1_0_k1_values = {4, 5, 6, 7, 8};
+  for (const auto k1_candidate : dci_1_0_k1_values) {
     pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1_candidate, *pdcch);
     if (pucch_grant.pucch_pdu != nullptr) {
       k1 = k1_candidate;
@@ -233,7 +232,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                   pdsch_time_res,
                   k1,
                   mcs_idx,
-                  ue_grant_prbs,
+                  ue_grant_crbs,
                   pdsch_cfg,
                   prbs_tbs.tbs_bytes);
 
@@ -249,7 +248,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                                         unsigned                   pdsch_time_res,
                                         unsigned                   k1,
                                         sch_mcs_index              mcs_idx,
-                                        const prb_interval&        ue_grant_prbs,
+                                        const crb_interval&        ue_grant_crbs,
                                         const pdsch_config_params& pdsch_params,
                                         unsigned                   tbs_bytes)
 {
@@ -258,21 +257,24 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs, srb0_dai);
 
   // Fill DL PDCCH DCI.
+  static const uint8_t msg4_rv = 0;
   build_dci_f1_0_tc_rnti(pdcch.dci,
                          cell_cfg.dl_cfg_common.init_dl_bwp,
-                         ue_grant_prbs,
+                         ue_grant_crbs,
                          pdsch_time_res,
                          k1,
                          pucch.pucch_res_indicator,
                          mcs_idx,
+                         msg4_rv,
                          h_dl);
 
   // Fill PDSCH PDU.
-  msg.context.ue_index = u.ue_index;
-  msg.context.k1       = k1;
-  msg.context.ss_id    = pdcch.ctx.context.ss_id;
+  msg.context.ue_index  = u.ue_index;
+  msg.context.k1        = k1;
+  msg.context.ss_id     = pdcch.ctx.context.ss_id;
+  msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
   build_pdsch_f1_0_tc_rnti(
-      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_prbs, true);
+      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_crbs, true);
 
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_srb0_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);

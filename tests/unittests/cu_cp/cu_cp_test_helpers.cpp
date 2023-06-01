@@ -55,6 +55,63 @@ cu_cp_test::~cu_cp_test()
   cu_cp_obj->stop();
 }
 
+void cu_cp_test::attach_ue(gnb_du_ue_f1ap_id_t du_ue_id,
+                           gnb_cu_ue_f1ap_id_t cu_ue_id,
+                           rnti_t              crnti,
+                           du_index_t          du_index)
+{
+  // Inject Initial UL RRC message
+  f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
+  test_logger.info("Injecting Initial UL RRC message");
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(init_ul_rrc_msg);
+
+  // Inject UL RRC message containing RRC Setup Complete
+  f1ap_message ul_rrc_msg =
+      generate_ul_rrc_message_transfer(cu_ue_id, du_ue_id, srb_id_t::srb1, generate_rrc_setup_complete());
+  test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(ul_rrc_msg);
+}
+
+void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
+                                           gnb_du_ue_f1ap_id_t du_ue_id,
+                                           gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                           pci_t               pci,
+                                           rnti_t              crnti)
+{
+  // Connect AMF by injecting a ng_setup_response
+  ngap_message ngap_msg = generate_ng_setup_response();
+  cu_cp_obj->get_ngap_message_handler().handle_message(ngap_msg);
+
+  ASSERT_TRUE(cu_cp_obj->amf_is_connected());
+
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request(pci);
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(du_index).handle_message(f1setup_msg);
+
+  // Attach UE
+  attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
+
+  // check that UE has been added
+  ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
+}
+
+void cu_cp_test::receive_ngap_dl_info_transfer()
+{
+  // Inject NGAP DL message using random AMF UE ID
+  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t  ran_ue_id        = uint_to_ran_ue_id(0);
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
+  cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
+}
+
 bool cu_cp_test::check_minimal_paging_result()
 {
   if (f1ap_pdu_notifier.last_f1ap_msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg ||
@@ -66,18 +123,18 @@ bool cu_cp_test::check_minimal_paging_result()
   auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
 
   // check ue id idx value
-  if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (4211117727 % 1024)) {
+  if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (279089024671 % 1024)) {
     test_logger.error("UE ID idx value mismatch {} != {}",
                       paging_msg->ue_id_idx_value.value.idx_len10().to_number(),
-                      (4211117727 % 1024));
+                      (279089024671 % 1024));
     return false;
   }
 
   // check paging id
-  if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 4211117727) {
+  if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
     test_logger.error("Paging ID mismatch {} != {}",
                       paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number(),
-                      4211117727);
+                      279089024671);
     return false;
   }
 

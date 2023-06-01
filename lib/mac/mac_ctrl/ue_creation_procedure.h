@@ -35,12 +35,12 @@ namespace srsran {
 class mac_ue_create_request_procedure
 {
 public:
-  explicit mac_ue_create_request_procedure(const mac_ue_create_request_message& req_,
-                                           mac_common_config_t&                 cfg_,
-                                           mac_ctrl_configurator&               mac_ctrl_,
-                                           mac_ul_configurator&                 mac_ul_,
-                                           mac_dl_configurator&                 mac_dl_,
-                                           mac_scheduler_configurator&          sched_configurator_) :
+  explicit mac_ue_create_request_procedure(const mac_ue_create_request& req_,
+                                           mac_common_config_t&         cfg_,
+                                           mac_ctrl_configurator&       mac_ctrl_,
+                                           mac_ul_configurator&         mac_ul_,
+                                           mac_dl_configurator&         mac_dl_,
+                                           mac_scheduler_configurator&  sched_configurator_) :
     req(req_),
     cfg(cfg_),
     logger(cfg.logger),
@@ -51,7 +51,7 @@ public:
   {
   }
 
-  void operator()(coro_context<async_task<mac_ue_create_response_message>>& ctx)
+  void operator()(coro_context<async_task<mac_ue_create_response>>& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
@@ -81,7 +81,7 @@ public:
   static const char* name() { return "UE Create Request"; }
 
 private:
-  mac_ue_create_response_message handle_mac_ue_create_result(bool result)
+  mac_ue_create_response handle_mac_ue_create_result(bool result)
   {
     if (result) {
       log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
@@ -95,20 +95,20 @@ private:
     }
 
     // Respond back to DU manager with result
-    mac_ue_create_response_message resp{};
+    mac_ue_create_response resp{};
     resp.ue_index   = req.ue_index;
     resp.cell_index = req.cell_index;
     resp.result     = result;
     return resp;
   }
 
-  const mac_ue_create_request_message req;
-  mac_common_config_t&                cfg;
-  srslog::basic_logger&               logger;
-  mac_ctrl_configurator&              ctrl_unit;
-  mac_ul_configurator&                ul_unit;
-  mac_dl_configurator&                dl_unit;
-  mac_scheduler_configurator&         sched_configurator;
+  const mac_ue_create_request req;
+  mac_common_config_t&        cfg;
+  srslog::basic_logger&       logger;
+  mac_ctrl_configurator&      ctrl_unit;
+  mac_ul_configurator&        ul_unit;
+  mac_dl_configurator&        dl_unit;
+  mac_scheduler_configurator& sched_configurator;
 
   bool ctrl_ue_created = false;
   bool add_ue_result   = false;

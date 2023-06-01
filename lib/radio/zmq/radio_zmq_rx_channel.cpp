@@ -21,6 +21,7 @@
  */
 
 #include "radio_zmq_rx_channel.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
@@ -35,7 +36,7 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
   socket_type(config.socket_type),
   logger(srslog::fetch_basic_logger(config.channel_id_str, false)),
   circular_buffer(config.buffer_size),
-  buffer(config.buffer_size * sizeof(radio_sample_type)),
+  buffer(config.buffer_size * sizeof(cf_t)),
   notification_handler(notification_handler_),
   async_executor(async_executor_)
 {
@@ -88,12 +89,6 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
 
   // Indicate the initialization was successful.
   state_fsm.init_successful();
-
-  // Start processing.
-  if (not async_executor.defer([this]() { run_async(); })) {
-    logger.error("Unable to initiate radio zmq execution");
-    return;
-  }
 }
 
 radio_zmq_rx_channel::~radio_zmq_rx_channel()
@@ -143,7 +138,7 @@ void radio_zmq_rx_channel::send_request()
 void radio_zmq_rx_channel::receive_response()
 {
   // Otherwise, send samples over socket.
-  int sample_size = sizeof(radio_sample_type);
+  int sample_size = sizeof(cf_t);
   int nbytes      = buffer.size();
   int n           = zmq_recv(sock, (void*)buffer.data(), nbytes, ZMQ_DONTWAIT);
 
@@ -225,13 +220,13 @@ void radio_zmq_rx_channel::run_async()
   }
 }
 
-void radio_zmq_rx_channel::receive(span<radio_sample_type> data)
+void radio_zmq_rx_channel::receive(span<cf_t> data)
 {
   logger.debug("Requested to receive {} samples.", data.size());
 
   // For each sample...
-  unsigned count;
-  for (count = 0; count < data.size();) {
+  unsigned count = 0;
+  while (state_fsm.is_running() && (count < data.size())) {
     // Try to push sample.
     unsigned popped = circular_buffer.try_pop(data.begin() + count, data.end());
     while (state_fsm.is_running() && popped == 0) {
@@ -240,10 +235,19 @@ void radio_zmq_rx_channel::receive(span<radio_sample_type> data)
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
       popped = circular_buffer.try_pop(data.begin() + count, data.end());
     }
-    if (!state_fsm.is_running()) {
-      break;
-    }
     count += popped;
+  }
+
+  if (!state_fsm.is_running()) {
+    srsvec::zero(data);
+  }
+}
+
+void radio_zmq_rx_channel::start()
+{
+  if (not async_executor.defer([this]() { run_async(); })) {
+    logger.error("Unable to initiate radio zmq execution");
+    return;
   }
 }
 

@@ -38,6 +38,7 @@ class dummy_sched : public mac_scheduler
 public:
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
   sched_configuration_notifier& notifier;
+  sched_result                  sched_res = {};
 
   explicit dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
 
@@ -59,7 +60,7 @@ public:
     notifier.on_ue_delete_response(ue_index);
   }
 
-  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
+  const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return sched_res; }
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void                handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void                handle_crc_indication(const ul_crc_indication& crc) override {}
@@ -77,9 +78,9 @@ struct add_reconf_delete_ue_test_task {
   std::thread::id                        tid;
   mac_dl_processor&                      mac_dl;
   unique_function<void(test_task_event)> event_test;
-  mac_ue_create_request_message          create_msg{};
-  mac_ue_reconfiguration_request_message reconf_msg{};
-  mac_ue_delete_request_message          delete_msg{};
+  mac_ue_create_request                  create_msg{};
+  mac_ue_reconfiguration_request         reconf_msg{};
+  mac_ue_delete_request                  delete_msg{};
 
   add_reconf_delete_ue_test_task(mac_dl_processor& mac_dl_, unique_function<void(test_task_event)> event_callback_) :
     mac_dl(mac_dl_), event_test(std::move(event_callback_))
@@ -141,13 +142,15 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator    du_mng_notifier;
   dummy_mac_result_notifier    phy_notifier;
   test_helpers::dummy_mac_pcap pcap;
-  mac_common_config_t          cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
-  du_rnti_table                rnti_table;
+  mac_dl_config                mac_dl_cfg{
+      ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
+  mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  du_rnti_table       rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);
 
   // Action: Add Cell.
   mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_config();
@@ -188,13 +191,15 @@ void test_dl_ue_procedure_tsan()
   dummy_mac_event_indicator    du_mng_notifier;
   dummy_mac_result_notifier    phy_notifier;
   test_helpers::dummy_mac_pcap pcap;
-  mac_common_config_t          cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
-  du_rnti_table                rnti_table;
+  mac_dl_config                mac_dl_cfg{
+      ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, mac_expert_config{10000, 10000}, pcap};
+  mac_common_config_t cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  du_rnti_table       rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(mac_dl_cfg, sched_obj, rnti_table);
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();

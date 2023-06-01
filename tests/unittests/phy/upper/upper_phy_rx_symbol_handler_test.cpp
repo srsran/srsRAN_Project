@@ -71,6 +71,23 @@ protected:
     }
   }
 
+  void handle_late_pusch_pdu()
+  {
+    uplink_processor::pusch_pdu pdu = {};
+    pdu.pdu.cp                      = cyclic_prefix::NORMAL;
+    pdu.pdu.codeword.emplace(pusch_processor::codeword_description{0, ldpc_base_graph_type::BG1, true});
+
+    pdu_repo.add_pusch_pdu(slot_point(0, 0, 0), pdu);
+
+    // Uplink processor gets called for a slot that does not correspond with the PUSCH PDU.
+    for (unsigned i = 0, e = get_nsymb_per_slot(pdu.pdu.cp); i != e; ++i) {
+      upper_phy_rx_symbol_context ctx = {};
+      ctx.symbol                      = i;
+      ctx.slot                        = slot_point(0, 0, 1);
+      rx_handler.handle_rx_symbol(ctx, rg);
+    }
+  }
+
   void handle_pucch_pdu()
   {
     uplink_processor::pucch_pdu pdu = {};
@@ -91,8 +108,14 @@ protected:
     softbuffer_pool(create_rx_softbuffer_pool(rx_softbuffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     pdu_repo(2),
-    rx_handler(*ul_processor_pool, pdu_repo, *softbuffer_pool, rx_results_wrapper, srslog::fetch_basic_logger("TEST"))
+    rx_handler(*ul_processor_pool,
+               pdu_repo,
+               *softbuffer_pool,
+               rx_results_wrapper,
+               srslog::fetch_basic_logger("TEST", true))
   {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
+    srslog::init();
   }
 
   std::unique_ptr<uplink_processor_pool> create_ul_processor_pool()
@@ -138,4 +161,13 @@ TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pucch_pdu_calls_uplink_pro
   handle_pucch_pdu();
 
   ASSERT_TRUE(ul_proc_spy->is_process_pucch_method_called());
+}
+
+TEST_F(UpperPhyRxSymbolHandlerFixture, handling_late_puxch_pdu_does_not_call_uplink_processor)
+{
+  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
+
+  handle_late_pusch_pdu();
+
+  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
 }

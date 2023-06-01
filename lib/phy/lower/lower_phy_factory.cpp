@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-/// \brief Calculates the reception-to-transmission (Rx-to-Tx) delay as a number of samples.
+/// \brief Calculates the transmit time offset as a number of samples.
 ///
 /// On the radio channel, uplink and downlink frames coexist on the same carrier. As explained in TS38.211
 /// Section 4.3.1, the sequence of uplink frames precedes the sequence of downlink frames by a given time
@@ -38,21 +38,16 @@ using namespace srsran;
 ///
 /// On the other hand, for an uplink and a downlink sample to coincide on the carrier at the same time, it is required
 /// that the lower PHY processes the downlink (transmit) sample in advance with respect to the uplink (receive) one,
-/// because of the delays introduced by the underlying radio device. The Rx-to-Tx delay is thus the number of
-/// samples by which the sequence of transmitted samples must precede that of received samples, as seen by the lower
+/// because of the delays introduced by the underlying radio device. The transmit time offset is thus the number of
+/// samples by which the sequence of transmitted samples must precede the reception time instant, as seen by the lower
 /// PHY processor, in order to achieve the aforementioned carrier alignment between uplink and downlink frames.
 ///
-/// More specifically, let \f$N_{\textup{offset}}\f$ be the "round-trip" delay introduced by the radio device
-/// (i.e., it is the sum of the delay experienced by a received sample before reaching the lower PHY plus the delay
-/// undergone by a downlink sample leaving the lower PHY, before transmission). Also, let \f$N_{\textup{TA,
-/// offset}}\f$ be the time-advance offset between downlink and uplink, as defined in TS38.211 Section 4.3.1. Finally,
-/// let \f$N_{\textup{cal}}\f$ be a calibration term that takes into account time-advance impairments due to radio
-/// device buffering. All three offsets are expressed as a number of samples. Then, the Rx-to-Tx delay \f$N\f$ is
-/// given by \f[ N=N_{\textup{offset}} - N_{\textup{cal}} + N_{\textup{TA, offset}} \f] samples or, equivalently,
-/// physical layer units of time.
+/// More specifically, let \f$N_{\textup{TA, offset}}\f$ be the time-advance offset between downlink and uplink, as
+/// defined in TS38.211 Section 4.3.1. Also, let \f$N_{\textup{cal}}\f$ be a calibration term that takes into account
+/// time-advance impairments due to radio device buffering. Both offsets are expressed as a number of samples.
+/// Then, the transmit time offset \f$N\f$ is given by \f[ N= N_{\textup{TA, offset}} - N_{\textup{cal}} \f] samples or,
+/// equivalently, physical layer units of time.
 ///
-/// \param[in] ul_to_dl_subframe_offset   UL-to-DL offset in subframes (recall, 1 subframe = 1ms). It maps to
-///                                       \f$N_{\textup{offset}}\f$.
 /// \param[in] time_alignment_calibration Time-advance radio calibration time, in number of samples. It
 ///                                       maps to \f$N_{\textup{cal}}\f$. Positive values cause a reduction of the RF
 ///                                       transmission delay with respect to the RF reception, while negative values
@@ -60,27 +55,14 @@ using namespace srsran;
 /// \param[in] ta_offset                  Time advance offset (see \ref lower_phy_ta_offset for more information). It
 ///                                       maps to \f$N_{\textup{TA, offset}}\f$.
 /// \param[in] srate                      Sampling rate.
-/// \return The reception-to-transmission delay as a number of samples.
-static unsigned get_rx_to_tx_delay(unsigned      ul_to_dl_subframe_offset,
-                                   int           time_alignment_calibration,
-                                   n_ta_offset   ta_offset,
-                                   sampling_rate srate)
+/// \return The transmit time offset as a number of samples.
+static int get_tx_time_offset(int time_alignment_calibration, n_ta_offset ta_offset, sampling_rate srate)
 {
-  // Calculate time between the UL signal reception and the transmission.
-  phy_time_unit ul_to_dl_delay = phy_time_unit::from_seconds(0.001 * static_cast<double>(ul_to_dl_subframe_offset));
-
-  // UL to DL delay in number of samples.
-  unsigned ul_to_dl_delay_samples = ul_to_dl_delay.to_samples(srate.to_Hz());
-
-  // Apply time alingment calibration.
-  ul_to_dl_delay_samples -= time_alignment_calibration;
-
-  // Apply the time alignment offset.
+  // Calculate the time alignment offset.
   phy_time_unit time_alignment_offset = phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset));
 
-  ul_to_dl_delay_samples += time_alignment_offset.to_samples(srate.to_Hz());
-
-  return ul_to_dl_delay_samples;
+  // Convert to samples and apply time alignment calibration.
+  return time_alignment_offset.to_samples(srate.to_Hz()) - time_alignment_calibration;
 }
 
 class lower_phy_factory_sw : public lower_phy_factory
@@ -99,15 +81,56 @@ public:
     srsran_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F),
                   "DFT window offset if out-of-range");
     srsran_assert(config.sectors.size() == 1, "Only one sector is currently supported.");
+    srsran_assert(config.srate.to_Hz() > 0, "Invalid sampling rate.");
 
     const lower_phy_sector_description& sector = config.sectors.front();
 
-    // Set the uplink processor initial slot to zero.
-    unsigned ul_init_slot_idx = 0;
+    srsran_assert(config.scs < subcarrier_spacing::kHz60,
+                  "Subcarrier spacing of {} is not supported. Only {} and {} are supported.",
+                  to_string(config.scs),
+                  to_string(subcarrier_spacing::kHz15),
+                  to_string(subcarrier_spacing::kHz30));
+    unsigned nof_samples_per_slot = config.srate.to_kHz() / pow2(to_numerology_value(config.scs));
 
-    // Calculate the downlink processor initial slot.
-    unsigned dl_init_slot_idx =
-        ul_init_slot_idx + config.ul_to_dl_subframe_offset * get_nof_slots_per_subframe(config.scs);
+    unsigned tx_buffer_size = config.bb_gateway->get_transmitter_optimal_buffer_size(0);
+    switch (config.baseband_tx_buffer_size_policy) {
+      case lower_phy_baseband_buffer_size_policy::slot:
+        tx_buffer_size = nof_samples_per_slot;
+        break;
+      case lower_phy_baseband_buffer_size_policy::half_slot:
+        tx_buffer_size = nof_samples_per_slot / 2;
+        break;
+      case lower_phy_baseband_buffer_size_policy::single_packet:
+        report_fatal_error_if_not(tx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
+        break;
+      case lower_phy_baseband_buffer_size_policy::optimal_slot:
+        report_fatal_error_if_not(tx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
+        tx_buffer_size = (nof_samples_per_slot / tx_buffer_size) * tx_buffer_size;
+        break;
+    }
+
+    unsigned rx_buffer_size = config.bb_gateway->get_receiver_optimal_buffer_size(0);
+    switch (config.baseband_rx_buffer_size_policy) {
+      case lower_phy_baseband_buffer_size_policy::slot:
+        rx_buffer_size = nof_samples_per_slot;
+        break;
+      case lower_phy_baseband_buffer_size_policy::half_slot:
+        rx_buffer_size = nof_samples_per_slot / 2;
+        break;
+      case lower_phy_baseband_buffer_size_policy::single_packet:
+        report_fatal_error_if_not(rx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
+        break;
+      case lower_phy_baseband_buffer_size_policy::optimal_slot:
+        report_fatal_error_if_not(rx_buffer_size > 0, "The radio does not have a transmitter optimal buffer size.");
+        rx_buffer_size = (nof_samples_per_slot / rx_buffer_size) * rx_buffer_size;
+        break;
+    }
+
+    // Get transmit time offset between the UL and the DL.
+    int tx_time_offset = get_tx_time_offset(config.time_alignment_calibration, config.ta_offset, config.srate);
+
+    // Maximum time delay between reception and transmission in samples (1ms plus the time offset).
+    unsigned rx_to_tx_max_delay = config.srate.to_kHz() + tx_time_offset;
 
     // Prepare downlink processor configuration.
     downlink_processor_configuration dl_proc_config;
@@ -118,7 +141,6 @@ public:
     dl_proc_config.bandwidth_prb           = sector.bandwidth_rb;
     dl_proc_config.center_frequency_Hz     = sector.dl_freq_hz;
     dl_proc_config.nof_tx_ports            = sector.nof_tx_ports;
-    dl_proc_config.initial_slot_index      = dl_init_slot_idx;
     dl_proc_config.nof_slot_tti_in_advance = config.max_processing_delay_slots;
 
     // Create downlink processor.
@@ -134,7 +156,6 @@ public:
     ul_proc_config.bandwidth_prb       = sector.bandwidth_rb;
     ul_proc_config.center_frequency_Hz = sector.ul_freq_hz;
     ul_proc_config.nof_rx_ports        = sector.nof_rx_ports;
-    ul_proc_config.initial_slot_index  = ul_init_slot_idx;
 
     // Create uplink processor.
     std::unique_ptr<lower_phy_uplink_processor> ul_proc = uplink_proc_factory->create(ul_proc_config);
@@ -142,18 +163,24 @@ public:
 
     // Prepare processor baseband adaptor configuration.
     lower_phy_baseband_processor::configuration proc_bb_adaptor_config;
-    proc_bb_adaptor_config.rx_task_executor = config.rx_task_executor;
-    proc_bb_adaptor_config.tx_task_executor = config.tx_task_executor;
-    proc_bb_adaptor_config.ul_task_executor = config.ul_task_executor;
-    proc_bb_adaptor_config.dl_task_executor = config.dl_task_executor;
-    proc_bb_adaptor_config.receiver         = &config.bb_gateway->get_receiver(0);
-    proc_bb_adaptor_config.transmitter      = &config.bb_gateway->get_transmitter(0);
-    proc_bb_adaptor_config.ul_bb_proc       = &ul_proc->get_baseband();
-    proc_bb_adaptor_config.dl_bb_proc       = &dl_proc->get_baseband();
-    proc_bb_adaptor_config.nof_tx_ports     = config.sectors.back().nof_tx_ports;
-    proc_bb_adaptor_config.nof_rx_ports     = config.sectors.back().nof_rx_ports;
-    proc_bb_adaptor_config.rx_to_tx_delay   = get_rx_to_tx_delay(
-        config.ul_to_dl_subframe_offset, config.time_alignment_calibration, config.ta_offset, config.srate);
+    proc_bb_adaptor_config.srate                  = config.srate;
+    proc_bb_adaptor_config.rx_task_executor       = config.rx_task_executor;
+    proc_bb_adaptor_config.tx_task_executor       = config.tx_task_executor;
+    proc_bb_adaptor_config.ul_task_executor       = config.ul_task_executor;
+    proc_bb_adaptor_config.dl_task_executor       = config.dl_task_executor;
+    proc_bb_adaptor_config.receiver               = &config.bb_gateway->get_receiver(0);
+    proc_bb_adaptor_config.transmitter            = &config.bb_gateway->get_transmitter(0);
+    proc_bb_adaptor_config.ul_bb_proc             = &ul_proc->get_baseband();
+    proc_bb_adaptor_config.dl_bb_proc             = &dl_proc->get_baseband();
+    proc_bb_adaptor_config.nof_tx_ports           = config.sectors.back().nof_tx_ports;
+    proc_bb_adaptor_config.nof_rx_ports           = config.sectors.back().nof_rx_ports;
+    proc_bb_adaptor_config.tx_time_offset         = tx_time_offset;
+    proc_bb_adaptor_config.rx_to_tx_max_delay     = config.srate.to_kHz() + proc_bb_adaptor_config.tx_time_offset;
+    proc_bb_adaptor_config.rx_buffer_size         = rx_buffer_size;
+    proc_bb_adaptor_config.nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size);
+    proc_bb_adaptor_config.tx_buffer_size         = tx_buffer_size;
+    proc_bb_adaptor_config.nof_tx_buffers         = std::max(4U, rx_to_tx_max_delay / tx_buffer_size);
+    proc_bb_adaptor_config.system_time_throttling = config.system_time_throttling;
 
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =

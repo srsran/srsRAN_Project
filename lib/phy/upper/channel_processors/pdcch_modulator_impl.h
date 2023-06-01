@@ -24,6 +24,8 @@
 
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsran/phy/upper/re_buffer.h"
+#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
 namespace srsran {
@@ -50,12 +52,6 @@ private:
   /// Provides an implementation of the the pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;
 
-  /// Temporal storage of scrambled bits.
-  std::array<uint8_t, MAX_BITS> temp_b_hat = {};
-
-  /// Temporal storage of resource elements.
-  std::array<cf_t, MAX_RE> temp_d_pdcch = {};
-
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.2.3 Scrambling.
   ///
   /// \param[out] b_hat Output bits after scrambling.
@@ -73,14 +69,14 @@ private:
   /// \brief Maps the modulated symbols to resource elements in the grid. Implements TS 38.211 section 7.3.2.5 Mapping
   /// to physical resources.
   ///
-  /// \param[out] grid Provides the destination resource grid.
+  /// \param[out] mapper   Provides the destination resource grid.
   /// \param[in] d_pdcch Provides the block of complex-valued symbols to map.
-  /// \param[in] config Provides the mapper configuration.
-  void map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config);
+  /// \param[in] config  Provides the mapper configuration.
+  void map(resource_grid_mapper& mapper, const re_buffer_reader& d_pdcch, const config_t& config);
 
 public:
   // See interface for the documentation.
-  void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) override;
+  void modulate(resource_grid_mapper& grid, span<const uint8_t> data, const config_t& config) override;
 
   /// Generic PDCCH modulator instance constructor.
   pdcch_modulator_impl(std::unique_ptr<modulation_mapper>       modulator_,

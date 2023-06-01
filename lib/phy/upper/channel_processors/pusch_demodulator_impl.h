@@ -90,12 +90,14 @@ private:
       for (unsigned i_symbol = 0; i_symbol != config.nof_symbols; ++i_symbol) {
         // Skip data carrying DM-RS.
         if (config.dmrs_symb_pos[i_symbol + config.start_symbol_index]) {
-          re_port_buffer = grid.get(re_port_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask_dmrs);
+          re_port_buffer =
+              grid.get(re_port_buffer, config.rx_ports[i_port], i_symbol + config.start_symbol_index, 0, re_mask_dmrs);
           continue;
         }
 
         // Copy grid data resource elements into the buffer.
-        re_port_buffer = grid.get(re_port_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask);
+        re_port_buffer =
+            grid.get(re_port_buffer, config.rx_ports[i_port], i_symbol + config.start_symbol_index, 0, re_mask);
       }
 
       srsran_assert(

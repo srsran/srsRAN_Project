@@ -119,7 +119,7 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req));
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req, harq_timeout_handler));
     return ues[ue_req.ue_index];
   }
 
@@ -161,9 +161,11 @@ protected:
     ues[ue_index].handle_bsr_indication(msg);
   }
 
-  scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
-  cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
-  sched_cfg_dummy_notifier   dummy_mac_notif;
+  scheduler_ue_expert_config           expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
+  cell_configuration                   cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier             dummy_mac_notif;
+  scheduler_ue_metrics_dummy_notifier  metrics_notif;
+  scheduler_harq_timeout_dummy_handler harq_timeout_handler;
 
   cell_resource_allocator           res_grid;
   ue_resource_grid_view             ue_res_grid;

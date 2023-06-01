@@ -47,14 +47,18 @@ void scheduler_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
 }
 
-void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu)
+void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs)
 {
   if (ues.contains(crc_pdu.ue_index)) {
-    ues[crc_pdu.ue_index].data.count_crc_acks += crc_pdu.tb_crc_success ? 1 : 0;
-    ues[crc_pdu.ue_index].data.count_crc_pdus++;
+    auto& u = ues[crc_pdu.ue_index];
+    u.data.count_crc_acks += crc_pdu.tb_crc_success ? 1 : 0;
+    u.data.count_crc_pdus++;
     if (crc_pdu.ul_sinr_metric.has_value()) {
-      ues[crc_pdu.ue_index].data.nof_pusch_snr_reports++;
-      ues[crc_pdu.ue_index].data.sum_pusch_snrs += crc_pdu.ul_sinr_metric.value();
+      u.data.nof_pusch_snr_reports++;
+      u.data.sum_pusch_snrs += crc_pdu.ul_sinr_metric.value();
+    }
+    if (crc_pdu.tb_crc_success) {
+      u.data.sum_ul_tb_bytes += tbs.value();
     }
   }
 }
@@ -76,12 +80,27 @@ void scheduler_metrics_handler::handle_csi_report(
   }
 }
 
-void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool ack)
+void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
     u.data.count_uci_harq_acks += ack ? 1 : 0;
     u.data.count_uci_harqs++;
+    if (ack) {
+      u.data.sum_dl_tb_bytes += tbs.value();
+    }
+  }
+}
+
+void scheduler_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_dl)
+{
+  if (ues.contains(ue_index)) {
+    auto& u = ues[ue_index];
+    if (is_dl) {
+      u.data.count_uci_harqs++;
+    } else {
+      u.data.count_crc_pdus++;
+    }
   }
 }
 
@@ -134,7 +153,6 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     ue_metric_context& u = ues[it->second];
     for (auto& cw : dl_grant.pdsch_cfg.codewords) {
       u.data.dl_mcs += cw.mcs_index.to_uint();
-      u.data.sum_dl_tb_bytes += cw.tb_size_bytes;
       u.data.nof_dl_cws++;
     }
   }
@@ -147,7 +165,6 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
-    u.data.sum_ul_tb_bytes += ul_grant.pusch_cfg.tb_size_bytes;
     u.data.nof_puschs++;
   }
 }

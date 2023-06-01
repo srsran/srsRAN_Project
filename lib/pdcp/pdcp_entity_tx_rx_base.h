@@ -69,9 +69,13 @@ constexpr uint32_t pdcp_window_size(pdcp_sn_size sn_size)
 class pdcp_entity_tx_rx_base
 {
 protected:
-  explicit pdcp_entity_tx_rx_base(rb_id_t rb_id_, pdcp_rb_type rb_type_, pdcp_sn_size sn_size_) :
+  explicit pdcp_entity_tx_rx_base(rb_id_t       rb_id_,
+                                  pdcp_rb_type  rb_type_,
+                                  pdcp_rlc_mode rlc_mode_,
+                                  pdcp_sn_size  sn_size_) :
     rb_id(rb_id_),
     rb_type(rb_type_),
+    rlc_mode(rlc_mode_),
     hdr_len_bytes((pdcp_data_pdu_header_size(sn_size_))),
     window_size(pdcp_window_size(sn_size_)),
     sn_size(sn_size_)
@@ -93,9 +97,12 @@ protected:
   /*
    * RB helpers
    */
-  const pdcp_rb_type rb_type;
-  bool               is_srb() { return rb_type == pdcp_rb_type::srb; }
-  bool               is_drb() { return rb_type == pdcp_rb_type::drb; }
+  const pdcp_rb_type  rb_type;
+  const pdcp_rlc_mode rlc_mode;
+  bool                is_srb() const { return rb_type == pdcp_rb_type::srb; }
+  bool                is_drb() const { return rb_type == pdcp_rb_type::drb; }
+  bool                is_um() const { return rlc_mode == pdcp_rlc_mode::um; }
+  bool                is_am() const { return rlc_mode == pdcp_rlc_mode::am; }
 
   /*
    * Header and window helpers

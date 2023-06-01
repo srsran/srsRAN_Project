@@ -33,19 +33,25 @@ namespace srs_du {
 
 /// \brief This class holds the context of an UE in the DU.
 struct du_ue {
-  explicit du_ue(du_ue_index_t                ue_index_,
-                 du_cell_index_t              pcell_index_,
-                 rnti_t                       rnti_,
-                 ue_ran_resource_configurator resources_) :
-    ue_index(ue_index_), rnti(rnti_), pcell_index(pcell_index_), resources(std::move(resources_))
+  explicit du_ue(du_ue_index_t                               ue_index_,
+                 du_cell_index_t                             pcell_index_,
+                 rnti_t                                      rnti_,
+                 std::unique_ptr<mac_ue_radio_link_notifier> mac_rlf_notifier_,
+                 ue_ran_resource_configurator                resources_) :
+    ue_index(ue_index_),
+    rnti(rnti_),
+    pcell_index(pcell_index_),
+    mac_rlf_notifier(std::move(mac_rlf_notifier_)),
+    resources(std::move(resources_))
   {
   }
 
-  const du_ue_index_t          ue_index;
-  rnti_t                       rnti;
-  du_cell_index_t              pcell_index;
-  du_ue_bearer_manager         bearers;
-  ue_ran_resource_configurator resources;
+  const du_ue_index_t                         ue_index;
+  rnti_t                                      rnti;
+  du_cell_index_t                             pcell_index;
+  std::unique_ptr<mac_ue_radio_link_notifier> mac_rlf_notifier;
+  du_ue_bearer_manager                        bearers;
+  ue_ran_resource_configurator                resources;
 };
 
 } // namespace srs_du

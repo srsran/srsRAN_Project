@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/support/async/async_task.h"
 

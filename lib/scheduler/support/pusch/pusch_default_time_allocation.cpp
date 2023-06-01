@@ -147,3 +147,33 @@ srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarr
   // Retrieve respective table.
   return tables[static_cast<unsigned>(cp.value) * 4 + to_numerology_value(scs)];
 }
+
+span<const pusch_time_domain_resource_allocation>
+srsran::get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_cfg,
+                                          const bwp_uplink_common&          active_bwp_ul_common,
+                                          const bwp_uplink_dedicated*       active_bwp_ul_ded)
+{
+  const bool is_fallback =
+      ss_cfg.type == search_space_configuration::type_t::common and ss_cfg.cs_id == to_coreset_id(0);
+  srsran_assert(is_fallback or active_bwp_ul_ded != nullptr, "Invalid BWP DL dedicated configuration");
+
+  // See TS 38.214, Table 6.1.2.1.1-1.
+  if (not is_fallback) {
+    if (active_bwp_ul_ded->pusch_cfg.has_value() and
+        (not active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list.empty())) {
+      // UE dedicated pusch-TimeDomain list.
+      return active_bwp_ul_ded->pusch_cfg.value().pusch_td_alloc_list;
+    }
+  }
+
+  if (active_bwp_ul_common.pusch_cfg_common.has_value() and
+      (not active_bwp_ul_common.pusch_cfg_common.value().pusch_td_alloc_list.empty())) {
+    // common pusch-TimeDomain list.
+    return active_bwp_ul_common.pusch_cfg_common.value().pusch_td_alloc_list;
+  }
+
+  // default A table case.
+  return pusch_default_time_allocations_default_A_table(
+      active_bwp_ul_common.generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
+      active_bwp_ul_common.generic_params.scs);
+}

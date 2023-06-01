@@ -35,8 +35,6 @@ class radio_zmq_rx_stream : public baseband_gateway_receiver
 private:
   /// Alignment timeout. Waits this time before padding zeros.
   const std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(100);
-  /// Desired receive number of samples.
-  static constexpr unsigned RECEIVE_BUFFER_SIZE = 1920;
   /// Transmitter alignment interface.
   radio_zmq_tx_align_interface& tx_align;
   /// Indicates whether the class was initialized successfully.
@@ -77,10 +75,10 @@ public:
 
   uint64_t get_sample_count() const { return sample_count; }
 
-  unsigned get_buffer_size() const override;
-
   // See interface for documentation.
-  metadata receive(baseband_gateway_buffer& data) override;
+  metadata receive(baseband_gateway_buffer_writer& data) override;
+
+  void start(baseband_gateway_timestamp init_time);
 
   void stop();
 

@@ -36,7 +36,7 @@ public:
   bool is_valid(const pdsch_processor::pdu_t& pdu) const override;
 };
 
-/// Describes a generic PDSCH processor.
+/// Implements a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {
 public:

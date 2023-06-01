@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_cell_config.h"
-#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/du_manager/du_manager_params.h"
 
 namespace srsran {
 
@@ -47,15 +47,12 @@ byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::st
 /// \return byte buffer with packed cell BCCH-DL-SCH message.
 byte_buffer make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg);
 
-/// \brief Fills ASN.1 F1SetupRequest struct.
-/// \param[out] request The F1 setup request message struct to fill.
-/// \param[in] setup_params DU setup parameters to add to the F1SetupRequest.
-/// \param[in] cells_to_add Configurations of cells to add to F1SetupRequest.
-/// \param[out] sib_jsons logger Logger used to log RRC ASN.1 SIB1 messages of the DU cells.
-void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
-                                const du_setup_params&          setup_params,
-                                span<const du_cell_config*>     cells_to_add,
-                                std::vector<std::string>*       cell_json_strs = nullptr);
+struct f1_setup_request_message;
+
+/// \brief Generate request message for F1AP to initiate an F1 Setup Request procedure.
+void fill_f1_setup_request(f1_setup_request_message&            req,
+                           const du_manager_params::ran_params& ran_params,
+                           std::vector<std::string>*            sib1_jsons = nullptr);
 
 } // namespace srs_du
 

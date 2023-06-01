@@ -21,10 +21,13 @@
  */
 
 #include "../../ran/gnb_format.h"
+#include "procedures/rrc_reestablishment_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
+#include "srsran/asn1/rrc_nr/nr_ue_variables.h"
+#include "srsran/security/integrity.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -76,9 +79,16 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   // Extract the setup ID and cause
   const rrc_setup_request_ies_s& request_ies = request_msg.rrc_setup_request;
   switch (request_ies.ue_id.type().value) {
-    case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1:
+    case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1: {
       context.setup_ue_id = request_ies.ue_id.ng_5_g_s_tmsi_part1().to_number();
+
+      // As per TS 23.003 section 2.10.1 the last 32Bits of the 5G-S-TMSI are the 5G-TMSI
+      unsigned shift_bits =
+          request_ies.ue_id.ng_5_g_s_tmsi_part1().length() - 32; // calculate the number of bits to shift
+      context.five_g_tmsi = ((request_ies.ue_id.ng_5_g_s_tmsi_part1().to_number() << shift_bits) >> shift_bits);
+
       break;
+    }
     case asn1::rrc_nr::init_ue_id_c::types_opts::random_value:
       context.setup_ue_id = request_ies.ue_id.random_value().to_number();
       // TODO: communicate with NGAP
@@ -92,13 +102,89 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   context.connection_cause.value = request_ies.establishment_cause.value;
 
   // Launch RRC setup procedure
-  task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, request_msg, du_to_cu_container, *this, du_processor_notifier, nas_notifier, *event_mng, logger));
+  task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
+                                                                   request_ies.establishment_cause.value,
+                                                                   du_to_cu_container,
+                                                                   *this,
+                                                                   du_processor_notifier,
+                                                                   nas_notifier,
+                                                                   *event_mng,
+                                                                   logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
-  // TODO: handle RRC reestablishment request
+  // Notifiy CU-CP about the RRC Reestablishment Request to get old RRC UE context
+  rrc_reestablishment_ue_context_t reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
+      msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti), context.ue_index);
+
+  // store capabilities if available
+  if (reest_context.capabilities.has_value()) {
+    context.capabilities = reest_context.capabilities.value();
+  }
+
+  // Get RX short MAC
+  security::sec_short_mac_i short_mac     = {};
+  uint16_t                  short_mac_int = htons(msg.rrc_reest_request.ue_id.short_mac_i.to_number());
+  memcpy(short_mac.data(), &short_mac_int, 2);
+
+  // Get packed varShortMAC-Input
+  var_short_mac_input_s var_short_mac_input = {};
+  var_short_mac_input.source_pci            = msg.rrc_reest_request.ue_id.pci;
+  var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci);
+  var_short_mac_input.source_c_rnti        = msg.rrc_reest_request.ue_id.c_rnti;
+  byte_buffer   var_short_mac_input_packed = {};
+  asn1::bit_ref bref(var_short_mac_input_packed);
+  var_short_mac_input.pack(bref);
+
+  logger.debug(var_short_mac_input_packed.begin(),
+               var_short_mac_input_packed.end(),
+               "Packed varShortMAC-Input. Source PCI={}, Target Cell-Id={}, Source C-RNTI={}",
+               var_short_mac_input.source_pci,
+               var_short_mac_input.target_cell_id.to_number(),
+               var_short_mac_input.source_c_rnti);
+
+  // Verify ShortMAC-I
+  bool valid = false;
+  if (reest_context.sec_context.sel_algos.algos_selected) {
+    security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
+    valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
+    logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
+  } else {
+    logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
+  }
+
+  // TODO Starting the RRC Re-establishment procedure is temporally disabled.
+  if (true /* not valid */) {
+    // Reject RRC Reestablishment Request by sending RRC Setup
+    task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,
+                                                                     asn1::rrc_nr::establishment_cause_e::mt_access,
+                                                                     du_to_cu_container,
+                                                                     *this,
+                                                                     du_processor_notifier,
+                                                                     nas_notifier,
+                                                                     *event_mng,
+                                                                     logger));
+
+    if (reest_context.ue_index != ue_index_t::invalid) {
+      // Release the old UE
+      cu_cp_ue_context_release_request release_req;
+      release_req.ue_index = reest_context.ue_index;
+      release_req.cause    = cause_t::radio_network;
+
+      ngap_ctrl_notifier.on_ue_context_release_request(release_req);
+    }
+  } else {
+    // Accept RRC Reestablishment Request by sending RRC Reestablishment
+    task_sched.schedule_async_task(
+        launch_async<rrc_reestablishment_procedure>(context, reest_context.ue_index, *this, *event_mng, logger));
+
+    // Notify CU-CP to transfer and remove UE Contexts
+    cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, reest_context.ue_index);
+
+    // Notify DU Processor to start a Reestablishment Context Modification Routine
+    du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index);
+  }
 }
 
 void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
@@ -136,6 +222,9 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
+      handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_reest_complete().rrc_transaction_id);
+      break;
     default:
       log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Unsupported message type");
       break;
@@ -165,7 +254,11 @@ void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message
   dl_info_transfer.ded_nas_msg.resize(msg.nas_pdu.length());
   std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), dl_info_transfer.ded_nas_msg.begin());
 
-  send_dl_dcch(dl_dcch_msg);
+  if (srbs[srb_id_to_uint(srb_id_t::srb2)].pdu_notifier != nullptr) {
+    send_dl_dcch(srb_id_t::srb2, dl_dcch_msg);
+  } else {
+    send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  }
 }
 
 void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint8_t transaction_id_)
@@ -178,14 +271,9 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   }
 }
 
-void rrc_ue_impl::handle_new_guami(const guami& msg)
-{
-  context.current_guami = msg;
-}
-
 async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
-  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, du_processor_notifier, logger);
 }
 
 async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg)
@@ -194,10 +282,30 @@ async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu
   return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
-void rrc_ue_impl::handle_rrc_ue_release()
+cu_cp_user_location_info_nr rrc_ue_impl::handle_rrc_ue_release()
 {
+  // prepare location info to return
+  cu_cp_user_location_info_nr user_location_info;
+  user_location_info.nr_cgi      = context.cell.cgi;
+  user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  user_location_info.tai.tac     = context.cell.tac;
+
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
-  send_dl_dcch(dl_dcch_msg);
+  send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+
+  return user_location_info;
+}
+
+rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
+{
+  rrc_reestablishment_ue_context_t rrc_reest_context;
+  rrc_reest_context.sec_context = context.sec_context;
+
+  if (context.capabilities.has_value()) {
+    rrc_reest_context.capabilities = context.capabilities.value();
+  }
+
+  return rrc_reest_context;
 }

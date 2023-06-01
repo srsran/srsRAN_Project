@@ -80,7 +80,7 @@ private:
   /// Creates SRB0 and SRB1 in RLC.
   void create_rlc_srbs();
 
-  async_task<mac_ue_create_response_message> make_mac_ue_create_req();
+  async_task<mac_ue_create_response> make_mac_ue_create_req();
 
   void connect_layer_bearers();
 
@@ -93,9 +93,9 @@ private:
   du_ran_resource_manager&                     du_res_alloc;
   ue_procedure_logger                          proc_logger;
 
-  du_ue*                         ue_ctx = nullptr;
-  mac_ue_create_response_message mac_resp{};
-  f1ap_ue_creation_response      f1ap_resp{};
+  du_ue*                    ue_ctx = nullptr;
+  mac_ue_create_response    mac_resp{};
+  f1ap_ue_creation_response f1ap_resp{};
 };
 
 } // namespace srs_du

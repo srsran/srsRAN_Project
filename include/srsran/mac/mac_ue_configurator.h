@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
@@ -17,6 +26,16 @@ namespace srsran {
 
 class unique_timer;
 
+/// Interface used to notify detected radio link failures in the MAC (e.g. due to max KOs reached) for a given UE.
+class mac_ue_radio_link_notifier
+{
+public:
+  virtual ~mac_ue_radio_link_notifier() = default;
+
+  /// \brief Notifies that a radio link failure has been detected for a given UE.
+  virtual void on_rlf_detected() = 0;
+};
+
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_config {
   lcid_t               lcid;
@@ -25,10 +44,11 @@ struct mac_logical_channel_config {
 };
 
 /// Input parameters used to create a UE in the scheduler.
-struct mac_ue_create_request_message {
+struct mac_ue_create_request {
   du_cell_index_t                         cell_index;
   du_ue_index_t                           ue_index;
   rnti_t                                  crnti;
+  mac_ue_radio_link_notifier*             rlf_notifier;
   std::vector<mac_logical_channel_config> bearers;
   mac_cell_group_config                   mac_cell_group_cfg;
   physical_cell_group_config              phy_cell_group_cfg;
@@ -38,14 +58,14 @@ struct mac_ue_create_request_message {
 };
 
 /// Outcome of a MAC UE creation request procedure.
-struct mac_ue_create_response_message {
+struct mac_ue_create_response {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   bool            result;
 };
 
 /// Input parameters used to reconfigure a UE in the scheduler.
-struct mac_ue_reconfiguration_request_message {
+struct mac_ue_reconfiguration_request {
   du_ue_index_t                           ue_index;
   du_cell_index_t                         pcell_index;
   rnti_t                                  crnti;
@@ -57,19 +77,21 @@ struct mac_ue_reconfiguration_request_message {
   sched_ue_config_request sched_cfg;
 };
 
-struct mac_ue_reconfiguration_response_message {
+/// \brief Outcome of a MAC UE reconfiguration request procedure.
+struct mac_ue_reconfiguration_response {
   du_ue_index_t ue_index;
   bool          result;
 };
 
 /// Input parameters used to delete a UE in the scheduler.
-struct mac_ue_delete_request_message {
+struct mac_ue_delete_request {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
 };
 
-struct mac_ue_delete_response_message {
+/// \brief Outcome of a MAC UE deletion request procedure.
+struct mac_ue_delete_response {
   bool result;
 };
 
@@ -78,15 +100,18 @@ class mac_ue_configurator
 {
 public:
   virtual ~mac_ue_configurator() = default;
-  virtual async_task<mac_ue_create_response_message>
-  handle_ue_create_request(const mac_ue_create_request_message& cfg) = 0;
 
-  virtual async_task<mac_ue_reconfiguration_response_message>
-  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  /// \brief Creates a UE context in the MAC.
+  virtual async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg) = 0;
 
-  virtual async_task<mac_ue_delete_response_message>
-  handle_ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
+  /// \brief Reconfigures an existing UE context in the MAC.
+  virtual async_task<mac_ue_reconfiguration_response>
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) = 0;
 
+  /// \brief Deletes an existing UE context in the MAC.
+  virtual async_task<mac_ue_delete_response> handle_ue_delete_request(const mac_ue_delete_request& cfg) = 0;
+
+  /// \brief Forward UL-CCCH message to upper layers.
   virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) = 0;
 };
 

@@ -42,11 +42,6 @@ static unsigned cell_nof_crbs(const cell_config_builder_params& params)
                                                                 : frequency_range::FR1);
 }
 
-static min_channel_bandwidth min_channel_bw(const cell_config_builder_params& params)
-{
-  return band_helper::get_min_channel_bw(get_band(params), params.scs_common);
-}
-
 static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params& params)
 {
   const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
@@ -70,7 +65,7 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
 carrier_configuration
 srsran::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
-  carrier_configuration cfg;
+  carrier_configuration cfg{};
   cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn                                  = params.dl_arfcn;
   cfg.nof_ant                                = 1;
@@ -102,14 +97,14 @@ coreset_configuration srsran::config_helpers::make_default_coreset_config(const 
   cfg.id = to_coreset_id(1);
   // PRBs spanning the maximnum number of CRBs possible.
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  unsigned             coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
-  // Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of UE decoding the DCI in CSS
-  // rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-  freq_resources.fill(1, coreset_nof_resources, true);
+  const unsigned       coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+  freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
+  const nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   // Number of symbols equal to max(CORESET#0, 2).
-  pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
-      min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
+  const pdcch_type0_css_coreset_description desc =
+      pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
   cfg.duration             = std::max(2U, static_cast<unsigned>(desc.nof_symb_coreset));
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
@@ -120,14 +115,16 @@ coreset_configuration srsran::config_helpers::make_default_coreset_config(const 
 coreset_configuration srsran::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg{};
-  cfg.id                                   = to_coreset_id(0);
-  pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
-      min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
+  cfg.id = to_coreset_id(0);
+  const nr_band band =
+      params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  const pdcch_type0_css_coreset_description desc =
+      pdcch_type0_css_coreset_get(band, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
-  cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
-  int rb_start = params.scs_common == subcarrier_spacing::kHz15
-                     ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
-                     : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
+  cfg.duration       = static_cast<unsigned>(desc.nof_symb_coreset);
+  const int rb_start = params.scs_common == subcarrier_spacing::kHz15
+                           ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
+                           : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
   if (rb_start < 0) {
     report_error("Coreset#0 CRB starts before pointA.\n");
   }
@@ -151,7 +148,7 @@ search_space_configuration srsran::config_helpers::make_default_search_space_zer
   cfg.monitoring_slot_offset = 0;
   cfg.duration               = 1;
   // TODO: Use TS38.213, Table 10.1-1.
-  cfg.nof_candidates       = {0, 0, 1, 0, 0};
+  cfg.nof_candidates       = {0, 0, 2, 0, 0};
   cfg.type                 = search_space_configuration::type_t::common;
   cfg.common.f0_0_and_f1_0 = true;
   return cfg;
@@ -173,7 +170,7 @@ search_space_configuration srsran::config_helpers::make_default_ue_search_space_
   cfg.cs_id                      = to_coreset_id(1);
   cfg.id                         = to_search_space_id(2);
   cfg.type                       = search_space_configuration::type_t::ue_dedicated;
-  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
   return cfg;
 }
 
@@ -199,7 +196,7 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
 
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz,
       params.scs_common,
       params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
@@ -233,7 +230,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
-  uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
+  const uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, params.band);
   // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
 
   const frequency_range freq_range =
@@ -241,9 +238,9 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   const duplex_mode duplex = band_helper::get_duplex_mode(
       params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
 
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(params.channel_bw_mhz, params.scs_common, freq_range);
 
-  double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
+  const double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), nof_crbs, params.scs_common);
   // absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
   // Section 4.4.4.2.
@@ -284,7 +281,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   auto to_pusch_td_list = [](const std::initializer_list<unsigned>& k2s) {
     std::vector<pusch_time_domain_resource_allocation> vec;
     vec.reserve(k2s.size());
-    for (unsigned k2 : k2s) {
+    for (const unsigned k2 : k2s) {
       vec.push_back(pusch_time_domain_resource_allocation{
           .k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}});
     }
@@ -294,6 +291,10 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4});
   } else {
     // TDD
+    // - [Implementation-defined] Ensure k2 value which is less than or equal to minimum value of k1(s) exist in the
+    // first entry of list. This way PDSCH(s) are scheduled before PUSCH and all DL slots are filled with PDSCH and all
+    // UL slots are filled with PUSCH under heavy load. It also ensures that correct DAI value goes in the UL PDCCH of
+    // DCI Format 0_1.
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4, 5, 6, 7});
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
@@ -328,9 +329,11 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
 pusch_config srsran::config_helpers::make_default_pusch_config()
 {
   pusch_config cfg{};
-  cfg.tx_cfg = pusch_config::tx_config::not_set;
+  // TODO: Verify whether its the correct Transmission Configuration we want to support.
+  cfg.tx_cfg = pusch_config::tx_config::codebook;
   cfg.pusch_mapping_type_a_dmrs.emplace();
-  cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos1;
+  cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.emplace();
+  cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos2;
 
   cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
                                                          .p0_nominal_without_grant = -76,
@@ -368,6 +371,48 @@ pusch_config srsran::config_helpers::make_default_pusch_config()
   return cfg;
 }
 
+srs_config srsran::config_helpers::make_default_srs_config(const cell_config_builder_params& params)
+{
+  srs_config cfg{};
+
+  cfg.srs_res.emplace_back();
+  // TODO: Verify correctness of the config based on what we support.
+  srs_config::srs_resource& res = cfg.srs_res.back();
+  res.id                        = static_cast<srs_config::srs_res_id>(0);
+  res.nof_ports                 = srs_config::srs_resource::nof_srs_ports::port1;
+  res.trans_comb_value          = 2;
+  res.trans_comb_offset         = 0;
+  res.trans_comb_cyclic_shift   = 0;
+  res.res_mapping.start_pos     = 0;
+  res.res_mapping.nof_symb      = srs_config::srs_resource::resource_mapping::nof_symbols::n1;
+  res.res_mapping.re_factor     = srs_config::srs_resource::resource_mapping::repetition_factor::n1;
+  res.freq_domain_pos           = 0;
+  res.freq_domain_shift         = 5;
+  // NOTE: C_SRS, B_SRS and B_hop are chosen to disable SRS frequency hopping and to monitor SRS over smallest
+  // possible BW i.e. 4 RBs. See TS 38.211, Table 6.4.1.4.3-1.
+  // This is done to cater to setups of all BWs until SRS is supported in scheduler.
+  // TODO: Support SRS in scheduler.
+  res.freq_hop.c_srs = 0;
+  res.freq_hop.b_srs = 0;
+  res.freq_hop.b_hop = 0;
+  res.grp_or_seq_hop = srs_config::srs_resource::group_or_sequence_hopping::neither;
+  res.res_type       = srs_config::srs_resource::aperiodic;
+  res.sequence_id    = params.pci;
+
+  cfg.srs_res_set.emplace_back();
+  // TODO: Verify correctness of the config based on what we support.
+  srs_config::srs_resource_set& res_set = cfg.srs_res_set.back();
+  res_set.id                            = static_cast<srs_config::srs_res_set_id>(0);
+  res_set.srs_res_id_list.emplace_back(static_cast<srs_config::srs_res_id>(0));
+  res_set.res_type =
+      srs_config::srs_resource_set::aperiodic_resource_type{.aperiodic_srs_res_trigger = 1, .slot_offset = 7};
+  res_set.srs_res_set_usage = srs_config::srs_resource_set::usage::codebook;
+  res_set.p0                = -84;
+  res_set.pathloss_ref_rs   = static_cast<ssb_id_t>(0);
+
+  return cfg;
+}
+
 uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_config_builder_params& params)
 {
   // > UL Config.
@@ -394,22 +439,16 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_res_set_1.pucch_res_id_list.emplace_back(7);
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
 
-  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
+  const unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz,
       params.scs_common,
       params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
-  pucch_resource res_basic{.res_id                 = 0,
-                           .starting_prb           = nof_rbs - 1,
-                           .second_hop_prb         = 0,
-                           .intraslot_freq_hopping = false,
-                           .format                 = pucch_format::FORMAT_1};
-  res_basic.format_1.initial_cyclic_shift = 0;
-  res_basic.format_1.nof_symbols          = 14;
-  res_basic.format_1.starting_sym_idx     = 0;
-  res_basic.format_1.time_domain_occ      = 0;
+  pucch_resource res_basic{.res_id = 0, .starting_prb = nof_rbs - 1, .format = pucch_format::FORMAT_1};
+  res_basic.format_params.emplace<pucch_format_1_cfg>(
+      pucch_format_1_cfg{.initial_cyclic_shift = 0, .nof_symbols = 14, .starting_sym_idx = 0, .time_domain_occ = 0});
   pucch_cfg.pucch_res_list.push_back(res_basic);
   // >>> PUCCH resource 1.
   pucch_cfg.pucch_res_list.push_back(res_basic);
@@ -424,45 +463,43 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
-  pucch_resource res_basic_f2{
-      .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
-  res_basic_f2.res_id                    = 3;
-  res_basic_f2.format_2.nof_prbs         = 1;
-  res_basic_f2.format_2.nof_symbols      = 2;
-  res_basic_f2.format_2.starting_sym_idx = 0;
+  pucch_resource res_basic_f2{.starting_prb = 2, .format = pucch_format::FORMAT_2};
+  res_basic_f2.res_id = 3;
+  res_basic_f2.format_params.emplace<pucch_format_2_3_cfg>(
+      pucch_format_2_3_cfg{.nof_prbs = 1, .nof_symbols = 2, .starting_sym_idx = 0});
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   // >>> PUCCH resource 4.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res4           = pucch_cfg.pucch_res_list.back();
-  res4.res_id                    = 4;
-  res4.format_2.starting_sym_idx = 2;
+  pucch_resource& res4                                                   = pucch_cfg.pucch_res_list.back();
+  res4.res_id                                                            = 4;
+  variant_get<pucch_format_2_3_cfg>(res4.format_params).starting_sym_idx = 2;
   // >>> PUCCH resource 5.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res5           = pucch_cfg.pucch_res_list.back();
-  res5.res_id                    = 5;
-  res5.format_2.starting_sym_idx = 4;
+  pucch_resource& res5                                                   = pucch_cfg.pucch_res_list.back();
+  res5.res_id                                                            = 5;
+  variant_get<pucch_format_2_3_cfg>(res5.format_params).starting_sym_idx = 4;
   // >>> PUCCH resource 6.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res6           = pucch_cfg.pucch_res_list.back();
-  res6.res_id                    = 6;
-  res6.format_2.starting_sym_idx = 6;
+  pucch_resource& res6                                                   = pucch_cfg.pucch_res_list.back();
+  res6.res_id                                                            = 6;
+  variant_get<pucch_format_2_3_cfg>(res6.format_params).starting_sym_idx = 6;
   // >>> PUCCH resource 7.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res7           = pucch_cfg.pucch_res_list.back();
-  res7.res_id                    = 7;
-  res7.format_2.starting_sym_idx = 8;
+  pucch_resource& res7                                                   = pucch_cfg.pucch_res_list.back();
+  res7.res_id                                                            = 7;
+  variant_get<pucch_format_2_3_cfg>(res7.format_params).starting_sym_idx = 8;
   // >>> PUCCH resource 8.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
-  res8.res_id                    = 8;
-  res8.format_2.starting_sym_idx = 10;
+  pucch_resource& res8                                                   = pucch_cfg.pucch_res_list.back();
+  res8.res_id                                                            = 8;
+  variant_get<pucch_format_2_3_cfg>(res8.format_params).starting_sym_idx = 10;
 
   // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
-  pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
-  res9.res_id                    = 9;
-  res9.format_2.starting_sym_idx = 12;
+  pucch_resource& res9                                                   = pucch_cfg.pucch_res_list.back();
+  res9.res_id                                                            = 9;
+  variant_get<pucch_format_2_3_cfg>(res9.format_params).starting_sym_idx = 12;
 
   // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.
@@ -481,7 +518,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >>> SR Resources.
   // Use 40msec SR period by default.
-  unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  const unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
   pucch_cfg.sr_res_list.push_back(
       scheduling_request_resource_config{.sr_res_id    = 1,
                                          .sr_id        = uint_to_sched_req_id(0),
@@ -504,11 +541,14 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     pucch_cfg.dl_data_to_ul_ack = {4};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7};
+    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7, 8};
   }
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
+
+  // > SRS config.
+  ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
 
   return ul_config;
 }
@@ -534,7 +574,7 @@ nzp_csi_rs_resource_set srsran::config_helpers::make_default_nzp_csi_rs_resource
 /// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.
 static csi_resource_periodicity get_max_csi_rs_period(const cell_config_builder_params& params)
 {
-  csi_resource_periodicity max_csi_period =
+  const csi_resource_periodicity max_csi_period =
       static_cast<csi_resource_periodicity>(std::min(80U * get_nof_slots_per_subframe(params.scs_common), 640U));
   return max_csi_period;
 }
@@ -706,6 +746,73 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   return meas_cfg;
 }
 
+zp_csi_rs_resource srsran::config_helpers::make_default_zp_csi_rs_resource(const cell_config_builder_params& params)
+{
+  zp_csi_rs_resource res{};
+  res.id = static_cast<zp_csi_rs_res_id_t>(0);
+  res.res_mapping.fd_alloc.reset();
+  res.res_mapping.fd_alloc.resize(12);
+  res.res_mapping.fd_alloc.set(0, true);
+  res.res_mapping.nof_ports               = 1;
+  res.res_mapping.first_ofdm_symbol_in_td = 8;
+  res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
+  res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
+  res.res_mapping.freq_band_start_rb      = 0;
+  res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
+  res.period                              = get_max_csi_rs_period(params);
+  res.offset                              = 2;
+
+  return res;
+}
+
+pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config_builder_params& params)
+{
+  pdsch_config pdsch_cfg;
+  pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
+  dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
+  dmrs_type_a.additional_positions  = dmrs_additional_positions::pos1;
+  pdsch_cfg.tci_states.push_back(tci_state{
+      .state_id  = static_cast<tci_state_id_t>(0),
+      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,
+                                 .ssb  = static_cast<ssb_id_t>(0)},
+                    .qcl_type = qcl_info::qcl_type::type_d},
+  });
+  pdsch_cfg.res_alloc = pdsch_config::resource_allocation::resource_allocation_type_1;
+  pdsch_cfg.rbg_sz    = rbg_size::config1;
+  pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
+      prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
+
+  // Resource 0.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  // Resource 1.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(1, true);
+  // Resource 2.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
+  // Resource 3.
+  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(3, true);
+
+  pdsch_cfg.p_zp_csi_rs_res.emplace();
+  pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(1),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(2),
+                                                   static_cast<zp_csi_rs_res_set_id_t>(3)};
+
+  return pdsch_cfg;
+}
+
 serving_cell_config
 srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params)
 {
@@ -721,24 +828,10 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].nof_candidates = {
-      0, 0, std::min((uint8_t)4U, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0])), 0, 0};
+      0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0};
 
   // > PDSCH-Config.
-  serv_cell.init_dl_bwp.pdsch_cfg.emplace();
-  pdsch_config& pdsch_cfg = serv_cell.init_dl_bwp.pdsch_cfg.value();
-  pdsch_cfg.pdsch_mapping_type_a_dmrs.emplace();
-  dmrs_downlink_config& dmrs_type_a = pdsch_cfg.pdsch_mapping_type_a_dmrs.value();
-  dmrs_type_a.additional_positions.emplace(dmrs_additional_positions::pos1);
-  pdsch_cfg.tci_states.push_back(tci_state{
-      .state_id  = static_cast<tci_state_id_t>(0),
-      .qcl_type1 = {.ref_sig  = {.type = qcl_info::reference_signal::reference_signal_type::ssb,
-                                 .ssb  = static_cast<ssb_id_t>(0)},
-                    .qcl_type = qcl_info::qcl_type::type_d},
-  });
-  pdsch_cfg.res_alloc = pdsch_config::resource_allocation::resource_allocation_type_1;
-  pdsch_cfg.rbg_sz    = rbg_size::config1;
-  pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
-      prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
+  serv_cell.init_dl_bwp.pdsch_cfg = make_default_pdsch_config(params);
 
   // > UL Config.
   serv_cell.ul_config.emplace(make_default_ue_uplink_config(params));
@@ -749,6 +842,9 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // > CSI-MeasConfig.
   if (params.csi_rs_enabled) {
     serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params));
+  } else {
+    serv_cell.init_dl_bwp.pdsch_cfg->zp_csi_rs_res_list.clear();
+    serv_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res.reset();
   }
 
   return serv_cell;

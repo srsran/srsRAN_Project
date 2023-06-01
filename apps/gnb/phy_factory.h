@@ -43,6 +43,7 @@ std::unique_ptr<upper_phy> create_upper_phy(const gnb_appconfig&                
                                             task_executor*                        pucch_executor,
                                             task_executor*                        pusch_executor,
                                             task_executor*                        prach_executor,
+                                            task_executor*                        pdsch_codeblock_executor,
                                             upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier);
 
 } // namespace srsran
