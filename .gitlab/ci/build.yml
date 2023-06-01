@@ -419,7 +419,10 @@ smoke rhel cached:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
     - *cache_src_get
     - *cache_build_get
@@ -433,7 +436,10 @@ smoke archlinux cached:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
     - *cache_src_get
     - *cache_build_get
@@ -473,7 +479,10 @@ smoke archlinux clean:
 intermediate commits:
   extends: .build_and_unit
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   variables:
     OS: ubuntu-22.04
     TEST_MODE: none
