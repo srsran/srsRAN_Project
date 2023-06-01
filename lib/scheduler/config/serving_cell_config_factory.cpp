@@ -674,6 +674,20 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
   cfg.report_freq_cfg.value().cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
   cfg.report_freq_cfg.value().pmi_format_ind = csi_report_config::pmi_format_indicator::wideband_pmi;
 
+  if (params.nof_dl_ports > 1) {
+    cfg.codebook_cfg.emplace();
+    codebook_config::type1                                                                     type1{};
+    codebook_config::type1::single_panel                                                       single_panel{};
+    codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction bitmap(6);
+    bitmap.fill(0, 6, true);
+    single_panel.nof_antenna_ports = bitmap;
+    single_panel.typei_single_panel_ri_restriction.resize(8);
+    single_panel.typei_single_panel_ri_restriction.from_uint64(0b11);
+    type1.sub_type                  = single_panel;
+    type1.codebook_mode             = 1;
+    cfg.codebook_cfg->codebook_type = type1;
+  }
+
   cfg.is_group_based_beam_reporting_enabled = false;
   cfg.cqi_table.emplace(csi_report_config::cqi_table_t::table1);
   cfg.subband_size = csi_report_config::subband_size_t::value1;
