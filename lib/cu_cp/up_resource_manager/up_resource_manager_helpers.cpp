@@ -262,14 +262,11 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
   up_config_update update;
   update.initial_context_creation = false;
 
-  logger.debug("PDU session modifcation with {} items.", pdu.pdu_session_res_modify_items.size());
   for (const auto& modify_item : pdu.pdu_session_res_modify_items) {
     srsran_assert(context.pdu_sessions.find(modify_item.pdu_session_id) != context.pdu_sessions.end(),
                   "PDU session does not exist.");
 
     up_pdu_session_context_update ctxt(modify_item.pdu_session_id);
-    logger.debug("modify_item.transfer.qos_flow_add_or_modify_request_list with {} items.",
-                 modify_item.transfer.qos_flow_add_or_modify_request_list.size());
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
       auto drb_id = allocate_qos_flow(ctxt, flow_item, update, context, cfg, logger);
       logger.debug("Allocated QoS flow ID {} to DRB ID {} with 5QI {}",

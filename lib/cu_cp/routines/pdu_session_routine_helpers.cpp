@@ -266,7 +266,7 @@ bool srsran::srs_cu_cp::update_modify_list(
       // Verify DRB is present in calculated config.
       if (next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.find(e1ap_drb_item.drb_id) ==
           next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_add.end()) {
-        logger.error("Couldn't find configuration for DRB {}", e1ap_drb_item.drb_id);
+        logger.error("Couldn't find configuration for {}", e1ap_drb_item.drb_id);
         return false;
       }
 
