@@ -81,7 +81,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
         // Add radio bearer config
         cu_cp_radio_bearer_config radio_bearer_config;
 
-        for (const auto& drb_to_add : rrc_ue_up_resource_manager.get_context(pdu_session).drbs) {
+        for (const auto& drb_to_add : rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session).drbs) {
           cu_cp_drb_to_add_mod drb_to_add_mod;
           drb_to_add_mod.drb_id   = drb_to_add.first;
           drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;

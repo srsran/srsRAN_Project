@@ -78,7 +78,8 @@ struct up_config_update {
 // Response given back to the UP resource manager containing the full context
 // that could be setup.
 struct up_config_update_result {
-  std::vector<up_pdu_session_context_update> pdu_sessions_added_list; // List of DRBs that have been added.
+  std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of session that have been added.
+  std::vector<up_pdu_session_context_update> pdu_sessions_modified_list; // List of sessions that have been modified.
 };
 
 /// Object to manage user-plane (UP) resources including configs, PDU session, DRB and QoS flow
@@ -104,10 +105,10 @@ public:
   virtual bool apply_config_update(const up_config_update_result& config) = 0;
 
   /// \brief Return context for given PDU session ID.
-  virtual up_pdu_session_context get_context(pdu_session_id_t psi) = 0;
+  virtual const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi) = 0;
 
   /// \brief Return context for a given DRB ID.
-  virtual up_drb_context get_context(drb_id_t drb_id) = 0;
+  virtual const up_drb_context& get_drb_context(drb_id_t drb_id) = 0;
 
   /// \brief Returns True if PDU session with given ID already exists.
   virtual bool has_pdu_session(pdu_session_id_t pdu_session_id) = 0;
@@ -117,6 +118,12 @@ public:
 
   /// \brief Returns the number of PDU sessions of the UE.
   virtual size_t get_nof_pdu_sessions() = 0;
+
+  /// \brief Returns the number of active QoS flows in a particular PDU sessions.
+  virtual size_t get_nof_qos_flows(pdu_session_id_t psi) = 0;
+
+  /// \brief Returns the number of *all* active QoS flows across all PDU sessions.
+  virtual size_t get_total_nof_qos_flows() = 0;
 
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
