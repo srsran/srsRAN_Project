@@ -8,6 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
+add_subdirectory(precoding)
+
 add_executable(resource_grid_pool_test resource_grid_pool_test.cpp)
 target_link_libraries(resource_grid_pool_test srsvec srsran_phy_support srslog)
 add_test(resource_grid_pool_test resource_grid_pool_test)
@@ -34,4 +36,8 @@ gtest_discover_tests(resource_grid_mapper_test)
 
 add_library(resource_grid_mapper_test_doubles STATIC resource_grid_mapper_test_doubles.cpp)
 target_link_libraries(srsran_upper_phy_support)
+
+add_executable(re_pattern_test re_pattern_test.cpp)
+target_link_libraries(re_pattern_test srsran_phy_support srslog)
+add_test(re_pattern_test re_pattern_test)
 

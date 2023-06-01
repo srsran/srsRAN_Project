@@ -11,9 +11,9 @@
 #pragma once
 
 #include "srsran/adt/tensor.h"
+#include "srsran/phy/generic_functions/precoding/channel_precoder.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/phy/upper/precoding/channel_precoder.h"
 
 namespace srsran {
 

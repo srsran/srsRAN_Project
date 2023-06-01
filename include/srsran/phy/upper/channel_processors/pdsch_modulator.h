@@ -12,11 +12,11 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/phy/upper/re_pattern.h"
 #include "srsran/ran/cyclic_prefix.h"
 
 namespace srsran {

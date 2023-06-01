@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
-#include "srsran/phy/upper/re_buffer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
 namespace srsran {

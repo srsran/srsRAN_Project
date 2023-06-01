@@ -11,23 +11,23 @@
 #pragma once
 
 #include "interpolator.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
-#include "srsran/phy/upper/precoding/precoding_factories.h"
 #include <memory>
 #include <vector>
 
 namespace srsran {
 
-/// Factory that builds resource grid objects.
+/// Factory that builds resource grids.
 class resource_grid_factory
 {
 public:
   /// Default destructor.
   virtual ~resource_grid_factory() = default;
 
-  /// Creates and returns a resource grid object.
+  /// Creates and returns an instance of a resource grid.
   virtual std::unique_ptr<resource_grid> create(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc) = 0;
 };
 

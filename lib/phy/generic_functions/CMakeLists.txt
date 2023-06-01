@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+add_subdirectory(precoding)
+
 # Initialise DFT sources and definitions for DFT libraries.
 set(SRSRAN_DFT_SOURCES dft_processor_generic_impl.cpp)
 set(SRSRAN_DFT_DEFINITIONS "")

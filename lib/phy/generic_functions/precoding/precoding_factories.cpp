@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/phy/upper/precoding/precoding_factories.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "channel_precoder_generic.h"
 #include "srsran/support/cpu_features.h"
 

@@ -9,7 +9,7 @@
  */
 
 #include "srsran/phy/constants.h"
-#include "srsran/phy/upper/precoding/precoding_factories.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"

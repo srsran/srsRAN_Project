@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/precoding/channel_precoder.h"
+#include "channel_precoder.h"
 
 namespace srsran {
 

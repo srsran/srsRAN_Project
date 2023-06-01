@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsran/phy/upper/re_buffer.h"
-#include "srsran/phy/upper/re_pattern.h"
+#include "re_buffer.h"
+#include "re_pattern.h"
 #include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {

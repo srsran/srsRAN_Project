@@ -298,6 +298,19 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
     // Number of RE to be allocated for the current symbol.
     unsigned nof_re_symbol = symbol_re_mask.count();
 
+    // Bypass precoding if it has no effect on the signal.
+    if ((nof_layers == 1) && (nof_precoding_ports == 1) && (precoding.get_nof_prg() == 1) &&
+        (precoding.get_coefficient(0, 0, 0) == 1.0F)) {
+      // View over the input RE belonging to the current symbol.
+      re_buffer_reader_view input_re_symbol(input, i_re_buffer, nof_re_symbol);
+
+      // Map directly to the grid.
+      span<const cf_t> unmapped = put(0, i_symbol, 0, symbol_re_mask, input_re_symbol.get_slice(0));
+      srsran_assert(unmapped.empty(), "Not all REs have been mapped to the grid.");
+      i_re_buffer += nof_re_symbol;
+      continue;
+    }
+
     if ((nof_re_symbol != precoding_buffer.get_nof_re()) ||
         (nof_precoding_ports != precoding_buffer.get_nof_slices())) {
       // Resize the output buffer if the input dimensions don't match.

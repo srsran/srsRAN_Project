@@ -38,7 +38,7 @@ precoding_configuration srsran::make_wideband_one_layer_one_port(unsigned nof_po
   return result;
 }
 
-precoding_configuration srsran::make_wideband_diversity(unsigned nof_ports)
+precoding_configuration srsran::make_wideband_one_layer_all_ports(unsigned nof_ports)
 {
   interval<unsigned, true> nof_ports_range(1, precoding_constants::MAX_NOF_PORTS);
   srsran_assert(nof_ports_range.contains(nof_ports),

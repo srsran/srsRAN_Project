@@ -14,7 +14,7 @@
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
 #include "resource_grid_pool_impl.h"
-#include "srsran/phy/upper/precoding/precoding_factories.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/ran/prach/prach_constants.h"
 
 using namespace srsran;
