@@ -25,6 +25,10 @@ class mac_scheduler_cell_info_handler : public mac_ue_control_information_handle
 public:
   virtual ~mac_scheduler_cell_info_handler() = default;
 
+  /// \brief Processes a new slot for a specific cell in the MAC scheduler.
+  /// \param slot_tx SFN + slot index of the Transmit slot to be processed.
+  /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
+  /// \return Result of the scheduling operation. It contains both DL and UL scheduling information.
   virtual const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) = 0;
 };
 

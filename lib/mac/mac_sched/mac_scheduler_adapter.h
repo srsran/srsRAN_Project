@@ -26,9 +26,15 @@ public:
   virtual ~mac_scheduler_adapter() = default;
 
   /// \brief Gets the RACH handler for a given cell.
+  ///
+  /// \param cell_index DU-specific index of the cell for which a RACH handler is being retrieved.
+  /// \return Cell-specific RACH handler.
   virtual mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) = 0;
 
   /// \brief Gets the control info handler for a given cell.
+  ///
+  /// \param cell_index DU-specific index of the cell for which the control info handler is being retrieved.
+  /// \return Cell-specific control info handler.
   virtual mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) = 0;
 };
 

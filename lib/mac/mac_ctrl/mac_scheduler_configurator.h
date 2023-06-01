@@ -23,12 +23,26 @@ class mac_scheduler_configurator
 public:
   virtual ~mac_scheduler_configurator() = default;
 
+  /// \brief Adds a new cell configuration to the scheduler and activates it.
+  ///
+  /// \param msg New cell configuration.
   virtual void add_cell(const mac_cell_creation_request& msg) = 0;
 
+  /// \brief Removes an existing cell from the scheduler.
+  ///
+  /// \param cell_index DU-specific index of the cell to remove.
   virtual void remove_cell(du_cell_index_t cell_index) = 0;
 
+  /// \brief Adds a new UE configuration to the scheduler.
+  ///
+  /// \param msg new UE configuration.
+  /// \return Asynchronous task handle that represents the state and outcome of the UE reconfiguration task.
   virtual async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) = 0;
 
+  /// \brief Reconfigures an existing UE configuration in the scheduler.
+  ///
+  /// \param msg new configuration for existing UE.
+  /// \return Asynchronous task handle that represents the state and outcome of the UE reconfiguration task.
   virtual async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) = 0;
 
   /// \brief Removes UE from MAC scheduler in an asynchronous manner.
