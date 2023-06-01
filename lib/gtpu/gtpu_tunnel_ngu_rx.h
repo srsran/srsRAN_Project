@@ -24,7 +24,7 @@ public:
   gtpu_tunnel_ngu_rx(uint32_t                                 ue_index,
                      gtpu_config::gtpu_rx_config              cfg_,
                      gtpu_tunnel_ngu_rx_lower_layer_notifier& rx_lower_) :
-    gtpu_tunnel_base_rx(ue_index, cfg_), lower_dn(rx_lower_)
+    gtpu_tunnel_base_rx(ue_index, cfg_), psup_packer(logger.get_basic_logger()), lower_dn(rx_lower_)
   {
     // Validate configuration
     logger.log_info("GTPU NGU configured. {}", cfg);
@@ -41,7 +41,7 @@ protected:
       switch (ext_hdr.extension_header_type) {
         case gtpu_extension_header_type::pdu_session_container:
           if (!have_pdu_session_info) {
-            have_pdu_session_info = psup_packing::unpack(pdu_session_info, ext_hdr.container);
+            have_pdu_session_info = psup_packer.unpack(pdu_session_info, ext_hdr.container);
             if (!have_pdu_session_info) {
               logger.log_error("Failed to unpack PDU session container.");
             }
@@ -68,6 +68,7 @@ protected:
   }
 
 private:
+  psup_packing                             psup_packer;
   gtpu_tunnel_ngu_rx_lower_layer_notifier& lower_dn;
 };
 } // namespace srsran
