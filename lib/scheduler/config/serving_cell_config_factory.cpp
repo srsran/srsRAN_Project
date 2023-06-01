@@ -689,6 +689,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   // Resource 0.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(0);
+  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
   if (params.nof_dl_ports == 1) {
     meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
     meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
@@ -833,6 +834,7 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
     // Resource 1.
     pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
     pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(6);
     pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
     pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
 
