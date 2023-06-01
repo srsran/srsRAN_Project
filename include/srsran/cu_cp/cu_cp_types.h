@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"

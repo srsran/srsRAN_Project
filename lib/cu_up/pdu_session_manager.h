@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "pdu_session.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/cu_types.h"

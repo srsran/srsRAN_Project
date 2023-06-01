@@ -13,9 +13,8 @@
 #include "adapters/gtpu_adapters.h"
 #include "adapters/sdap_adapters.h"
 #include "drb_context.h"
-#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {

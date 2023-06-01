@@ -10,12 +10,14 @@
 
 #pragma once
 
+#include "pdu_session.h"
 #include "pdu_session_manager.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/support/timers.h"
 #include <map>
 

@@ -14,7 +14,6 @@
 #include "nr_cgi.h"
 #include "s_nssai.h"
 #include "srsran/adt/optional.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include "fmt/format.h"
 
 namespace srsran {
