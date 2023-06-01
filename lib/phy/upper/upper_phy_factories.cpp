@@ -429,7 +429,7 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
   std::shared_ptr<prach_detector_factory> prach_factory =
-      create_prach_detector_factory_simple(dft_factory, prach_gen_factory, 1536U);
+      create_prach_detector_factory_sw(dft_factory, prach_gen_factory);
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   /// PUSCH FACTORY.
@@ -587,9 +587,9 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
     std::unique_ptr<prach_buffer> buffer;
 
     if (config.is_prach_long_format) {
-      buffer = create_prach_buffer_long(config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_long(1, config.max_nof_fd_prach_occasions);
     } else {
-      buffer = create_prach_buffer_short(config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
+      buffer = create_prach_buffer_short(1, config.max_nof_td_prach_occasions, config.max_nof_fd_prach_occasions);
     }
 
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");

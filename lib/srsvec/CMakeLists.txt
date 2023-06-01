@@ -13,7 +13,9 @@ set(SOURCES
         clip.cpp
         compare.cpp
         conversion.cpp
+        division.cpp
         dot_prod.cpp
+        modulus_square.cpp
         prod.cpp
         sc_prod.cpp
         subtract.cpp

@@ -100,4 +100,20 @@ constexpr inline prach_subcarrier_spacing to_ra_subcarrier_spacing(subcarrier_sp
   return static_cast<prach_subcarrier_spacing>(numerology);
 }
 
+/// Convert a string to SCS.
+inline prach_subcarrier_spacing to_ra_subcarrier_spacing(const char* str)
+{
+  unsigned in_scs_Hz = static_cast<unsigned>(1e3F * std::strtof(str, nullptr));
+  for (unsigned index = 0, index_end = static_cast<unsigned>(prach_subcarrier_spacing::invalid); index != index_end;
+       ++index) {
+    prach_subcarrier_spacing scs    = static_cast<prach_subcarrier_spacing>(index);
+    unsigned                 scs_Hz = ra_scs_to_Hz(scs);
+
+    if ((in_scs_Hz == scs_Hz) || (in_scs_Hz == scs_Hz * 1000)) {
+      return scs;
+    }
+  }
+  return prach_subcarrier_spacing::invalid;
+}
+
 } // namespace srsran
