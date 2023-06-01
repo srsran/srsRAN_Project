@@ -22,7 +22,7 @@ ru_ofh:
       vlan_tag: 2                                                 # VLAN tag value.
       prach_port_id: 4                                            # PRACH eAxC port value.
       dl_port_id: 0                                               # Downlink eAxC port values.
-      ul_port_id: 1                                               # Uplink eAxC port values.
+      ul_port_id: 0                                               # Uplink eAxC port values.
 
 cell_cfg:
   dl_arfcn: 640000                                                # ARFCN of the downlink carrier (center frequency).
