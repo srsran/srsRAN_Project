@@ -157,13 +157,13 @@ public:
       res_mod_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
       // add a single DRB with the same ID like the PDU session it belongs to
-      drb_id_t                   drb_id = uint_to_drb_id(psi); // Note: we use the PDU session ID here also as DRB ID
+      drb_id_t                   drb_id = uint_to_drb_id(psi + 1);
       e1ap_drb_setup_item_ng_ran drb_item;
       drb_item.drb_id = drb_id;
 
       // add a QoS flow
       e1ap_qos_flow_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(psi + 1); // QoS flow has different ID than i
+      qos_item.qos_flow_id = uint_to_qos_flow_id(psi + 1); // QoS flow has different ID than PSI
       drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
 
       // add one UP transport item
