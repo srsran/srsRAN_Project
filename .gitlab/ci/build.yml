@@ -244,7 +244,7 @@ pull_src_cache:
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
             ctest_extra="-T memcheck --timeout 10800"
-            BUILD_ARGS="${BUILD_ARGS} -DEXIT_TIMEOUT=40"
+            BUILD_ARGS="${BUILD_ARGS} -DEXIT_TIMEOUT=120"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
