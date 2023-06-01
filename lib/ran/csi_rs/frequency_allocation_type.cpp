@@ -51,9 +51,9 @@ void srsran::csi_rs::convert_freq_domain(freq_allocation_index_type&      dst,
 {
   const unsigned scale = get_bitpos_scale(row);
   const unsigned size  = get_bitmap_size(row);
-  for (unsigned i = size; i != 0; --i) {
-    if (src.test(i - 1)) {
-      dst.push_back(scale * (size - i));
+  for (unsigned i = 0; i < size; ++i) {
+    if (src.test(i)) {
+      dst.push_back(scale * (i));
     }
   }
 }
