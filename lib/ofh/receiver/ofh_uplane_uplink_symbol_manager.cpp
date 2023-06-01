@@ -105,6 +105,11 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder
   const slot_point slot            = results.params.slot;
   ul_slot_context  ul_data_context = ul_slot_repo.get(slot);
   if (ul_data_context.empty()) {
+    logger.debug(
+        "Dropping Open Fronthaul message as no associated Control-Plane packet was found in slot={}, symbol={}",
+        results.params.slot,
+        results.params.symbol_id);
+
     return;
   }
 
@@ -141,5 +146,6 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder
   if (!ul_data_context.notified_symbols.test(symbol)) {
     notifier.on_new_uplink_symbol({ul_data_context.context.slot, symbol}, *ul_data_context.grid);
     ul_data_context.notified_symbols.set(symbol);
+    logger.debug("Notifying new uplink symbol for slot={}, symbol={}", ul_data_context.context.slot, symbol);
   }
 }
