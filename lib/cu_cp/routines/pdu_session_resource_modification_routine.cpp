@@ -297,8 +297,11 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
   if (success) {
     logger.debug("ue={}: \"{}\" finalized.", modify_request.ue_index, name());
 
-    // TODO: Prepare update for UP resource manager.
+    // Prepare update for UP resource manager.
     up_config_update_result result;
+    for (const auto& pdu_session_to_mod : next_config.pdu_sessions_to_modify_list) {
+      result.pdu_sessions_modified_list.push_back(pdu_session_to_mod.second);
+    }
     rrc_ue_up_resource_manager.apply_config_update(result);
   } else {
     logger.error("ue={}: \"{}\" failed.", modify_request.ue_index, name());
