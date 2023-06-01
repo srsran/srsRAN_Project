@@ -10,7 +10,7 @@
 
 #include "gtpu_test.h"
 #include "lib/gtpu/gtpu_pdu.h"
-#include "srsran/gtpu/gtpu_tunnel_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -146,10 +146,10 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_test, entity_creation)
 {
-  srsran::test_delimit_logger  delimiter("GTP-U entity creation test");
-  gtpu_tunnel_creation_message msg  = {};
-  msg.cfg.tx.peer_addr              = "127.0.0.1";
-  std::unique_ptr<gtpu_tunnel> gtpu = create_gtpu_tunnel(msg);
+  srsran::test_delimit_logger      delimiter("GTP-U entity creation test");
+  gtpu_tunnel_ngu_creation_message msg  = {};
+  msg.cfg.tx.peer_addr                  = "127.0.0.1";
+  std::unique_ptr<gtpu_tunnel_ngu> gtpu = create_gtpu_tunnel_ngu(msg);
 
   ASSERT_NE(gtpu, nullptr);
 };
@@ -159,14 +159,14 @@ TEST_F(gtpu_test, rx_sdu)
 {
   srsran::test_delimit_logger delimiter("GTP-U entity creation test");
 
-  gtpu_test_rx_lower           gtpu_rx = {};
-  gtpu_test_tx_upper           gtpu_tx = {};
-  gtpu_tunnel_creation_message msg     = {};
-  msg.cfg.rx.local_teid                = 0x1;
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  std::unique_ptr<gtpu_tunnel> gtpu    = create_gtpu_tunnel(msg);
+  gtpu_test_rx_lower               gtpu_rx = {};
+  gtpu_test_tx_upper               gtpu_tx = {};
+  gtpu_tunnel_ngu_creation_message msg     = {};
+  msg.cfg.rx.local_teid                    = 0x1;
+  msg.cfg.tx.peer_addr                     = "127.0.0.1";
+  msg.rx_lower                             = &gtpu_rx;
+  msg.tx_upper                             = &gtpu_tx;
+  std::unique_ptr<gtpu_tunnel_ngu> gtpu    = create_gtpu_tunnel_ngu(msg);
 
   byte_buffer orig_vec{gtpu_ping_vec};
   byte_buffer strip_vec{gtpu_ping_vec};
@@ -184,14 +184,14 @@ TEST_F(gtpu_test, tx_pdu)
 {
   srsran::test_delimit_logger delimiter("GTP-U entity creation test");
 
-  gtpu_test_tx_upper           gtpu_tx = {};
-  gtpu_test_rx_lower           gtpu_rx = {};
-  gtpu_tunnel_creation_message msg     = {};
-  msg.cfg.tx.peer_teid                 = 0x1;
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  std::unique_ptr<gtpu_tunnel> gtpu    = create_gtpu_tunnel(msg);
+  gtpu_test_tx_upper               gtpu_tx = {};
+  gtpu_test_rx_lower               gtpu_rx = {};
+  gtpu_tunnel_ngu_creation_message msg     = {};
+  msg.cfg.tx.peer_teid                     = 0x1;
+  msg.cfg.tx.peer_addr                     = "127.0.0.1";
+  msg.rx_lower                             = &gtpu_rx;
+  msg.tx_upper                             = &gtpu_tx;
+  std::unique_ptr<gtpu_tunnel_ngu> gtpu    = create_gtpu_tunnel_ngu(msg);
 
   byte_buffer orig_vec{gtpu_ping_vec};
   byte_buffer strip_vec{gtpu_ping_vec};

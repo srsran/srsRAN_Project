@@ -167,15 +167,15 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->sdap                     = create_sdap(sdap_msg);
 
   // Create GTPU entity
-  gtpu_tunnel_creation_message msg = {};
-  msg.ue_index                     = ue_index;
-  msg.cfg.tx.peer_teid             = ul_tunnel_info.gtp_teid.value();
-  msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port             = net_config.upf_port;
-  msg.cfg.rx.local_teid            = new_session->local_teid;
-  msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                     = &gtpu_tx_notifier;
-  new_session->gtpu                = create_gtpu_tunnel(msg);
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.ue_index                         = ue_index;
+  msg.cfg.tx.peer_teid                 = ul_tunnel_info.gtp_teid.value();
+  msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
+  msg.cfg.tx.peer_port                 = net_config.upf_port;
+  msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
+  msg.tx_upper                         = &gtpu_tx_notifier;
+  new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());

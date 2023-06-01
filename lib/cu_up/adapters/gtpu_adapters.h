@@ -38,7 +38,7 @@ private:
 };
 
 /// Adapter between GTP-U and SDAP
-class gtpu_sdap_adapter : public gtpu_tunnel_rx_lower_layer_notifier
+class gtpu_sdap_adapter : public gtpu_tunnel_ngu_rx_lower_layer_notifier
 {
 public:
   gtpu_sdap_adapter()  = default;

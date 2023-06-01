@@ -8,14 +8,14 @@
  *
  */
 
-#include "srsran/gtpu/gtpu_tunnel_factory.h"
-#include "gtpu_tunnel_impl.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
+#include "gtpu_tunnel_impl_ngu.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
 using namespace srsran;
 
-std::unique_ptr<gtpu_tunnel> srsran::create_gtpu_tunnel(gtpu_tunnel_creation_message& msg)
+std::unique_ptr<gtpu_tunnel_ngu> srsran::create_gtpu_tunnel_ngu(gtpu_tunnel_ngu_creation_message& msg)
 {
-  return std::make_unique<gtpu_tunnel_impl>(msg.ue_index, msg.cfg, *msg.rx_lower, *msg.tx_upper);
+  return std::make_unique<gtpu_tunnel_ngu_impl>(msg.ue_index, msg.cfg, *msg.rx_lower, *msg.tx_upper);
 }
