@@ -32,7 +32,7 @@ bool prach_detector_validator_impl::is_valid(const prach_detector::configuration
   }
 
   // Check short preambles configurations.
-  if (config.format == prach_format_type::B4) {
+  if ((config.format == prach_format_type::A1) || (config.format == prach_format_type::B4)) {
     // The zero correlation zone supported are the values indicated in TS38.104 Table A.6-1.
     if (config.ra_scs == prach_subcarrier_spacing::kHz15) {
       if ((config.zero_correlation_zone != 0) && (config.zero_correlation_zone != 11)) {
@@ -116,6 +116,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         win_margin = 5;
         threshold  = 2;
         break;
+      case prach_format_type::A1:
       case prach_format_type::B4:
         // This threshold has been tuned for Format B4 and one receive port.
         win_margin = 12;
@@ -133,10 +134,11 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         win_margin = 5;
         threshold  = 0.88;
         break;
+      case prach_format_type::A1:
       case prach_format_type::B4:
         // This threshold has been tuned for Format B4 and two receive port.
         win_margin = 12;
-        threshold  = 0.37;
+        threshold  = 1;
         break;
       default:; // Do nothing.
     }

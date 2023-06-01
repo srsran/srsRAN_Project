@@ -101,9 +101,8 @@ constexpr inline prach_subcarrier_spacing to_ra_subcarrier_spacing(subcarrier_sp
 }
 
 /// Convert a string to SCS.
-inline prach_subcarrier_spacing to_ra_subcarrier_spacing(const char* str)
+inline prach_subcarrier_spacing to_ra_subcarrier_spacing(unsigned in_scs_Hz)
 {
-  unsigned in_scs_Hz = static_cast<unsigned>(1e3F * std::strtof(str, nullptr));
   for (unsigned index = 0, index_end = static_cast<unsigned>(prach_subcarrier_spacing::invalid); index != index_end;
        ++index) {
     prach_subcarrier_spacing scs    = static_cast<prach_subcarrier_spacing>(index);
@@ -114,6 +113,13 @@ inline prach_subcarrier_spacing to_ra_subcarrier_spacing(const char* str)
     }
   }
   return prach_subcarrier_spacing::invalid;
+}
+
+/// Convert a string to SCS.
+inline prach_subcarrier_spacing to_ra_subcarrier_spacing(const char* str)
+{
+  unsigned in_scs_Hz = static_cast<unsigned>(1e3F * std::strtof(str, nullptr));
+  return to_ra_subcarrier_spacing(in_scs_Hz);
 }
 
 } // namespace srsran
