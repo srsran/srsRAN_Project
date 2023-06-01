@@ -549,8 +549,52 @@ byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config&
   asn1::rrc_nr::meas_timing_cfg_s cfg;
   auto&                           meas_timing = cfg.crit_exts.set_c1().set_meas_timing_conf();
   meas_timing.meas_timing.resize(1);
-  meas_timing.meas_timing[0].freq_and_timing_present = false;
-  // TODO: Fill meas freq and timing.
+  auto& meas_item = meas_timing.meas_timing[0];
+
+  // MeasTiming
+  meas_item.freq_and_timing_present = true;
+  auto& freq_time                   = meas_item.freq_and_timing;
+  freq_time.ssb_subcarrier_spacing  = get_asn1_scs(du_cfg.ssb_cfg.scs);
+  // > Derive SSB ARFCN.
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(du_cfg.dl_carrier.carrier_bw_mhz),
+                                                     du_cfg.scs_common,
+                                                     band_helper::get_freq_range(du_cfg.dl_carrier.band));
+  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc =
+      band_helper::get_ssb_coreset0_freq_location(du_cfg.dl_carrier.arfcn,
+                                                  du_cfg.dl_carrier.band,
+                                                  nof_crbs,
+                                                  du_cfg.scs_common,
+                                                  du_cfg.scs_common,
+                                                  du_cfg.searchspace0_idx);
+  freq_time.carrier_freq = ssb_freq_loc->ssb_arfcn;
+  // > Derive SSB periodicity, duration and offset.
+  // TODO: Derive the correct duration.
+  freq_time.ssb_meas_timing_cfg.dur.value = asn1::rrc_nr::ssb_mtc_s::dur_opts::sf5;
+  // TODO: Derive the correct offset.
+  switch (du_cfg.ssb_cfg.ssb_period) {
+    case ssb_periodicity::ms5:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf5() = 0;
+      break;
+    case ssb_periodicity::ms10:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf10() = 0;
+      break;
+    case ssb_periodicity::ms20:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf20() = 0;
+      break;
+    case ssb_periodicity::ms40:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf40() = 0;
+      break;
+    case ssb_periodicity::ms80:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf80() = 0;
+      break;
+    case ssb_periodicity::ms160:
+      freq_time.ssb_meas_timing_cfg.periodicity_and_offset.set_sf160() = 0;
+      break;
+    default:
+      report_fatal_error("Invalid SSB periodicity {}.", du_cfg.ssb_cfg.ssb_period);
+  }
+  meas_item.pci_present = true;
+  meas_item.pci         = du_cfg.pci;
 
   asn1::SRSASN_CODE ret = cfg.pack(bref);
   srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack meas_time_cfg");
