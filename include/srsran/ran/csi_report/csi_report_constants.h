@@ -15,6 +15,6 @@
 namespace srsran {
 
 /// Maximum Channel State Information (CSI) report size in bits.
-static constexpr units::bits csi_report_max_size(12U);
+static constexpr units::bits csi_report_max_size(16U);
 
 } // namespace srsran

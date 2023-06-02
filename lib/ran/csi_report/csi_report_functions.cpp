@@ -366,6 +366,10 @@ csi_report_data srsran::csi_report_unpack(const csi_report_packed& packed, const
 {
   // Validate input size.
   units::bits csi_report_size = get_csi_report_size(config);
+  srsran_assert(csi_report_size <= csi_report_max_size,
+                "The report size (i.e., {}) exceeds the maximum report size (i.e., {})",
+                csi_report_size,
+                csi_report_max_size);
   srsran_assert(packed.size() == csi_report_size.value(),
                 "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
                 units::bits(packed.size()),
