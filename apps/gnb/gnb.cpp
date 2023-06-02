@@ -837,7 +837,9 @@ int main(int argc, char** argv)
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pusch_active,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.nof_dl_layers};
+                                                                        gnb_cfg.test_mode_cfg.test_ue.cqi,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.pmi,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.ri};
   }
 
   srs_du::du_high du_obj(du_hi_cfg);

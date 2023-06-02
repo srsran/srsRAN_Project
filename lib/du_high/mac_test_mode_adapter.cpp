@@ -103,15 +103,31 @@ public:
       } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(uci.pdu)) {
         auto& pusch = variant_get<mac_uci_pdu::pusch_type>(uci.pdu);
         if (pusch.harq_info.has_value()) {
-          pusch.harq_info->harq_status = srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          pusch.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
           pusch.harq_info->payload.fill(0, pusch.harq_info->payload.size(), true);
         }
+        if (pusch.csi_part1_info.has_value()) {
+          pusch.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          pusch.csi_part1_info->payload.resize(4);
+          pusch.csi_part1_info->payload.from_uint64(bit_reverse(test_ue_cfg.cqi) >> (64U - 4U));
+        }
+        pusch.pmi = test_ue_cfg.pmi;
+        pusch.ri  = test_ue_cfg.ri;
       } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu)) {
         auto& f2 = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci.pdu);
         if (f2.harq_info.has_value()) {
           f2.harq_info->harq_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
           f2.harq_info->payload.fill(0, f2.harq_info->payload.size(), true);
         }
+        if (f2.uci_part1_or_csi_part1_info.has_value()) {
+          f2.uci_part1_or_csi_part1_info->status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+          f2.uci_part1_or_csi_part1_info->payload.resize(4);
+          f2.uci_part1_or_csi_part1_info->payload.from_uint64(bit_reverse(test_ue_cfg.cqi) >> (64U - 4U));
+          f2.uci_part1_or_csi_part1_info->payload_type =
+              mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+        }
+        f2.pmi = test_ue_cfg.pmi;
+        f2.ri  = test_ue_cfg.ri;
       }
     }
 

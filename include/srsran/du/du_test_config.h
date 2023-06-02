@@ -21,7 +21,9 @@ struct du_test_config {
     rnti_t   rnti;
     bool     pdsch_active;
     bool     pusch_active;
-    unsigned nof_layers;
+    unsigned cqi;
+    unsigned pmi;
+    unsigned ri;
   };
 
   /// \brief Creation of a phantom UE for testing purposes.

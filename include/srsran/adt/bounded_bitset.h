@@ -175,6 +175,8 @@ T swapbits(T p)
   return p ^ q ^ (q << k);
 }
 
+} // namespace detail
+
 /// \brief Knuth's 64-bit reverse. E.g. 0x0000000000000001 -> 0x8000000000000000.
 /// For more information see: https://matthewarcus.wordpress.com/2012/11/18/reversing-a-64-bit-word/
 /// \param n Number to reverse.
@@ -186,14 +188,12 @@ inline uint64_t bit_reverse(uint64_t n)
   static const uint64_t m2 = 0x00c0300c03f0003fLLU;
   static const uint64_t m3 = 0x00000ffc00003fffLLU;
   n                        = ((n >> 1U) & m0) | (n & m0) << 1U;
-  n                        = swapbits<uint64_t, m1, 4>(n);
-  n                        = swapbits<uint64_t, m2, 8>(n);
-  n                        = swapbits<uint64_t, m3, 20>(n);
+  n                        = detail::swapbits<uint64_t, m1, 4>(n);
+  n                        = detail::swapbits<uint64_t, m2, 8>(n);
+  n                        = detail::swapbits<uint64_t, m3, 20>(n);
   n                        = (n >> 34U) | (n << 30U);
   return n;
 }
-
-} // namespace detail
 
 /// \brief Counts the number of contiguous bits set to zero, starting from the MSB.
 /// \tparam Integer Integer type of received bitmap.
@@ -1210,13 +1210,13 @@ private:
     } else {
       unsigned i = 0;
       for (; i != nof_words_() - 1; ++i) {
-        uint64_t w = detail::bit_reverse(buffer[i]);
+        uint64_t w = bit_reverse(buffer[i]);
         fmt::format_to(mem_buffer, "{:0>16x}", w);
       }
       // last word may not print 16 hex digits
       size_t   rem_bits   = size() - (size() / bits_per_word) * bits_per_word;
       size_t   rem_digits = divide_ceil(rem_bits, 4U);
-      uint64_t w          = detail::bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
+      uint64_t w          = bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
       fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
     }
     return mem_buffer;

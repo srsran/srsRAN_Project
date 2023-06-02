@@ -370,8 +370,12 @@ struct test_mode_ue_appconfig {
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
   bool pusch_active = true;
-  /// Number of DL layers to configure in the test UE. This value has to be lower or equal to the number of ports.
-  unsigned nof_dl_layers = 1;
+  /// Channel Quality Indicator to use for the test UE.
+  unsigned cqi = 15;
+  /// Rank Indicator to use for the test UE. This value has to be lower than the number of ports.
+  unsigned ri = 0;
+  /// Precoding Matrix Indicator to use for the test UE.
+  unsigned pmi = 0;
 };
 
 /// gNB app Test Mode configuration.

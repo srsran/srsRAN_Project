@@ -605,11 +605,15 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
-  app.add_option("--nof_dl_layers",
-                 test_params.nof_dl_layers,
-                 "Number of DL layers. This value has to be lower or equal to the number of ports")
+  app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
       ->capture_default_str()
-      ->check(CLI::Range(1, 2));
+      ->check(CLI::Range(1, 15));
+  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1));
+  app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)
