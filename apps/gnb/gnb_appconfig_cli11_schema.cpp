@@ -394,6 +394,45 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& t
       ->check(CLI::Range(0, 13));
 }
 
+static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
+{
+  app.add_option("--pg_search_space_id", pg_params.paging_search_space_id, "SearchSpace to use for Paging")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1}));
+  app.add_option(
+         "--default_pg_cycle_in_rf", pg_params.default_paging_cycle, "Default Paging cycle in nof. Radio Frames")
+      ->capture_default_str()
+      ->check(CLI::IsMember({32, 64, 128, 256}));
+  app.add_option_function<std::string>(
+         "--nof_pf_per_paging_cycle",
+         [&pg_params](const std::string& value) {
+           if (value == "oneT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneT;
+           } else if (value == "halfT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::halfT;
+           } else if (value == "quarterT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::quarterT;
+           } else if (value == "oneEighthT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneEighthT;
+           } else if (value == "oneSixteethT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneSixteethT;
+           }
+         },
+         "Number of paging frames per DRX cycle {oneT, halfT, quarterT, oneEighthT, oneSixteethT}. Default: oneT")
+      ->check([](const std::string& value) -> std::string {
+        if ((value == "oneT") || (value == "halfT") || (value == "quarterT") || (value == "oneEighthT") ||
+            (value == "oneSixteethT")) {
+          return "";
+        }
+        return "Invalid Number of paging frames per DRX cycle. \n"
+               "Valid values are: oneT, halfT, quarterT, oneEighthT, oneSixteethT";
+      });
+  app.add_option("--pf_offset", pg_params.pf_offset, "Paging frame offset")->capture_default_str();
+  app.add_option("--nof_po_per_pf", pg_params.nof_po_per_pf, "Number of paging occasions per paging frame")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4}));
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -485,6 +524,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
     }
   };
   app.callback(tdd_ul_dl_verify_callback);
+
+  // Paging configuration.
+  CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
+  configure_cli11_paging_args(*paging_subcmd, cell_params.paging_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

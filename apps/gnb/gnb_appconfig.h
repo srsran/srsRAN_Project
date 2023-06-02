@@ -15,6 +15,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -58,6 +59,20 @@ struct tdd_ul_dl_appconfig {
   unsigned nof_ul_slots = 3;
   /// Values: {0,...,maxNrofSymbols-1=13}.
   unsigned nof_ul_symbols = 0;
+};
+
+/// Paging related configuration. See TS 38.331, PCCH-Config.
+struct paging_appconfig {
+  /// SearchSpace to use for Paging. Values {0, 1}.
+  unsigned paging_search_space_id = 1;
+  /// Default Paging cycle in nof. Radio Frames. Values {32, 64, 128, 256}.
+  unsigned default_paging_cycle = 128;
+  /// Number of paging frames per DRX cycle. Values {oneT, halfT, quarterT, oneEighthT, oneSixteethT}.
+  pcch_config::nof_pf_per_drx_cycle nof_pf = pcch_config::nof_pf_per_drx_cycle::oneT;
+  /// Paging frame offset. Values {0,...,(T/nof_pf_per_paging_cycle) - 1}.
+  unsigned pf_offset = 0;
+  /// Number of paging occasions per paging frame. Values {1, 2, 4}.
+  unsigned nof_po_per_pf = 1;
 };
 
 /// PDCCH application configuration.
@@ -184,6 +199,8 @@ struct base_cell_appconfig {
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// TDD slot configuration.
   optional<tdd_ul_dl_appconfig> tdd_ul_dl_cfg;
+  /// Paging configuration.
+  paging_appconfig paging_cfg;
 };
 
 /// Cell configuration

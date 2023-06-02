@@ -44,6 +44,54 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
+pcch_config srsran::generate_pcch_config(const gnb_appconfig& config)
+{
+  pcch_config cfg{};
+  switch (config.common_cell_cfg.paging_cfg.default_paging_cycle) {
+    case 32:
+      cfg.default_paging_cycle = paging_cycle::rf32;
+      break;
+    case 64:
+      cfg.default_paging_cycle = paging_cycle::rf64;
+      break;
+    case 128:
+      cfg.default_paging_cycle = paging_cycle::rf128;
+      break;
+    case 256:
+      cfg.default_paging_cycle = paging_cycle::rf256;
+      break;
+    default:
+      report_error("Invalid default paging cycle={} for cell with pci={}\n",
+                   config.common_cell_cfg.paging_cfg.default_paging_cycle,
+                   config.common_cell_cfg.pci);
+  }
+  cfg.nof_pf = config.common_cell_cfg.paging_cfg.nof_pf;
+  if (config.common_cell_cfg.paging_cfg.pf_offset > (static_cast<unsigned>(cfg.nof_pf) - 1)) {
+    report_error("Invalid paging frame offset value={} for cell with pci={}. Value must be less than or equal to {}\n",
+                 config.common_cell_cfg.paging_cfg.pf_offset,
+                 config.common_cell_cfg.pci,
+                 (static_cast<unsigned>(cfg.nof_pf) - 1));
+  }
+  cfg.paging_frame_offset = config.common_cell_cfg.paging_cfg.pf_offset;
+  switch (config.common_cell_cfg.paging_cfg.nof_po_per_pf) {
+    case 1:
+      cfg.ns = pcch_config::nof_po_per_pf::one;
+      break;
+    case 2:
+      cfg.ns = pcch_config::nof_po_per_pf::two;
+      break;
+    case 4:
+      cfg.ns = pcch_config::nof_po_per_pf::four;
+      break;
+    default:
+      report_error("Invalid number of paging occasions per paging frame={} for cell with pci={}\n",
+                   config.common_cell_cfg.paging_cfg.nof_po_per_pf,
+                   config.common_cell_cfg.pci);
+  }
+
+  return cfg;
+}
+
 std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -166,6 +214,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.nof_ul_slots;
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.nof_ul_symbols;
     }
+
+    // PCCH-Config.
+    out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id =
+        to_search_space_id(config.common_cell_cfg.paging_cfg.paging_search_space_id);
+    out_cell.dl_cfg_common.pcch_cfg = generate_pcch_config(config);
 
     // Parameters for PUCCH-Config.
     pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;
