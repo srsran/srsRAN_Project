@@ -146,7 +146,7 @@ zmq-valgrind:
     RETINA_ARGS: "gnb.all.pcap=True"
   interruptible: false
   needs:
-    - job: "basic debug"
+    - job: "basic valgrind"
       artifacts: true
 
 rf:
