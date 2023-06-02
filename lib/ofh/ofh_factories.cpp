@@ -79,16 +79,13 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
     compr[i] = create_iq_compressor(static_cast<ofh::compression_type>(i), tx_config.iq_scaling);
   }
   config.compressor_sel = ofh::create_iq_compressor_selector(std::move(compr));
-
-  config.up_builder = ofh::create_static_comp_method_ofh_user_plane_packet_builder(
-      logger,
-      *config.compressor_sel,
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.bw), tx_config.scs, frequency_range::FR1),
-      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, frequency_range::FR1));
+  config.up_builder     = ofh::create_static_comp_method_ofh_user_plane_packet_builder(logger, *config.compressor_sel);
 
   config.nof_symbols = get_nsymb_per_slot(tx_config.cp);
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  config.du_nof_prbs =
+      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.bw), tx_config.scs, srsran::frequency_range::FR1);
   config.compr_params = tx_config.dl_compr_params;
 
   // VLAN configuration.
@@ -107,12 +104,9 @@ std::unique_ptr<cplane_message_builder> srsran::ofh::create_ofh_control_plane_pa
 
 std::unique_ptr<uplane_message_builder>
 srsran::ofh::create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
-                                                                     iq_compressor&        compressor,
-                                                                     unsigned              du_nof_prbs,
-                                                                     unsigned              ru_nof_prbs)
+                                                                     iq_compressor&        compressor)
 {
-  return std::make_unique<ofh_uplane_message_builder_static_compression_impl>(
-      logger, compressor, du_nof_prbs, ru_nof_prbs);
+  return std::make_unique<ofh_uplane_message_builder_static_compression_impl>(logger, compressor);
 }
 
 std::unique_ptr<uplane_message_decoder>

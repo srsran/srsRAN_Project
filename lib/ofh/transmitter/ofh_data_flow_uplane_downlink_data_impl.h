@@ -32,6 +32,8 @@ struct data_flow_uplane_downlink_data_impl_config {
   unsigned nof_symbols;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
+  /// DU bandwidth in PRBs.
+  unsigned du_nof_prbs;
   /// VLAN frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Compression parameters.
@@ -68,20 +70,22 @@ private:
                                                    unsigned                     eaxc);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
-  unsigned enqueue_section_type_1_message_symbol(const resource_grid_context& context,
-                                                 const resource_grid_reader&  grid,
-                                                 unsigned                     symbol_id,
-                                                 unsigned                     start_prb,
-                                                 unsigned                     nof_prb,
+  unsigned enqueue_section_type_1_message_symbol(span<const cf_t>             iq_symbol_data,
+                                                 const uplane_message_params& params,
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);
+
+  /// Prepares the IQ data vector with the requested PRBs from the grid.
+  void prepare_iq_data_vector(unsigned symbol, unsigned port, const resource_grid_reader& grid);
 
 private:
   const unsigned                             nof_symbols;
   const unsigned                             ru_nof_prbs;
+  const unsigned                             du_nof_res;
   const ether::vlan_frame_params             vlan_params;
   const ru_compression_params                compr_params;
   sequence_identifier_generator              up_seq_gen;
+  std::vector<cf_t>                          iq_data_buffer;
   srslog::basic_logger&                      logger;
   std::shared_ptr<ether::eth_frame_pool>     frame_pool_ptr;
   ether::eth_frame_pool&                     frame_pool;

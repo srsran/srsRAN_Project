@@ -59,8 +59,10 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
     data_flow_uplane_downlink_data_impl_config&& config) :
   nof_symbols(config.nof_symbols),
   ru_nof_prbs(config.ru_nof_prbs),
+  du_nof_res(config.du_nof_prbs * NOF_SUBCARRIERS_PER_RB),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
+  iq_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0}),
   logger(*config.logger),
   frame_pool_ptr(config.frame_pool),
   frame_pool(*frame_pool_ptr),
@@ -82,6 +84,15 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const r
   enqueue_section_type_1_message_symbol_burst(context, grid, eaxc);
 }
 
+void data_flow_uplane_downlink_data_impl::prepare_iq_data_vector(unsigned                    symbol,
+                                                                 unsigned                    port,
+                                                                 const resource_grid_reader& grid)
+{
+  // DU grid is copied at the beginning of the RU grid, and copies all the RE of the DU grid.
+  span<cf_t> grid_data = span<cf_t>(iq_data_buffer).first(du_nof_res);
+  grid.get(grid_data, port, symbol, 0);
+}
+
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
     const resource_grid_context& context,
     const resource_grid_reader&  grid,
@@ -95,6 +106,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
   for (unsigned symbol_id = 0, symbol_end = nof_symbols; symbol_id != symbol_end; ++symbol_id) {
     scoped_frame_buffer                 scoped_buffer(frame_pool, context.slot, symbol_id, message_type::user_plane);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
+    prepare_iq_data_vector(symbol_id, 0, grid);
     // Split the data into multiple messages when it does not fit into a single one.
     bool     is_last_fragment   = false;
     unsigned fragment_start_prb = 0U;
@@ -114,29 +126,31 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
         continue;
       }
 
+      const uplane_message_params& up_params =
+          generate_dl_ofh_user_parameters(context.slot, symbol_id, fragment_start_prb, fragment_nof_prbs, compr_params);
+
       unsigned used_size = enqueue_section_type_1_message_symbol(
-          context, grid, symbol_id, fragment_start_prb, fragment_nof_prbs, eaxc, data);
+          span<const cf_t>(iq_data_buffer)
+              .subspan(fragment_start_prb * NOF_SUBCARRIERS_PER_RB, fragment_nof_prbs * NOF_SUBCARRIERS_PER_RB),
+          up_params,
+          eaxc,
+          data);
       frame_buffer.set_size(used_size);
     } while (!is_last_fragment);
   }
 }
 
-unsigned
-data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol(const resource_grid_context& context,
-                                                                           const resource_grid_reader&  grid,
-                                                                           unsigned                     symbol_id,
-                                                                           unsigned                     start_prb,
-                                                                           unsigned                     nof_prb,
-                                                                           unsigned                     eaxc,
-                                                                           span<uint8_t>                buffer)
+unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol(span<const cf_t> iq_symbol_data,
+                                                                                    const uplane_message_params& params,
+                                                                                    unsigned                     eaxc,
+                                                                                    span<uint8_t>                buffer)
 {
   // Build the Open Fronthaul data message. Only one port supported.
   units::bytes  ether_header_size = eth_builder->get_header_size();
   units::bytes  ecpri_hdr_size    = ecpri_builder->get_header_size(ecpri::message_type::iq_data);
   units::bytes  offset            = ether_header_size + ecpri_hdr_size;
   span<uint8_t> ofh_buffer        = span<uint8_t>(buffer).last(buffer.size() - offset.value());
-  unsigned      bytes_written     = up_builder->build_message(
-      ofh_buffer, grid, generate_dl_ofh_user_parameters(context.slot, symbol_id, start_prb, nof_prb, compr_params));
+  unsigned      bytes_written     = up_builder->build_message(ofh_buffer, iq_symbol_data, params);
 
   // Add eCPRI header. Create a subspan with the payload that skips the Ethernet header.
   span<uint8_t> ecpri_buffer =
@@ -151,10 +165,10 @@ data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol(const
   eth_builder->build_vlan_frame(eth_buffer, vlan_params);
 
   logger.debug("Creating User-Plane message for downlink at slot={}, symbol_id={}, prbs={}:{}, size={}",
-               context.slot,
-               symbol_id,
-               start_prb,
-               nof_prb,
+               params.slot,
+               params.symbol_id,
+               params.start_prb,
+               params.nof_prb,
                eth_buffer.size());
 
   return eth_buffer.size();
