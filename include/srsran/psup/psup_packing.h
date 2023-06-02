@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/psup/psup_message.h"
 #include "srsran/srslog/logger.h"
@@ -24,7 +25,8 @@ class psup_packing
 public:
   psup_packing(srslog::basic_logger& logger_) : logger(logger_) {}
 
-  bool unpack(psup_dl_pdu_session_information& dl_pdu_session_information, const span<uint8_t> container);
+  bool unpack(psup_dl_pdu_session_information& dl_pdu_session_information, const span<const uint8_t> container) const;
+  void pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const;
 
 private:
   srslog::basic_logger& logger;

@@ -13,7 +13,8 @@
 
 namespace srsran {
 
-bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_information, const span<uint8_t> container)
+bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_information,
+                          const span<const uint8_t>        container) const
 {
   byte_buffer buf{container};
   bit_decoder decoder{buf};
@@ -76,18 +77,70 @@ bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_inform
   if (qmp) {
     // DL Sending Time Stamp
     uint64_t dl_sending_time_stamp = 0;
-    decoder.unpack(dl_sending_time_stamp, 64);
-    dl_pdu_session_information.dl_sending_time_stamp = dl_sending_time_stamp;
+    decoder.unpack(dl_sending_time_stamp, 32);
+    dl_pdu_session_information.dl_sending_time_stamp = dl_sending_time_stamp << 32;
+    decoder.unpack(dl_sending_time_stamp, 32);
+    dl_pdu_session_information.dl_sending_time_stamp.value() |= dl_sending_time_stamp;
   }
 
   if (snp) {
     // DL QFI Sequence Number
     uint32_t dl_qfi_sn = 0;
-    decoder.unpack(dl_qfi_sn, 32);
+    decoder.unpack(dl_qfi_sn, 24);
     dl_pdu_session_information.dl_qfi_sn = dl_qfi_sn;
   }
 
   return true;
+}
+
+void psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_information& dl_pdu_session_information) const
+{
+  size_t      start_len = out_buf.length();
+  bit_encoder encoder{out_buf};
+
+  // PDU Type
+  encoder.pack(psup_pdu_type_to_uint(dl_pdu_session_information.pdu_type), 4);
+
+  // QMP
+  encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.has_value(), 1);
+
+  // SNP
+  encoder.pack(dl_pdu_session_information.dl_qfi_sn.has_value(), 1);
+
+  // Spare
+  encoder.pack(0, 2);
+
+  // PPP
+  encoder.pack(dl_pdu_session_information.ppi.has_value(), 1);
+
+  // RQI
+  encoder.pack(dl_pdu_session_information.rqi, 1);
+
+  // QoS Flow Identifier
+  encoder.pack(qos_flow_id_to_uint(dl_pdu_session_information.qos_flow_id), 6);
+
+  if (dl_pdu_session_information.ppi.has_value()) {
+    // PPI
+    encoder.pack(psup_ppi_to_uint(dl_pdu_session_information.ppi.value()), 3);
+    // Spare
+    encoder.pack(0, 5);
+  }
+
+  if (dl_pdu_session_information.dl_sending_time_stamp.has_value()) {
+    // DL Sending Time Stamp
+    encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.value() >> 32, 32);
+    encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.value(), 32);
+  }
+
+  if (dl_pdu_session_information.dl_qfi_sn.has_value()) {
+    // DL QFI Sequence Number
+    encoder.pack(dl_pdu_session_information.dl_qfi_sn.value(), 24);
+  }
+
+  // Add padding such that length is (n*4-2) octets, where n is a positive integer.
+  while (((out_buf.length() - start_len) + 2) % 4) {
+    out_buf.append(0x0);
+  }
 }
 
 } // namespace srsran

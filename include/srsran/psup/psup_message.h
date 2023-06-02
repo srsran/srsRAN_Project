@@ -82,6 +82,12 @@ struct psup_dl_pdu_session_information {
   /// DL QFI Sequence Number.
   /// This parameter indicates the sequence number as assigned by the UPF/ NG-RAN node associated with a given QoS flow.
   optional<uint32_t> dl_qfi_sn;
+
+  bool operator==(const psup_dl_pdu_session_information& other) const
+  {
+    return rqi == other.rqi && qos_flow_id == other.qos_flow_id && ppi == other.ppi &&
+           dl_sending_time_stamp == other.dl_sending_time_stamp && dl_qfi_sn == other.dl_qfi_sn;
+  }
 };
 
 /// UL PDU SESSION INFORMATION (PDU Type 1)
