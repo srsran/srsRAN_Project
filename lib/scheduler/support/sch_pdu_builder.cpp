@@ -275,7 +275,8 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   pdsch.symbols     = symbols;
   pdsch.rbs         = vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
-  pdsch.n_id = cell_cfg.pci;
+  pdsch.n_id       = cell_cfg.pci;
+  pdsch.nof_layers = 1;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
   cw.rv_index          = dci_cfg.redundancy_version;
@@ -311,7 +312,8 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   pdsch.symbols     = symbols;
   pdsch.rbs         = vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
-  pdsch.n_id = cell_cfg.pci;
+  pdsch.n_id       = cell_cfg.pci;
+  pdsch.nof_layers = 1;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
   cw.mcs_index         = dci_cfg.modulation_coding_scheme;
@@ -355,6 +357,7 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
   pdsch.dmrs = dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
   pdsch.n_id           = cell_cfg.pci;
+  pdsch.nof_layers     = 1;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   pdsch.ss_set_type    = search_space_set_type::type1;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
@@ -446,7 +449,8 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
-  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
+  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
+  pdsch.nof_layers = pdsch_cfg.nof_layers;
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
@@ -488,7 +492,8 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->type);
+  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->type);
+  pdsch.nof_layers = pdsch_cfg.nof_layers;
 
   // TODO: Add second Codeword when supported.
   // One Codeword.
