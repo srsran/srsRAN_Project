@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -29,7 +30,6 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          cyclic_prefix::NORMAL,
                                          {{modulation_scheme::QPSK, 0}},
                                          1,
-                                         {0},
                                          pdsch_processor::pdu_t::CRB0,
                                          {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},
                                          dmrs_type::TYPE1,
@@ -43,7 +43,8 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          3168,
                                          {},
                                          0,
-                                         0};
+                                         0,
+                                         make_single_port()};
 
 struct test_case_t {
   std::function<pdsch_processor::pdu_t()> get_pdu;
@@ -120,7 +121,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(Only contiguous allocation is currently supported\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.ports                  = {0, 1};
+       pdu.precoding              = make_wideband_identity(2);
        return pdu;
      },
      R"(Only one layer is currently supported\. 2 layers requested\.)"},

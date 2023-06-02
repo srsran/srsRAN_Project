@@ -74,7 +74,8 @@ void srsran::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
                                                 const config_t&                     config)
 {
   // Resource elements views for each port.
-  static_vector<span<const cf_t>, MAX_PORTS> re(config.ports.size());
+  unsigned                                   nof_ports = config.precoding.get_nof_ports();
+  static_vector<span<const cf_t>, MAX_PORTS> re(nof_ports);
 
   // Set l_prime to 1 if the symbol follows another one.
   unsigned l_prime = 0;
@@ -83,7 +84,7 @@ void srsran::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
   }
 
   // For each port compute the sequence.
-  for (unsigned port = 0; port != config.ports.size(); ++port) {
+  for (unsigned port = 0; port != nof_ports; ++port) {
     // Get parameter for this port and symbol.
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
@@ -116,12 +117,12 @@ void srsran::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
   }
 
   // For each port put elements in grid.
-  for (unsigned port = 0; port != config.ports.size(); ++port) {
+  for (unsigned port = 0; port != nof_ports; ++port) {
     // Get parameter for this port and symbol.
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
     // Put port elements in the resource grid.
-    grid.put(config.ports[port], symbol, params.delta, rg_subc_mask, re[port]);
+    grid.put(port, symbol, params.delta, rg_subc_mask, re[port]);
   }
 }
 

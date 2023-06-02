@@ -204,7 +204,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.ratio_pdsch_data_to_sss_dB);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
-    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.ports));
+    helper.format_if_verbose(ctx, "precoding={}", pdu.precoding);
     if (pdu.reserved.get_nof_entries() > 0) {
       helper.format_if_verbose(ctx, "reserved=[{:,}]", pdu.reserved.get_re_patterns());
     }

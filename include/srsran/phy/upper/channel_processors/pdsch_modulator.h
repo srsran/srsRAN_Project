@@ -18,6 +18,7 @@
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {
 
@@ -68,8 +69,8 @@ public:
     re_pattern_list reserved;
     /// Precoding matrix indicator.
     unsigned pmi;
-    /// Port indexes the PDSCH transmission is mapped onto.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding information for the PDSCH transmission.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.

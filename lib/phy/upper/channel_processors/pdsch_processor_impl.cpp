@@ -70,7 +70,12 @@ bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu)
   }
 
   // Only one layer is currently supported.
-  if (pdu.ports.size() != 1) {
+  if (pdu.precoding.get_nof_layers() != 1) {
+    return false;
+  }
+
+  // Only one or two antenna ports are currently supported.
+  if ((pdu.precoding.get_nof_ports() == 0) || (pdu.precoding.get_nof_ports() > 2)) {
     return false;
   }
 
@@ -93,11 +98,11 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
 {
   assert_pdu(pdu);
 
-  // Number of codewords.
-  unsigned nof_codewords = (pdu.ports.size() > 4) ? 2 : 1;
+  // Number of layers from the precoding configuration.
+  unsigned nof_layers = pdu.precoding.get_nof_layers();
 
-  // The number of layers is equal to the number of ports.
-  unsigned nof_layers = pdu.ports.size();
+  // Number of codewords.
+  unsigned nof_codewords = (nof_layers > 4) ? 2 : 1;
 
   // Calculate the number of layers codeword 0 is mapped to. It is the number of layers divided by the number of
   // codewords, rounding down (floor).
@@ -131,7 +136,8 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
 void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
 {
   // Deduce parameters from the PDU.
-  unsigned         nof_codewords    = (pdu.ports.size() > 4) ? 2 : 1;
+  unsigned         nof_layers       = pdu.precoding.get_nof_layers();
+  unsigned         nof_codewords    = (nof_layers > 4) ? 2 : 1;
   unsigned         nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
   dmrs_config_type dmrs_config = (pdu.dmrs == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
 
@@ -169,14 +175,14 @@ void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
       "The number of CDM groups without data (i.e., {}) must not exceed the maximum given by the type (i.e., {}).",
       pdu.nof_cdm_groups_without_data,
       get_max_nof_cdm_groups_without_data(dmrs_config));
-  srsran_assert(!pdu.ports.empty(), "No transmit layers are active.");
-  srsran_assert(pdu.ports.size() == 1, "Only one layer is currently supported. {} layers requested.", pdu.ports.size());
+  srsran_assert(nof_layers != 0, "No transmit layers are active.");
+  srsran_assert(nof_layers == 1, "Only one layer is currently supported. {} layers requested.", nof_layers);
 
   srsran_assert(pdu.codewords.size() == nof_codewords,
                 "Expected {} codewords and got {} for {} layers.",
                 nof_codewords,
                 pdu.codewords.size(),
-                pdu.ports.size());
+                nof_layers);
   srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
                 "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
                 pdu.tbs_lbrm_bytes,
@@ -259,7 +265,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
   modulator_config.n_id                        = pdu.n_id;
   modulator_config.scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
   modulator_config.reserved                    = pdu.reserved;
-  modulator_config.ports                       = pdu.ports;
+  modulator_config.precoding                   = pdu.precoding;
 
   modulator->modulate(grid, codewords, modulator_config);
 }
@@ -283,8 +289,8 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
   dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
   dmrs_config.rb_mask              = rb_mask_bitset;
-  dmrs_config.ports.resize(pdu.ports.size());
-  srsvec::copy(dmrs_config.ports, pdu.ports);
+  dmrs_config.precoding            = pdu.precoding;
 
+  // Generate and map DM-RS.
   dmrs->map(grid, dmrs_config);
 }

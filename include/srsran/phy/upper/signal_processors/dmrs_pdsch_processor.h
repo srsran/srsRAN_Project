@@ -14,6 +14,7 @@
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -40,8 +41,8 @@ public:
     symbol_slot_mask symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;
-    /// List of ports, every entry is an index.
-    static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.

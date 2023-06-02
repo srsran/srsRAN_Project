@@ -19,6 +19,7 @@
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/modulation_scheme.h"
 #include "srsran/ran/pdsch/pdsch_context.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -70,8 +71,6 @@ public:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPDSCH if configured,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned n_id;
-    /// Port indexes the PDSCH transmission is mapped to. The number of ports indicates the number of layers.
-    static_vector<uint8_t, MAX_PORTS> ports;
     // Ignores the transmission scheme.
     // ...
     /// \brief Reference point for the PDSCH DM-RS subcarrier index \e k, as per TS38.211 Section 7.4.1.1.2.
@@ -138,6 +137,8 @@ public:
     float ratio_pdsch_dmrs_to_sss_dB;
     /// Ratio of PDSCH data EPRE to SSS EPRE in decibels.
     float ratio_pdsch_data_to_sss_dB;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.

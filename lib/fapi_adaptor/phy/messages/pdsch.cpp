@@ -9,6 +9,7 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
@@ -211,8 +212,8 @@ void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&    
 
   fill_reserved_re_pattern(proc_pdu, fapi_pdu, csi_re_pattern_list);
 
-  // :TODO: add the ports.
-  proc_pdu.ports = {0};
+  // :TODO: Fill this in the future.
+  proc_pdu.precoding = make_single_port();
 
   // Fill PDSCH context for logging.
   proc_pdu.context = fapi_pdu.context;

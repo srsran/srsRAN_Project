@@ -138,7 +138,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
     span<const cf_t> x_buffer = x_pdsch[layer_idx];
 
     // Get port from the layer index.
-    unsigned port_idx = config.ports[layer_idx];
+    unsigned port_idx = layer_idx;
 
     // Iterate for each symbol.
     for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
@@ -204,7 +204,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
     span<const cf_t> x_buffer = x_pdsch[layer_idx];
 
     // Get port from the layer index.
-    unsigned port_idx = config.ports[layer_idx];
+    unsigned port_idx = layer_idx;
 
     // Map the REs for each symbol in the layer.
     for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
@@ -228,7 +228,7 @@ void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
                                     const pdsch_modulator::config_t& config)
 {
   // Deduce the number of layers from the number of ports
-  unsigned nof_layers = config.ports.size();
+  unsigned nof_layers = config.precoding.get_nof_layers();
   srsran_assert(nof_layers > 0, "Number of layers is zero.");
 
   // Deduce the number of codewords and assert it is coherent with the number of layers.

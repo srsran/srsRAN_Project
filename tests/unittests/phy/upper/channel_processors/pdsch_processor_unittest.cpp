@@ -14,6 +14,7 @@
 #include "pdsch_modulator_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/compare.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -134,10 +135,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
     pdu.codewords.back().modulation = modulations[dist_mod(rgen)];
     pdu.codewords.back().rv         = dist_rv(rgen);
   }
-  pdu.n_id = 0;
-  for (unsigned layer = 0; layer != nof_layers; ++layer) {
-    pdu.ports.emplace_back(layer);
-  }
+  pdu.n_id             = 0;
+  pdu.precoding        = make_wideband_identity(nof_layers);
   pdu.ref_point        = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
   pdu.dmrs_symbol_mask = symbol_slot_mask(nof_symbols_slot);
   while (pdu.dmrs_symbol_mask.none()) {
@@ -238,7 +237,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_EQ(entry.config.n_id, pdu.n_id);
     ASSERT_NEAR(entry.config.scaling, convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.reserved, pdu.reserved);
-    ASSERT_EQ(entry.config.ports, pdu.ports);
+    ASSERT_EQ(entry.config.precoding, pdu.precoding);
     ASSERT_EQ(entry.grid_ptr, &rg_dummy);
     for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
       span<const uint8_t> codeword_encoder   = encoder_spy->get_entries()[codeword].codeword;
@@ -263,7 +262,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_NEAR(entry.config.amplitude, convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.symbols_mask, pdu.dmrs_symbol_mask);
     ASSERT_EQ(entry.config.rb_mask, rb_mask);
-    ASSERT_EQ(span<const uint8_t>(entry.config.ports), span<const uint8_t>(pdu.ports));
+    ASSERT_EQ(entry.config.precoding, pdu.precoding);
     ASSERT_EQ(entry.grid, &rg_dummy);
   }
 }

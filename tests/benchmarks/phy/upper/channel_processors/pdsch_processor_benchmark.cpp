@@ -12,6 +12,7 @@
 #include "../../../lib/scheduler/support/tbs_calculator.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/srsran_test.h"
@@ -303,7 +304,6 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          profile.cp,
                                          {pdsch_processor::codeword_description{mcs.modulation, i_rv}},
                                          0,
-                                         {0},
                                          pdsch_processor::pdu_t::CRB0,
                                          dmrs_symbol_mask,
                                          dmrs_type::options::TYPE1,
@@ -317,7 +317,8 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
                                          ldpc::MAX_CODEBLOCK_SIZE / 8,
                                          {},
                                          0.0,
-                                         0.0};
+                                         0.0,
+                                         make_single_port()};
         test_case_set.emplace_back(std::tuple<pdsch_processor::pdu_t, unsigned>(config, tbs));
       }
     }
