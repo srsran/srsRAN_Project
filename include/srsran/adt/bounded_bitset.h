@@ -936,6 +936,35 @@ public:
     }
   }
 
+  /// \brief Generates a list of bit positions corresponding to the information bits set to one or zero.
+  ///
+  /// The bit positions correspond to the location of each bit within the information bit word stored in the bitset,
+  /// regardless of the bit index order in memory given by \ref LowestInfoBitIsMSB.
+  ///
+  /// \param[in] value Selects the bits whose positions are returned. Set to \c true to find ones, \c false for zeros.
+  /// \return A list containing the bit positions.
+  static_vector<size_t, N> get_bit_positions(bool value = true) const
+  {
+    static_vector<size_t, N> positions;
+
+    size_t i_bit = 0;
+    while (i_bit < size()) {
+      // Find the next bit position of the bit set to value.
+      int next_position = find_lowest(i_bit, size(), value);
+      if (next_position < 0) {
+        break;
+      }
+
+      // If a bit was found, add to the list.
+      positions.emplace_back(static_cast<size_t>(next_position));
+
+      // Exclude the evaluated bit range from the next search.
+      i_bit = next_position + 1;
+    }
+
+    return positions;
+  }
+
 private:
   template <size_t N2, bool reversed2>
   friend class bounded_bitset;
@@ -1129,35 +1158,6 @@ private:
       }
     }
     return false;
-  }
-
-  /// \brief Generates a list of bit positions corresponding to the information bits set to one or zero.
-  ///
-  /// The bit positions correspond to the location of each bit within the information bit word stored in the bitset,
-  /// regardless of the bit index order in memory given by \ref LowestInfoBitIsMSB.
-  ///
-  /// \param[in] value Selects the bits whose positions are returned. Set to \c true to find ones, \c false for zeros.
-  /// \return A list containing the bit positions.
-  static_vector<size_t, N> get_bit_positions(bool value = true) const
-  {
-    static_vector<size_t, N> positions;
-
-    size_t i_bit = 0;
-    while (i_bit < size()) {
-      // Find the next bit position of the bit set to value.
-      int next_position = find_lowest(i_bit, size(), value);
-      if (next_position < 0) {
-        break;
-      }
-
-      // If a bit was found, add to the list.
-      positions.emplace_back(static_cast<size_t>(next_position));
-
-      // Exclude the evaluated bit range from the next search.
-      i_bit = next_position + 1;
-    }
-
-    return positions;
   }
 
   /// \brief Formatting helper to convert bitset to string of bits.
