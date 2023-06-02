@@ -36,15 +36,13 @@ public:
   int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override;
 
   /// \brief checks whether the given action is supported.
-  /// \param[in] action_definition The action definition to check.
+  /// \param[in] action The action to check.
   /// \param[in] ran_func_id The ran function id.
   /// \param[in] ric_instance_id associated with the subscription.
-  /// \param[in] ric_action_id associated with the action.
   /// \return true if the action is supported, false otherwise.
-  bool action_supported(const srsran::byte_buffer& action_definition,
-                        uint16_t                   ran_func_id,
-                        uint32_t                   ric_instance_id,
-                        uint16_t                   ric_action_id);
+  bool action_supported(const asn1::e2ap::ri_caction_to_be_setup_item_s& action,
+                        uint16_t                                         ran_func_id,
+                        uint32_t                                         ric_instance_id);
 
   /// \brief  Gets the subscription outcome based on the subscription.
   /// \param[in]  ran_func_id The ran function id.

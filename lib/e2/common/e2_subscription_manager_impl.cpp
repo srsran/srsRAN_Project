@@ -60,22 +60,22 @@ int e2_subscription_manager_impl::start_subscription(int ric_instance_id, e2_eve
   return 0;
 }
 
-bool e2_subscription_manager_impl::action_supported(const srsran::byte_buffer& action_definition,
-                                                    uint16_t                   ran_func_id,
-                                                    uint32_t                   ric_instance_id,
-                                                    uint16_t                   ric_action_id)
+bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup_item_s& action,
+                                                    uint16_t                             ran_func_id,
+                                                    uint32_t                             ric_instance_id)
 {
-  auto action_def  = e2sm_packer_list[ran_func_id]->handle_packed_e2sm_kpm_action_definition(action_definition);
+  auto action_def =
+      e2sm_packer_list[ran_func_id]->handle_packed_e2sm_kpm_action_definition(action.ric_action_definition);
   auto action_type = action_def.action_definition_formats.type().value;
   if (action_type == e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::nulltype) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
-        {action_definition.deep_copy(), ric_action_id});
+        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
     return true;
   }
   if (action_type ==
       e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::action_definition_format3) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
-        {action_definition.deep_copy(), ric_action_id});
+        {action.ric_action_definition.deep_copy(), action.ric_action_id, action.ric_action_type});
     return true;
   }
 
@@ -93,8 +93,7 @@ void e2_subscription_manager_impl::get_subscription_result(uint16_t             
   outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
   for (unsigned i = 0, e = actions.size(); i != e; ++i) {
     auto& action = actions[i].value().ri_caction_to_be_setup_item();
-    if (action_supported(
-            action.ric_action_definition, ran_func_id, outcome.request_id.ric_instance_id, action.ric_action_id)) {
+    if (action_supported(action, ran_func_id, outcome.request_id.ric_instance_id)) {
       outcome.success = true;
       outcome.admitted_list.resize(outcome.admitted_list.size() + 1);
       outcome.admitted_list[i].value().ri_caction_admitted_item().ric_action_id = action.ric_action_id;
