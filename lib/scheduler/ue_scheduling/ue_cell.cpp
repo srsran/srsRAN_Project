@@ -44,9 +44,17 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-void ue_cell::set_latest_wb_cqi(unsigned wb_cqi)
+void ue_cell::handle_csi_report(const uci_indication::uci_pdu::csi_report& csi)
 {
-  ue_metrics.latest_wb_cqi = wb_cqi;
+  if (csi.cqi.has_value()) {
+    ue_metrics.latest_wb_cqi = *csi.cqi;
+  }
+  if (csi.ri.has_value()) {
+    ue_metrics.latest_ri = *csi.ri;
+  }
+  if (csi.pmi.has_value()) {
+    ue_metrics.latest_pmi = *csi.pmi;
+  }
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -103,7 +111,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg, get_nof_layers_ul());
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg, get_nof_ul_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");

@@ -51,20 +51,14 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
-void scheduler_metrics_handler::handle_csi_report(
-    du_ue_index_t                                                         ue_index,
-    const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi)
+void scheduler_metrics_handler::handle_csi_report(du_ue_index_t                              ue_index,
+                                                  const uci_indication::uci_pdu::csi_report& csi)
 {
   if (ues.contains(ue_index)) {
-    auto&               u                = ues[ue_index];
-    static const size_t cqi_payload_size = 4;
-    if (csi.size() != cqi_payload_size) {
-      return;
+    auto& u = ues[ue_index];
+    if (csi.cqi.has_value()) {
+      u.last_cqi = *csi.cqi;
     }
-    // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
-    // encoding.
-    u.last_cqi = (static_cast<unsigned>(csi.test(0)) << 3) + (static_cast<unsigned>(csi.test(1)) << 2) +
-                 (static_cast<unsigned>(csi.test(2)) << 1) + (static_cast<unsigned>(csi.test(3)));
   }
 }
 

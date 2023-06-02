@@ -263,6 +263,34 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   }
 }
 
+static optional<uci_indication::uci_pdu::csi_report>
+decode_csi(uci_pusch_or_pucch_f2_3_4_detection_status                            csi_status,
+           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi1_bits,
+           const optional<uint8_t>&                                              ri,
+           const optional<uint8_t>&                                              pmi)
+{
+  optional<uci_indication::uci_pdu::csi_report> rep;
+
+  if (csi_status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+    rep.emplace();
+
+    // Convert CSI-1 bits to CSI report.
+    // TODO: Support more CSI encodings.
+
+    // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
+    // encoding.
+    unsigned wb_cqi = (static_cast<unsigned>(csi1_bits.test(0)) << 3) +
+                      (static_cast<unsigned>(csi1_bits.test(1)) << 2) +
+                      (static_cast<unsigned>(csi1_bits.test(2)) << 1) + (static_cast<unsigned>(csi1_bits.test(3)));
+    rep->cqi = wb_cqi;
+
+    rep->ri  = ri;  // TODO: Support RI decoding.
+    rep->pmi = pmi; // TODO: Support RI decoding.
+  }
+
+  return rep;
+}
+
 void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication_message& msg)
 {
   // Convert MAC UCI indication to srsRAN scheduler UCI indication.
@@ -338,15 +366,13 @@ void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication
           parent->rlf_handler.handle_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
-      if (pusch.csi_part1_info.has_value() and
-          pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        pdu.csi_part1 = pusch.csi_part1_info->payload;
+
+      if (pusch.csi_part1_info.has_value()) {
+        pdu.csi = decode_csi(pusch.csi_part1_info->csi_status, pusch.csi_part1_info->payload, pusch.ri, pusch.pmi);
       }
-      if (pusch.csi_part2_info.has_value() and
-          pusch.csi_part2_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        pdu.csi_part2 = pusch.csi_part2_info->payload;
-      }
+
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
+
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
@@ -365,14 +391,12 @@ void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication
           parent->rlf_handler.handle_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
         }
       }
-      if (pucch.uci_part1_or_csi_part1_info.has_value() and
-          pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        pdu.csi_part1 = pucch.uci_part1_or_csi_part1_info->payload;
+
+      if (pucch.uci_part1_or_csi_part1_info.has_value()) {
+        pdu.csi = decode_csi(
+            pucch.uci_part1_or_csi_part1_info->status, pucch.uci_part1_or_csi_part1_info->payload, pucch.ri, pucch.pmi);
       }
-      if (pucch.uci_part2_or_csi_part2_info.has_value() and
-          pucch.uci_part2_or_csi_part2_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        pdu.csi_part2 = pucch.uci_part2_or_csi_part2_info->payload;
-      }
+
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);
     }
   }

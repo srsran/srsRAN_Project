@@ -15,6 +15,7 @@
 #include "ue_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 
@@ -25,6 +26,12 @@ struct grant_prbs_mcs {
   sch_mcs_index mcs;
   /// Number of PRBs to be allocated for the UE's PUSCH.
   unsigned n_prbs;
+};
+
+struct ue_csi_report {
+  optional<uint8_t> wb_cqi;
+  optional<uint8_t> ri;
+  optional<uint8_t> pmi;
 };
 
 /// \brief Context respective to a UE serving cell.
@@ -38,7 +45,8 @@ public:
     unsigned consecutive_pusch_kos = 0;
     // This gets initialized in the ue_cell constructor.
     unsigned latest_wb_cqi;
-    // TODO: Add other metrics of interest for the scheduler.
+    unsigned latest_ri  = 0;
+    unsigned latest_pmi = 0;
   };
 
   ue_cell(du_ue_index_t                     ue_index_,
@@ -64,7 +72,8 @@ public:
 
   unsigned get_latest_wb_cqi() const { return ue_metrics.latest_wb_cqi; }
 
-  void set_latest_wb_cqi(unsigned wb_cqi);
+  /// Update UE with the latest CSI report for a given cell.
+  void handle_csi_report(const uci_indication::uci_pdu::csi_report& csi);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -87,13 +96,11 @@ public:
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
-  /// \brief Fetches number of layers to be used in DL based on reported PMI.
-  // TODO: Adapt nof. layers returned based on reported PMI.
-  unsigned get_nof_layers_dl() const { return 1; }
+  /// \brief Fetches number of layers to be used in DL based on reported RI.
+  unsigned get_nof_dl_layers() const { return ue_metrics.latest_ri + 1; }
 
-  /// \brief Fetches number of layers to be used in UL based on reported PMI.
-  // TODO: Adapt nof. layers returned based on reported PMI.
-  unsigned get_nof_layers_ul() const { return 1; }
+  /// \brief Fetches number of layers to be used in UL based on reported RI.
+  unsigned get_nof_ul_layers() const { return 1; }
 
   /// \brief Get the current UE cell metrics.
   const metrics& get_metrics() const { return ue_metrics; }
