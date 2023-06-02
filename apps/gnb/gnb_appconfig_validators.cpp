@@ -461,7 +461,7 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
     return false;
   }
   if (config.test_mode_cfg.test_ue.ri >= config.common_cell_cfg.pdsch_cfg.nof_ports) {
-    fmt::print("Test mode UE configured to use ri={}, which is not lower than the number of ports={} for the cell",
+    fmt::print("RI and PMI must be equal to zero for test mode UE configured to use DCI format 1_0",
                config.test_mode_cfg.test_ue.ri,
                config.common_cell_cfg.pdsch_cfg.nof_ports);
     return false;
