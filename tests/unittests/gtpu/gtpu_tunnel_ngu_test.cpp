@@ -65,15 +65,6 @@ protected:
     // init GTP-U logger
     gtpu_logger.set_level(srslog::basic_levels::debug);
     gtpu_logger.set_hex_dump_max_size(100);
-
-    // init GTP-U entity
-    gtpu_tunnel_ngu_creation_message msg = {};
-    msg.cfg.rx.local_teid                = 0x1;
-    msg.cfg.tx.peer_teid                 = 0x2;
-    msg.cfg.tx.peer_addr                 = "127.0.0.1";
-    msg.rx_lower                         = &gtpu_rx;
-    msg.tx_upper                         = &gtpu_tx;
-    gtpu                                 = create_gtpu_tunnel_ngu(msg);
   }
 
   void TearDown() override
@@ -101,12 +92,30 @@ protected:
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
+  // init GTP-U entity
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.cfg.rx.local_teid                = 0x1;
+  msg.cfg.tx.peer_teid                 = 0x2;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
+  msg.rx_lower                         = &gtpu_rx;
+  msg.tx_upper                         = &gtpu_tx;
+  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+
   ASSERT_NE(gtpu, nullptr);
 };
 
-/// \brief Test correct reception of GTP-U packet
-TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
+/// \brief Test correct reception of GTP-U packet without PDU Session Container (i.e. missing QFI)
+TEST_F(gtpu_tunnel_ngu_test, rx_sdu_no_qfi)
 {
+  // init GTP-U entity
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.cfg.rx.local_teid                = 0x1;
+  msg.cfg.tx.peer_teid                 = 0x2;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
+  msg.rx_lower                         = &gtpu_rx;
+  msg.tx_upper                         = &gtpu_tx;
+  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+
   byte_buffer orig_vec{gtpu_ping_vec_teid_1};
   byte_buffer strip_vec{gtpu_ping_vec_teid_1};
   gtpu_header tmp;
@@ -119,9 +128,42 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   ASSERT_EQ(qos_flow_id_t::missing, gtpu_rx.last_rx_qos_flow_id);
 };
 
+/// \brief Test correct reception of GTP-U packet with PDU Session Container
+TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
+{
+  // init GTP-U entity
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.cfg.rx.local_teid                = 0x2;
+  msg.cfg.tx.peer_teid                 = 0xbc1e3be9;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
+  msg.rx_lower                         = &gtpu_rx;
+  msg.tx_upper                         = &gtpu_tx;
+  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+
+  byte_buffer orig_vec  = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1);
+  byte_buffer strip_vec = make_byte_buffer(gtpu_ping_vec_teid_2_qfi_1);
+  gtpu_header tmp;
+  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_rx_logger);
+  ASSERT_EQ(read_ok, true);
+
+  gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
+  rx->handle_pdu(std::move(orig_vec));
+  ASSERT_EQ(strip_vec, gtpu_rx.last_rx);
+  ASSERT_EQ(uint_to_qos_flow_id(1), gtpu_rx.last_rx_qos_flow_id);
+};
+
 /// \brief Test correct transmission of GTP-U packet
 TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
+  // init GTP-U entity
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.cfg.rx.local_teid                = 0x1;
+  msg.cfg.tx.peer_teid                 = 0x2;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
+  msg.rx_lower                         = &gtpu_rx;
+  msg.tx_upper                         = &gtpu_tx;
+  gtpu                                 = create_gtpu_tunnel_ngu(msg);
+
   byte_buffer orig_vec{gtpu_ping_vec_teid_2};
   byte_buffer strip_vec{gtpu_ping_vec_teid_2};
   gtpu_header tmp;
