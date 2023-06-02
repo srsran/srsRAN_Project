@@ -116,7 +116,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(orig_vec));
   ASSERT_EQ(strip_vec, gtpu_rx.last_rx);
-  ASSERT_EQ(qos_flow_id_t::invalid, gtpu_rx.last_rx_qos_flow_id);
+  ASSERT_EQ(qos_flow_id_t::missing, gtpu_rx.last_rx_qos_flow_id);
 };
 
 /// \brief Test correct transmission of GTP-U packet
