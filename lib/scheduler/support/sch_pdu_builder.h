@@ -139,7 +139,8 @@ void build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
                              search_space_id              ss_id,
                              const dci_1_1_configuration& dci_cfg,
                              const crb_interval&          crbs,
-                             const dl_harq_process&       h_dl);
+                             const dl_harq_process&       h_dl,
+                             uint16_t                     pmi);
 
 /// \brief Builds PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

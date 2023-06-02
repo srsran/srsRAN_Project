@@ -329,7 +329,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               grant.ss_id,
                               pdcch->dci.c_rnti_f1_1,
                               grant.crbs,
-                              h_dl);
+                              h_dl,
+                              ue_cc->get_metrics().latest_pmi);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DL DCI format");

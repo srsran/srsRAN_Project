@@ -470,7 +470,8 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
                                      search_space_id              ss_id,
                                      const dci_1_1_configuration& dci_cfg,
                                      const crb_interval&          crbs,
-                                     const dl_harq_process&       h_dl)
+                                     const dl_harq_process&       h_dl,
+                                     uint16_t                     pmi)
 {
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
   const search_space_info&     ss_info        = ue_cell_cfg.search_space(ss_id);
@@ -504,6 +505,12 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   cw.mcs_table       = pdsch_cfg.mcs_table;
   cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
+
+  // Beamforming and precoding.
+  pdsch.precoding_and_beamforming.emplace();
+  pdsch.precoding_and_beamforming->nof_rbs_per_prg = crbs.length();
+  pdsch.precoding_and_beamforming->prg_infos.resize(1);
+  pdsch.precoding_and_beamforming->prg_infos[0].pmi = pmi;
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

@@ -38,8 +38,21 @@
 
 namespace srsran {
 
-struct beamforming_info {
-  // TODO
+/// The precoding and beamforming information to be associated with PDCCH, PDSCH, CSI-RS and SSB PDUs.
+struct precoding_and_beamforming_info {
+  /// Precoding Resource Block Group (PRG) information.
+  struct prg_info {
+    /// Index of the precoding matrix (PMI). Values: {0,...,65535}. For no precoding, zero should be used.
+    uint16_t pmi;
+    /// Index of the digital beam weigth vector pre-stored at cell configuration.
+    static_vector<uint16_t, MAX_LOGICAL_ANTENNA_PORTS_PER_BEAMFORMING_PDU> beamforming_vector;
+  };
+
+  /// \brief Size in RBs of a precoding resource block group (PRG) to which same precoding and digital beamforming gets
+  /// applied.
+  unsigned nof_rbs_per_prg;
+  /// PRG list.
+  static_vector<prg_info, MAX_PRGS_PER_BEAFORMING_PDU> prg_infos;
 };
 
 struct tx_power_pdcch_information {
@@ -85,7 +98,7 @@ struct dci_context_information {
   /// Starting symbol of the Search Space.
   unsigned starting_symbol;
   /// Precoding and beamforming info used for this DCI.
-  beamforming_info bf;
+  optional<precoding_and_beamforming_info> bf;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
   /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
@@ -155,6 +168,8 @@ struct pdsch_information {
   dci_dl_format         dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
   harq_id_t harq_id;
+  /// Precoding and beamforming information of the PDSCH.
+  optional<precoding_and_beamforming_info> precoding_and_beamforming;
 };
 
 struct dl_msg_lc_info {
