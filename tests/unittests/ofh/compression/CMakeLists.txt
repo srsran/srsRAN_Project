@@ -18,6 +18,9 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
+set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
+
 if (USE_PHY_TESTVECTORS)
   add_executable(ofh_compression_test ofh_compression_test.cpp)
   target_link_libraries(ofh_compression_test srsran_ofh_compression srslog gtest gtest_main)
