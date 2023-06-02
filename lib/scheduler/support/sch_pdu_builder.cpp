@@ -450,7 +450,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
   pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
-  pdsch.nof_layers = pdsch_cfg.nof_layers;
+  pdsch.nof_layers = 1;
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
