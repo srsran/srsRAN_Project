@@ -30,22 +30,6 @@ public:
     byte_buffer buf{container};
     bit_decoder decoder{buf};
 
-    // Spare
-    uint8_t spare = 0;
-    decoder.unpack(spare, 2);
-    if (spare != 0) {
-      logger.error("Spare bits set in first octet. value={:#x}", spare);
-      return false;
-    }
-
-    // SNP
-    bool snp = false;
-    decoder.unpack(snp, 1);
-
-    // QMP
-    bool qmp = false;
-    decoder.unpack(qmp, 1);
-
     // PDU Type
     uint8_t pdu_type = 0;
     decoder.unpack(pdu_type, 4);
@@ -56,30 +40,48 @@ public:
       return false;
     }
 
-    // QoS Flow Identifier
-    uint8_t qos_flow_id = 0;
-    decoder.unpack(qos_flow_id, 6);
-    dl_pdu_session_information.qos_flow_id = uint_to_qos_flow_id(qos_flow_id);
+    // QMP
+    bool qmp = false;
+    decoder.unpack(qmp, 1);
 
-    // RQI
-    decoder.unpack(dl_pdu_session_information.rqi, 1);
+    // SNP
+    bool snp = false;
+    decoder.unpack(snp, 1);
+
+    // Spare
+    uint8_t spare = 0;
+    decoder.unpack(spare, 2);
+    if (spare != 0) {
+      logger.warning("Spare bits set in first octet. value={:#x}", spare);
+      // TS 38.415 Sec. 5.5.1
+      // 'Spare bits should be set to "0" by the sender and should not be checked by the receiver.'
+    }
 
     // PPP
     bool ppp = false;
     decoder.unpack(ppp, 1);
 
-    if (ppp) {
-      // Spare
-      spare = 0;
-      if (spare != 0) {
-        logger.error("Spare bits set in third octet. value={:#x}", spare);
-        return false;
-      }
+    // RQI
+    decoder.unpack(dl_pdu_session_information.rqi, 1);
 
+    // QoS Flow Identifier
+    uint8_t qos_flow_id = 0;
+    decoder.unpack(qos_flow_id, 6);
+    dl_pdu_session_information.qos_flow_id = uint_to_qos_flow_id(qos_flow_id);
+
+    if (ppp) {
       // PPI
       uint8_t ppi = 0;
       decoder.unpack(ppi, 3);
       dl_pdu_session_information.ppi = uint_to_psup_ppi(ppi);
+
+      // Spare
+      spare = 0;
+      if (spare != 0) {
+        logger.warning("Spare bits set in third octet. value={:#x}", spare);
+        // TS 38.415 Sec. 5.5.1
+        // 'Spare bits should be set to "0" by the sender and should not be checked by the receiver.'
+      }
     }
 
     if (qmp) {
