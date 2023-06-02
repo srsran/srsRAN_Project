@@ -11,8 +11,7 @@
 #pragma once
 
 #include "gtpu_tunnel_base_rx.h"
-#include "psup_packing.h"
-#include "srsran/gtpu/psup_message.h"
+#include "srsran/psup/psup_packing.h"
 #include "srsran/ran/cu_types.h"
 
 namespace srsran {
