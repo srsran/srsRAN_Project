@@ -47,6 +47,7 @@ protected:
           } else {
             logger.log_warning("Ignoring multiple PDU session container.");
           }
+          break;
         default:
           logger.log_warning("Ignoring unexpected extension header at NG-U interface. type={}",
                              ext_hdr.extension_header_type);
