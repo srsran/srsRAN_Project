@@ -77,10 +77,8 @@ bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_inform
   if (qmp) {
     // DL Sending Time Stamp
     uint64_t dl_sending_time_stamp = 0;
-    decoder.unpack(dl_sending_time_stamp, 32);
-    dl_pdu_session_information.dl_sending_time_stamp = dl_sending_time_stamp << 32;
-    decoder.unpack(dl_sending_time_stamp, 32);
-    dl_pdu_session_information.dl_sending_time_stamp.value() |= dl_sending_time_stamp;
+    decoder.unpack(dl_sending_time_stamp, 64);
+    dl_pdu_session_information.dl_sending_time_stamp = dl_sending_time_stamp;
   }
 
   if (snp) {
@@ -128,8 +126,7 @@ void psup_packing::pack(byte_buffer& out_buf, const psup_dl_pdu_session_informat
 
   if (dl_pdu_session_information.dl_sending_time_stamp.has_value()) {
     // DL Sending Time Stamp
-    encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.value() >> 32, 32);
-    encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.value(), 32);
+    encoder.pack(dl_pdu_session_information.dl_sending_time_stamp.value(), 64);
   }
 
   if (dl_pdu_session_information.dl_qfi_sn.has_value()) {
