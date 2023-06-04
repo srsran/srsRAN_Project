@@ -76,16 +76,14 @@ bool psup_packing::unpack(psup_dl_pdu_session_information& dl_pdu_session_inform
 
   if (qmp) {
     // DL Sending Time Stamp
-    uint64_t dl_sending_time_stamp = 0;
-    decoder.unpack(dl_sending_time_stamp, 64);
-    dl_pdu_session_information.dl_sending_time_stamp = dl_sending_time_stamp;
+    dl_pdu_session_information.dl_sending_time_stamp = 0;
+    decoder.unpack(dl_pdu_session_information.dl_sending_time_stamp.value(), 64);
   }
 
   if (snp) {
     // DL QFI Sequence Number
-    uint32_t dl_qfi_sn = 0;
-    decoder.unpack(dl_qfi_sn, 24);
-    dl_pdu_session_information.dl_qfi_sn = dl_qfi_sn;
+    dl_pdu_session_information.dl_qfi_sn = 0;
+    decoder.unpack(dl_pdu_session_information.dl_qfi_sn.value(), 24);
   }
 
   return true;
