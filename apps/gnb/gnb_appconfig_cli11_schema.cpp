@@ -319,15 +319,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
            }
          },
          "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot25")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "dot08") || (value == "dot15") || (value == "dot25") || (value == "dot35") ||
-            (value == "dot45") || (value == "dot60") || (value == "dot80")) {
-          return "";
-        }
-
-        return "Invalid PUCCH F2 max code rate. \n"
-               "Valid profiles are: dot08, dot15, dot25, dot35, dot45, dot60, dot80";
-      });
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   app.add_option("--f2_intraslot_freq_hop",
                  pucch_params.f2_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F2")
@@ -419,14 +411,7 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
            }
          },
          "Number of paging frames per DRX cycle {oneT, halfT, quarterT, oneEighthT, oneSixteethT}. Default: oneT")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "oneT") || (value == "halfT") || (value == "quarterT") || (value == "oneEighthT") ||
-            (value == "oneSixteethT")) {
-          return "";
-        }
-        return "Invalid Number of paging frames per DRX cycle. \n"
-               "Valid values are: oneT, halfT, quarterT, oneEighthT, oneSixteethT";
-      });
+      ->check(CLI::IsMember({"oneT", "halfT", "quarterT", "oneEighthT", "oneSixteethT"}, CLI::ignore_case));
   app.add_option("--pf_offset", pg_params.pf_offset, "Paging frame offset")->capture_default_str();
   app.add_option("--nof_po_per_pf", pg_params.nof_po_per_pf, "Number of paging occasions per paging frame")
       ->capture_default_str()
