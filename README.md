@@ -10,22 +10,14 @@ The solution includes a complete L1/2/3 implementation with minimal external dep
 
 See the [srsRAN Project](https://www.srsran.com/) for information, guides and project news.
 
-For application features, build instructions and user guides see the [srsRAN Project documentation](https://docs.srsran.com/projects/project).
+For build instructions and user guides see the [srsRAN Project documentation](https://docs.srsran.com/projects/project).
 
 For community announcements and support, join our [discussion board](https://www.github.com/srsran/srsran_project/discussions).
 
-Current Features
-----------------
+Features and Roadmap
+--------------------
 
-* FDD/TDD supported, all FR1 bands
-* 15/30 KHz subcarrier spacing
-* All physical channels including PUCCH Format 1 and 2, excluding Sounding-RS 
-* Highly optimized LDPC and Polar encoder/decoder for ARM Neon and x86 AVX2/AVX512
-* All RRC procedures excluding Mobility, Paging and Reestablishment
-* All MAC procedures excluding power control
-* Tested Performance:
-  * 64 simultaneous users
-  * Simultaneous 140 Mbps DL and 120 Mbps UL in TDD-100 MHz or FDD-50 MHz configuration (running in AMD Ryzen5 6-core CPU)
+For application features and feature roadmap see [here](https://docs.srsran.com/projects/project/en/latest/general/source/2_features_and_roadmap.html).
 
 License
 -------
