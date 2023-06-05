@@ -57,8 +57,8 @@ protected:
       logger.log_warning("Incomplete PDU at NG-U interface: missing or invalid PDU session container.");
       // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the N3
       // and N9 user plane interfaces (...).
-      // For increased compatibility, since the container is missing sometimes, we tag QFI as "missing" and let the
-      // lower layer (SDAP) decide what to do with such a PDU.
+      // For increased compatibility, we tag QFI as "missing" and let the lower layer (SDAP) decide what to do with such
+      // a PDU.
       pdu_session_info.qos_flow_id = qos_flow_id_t::missing;
     }
 
