@@ -5,9 +5,21 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+Rebaser:
+  cron: "*/15 6-23 * * 1-5"
+  cron_timezone: "Europe/Madrid"
+  ref: dev
+  active: true
+  variables:
+    - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Rebaser"
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "false"
 
 Nightly:
-  cron: "59 23 * * 0-5"
+  cron: "30 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   variables:
