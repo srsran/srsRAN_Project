@@ -49,7 +49,8 @@ protected:
     // Create SDAP TX entity
     ue_inactivity_timer = timers.create_timer();
     ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
-    sdap = std::make_unique<sdap_entity_tx_impl>(7, pdu_session_id_t::min, ue_inactivity_timer, *tester);
+    sdap = std::make_unique<sdap_entity_tx_impl>(
+        7, pdu_session_id_t::min, qos_flow_id_t::min, drb_id_t::drb1, ue_inactivity_timer, *tester);
   }
 
   void TearDown() override
@@ -79,7 +80,7 @@ TEST_F(sdap_tx_test, test_tx)
   const std::array<uint8_t, 4> sdu_buf = {0x00, 0x01, 0x02, 0x03};
   byte_buffer                  sdu{sdu_buf};
 
-  sdap->handle_sdu(sdu.deep_copy(), qos_flow_id_t::min);
+  sdap->handle_sdu(sdu.deep_copy());
 
   ASSERT_FALSE(tester->pdu_queue.empty());
   EXPECT_EQ(tester->pdu_queue.front(), sdu);

@@ -104,13 +104,10 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     logger.debug(
         "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
-    // TODO: somehow take the FiveQI and configure SDAP
-
-    // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
-    // Connect the DRB's "PDCP->SDAP adapter" directly to SDAP
-    new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler());
-    // Connect SDAP's "SDAP->PDCP adapter" directly to PDCP
-    new_session.sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
+    new_session.sdap->add_mapping(
+        qos_flow.qos_flow_id, drb_to_setup.drb_id, drb_to_setup.sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
+    new_qos_flow->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
+    new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
 
     // Add QoS flow creation result
     flow_result.success = true;
@@ -159,12 +156,9 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
-  sdap_entity_creation_message sdap_msg = {ue_index,
-                                           session.pdu_session_id,
-                                           ue_inactivity_timer,
-                                           &new_session->sdap_to_gtpu_adapter,
-                                           &new_session->sdap_to_pdcp_adapter};
-  new_session->sdap                     = create_sdap(sdap_msg);
+  sdap_entity_creation_message sdap_msg = {
+      ue_index, session.pdu_session_id, ue_inactivity_timer, &new_session->sdap_to_gtpu_adapter};
+  new_session->sdap = create_sdap(sdap_msg);
 
   // Create GTPU entity
   gtpu_tunnel_ngu_creation_message msg = {};
@@ -253,11 +247,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
   // > DRB To Remove List
   for (const auto& drb_to_rem : session.drb_to_rem_list_ng_ran) {
-    // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
-    // disconnect SDAP->PDCP direct connection
-    pdu_session->sdap_to_pdcp_adapter.disconnect_pdcp();
+    // unmap all QFI that use this DRB
+    pdu_session->sdap->remove_mapping(drb_to_rem);
 
-    // remove DRB from PDU session
+    // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_rem);
     if (drb_iter == pdu_session->drbs.end()) {
       logger.warning("Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem, session.pdu_session_id);
@@ -268,6 +261,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_to_rem,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
+
     // remove DRB (this will automatically disconnect from F1-U gateway)
     pdu_session->drbs.erase(drb_iter);
 
