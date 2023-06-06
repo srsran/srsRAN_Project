@@ -153,7 +153,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
     // HARQ with matching ID and UCI slot was found.
 
     if (crc_pdu.tb_crc_success and is_fallback_mode) {
-      logger.debug("ue={} rnti={}: Leaving fallback mode", ue_index, rnti());
+      logger.debug("ue={} rnti={:#x}: Leaving fallback mode", ue_index, rnti());
       is_fallback_mode = false;
     }
 
@@ -167,32 +167,27 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   return tbs;
 }
 
-static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
-ue_cell::get_active_search_spaces(bool is_dl) const
+template <typename FilterSearchSpace>
+static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
 {
-  // TODO: Set aggregation level based on link quality.
-  static const aggregation_level agg_lvl      = aggregation_level::n4;
-  static const unsigned          aggr_lvl_idx = to_aggregation_level_index(agg_lvl);
-
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
 
-  if (is_dl and is_fallback_mode) {
-    // In fallback mode state, only use search spaces configured in CellConfigCommon.
-    for (const search_space_configuration& ss :
-         ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+  const unsigned aggr_lvl_idx = to_aggregation_level_index(ue_cc.get_aggregation_level());
+
+  // Get all search Spaces for active BWP with candidates for the required Aggregation Level.
+  const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
+  for (const search_space_info* search_space : bwp_ss_lst) {
+    if (filter(*search_space)) {
+      active_search_spaces.push_back(search_space);
     }
-    return active_search_spaces;
   }
 
-  const auto& bwp_ss_lst = ue_cfg.bwp(active_bwp_id()).search_spaces;
-  for (const search_space_info* search_space : bwp_ss_lst) {
-    active_search_spaces.push_back(search_space);
-  }
+  // Sort search spaces by priority.
   // TODO: Revisit SearchSpace prioritization.
   std::sort(active_search_spaces.begin(),
             active_search_spaces.end(),
-            [](const search_space_info* lhs, const search_space_info* rhs) -> bool {
+            [aggr_lvl_idx](const search_space_info* lhs, const search_space_info* rhs) -> bool {
               if (lhs->cfg->nof_candidates[aggr_lvl_idx] == rhs->cfg->nof_candidates[aggr_lvl_idx]) {
                 // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
                 // little as possible).
@@ -202,4 +197,48 @@ ue_cell::get_active_search_spaces(bool is_dl) const
             });
 
   return active_search_spaces;
+}
+
+static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type) const
+{
+  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
+
+  if (required_dci_rnti_type == dci_dl_rnti_config_type::tc_rnti_f1_0) {
+    // In case of TC-RNTI, use Type-1 PDCCH CSS for a UE.
+    active_search_spaces.push_back(
+        &cfg().search_space(cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id));
+    return active_search_spaces;
+  }
+
+  // In fallback mode state, only use search spaces configured in CellConfigCommon.
+  if (is_fallback_mode) {
+    srsran_assert(not required_dci_rnti_type.has_value() or
+                      required_dci_rnti_type == dci_dl_rnti_config_type::c_rnti_f1_0,
+                  "Invalid required dci-rnti parameter");
+    for (const search_space_configuration& ss :
+         ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+    }
+    return active_search_spaces;
+  }
+
+  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
+  return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
+    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_dl_dci_format());
+  });
+}
+
+static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
+{
+  const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
+
+  auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
+    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+           (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_ul_dci_format());
+  };
+
+  return get_prioritized_search_spaces(*this, filter_dci);
 }

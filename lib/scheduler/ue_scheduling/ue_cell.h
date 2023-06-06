@@ -106,9 +106,20 @@ public:
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
 
+  /// \brief Get recommended aggregation level for PDCCH given reported CQI.
+  aggregation_level get_aggregation_level() const
+  {
+    // TODO: Use dynamic aggregation level.
+    return aggregation_level::n4;
+  }
+
   /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
+  /// \param[in] required_dci_rnti_type Optional parameter to filter Search Spaces by DCI RNTI config type.
   /// \return List of SearchSpace configuration.
-  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> get_active_search_spaces(bool is_dl) const;
+  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+  get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_dci_rnti_type = {}) const;
+  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+  get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
 private:
   /// Update PUSCH SNR metric of the UE.
