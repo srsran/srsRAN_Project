@@ -67,16 +67,6 @@ private:
   /// \note The generated sequence length is determined by the size of the provided \c sequence.
   void generate_sequence(span<cf_t> sequence, unsigned symbol, const config_t& config) const;
 
-  /// \brief Generates the resource grid allocation patterns for the CSI-RS signals.
-  ///
-  /// This method implements the CSI-RS signal mapping as described in TS 38.211 Section 7.4.1.5.3.
-  ///
-  /// \param[out] pattern_list Provides a list of RE patterns that contain the CSI-RS mapping for each port.
-  /// \param[in] config Provides the higher layer parameters that determine the resource grid mapping.
-  ///
-  /// \note This method expects \c pattern_list to contain as many RE patterns as the number of ports in the config.
-  void build_grid_allocation(span<re_pattern> pattern_list, const config_t& config);
-
   /// \brief Applies the CDM codes to the NZP-CSI-RS sequence.
   ///
   /// This helper method takes an NZP-CSI-RS sequence pertaining to a single OFDM symbol, and applies the corresponding
@@ -96,7 +86,7 @@ private:
 public:
   nzp_csi_rs_generator_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(prg, "Invalid pseudo random generator.");
   }
 
   void map(resource_grid_writer& grid, const config_t& config) override;

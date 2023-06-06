@@ -67,8 +67,6 @@ public:
     float scaling;
     /// Reserved RE pattern where PDSCH is not mapped.
     re_pattern_list reserved;
-    /// Precoding matrix indicator.
-    unsigned pmi;
     /// Precoding information for the PDSCH transmission.
     precoding_configuration precoding;
   };

@@ -15,6 +15,7 @@
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -60,13 +61,8 @@ public:
     unsigned scrambling_id;
     /// Linear amplitude scaling factor.
     float amplitude;
-    /// \brief Precoding Matrix Indicator.
-    ///
-    /// Set to 0 for no precoding.
-    unsigned pmi;
-    /// \brief Port indexes to map the signal.
-    /// \remark This is so that the ports to be used can be arbitrarily ordered by higher layers.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.

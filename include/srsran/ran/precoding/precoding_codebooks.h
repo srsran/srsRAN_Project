@@ -65,4 +65,15 @@ precoding_configuration make_wideband_one_layer_two_ports(unsigned i_codebook);
 /// \return A wideband precoding configuration for two layers and two ports.
 precoding_configuration make_wideband_two_layer_two_ports(unsigned i_codebook);
 
+/// \brief Constructs a precoder configuration for the NZP-CSI-RS signals.
+///
+/// Creates a precoding configuration that maps NZP-CSI-RS signals to antenna ports. The mapping is one-to-one, i.e.,
+/// the NZP-CSI-RS ports are mapped to each respective antenna port in increasing order.
+///
+/// \param[in] nof_ports Number of NZP-CSI-RS signal ports.
+/// \return A precoding configuration for the NZP-CSI-RS signals.
+/// \remark An assertion is triggered if \c nof_ports is out of the range {1, ..., \ref
+/// precoding_constants::MAX_NOF_PORTS}.
+precoding_configuration make_nzp_csi(unsigned nof_ports);
+
 } // namespace srsran

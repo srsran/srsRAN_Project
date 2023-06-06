@@ -10,6 +10,7 @@
 
 #include "nzp_csi_rs_generator_impl.h"
 #include "srsran/phy/support/re_pattern.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/ran/csi_rs/csi_rs_pattern.h"
 
 using namespace srsran;
@@ -159,9 +160,23 @@ static unsigned get_seq_len(const nzp_csi_rs_generator::config_t& config)
 
 void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& config)
 {
-  unsigned nof_ports = config.ports.size();
+  unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(config.csi_rs_mapping_table_row);
 
-  srsran_assert(config.symbol_l0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 1: l_0 outside the valid range.");
+  srsran_assert(nof_ports == config.precoding.get_nof_ports(),
+                "CSI-RS number of ports, i.e., {}, does not match the precoding number of ports, i.e., {}.",
+                nof_ports,
+                config.precoding.get_nof_ports());
+
+  srsran_assert(nof_ports == config.precoding.get_nof_layers(),
+                "CSI-RS precoding number of ports, i.e., {} and number of layers, i.e., {}, must be equal.",
+                nof_ports,
+                config.precoding.get_nof_layers());
+
+  interval<unsigned, false> l0_range(0, get_nsymb_per_slot(config.cp));
+  srsran_assert(l0_range.contains(config.symbol_l0),
+                "CSI-RS Mapping: l_0, i.e., {} outside the valid range, i.e., {}.",
+                config.symbol_l0,
+                l0_range);
 
   // Generate the grid allocations patterns for each port.
   csi_rs_pattern_configuration mapping_config;
@@ -173,7 +188,6 @@ void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const co
   mapping_config.symbol_l1                = config.symbol_l1;
   mapping_config.cdm                      = config.cdm;
   mapping_config.freq_density             = config.freq_density;
-  mapping_config.nof_ports                = nof_ports;
   csi_rs_pattern pattern_all_port         = get_csi_rs_pattern(mapping_config);
 
   // Calculate the CSI-RS sequence length for a signel OFDM symbol.
@@ -184,11 +198,6 @@ void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const co
 
   // Stores the NZP-CSI-RS sequence for a single OFDM symbol.
   static_vector<cf_t, MAX_SEQ_LEN> sequence(seq_len);
-
-  // Precoding not currently supported.
-  if (config.pmi != 0) {
-    srsran_assertion_failure("Precoding is not currently supported\n");
-  }
 
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
     // Use the corresponding RE pattern.
@@ -213,7 +222,7 @@ void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const co
 
         // Calculate the CDM sequence and write into the resource grid.
         apply_cdm(sequence, sequence, config.cdm, cdm_group_idx, cdm_l_idx++);
-        grid.put(config.ports[i_port], l, config.start_rb * NRE, mask_csi, sequence);
+        grid.put(i_port, l, config.start_rb * NRE, mask_csi, sequence);
       }
     }
   }
