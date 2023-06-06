@@ -23,6 +23,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/prach/prach_format_type.h"
+#include "srsran/ran/precoding/precoding_constants.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
@@ -44,15 +45,13 @@ struct precoding_and_beamforming_info {
   struct prg_info {
     /// Index of the precoding matrix (PMI). Values: {0,...,65535}. For no precoding, zero should be used.
     uint16_t pmi;
-    /// Index of the digital beam weigth vector pre-stored at cell configuration.
-    static_vector<uint16_t, MAX_LOGICAL_ANTENNA_PORTS_PER_BEAMFORMING_PDU> beamforming_vector;
   };
 
   /// \brief Size in RBs of a precoding resource block group (PRG) to which same precoding and digital beamforming gets
-  /// applied.
+  /// applied. Values: {1,...,275}.
   unsigned nof_rbs_per_prg;
   /// PRG list.
-  static_vector<prg_info, MAX_PRGS_PER_BEAFORMING_PDU> prg_infos;
+  static_vector<prg_info, precoding_constants::MAX_NOF_PRG> prg_infos;
 };
 
 struct tx_power_pdcch_information {
