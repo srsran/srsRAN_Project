@@ -150,7 +150,8 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
     }
   }
 
-  // TODO Starting the RRC Re-establishment procedure is temporally disabled.
+  // TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
+  // enabling it.
   if (true /* not valid */) {
     // Reject RRC Reestablishment Request by sending RRC Setup
     task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(context,

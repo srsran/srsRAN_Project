@@ -127,6 +127,8 @@ private:
 class dummy_rrc_ue_cu_cp_adapter : public rrc_ue_reestablishment_notifier
 {
 public:
+  void add_ue_context(rrc_reestablishment_ue_context_t context) { reest_context = context; }
+
   rrc_reestablishment_ue_context_t
   on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, ue_index_t ue_index) override
   {
@@ -135,7 +137,7 @@ public:
                 old_pci,
                 old_c_rnti);
 
-    return rrc_reestablishment_ue_context_t{};
+    return reest_context;
   }
 
   void on_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t old_ue_index) override
@@ -144,7 +146,8 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  rrc_reestablishment_ue_context_t reest_context = {};
+  srslog::basic_logger&            logger        = srslog::fetch_basic_logger("TEST");
 };
 
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {

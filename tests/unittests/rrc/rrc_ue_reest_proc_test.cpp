@@ -9,10 +9,6 @@
  */
 
 #include "rrc_ue_test_helpers.h"
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/rrc/rrc_du_factory.h"
-#include "srsran/support/async/async_task_loop.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -50,11 +46,14 @@ TEST_F(rrc_ue_reest, when_invalid_reestablishment_request_received_then_rrc_setu
   check_initial_ue_message_sent();
 }
 
-/// Test the RRC Reestablishment
+// TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
+// enabling it.
+// /// Test the RRC Reestablishment
 // TEST_F(rrc_ue_reest, when_valid_reestablishment_request_received_then_rrc_reestablishment_sent)
 // {
 //   connect_amf();
-//   receive_valid_reestablishment_request(0, to_rnti(0x4601));
+//   add_ue_reestablishment_context(uint_to_ue_index(0));
+//   receive_valid_reestablishment_request(1, to_rnti(0x4601));
 
 //   // check if SRB1 was created
 //   check_srb1_exists();
