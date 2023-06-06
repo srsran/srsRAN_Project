@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/nr_cgi.h"
+#include <cstdint>
 
 namespace srsran {
 
@@ -20,6 +21,7 @@ namespace srs_cu_cp {
 struct rrc_cell_context {
   nr_cell_global_id_t cgi;
   uint32_t            tac;
+  uint32_t            carrier_freq; ///< SSB ARFCN of the cell, required for HKD during re-establishment
 };
 
 } // namespace srs_cu_cp

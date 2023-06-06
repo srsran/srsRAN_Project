@@ -125,7 +125,10 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
       du_cell.sys_info.packed_sib1 = served_cell.gnb_du_sys_info.value().sib1_msg.copy();
     }
 
-    // TODO: add unpacking
+    // TODO: add unpacking of sys_info
+
+    du_cell.meas_time_cfg.packed_meas_time_cfg = served_cell.served_cell_info.meas_timing_cfg.copy();
+    // TODO: add unpacking of meas_time_cfg
 
     // add cell to DU context
     du_cell_index_t cell_index = du_cell.cell_index;
@@ -238,6 +241,8 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.c_rnti   = msg.c_rnti;
   rrc_ue_create_msg.cell.cgi = msg.cgi;
   rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.cell.carrier_freq =
+      cell_db.at(pcell_index).meas_time_cfg.meas_time_cfg.freq_and_timing.carrier_freq;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)] = {};
   }
