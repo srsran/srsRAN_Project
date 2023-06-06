@@ -31,7 +31,10 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
-  ue_cfg(cell_cfg_common_, ue_serv_cell)
+  ue_cfg(cell_cfg_common_, ue_serv_cell),
+  logger(srslog::fetch_basic_logger("SCHED")),
+  // PCell starts in fallback mode.
+  is_fallback_mode(cell_cfg_common_.cell_index == to_du_cell_index(0))
 {
   if (expert_cfg.ul_mcs.start() != expert_cfg.ul_mcs.stop()) {
     update_pusch_snr(expert_cfg.initial_ul_sinr);
@@ -149,6 +152,11 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
+    if (crc_pdu.tb_crc_success and is_fallback_mode) {
+      logger.debug("ue={} rnti={}: Leaving fallback mode", ue_index, rnti());
+      is_fallback_mode = false;
+    }
+
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
@@ -157,4 +165,41 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   }
 
   return tbs;
+}
+
+static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+ue_cell::get_active_search_spaces(bool is_dl) const
+{
+  // TODO: Set aggregation level based on link quality.
+  static const aggregation_level agg_lvl      = aggregation_level::n4;
+  static const unsigned          aggr_lvl_idx = to_aggregation_level_index(agg_lvl);
+
+  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
+
+  if (is_dl and is_fallback_mode) {
+    // In fallback mode state, only use search spaces configured in CellConfigCommon.
+    for (const search_space_configuration& ss :
+         ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+    }
+    return active_search_spaces;
+  }
+
+  const auto& bwp_ss_lst = ue_cfg.bwp(active_bwp_id()).search_spaces;
+  for (const search_space_info* search_space : bwp_ss_lst) {
+    active_search_spaces.push_back(search_space);
+  }
+  // TODO: Revisit SearchSpace prioritization.
+  std::sort(active_search_spaces.begin(),
+            active_search_spaces.end(),
+            [](const search_space_info* lhs, const search_space_info* rhs) -> bool {
+              if (lhs->cfg->nof_candidates[aggr_lvl_idx] == rhs->cfg->nof_candidates[aggr_lvl_idx]) {
+                // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
+                // little as possible).
+                return lhs->cfg->cs_id > rhs->cfg->cs_id;
+              }
+              return lhs->cfg->nof_candidates[aggr_lvl_idx] > rhs->cfg->nof_candidates[aggr_lvl_idx];
+            });
+
+  return active_search_spaces;
 }

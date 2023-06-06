@@ -106,6 +106,10 @@ public:
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
 
+  /// \brief Get list of recommended Search Spaces given the UE current state and channel quality.
+  /// \return List of SearchSpace configuration.
+  static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> get_active_search_spaces(bool is_dl) const;
+
 private:
   /// Update PUSCH SNR metric of the UE.
   void update_pusch_snr(optional<float> snr)
@@ -118,6 +122,9 @@ private:
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;
   ue_cell_configuration             ue_cfg;
+  srslog::basic_logger&             logger;
+
+  bool is_fallback_mode = true;
 
   metrics ue_metrics;
 };
