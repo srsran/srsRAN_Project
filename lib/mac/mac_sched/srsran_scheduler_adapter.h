@@ -48,6 +48,8 @@ public:
 
   void handle_ul_sched_command(const mac_ul_scheduling_command& cmd) override;
 
+  void handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce) override;
+
   /// \brief Forward to scheduler an RLC DL buffer state update.
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs_ind) override;
 

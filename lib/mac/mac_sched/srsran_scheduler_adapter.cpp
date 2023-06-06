@@ -133,6 +133,11 @@ void srsran_scheduler_adapter::handle_ul_sched_command(const mac_ul_scheduling_c
   sched_impl->handle_uci_indication(uci);
 }
 
+void srsran_scheduler_adapter::handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce)
+{
+  sched_impl->handle_dl_mac_ce_indication(dl_mac_ce_indication{mac_ce.ue_index, mac_ce.ce_lcid});
+}
+
 static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
                                                        const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
 {

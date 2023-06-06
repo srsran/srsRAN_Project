@@ -90,10 +90,6 @@ public:
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
   {
     dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, msg.bs);
-    if (msg.lcid == LCID_SRB0 and msg.bs > 0) {
-      // Enqueue a UE Contention Resolution ID.
-      dl_lc_ch_mgr.handle_mac_ce_indication(lcid_dl_sch_t::UE_CON_RES_ID);
-    }
   }
 
   void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg);
@@ -108,7 +104,7 @@ public:
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
   /// to derive the required transport block size for an DL grant.
-  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
+  /// \remark Excludes SRB0.
   unsigned pending_dl_newtx_bytes() const;
 
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ for SRB0. The value is
@@ -121,7 +117,7 @@ public:
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
-  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
+  /// \remark Excludes SRB0.
   unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for

@@ -115,6 +115,7 @@ public:
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
+  /// \param mac_ce DL MAC CE to be scheduled.
   virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;
 };
 

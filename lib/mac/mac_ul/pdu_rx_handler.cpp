@@ -9,7 +9,6 @@
  */
 
 #include "pdu_rx_handler.h"
-#include "srsran/support/timers.h"
 
 using namespace srsran;
 
@@ -125,6 +124,10 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 
   // Push CCCH message to upper layers.
   ue->ul_bearers[LCID_SRB0]->on_new_sdu(byte_buffer_slice{std::move(ul_ccch_msg)});
+
+  // Notify the scheduler that a Contention Resolution CE needs to be scheduled.
+  sched.handle_dl_mac_ce_indication(mac_ce_scheduling_command{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+
   return true;
 }
 

@@ -12,6 +12,7 @@
 
 #include "ul_bsr.h"
 #include "srsran/adt/variant.h"
+#include "srsran/mac/lcid_dl_sch.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_point.h"
@@ -36,6 +37,12 @@ struct mac_ul_scheduling_command {
   rnti_t          rnti;
 };
 
+/// \brief Command used by MAC to trigger the scheduling of a DL MAC CE for a UE.
+struct mac_ce_scheduling_command {
+  du_ue_index_t ue_index;
+  lcid_dl_sch_t ce_lcid;
+};
+
 /// \brief Interface between MAC and scheduler that is used by MAC to forward decoded UL BSRs and force UL grants.
 class mac_scheduler_ul_buffer_state_updater
 {
@@ -47,6 +54,10 @@ public:
 
   /// \brief Force the UL grant scheduling for a given UE.
   virtual void handle_ul_sched_command(const mac_ul_scheduling_command& sched_cmd) = 0;
+
+  /// \brief Command scheduling of DL MAC CE for a given UE.
+  /// \param mac_ce DL MAC CE to be scheduled.
+  virtual void handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce) = 0;
 };
 
 } // namespace srsran

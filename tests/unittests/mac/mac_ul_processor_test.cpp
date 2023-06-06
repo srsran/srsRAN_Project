@@ -26,12 +26,15 @@ class dummy_sched_ul_buffer_state_handler : public mac_scheduler_ul_buffer_state
 public:
   optional<mac_bsr_ce_info>           last_bsr_msg;
   optional<mac_ul_scheduling_command> last_sched_cmd;
+  optional<mac_ce_scheduling_command> last_ce_cmd;
 
   /// \brief Forward to scheduler any decoded UL BSRs for a given UE.
   void handle_ul_bsr_indication(const mac_bsr_ce_info& bsr) override { last_bsr_msg = bsr; }
 
   /// \brief Force the UL grant scheduling for a given UE.
   void handle_ul_sched_command(const mac_ul_scheduling_command& sched_cmd) override { last_sched_cmd = sched_cmd; }
+
+  void handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce) override { last_ce_cmd = mac_ce; }
 
   /// Verify a SR indication was added for a given UE.
   bool verify_sched_req_msg(du_ue_index_t ue_index)
