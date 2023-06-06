@@ -286,7 +286,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             uci.dai,
                             mcs_tbs_info.value().mcs,
                             rv,
-                            h_dl);
+                            h_dl,
+                            ue_cc->get_nof_dl_layers());
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
@@ -546,7 +547,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_ul,
-                            dai);
+                            dai,
+                            ue_cc->get_nof_ul_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");

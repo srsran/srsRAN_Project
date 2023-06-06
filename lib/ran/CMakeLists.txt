@@ -17,6 +17,7 @@ add_library(srsran_ran
         pdcch/pdcch_type0_css_occasions.cpp
         pdsch/dlsch_info.cpp
         pdsch/pdsch_mcs.cpp
+        pdsch/pdsch_antenna_port_mapping.cpp
         prach/prach_configuration.cpp
         prach/prach_cyclic_shifts.cpp
         prach/prach_frequency_mapping.cpp
