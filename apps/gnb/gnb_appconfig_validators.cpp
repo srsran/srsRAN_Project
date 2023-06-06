@@ -173,41 +173,17 @@ static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconf
 {
   // NOTE: TDD pattern is assumed to use common SCS as reference SCS.
   if (common_scs > subcarrier_spacing::kHz60) {
-    fmt::print("Invalid TDD UL DL reference SCS={}. Must be 15, 30 or 60 kHz for FR1.\n", common_scs);
-    return false;
-  }
-  if (config.dl_ul_tx_period != 0.5F and config.dl_ul_tx_period != 0.625F and config.dl_ul_tx_period != 1.0F and
-      config.dl_ul_tx_period != 1.25F and config.dl_ul_tx_period != 2.0F and config.dl_ul_tx_period != 2.5F and
-      config.dl_ul_tx_period != 5.0F and config.dl_ul_tx_period != 10.0F) {
-    fmt::print(
-        "Invalid TDD pattern 1 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
-        config.dl_ul_tx_period);
+    fmt::print("Invalid TDD UL DL reference SCS={}kHz. Must be 15, 30 or 60 kHz for FR1.\n", scs_to_khz(common_scs));
     return false;
   }
 
-  // See TS 38.213, clause 11.1.
-  if (config.dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               config.dl_ul_tx_period);
-    return false;
-  }
-  if (config.dl_ul_tx_period == 1.25F and
-      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 or 60 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               config.dl_ul_tx_period);
-    return false;
-  }
-  if (config.dl_ul_tx_period == 2.5F and
-      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
-       common_scs != subcarrier_spacing::kHz30)) {
-    fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120, 60 or 30 kHz when using "
-               "periodicity of {} ms.\n",
-               common_scs,
-               config.dl_ul_tx_period);
+  const unsigned period_msec = config.dl_ul_period_slots / get_nof_slots_per_subframe(common_scs);
+
+  if (period_msec != 0.5F and period_msec != 0.625F and period_msec != 1.0F and period_msec != 1.25F and
+      period_msec != 2.0F and period_msec != 2.5F and period_msec != 5.0F and period_msec != 10.0F) {
+    fmt::print(
+        "Invalid TDD pattern 1 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
+        period_msec);
     return false;
   }
 

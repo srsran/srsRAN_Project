@@ -491,9 +491,11 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 
 static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_pattern_appconfig& pattern_params)
 {
-  app.add_option("--dl_ul_tx_period", pattern_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
+  app.add_option("--dl_ul_tx_period",
+                 pattern_params.dl_ul_period_slots,
+                 "TDD pattern periodicity in slots. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 10.0));
+      ->check(CLI::Range(2, 80));
   app.add_option("--nof_dl_slots", pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 80));
