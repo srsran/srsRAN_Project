@@ -29,6 +29,10 @@ rm_deleted_by_them() {
 # Checks the git status and tries to `git rm` the files removed from
 # the target branch to the commit.
 rm_deleted_by_us() {
+    echo "=================="
+    echo "= Remove deleted ="
+    echo "=================="
+
     delete_name="deleted by us:"
     delete_size_next=${#delete_name}+3
     lines=$(git status)
@@ -45,6 +49,10 @@ rm_deleted_by_us() {
 
 # Fixes the conflicts using theirs and adds them to the commit.
 fix_conflicts_using_theirs() {
+    echo "================="
+    echo "= Fix conflicts ="
+    echo "================="
+
     conflict_name="both modified:"
     conflict_size_next=${#conflict_name}+3
     lines=$(git status)
@@ -54,6 +62,7 @@ fix_conflicts_using_theirs() {
         if [[ "$status" == "$conflict_name" ]]; then
             path_name=${line:$conflict_size_next:${#line}}
             echo "Resolving using theirs $path_name"
+            git diff ORIG_HEAD MERGE_HEAD "$path_name"
             git checkout --theirs "$path_name"
             git add "$path_name"
         fi
@@ -62,12 +71,20 @@ fix_conflicts_using_theirs() {
 }
 
 remove_lfs_files() {
+    echo "===================="
+    echo "= Remove lfs files ="
+    echo "===================="
+
     while read -r line; do
         git rm --cached "$line"
     done < <(git lfs ls-files | sed -r 's/^.{13}//')
 }
 
 update_headers() {
+    echo "=================="
+    echo "= Update headers ="
+    echo "=================="
+
     # for actual source and header files
     find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.h.in" \) ! -path "*/external/*" ! -name "rfnoc_test.cc" -exec perl -0777 -pi -e "s{/\*.*?\*/}{/*
  *
@@ -133,23 +150,22 @@ main() {
     fi
 
     # Merge
+    echo "========="
+    echo "= Merge ="
+    echo "========="
     git fetch -q origin "$source_branch"
-    if ! git merge "$source_branch"; then
-        # Conflicts
+    # Git merge will always generate a merge commit because history is different in both branches
+    if ! git merge "$source_branch" -m "Update main"; then
+        # There are conflicts
         git status
         rm_deleted_by_us
         rm_deleted_by_them
         fix_conflicts_using_theirs
         git commit --no-edit
     fi
-
-    # Remove any remaining lfs files
     remove_lfs_files
-    git commit -a --amend --no-edit
-
-    # Update headers
     update_headers
-    git commit -a -m "Adding AGPL copyright to new files"
+    git commit -a --amend --no-edit
 
     # Push
     if [ "$mode" = "push" ]; then
