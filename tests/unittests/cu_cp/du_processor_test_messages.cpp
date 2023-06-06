@@ -164,6 +164,29 @@ cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_sessio
   return request;
 }
 
+cu_cp_pdu_session_resource_modify_request
+srsran::srs_cu_cp::generate_pdu_session_resource_modification_with_qos_flow_removal(qos_flow_id_t flow_id)
+{
+  cu_cp_pdu_session_resource_modify_request request;
+  request.ue_index = uint_to_ue_index(0);
+
+  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+
+  cu_cp_pdu_session_res_modify_request_transfer transfer;
+
+  // Add item to remove inexisting QoS flow.
+  qos_flow_with_cause_item release_item;
+  release_item.qos_flow_id = flow_id;
+  release_item.cause       = cause_t::radio_network;
+  transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);
+
+  modify_item.transfer = transfer;
+  request.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id, modify_item);
+
+  return request;
+}
+
 e1ap_bearer_context_setup_response
 srsran::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)

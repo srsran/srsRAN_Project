@@ -137,6 +137,22 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
         return false;
       }
     }
+
+    // Reject request if QoS flow to remove doesn't exist.
+    for (const auto& qos_flow : pdu_session.transfer.qos_flow_to_release_list) {
+      if (context.qos_flow_map.find(qos_flow.qos_flow_id) == context.qos_flow_map.end()) {
+        logger.error("OoS flow ID {} doesn't exist", qos_flow.qos_flow_id);
+        return false;
+      }
+    }
+
+    // Reject request if it removes all exisiting QoS flows.
+    if (pdu_session.transfer.qos_flow_to_release_list.size() >= context.qos_flow_map.size()) {
+      logger.error("Modification requests tries to remove {} from {} existing QoS flows.",
+                   pdu_session.transfer.qos_flow_to_release_list.size(),
+                   context.qos_flow_map.size());
+      return false;
+    }
   }
 
   return true;
@@ -269,10 +285,29 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     up_pdu_session_context_update ctxt(modify_item.pdu_session_id);
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
       auto drb_id = allocate_qos_flow(ctxt, flow_item, update, context, cfg, logger);
-      logger.debug("Allocated QoS flow ID {} to DRB ID {} with 5QI {}",
+      logger.debug("Allocated QoS flow ID {} to {} with 5QI {}",
                    flow_item.qos_flow_id,
                    drb_id,
                    ctxt.drb_to_add.at(drb_id).qos_params.qos_characteristics.get_five_qi());
+    }
+
+    for (const auto& flow_item : modify_item.transfer.qos_flow_to_release_list) {
+      auto drb_id = context.qos_flow_map.at(flow_item.qos_flow_id);
+      logger.debug("Releasing QoS flow ID {} on {}", flow_item.qos_flow_id, drb_id);
+
+      // Release DRB if this is the only flow mapped to it.
+      const auto& pdu_session_ctxt = context.pdu_sessions.at(modify_item.pdu_session_id);
+      srsran_assert(std::find(pdu_session_ctxt.drbs.at(drb_id).qos_flows.begin(),
+                              pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
+                              flow_item.qos_flow_id) != pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
+                    "QoS flow ID {} not mapped on {}",
+                    flow_item.qos_flow_id,
+                    drb_id);
+      if (pdu_session_ctxt.drbs.at(drb_id).qos_flows.size() == 1) {
+        // Flow is the only active flow on this DRB - release it.
+        logger.debug("Releasing {}", drb_id);
+        ctxt.drb_to_remove.push_back(drb_id);
+      }
     }
 
     update.pdu_sessions_to_modify_list.emplace(ctxt.id, ctxt);

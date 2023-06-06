@@ -53,6 +53,31 @@ inline void apply_update_for_new_drbs(up_pdu_session_context&                   
 
     // add FiveQI to map of existing QoS groups.
     context.five_qi_map.emplace(drb.second.qos_params.qos_characteristics.get_five_qi(), drb.first);
+
+    // add QoS flows of the DRB to the map.
+    for (const auto& qos_flow_id : drb.second.qos_flows) {
+      context.qos_flow_map.insert({qos_flow_id, drb.first});
+    }
+  }
+}
+
+inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_session_context,
+                                          up_context&                  context,
+                                          const std::vector<drb_id_t>& drb_to_remove)
+{
+  // Remove DRB and all mapped flows.
+  for (const auto& drb_id : drb_to_remove) {
+    // First remove all QoS flows from map.
+    for (const auto& flow_id : pdu_session_context.drbs.at(drb_id).qos_flows) {
+      context.qos_flow_map.erase(flow_id);
+    }
+
+    // Remove associated 5QI.
+    context.five_qi_map.erase(pdu_session_context.drbs.at(drb_id).qos_params.qos_characteristics.get_five_qi());
+
+    // Now remove DRB from PDU session and DRB map.
+    pdu_session_context.drbs.erase(drb_id);
+    context.drb_map.erase(drb_id);
   }
 }
 
@@ -78,6 +103,9 @@ bool up_resource_manager_impl::apply_config_update(const up_config_update_result
 
     // Add new DRBs.
     apply_update_for_new_drbs(session_context, context, mod_session.drb_to_add);
+
+    // Remove DRBs.
+    apply_update_for_removed_drbs(session_context, context, mod_session.drb_to_remove);
   }
   return true;
 }
@@ -147,15 +175,8 @@ size_t up_resource_manager_impl::get_nof_qos_flows(pdu_session_id_t psi)
 
 size_t up_resource_manager_impl::get_total_nof_qos_flows()
 {
-  size_t nof_qos_flows = 0;
-
   // Return number of active QoS flows in all active sessions.
-  for (const auto& pdu_session : context.pdu_sessions) {
-    for (const auto& drb : pdu_session.second.drbs) {
-      nof_qos_flows += drb.second.qos_flows.size();
-    }
-  }
-  return nof_qos_flows;
+  return context.qos_flow_map.size();
 }
 
 std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()

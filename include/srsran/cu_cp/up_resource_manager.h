@@ -55,6 +55,7 @@ struct up_pdu_session_context_update {
   up_pdu_session_context_update(pdu_session_id_t id_) : id(id_){};
   pdu_session_id_t                   id;
   std::map<drb_id_t, up_drb_context> drb_to_add;
+  std::vector<drb_id_t>              drb_to_remove;
 };
 
 // Struct that contains all fields required to update the UP config based on an incoming
@@ -78,7 +79,7 @@ struct up_config_update {
 // Response given back to the UP resource manager containing the full context
 // that could be setup.
 struct up_config_update_result {
-  std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of session that have been added.
+  std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of sessions that have been added.
   std::vector<up_pdu_session_context_update> pdu_sessions_modified_list; // List of sessions that have been modified.
 };
 
