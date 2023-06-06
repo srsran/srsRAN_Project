@@ -104,30 +104,6 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   ASSERT_NE(gtpu, nullptr);
 };
 
-/// \brief Test correct reception of GTP-U packet without PDU Session Container (i.e. missing QFI)
-TEST_F(gtpu_tunnel_ngu_test, rx_sdu_no_qfi)
-{
-  // init GTP-U entity
-  gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = 0x1;
-  msg.cfg.tx.peer_teid                 = 0x2;
-  msg.cfg.tx.peer_addr                 = "127.0.0.1";
-  msg.rx_lower                         = &gtpu_rx;
-  msg.tx_upper                         = &gtpu_tx;
-  gtpu                                 = create_gtpu_tunnel_ngu(msg);
-
-  byte_buffer orig_vec{gtpu_ping_vec_teid_1};
-  byte_buffer strip_vec{gtpu_ping_vec_teid_1};
-  gtpu_header tmp;
-  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_rx_logger);
-  ASSERT_EQ(read_ok, true);
-
-  gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
-  rx->handle_pdu(std::move(orig_vec));
-  ASSERT_EQ(strip_vec, gtpu_rx.last_rx);
-  ASSERT_EQ(qos_flow_id_t::missing, gtpu_rx.last_rx_qos_flow_id);
-};
-
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
 TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {

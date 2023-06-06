@@ -42,12 +42,7 @@ constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
 
 /// \brief QoS Flow ID.
 /// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)
-enum class qos_flow_id_t : uint8_t {
-  min     = 0,
-  max     = MAX_NOF_QOS_FLOWS - 1,
-  invalid = MAX_NOF_QOS_FLOWS,
-  missing = MAX_NOF_QOS_FLOWS + 1, ///< Custom compatibility extension for GTP-U PDUs without PDU Session Container
-};
+enum class qos_flow_id_t : uint8_t { min = 0, max = MAX_NOF_QOS_FLOWS - 1, invalid = MAX_NOF_QOS_FLOWS };
 
 /// Convert QoS Flow ID type to integer.
 constexpr inline uint8_t qos_flow_id_to_uint(qos_flow_id_t id)
@@ -185,8 +180,6 @@ struct formatter<srsran::qos_flow_id_t> {
   auto format(const srsran::qos_flow_id_t& qfi, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     switch (qfi) {
-      case srsran::qos_flow_id_t::missing:
-        return format_to(ctx.out(), "missing");
       case srsran::qos_flow_id_t::invalid:
         return format_to(ctx.out(), "invalid QFI");
       default:
