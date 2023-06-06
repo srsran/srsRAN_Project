@@ -117,21 +117,23 @@ static re_pattern get_re_pattern_port(const csi_rs_pattern& pattern_all_ports, u
                     pattern_all_ports.prb_patterns[i_port].symbol_mask);
 }
 
-/// \brief Returns a vector of the RE patterns from the CSI-RS PDUs of the given DL_TTI.request.
-/// Each element of the vector refers to a CSI-RS PDU with the same index.
+/// \brief Returns a list of the RE patterns that carry CSI-RS for the given DL_TTI.request.
+/// Each element of the list refers to a CSI-RS PDU with the same index.
 static static_vector<re_pattern_list, MAX_CSI_RS_PDUS_PER_SLOT>
-calculate_csi_re_pattern(const fapi::dl_tti_request_message& msg, uint16_t cell_bandwidth_prb)
+generate_csi_re_pattern_list(const fapi::dl_tti_request_message& msg, uint16_t cell_bandwidth_prb)
 {
-  // Get all the CSI-RS patterns from the message.
-  // NOTE: Assuming one port only in the pattern.
   static_vector<re_pattern_list, MAX_CSI_RS_PDUS_PER_SLOT> re_pattern_lst;
+
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
         csi_rs_pattern pattern;
         get_csi_rs_pattern_from_fapi_pdu(pattern, pdu.csi_rs_pdu, cell_bandwidth_prb);
+
         auto& re_pat = re_pattern_lst.emplace_back();
-        re_pat.merge(get_re_pattern_port(pattern, 0));
+        for (unsigned port = 0, nof_ports = pattern.prb_patterns.size(); port != nof_ports; ++port) {
+          re_pat.merge(get_re_pattern_port(pattern, port));
+        }
         break;
       }
       default:
@@ -151,7 +153,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
                                                        uint16_t                            cell_bandwidth_prb)
 {
   downlink_pdus pdus;
-  const auto&   csi_re_patterns = calculate_csi_re_pattern(msg, cell_bandwidth_prb);
+  const auto&   csi_re_patterns = generate_csi_re_pattern_list(msg, cell_bandwidth_prb);
+
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS: {
@@ -216,6 +219,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         srsran_assert(0, "DL_TTI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
+
   return pdus;
 }
 

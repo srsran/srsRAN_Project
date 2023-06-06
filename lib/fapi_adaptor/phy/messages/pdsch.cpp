@@ -15,7 +15,7 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-/// Fills the reserved RE patterns parameter of the PDSCH PDU.
+/// Fills the reserved RE pattern list field in a PDSCH PDU.
 static void fill_reserved_re_pattern(pdsch_processor::pdu_t&     proc_pdu,
                                      const fapi::dl_pdsch_pdu&   fapi_pdu,
                                      span<const re_pattern_list> csi_re_pattern_list)
