@@ -168,8 +168,8 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
   return true;
 }
 
-/// Validates the given TDD UL DL pattern application configuration. Returns true on success, otherwise false.
-static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subcarrier_spacing common_scs)
+static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconfig& config,
+                                                 subcarrier_spacing                 common_scs)
 {
   // NOTE: TDD pattern is assumed to use common SCS as reference SCS.
   if (common_scs > subcarrier_spacing::kHz60) {
@@ -184,6 +184,7 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subc
         config.dl_ul_tx_period);
     return false;
   }
+
   // See TS 38.213, clause 11.1.
   if (config.dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 kHz when using "
@@ -210,6 +211,18 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subc
     return false;
   }
 
+  return true;
+}
+
+/// Validates the given TDD UL DL pattern application configuration. Returns true on success, otherwise false.
+static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_appconfig& config, subcarrier_spacing common_scs)
+{
+  if (not validate_tdd_ul_dl_pattern_appconfig(config.pattern1, common_scs)) {
+    return false;
+  }
+  if (config.pattern2.has_value() and not validate_tdd_ul_dl_pattern_appconfig(config.pattern2.value(), common_scs)) {
+    return false;
+  }
   return true;
 }
 

@@ -489,27 +489,42 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
-static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
+static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_pattern_appconfig& pattern_params)
 {
-  app.add_option("--dl_ul_tx_period", tdd_ul_dl_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
+  app.add_option("--dl_ul_tx_period", pattern_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
       ->capture_default_str()
       ->check(CLI::Range(0.0, 10.0));
-  app.add_option("--nof_dl_slots", tdd_ul_dl_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
+  app.add_option("--nof_dl_slots", pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 80));
   app.add_option("--nof_dl_symbols",
-                 tdd_ul_dl_params.nof_dl_symbols,
+                 pattern_params.nof_dl_symbols,
                  "TDD pattern nof. DL symbols at the beginning of the slot following full DL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 13));
-  app.add_option("--nof_ul_slots", tdd_ul_dl_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
+  app.add_option("--nof_ul_slots", pattern_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 80));
   app.add_option("--nof_ul_symbols",
-                 tdd_ul_dl_params.nof_ul_symbols,
+                 pattern_params.nof_ul_symbols,
                  "TDD pattern nof. UL symbols at the end of the slot preceding the first full UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 13));
+}
+
+static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
+{
+  configure_cli11_tdd_ul_dl_pattern_args(app, tdd_ul_dl_params.pattern1);
+  CLI::App* pattern2_subcmd =
+      app.add_subcommand("pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
+  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
+  auto tdd_ul_dl_verify_callback = [&]() {
+    CLI::App* tdd_cfg = app.get_subcommand("pattern2");
+    if (tdd_cfg->count_all() == 0) {
+      tdd_ul_dl_params.pattern2.reset();
+    }
+  };
+  app.callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
