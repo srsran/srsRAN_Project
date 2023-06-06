@@ -46,6 +46,23 @@ TEST_F(rrc_ue_reest, when_invalid_reestablishment_request_received_then_rrc_setu
   check_initial_ue_message_sent();
 }
 
+/// Test the RRC Reestablishment
+TEST_F(rrc_ue_reest, when_valid_reestablishment_request_received_but_security_context_not_found_then_rrc_setup_sent)
+{
+  connect_amf();
+  receive_valid_reestablishment_request(1, to_rnti(0x4601));
+
+  // check if the RRC Setup Request was generated
+  ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+
+  // check if SRB1 was created
+  check_srb1_exists();
+
+  receive_setup_complete();
+
+  check_initial_ue_message_sent();
+}
+
 // TODO Starting the RRC Re-establishment procedure is temporally disabled. Remember to activate unittest when
 // enabling it.
 // /// Test the RRC Reestablishment
