@@ -28,12 +28,6 @@ struct grant_prbs_mcs {
   unsigned n_prbs;
 };
 
-struct ue_csi_report {
-  optional<uint8_t> wb_cqi;
-  optional<uint8_t> ri;
-  optional<uint8_t> pmi;
-};
-
 /// \brief Context respective to a UE serving cell.
 class ue_cell
 {
@@ -121,6 +115,10 @@ public:
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
   get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
+  /// \brief Set UE fallback state. When in "fallback" mode, only the search spaces of cellConfigCommon are used. The UE
+  /// should automatically leave this mode, when a CRC=OK is received.
+  void set_fallback_state(bool fallback_state_) { is_fallback_mode = fallback_state_; }
+
 private:
   /// Update PUSCH SNR metric of the UE.
   void update_pusch_snr(optional<float> snr)
@@ -135,7 +133,8 @@ private:
   ue_cell_configuration             ue_cfg;
   srslog::basic_logger&             logger;
 
-  bool is_fallback_mode = true;
+  /// \brief Fallback state of the UE.
+  bool is_fallback_mode = false;
 
   metrics ue_metrics;
 };

@@ -32,9 +32,7 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell),
-  logger(srslog::fetch_basic_logger("SCHED")),
-  // PCell starts in fallback mode.
-  is_fallback_mode(cell_cfg_common_.cell_index == to_du_cell_index(0))
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (expert_cfg.ul_mcs.start() != expert_cfg.ul_mcs.stop()) {
     update_pusch_snr(expert_cfg.initial_ul_sinr);
@@ -152,7 +150,9 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
-    if (crc_pdu.tb_crc_success and is_fallback_mode) {
+    // If the UE is in fallback mode and the CRC was successful, leave fallback mode.
+    if (is_fallback_mode and crc_pdu.tb_crc_success and
+        harqs.ul_harq(crc_pdu.harq_id).last_tx_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0) {
       logger.debug("ue={} rnti={:#x}: Leaving fallback mode", ue_index, rnti());
       is_fallback_mode = false;
     }

@@ -83,6 +83,11 @@ public:
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
+    if (msg.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+      // When Contention Resolution Identity CE is required (e.g. RRC Setup, RRC Reestablishment), we force fallback
+      // mode to be used.
+      get_cell(to_ue_cell_index(0)).set_fallback_state(true);
+    }
     dl_lc_ch_mgr.handle_mac_ce_indication(msg.ce_lcid);
   }
 
