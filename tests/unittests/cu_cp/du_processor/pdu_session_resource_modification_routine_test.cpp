@@ -70,6 +70,45 @@ protected:
     e1ap_ctrl_notifier.reset();
   }
 
+  void modify_pdu_session_and_add_second_qos_flow()
+  {
+    // Set expected results for sub-procedures.
+    bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
+    first_bearer_ctxt_mod_outcome.outcome                    = true;
+    first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
+    first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
+    first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+    ue_context_outcome_t ue_cxt_mod_outcome;
+    ue_cxt_mod_outcome.outcome          = true;
+    ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
+    ue_cxt_mod_outcome.drb_failed_list  = {};
+    bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
+    second_bearer_ctxt_mod_outcome.outcome                    = true;
+    second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
+    second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
+    second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+    set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
+
+    // Run PDU session modification.
+    cu_cp_pdu_session_resource_modify_request              request = generate_pdu_session_resource_modification();
+    async_task<cu_cp_pdu_session_resource_modify_response> modify_task =
+        routine_mng->start_pdu_session_resource_modification_routine(
+            request, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
+    lazy_task_launcher<cu_cp_pdu_session_resource_modify_response> modify_launcher(modify_task);
+
+    // Verify content of UE context modifcation.
+    ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_setup_mod_list.size(), 1);
+
+    // PDU session resource modification succeeded.
+    ASSERT_TRUE(modify_task.ready());
+    ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.size(), 1);
+    ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+    ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 0);
+
+    // clear stored E1AP requests for next procedure
+    e1ap_ctrl_notifier.reset();
+  }
+
 private:
   async_task<cu_cp_pdu_session_resource_modify_response>                   t;
   optional<lazy_task_launcher<cu_cp_pdu_session_resource_modify_response>> t_launcher;
@@ -222,4 +261,14 @@ TEST_F(pdu_session_resource_modification_test, when_rrc_reconfiguration_fails_th
   ASSERT_TRUE(procedure_ready());
   ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.size(), 1);
   ASSERT_EQ(result().pdu_session_res_failed_to_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+}
+
+TEST_F(pdu_session_resource_modification_test,
+       when_valid_modifcation_arrives_and_subprocedures_succeed_then_pdu_session_modification_succeeds)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Run PDU session modifcation and add second QoS flow.
+  modify_pdu_session_and_add_second_qos_flow();
 }
