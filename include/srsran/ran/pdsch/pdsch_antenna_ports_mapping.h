@@ -36,6 +36,7 @@ struct pdsch_antenna_ports_mapping {
 /// \param[in] nof_dl_antenna_ports Number of DL antenna ports supported by gNB.
 /// \param[in] dmrs_cfg_type PDSCH DMRS configuration type.
 /// \param[in] dmrs_max_len PDSCH DMRS maximum number of OFDM symbols.
+/// \param[in] are_both_cws_enabled Flag indicating whether Codeword 0 and Codeword 1 are enabled or not.
 /// \return The PDSCH antenna ports mapping from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on DMRS configuration, nof.
 ///         layers etc. If the given input configuration does not match any of the rows in the table, the function
 ///         triggers an asserts. But if input configuration matches more than one row in the table, the first matching
@@ -43,13 +44,15 @@ struct pdsch_antenna_ports_mapping {
 pdsch_antenna_ports_mapping get_pdsch_antenna_port_mapping(unsigned         nof_layers,
                                                            unsigned         nof_dl_antenna_ports,
                                                            dmrs_config_type dmrs_cfg_type,
-                                                           dmrs_max_length  dmrs_max_len);
+                                                           dmrs_max_length  dmrs_max_len,
+                                                           bool             are_both_cws_enabled);
 
 /// \brief Returns the PDSCH antenna ports mapping row index in TS 38.212, tables 7.3.1.2.2-1/2/3/4.
 /// \param[in] nof_layers Number of layers.
 /// \param[in] nof_dl_antenna_ports Number of DL antenna ports supported by gNB.
 /// \param[in] dmrs_cfg_type PDSCH DMRS configuration type.
 /// \param[in] dmrs_max_len PDSCH DMRS maximum number of OFDM symbols.
+/// \param[in] are_both_cws_enabled Flag indicating whether Codeword 0 and Codeword 1 are enabled or not.
 /// \return The PDSCH antenna ports mapping row index from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on DMRS
 ///         configuration, nof. layers etc. If the given input configuration does not match any of the rows in the
 ///         table, the function triggers an asserts. But if input configuration matches more than one row in the
@@ -57,6 +60,7 @@ pdsch_antenna_ports_mapping get_pdsch_antenna_port_mapping(unsigned         nof_
 unsigned get_pdsch_antenna_port_mapping_row_index(unsigned         nof_layers,
                                                   unsigned         nof_dl_antenna_ports,
                                                   dmrs_config_type dmrs_cfg_type,
-                                                  dmrs_max_length  dmrs_max_len);
+                                                  dmrs_max_length  dmrs_max_len,
+                                                  bool             are_both_cws_enabled);
 
 } // namespace srsran

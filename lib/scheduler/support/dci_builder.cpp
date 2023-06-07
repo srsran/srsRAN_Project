@@ -9,16 +9,11 @@
 
 #include "dci_builder.h"
 #include "srsran/adt/optional.h"
-#include "srsran/adt/variant.h"
-#include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"
-#include "srsran/ran/physical_cell_group.h"
-#include "srsran/ran/pucch/srs_configuration.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/config/serving_cell_config.h"
 #include <algorithm>
 
 using namespace srsran;
@@ -48,7 +43,7 @@ void srsran::build_dci_f1_0_si_rnti(dci_dl_info&               dci,
                                     sch_mcs_index              mcs_index,
                                     uint8_t                    si_indicator)
 {
-  dci.type                              = srsran::dci_dl_rnti_config_type::si_f1_0;
+  dci.type                              = dci_dl_rnti_config_type::si_f1_0;
   dci.si_f1_0                           = {};
   dci_1_0_si_rnti_configuration& si_dci = dci.si_f1_0;
   // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
@@ -97,7 +92,7 @@ void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
                                     unsigned                   time_resource,
                                     sch_mcs_index              mcs_index)
 {
-  dci.type                              = srsran::dci_dl_rnti_config_type::ra_f1_0;
+  dci.type                              = dci_dl_rnti_config_type::ra_f1_0;
   dci.ra_f1_0                           = {};
   dci_1_0_ra_rnti_configuration& ra_dci = dci.ra_f1_0;
   // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
@@ -126,7 +121,7 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
 {
   static constexpr unsigned tb_idx = 0;
 
-  dci.type                            = srsran::dci_dl_rnti_config_type::tc_rnti_f1_0;
+  dci.type                            = dci_dl_rnti_config_type::tc_rnti_f1_0;
   dci.tc_rnti_f1_0                    = {};
   dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
 
@@ -173,7 +168,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                 dci,
   const bwp_downlink_common&   init_dl_bwp       = *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common;
   const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
 
-  dci.type                           = srsran::dci_dl_rnti_config_type::c_rnti_f1_0;
+  dci.type                           = dci_dl_rnti_config_type::c_rnti_f1_0;
   dci.c_rnti_f1_0                    = {};
   dci_1_0_c_rnti_configuration& f1_0 = dci.c_rnti_f1_0;
 
@@ -229,12 +224,15 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
   srsran_assert(ss_info.cfg->type == search_space_configuration::type_t::ue_dedicated,
                 "SearchSpace must be of type UE-Specific SearchSpace");
 
+  // TODO: Update the value based on nof. CWs enabled.
+  static const bool are_both_cws_enabled = false;
+
   const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common;
   const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
   const auto                 k1_candidates     = ss_info.get_k1_candidates();
   const auto&                opt_pdsch_cfg     = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
 
-  dci.type                    = srsran::dci_dl_rnti_config_type::c_rnti_f1_1;
+  dci.type                    = dci_dl_rnti_config_type::c_rnti_f1_1;
   dci.c_rnti_f1_1             = {};
   dci_1_1_configuration& f1_1 = dci.c_rnti_f1_1;
 
@@ -248,7 +246,8 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
       nof_layers,
       ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant,
       dmrs_cfg.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1,
-      dmrs_cfg.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1);
+      dmrs_cfg.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1,
+      are_both_cws_enabled);
 
   // See 38.212, clause 7.3.1.2.2 - N^{DL,BWP}_RB for C-RNTI.
   f1_1.frequency_resource = ra_frequency_type1_get_riv(
@@ -298,7 +297,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
   srsran_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
 
-  dci.type                            = srsran::dci_ul_rnti_config_type::tc_rnti_f0_0;
+  dci.type                            = dci_ul_rnti_config_type::tc_rnti_f0_0;
   dci.tc_rnti_f0_0                    = {};
   dci_0_0_tc_rnti_configuration& f0_0 = dci.tc_rnti_f0_0;
 

@@ -212,27 +212,49 @@ static const std::array<pdsch_antenna_ports_mapping, antenna_port_mapping_dmrs_t
         // clang-format on
     }};
 
-static span<const pdsch_antenna_ports_mapping> get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
-                                                                                    dmrs_max_length  dmrs_max_len)
+namespace {
+// Helper function to fetch the PDSCH antenna ports mapping table to use based on input configuration.
+span<const pdsch_antenna_ports_mapping> get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
+                                                                             dmrs_max_length  dmrs_max_len,
+                                                                             bool             are_both_cws_enabled)
 {
-  if (dmrs_cfg_type == srsran::dmrs_config_type::type2 or dmrs_max_len == srsran::dmrs_max_length::len2) {
-    srsran_assertion_failure(
-        "PDSCH antenna ports mapping for the given DMRS configuration is currently not supported.");
+  if (dmrs_cfg_type == dmrs_config_type::type1 and dmrs_max_len == dmrs_max_length::len1) {
+    return antenna_port_mapping_dmrs_type1_max_length1;
   }
-  return antenna_port_mapping_dmrs_type1_max_length1;
+  if (dmrs_cfg_type == dmrs_config_type::type1 and dmrs_max_len == dmrs_max_length::len2 and not are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type1_max_length2_one_cw;
+  }
+  if (dmrs_cfg_type == dmrs_config_type::type1 and dmrs_max_len == dmrs_max_length::len2 and are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type1_max_length2_two_cw;
+  }
+  if (dmrs_cfg_type == dmrs_config_type::type2 and dmrs_max_len == dmrs_max_length::len1 and not are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type2_max_length1_one_cw;
+  }
+  if (dmrs_cfg_type == dmrs_config_type::type2 and dmrs_max_len == dmrs_max_length::len1 and are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type2_max_length1_two_cw;
+  }
+  if (dmrs_cfg_type == dmrs_config_type::type2 and dmrs_max_len == dmrs_max_length::len2 and not are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type2_max_length2_one_cw;
+  }
+  if (dmrs_cfg_type == dmrs_config_type::type2 and dmrs_max_len == dmrs_max_length::len2 and are_both_cws_enabled) {
+    return antenna_port_mapping_dmrs_type2_max_length2_two_cw;
+  }
+  report_fatal_error("No PDSCH antenna ports mapping found for the given DMRS configuration.");
 }
 
-static const pdsch_antenna_ports_mapping* get_pdsch_antenna_port_mapping_row(unsigned         nof_layers,
-                                                                             unsigned         nof_dl_antenna_ports,
-                                                                             dmrs_config_type dmrs_cfg_type,
-                                                                             dmrs_max_length  dmrs_max_len)
+// Helper function to fetch a row from the relevant PDSCH antenna ports mapping table based on input configuration.
+const pdsch_antenna_ports_mapping* get_pdsch_antenna_port_mapping_row(unsigned         nof_layers,
+                                                                      unsigned         nof_dl_antenna_ports,
+                                                                      dmrs_config_type dmrs_cfg_type,
+                                                                      dmrs_max_length  dmrs_max_len,
+                                                                      bool             are_both_cws_enabled)
 {
   if (nof_layers > nof_dl_antenna_ports) {
     srsran_assertion_failure("Number of DL layers={} cannot be greater than number of DL antenna ports={} of the cell.",
                              nof_layers,
                              nof_dl_antenna_ports);
   }
-  const auto  mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len);
+  const auto  mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);
   const auto* it            = std::find_if(mapping_table.begin(),
                                 mapping_table.end(),
                                 [nof_layers, nof_dl_antenna_ports](const pdsch_antenna_ports_mapping& mapping) {
@@ -245,22 +267,26 @@ static const pdsch_antenna_ports_mapping* get_pdsch_antenna_port_mapping_row(uns
   }
   return it;
 }
+} // namespace
 
 pdsch_antenna_ports_mapping srsran::get_pdsch_antenna_port_mapping(unsigned         nof_layers,
                                                                    unsigned         nof_dl_antenna_ports,
                                                                    dmrs_config_type dmrs_cfg_type,
-                                                                   dmrs_max_length  dmrs_max_len)
+                                                                   dmrs_max_length  dmrs_max_len,
+                                                                   bool             are_both_cws_enabled)
 {
-  return *get_pdsch_antenna_port_mapping_row(nof_layers, nof_dl_antenna_ports, dmrs_cfg_type, dmrs_max_len);
+  return *get_pdsch_antenna_port_mapping_row(
+      nof_layers, nof_dl_antenna_ports, dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);
 }
 
 unsigned srsran::get_pdsch_antenna_port_mapping_row_index(unsigned         nof_layers,
                                                           unsigned         nof_dl_antenna_ports,
                                                           dmrs_config_type dmrs_cfg_type,
-                                                          dmrs_max_length  dmrs_max_len)
+                                                          dmrs_max_length  dmrs_max_len,
+                                                          bool             are_both_cws_enabled)
 {
-  const auto mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len);
-  return std::distance(
-      mapping_table.begin(),
-      get_pdsch_antenna_port_mapping_row(nof_layers, nof_dl_antenna_ports, dmrs_cfg_type, dmrs_max_len));
+  const auto mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);
+  return std::distance(mapping_table.begin(),
+                       get_pdsch_antenna_port_mapping_row(
+                           nof_layers, nof_dl_antenna_ports, dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled));
 }

@@ -89,6 +89,9 @@ pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configura
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
 
+  // TODO: Update the value based on nof. CWs enabled.
+  static const bool are_both_cws_enabled = false;
+
   pdsch_config_params pdsch;
 
   srsran_assert(ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),
@@ -99,7 +102,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configura
                                ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
                                ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value(),
                                nof_layers,
-                               ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant);
+                               ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant,
+                               are_both_cws_enabled);
 
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
@@ -220,6 +224,8 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
+  // TODO: Update the value based on nof. CWs enabled.
+  static const bool are_both_cws_enabled = false;
 
   pusch_config_params pusch;
 
@@ -232,7 +238,8 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
       ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
       ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value(),
       nof_layers,
-      ue_cell_cfg.cell_cfg_common.ul_carrier.nof_ant);
+      ue_cell_cfg.cell_cfg_common.ul_carrier.nof_ant,
+      are_both_cws_enabled);
 
   pusch.symbols = pusch_td_cfg.symbols;
 

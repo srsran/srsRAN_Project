@@ -83,7 +83,8 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
                                                  const dmrs_downlink_config&                  dmrs_dl_cfg_ded,
                                                  unsigned                                     nof_layers,
-                                                 unsigned                                     nof_dl_antenna_ports)
+                                                 unsigned                                     nof_dl_antenna_ports,
+                                                 bool                                         are_both_cws_enabled)
 {
   dmrs_information dmrs{};
 
@@ -103,14 +104,15 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
 
   dmrs.config_type = dmrs_dl_cfg_ded.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1;
   // TODO: See TS 38.211, 7.4.1.1.1.
-  dmrs.dmrs_scrambling_id                       = pci;
-  dmrs.low_papr_dmrs                            = false;
-  dmrs.n_scid                                   = false;
-  const pdsch_antenna_ports_mapping ant_mapping = get_pdsch_antenna_port_mapping(
-      nof_layers,
-      nof_dl_antenna_ports,
-      dmrs.config_type,
-      dmrs_dl_cfg_ded.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1);
+  dmrs.dmrs_scrambling_id = pci;
+  dmrs.low_papr_dmrs      = false;
+  dmrs.n_scid             = false;
+  const pdsch_antenna_ports_mapping ant_mapping =
+      get_pdsch_antenna_port_mapping(nof_layers,
+                                     nof_dl_antenna_ports,
+                                     dmrs.config_type,
+                                     dmrs_dl_cfg_ded.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1,
+                                     are_both_cws_enabled);
   dmrs.num_dmrs_cdm_grps_no_data = ant_mapping.nof_dmrs_cdm_groups_without_data;
   dmrs.dmrs_ports.resize(12);
   for (const auto port : ant_mapping.dmrs_ports) {
@@ -181,7 +183,8 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
                                                  const dmrs_uplink_config&                    dmrs_ul_cfg,
                                                  unsigned                                     nof_layers,
-                                                 unsigned                                     nof_ul_antenna_ports)
+                                                 unsigned                                     nof_ul_antenna_ports,
+                                                 bool                                         are_both_cws_enabled)
 {
   dmrs_information dmrs{};
 
