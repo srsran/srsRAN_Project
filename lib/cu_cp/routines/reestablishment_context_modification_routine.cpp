@@ -9,6 +9,7 @@
  */
 
 #include "reestablishment_context_modification_routine.h"
+#include "pdu_session_routine_helpers.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 
 using namespace srsran;
@@ -77,31 +78,16 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
-      for (const auto& pdu_session : rrc_ue_up_resource_manager.get_pdu_sessions()) {
-        // Add radio bearer config
-        cu_cp_radio_bearer_config radio_bearer_config;
+      // convert pdu session context
+      std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
+      for (const auto& pdu_session_id : rrc_ue_up_resource_manager.get_pdu_sessions()) {
+        up_pdu_session_context_update context_update{pdu_session_id};
+        context_update.drb_to_add = rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session_id).drbs;
 
-        for (const auto& drb_to_add : rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session).drbs) {
-          cu_cp_drb_to_add_mod drb_to_add_mod;
-          drb_to_add_mod.drb_id   = drb_to_add.first;
-          drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
-
-          // Add CN association and SDAP config
-          cu_cp_cn_assoc cn_assoc;
-          cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
-          drb_to_add_mod.cn_assoc = cn_assoc;
-
-          radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
-        }
-        rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
-
-        // set masterCellGroupConfig as received by DU
-        cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-        rrc_recfg_v1530_ies.master_cell_group =
-            ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
-
-        rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
+        pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
       }
+
+      fill_rrc_reconfig_args(rrc_reconfig_args, {}, pdu_sessions_to_setup_list, ue_context_modification_response, {});
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
