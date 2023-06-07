@@ -239,7 +239,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     // If any dependent parameter needs to be updated, this is the place.
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
-          du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+          du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
     }
 
     logger.info(
