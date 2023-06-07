@@ -143,6 +143,14 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.searchspace0_idx = ss0_idx;
     out_cell.ssb_cfg.ssb_period = (ssb_periodicity)config.common_cell_cfg.ssb_period_msec;
 
+    // Cell selection parameters.
+    out_cell.cell_sel_info.q_rx_lev_min = base_cell.q_rx_lev_min;
+    out_cell.cell_sel_info.q_qual_min   = base_cell.q_qual_min;
+
+    // SSB config.
+    out_cell.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;
+    out_cell.ssb_cfg.pss_to_sss_epre = base_cell.ssb_cfg.pss_to_sss_epre;
+
     // Carrier config.
     out_cell.dl_carrier.nof_ant = base_cell.nof_antennas_dl;
     out_cell.ul_carrier.nof_ant = base_cell.nof_antennas_ul;
@@ -162,6 +170,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.msg1_scs                     = is_long_prach ? subcarrier_spacing::invalid : base_cell.common_scs;
     rach_cfg.prach_root_seq_index         = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
+    rach_cfg.rach_cfg_generic.preamble_rx_target_pw        = base_cell.prach_cfg.preamble_rx_target_pw;
     // \c msg1_frequency_start for RACH is one of the parameters that can either be set manually, or need to be
     // recomputed at the end of the manual configuration, as a results of other user parameters passed by the user.
     bool update_msg1_frequency_start = not base_cell.prach_cfg.prach_frequency_start.has_value();
@@ -190,11 +199,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-                0,
-                0,
-                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                0,
-                0};
+          0,
+          0,
+          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+          0,
+          0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -224,6 +233,22 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id =
         to_search_space_id(config.common_cell_cfg.paging_cfg.paging_search_space_id);
     out_cell.dl_cfg_common.pcch_cfg = generate_pcch_config(config);
+
+    // Parameters for PUSCH-ConfigCommon.
+    if (not out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value()) {
+      out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.emplace();
+    }
+    out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_preamble =
+        base_cell.pusch_cfg.msg3_delta_preamble;
+    out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant =
+        base_cell.pusch_cfg.p0_nominal_with_grant;
+    out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
+
+    // Parameters for PUCCH-ConfigCommon.
+    if (not out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
+      out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
+    }
+    out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
 
     // Parameters for PUCCH-Config.
     pucch_builder_params&  du_pucch_cfg           = out_cell.pucch_cfg;

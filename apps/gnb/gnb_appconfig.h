@@ -41,6 +41,8 @@ struct prach_appconfig {
   unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
+  /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are valid.
+  int preamble_rx_target_pw = -100;
   /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
   optional<unsigned> total_nof_ra_preambles;
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
@@ -123,9 +125,22 @@ struct pusch_appconfig {
   std::vector<unsigned> rv_sequence = {0};
   /// MCS table to use for PUSCH
   pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
+  /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
+  int msg3_delta_preamble = 6;
+  /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0_nominal_with_grant = -76;
+
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
+  /// Values {-6,...,8} and must be a multiple of 2.
+  int msg3_delta_power = 8;
 };
 
 struct pucch_appconfig {
+  /// \c PUCCH-ConfigCommon parameters.
+  /// \c p0-nominal, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0_nominal = -90;
+
+  /// \c PUCCH-Config parameters.
   /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f1_res_harq = 3;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
@@ -167,6 +182,15 @@ struct amplitude_control_appconfig {
   bool enable_clipping = false;
 };
 
+struct ssb_appconfig {
+  /// \brief \c ss-PBCH-BlockPower, part of \c ServingCellConfigCommonSIB, as per TS 38.331.
+  /// Average EPRE of the REs that carry secondary synchronization signals in dBm used for SSB transmission.
+  /// Values: {-60,..,70}
+  int ssb_block_power = -16;
+  /// PSS EPRE to SSS EPRE for SSB, as per TS 38.213, Section 4.1.
+  ssb_pss_to_sss_epre pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
+};
+
 /// Base cell configuration.
 struct base_cell_appconfig {
   /// Physical cell identifier.
@@ -187,6 +211,12 @@ struct base_cell_appconfig {
   unsigned tac = 7;
   /// SSB period in milliseconds.
   unsigned ssb_period_msec = 10;
+  /// \brief \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
+  int q_rx_lev_min = -70;
+  /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
+  int q_qual_min = -20;
+  /// SSB parameters.
+  ssb_appconfig ssb_cfg;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.

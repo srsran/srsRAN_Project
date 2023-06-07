@@ -72,12 +72,24 @@ struct pucch_builder_params {
   pucch_f2_params f2_params;
 };
 
+struct cell_selection_info {
+  /// \brief \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
+  /// Indicates the required minimum received RSRP level for cell selection/re-selection (see \c Q-RxLevMin, TS 38.311).
+  bounded_integer<int, -70, -22> q_rx_lev_min = -70;
+  /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
+  /// Indicates the required minimum received RSRQ level for cell selection/re-selection (see \c Q-QualMin, TS 38.311).
+  bounded_integer<int, -43, -12> q_qual_min = -20;
+};
+
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
 /// other layers (e.g. scheduler).
 struct du_cell_config {
   pci_t               pci;
   uint32_t            tac;
   nr_cell_global_id_t nr_cgi;
+
+  /// \c cellSelectionInfo, \c SIB1, as per TS 38.311.
+  cell_selection_info cell_sel_info;
 
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;

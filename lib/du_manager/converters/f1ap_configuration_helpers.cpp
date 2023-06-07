@@ -318,7 +318,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   rach.rach_cfg_generic.msg1_freq_start   = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
   rach.rach_cfg_generic.zero_correlation_zone_cfg =
       static_cast<uint8_t>(rach_cfg.rach_cfg_generic.zero_correlation_zone_config);
-  rach.rach_cfg_generic.preamb_rx_target_pwr   = -110;
+  rach.rach_cfg_generic.preamb_rx_target_pwr   = rach_cfg.rach_cfg_generic.preamble_rx_target_pw.to_int();
   rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
   rach.rach_cfg_generic.pwr_ramp_step.value    = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
   bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
@@ -373,8 +373,10 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
                           pusch_cfg.pusch_td_alloc_list[i].symbols.start(),
                           pusch_cfg.pusch_td_alloc_list[i].symbols.length());
   }
+  pusch.msg3_delta_preamb_present     = true;
+  pusch.msg3_delta_preamb             = pusch_cfg.msg3_delta_preamble.to_int();
   pusch.p0_nominal_with_grant_present = true;
-  pusch.p0_nominal_with_grant         = -76;
+  pusch.p0_nominal_with_grant         = pusch_cfg.p0_nominal_with_grant.to_int();
 
   // PUCCH-ConfigCommon.
   const pucch_config_common& pucch_cfg     = cfg.init_ul_bwp.pucch_cfg_common.value();
@@ -384,7 +386,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   pucch.pucch_res_common                   = pucch_cfg.pucch_resource_common;
   pucch.pucch_group_hop.value              = pucch_group_hop_convert_to_asn1(pucch_cfg.group_hopping);
   pucch.p0_nominal_present                 = true;
-  pucch.p0_nominal                         = -90;
+  pucch.p0_nominal                         = pucch_cfg.p0_nominal;
   if (pucch_cfg.hopping_id.has_value()) {
     pucch.hop_id_present = true;
     pucch.hop_id         = static_cast<uint16_t>(pucch_cfg.hopping_id.value());
@@ -472,9 +474,9 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   sib1_s sib1;
 
   sib1.cell_sel_info_present            = true;
-  sib1.cell_sel_info.q_rx_lev_min       = -70;
+  sib1.cell_sel_info.q_rx_lev_min       = du_cfg.cell_sel_info.q_rx_lev_min.to_int();
   sib1.cell_sel_info.q_qual_min_present = true;
-  sib1.cell_sel_info.q_qual_min         = -20;
+  sib1.cell_sel_info.q_qual_min         = du_cfg.cell_sel_info.q_qual_min.to_int();
 
   sib1.cell_access_related_info.plmn_id_info_list.resize(1);
   sib1.cell_access_related_info.plmn_id_info_list[0].plmn_id_list.resize(1);

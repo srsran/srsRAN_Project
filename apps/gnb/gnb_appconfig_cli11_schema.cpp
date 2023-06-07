@@ -269,10 +269,64 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
          "MCS table to use PUSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+  app.add_option("--msg3_delta_preamble",
+                 pusch_params.msg3_delta_preamble,
+                 "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")
+      ->capture_default_str()
+      ->check(CLI::Range(-1, 6));
+  app.add_option("--p0_nominal_with_grant",
+                 pusch_params.p0_nominal_with_grant,
+                 "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
+                 "within the [-202, 24] interval.  Default: -100")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
+  app.add_option("--msg3_delta_power",
+                 pusch_params.msg3_delta_power,
+                 "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and "
+                 "within the [-6, 8] interval. Default: 8")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-6, 8] interval";
+        if (pw < -6 or pw > 8 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
 {
+  app.add_option(
+         "--p0_nominal",
+         pucch_params.p0_nominal,
+         "Power control parameter P0 for PUCCH transmissions. Value in dBm. Valid values must be multiple of 2 and "
+         "within the [-202, 24] interval. Default: -90")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
   app.add_option("--f1_nof_ue_res_harq",
                  pucch_params.nof_ue_pucch_f1_res_harq,
                  "Number of PUCCH F1 resources available per UE for HARQ")
@@ -336,6 +390,24 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
       ->capture_default_str();
 }
 
+static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
+{
+  app.add_option("--ssb_block_power_dbm", ssb_params.ssb_block_power, "SS_PBCH_power_block in dBm")
+      ->capture_default_str()
+      ->check(CLI::Range(-60, 50));
+  app.add_option_function<unsigned>(
+         "--pss_to_sss_epre_db",
+         [&ssb_params](unsigned value) {
+           if (value == 0) {
+             ssb_params.pss_to_sss_epre = srsran::ssb_pss_to_sss_epre::dB_0;
+           } else if (value == 3) {
+             ssb_params.pss_to_sss_epre = srsran::ssb_pss_to_sss_epre::dB_3;
+           }
+         },
+         "SSB PSS to SSS EPRE ratio in dB {0, 3}")
+      ->check(CLI::IsMember({0, 3}));
+}
+
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
 {
   app.add_option("--prach_config_index", prach_params.prach_config_index, "PRACH configuration index")
@@ -360,6 +432,22 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
          "--prach_frequency_start", prach_params.prach_frequency_start, "PRACH message frequency offset in PRBs")
       ->capture_default_str()
       ->check(CLI::Range(0, 274));
+  app.add_option("--preamble_rx_target_pw",
+                 prach_params.preamble_rx_target_pw,
+                 "Target power level at the network receiver side, in dBm")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, -60] interval";
+        // Bandwidth cannot be less than 5MHz.
+        if (pw < -202 or pw > -60 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -487,6 +575,22 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   app.add_option("--ssb_period", cell_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 20}));
+
+  app.add_option("--q_rx_lev_min",
+                 cell_params.q_rx_lev_min,
+                 "q-RxLevMin, required minimum received RSRP level for cell selection/re-selection, in dBm")
+      ->capture_default_str()
+      ->check(CLI::Range(-70, -22));
+
+  app.add_option("--q_qual_min",
+                 cell_params.q_qual_min,
+                 "q-QualMin, required minimum received RSRQ level for cell selection/re-selection, in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-43, -12));
+
+  // SSB configuration.
+  CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
+  configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
 
   // PDCCH configuration.
   CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");

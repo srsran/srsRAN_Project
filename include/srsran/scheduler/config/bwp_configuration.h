@@ -119,6 +119,9 @@ struct rach_config_generic {
   unsigned msg1_frequency_start;
   /// Zero-correlation zone configuration number as per TS38.331 "zeroCorrelationZoneConfig", used to derive N_{CS}.
   uint16_t zero_correlation_zone_config;
+  /// \brief \c preambleReceivedTargetPower, part of \c RACH-ConfigGeneric, TS 38.311.
+  /// Target power level at the network receiver side, in dBm. Only values multiple of 2 are valid.
+  bounded_integer<int, -202, -60> preamble_rx_target_pw;
 };
 
 /// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
@@ -158,6 +161,17 @@ struct pusch_time_domain_resource_allocation {
 struct pusch_config_common {
   /// PUSCH time domain resource allocations. Size: (0..maxNrofUL-Allocations=16).
   std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
+  /// \brief \c msg3-DeltaPreamble, part of \c PUSCH-ConfigCommon, TS 38.331.
+  /// Power offset between msg3 and RACH preamble transmission. The actual value is 2 * msg3-DeltaPreamble in dB.
+  bounded_integer<int, -1, 6> msg3_delta_preamble;
+  /// \brief \c p0-NominalWithGrant, part of \c PUSCH-ConfigCommon, TS 38.331.
+  /// P0 value for PUSCH with grant (except msg3). Value in dBm. Only even values allowed.
+  bounded_integer<int, -202, 24> p0_nominal_with_grant;
+
+  /// Non RACH-ConfigCommon parameters.
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
+  /// Values {-6,...,8} and must be a multiple of 2.
+  bounded_integer<int, -6, 8> msg3_delta_power;
 };
 
 /// \remark See TS 38.331, "PUCCH-ConfigCommon".
