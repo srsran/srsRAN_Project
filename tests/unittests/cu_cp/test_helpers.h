@@ -289,6 +289,7 @@ struct ue_context_outcome_t {
   bool                outcome = false;
   std::list<unsigned> drb_success_list; // List of DRB IDs that were successful to setup.
   std::list<unsigned> drb_failed_list;  // List of DRB IDs that failed to be setup.
+  std::list<unsigned> drb_removed_list; // List of DRB IDs that were removed.
 };
 
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
@@ -357,6 +358,7 @@ private:
   {
     // only copy fields that are actually checked in unit tests
     target.drbs_to_be_setup_mod_list = source.drbs_to_be_setup_mod_list;
+    target.drbs_to_be_released_list  = source.drbs_to_be_released_list;
   }
 
   srslog::basic_logger& logger                   = srslog::fetch_basic_logger("TEST");

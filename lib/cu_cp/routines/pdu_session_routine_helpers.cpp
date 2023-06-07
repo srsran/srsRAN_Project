@@ -52,33 +52,6 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
       request_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability;
 }
 
-void srsran::srs_cu_cp::fill_drb_to_setup_list(
-    slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>&          e1ap_drb_to_setup_list,
-    const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
-    const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
-    const srslog::basic_logger&                                          logger)
-{
-  for (const auto& drb_to_setup : drb_to_add_list) {
-    e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
-    e1ap_drb_setup_item.drb_id = drb_to_setup.first;
-    // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
-    e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
-    fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
-
-    e1ap_cell_group_info_item e1ap_cell_group_item;
-    e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
-    e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
-
-    for (const auto& request_item : qos_flow_list) {
-      e1ap_qos_flow_qos_param_item e1ap_qos_item;
-      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
-      e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
-    }
-
-    e1ap_drb_to_setup_list.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
-  }
-}
-
 void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     cu_cp_rrc_reconfiguration_procedure_request&                        rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
@@ -251,6 +224,41 @@ bool srsran::srs_cu_cp::update_setup_list(
   return true;
 }
 
+void srsran::srs_cu_cp::fill_drb_to_setup_list(
+    slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran>&          e1ap_drb_to_setup_list,
+    const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
+    const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
+    const srslog::basic_logger&                                          logger)
+{
+  for (const auto& drb_to_setup : drb_to_add_list) {
+    e1ap_drb_to_setup_item_ng_ran e1ap_drb_setup_item;
+    e1ap_drb_setup_item.drb_id = drb_to_setup.first;
+    // TODO: set `e1ap_drb_setup_item.drb_inactivity_timer` if configured
+    e1ap_drb_setup_item.sdap_cfg = drb_to_setup.second.sdap_cfg;
+    fill_e1ap_drb_pdcp_config(e1ap_drb_setup_item.pdcp_cfg, drb_to_setup.second.pdcp_cfg);
+
+    e1ap_cell_group_info_item e1ap_cell_group_item;
+    e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
+    e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
+
+    for (const auto& request_item : qos_flow_list) {
+      e1ap_qos_flow_qos_param_item e1ap_qos_item;
+      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
+      e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+    }
+
+    e1ap_drb_to_setup_list.emplace(e1ap_drb_setup_item.drb_id, e1ap_drb_setup_item);
+  }
+}
+
+void srsran::srs_cu_cp::fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_list,
+                                                const std::vector<drb_id_t>& drb_to_remove_list)
+{
+  for (const auto& drb_to_remove : drb_to_remove_list) {
+    e1ap_drb_to_remove_list.push_back(drb_to_remove);
+  }
+}
+
 void srsran::srs_cu_cp::update_failed_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>&     ngap_failed_list,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>& pdu_session_resource_failed_list)
@@ -374,6 +382,11 @@ bool srsran::srs_cu_cp::update_modify_list(
       ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
     }
 
+    // Add DRB to be removed to UE context modifcation.
+    for (const auto& drb_id : next_config.pdu_sessions_to_modify_list.at(e1ap_item.pdu_session_id).drb_to_remove) {
+      ue_context_mod_request.drbs_to_be_released_list.push_back(drb_id);
+    }
+
     // Fail on any DRB that fails to be setup
     if (!e1ap_item.drb_failed_list_ng_ran.empty()) {
       logger.error("Non-empty DRB failed list not supported");
@@ -429,6 +442,15 @@ bool srsran::srs_cu_cp::update_modify_list(
     logger.error("Couldn't setup {} DRBs at DU.",
                  ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
     return false;
+  }
+
+  // Only prepare bearer context modifcation request if needed
+  if (ue_context_modification_response.drbs_setup_mod_list.empty() and
+      ue_context_modification_response.drbs_modified_list.empty()) {
+    // No DRB added or updated.
+    logger.debug("Skipping preparation of bearer context modifcation request.");
+    bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.reset();
+    return ue_context_modification_response.success;
   }
 
   // Start with empty message.

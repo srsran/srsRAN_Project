@@ -29,6 +29,8 @@ void fill_drb_to_setup_list(slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_n
                             const slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item>& qos_flow_list,
                             const std::map<drb_id_t, up_drb_context>&                            drb_to_add_list,
                             const srslog::basic_logger&                                          logger);
+void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_list,
+                             const std::vector<drb_id_t>& drb_to_remove_list);
 
 /// \brief Fill RRC Reconfiguration Arguments.
 /// \param[out] rrc_reconfig_args The RRC Reconfiguration Arguments struct to fill.

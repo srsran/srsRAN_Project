@@ -54,6 +54,10 @@ protected:
     e1ap_ctrl_notifier.set_second_message_outcome({true});
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(true);
 
+    ASSERT_FALSE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());
+    ASSERT_FALSE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+
     // Run setup procedure.
     cu_cp_pdu_session_resource_setup_request              request = generate_pdu_session_resource_setup();
     async_task<cu_cp_pdu_session_resource_setup_response> setup_task =
@@ -66,8 +70,9 @@ protected:
     ASSERT_EQ(setup_task.get().pdu_session_res_setup_response_items.size(), 1);
     ASSERT_EQ(setup_task.get().pdu_session_res_failed_to_setup_items.size(), 0);
 
-    // clear stored E1AP requests for next procedure
+    // clear stored requests for next procedure
     e1ap_ctrl_notifier.reset();
+    rrc_ue_ctrl_notifier.reset();
   }
 
   void modify_pdu_session_and_add_second_qos_flow()
@@ -94,6 +99,10 @@ protected:
     second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item2);
     set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
 
+    ASSERT_FALSE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());
+    ASSERT_FALSE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+    ASSERT_FALSE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
+
     // Run PDU session modification.
     cu_cp_pdu_session_resource_modify_request              request = generate_pdu_session_resource_modification();
     async_task<cu_cp_pdu_session_resource_modify_response> modify_task =
@@ -112,6 +121,7 @@ protected:
 
     // clear stored E1AP requests for next procedure
     e1ap_ctrl_notifier.reset();
+    rrc_ue_ctrl_notifier.reset();
   }
 
 private:
@@ -287,4 +297,71 @@ TEST_F(pdu_session_resource_modification_test,
 
   // Run PDU session modifcation and add second QoS flow.
   modify_pdu_session_and_add_second_qos_flow();
+}
+
+TEST_F(pdu_session_resource_modification_test,
+       when_valid_modifcation_arrives_and_qos_flow_can_be_removed_then_pdu_session_modification_succeeds)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Run PDU session modifcation and add second QoS flow.
+  modify_pdu_session_and_add_second_qos_flow();
+
+  // Test body.
+
+  // Set expected results for sub-procedures.
+  bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
+  first_bearer_ctxt_mod_outcome.outcome = true;
+  pdu_session_modified_outcome_t modify_item;
+  modify_item.psi         = uint_to_pdu_session_id(1);
+  modify_item.drb_removed = {uint_to_drb_id(1)};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
+
+  ue_context_outcome_t ue_cxt_mod_outcome;
+  ue_cxt_mod_outcome.outcome          = true;
+  ue_cxt_mod_outcome.drb_removed_list = {2}; // DRB2 was removed
+
+  bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
+  second_bearer_ctxt_mod_outcome.outcome                  = true;
+  second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+  second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+  pdu_session_modified_outcome_t modify_item2;
+  modify_item2.psi = uint_to_pdu_session_id(1);
+  second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item2);
+  set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
+
+  // Start modification routine.
+  cu_cp_pdu_session_resource_modify_request request =
+      generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(2));
+  start_procedure(request);
+
+  // Verify content of initial bearer modification request.
+  ASSERT_TRUE(e1ap_ctrl_notifier.first_e1ap_request.has_value());
+  ASSERT_TRUE(variant_holds_alternative<e1ap_bearer_context_modification_request>(
+      e1ap_ctrl_notifier.first_e1ap_request.value()));
+  const auto& bearer_ctxt_mod_req =
+      variant_get<e1ap_bearer_context_modification_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
+  ASSERT_TRUE(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.has_value());
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.size(), 1);
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->pdu_session_id,
+            uint_to_pdu_session_id(1));
+  ASSERT_EQ(bearer_ctxt_mod_req.ng_ran_bearer_context_mod_request.value()
+                .pdu_session_res_to_modify_list.begin()
+                ->drb_to_rem_list_ng_ran.size(),
+            1);
+
+  // Verify content of UE context modifcation.
+  ASSERT_EQ(f1ap_ue_ctxt_notifier.get_ctxt_mod_request().drbs_to_be_released_list.size(), 1);
+
+  // Verify RRC reconfig.
+  ASSERT_TRUE(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.has_value());
+  ASSERT_EQ(rrc_ue_ctrl_notifier.last_radio_bearer_cfg.value().drb_to_release_list.size(), 1);
+
+  // PDU session resource modification for session 1 succeeded.
+  ASSERT_TRUE(procedure_ready());
+  ASSERT_EQ(result().pdu_session_res_modify_list.size(), 1);
+  ASSERT_EQ(result().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
 }

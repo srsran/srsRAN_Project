@@ -52,6 +52,8 @@ void fill_e1ap_pdu_session_res_to_modify_list(
                            session.drb_to_add,
                            logger);
 
+    fill_drb_to_remove_list(e1ap_pdu_session_item.drb_to_rem_list_ng_ran, session.drb_to_remove);
+
     pdu_session_res_to_modify_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
   }
 }
@@ -210,8 +212,8 @@ void pdu_session_resource_modification_routine::operator()(
     }
   }
 
-  // Inform CU-UP about the new TEID for UL F1u traffic
-  {
+  // If needed, inform CU-UP about the new TEID for UL F1u traffic
+  if (bearer_context_modification_request.ng_ran_bearer_context_mod_request.has_value()) {
     // add remaining fields to BearerContextModificationRequest
     bearer_context_modification_request.ue_index = modify_request.ue_index;
 
@@ -226,7 +228,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }

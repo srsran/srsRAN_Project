@@ -73,7 +73,6 @@ struct up_config_update {
   std::map<pdu_session_id_t, up_pdu_session_context_update>
                                 pdu_sessions_to_modify_list; // List of PDU sessions to be modified.
   std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
-  std::vector<drb_id_t>         drb_to_remove_list;
 };
 
 // Response given back to the UP resource manager containing the full context
