@@ -6,11 +6,7 @@
 # the distribution.
 #
 
-remove_definitions(-DASSERTS_ENABLED)
-remove_definitions(-DPARANOID_ASSERTS_ENABLED)
+set_directory_properties(PROPERTIES LABELS "ofh")
 
-add_subdirectory(adt)
-add_subdirectory(phy)
-add_subdirectory(scheduler)
-add_subdirectory(du_high)
-add_subdirectory(ofh)
+add_executable(ofh_compression_benchmark ofh_compression_benchmark.cpp)
+target_link_libraries(ofh_compression_benchmark srslog srsran_ofh_compression)
