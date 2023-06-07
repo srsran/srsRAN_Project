@@ -249,11 +249,10 @@ const pdsch_antenna_ports_mapping* get_pdsch_antenna_port_mapping_row(unsigned  
                                                                       dmrs_max_length  dmrs_max_len,
                                                                       bool             are_both_cws_enabled)
 {
-  if (nof_layers > nof_dl_antenna_ports) {
-    srsran_assertion_failure("Number of DL layers={} cannot be greater than number of DL antenna ports={} of the cell.",
-                             nof_layers,
-                             nof_dl_antenna_ports);
-  }
+  srsran_assert(nof_layers <= nof_dl_antenna_ports,
+                "Number of DL layers={} cannot be greater than number of DL antenna ports={} of the cell.",
+                nof_layers,
+                nof_dl_antenna_ports);
   const auto  mapping_table = get_pdsch_antenna_port_mapping_table(dmrs_cfg_type, dmrs_max_len, are_both_cws_enabled);
   const auto* it            = std::find_if(mapping_table.begin(),
                                 mapping_table.end(),
