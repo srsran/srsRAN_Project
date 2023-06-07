@@ -1599,6 +1599,11 @@ struct setup_release_c {
     return c;
   }
 
+  bool operator==(const setup_release_c<T>& other) const
+  {
+    return type_ == other.type_ and (type_ != types::setup or (c == other.c));
+  }
+
 private:
   types type_;
   T     c;
