@@ -1405,18 +1405,20 @@ class json_writer
 {
 public:
   json_writer();
-  void        write_fieldname(const std::string& fieldname);
-  void        write_str(const std::string& fieldname, const std::string& value);
+  void        write_fieldname(const char* fieldname);
+  void        write_str(const char* fieldname, const std::string& value);
+  void        write_str(const char* fieldname, const char* value);
+  void        write_str(const char* value);
   void        write_str(const std::string& value);
-  void        write_int(const std::string& fieldname, int64_t value);
+  void        write_int(const char* fieldname, int64_t value);
   void        write_int(int64_t value);
-  void        write_bool(const std::string& fieldname, bool value);
+  void        write_bool(const char* fieldname, bool value);
   void        write_bool(bool value);
-  void        write_null(const std::string& fieldname);
+  void        write_null(const char* fieldname);
   void        write_null();
-  void        start_obj(const std::string& fieldname = "");
+  void        start_obj(const char* fieldname = "");
   void        end_obj();
-  void        start_array(const std::string& fieldname = "");
+  void        start_array(const char* fieldname = "");
   void        end_array();
   std::string to_string() const;
 
