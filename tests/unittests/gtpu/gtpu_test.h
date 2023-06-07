@@ -78,6 +78,7 @@ protected:
     // init test's logger
     srslog::init();
     logger.set_level(srslog::basic_levels::debug);
+    logger.set_hex_dump_max_size(100);
 
     // init GTPU logger
     gtpu_logger.set_level(srslog::basic_levels::debug);

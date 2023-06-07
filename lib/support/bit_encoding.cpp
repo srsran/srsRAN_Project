@@ -103,7 +103,7 @@ bool bit_decoder::unpack(T& val, uint32_t n_bits)
     }
     if ((uint32_t)(8U - offset) > n_bits) {
       uint8_t mask = (uint8_t)(1u << (8u - offset)) - (uint8_t)(1u << (8u - offset - n_bits));
-      val += ((T)((*it) & mask)) >> (8u - offset - n_bits);
+      val += ((uint8_t)((*it) & mask)) >> (8u - offset - n_bits);
       offset += n_bits;
       n_bits = 0;
     } else {

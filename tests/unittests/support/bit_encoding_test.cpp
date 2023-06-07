@@ -127,6 +127,22 @@ void test_bit_encoder()
   TESTASSERT(bytes == byte_buffer{packed_vec});
 }
 
+void test_bit_encoder_bool()
+{
+  byte_buffer bytes;
+  bit_encoder enc(bytes);
+  uint8_t     dummy          = 0;
+  bool        bit1           = true;
+  bool        bit0           = false;
+  byte_buffer expected_bytes = {0x02};
+
+  enc.pack(dummy, 6);
+  enc.pack(bit1, 1);
+  enc.pack(bit0, 1);
+
+  TESTASSERT(expected_bytes == bytes);
+}
+
 void test_bit_encoder_uint64_aligned()
 {
   byte_buffer bytes;
@@ -280,6 +296,21 @@ void test_bit_decoder()
   TESTASSERT_EQ(4 * 8, dec.nof_bits());
 }
 
+void test_bit_decoder_bool()
+{
+  byte_buffer bytes = {0x02};
+  bit_decoder dec(bytes);
+  uint8_t     dummy;
+  bool        bit1, bit0;
+
+  TESTASSERT(dec.unpack(dummy, 6));
+  TESTASSERT(dec.unpack(bit1, 1));
+  TESTASSERT(dec.unpack(bit0, 1));
+
+  TESTASSERT_EQ(bit1, true);
+  TESTASSERT_EQ(bit0, false);
+}
+
 void test_bit_decoder_uint64_aligned()
 {
   byte_buffer bytes = {0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01};
@@ -323,10 +354,12 @@ void test_bit_decoder_uint64_offset()
 int main()
 {
   test_bit_encoder();
+  test_bit_encoder_bool();
   test_bit_encoder_uint64_aligned();
   test_bit_encoder_uint64_offset();
   test_bit_decoder_empty_buffer();
   test_bit_decoder();
+  test_bit_decoder_bool();
   test_bit_decoder_uint64_aligned();
   test_bit_decoder_uint64_offset();
 }
