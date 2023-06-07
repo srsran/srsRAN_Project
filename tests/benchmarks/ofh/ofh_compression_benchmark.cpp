@@ -197,12 +197,12 @@ int main(int argc, char** argv)
     }
 
     // Measure performance.
-    perf_meas.new_measure(meas_descr_compression, nof_ports * nof_prbs * NOF_SUBCARRIERS_PER_RB, [&]() {
+    perf_meas.new_measure(meas_descr_compression, nof_ports * nof_prbs * NOF_SUBCARRIERS_PER_RB * 2, [&]() {
       for (unsigned i = 0; i != nof_ports; ++i) {
         compressor->compress(compressed_data[i], test_data[i], params);
       }
     });
-    perf_meas.new_measure(meas_descr_decompression, nof_ports * nof_prbs * NOF_SUBCARRIERS_PER_RB, [&]() {
+    perf_meas.new_measure(meas_descr_decompression, nof_ports * nof_prbs * NOF_SUBCARRIERS_PER_RB * 2, [&]() {
       for (unsigned i = 0; i != nof_ports; ++i) {
         decompressor->decompress(decompressed_data[i], compressed_data[i], params);
       }
