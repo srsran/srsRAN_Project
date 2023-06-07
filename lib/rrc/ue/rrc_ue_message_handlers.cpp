@@ -145,6 +145,9 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       security::sec_as_config source_as_config = reest_context.sec_context.get_as_config(security::sec_domain::rrc);
       valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
       logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
+
+      // TODO: use SSB ARFCN for HKD:
+      (void)context.cell.ssb_arfcn;
     } else {
       logger.warning("Received RRC re-establishment, but old UE does not have valid security context");
     }
