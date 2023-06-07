@@ -279,42 +279,19 @@ void pdu_session_resource_setup_routine::operator()(
     // prepare RRC Reconfiguration and call RRC UE notifier
     // if default DRB is being setup, SRB2 needs to be setup as well
     {
-      cu_cp_radio_bearer_config radio_bearer_config;
-      for (const cu_cp_srbs_to_be_setup_mod_item& srb_to_add_mod : ue_context_mod_request.srbs_to_be_setup_mod_list) {
-        cu_cp_srb_to_add_mod srb = {};
-        srb.srb_id               = srb_to_add_mod.srb_id;
-        radio_bearer_config.srb_to_add_mod_list.emplace(srb_to_add_mod.srb_id, srb);
+      // get NAS PDUs as received by AMF
+      std::map<pdu_session_id_t, byte_buffer> nas_pdus;
+      for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
+        if (!pdu_session.pdu_session_nas_pdu.empty()) {
+          nas_pdus.emplace(pdu_session.pdu_session_id, pdu_session.pdu_session_nas_pdu);
+        }
       }
 
-      for (const auto& pdu_session_to_add : next_config.pdu_sessions_to_setup_list) {
-        // Add radio bearer config
-        for (const auto& drb_to_add : pdu_session_to_add.second.drb_to_add) {
-          cu_cp_drb_to_add_mod drb_to_add_mod;
-          drb_to_add_mod.drb_id   = drb_to_add.first;
-          drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
-
-          // Add CN association and SDAP config
-          cu_cp_cn_assoc cn_assoc;
-          cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
-          drb_to_add_mod.cn_assoc = cn_assoc;
-
-          radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
-          rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
-        }
-
-        // set masterCellGroupConfig as received by DU
-        cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-        rrc_recfg_v1530_ies.master_cell_group =
-            ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
-
-        // append NAS PDUs as received by AMF
-        for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
-          if (!pdu_session.pdu_session_nas_pdu.empty()) {
-            rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
-          }
-        }
-        rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
-      }
+      fill_rrc_reconfig_args(rrc_reconfig_args,
+                             ue_context_mod_request.srbs_to_be_setup_mod_list,
+                             next_config.pdu_sessions_to_setup_list,
+                             ue_context_modification_response,
+                             nas_pdus);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
