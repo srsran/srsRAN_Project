@@ -65,8 +65,7 @@ inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f
       served_cell.served_cell_info.nr_mode_info = asn1_served_cell.served_cell_info.nr_mode_info.type().to_string();
 
       // meas timing cfg
-      served_cell.served_cell_info.meas_timing_cfg = byte_buffer(served_cell.served_cell_info.meas_timing_cfg.begin(),
-                                                                 served_cell.served_cell_info.meas_timing_cfg.end());
+      served_cell.served_cell_info.meas_timing_cfg = asn1_served_cell.served_cell_info.meas_timing_cfg.copy();
 
       // GNB DU sys info
       if (asn1_served_cell.gnb_du_sys_info_present) {

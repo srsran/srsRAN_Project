@@ -35,8 +35,8 @@ struct du_sys_info {
 
 /// Contains the MeasurementTimingConfiguration inter-node message defined in TS 38.331
 struct du_meas_time_cfg {
-  asn1::rrc_nr::meas_timing_s meas_time_cfg;
-  byte_buffer                 packed_meas_time_cfg;
+  asn1::rrc_nr::meas_timing_cfg_s meas_time_cfg;
+  byte_buffer                     packed_meas_time_cfg;
 };
 
 struct du_cell_context {
