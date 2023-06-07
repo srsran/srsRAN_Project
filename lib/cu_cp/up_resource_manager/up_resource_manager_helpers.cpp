@@ -133,7 +133,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
     // Reject request if OoS flow requirements can't be met.
     for (const auto& qos_flow : pdu_session.transfer.qos_flow_add_or_modify_request_list) {
       if (get_five_qi(qos_flow, cfg, logger) == five_qi_t::invalid) {
-        logger.error("OoS flow configuration for flow ID {} can't be derived", qos_flow.qos_flow_id);
+        logger.error("QoS flow configuration for flow ID {} can't be derived", qos_flow.qos_flow_id);
         return false;
       }
     }
@@ -141,7 +141,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
     // Reject request if QoS flow to remove doesn't exist.
     for (const auto& qos_flow : pdu_session.transfer.qos_flow_to_release_list) {
       if (context.qos_flow_map.find(qos_flow.qos_flow_id) == context.qos_flow_map.end()) {
-        logger.error("OoS flow ID {} doesn't exist", qos_flow.qos_flow_id);
+        logger.error("QoS flow ID {} doesn't exist", qos_flow.qos_flow_id);
         return false;
       }
     }
