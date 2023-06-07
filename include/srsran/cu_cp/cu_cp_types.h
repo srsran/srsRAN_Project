@@ -600,6 +600,12 @@ struct cu_cp_security_config {
 };
 
 struct cu_cp_radio_bearer_config {
+  /// \brief Returns true if at least one of the optional vectors/fields contains an element.
+  bool contains_values()
+  {
+    return (srb_to_add_mod_list.empty() || drb_to_add_mod_list.empty() || drb_to_release_list.empty() ||
+            !security_cfg.has_value());
+  }
   slotted_id_vector<srb_id_t, cu_cp_srb_to_add_mod> srb_to_add_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drb_to_add_mod> drb_to_add_mod_list;
   std::vector<drb_id_t>                             drb_to_release_list;
