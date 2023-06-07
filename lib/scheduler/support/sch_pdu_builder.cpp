@@ -512,10 +512,12 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.
-  pdsch.precoding_and_beamforming.emplace();
-  pdsch.precoding_and_beamforming->nof_rbs_per_prg = crbs.length();
-  pdsch.precoding_and_beamforming->prg_infos.resize(1);
-  pdsch.precoding_and_beamforming->prg_infos[0].pmi = pmi;
+  if (pdsch_cfg.dmrs.dmrs_ports.count() > 1) {
+    pdsch.precoding_and_beamforming.emplace();
+    pdsch.precoding_and_beamforming->nof_rbs_per_prg = crbs.length();
+    pdsch.precoding_and_beamforming->prg_infos.resize(1);
+    pdsch.precoding_and_beamforming->prg_infos[0].pmi = pmi;
+  }
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
