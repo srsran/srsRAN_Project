@@ -74,19 +74,24 @@ protected:
   {
     // Set expected results for sub-procedures.
     bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
-    first_bearer_ctxt_mod_outcome.outcome                    = true;
-    first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-    first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-    first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+    first_bearer_ctxt_mod_outcome.outcome                  = true;
+    first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+    first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+    pdu_session_modified_outcome_t modify_item;
+    modify_item.psi       = uint_to_pdu_session_id(1);
+    modify_item.drb_added = {uint_to_drb_id(2)};
+    first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
     ue_context_outcome_t ue_cxt_mod_outcome;
     ue_cxt_mod_outcome.outcome          = true;
     ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
     ue_cxt_mod_outcome.drb_failed_list  = {};
     bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
-    second_bearer_ctxt_mod_outcome.outcome                    = true;
-    second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-    second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-    second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+    second_bearer_ctxt_mod_outcome.outcome                  = true;
+    second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+    second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+    pdu_session_modified_outcome_t modify_item2;
+    modify_item2.psi = uint_to_pdu_session_id(1);
+    second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item2);
     set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
 
     // Run PDU session modification.
@@ -171,10 +176,13 @@ TEST_F(pdu_session_resource_modification_test, when_ue_ctxt_modification_fails_t
 
   // Set expected results for sub-procedures.
   bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
-  first_bearer_ctxt_mod_outcome.outcome                    = true;
-  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  first_bearer_ctxt_mod_outcome.outcome                  = true;
+  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+  pdu_session_modified_outcome_t modify_item;
+  modify_item.psi       = uint_to_pdu_session_id(1);
+  modify_item.drb_added = {uint_to_drb_id(1)};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
   set_expected_results(first_bearer_ctxt_mod_outcome, {false}, {}, false);
 
   // Start modification routine.
@@ -198,10 +206,13 @@ TEST_F(pdu_session_resource_modification_test,
 
   // Set expected results for sub-procedures.
   bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
-  first_bearer_ctxt_mod_outcome.outcome                    = true;
-  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  first_bearer_ctxt_mod_outcome.outcome                  = true;
+  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+  pdu_session_modified_outcome_t modify_item;
+  modify_item.psi       = uint_to_pdu_session_id(1);
+  modify_item.drb_added = {uint_to_drb_id(2)};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
   ue_context_outcome_t ue_cxt_mod_outcome;
   ue_cxt_mod_outcome.outcome          = true;
   ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
@@ -235,19 +246,24 @@ TEST_F(pdu_session_resource_modification_test, when_rrc_reconfiguration_fails_th
 
   // Set expected results for sub-procedures.
   bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
-  first_bearer_ctxt_mod_outcome.outcome                    = true;
-  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  first_bearer_ctxt_mod_outcome.outcome                  = true;
+  first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+  pdu_session_modified_outcome_t modify_item;
+  modify_item.psi       = uint_to_pdu_session_id(1);
+  modify_item.drb_added = {uint_to_drb_id(1)};
+  first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
   ue_context_outcome_t ue_cxt_mod_outcome;
   ue_cxt_mod_outcome.outcome          = true;
   ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
   ue_cxt_mod_outcome.drb_failed_list  = {};
   bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
-  second_bearer_ctxt_mod_outcome.outcome                    = true;
-  second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list    = {};
-  second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list   = {};
-  second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list = {1};
+  second_bearer_ctxt_mod_outcome.outcome                  = true;
+  second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
+  second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
+  pdu_session_modified_outcome_t modify_item2;
+  modify_item2.psi = uint_to_pdu_session_id(1);
+  second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item2);
   set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, false);
 
   // Start modification routine.

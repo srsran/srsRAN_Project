@@ -83,12 +83,20 @@ private:
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
+// Configuration struct to parameterize the modification outcome
+struct pdu_session_modified_outcome_t {
+  pdu_session_id_t      psi;
+  std::vector<drb_id_t> drb_added;
+  std::vector<drb_id_t> drb_removed;
+};
+
 // Stuct to configure Bearer Context Setup/Modification result content.
 struct bearer_context_outcome_t {
   bool                outcome = false;
-  std::list<unsigned> pdu_sessions_setup_list;    // List of PDU session IDs that were successful to setup.
-  std::list<unsigned> pdu_sessions_failed_list;   // List of PDU sessions IDs that failed to be setup.
-  std::list<unsigned> pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
+  std::list<unsigned> pdu_sessions_setup_list;  // List of PDU session IDs that were successful to setup.
+  std::list<unsigned> pdu_sessions_failed_list; // List of PDU sessions IDs that failed to be setup.
+  std::list<pdu_session_modified_outcome_t>
+      pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
@@ -149,27 +157,28 @@ public:
 
   void fill_pdu_session_modified_list(
       slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& e1ap_modified_list,
-      const std::list<unsigned>&                                                    outcome_modified_list)
+      const std::list<pdu_session_modified_outcome_t>&                              outcome_modified_list)
   {
-    for (const auto& psi : outcome_modified_list) {
+    for (const auto& modified_item : outcome_modified_list) {
       // add only the most relevant items
       e1ap_pdu_session_resource_modified_item res_mod_item;
-      res_mod_item.pdu_session_id = uint_to_pdu_session_id(psi);
+      res_mod_item.pdu_session_id = modified_item.psi;
 
-      // add a single DRB with the same ID like the PDU session it belongs to
-      drb_id_t                   drb_id = uint_to_drb_id(psi + 1);
-      e1ap_drb_setup_item_ng_ran drb_item;
-      drb_item.drb_id = drb_id;
+      for (const auto& drb_id : modified_item.drb_added) {
+        // add a single DRB with the same ID like the PDU session it belongs to
+        e1ap_drb_setup_item_ng_ran drb_item;
+        drb_item.drb_id = drb_id;
 
-      // add a QoS flow
-      e1ap_qos_flow_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(psi + 1); // QoS flow has different ID than PSI
-      drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
+        // add a QoS flow
+        e1ap_qos_flow_item qos_item;
+        qos_item.qos_flow_id = uint_to_qos_flow_id(drb_id_to_uint(drb_id)); // QoS flow has same ID like DRB
+        drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
 
-      // add one UP transport item
-      e1ap_up_params_item up_item;
-      drb_item.ul_up_transport_params.push_back(up_item);
-      res_mod_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+        // add one UP transport item
+        e1ap_up_params_item up_item;
+        drb_item.ul_up_transport_params.push_back(up_item);
+        res_mod_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+      }
 
       e1ap_modified_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
     }
