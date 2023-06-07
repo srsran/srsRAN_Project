@@ -151,8 +151,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
     // HARQ with matching ID and UCI slot was found.
 
     // If the UE is in fallback mode and the CRC was successful, leave fallback mode.
-    if (is_fallback_mode and crc_pdu.tb_crc_success and
-        harqs.ul_harq(crc_pdu.harq_id).last_tx_params().dci_cfg_type == dci_ul_rnti_config_type::c_rnti_f0_0) {
+    if (is_fallback_mode and crc_pdu.tb_crc_success) {
       logger.debug("ue={} rnti={:#x}: Leaving fallback mode", ue_index, rnti());
       is_fallback_mode = false;
     }
