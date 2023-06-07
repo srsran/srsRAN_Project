@@ -339,10 +339,9 @@ bool srsran::srs_cu_cp::update_modify_list(
         // Verify the QoS flow ID is present in original setup message.
         if (ngap_modify_list[e1ap_item.pdu_session_id].transfer.qos_flow_add_or_modify_request_list.contains(
                 e1ap_flow.qos_flow_id) == false) {
-          logger.error(
-              "PDU Session Resource modifify request doesn't include addition for QoS flow {} in PDU session {}",
-              e1ap_flow.qos_flow_id,
-              e1ap_item.pdu_session_id);
+          logger.error("PDU Session Resource modify request doesn't include addition for QoS flow {} in PDU session {}",
+                       e1ap_flow.qos_flow_id,
+                       e1ap_item.pdu_session_id);
           return false;
         }
 
