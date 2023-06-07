@@ -20,7 +20,10 @@ struct pdsch_antenna_ports_mapping {
   /// Number of DMRS CDM group(s) without data.
   unsigned nof_dmrs_cdm_groups_without_data;
   /// Contains list of DMRS ports used.
-  /// E.g. if the value is {0, 3}, then the DMRS ports (1000 + 0) = 1000 and (1000 + 3) = 1003 are used.
+  /// Example 1: For a cell with 4 DL antenna ports and if the value of DMRS ports list is {0, 3}, then the DMRS ports
+  /// (1000 + 0) = 1000 and (1000 + 3) = 1003 are used.
+  /// Example 2: For a cell with 2 DL antenna ports and if the value of DMRS ports list is {0, 1}, then the DMRS ports
+  /// (1000 + 0) = 1000 and (1000 + 1) = 1001 are used.
   std::vector<unsigned> dmrs_ports;
   /// Number of DMRS front-load symbols. Number of front-load symbols equates to maxLength in DMRS-DownlinkConfig whose
   /// default value is Len1 i.e. 1 symbol.
