@@ -330,6 +330,15 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
     }
   }
 
+  if (asn1_modify_req_transfer->qos_flow_to_release_list_present) {
+    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list.value) {
+      qos_flow_with_cause_item qos_flow_release_item;
+      qos_flow_release_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
+      qos_flow_release_item.cause       = ngap_cause_to_cause(asn1_flow_item.cause);
+      modify_item.transfer.qos_flow_to_release_list.emplace(qos_flow_release_item.qos_flow_id, qos_flow_release_item);
+    }
+  }
+
   if (!asn1_session_item.nas_pdu.empty()) {
     modify_item.nas_pdu.resize(asn1_session_item.nas_pdu.size());
     std::copy(asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), modify_item.nas_pdu.begin());
