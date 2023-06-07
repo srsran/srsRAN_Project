@@ -512,7 +512,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.
-  if (pdsch_cfg.dmrs.dmrs_ports.count() > 1) {
+  if (ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant > 1) {
     pdsch.precoding_and_beamforming.emplace();
     pdsch.precoding_and_beamforming->nof_rbs_per_prg = crbs.length();
     pdsch.precoding_and_beamforming->prg_infos.resize(1);
