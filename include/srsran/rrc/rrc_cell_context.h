@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/nr_cgi.h"
 #include <cstdint>
 
@@ -21,7 +22,16 @@ namespace srs_cu_cp {
 struct rrc_cell_context {
   nr_cell_global_id_t cgi;
   uint32_t            tac;
-  uint32_t            ssb_arfcn; ///< SSB ARFCN of the cell, required for HKD during re-establishment
+  /// Contains the MeasurementTimingConfiguration inter-node message defined in TS 38.331
+  byte_buffer meas_time_cfg;
+
+  rrc_cell_context& operator=(const rrc_cell_context& other)
+  {
+    cgi           = other.cgi;
+    tac           = other.tac;
+    meas_time_cfg = other.meas_time_cfg.copy();
+    return *this;
+  }
 };
 
 } // namespace srs_cu_cp

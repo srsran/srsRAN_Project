@@ -128,8 +128,7 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
     // TODO: add unpacking of sys_info
 
     // add MeasurementTimingConfiguration
-    asn1::cbit_ref bref{served_cell.served_cell_info.meas_timing_cfg};
-    du_cell.meas_time_cfg.meas_time_cfg.unpack(bref);
+    du_cell.meas_time_cfg = served_cell.served_cell_info.meas_timing_cfg.copy();
 
     // add cell to DU context
     du_cell_index_t cell_index = du_cell.cell_index;
@@ -238,15 +237,11 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index       = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti         = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi       = msg.cgi;
-  rrc_ue_create_msg.cell.tac       = cell_db.at(pcell_index).tac;
-  rrc_ue_create_msg.cell.ssb_arfcn = cell_db.at(pcell_index)
-                                         .meas_time_cfg.meas_time_cfg.crit_exts.c1()
-                                         .meas_timing_conf()
-                                         .meas_timing.begin()
-                                         ->freq_and_timing.carrier_freq;
+  rrc_ue_create_msg.ue_index           = ue->get_ue_index();
+  rrc_ue_create_msg.c_rnti             = msg.c_rnti;
+  rrc_ue_create_msg.cell.cgi           = msg.cgi;
+  rrc_ue_create_msg.cell.tac           = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.cell.meas_time_cfg = cell_db.at(pcell_index).meas_time_cfg.copy();
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)] = {};
   }

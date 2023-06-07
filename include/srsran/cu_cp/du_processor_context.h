@@ -33,12 +33,6 @@ struct du_sys_info {
   }
 };
 
-/// Contains the MeasurementTimingConfiguration inter-node message defined in TS 38.331
-struct du_meas_time_cfg {
-  asn1::rrc_nr::meas_timing_cfg_s meas_time_cfg;
-  byte_buffer                     packed_meas_time_cfg;
-};
-
 struct du_cell_context {
   du_cell_index_t     cell_index = du_cell_index_t::invalid; /// CU internal cell ID
   du_index_t          du_index   = du_index_t::invalid;      /// Index of the DU containing the cell
@@ -46,7 +40,8 @@ struct du_cell_context {
   uint32_t            tac;                                   /// tracking area code
   pci_t               pci;                                   /// Physical cell ID
   du_sys_info         sys_info;                              /// System information provided by DU
-  du_meas_time_cfg    meas_time_cfg;                         /// Measurement Timing Configuration
+  /// Contains the MeasurementTimingConfiguration inter-node message defined in TS 38.331
+  byte_buffer meas_time_cfg;
 };
 
 struct du_processor_context {
