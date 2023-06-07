@@ -554,6 +554,12 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
         }
 
+        for (const auto& drb_to_rem_item : res_to_mod_item.drb_to_rem_list_ng_ran) {
+          asn1::e1ap::drb_to_rem_item_ng_ran_s asn1_drb_to_rem_item;
+          asn1_drb_to_rem_item.drb_id = drb_id_to_uint(drb_to_rem_item);
+          asn1_res_to_mod_item.drb_to_rem_list_ng_ran.push_back(asn1_drb_to_rem_item);
+        }
+
         asn1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
       }
     }
