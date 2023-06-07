@@ -85,12 +85,40 @@ struct paging_appconfig {
   unsigned nof_po_per_pf = 1;
 };
 
+/// PDCCH Common configuration.
+struct pdcch_common_appconfig {
+  /// CORESET#0 index as per tables in TS 38.213, clause 13.
+  optional<unsigned> coreset0_index;
+  /// Number of PDCCH candidates per aggregation level for SearchSpace#1. The aggregation level for the array element
+  /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
+  std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 4, 0, 0};
+  /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
+  unsigned ss0_index = 0;
+};
+
+/// PDCCH Dedicated configuration.
+struct pdcch_dedicated_appconfig {
+  /// Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0.
+  optional<unsigned> coreset1_rb_start;
+  /// Length of CORESET 1 in number of CRBs.
+  optional<unsigned> coreset1_l_crb;
+  /// Duration of CORESET 1 in number of OFDM symbols.
+  optional<unsigned> coreset1_duration;
+  /// Number of PDCCH candidates per aggregation level for SearchSpace#2. The aggregation level for the array element
+  /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
+  std::array<uint8_t, 5> ss2_n_candidates = {0, 2, 2, 0, 0};
+  /// Flag specifying whether to use non-fallback or fallback DCI format in SearchSpace#2.
+  bool dci_format_0_1_and_1_1 = true;
+  /// SearchSpace type of SearchSpace#2.
+  search_space_configuration::type_t ss2_type = search_space_configuration::type_t::ue_dedicated;
+};
+
 /// PDCCH application configuration.
 struct pdcch_appconfig {
-  /// Use an UE-dedicated or Common Search Space.
-  search_space_configuration::type_t ue_ss_type = search_space_configuration::type_t::ue_dedicated;
-  /// Flag specifying whether to use non-fallback or fallback DCI format in UE dedicated SearchSpace.
-  bool dci_format_0_1_and_1_1 = true;
+  /// PDCCH Common configuration applicable for entire cell.
+  pdcch_common_appconfig common;
+  /// PDCCH Dedicated configuration applicable for each UE.
+  pdcch_dedicated_appconfig dedicated;
 };
 
 /// PDSCH application configuration.

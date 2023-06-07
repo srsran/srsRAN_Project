@@ -478,7 +478,7 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
 
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
-  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
     fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }

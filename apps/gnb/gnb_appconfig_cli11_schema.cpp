@@ -189,19 +189,95 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
       ->capture_default_str();
 }
 
-static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
 {
+  app.add_option("--coreset0_index", common_params.coreset0_index.emplace(), "CORESET#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+  auto coreset0_idx_verify_callback = [&]() {
+    CLI::Option* coreset0_idx_cfg = app.get_option("coreset0_index");
+    if (coreset0_idx_cfg->empty()) {
+      common_params.coreset0_index.reset();
+    }
+  };
+  app.callback(coreset0_idx_verify_callback);
+
+  app.add_option("--ss1_n_candidates",
+                 common_params.ss1_n_candidates,
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#1. (e.g. {0, 0, 4, 0, 0}")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
+  app.add_option("--ss0_index", common_params.ss0_index, "SearchSpace#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+}
+
+static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_appconfig& ded_params)
+{
+  app.add_option("--coreset1_rb_start",
+                 ded_params.coreset1_rb_start.emplace(),
+                 "Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0")
+      ->capture_default_str();
+  auto coreset1_rb_start_verify_callback = [&]() {
+    CLI::Option* coreset1_rb_start_cfg = app.get_option("coreset1_rb_start");
+    if (coreset1_rb_start_cfg->empty()) {
+      ded_params.coreset1_rb_start.reset();
+    }
+  };
+  app.callback(coreset1_rb_start_verify_callback);
+
+  app.add_option("--coreset1_l_crb", ded_params.coreset1_l_crb.emplace(), "Length of CORESET 1 in number of CRBs")
+      ->capture_default_str();
+  auto coreset1_l_crb_verify_callback = [&]() {
+    CLI::Option* coreset1_l_crb_cfg = app.get_option("coreset1_l_crb");
+    if (coreset1_l_crb_cfg->empty()) {
+      ded_params.coreset1_l_crb.reset();
+    }
+  };
+  app.callback(coreset1_l_crb_verify_callback);
+
+  app.add_option("--coreset1_duration",
+                 ded_params.coreset1_duration.emplace(),
+                 "Duration of CORESET 1 in number of OFDM symbols")
+      ->capture_default_str();
+  auto coreset1_duration_verify_callback = [&]() {
+    CLI::Option* coreset1_duration_cfg = app.get_option("coreset1_duration");
+    if (coreset1_duration_cfg->empty()) {
+      ded_params.coreset1_duration.reset();
+    }
+  };
+  app.callback(coreset1_duration_verify_callback);
+
+  app.add_option("--ss2_n_candidates",
+                 ded_params.ss2_n_candidates,
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#2. (e.g. {0, 2, 2, 0, 0}")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
+
+  app.add_option("--dci_format_0_1_and_1_1",
+                 ded_params.dci_format_0_1_and_1_1,
+                 "DCI format to use in UE dedicated SearchSpace#2")
+      ->capture_default_str();
   app.add_option_function<std::string>(
-         "--ss_type",
-         [&pdcch_params](const std::string& value) {
-           pdcch_params.ue_ss_type = (value == "common") ? search_space_configuration::type_t::common
-                                                         : search_space_configuration::type_t::ue_dedicated;
+         "--ss2_type",
+         [&ded_params](const std::string& value) {
+           ded_params.ss2_type = (value == "common") ? search_space_configuration::type_t::common
+                                                     : search_space_configuration::type_t::ue_dedicated;
          },
-         "SearchSpace type for UE data")
+         "SearchSpace type for UE dedicated SearchSpace#2")
       ->default_str("ue_dedicated")
       ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
-  app.add_option("--dci_format_0_1_and_1_1", pdcch_params.dci_format_0_1_and_1_1, "DCI format to use for UE data")
-      ->capture_default_str();
+}
+
+static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+{
+  // PDCCH Common configuration.
+  CLI::App* pdcch_common_subcmd = app.add_subcommand("common", "PDCCH Common configuration parameters");
+  configure_cli11_pdcch_common_args(*pdcch_common_subcmd, pdcch_params.common);
+
+  // PDCCH Dedicated configuration.
+  CLI::App* pdcch_dedicated_subcmd = app.add_subcommand("dedicated", "PDCCH Dedicated configuration parameters");
+  configure_cli11_pdcch_dedicated_args(*pdcch_dedicated_subcmd, pdcch_params.dedicated);
 }
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
