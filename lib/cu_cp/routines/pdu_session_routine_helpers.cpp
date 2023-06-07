@@ -69,9 +69,9 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     }
   }
 
-  for (const auto& pdu_session_to_add : pdu_sessions) {
+  for (const auto& pdu_session_to_add_mod : pdu_sessions) {
     // Add radio bearer config
-    for (const auto& drb_to_add : pdu_session_to_add.second.drb_to_add) {
+    for (const auto& drb_to_add : pdu_session_to_add_mod.second.drb_to_add) {
       cu_cp_drb_to_add_mod drb_to_add_mod;
       drb_to_add_mod.drb_id   = drb_to_add.first;
       drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
@@ -82,7 +82,10 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
       drb_to_add_mod.cn_assoc = cn_assoc;
 
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
-      rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
+    }
+
+    for (const auto& drb_to_remove : pdu_session_to_add_mod.second.drb_to_remove) {
+      radio_bearer_config.drb_to_release_list.push_back(drb_to_remove);
     }
 
     // set masterCellGroupConfig as received by DU
@@ -91,14 +94,19 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
 
     // append NAS PDUs as received by AMF
     if (!nas_pdus.empty()) {
-      if (nas_pdus.find(pdu_session_to_add.first) != nas_pdus.end()) {
-        if (!nas_pdus.at(pdu_session_to_add.first).empty()) {
-          rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdus.at(pdu_session_to_add.first).copy());
+      if (nas_pdus.find(pdu_session_to_add_mod.first) != nas_pdus.end()) {
+        if (!nas_pdus.at(pdu_session_to_add_mod.first).empty()) {
+          rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(nas_pdus.at(pdu_session_to_add_mod.first).copy());
         }
       }
     }
 
     rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
+  }
+
+  if (radio_bearer_config.contains_values()) {
+    // Add radio bearer config.
+    rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
   }
 }
 

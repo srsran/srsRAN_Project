@@ -245,7 +245,7 @@ void pdu_session_resource_modification_routine::operator()(
       }
 
       fill_rrc_reconfig_args(
-          rrc_reconfig_args, {}, next_config.pdu_sessions_to_setup_list, ue_context_modification_response, nas_pdus);
+          rrc_reconfig_args, {}, next_config.pdu_sessions_to_modify_list, ue_context_modification_response, nas_pdus);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
