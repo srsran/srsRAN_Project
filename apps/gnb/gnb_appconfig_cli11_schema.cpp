@@ -217,7 +217,8 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
   app.add_option("--coreset1_rb_start",
                  ded_params.coreset1_rb_start.emplace(),
                  "Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0, 275));
   auto coreset1_rb_start_verify_callback = [&]() {
     CLI::Option* coreset1_rb_start_cfg = app.get_option("coreset1_rb_start");
     if (coreset1_rb_start_cfg->empty()) {
@@ -227,7 +228,8 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
   app.callback(coreset1_rb_start_verify_callback);
 
   app.add_option("--coreset1_l_crb", ded_params.coreset1_l_crb.emplace(), "Length of CORESET 1 in number of CRBs")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0, 275));
   auto coreset1_l_crb_verify_callback = [&]() {
     CLI::Option* coreset1_l_crb_cfg = app.get_option("coreset1_l_crb");
     if (coreset1_l_crb_cfg->empty()) {
