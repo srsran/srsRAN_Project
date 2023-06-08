@@ -456,7 +456,7 @@ bool srsran::srs_cu_cp::update_modify_list(
   if (ue_context_modification_response.drbs_setup_mod_list.empty() and
       ue_context_modification_response.drbs_modified_list.empty()) {
     // No DRB added or updated.
-    logger.debug("Skipping preparation of bearer context modifcation request.");
+    logger.debug("Skipping preparation of bearer context modification request.");
     bearer_ctxt_mod_request.ng_ran_bearer_context_mod_request.reset();
     return ue_context_modification_response.success;
   }
