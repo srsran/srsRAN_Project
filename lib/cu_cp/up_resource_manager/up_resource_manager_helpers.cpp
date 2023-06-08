@@ -282,13 +282,14 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     srsran_assert(context.pdu_sessions.find(modify_item.pdu_session_id) != context.pdu_sessions.end(),
                   "PDU session does not exist.");
 
-    up_pdu_session_context_update ctxt(modify_item.pdu_session_id);
+    up_pdu_session_context_update ctxt_update(modify_item.pdu_session_id);
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
-      auto drb_id = allocate_qos_flow(ctxt, flow_item, update, context, cfg, logger);
-      logger.debug("Allocated QoS flow ID {} to {} with 5QI {}",
-                   flow_item.qos_flow_id,
-                   drb_id,
-                   ctxt.drb_to_add.at(drb_id).qos_params.qos_characteristics.get_five_qi());
+      auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
+      srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end() ||
+                        ctxt_update.drb_to_add.find(drb_id) != ctxt_update.drb_to_add.end(),
+                    "{} has to exist in current PDU session context or in context update",
+                    drb_id);
+      logger.debug("Allocated QoS flow ID {} to {}", flow_item.qos_flow_id, drb_id);
     }
 
     for (const auto& flow_item : modify_item.transfer.qos_flow_to_release_list) {
@@ -306,11 +307,11 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
       if (pdu_session_ctxt.drbs.at(drb_id).qos_flows.size() == 1) {
         // Flow is the only active flow on this DRB - release it.
         logger.debug("Releasing {}", drb_id);
-        ctxt.drb_to_remove.push_back(drb_id);
+        ctxt_update.drb_to_remove.push_back(drb_id);
       }
     }
 
-    update.pdu_sessions_to_modify_list.emplace(ctxt.id, ctxt);
+    update.pdu_sessions_to_modify_list.emplace(ctxt_update.id, ctxt_update);
   }
 
   return update;
