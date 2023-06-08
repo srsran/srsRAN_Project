@@ -172,6 +172,13 @@ struct pucch_appconfig {
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
 };
 
+/// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
+struct phy_cell_group_appconfig {
+  /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
+  /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
+  int p_nr_fr1 = 10;
+};
+
 /// Amplitude control application configuration.
 struct amplitude_control_appconfig {
   /// Baseband gain back-off. This accounts for the signal PAPR and is applied regardless of clipping settings.
@@ -183,6 +190,8 @@ struct amplitude_control_appconfig {
 };
 
 struct ssb_appconfig {
+  /// SSB period in milliseconds.
+  unsigned ssb_period_msec = 10;
   /// \brief \c ss-PBCH-BlockPower, part of \c ServingCellConfigCommonSIB, as per TS 38.331.
   /// Average EPRE of the REs that carry secondary synchronization signals in dBm used for SSB transmission.
   /// Values: {-60,..,70}
@@ -209,8 +218,6 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
-  /// SSB period in milliseconds.
-  unsigned ssb_period_msec = 10;
   /// \brief \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
   int q_rx_lev_min = -70;
   /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
@@ -227,6 +234,8 @@ struct base_cell_appconfig {
   pusch_appconfig pusch_cfg;
   /// PUCCH configuration.
   pucch_appconfig pucch_cfg;
+  /// Physical Cell Group parameters.
+  phy_cell_group_appconfig pcg_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// TDD slot configuration.

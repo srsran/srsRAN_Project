@@ -141,13 +141,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
     out_cell.tac              = base_cell.tac;
     out_cell.searchspace0_idx = ss0_idx;
-    out_cell.ssb_cfg.ssb_period = (ssb_periodicity)config.common_cell_cfg.ssb_period_msec;
 
     // Cell selection parameters.
     out_cell.cell_sel_info.q_rx_lev_min = base_cell.q_rx_lev_min;
     out_cell.cell_sel_info.q_qual_min   = base_cell.q_qual_min;
 
     // SSB config.
+    out_cell.ssb_cfg.ssb_period      = (ssb_periodicity)base_cell.ssb_cfg.ssb_period_msec;
     out_cell.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;
     out_cell.ssb_cfg.pss_to_sss_epre = base_cell.ssb_cfg.pss_to_sss_epre;
 
@@ -199,11 +199,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-                0,
-                0,
-                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                0,
-                0};
+          0,
+          0,
+          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+          0,
+          0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -213,6 +213,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = config.common_cell_cfg.pdsch_cfg.mcs_table;
     out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table =
         config.common_cell_cfg.pusch_cfg.mcs_table;
+
+    // PhysicalCellGroup Config parameters.
+    out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1;
 
     // TDD UL DL config.
     if (not band_helper::is_paired_spectrum(param.band.value()) and config.common_cell_cfg.tdd_ul_dl_cfg.has_value()) {

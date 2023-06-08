@@ -392,6 +392,9 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
 
 static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
 {
+  app.add_option("--ssb_period", ssb_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20}));
   app.add_option("--ssb_block_power_dbm", ssb_params.ssb_block_power, "SS_PBCH_power_block in dBm")
       ->capture_default_str()
       ->check(CLI::Range(-60, 50));
@@ -572,21 +575,21 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
-  app.add_option("--ssb_period", cell_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
-      ->capture_default_str()
-      ->check(CLI::IsMember({5, 10, 20}));
-
   app.add_option("--q_rx_lev_min",
                  cell_params.q_rx_lev_min,
                  "q-RxLevMin, required minimum received RSRP level for cell selection/re-selection, in dBm")
       ->capture_default_str()
       ->check(CLI::Range(-70, -22));
-
   app.add_option("--q_qual_min",
                  cell_params.q_qual_min,
                  "q-QualMin, required minimum received RSRQ level for cell selection/re-selection, in dB")
       ->capture_default_str()
       ->check(CLI::Range(-43, -12));
+  app.add_option("--pcg_p_nr_fr1",
+                 cell_params.pcg_cfg.p_nr_fr1,
+                 "p_nr_fr1, max. tot. TX power to be used by the UE in this NR cell group across in FR1")
+      ->capture_default_str()
+      ->check(CLI::Range(-30, 33));
 
   // SSB configuration.
   CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");

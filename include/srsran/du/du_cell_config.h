@@ -81,6 +81,13 @@ struct cell_selection_info {
   bounded_integer<int, -43, -12> q_qual_min = -20;
 };
 
+/// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
+struct phy_cell_group_params {
+  /// \brief \c p-NR-FR1, part \c PhysicalCellGroupConfig, TS 38.331.
+  /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
+  bounded_integer<int, -30, 33> p_nr_fr1;
+};
+
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
 /// other layers (e.g. scheduler).
 struct du_cell_config {
@@ -121,6 +128,9 @@ struct du_cell_config {
 
   /// UE-dedicated serving cell configuration.
   serving_cell_config ue_ded_serv_cell_cfg;
+
+  /// Parameters to initialize/build the \c phy_cell_group.
+  phy_cell_group_params pcg_params;
 
   /// Parameters for PUCCH-Config generation.
   pucch_builder_params pucch_cfg;
