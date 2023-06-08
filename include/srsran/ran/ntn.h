@@ -36,13 +36,13 @@ struct epoch_time_t {
 
 struct ntn_config {
   // sib 19 values
-  std::string reference_location;
-  uint32_t    distance_threshold;
+  std::string reference_location = "0";
+  uint32_t    distance_threshold = 0;
   // ntn-config values
-  epoch_time_t        epoch_time;
-  int32_t             cell_specific_koffset;
-  uint32_t            k_mac;
-  position_velocity_t ephemeris_info;
-  ta_common_t         ta_info;
+  epoch_time_t        epoch_time            = {0, 0};
+  int32_t             cell_specific_koffset = 0;
+  uint32_t            k_mac                 = 0;
+  position_velocity_t ephemeris_info        = {1, 2, 3, 1, 1, 1};
+  ta_common_t         ta_info               = {0, 0, 0};
 };
 } // namespace srsran
