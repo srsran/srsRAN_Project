@@ -16,6 +16,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
+#include "srsran/ran/ntn.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
@@ -550,6 +551,9 @@ struct gnb_appconfig {
 
   /// Configuration for testing purposes.
   test_mode_appconfig test_mode_cfg = {};
+
+  /// \brief NTN configuration.
+  optional<ntn_config> ntn_cfg;
 };
 
 } // namespace srsran
