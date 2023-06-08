@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du_manager/du_manager_params.h"
+#include "srsran/ran/ntn.h"
 
 namespace srsran {
 
@@ -29,6 +30,8 @@ byte_buffer make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg);
 /// place.
 /// \return byte buffer with packed cell SIB1.
 byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str = nullptr);
+
+byte_buffer make_asn1_rrc_cell_sib19_buffer(const ntn_config& ntn_cfg, std::string* js_str = nullptr);
 
 /// \brief Derive packed cell BCCH-DL-SCH message from DU cell configuration.
 /// \param[in] du_cfg DU Cell Configuration.

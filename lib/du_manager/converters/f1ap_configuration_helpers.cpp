@@ -638,3 +638,67 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     }
   }
 }
+
+asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const ntn_config& ntn_cfg)
+{
+  using namespace asn1::rrc_nr;
+
+  sib19_r17_s sib19;
+
+  sib19.distance_thresh_r17_present = true;
+  sib19.distance_thresh_r17         = ntn_cfg.distance_threshold;
+  sib19.ref_location_r17.from_string(ntn_cfg.reference_location);
+
+  sib19.t_service_r17_present = false;
+  sib19.ntn_cfg_r17_present   = true;
+
+  sib19.ntn_cfg_r17.cell_specific_koffset_r17_present = true;
+  sib19.ntn_cfg_r17.cell_specific_koffset_r17         = ntn_cfg.cell_specific_koffset;
+
+  sib19.ntn_cfg_r17.ephemeris_info_r17_present = true;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.set_position_velocity_r17();
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_x_r17  = ntn_cfg.ephemeris_info.position_x;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_y_r17  = ntn_cfg.ephemeris_info.position_y;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().position_z_r17  = ntn_cfg.ephemeris_info.position_z;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vx_r17 = ntn_cfg.ephemeris_info.velocity_vx;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vy_r17 = ntn_cfg.ephemeris_info.velocity_vy;
+  sib19.ntn_cfg_r17.ephemeris_info_r17.position_velocity_r17().velocity_vz_r17 = ntn_cfg.ephemeris_info.velocity_vz;
+
+  sib19.ntn_cfg_r17.epoch_time_r17_present          = true;
+  sib19.ntn_cfg_r17.epoch_time_r17.sfn_r17          = ntn_cfg.epoch_time.sfn;
+  sib19.ntn_cfg_r17.epoch_time_r17.sub_frame_nr_r17 = ntn_cfg.epoch_time.subframe_number;
+
+  sib19.ntn_cfg_r17.kmac_r17_present = true;
+  sib19.ntn_cfg_r17.kmac_r17         = ntn_cfg.k_mac;
+
+  sib19.ntn_cfg_r17.ntn_polarization_dl_r17_present      = false;
+  sib19.ntn_cfg_r17.ntn_polarization_ul_r17_present      = false;
+  sib19.ntn_cfg_r17.ntn_ul_sync_validity_dur_r17_present = false;
+
+  sib19.ntn_cfg_r17.ta_info_r17_present                             = true;
+  sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17_present         = true;
+  sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17_present = true;
+  sib19.ntn_cfg_r17.ta_info_r17.ta_common_r17                       = ntn_cfg.ta_info.ta_common;
+  sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_r17                 = ntn_cfg.ta_info.ta_common_drift;
+  sib19.ntn_cfg_r17.ta_info_r17.ta_common_drift_variant_r17         = ntn_cfg.ta_info.ta_common_drift_variant;
+
+  sib19.ntn_cfg_r17.ta_report_r17_present = false;
+
+  return sib19;
+}
+
+byte_buffer srsran::srs_du::make_asn1_rrc_cell_sib19_buffer(const ntn_config& ntn_cfg, std::string* js_str)
+{
+  byte_buffer               buf;
+  asn1::bit_ref             bref{buf};
+  asn1::rrc_nr::sib19_r17_s sib19 = make_asn1_rrc_cell_sib19(ntn_cfg);
+  asn1::SRSASN_CODE         ret   = sib19.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB19");
+
+  if (js_str != nullptr) {
+    asn1::json_writer js;
+    sib19.to_json(js);
+    *js_str = js.to_string();
+  }
+  return buf;
+}
