@@ -14,7 +14,9 @@
 
 namespace srsran {
 
-/// (Implementation-defined) Maximum size in bytes of a PDSCH PDU for a given UE.
-static constexpr size_t MAX_DL_PDU_LENGTH = 32768;
+/// \brief Maximum size in bytes of a PDSCH PDU for a given UE.
+///
+/// It is not given by the TS. It assumes 156 resource elements for a maximum of 275 PRB, four layers and 256-QAM.
+static constexpr size_t MAX_DL_PDU_LENGTH = (156 * 275 * 4 * 8) / 8;
 
 } // namespace srsran
