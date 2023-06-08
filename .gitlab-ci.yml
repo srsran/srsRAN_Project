@@ -322,8 +322,6 @@ pages:
   needs:
     - job: unit coverage
       artifacts: true
-    - job: clang-tidy
-      artifacts: true
     - job: cppcheck
       artifacts: true
     - job: zmq
