@@ -444,7 +444,7 @@ static void thread_process(const pdsch_processor::pdu_t& config, span<const uint
     }
 
     // Process PDU.
-    proc->process(*grid, {data}, config);
+    proc->process(grid->get_mapper(), {data}, config);
 
     // Notify finish count.
     {

@@ -261,7 +261,8 @@ bool resource_grid_impl::is_empty(unsigned port) const
 
 void resource_grid_impl::map(const re_buffer_reader&        input,
                              const re_pattern_list&         pattern,
-                             const precoding_configuration& precoding)
+                             const precoding_configuration& precoding,
+                             const re_pattern_list&         reserved)
 {
   unsigned nof_layers = precoding.get_nof_layers();
 
@@ -285,6 +286,7 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
     // Get the symbol RE mask.
     bounded_bitset<MAX_RB * NRE> symbol_re_mask(nof_subc);
     pattern.get_inclusion_mask(symbol_re_mask, i_symbol);
+    reserved.get_exclusion_mask(symbol_re_mask, i_symbol);
 
     // Find the highest used subcarrier. Skip symbol if no active subcarrier.
     int i_highest_subc = symbol_re_mask.find_highest();
@@ -366,4 +368,10 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
                 "The number of total precoded RE (i.e., {}) does not match the number of total input RE (i.e., {}).",
                 i_re_buffer,
                 input.get_nof_re());
+}
+
+void resource_grid_impl::map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding)
+{
+  // Map with an empty list of reserved RE patterns.
+  map(input, pattern, precoding, re_pattern_list());
 }

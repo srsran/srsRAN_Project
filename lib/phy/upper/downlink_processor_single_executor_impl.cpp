@@ -66,7 +66,8 @@ void downlink_processor_single_executor_impl::process_pdsch(
   increase_pending_pdus();
 
   executor.execute([this, data, pdu]() {
-    pdsch_proc->process(*current_grid, data, pdu);
+    resource_grid_mapper& mapper = current_grid->get_mapper();
+    pdsch_proc->process(mapper, data, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();
   });

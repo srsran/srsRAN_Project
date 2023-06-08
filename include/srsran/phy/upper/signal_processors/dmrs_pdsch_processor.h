@@ -51,7 +51,7 @@ public:
   /// \brief Generates and maps DMRS for PDSCH.
   /// \param [out] grid Provides the destination resource grid.
   /// \param [in] config Provides the required configuration to generate and map the signal.
-  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
+  virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
 };
 
 } // namespace srsran

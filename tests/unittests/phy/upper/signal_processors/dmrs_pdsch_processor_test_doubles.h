@@ -12,16 +12,16 @@ class dmrs_pdsch_processor_spy : public dmrs_pdsch_processor
 private:
   struct entry_t {
     config_t              config;
-    resource_grid_writer* grid;
+    resource_grid_mapper* mapper;
   };
   std::vector<entry_t> entries;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& config) override
+  void map(resource_grid_mapper& mapper, const config_t& config) override
   {
     entry_t entry = {};
     entry.config  = config;
-    entry.grid    = &grid;
+    entry.mapper  = &mapper;
     entries.emplace_back(entry);
   }
   void                        reset() { entries.clear(); }

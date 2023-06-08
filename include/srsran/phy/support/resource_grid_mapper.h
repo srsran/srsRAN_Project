@@ -31,6 +31,16 @@ public:
   /// \param[in] precoding  Precoding configuration.
   virtual void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) = 0;
+
+  /// \brief Maps the input resource elements into the resource grid.
+  /// \param[in] input      Input data.
+  /// \param[in] pattern    Data allocation pattern in the resource grid.
+  /// \param[in] precoding  Precoding configuration.
+  /// \param[in] reserved   Reserved resource elements, to be excluded from the allocation pattern.
+  virtual void map(const re_buffer_reader&        input,
+                   const re_pattern_list&         pattern,
+                   const precoding_configuration& precoding,
+                   const re_pattern_list&         reserved) = 0;
 };
 
 } // namespace srsran

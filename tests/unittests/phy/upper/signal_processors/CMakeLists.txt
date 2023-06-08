@@ -30,7 +30,7 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(dmrs_pdcch_processor_test dmrs_pdcch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pdsch_processor_test dmrs_pdsch_processor_test.cpp)
-    target_link_libraries(dmrs_pdsch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog)
+    target_link_libraries(dmrs_pdsch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog resource_grid_mapper_test_doubles)
     add_test_vector(dmrs_pdsch_processor_test dmrs_pdsch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)

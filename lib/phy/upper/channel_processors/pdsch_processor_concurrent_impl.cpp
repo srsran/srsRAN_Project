@@ -18,7 +18,7 @@
 
 using namespace srsran;
 
-void pdsch_processor_concurrent_impl::process(resource_grid_writer&                                        grid,
+void pdsch_processor_concurrent_impl::process(resource_grid_mapper&                                        mapper,
                                               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                               const pdsch_processor::pdu_t&                                pdu)
 {
@@ -106,7 +106,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_writer&             
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
-  dmrs->map(grid, dmrs_config);
+  dmrs->map(mapper, dmrs_config);
 
   // Prepare packed encoded codeword.
   temp_packed_codeword.resize(codeword.size());
@@ -171,7 +171,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_writer&             
   static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords = {temp_packed_codeword};
 
   // Actual modulation.
-  modulator->modulate(grid, codewords, modulator_config);
+  modulator->modulate(mapper, codewords, modulator_config);
 }
 
 void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const

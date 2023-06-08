@@ -92,7 +92,7 @@ bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu)
   return true;
 }
 
-void pdsch_processor_impl::process(resource_grid_writer&                                        grid,
+void pdsch_processor_impl::process(resource_grid_mapper&                                        mapper,
                                    static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                                    const pdsch_processor::pdu_t&                                pdu)
 {
@@ -127,10 +127,10 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   }
 
   // Modulate codewords.
-  modulate(grid, codewords, pdu);
+  modulate(mapper, codewords, pdu);
 
   // Prepare DM-RS configuration and generate.
-  put_dmrs(grid, pdu);
+  put_dmrs(mapper, pdu);
 }
 
 void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
@@ -247,7 +247,7 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
   return temp_packed_codewords[codeword_id];
 }
 
-void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const pdu_t& pdu)
+void pdsch_processor_impl::modulate(resource_grid_mapper& mapper, span<const bit_buffer> codewords, const pdu_t& pdu)
 {
   unsigned nof_codewords = codewords.size();
 
@@ -267,10 +267,10 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
   modulator_config.reserved                    = pdu.reserved;
   modulator_config.precoding                   = pdu.precoding;
 
-  modulator->modulate(grid, codewords, modulator_config);
+  modulator->modulate(mapper, codewords, modulator_config);
 }
 
-void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu)
+void pdsch_processor_impl::put_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu)
 {
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
@@ -292,5 +292,5 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
   dmrs_config.precoding            = pdu.precoding;
 
   // Generate and map DM-RS.
-  dmrs->map(grid, dmrs_config);
+  dmrs->map(mapper, dmrs_config);
 }

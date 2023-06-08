@@ -41,7 +41,7 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_writer&                                        grid,
+  void process(resource_grid_mapper&                                        mapper,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
 
@@ -71,12 +71,12 @@ private:
   /// \param[out] grid          Provides the destination resource grid.
   /// \param[in] temp_codewords Provides the encoded codewords.
   /// \param[in] pdu            Provides the PDSCH processor PDU.
-  void modulate(resource_grid_writer& grid, span<const bit_buffer> temp_codewords, const pdu_t& pdu);
+  void modulate(resource_grid_mapper& mapper, span<const bit_buffer> temp_codewords, const pdu_t& pdu);
 
   /// \brief Generates and maps DMRS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
   /// \param[out] grid   Provides the destination resource grid.
   /// \param[in] pdu     Provides the PDSCH processor PDU.
-  void put_dmrs(resource_grid_writer& grid, const pdu_t& pdu);
+  void put_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
 
   std::unique_ptr<pdsch_encoder>                                                              encoder;
   std::unique_ptr<pdsch_modulator>                                                            modulator;

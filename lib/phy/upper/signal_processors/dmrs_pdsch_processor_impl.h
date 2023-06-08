@@ -12,6 +12,7 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/support/math_utils.h"
@@ -29,9 +30,15 @@ private:
   /// Define the maximum number of DMRS per symbol.
   static constexpr unsigned MAX_DMRS_PER_SYMBOL = MAX_RB * MAX_DRMS_PER_RB;
 
+  /// \brief Maximum number of OFDM symbols containing DM-RS on a PDSCH allocation
+  ///
+  /// It corresponds to a single symbol DM-RS with three additional positions, or to a double symbol DM-RS with one
+  /// additional position, as per TS38.211 Section 7.4.1.1.2. and TS38.214 Section 5.6.1.2.
+  static constexpr unsigned MAX_DMRS_SYMBOLS = 4;
+
   /// Defines generation parameters.
   struct params_t {
-    unsigned             delta;
+    unsigned             cdm_group_id;
     std::array<float, 2> w_f;
     std::array<float, 2> w_t;
   };
@@ -57,23 +64,20 @@ private:
 
   /// \brief Implements TS 38.211 section 7.4.1.1.2 Mapping to physical resources.
   ///
-  /// This method implements the signal mapping as described in TS 38.211 section 7.4.1.1.2. In addition, it applies
-  /// precoding if configured.
+  /// This method implements the signal mapping as described in TS 38.211 section 7.4.1.1.2.
   ///
-  /// \param[out] grid        Grid destination to map the signal.
+  /// \param[out] mapper      Resource grid mapping interface.
   /// \param[in] sequence     Generated sequence for the given symbol.
-  /// \param[in] rg_subc_mask Subcarriers where \c sequence is mapped onto, as a boolean mask.
-  /// \param[in] symbol       Symbol index.
+  /// \param[in] allocation   DM-RS allocation pattern.
   /// \param[in] config       Configuration parameters.
   /// \note The method expects \c base_mask to start with \c NRE entries of zero-padding (i.e., set to \c false).
-  void mapping(resource_grid_writer&               grid,
-               span<const cf_t>                    sequence,
-               const bounded_bitset<MAX_RB * NRE>& rg_subc_mask,
-               unsigned                            symbol,
-               const config_t&                     config);
+  void mapping(resource_grid_mapper&  mapper,
+               span<const cf_t>       sequence,
+               const re_pattern_list& allocation,
+               const config_t&        config);
 
-  /// Temporal resource element storage, just in case weights or precoding is applied for each port.
-  std::array<std::array<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> static_temp_re;
+  /// Temporal resource element storage.
+  static_re_buffer<MAX_PORTS, MAX_DMRS_PER_SYMBOL * MAX_DMRS_SYMBOLS> temp_re;
 
 public:
   dmrs_pdsch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :
@@ -83,7 +87,7 @@ public:
   }
 
   // See interface for documentation.
-  void map(resource_grid_writer& grid, const config_t& config) override;
+  void map(resource_grid_mapper& mapper, const config_t& config) override;
 };
 
 } // namespace srsran

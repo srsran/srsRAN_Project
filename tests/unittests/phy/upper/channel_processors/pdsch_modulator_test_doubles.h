@@ -12,19 +12,19 @@ private:
   struct entry_t {
     config_t                config;
     std::vector<bit_buffer> codewords;
-    resource_grid_writer*   grid_ptr;
+    resource_grid_mapper*   mapper;
   };
   std::vector<entry_t> entries;
 
 public:
-  void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) override
+  void modulate(resource_grid_mapper& mapper, span<const bit_buffer> codewords, const config_t& config) override
   {
     entry_t e = {};
     e.config  = config;
     for (unsigned cw = 0; cw != codewords.size(); ++cw) {
       e.codewords.emplace_back(codewords[cw]);
     }
-    e.grid_ptr = &grid;
+    e.mapper = &mapper;
     entries.emplace_back(e);
   }
   void                        reset() { entries.clear(); }

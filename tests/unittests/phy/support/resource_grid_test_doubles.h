@@ -316,7 +316,7 @@ private:
 };
 
 /// Describes a resource grid spy.
-class resource_grid_spy : public resource_grid, public resource_grid_mapper
+class resource_grid_spy : public resource_grid, private resource_grid_mapper
 {
 public:
   resource_grid_spy() : writer(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB)
@@ -411,6 +411,14 @@ public:
 
   void map(const re_buffer_reader& /* input */,
            const re_pattern_list& /* pattern */,
+           const precoding_configuration& /* precoding */,
+           const re_pattern_list& /* reserved */) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
+  }
+
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
            const precoding_configuration& /* precoding */) override
   {
     srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
@@ -429,7 +437,7 @@ private:
 /// interface.
 ///
 /// \note The test terminates if any component under test calls any method from the interface.
-class resource_grid_dummy : public resource_grid, public resource_grid_mapper
+class resource_grid_dummy : public resource_grid, private resource_grid_mapper
 {
 private:
   /// Throws a assertion failure due to an overridden method call.
@@ -490,11 +498,18 @@ public:
 
   resource_grid_mapper& get_mapper() override { return *this; }
 
+  void map(const re_buffer_reader&        input,
+           const re_pattern_list&         pattern,
+           const precoding_configuration& precoding,
+           const re_pattern_list&         reserved) override
+  {
+    failure();
+  }
+
   void
   map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
   {
     failure();
-    return;
   }
 
   void clear_set_all_zero_count() { set_all_zero_count = 0; }

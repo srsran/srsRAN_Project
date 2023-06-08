@@ -31,6 +31,19 @@ public:
   ///
   /// \param[in] input input resource elements arranged by layer.
   /// \param[in] pattern RE pattern representing the grid allocation.
+  /// \param[in] reserved Reserved resource elements, to be excluded from the allocation pattern.
+  void map(const re_buffer_reader& input,
+           const re_pattern_list&  pattern,
+           const precoding_configuration& /* precoding */,
+           const re_pattern_list& reserved) override;
+
+  /// \brief Maps the input resource elements using a resource grid writer spy.
+  ///
+  /// The mapping into the resource grid does not use precoding, therefore, the resource grid is filled with the symbols
+  /// corresponding to each layer.
+  ///
+  /// \param[in] input input resource elements arranged by layer.
+  /// \param[in] pattern RE pattern representing the grid allocation.
   void map(const re_buffer_reader& input,
            const re_pattern_list&  pattern,
            const precoding_configuration& /* precoding */) override;
