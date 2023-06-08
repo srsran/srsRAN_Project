@@ -199,11 +199,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-          0,
-          0,
-          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-          0,
-          0};
+                0,
+                0,
+                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+                0,
+                0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;

@@ -281,6 +281,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 6;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.preamble_rx_target_pw = -100;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   auto to_pusch_td_list = [](const std::initializer_list<unsigned>& k2s) {
     std::vector<pusch_time_domain_resource_allocation> vec;
@@ -302,9 +303,12 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4, 5, 6, 7});
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
-  cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
-  cfg.init_ul_bwp.pucch_cfg_common->group_hopping         = pucch_group_hopping::NEITHER;
-  cfg.init_ul_bwp.pucch_cfg_common->p0_nominal            = -90;
+  cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
+  cfg.init_ul_bwp.pucch_cfg_common->group_hopping                = pucch_group_hopping::NEITHER;
+  cfg.init_ul_bwp.pucch_cfg_common->p0_nominal                   = -90;
+  cfg.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant = -76;
+  cfg.init_ul_bwp.pusch_cfg_common.value().msg3_delta_preamble   = 6;
+  cfg.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power      = 8;
 
   return cfg;
 }

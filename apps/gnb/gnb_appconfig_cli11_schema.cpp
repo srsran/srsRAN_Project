@@ -277,7 +277,7 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
   app.add_option("--p0_nominal_with_grant",
                  pusch_params.p0_nominal_with_grant,
                  "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
-                 "within the [-202, 24] interval.  Default: -100")
+                 "within the [-202, 24] interval.  Default: -76")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {
         std::stringstream ss(value);
