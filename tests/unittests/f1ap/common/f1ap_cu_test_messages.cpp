@@ -38,7 +38,7 @@ asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = asn1::f1ap::nr_scs_opts::scs30;
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nr_nrb_opts::nrb51;
-  served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
+  served_cells_item.served_cell_info.meas_timing_cfg.from_string("101105af4084");
 
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
