@@ -199,11 +199,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.type                 = search_space_configuration::type_t::common;
       ss_cfg.common.f0_0_and_f1_0 = true;
       ss_cfg.nof_candidates       = {
-          0,
-          0,
-          std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-          0,
-          0};
+                0,
+                0,
+                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
+                0,
+                0};
     } else if (not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
@@ -274,6 +274,55 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
           du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
     }
+
+    // Parameters for PUSCH-Config.
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.emplace();
+    }
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
+    }
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
+    }
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
+    }
+    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+                .init_ul_bwp.pusch_cfg.value()
+                .uci_cfg.value()
+                .beta_offsets_cfg.has_value()) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .uci_cfg.value()
+          .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
+    }
+    if (not variant_holds_alternative<uci_on_pusch::beta_offsets_semi_static>(
+            out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+                .init_ul_bwp.pusch_cfg.value()
+                .uci_cfg.value()
+                .beta_offsets_cfg.value())) {
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .uci_cfg.value()
+          .beta_offsets_cfg.reset();
+      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .uci_cfg.value()
+          .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
+    }
+    beta_offsets& b_offsets =
+        variant_get<uci_on_pusch::beta_offsets_semi_static>(out_cell.ue_ded_serv_cell_cfg.ul_config.value()
+                                                                .init_ul_bwp.pusch_cfg.value()
+                                                                .uci_cfg.value()
+                                                                .beta_offsets_cfg.value());
+    b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.b_offset_ack_idx_1;
+    b_offsets.beta_offset_ack_idx_2    = base_cell.pusch_cfg.b_offset_ack_idx_2;
+    b_offsets.beta_offset_ack_idx_3    = base_cell.pusch_cfg.b_offset_ack_idx_3;
+    b_offsets.beta_offset_csi_p1_idx_1 = base_cell.pusch_cfg.b_offset_csi_p1_idx_1;
+    b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.b_offset_csi_p1_idx_2;
+    b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.b_offset_csi_p2_idx_1;
+    b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.b_offset_csi_p2_idx_2;
 
     logger.info(
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "

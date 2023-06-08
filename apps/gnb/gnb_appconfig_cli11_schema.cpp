@@ -306,6 +306,31 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 
         return "";
       });
+  app.add_option("--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option("--b_offset_ack_idx_2", pusch_params.b_offset_ack_idx_2, "betaOffsetACK-Index2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option("--b_offset_ack_idx_3", pusch_params.b_offset_ack_idx_3, "betaOffsetACK-Index3 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p1_idx_1", pusch_params.b_offset_csi_p1_idx_1, "b_offset_csi_p1_idx_1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p1_idx_2", pusch_params.b_offset_csi_p1_idx_2, "b_offset_csi_p1_idx_2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p2_idx_1", pusch_params.b_offset_csi_p2_idx_1, "b_offset_csi_p2_idx_1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p2_idx_2", pusch_params.b_offset_csi_p2_idx_2, "b_offset_csi_p2_idx_2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
