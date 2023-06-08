@@ -147,8 +147,10 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
 
       // TODO: use SSB ARFCN for HKD:
-      uint32_t ssb_arfcn =
-          context.cell.meas_time_cfg.meas_timing_list.begin()->frequency_and_timing.value().carrier_freq;
+      uint32_t ssb_arfcn = context.cfg.meas_timing_cfg.crit_exts.c1()
+                               .meas_timing_conf()
+                               .meas_timing.begin()
+                               ->freq_and_timing.carrier_freq;
       (void)ssb_arfcn;
     } else {
       logger.warning("Received RRC re-establishment, but old UE does not have valid security context");

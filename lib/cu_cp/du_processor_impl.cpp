@@ -20,8 +20,6 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-inline void fill_meas_timing_cfg(cu_cp_meas_timing_cfg& meas_timing_cfg, const byte_buffer& packed_meas_timing_cfg);
-
 du_processor_impl::du_processor_impl(const du_processor_config_t         du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
                                      f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
@@ -239,11 +237,12 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti   = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi = msg.cgi;
-  rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
-  fill_meas_timing_cfg(rrc_ue_create_msg.cell.meas_time_cfg, cell_db.at(pcell_index).meas_time_cfg);
+  rrc_ue_create_msg.ue_index             = ue->get_ue_index();
+  rrc_ue_create_msg.c_rnti               = msg.c_rnti;
+  rrc_ue_create_msg.cell.cgi             = msg.cgi;
+  rrc_ue_create_msg.cell.tac             = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.meas_time_cfg_packed = cell_db.at(pcell_index).meas_time_cfg.copy();
+
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)] = {};
   }
@@ -571,17 +570,4 @@ void du_processor_impl::remove_ue(ue_index_t ue_index)
   // Remove UE from UE database
   logger.info("Removing DU UE (id={})", ue_index);
   ue_manager.remove_du_ue(ue_index);
-}
-
-inline void fill_meas_timing_cfg(cu_cp_meas_timing_cfg& meas_timing_cfg, const byte_buffer& packed_meas_timing_cfg)
-{
-  // Unpack SSB ARFCN from MeasurementTimingConfiguration
-  asn1::cbit_ref                  bref_mtc{packed_meas_timing_cfg};
-  asn1::rrc_nr::meas_timing_cfg_s asn1_meas_time_cfg;
-  asn1_meas_time_cfg.unpack(bref_mtc);
-  for (auto& item : asn1_meas_time_cfg.crit_exts.c1().meas_timing_conf().meas_timing) {
-    cu_cp_meas_timing meas_timing    = {};
-    meas_timing.frequency_and_timing = cu_cp_meas_timing_frequency_and_timing{item.freq_and_timing.carrier_freq};
-    meas_timing_cfg.meas_timing_list.push_back(std::move(meas_timing));
-  }
 }
