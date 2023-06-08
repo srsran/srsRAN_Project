@@ -33,17 +33,17 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
 inline bool is_valid_configuration(const srs_cu_cp::ngap_configuration& config)
 {
   if (config.ran_node_name.empty()) {
-    fmt::print("RAN node name is empty");
+    fmt::print("RAN node name is empty\n");
     return false;
   }
 
   if (config.plmn.empty()) {
-    fmt::print("PLMN id is empty");
+    fmt::print("PLMN id is empty\n");
     return false;
   }
 
   if (config.plmn.find("0x") != std::string::npos) {
-    fmt::print("PLMN must not contain 0x");
+    fmt::print("PLMN must not contain 0x\n");
     return false;
   }
 

@@ -619,7 +619,7 @@ static bool parse_mac_address(const std::string& mac_str, span<uint8_t> mac)
   int                     bytes_read = std::sscanf(
       mac_str.c_str(), "%02x:%02x:%02x:%02x:%02x:%02x", &data[0], &data[1], &data[2], &data[3], &data[4], &data[5]);
   if (bytes_read != ether::ETH_ADDR_LEN) {
-    fmt::print("Invalid MAC address provided: {}", mac_str);
+    fmt::print("Invalid MAC address provided: {}\n", mac_str);
     return false;
   }
 
