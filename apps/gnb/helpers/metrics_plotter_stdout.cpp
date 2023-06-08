@@ -56,7 +56,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     fmt::print(" {:>4}", ue.dl_nof_ok);
     fmt::print(" {:>4}", ue.dl_nof_nok);
     unsigned dl_total = ue.dl_nof_ok + ue.dl_nof_nok;
-    if (dl_total > 0 && ue.dl_nof_nok) {
+    if (dl_total > 0) {
       fmt::print(" {:>3}%", int((float)100 * ue.dl_nof_nok / dl_total));
     } else {
       fmt::print(" {:>3}%", 0);
@@ -84,7 +84,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
     fmt::print(" {:>4}", ue.ul_nof_nok);
 
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
-    if (ul_total > 0 && ue.ul_nof_ok > 0) {
+    if (ul_total > 0) {
       fmt::print(" {:>3}%", int((float)100 * ue.ul_nof_nok / ul_total));
     } else {
       fmt::print(" {:>3}%", 0);
