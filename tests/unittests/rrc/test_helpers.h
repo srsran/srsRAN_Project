@@ -23,10 +23,12 @@ public:
 
   void on_new_pdu(const rrc_pdu_message& msg, ue_index_t old_ue_index) override
   {
-    last_pdu = byte_buffer_slice{msg.pdu};
+    last_pdu      = byte_buffer_slice{msg.pdu};
+    last_ue_index = old_ue_index;
   }
 
   byte_buffer_slice last_pdu;
+  ue_index_t        last_ue_index;
 };
 
 class dummy_rrc_tx_security_notifier : public rrc_tx_security_notifier

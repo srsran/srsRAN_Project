@@ -65,7 +65,7 @@ protected:
     ASSERT_NE(rrc_ue, nullptr);
   }
 
-  asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_srb0_pdu_type()
+  asn1::rrc_nr::dl_ccch_msg_s get_srb0_pdu()
   {
     // generated PDU must not be empty
     EXPECT_GT(rrc_srb_pdu_notifiers[0]->last_pdu.length(), 0);
@@ -75,10 +75,16 @@ protected:
     asn1::cbit_ref bref(rx_pdu);
     asn1::rrc_nr::dl_ccch_msg_s dl_ccch;
     EXPECT_EQ(dl_ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_ccch;
+  }
+
+  asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_srb0_pdu_type()
+  {
+    asn1::rrc_nr::dl_ccch_msg_s dl_ccch = get_srb0_pdu();
     return dl_ccch.msg.c1().type();
   }
 
-  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb1_pdu_type()
+  asn1::rrc_nr::dl_dcch_msg_s get_srb1_pdu()
   {
     // generated PDU must not be empty
     EXPECT_GT(rrc_srb_pdu_notifiers[1]->last_pdu.length(), 0);
@@ -88,10 +94,18 @@ protected:
     asn1::cbit_ref bref(rx_pdu);
     asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
     EXPECT_EQ(dl_dcch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_dcch;
+  }
+
+  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb1_pdu_type()
+  {
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch = get_srb1_pdu();
     return dl_dcch.msg.c1().type();
   }
 
-  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb2_pdu_type()
+  ue_index_t get_old_ue_index() { return rrc_srb_pdu_notifiers[1]->last_ue_index; }
+
+  asn1::rrc_nr::dl_dcch_msg_s get_srb2_pdu()
   {
     // generated PDU must not be empty
     EXPECT_GT(rrc_srb_pdu_notifiers[2]->last_pdu.length(), 0);
@@ -101,6 +115,12 @@ protected:
     asn1::cbit_ref bref(rx_pdu);
     asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
     EXPECT_EQ(dl_dcch.unpack(bref), asn1::SRSASN_SUCCESS);
+    return dl_dcch;
+  }
+
+  asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::options get_srb2_pdu_type()
+  {
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch = get_srb2_pdu();
     return dl_dcch.msg.c1().type();
   }
 
