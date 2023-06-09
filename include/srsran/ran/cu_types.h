@@ -188,9 +188,9 @@ struct formatter<srsran::qos_flow_id_t> {
       case srsran::qos_flow_id_t::missing:
         return format_to(ctx.out(), "missing");
       case srsran::qos_flow_id_t::invalid:
-        return format_to(ctx.out(), "invalid");
+        return format_to(ctx.out(), "invalid QFI");
       default:
-        return format_to(ctx.out(), "{:#}", qos_flow_id_to_uint(qfi));
+        return format_to(ctx.out(), "QFI={:#}", qos_flow_id_to_uint(qfi));
     }
   }
 };
