@@ -44,9 +44,15 @@ bool includes_drb(const up_context& context, drb_id_t new_drb_id)
   return false;
 }
 
-drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_context&           context,
-                                            const up_config_update&     config_update,
-                                            const srslog::basic_logger& logger)
+bool includes_drb(const up_pdu_session_context_update& new_session_context, drb_id_t new_drb_id)
+{
+  return (new_session_context.drb_to_add.find(new_drb_id) != new_session_context.drb_to_add.end());
+}
+
+drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update& new_session_context,
+                                            const up_context&                    context,
+                                            const up_config_update&              config_update,
+                                            const srslog::basic_logger&          logger)
 {
   if (context.drb_map.size() >= MAX_NOF_DRBS) {
     logger.error("No more DRBs available");
@@ -54,7 +60,9 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_context&           context,
   }
 
   drb_id_t new_drb_id = drb_id_t::drb1;
-  while (includes_drb(context, new_drb_id) || includes_drb_to_setup(config_update, new_drb_id)) {
+  // The new DRB ID must not be allocated already.
+  while (includes_drb(context, new_drb_id) || includes_drb_to_setup(config_update, new_drb_id) ||
+         includes_drb(new_session_context, new_drb_id)) {
     /// try next
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
     if (new_drb_id == drb_id_t::invalid) {
@@ -102,7 +110,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_setup_request&
     // Reject request if OoS flow requirements can't be met.
     for (const auto& qos_flow : pdu_session.qos_flow_setup_request_items) {
       if (get_five_qi(qos_flow, cfg, logger) == five_qi_t::invalid) {
-        logger.error("OoS flow configuration for flow ID {} can't be derived", qos_flow.qos_flow_id);
+        logger.error("Configuration for {} can't be derived", qos_flow.qos_flow_id);
         return false;
       }
     }
@@ -159,10 +167,10 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
 }
 
 /// \brief Allocates a QoS flow to a new DRB. Inserts it in PDU session object.
-drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
+drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_context,
                            const qos_flow_setup_request_item& qos_flow,
                            const up_config_update&            config_update,
-                           const up_context&                  context,
+                           const up_context&                  full_context,
                            const up_resource_manager_cfg&     cfg,
                            const srslog::basic_logger&        logger)
 {
@@ -171,7 +179,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
 
   // Note: We map QoS flows to DRBs in a 1:1 manner meaning that each flow gets it's own DRB.
   // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
-  drb_id_t drb_id = allocate_drb_id(context, config_update, logger);
+  drb_id_t drb_id = allocate_drb_id(new_session_context, full_context, config_update, logger);
   if (drb_id == drb_id_t::invalid) {
     logger.error("No more DRBs available");
     return drb_id;
@@ -179,8 +187,8 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
 
   up_drb_context drb_ctx;
   drb_ctx.drb_id         = drb_id;
-  drb_ctx.pdu_session_id = session_context.id;
-  drb_ctx.default_drb    = context.drb_map.empty() ? true : false; // make first DRB the default
+  drb_ctx.pdu_session_id = new_session_context.id;
+  drb_ctx.default_drb    = full_context.drb_map.empty() ? true : false; // make first DRB the default
 
   // Fill QoS (TODO: derive QoS params correctly)
   auto& qos_params = drb_ctx.qos_params;
@@ -198,7 +206,7 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     session_context,
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
 
   // add new DRB to list
-  session_context.drb_to_add.emplace(drb_id, drb_ctx);
+  new_session_context.drb_to_add.emplace(drb_id, drb_ctx);
 
   return drb_id;
 }
