@@ -75,7 +75,7 @@ protected:
     rrc_ue_ctrl_notifier.reset();
   }
 
-  void modify_pdu_session_and_add_second_qos_flow()
+  void modify_pdu_session_and_add_qos_flow(unsigned psi, unsigned drb_id, unsigned qfi, bool success)
   {
     // Set expected results for sub-procedures.
     bearer_context_outcome_t first_bearer_ctxt_mod_outcome;
@@ -83,19 +83,19 @@ protected:
     first_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
     first_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
     pdu_session_modified_outcome_t modify_item;
-    modify_item.psi       = uint_to_pdu_session_id(1);
-    modify_item.drb_added = {uint_to_drb_id(2)};
+    modify_item.psi       = uint_to_pdu_session_id(psi);
+    modify_item.drb_added = {uint_to_drb_id(drb_id)};
     first_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item);
     ue_context_outcome_t ue_cxt_mod_outcome;
     ue_cxt_mod_outcome.outcome          = true;
-    ue_cxt_mod_outcome.drb_success_list = {2}; // setup of DRB was ok
+    ue_cxt_mod_outcome.drb_success_list = {drb_id}; // setup of DRB was ok
     ue_cxt_mod_outcome.drb_failed_list  = {};
     bearer_context_outcome_t second_bearer_ctxt_mod_outcome;
     second_bearer_ctxt_mod_outcome.outcome                  = true;
     second_bearer_ctxt_mod_outcome.pdu_sessions_setup_list  = {};
     second_bearer_ctxt_mod_outcome.pdu_sessions_failed_list = {};
     pdu_session_modified_outcome_t modify_item2;
-    modify_item2.psi = uint_to_pdu_session_id(1);
+    modify_item2.psi = uint_to_pdu_session_id(psi);
     second_bearer_ctxt_mod_outcome.pdu_sessions_modified_list.push_back(modify_item2);
     set_expected_results(first_bearer_ctxt_mod_outcome, ue_cxt_mod_outcome, second_bearer_ctxt_mod_outcome, true);
 
@@ -104,7 +104,7 @@ protected:
     ASSERT_FALSE(e1ap_ctrl_notifier.second_e1ap_request.has_value());
 
     // Run PDU session modification.
-    cu_cp_pdu_session_resource_modify_request              request = generate_pdu_session_resource_modification();
+    cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification(psi, qfi);
     async_task<cu_cp_pdu_session_resource_modify_response> modify_task =
         routine_mng->start_pdu_session_resource_modification_routine(
             request, rrc_ue_ctrl_notifier, *rrc_ue_up_resource_manager);
@@ -117,7 +117,11 @@ protected:
     ASSERT_TRUE(modify_task.ready());
     ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.size(), 1);
     ASSERT_EQ(modify_task.get().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
-    ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 0);
+    if (success) {
+      ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 0);
+    } else {
+      ASSERT_EQ(modify_task.get().pdu_session_res_failed_to_modify_list.size(), 1);
+    }
 
     // clear stored E1AP requests for next procedure
     e1ap_ctrl_notifier.reset();
@@ -133,7 +137,7 @@ TEST_F(pdu_session_resource_modification_test,
        when_modification_request_with_inactive_pdu_session_arrives_then_modification_fails)
 {
   // Test Preamble.
-  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
+  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification(1, 1);
 
   // Start modification routine (without setting any results).
   start_procedure(request);
@@ -153,7 +157,7 @@ TEST_F(pdu_session_resource_modification_test, when_bearer_ctxt_modification_fai
   set_expected_results({false}, {}, {}, false);
 
   // Start modification routine.
-  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification();
+  cu_cp_pdu_session_resource_modify_request request = generate_pdu_session_resource_modification(1, 2);
   start_procedure(request);
 
   // Verify content of initial bearer modification request.
@@ -296,7 +300,7 @@ TEST_F(pdu_session_resource_modification_test,
   setup_pdu_session();
 
   // Run PDU session modifcation and add second QoS flow.
-  modify_pdu_session_and_add_second_qos_flow();
+  modify_pdu_session_and_add_qos_flow(1, 2, 2, true);
 }
 
 TEST_F(pdu_session_resource_modification_test,
@@ -306,7 +310,7 @@ TEST_F(pdu_session_resource_modification_test,
   setup_pdu_session();
 
   // Run PDU session modifcation and add second QoS flow.
-  modify_pdu_session_and_add_second_qos_flow();
+  modify_pdu_session_and_add_qos_flow(1, 2, 2, true);
 
   // Test body.
 
@@ -364,4 +368,29 @@ TEST_F(pdu_session_resource_modification_test,
   ASSERT_TRUE(procedure_ready());
   ASSERT_EQ(result().pdu_session_res_modify_list.size(), 1);
   ASSERT_EQ(result().pdu_session_res_modify_list.begin()->pdu_session_id, uint_to_pdu_session_id(1));
+}
+
+TEST_F(pdu_session_resource_modification_test, when_many_qos_flows_are_added_pdu_session_modification_succeeds)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Add QoS flows until maximum number of DRBs is reached.
+  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+    modify_pdu_session_and_add_qos_flow(1, i, i, true);
+  }
+}
+
+TEST_F(pdu_session_resource_modification_test, when_one_to_many_qos_flows_are_added_last_pdu_session_modification_fails)
+{
+  // Test Preamble - Setup a single PDU session initially.
+  setup_pdu_session();
+
+  // Add QoS flows until maximum number of DRBs is reached.
+  for (unsigned i = 2; i <= MAX_NOF_DRBS; ++i) {
+    modify_pdu_session_and_add_qos_flow(1, i, i, true);
+  }
+
+  // Try to add one more QoS flow but addtion should fail.
+  modify_pdu_session_and_add_qos_flow(1, MAX_NOF_DRBS + 1, MAX_NOF_DRBS + 1, false);
 }

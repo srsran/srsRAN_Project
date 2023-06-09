@@ -136,16 +136,17 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
   return cmd;
 };
 
-cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification()
+cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification(unsigned psi,
+                                                                                                        unsigned qfi)
 {
   cu_cp_pdu_session_resource_modify_request request;
   request.ue_index = uint_to_ue_index(0);
 
   cu_cp_pdu_session_res_modify_item_mod_req modify_item;
-  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+  modify_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
   qos_flow_add_or_mod_item qos_item;
-  qos_item.qos_flow_id = uint_to_qos_flow_id(2);
+  qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
     non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(7);

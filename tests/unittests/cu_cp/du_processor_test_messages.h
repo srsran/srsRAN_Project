@@ -45,7 +45,8 @@ cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup(uns
 cu_cp_pdu_session_resource_release_command generate_pdu_session_resource_release();
 
 /// \brief Generate a dummy PDU Session Resource Modification Request.
-cu_cp_pdu_session_resource_modify_request generate_pdu_session_resource_modification();
+cu_cp_pdu_session_resource_modify_request generate_pdu_session_resource_modification(unsigned psi = 1,
+                                                                                     unsigned qfi = 2);
 
 /// \brief Generate a dummy PDU Session Resource Modification Request with QoS flow to remove item.
 cu_cp_pdu_session_resource_modify_request
