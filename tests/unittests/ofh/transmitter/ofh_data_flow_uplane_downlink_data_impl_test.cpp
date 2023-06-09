@@ -94,9 +94,7 @@ protected:
     data_flow_uplane_downlink_data_impl_config config;
 
     config.logger         = &srslog::fetch_basic_logger("TEST");
-    config.nof_symbols    = nof_symbols;
     config.ru_nof_prbs    = ru_nof_prbs;
-    config.du_nof_prbs    = du_nof_prbs;
     config.vlan_params    = vlan_params;
     config.compr_params   = comp_params;
     config.compressor_sel = std::make_unique<ofh::testing::iq_compressor_dummy>();
@@ -142,8 +140,11 @@ INSTANTIATE_TEST_SUITE_P(compression_params,
 
 TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_type_1_message_success)
 {
-  resource_grid_context context;
-  unsigned              eaxc = 2;
+  data_flow_resource_grid_context context;
+  context.port   = 0;
+  context.sector = 0;
+  context.slot   = slot_point(0, 0, 0);
+  unsigned eaxc  = 2;
 
   data_flow.enqueue_section_type_1_message(context, rg_reader_spy, eaxc);
 

@@ -10,13 +10,15 @@
 
 #pragma once
 
+#include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include <bitset>
+#include "srsran/ran/resource_block.h"
 #include <mutex>
-#include <vector>
 
 namespace srsran {
 namespace ofh {
@@ -30,25 +32,127 @@ struct ul_prach_context {
   prach_buffer_context context;
   /// PRACH buffer.
   prach_buffer* buffer = nullptr;
-  /// Is PRACH notified flag.
-  bool is_notified = false;
-  /// Number of REs written in the PRACH buffer.
-  unsigned nof_re_written = 0;
 };
 
 /// Uplink slot context.
-struct ul_slot_context {
+class ul_slot_context
+{
+  /// Maximum number of ports.
+  static constexpr unsigned MAX_NUM_PORTS = 4U;
+
+  /// Resource grid writer statistics.
+  struct resource_grid_writer_stats {
+    /// Number of REs of the grid.
+    unsigned grid_nof_re = 0;
+    /// Number of REs written indexed by port.
+    static_vector<unsigned, MAX_NUM_PORTS> re_written;
+
+    /// Returns true when all the RE for all the ports have been written.
+    explicit operator bool() const noexcept { return grid_nof_re != 0; }
+
+    /// Returns true when all the REs for the current symbol have been written.
+    bool have_all_prbs_been_written() const
+    {
+      return std::all_of(re_written.begin(), re_written.end(), [&](unsigned port_re_written) {
+        return port_re_written == grid_nof_re;
+      });
+    }
+  };
+
+public:
+  /// Default constructor.
+  ul_slot_context() = default;
+
+  /// Constructs an uplink slot context with the given resource grid and resource grid context.
+  ul_slot_context(const resource_grid_context& context_, resource_grid& grid_) : context(context_), grid(&grid_)
+  {
+    for (unsigned symbol_id = 0, e = grid_.get_writer().get_nof_symbols(); symbol_id != e; ++symbol_id) {
+      rg_stats[symbol_id].grid_nof_re = grid_.get_writer().get_nof_subc();
+      rg_stats[symbol_id].re_written  = static_vector<unsigned, MAX_NUM_PORTS>(grid_.get_writer().get_nof_ports(), 0);
+    }
+  }
+
   /// Returns true if this context is empty, otherwise false.
   bool empty() const { return grid == nullptr; }
 
-  /// Resource grid context.
-  resource_grid_context context;
-  /// Resource grid.
-  resource_grid* grid = nullptr;
-  /// Mask that keeps the state of the grid's notified symbols.
-  std::bitset<MAX_NSYMB_PER_SLOT> notified_symbols;
-  /// Number of PRBs written for each symbol in the grid.
-  std::array<unsigned, MAX_NSYMB_PER_SLOT> prb_written = {};
+  /// Returns the number of PRBs of the context grid or zero if no grid was configured for this context.
+  unsigned get_grid_nof_prbs() const
+  {
+    return (grid) ? (grid->get_writer().get_nof_subc() / NOF_SUBCARRIERS_PER_RB) : 0U;
+  }
+
+  /// Writes the given RE IQ buffer into the given symbol, port and start RE and notifies that an uplink symbol has been
+  /// completed when all the PRBs for all the ports have been written in the grid.
+  void update_grid_and_notify(unsigned                   port,
+                              unsigned                   symbol,
+                              unsigned                   start_re,
+                              span<const cf_t>           re_iq_buffer,
+                              uplane_rx_symbol_notifier& notifier)
+  {
+    srsran_assert(grid, "Invalid resource grid");
+
+    // Update the grid.
+    write_grid(port, symbol, start_re, re_iq_buffer);
+
+    // Notify the received symbol when it is complete.
+    notify_symbol_when_complete(symbol, notifier);
+  }
+
+  /// Notify using the given notifier.
+  void notify_symbol(unsigned symbol, uplane_rx_symbol_notifier& notifier)
+  {
+    if (!rg_stats[symbol]) {
+      return;
+    }
+
+    // Create the notification context.
+    uplane_rx_symbol_context notifier_context;
+    notifier_context.symbol = symbol;
+    notifier_context.slot   = context.slot;
+
+    // Notify.
+    notifier.on_new_uplink_symbol(notifier_context, grid->get_reader());
+
+    // Mark the symbol as sent.
+    rg_stats[symbol] = {};
+  }
+
+private:
+  /// Writes the given RE IQ buffer into the grid using the port, symbol and start RE.
+  void write_grid(unsigned port, unsigned symbol, unsigned start_re, span<const cf_t> re_iq_buffer)
+  {
+    // Symbol is not valid for this grid or already been sent.
+    if (!rg_stats[symbol]) {
+      return;
+    }
+
+    grid->get_writer().put(port, symbol, start_re, re_iq_buffer);
+    rg_stats[symbol].re_written[port] += re_iq_buffer.size();
+  }
+
+  /// Notify using the given notifier when all the REs for all the ports of the given symbol have been written.
+  void notify_symbol_when_complete(unsigned symbol, uplane_rx_symbol_notifier& notifier)
+  {
+    if (!rg_stats[symbol] || !rg_stats[symbol].have_all_prbs_been_written()) {
+      return;
+    }
+
+    // Create the notification context.
+    uplane_rx_symbol_context notifier_context;
+    notifier_context.symbol = symbol;
+    notifier_context.slot   = context.slot;
+
+    // Notify.
+    notifier.on_new_uplink_symbol(notifier_context, grid->get_reader());
+
+    // Mark the symbol as sent.
+    rg_stats[symbol] = {};
+  }
+
+private:
+  resource_grid_context                                      context;
+  resource_grid*                                             grid     = nullptr;
+  std::array<resource_grid_writer_stats, MAX_NSYMB_PER_SLOT> rg_stats = {};
 };
 
 /// Uplink context repository.
@@ -89,6 +193,20 @@ public:
     entry(slot) = new_entry;
   }
 
+  /// Function to write the grid for the uplink slot context.
+  template <typename X = T>
+  typename std::enable_if<std::is_same<ul_slot_context, X>::value>::type
+  update_grid_and_notify(slot_point                 slot,
+                         unsigned                   port,
+                         unsigned                   symbol,
+                         unsigned                   start_re,
+                         span<const cf_t>           re_iq_buffer,
+                         uplane_rx_symbol_notifier& notifier)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    entry(slot).update_grid_and_notify(port, symbol, start_re, re_iq_buffer, notifier);
+  }
+
   /// Returns the entry of the repository for the given slot.
   T get(slot_point slot) const
   {
@@ -100,7 +218,7 @@ public:
   void clear(slot_point slot)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(slot) = {};
+    entry(slot) = T();
   }
 };
 

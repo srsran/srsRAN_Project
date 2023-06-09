@@ -531,7 +531,7 @@ struct ru_ofh_cell_appconfig {
   /// RU Downlink port.
   std::vector<unsigned> ru_dl_port_id = {0, 1};
   /// RU Uplink port.
-  unsigned ru_ul_port_id = 0U;
+  std::vector<unsigned> ru_ul_port_id = {0, 1};
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

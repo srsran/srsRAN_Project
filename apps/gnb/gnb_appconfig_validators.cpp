@@ -53,15 +53,47 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
   return true;
 }
 
-/// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise false.
-static bool validate_ru_ofh_appconfig(const ru_ofh_appconfig& config)
+/// Validates that the given Radio Unit ports are not duplicated. Returns true on success, otherwise false.
+static bool validate_ru_duplicated_ports(const std::vector<unsigned>& ru_ports)
 {
-  for (const auto& cell : config.cells) {
-    std::vector<unsigned> ports = cell.ru_dl_port_id;
-    std::sort(ports.begin(), ports.end());
+  std::vector<unsigned> ports = ru_ports;
+  std::sort(ports.begin(), ports.end());
 
-    if (std::unique(ports.begin(), ports.end()) != ports.end()) {
+  return std::unique(ports.begin(), ports.end()) == ports.end();
+}
+
+/// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
+/// false.
+static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
+{
+  const ru_ofh_appconfig& ofh_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg);
+
+  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
+    const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
+    const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
+
+    if (cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of uplink ports={} must match the number of reception antennas={}\n",
+                 cell_cfg.nof_antennas_ul,
+                 ofh_cell.ru_ul_port_id.size());
+
+      return false;
+    }
+
+    if (!ofh_cfg.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+      fmt::print("Detected duplicated uplink port identifiers\n");
 
       return false;
     }
@@ -577,7 +609,7 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_ofh_appconfig(ofh_cfg)) {
+    if (!validate_ru_ofh_appconfig(config)) {
       return false;
     }
   }

@@ -14,6 +14,8 @@
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
+#include "srsran/ofh/ofh_constants.h"
+#include "srsran/ofh/ofh_message_decoder_properties.h"
 #include "srsran/ofh/ofh_uplane_message_decoder.h"
 
 namespace srsran {
@@ -37,7 +39,7 @@ struct uplane_uplink_packet_handler_config {
   /// RU PRACH port.
   unsigned ru_prach_port;
   /// RU uplink data port.
-  unsigned ru_ul_data_port;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// User-Plane message decoder.
   std::unique_ptr<uplane_message_decoder> uplane_decoder;
   /// eCPRI packet decoder.
@@ -53,7 +55,7 @@ public:
   explicit uplane_uplink_packet_handler(uplane_uplink_packet_handler_config&& config);
 
   // Decodes the given packet and returns the results.
-  expected<uplane_message_decoder_results> decode_packet(span<const uint8_t> packet);
+  expected<message_decoder_results> decode_packet(span<const uint8_t> packet);
 
 private:
   /// Returns true if the ethernet frame represented by the given eth parameters should be filtered, otherwise false.
@@ -64,18 +66,18 @@ private:
 
   /// Returns true if the User-Plane packet represented by the given User-Plane results should be filtered, otherwise
   /// false.
-  bool should_uplane_packet_be_filtered(const uplane_message_decoder_results& uplane_results) const;
+  bool should_uplane_packet_be_filtered(const message_decoder_results& results) const;
 
 private:
-  srslog::basic_logger&                      logger;
-  const bool                                 is_prach_cp_enabled;
-  uplink_cplane_context_repository&          cplane_repo;
-  ether::vlan_frame_params                   vlan_params;
-  const unsigned                             ru_prach_port;
-  const unsigned                             ru_ul_data_port;
-  std::unique_ptr<uplane_message_decoder>    uplane_decoder;
-  std::unique_ptr<ecpri::packet_decoder>     ecpri_decoder;
-  std::unique_ptr<ether::vlan_frame_decoder> eth_frame_decoder;
+  srslog::basic_logger&                                 logger;
+  const bool                                            is_prach_cp_enabled;
+  uplink_cplane_context_repository&                     cplane_repo;
+  ether::vlan_frame_params                              vlan_params;
+  const unsigned                                        ul_prach_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  std::unique_ptr<uplane_message_decoder>               uplane_decoder;
+  std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;
+  std::unique_ptr<ether::vlan_frame_decoder>            eth_frame_decoder;
 };
 
 } // namespace ofh

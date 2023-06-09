@@ -28,12 +28,8 @@ namespace ofh {
 
 /// Open Fronthaul data flow for User-Plane downlink data implementation configuration.
 struct data_flow_uplane_downlink_data_impl_config {
-  /// Number of symbols.
-  unsigned nof_symbols;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
-  /// DU bandwidth in PRBs.
-  unsigned du_nof_prbs;
   /// VLAN frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Compression parameters.
@@ -59,15 +55,15 @@ public:
   explicit data_flow_uplane_downlink_data_impl(data_flow_uplane_downlink_data_impl_config&& config);
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
-  void enqueue_section_type_1_message(const resource_grid_context& context,
-                                      const resource_grid_reader&  grid,
-                                      unsigned                     eaxc) override;
+  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
+                                      const resource_grid_reader&            grid,
+                                      unsigned                               eaxc) override;
 
 private:
   /// Enqueues an User-Plane message burst.
-  void enqueue_section_type_1_message_symbol_burst(const resource_grid_context& context,
-                                                   const resource_grid_reader&  grid,
-                                                   unsigned                     eaxc);
+  void enqueue_section_type_1_message_symbol_burst(const data_flow_resource_grid_context& context,
+                                                   const resource_grid_reader&            grid,
+                                                   unsigned                               eaxc);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
   unsigned enqueue_section_type_1_message_symbol(span<const cf_t>             iq_symbol_data,
@@ -79,9 +75,7 @@ private:
   void prepare_iq_data_vector(unsigned symbol, unsigned port, const resource_grid_reader& grid);
 
 private:
-  const unsigned                             nof_symbols;
   const unsigned                             ru_nof_prbs;
-  const unsigned                             du_nof_res;
   const ether::vlan_frame_params             vlan_params;
   const ru_compression_params                compr_params;
   sequence_identifier_generator              up_seq_gen;

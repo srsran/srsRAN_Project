@@ -13,7 +13,6 @@
 #include "scoped_frame_buffer.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader.h"
-#include "srsran/phy/support/resource_grid_writer.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -59,9 +58,7 @@ static ecpri::iq_data_parameters generate_ecpri_data_parameters(uint16_t seq_id,
 
 data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
     data_flow_uplane_downlink_data_impl_config&& config) :
-  nof_symbols(config.nof_symbols),
   ru_nof_prbs(config.ru_nof_prbs),
-  du_nof_res(config.du_nof_prbs * NOF_SUBCARRIERS_PER_RB),
   vlan_params(config.vlan_params),
   compr_params(config.compr_params),
   iq_data_buffer(ru_nof_prbs * NOF_SUBCARRIERS_PER_RB, {0, 0}),
@@ -79,9 +76,9 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   srsran_assert(up_builder, "Invalid User-Plane message builder");
 }
 
-void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const resource_grid_context& context,
-                                                                         const resource_grid_reader&  grid,
-                                                                         unsigned                     eaxc)
+void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
+                                                                         const resource_grid_reader&            grid,
+                                                                         unsigned                               eaxc)
 {
   enqueue_section_type_1_message_symbol_burst(context, grid, eaxc);
 }
@@ -91,24 +88,24 @@ void data_flow_uplane_downlink_data_impl::prepare_iq_data_vector(unsigned       
                                                                  const resource_grid_reader& grid)
 {
   // DU grid is copied at the beginning of the RU grid, and copies all the RE of the DU grid.
-  span<cf_t> grid_data = span<cf_t>(iq_data_buffer).first(du_nof_res);
+  span<cf_t> grid_data = span<cf_t>(iq_data_buffer).first(grid.get_nof_subc());
   grid.get(grid_data, port, symbol, 0);
 }
 
 void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_burst(
-    const resource_grid_context& context,
-    const resource_grid_reader&  grid,
-    unsigned                     eaxc)
+    const data_flow_resource_grid_context& context,
+    const resource_grid_reader&            grid,
+    unsigned                               eaxc)
 {
   units::bytes headers_size = eth_builder->get_header_size() +
                               ecpri_builder->get_header_size(ecpri::message_type::iq_data) +
                               up_builder->get_header_size(compr_params);
 
   // Iterate over all the symbols.
-  for (unsigned symbol_id = 0, symbol_end = nof_symbols; symbol_id != symbol_end; ++symbol_id) {
+  for (unsigned symbol_id = 0, symbol_end = grid.get_nof_symbols(); symbol_id != symbol_end; ++symbol_id) {
     scoped_frame_buffer                 scoped_buffer(frame_pool, context.slot, symbol_id, message_type::user_plane);
     ofh_uplane_fragment_size_calculator prb_fragment_calculator(0, ru_nof_prbs, compr_params);
-    prepare_iq_data_vector(symbol_id, 0, grid);
+    prepare_iq_data_vector(symbol_id, context.port, grid);
     // Split the data into multiple messages when it does not fit into a single one.
     bool     is_last_fragment   = false;
     unsigned fragment_start_prb = 0U;

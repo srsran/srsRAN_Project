@@ -906,9 +906,7 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
   app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
-  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
+  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
 }
 
 static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)

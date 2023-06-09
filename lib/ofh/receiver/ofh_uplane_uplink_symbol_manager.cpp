@@ -20,8 +20,8 @@ using namespace srsran;
 using namespace ofh;
 
 uplane_uplink_symbol_manager::uplane_uplink_symbol_manager(const uplane_uplink_symbol_manager_config& config) :
-  du_ul_nof_prbs(config.du_ul_nof_prbs),
   logger(config.logger),
+  ul_eaxc(config.ul_eaxc),
   notifier(config.notifier),
   packet_handler(config.packet_handler),
   prach_repo(config.prach_repo),
@@ -31,34 +31,38 @@ uplane_uplink_symbol_manager::uplane_uplink_symbol_manager(const uplane_uplink_s
 
 void uplane_uplink_symbol_manager::on_new_frame(span<const uint8_t> payload)
 {
-  expected<uplane_message_decoder_results> decoding_results = packet_handler.decode_packet(payload);
+  expected<message_decoder_results> decoding_results = packet_handler.decode_packet(payload);
 
   // Do nothing on decoding error.
   if (decoding_results.is_error()) {
     return;
   }
 
-  const uplane_message_decoder_results& results = decoding_results.value();
+  const uplane_message_decoder_results& results = decoding_results.value().uplane_results;
 
   // Copy the PRBs into the PRACH buffer.
   if (results.params.filter_index == filter_index_type::ul_prach_preamble_1p25khz) {
-    handle_prach_prbs(results);
+    handle_prach_prbs(decoding_results.value());
 
     return;
   }
 
   // Copy the PRBs into the resource grid.
   if (results.params.filter_index == filter_index_type::standard_channel_filter) {
-    handle_grid_prbs(results);
+    handle_grid_prbs(decoding_results.value());
 
     return;
   }
 }
 
-void uplane_uplink_symbol_manager::handle_prach_prbs(const uplane_message_decoder_results& results)
+void uplane_uplink_symbol_manager::handle_prach_prbs(const message_decoder_results& results)
 {
+  const uplane_message_decoder_results& uplane_results = results.uplane_results;
   // NOTE: RU notifies the PRACH in slot 1, but MAC asked for that in slot 0.
-  slot_point slot(results.params.slot.numerology(), results.params.slot.sfn(), results.params.slot.subframe_index(), 0);
+  slot_point slot(uplane_results.params.slot.numerology(),
+                  uplane_results.params.slot.sfn(),
+                  uplane_results.params.slot.subframe_index(),
+                  0);
 
   ul_prach_context prach_context = prach_repo.get(slot);
   if (prach_context.empty()) {
@@ -71,10 +75,10 @@ void uplane_uplink_symbol_manager::handle_prach_prbs(const uplane_message_decode
   span<cf_t> buffer = prach_context.buffer->get_symbol(prach_context.context.port,
                                                        prach_context.context.nof_fd_occasions - 1,
                                                        prach_context.context.nof_td_occasions - 1,
-                                                       results.params.symbol_id);
+                                                       uplane_results.params.symbol_id);
 
   // Note assuming all PRBs in 1 packet.
-  const uplane_section_params& sect_params        = results.sections.front();
+  const uplane_section_params& sect_params        = uplane_results.sections.front();
   unsigned                     prach_length_in_re = (is_long_preamble(prach_context.context.format))
                                                         ? prach_constants::LONG_SEQUENCE_LENGTH
                                                         : prach_constants::SHORT_SEQUENCE_LENGTH;
@@ -95,27 +99,29 @@ void uplane_uplink_symbol_manager::handle_prach_prbs(const uplane_message_decode
       span<const cf_t>(sect_params.iq_samples).subspan(nof_re_to_prach_data, prach_length_in_re);
 
   std::copy(prach_data.begin(), prach_data.end(), buffer.begin());
-  prach_context.nof_re_written = prach_length_in_re;
 
   notifier.on_new_prach_window_data(prach_context.context, *(prach_context.buffer));
-  prach_context.is_notified = true;
 }
 
-void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder_results& results)
+void uplane_uplink_symbol_manager::handle_grid_prbs(const message_decoder_results& results)
 {
-  const slot_point slot            = results.params.slot;
-  ul_slot_context  ul_data_context = ul_slot_repo.get(slot);
+  const uplane_message_decoder_results& uplane_results  = results.uplane_results;
+  const slot_point                      slot            = uplane_results.params.slot;
+  ul_slot_context                       ul_data_context = ul_slot_repo.get(slot);
   if (ul_data_context.empty()) {
-    logger.debug(
-        "Dropping Open Fronthaul message as no associated Control-Plane packet was found in slot={}, symbol={}",
-        results.params.slot,
-        results.params.symbol_id);
+    logger.info("Dropping Open Fronthaul message as no uplink slot context was found for slot={}, symbol={}",
+                uplane_results.params.slot,
+                uplane_results.params.symbol_id);
 
     return;
   }
 
-  const unsigned symbol = results.params.symbol_id;
-  for (const auto& sect : results.sections) {
+  // Find port with eAxC.
+  unsigned rg_port = std::distance(ul_eaxc.begin(), std::find(ul_eaxc.begin(), ul_eaxc.end(), results.eaxc));
+
+  const unsigned du_ul_nof_prbs = ul_data_context.get_grid_nof_prbs();
+  const unsigned symbol         = uplane_results.params.symbol_id;
+  for (const auto& sect : uplane_results.sections) {
     // Section PRBs are above the last PRB of the DU. Do not copy.
     if (sect.start_prb >= du_ul_nof_prbs) {
       continue;
@@ -129,24 +135,15 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder
       nof_prbs_to_write = sect.nof_prbs;
     }
 
-    ul_data_context.grid->get_writer().put(
-        0,
+    srsran_assert(rg_port < ul_eaxc.size(), "Invalid resource grid port={}", rg_port);
+
+    ul_slot_repo.update_grid_and_notify(
+        slot,
+        rg_port,
         symbol,
-        0,
+        sect.start_prb * NOF_SUBCARRIERS_PER_RB,
         span<const cf_t>(sect.iq_samples)
-            .subspan(sect.start_prb * NOF_SUBCARRIERS_PER_RB, nof_prbs_to_write * NOF_SUBCARRIERS_PER_RB));
-
-    ul_data_context.prb_written[symbol] += du_ul_nof_prbs;
-  }
-
-  // Check if all PRBs have been written.
-  if (ul_data_context.prb_written[symbol] != du_ul_nof_prbs) {
-    return;
-  }
-
-  if (!ul_data_context.notified_symbols.test(symbol)) {
-    notifier.on_new_uplink_symbol({ul_data_context.context.slot, symbol}, ul_data_context.grid->get_reader());
-    ul_data_context.notified_symbols.set(symbol);
-    logger.debug("Notifying new uplink symbol for slot={}, symbol={}", ul_data_context.context.slot, symbol);
+            .subspan(sect.start_prb * NOF_SUBCARRIERS_PER_RB, nof_prbs_to_write * NOF_SUBCARRIERS_PER_RB),
+        notifier);
   }
 }
