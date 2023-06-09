@@ -11,9 +11,7 @@
 #pragma once
 
 #include "rrc_cell_context.h"
-#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc.h"

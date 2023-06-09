@@ -84,7 +84,9 @@ public:
   void on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_cu_cp_ue_context_release_command = msg;
+    last_cu_cp_ue_context_release_command.ue_index        = msg.ue_index;
+    last_cu_cp_ue_context_release_command.cause           = msg.cause;
+    last_cu_cp_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
   }
 
   void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override

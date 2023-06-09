@@ -49,8 +49,9 @@ void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
 
   {
     // prepare F1AP UE Context Release Command and call F1AP notifier
-    f1ap_ue_context_release_cmd.ue_index = command.ue_index;
-    f1ap_ue_context_release_cmd.cause    = command.cause;
+    f1ap_ue_context_release_cmd.ue_index        = command.ue_index;
+    f1ap_ue_context_release_cmd.cause           = command.cause;
+    f1ap_ue_context_release_cmd.rrc_release_pdu = command.rrc_release_pdu.copy();
 
     CORO_AWAIT_VALUE(f1ap_ue_context_release_result,
                      f1ap_ue_ctxt_notifier.on_ue_context_release_command(f1ap_ue_context_release_cmd));

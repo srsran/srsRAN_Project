@@ -12,8 +12,6 @@
 
 #include "../common/f1ap_types.h"
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/expected.h"
-#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
@@ -62,8 +60,9 @@ public:
 };
 
 struct f1ap_ue_context_release_command {
-  ue_index_t ue_index = ue_index_t::invalid;
-  cause_t    cause;
+  ue_index_t  ue_index = ue_index_t::invalid;
+  cause_t     cause;
+  byte_buffer rrc_release_pdu;
 };
 
 struct f1ap_ue_context_release_complete {

@@ -24,6 +24,10 @@ ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&
   command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   command->cause.value             = cause_to_f1ap_cause(cmd_.cause);
+  if (!cmd_.rrc_release_pdu.empty()) {
+    command->rrc_container_present = true;
+    command->rrc_container.value   = cmd_.rrc_release_pdu.copy();
+  }
 }
 
 void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)

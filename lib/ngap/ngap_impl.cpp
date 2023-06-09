@@ -385,9 +385,9 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   logger.info("ue={} Received UeContextReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   // Convert to common type
-  cu_cp_ue_context_release_command msg;
+  cu_cp_ngap_ue_context_release_command msg;
   msg.ue_index = ue_index;
-  fill_cu_cp_ue_context_release_command(msg, cmd);
+  fill_cu_cp_ngap_ue_context_release_command(msg, cmd);
 
   // Notify DU processor about UE Context Release Command
   cu_cp_ue_context_release_complete ue_context_release_complete =

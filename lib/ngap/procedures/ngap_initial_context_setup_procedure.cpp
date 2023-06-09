@@ -64,9 +64,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
     // Release UE
-    cu_cp_ue_context_release_command rel_cmd = {};
-    rel_cmd.ue_index                         = ue->get_ue_index();
-    rel_cmd.cause                            = cause_t::protocol;
+    cu_cp_ngap_ue_context_release_command rel_cmd = {};
+    rel_cmd.ue_index                              = ue->get_ue_index();
+    rel_cmd.cause                                 = cause_t::protocol;
 
     ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
 
