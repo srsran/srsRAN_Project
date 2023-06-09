@@ -76,12 +76,12 @@ full-code-format:
   image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
   stage: static
   needs: []
-  tags:
-    - ${INFRASTRUCTURE_TAG}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
+    KUBERNETES_MEMORY_REQUEST: 6Gi
+    KUBERNETES_CPU_REQUEST: 4
   before_script:
     - |
       echo "
@@ -117,7 +117,6 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
-  resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   rules:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
