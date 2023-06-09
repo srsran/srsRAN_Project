@@ -41,7 +41,10 @@
 
 namespace srsran {
 
-/// The precoding information to be associated with PDCCH, PDSCH, CSI-RS and SSB PDUs.
+/// The precoding information associated with PDCCH PDUs.
+struct pdcch_precoding_info {};
+
+/// The precoding information associated with PDSCH PDUs.
 struct pdsch_precoding_info {
   /// Precoding Resource Block Group (PRG) information.
   using prg_info = csi_report_pmi;
@@ -96,7 +99,7 @@ struct dci_context_information {
   /// Starting symbol of the Search Space.
   unsigned starting_symbol;
   /// Precoding and beamforming info used for this DCI.
-  optional<pdsch_precoding_info> bf;
+  optional<pdcch_precoding_info> precoding_info;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
   /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
