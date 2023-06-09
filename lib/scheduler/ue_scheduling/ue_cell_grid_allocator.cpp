@@ -173,13 +173,19 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
       continue;
     }
-    // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
-    // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
-    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot) and
-        get_uci_alloc(grant.cell_index)
-                .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
-            max_harq_bits_per_uci) {
-      continue;
+    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot)) {
+      // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
+      // the slots for CSI.
+      if (cell_cfg.dl_carrier.nof_ant > 1) {
+        continue;
+      }
+      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
+      // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
+      if (get_uci_alloc(grant.cell_index)
+              .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
+          max_harq_bits_per_uci) {
+        continue;
+      }
     }
     uci = get_uci_alloc(grant.cell_index)
               .alloc_uci_harq_ue(
@@ -410,6 +416,13 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     logger.warning("Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
                    pusch_alloc.slot,
                    pusch_td_cfg.k2);
+    return false;
+  }
+
+  // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
+  if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot)) {
+    logger.debug("Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
+                 pusch_alloc.slot);
     return false;
   }
 
