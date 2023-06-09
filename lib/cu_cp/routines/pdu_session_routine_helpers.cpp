@@ -249,9 +249,13 @@ void srsran::srs_cu_cp::fill_drb_to_setup_list(
     e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
     e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
 
-    for (const auto& request_item : qos_flow_list) {
+    // Only iterate over the QoS flows mapped to this particular DRB
+    for (const auto& qfi : drb_to_setup.second.qos_flows) {
+      srsran_assert(qos_flow_list.contains(qfi), "Original setup request doesn't contain for {}", qfi);
+      // Lookup the QoS characteristics from the original request.
+      const auto&                  qos_flow_params = qos_flow_list[qfi];
       e1ap_qos_flow_qos_param_item e1ap_qos_item;
-      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, request_item);
+      fill_e1ap_qos_flow_param_item(e1ap_qos_item, logger, qos_flow_params);
       e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
     }
 
