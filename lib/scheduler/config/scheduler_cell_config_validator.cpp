@@ -77,9 +77,12 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
       const unsigned start_slot_idx =
           subframe_idx * (1U << to_numerology_value(pusch_scs)) + prach_duration_info.start_slot_pusch_scs;
       for (unsigned sl = 0; sl < prach_duration_info.prach_length_slots; ++sl) {
-        VERIFY(cell_cfg.is_fully_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
-               "PRACH configuration index {} not supported with current TDD pattern. PRACH fall outside UL slots",
-               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+        VERIFY(
+            cell_cfg.is_fully_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
+            "PRACH configuration index {} not supported with current TDD pattern. Slot indexes used for PRACH {} fall "
+            "outside TDD UL slots",
+            rach_cfg_cmn.rach_cfg_generic.prach_config_index,
+            interval<unsigned>{start_slot_idx, start_slot_idx + prach_duration_info.prach_length_slots});
       }
     }
   }

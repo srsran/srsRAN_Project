@@ -231,12 +231,3 @@ TEST_F(scheduler_missing_ack_tester, when_no_crc_arrives_then_ul_harq_eventually
 INSTANTIATE_TEST_SUITE_P(msg3_retx,
                          scheduler_retx_tester,
                          testing::Values(test_params{0}, test_params{1}, test_params{2}, test_params{3}));
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

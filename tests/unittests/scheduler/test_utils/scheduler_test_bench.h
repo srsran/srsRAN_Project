@@ -27,6 +27,7 @@ public:
   explicit scheduler_test_bench(unsigned tx_rx_delay_ = 4, subcarrier_spacing max_scs = subcarrier_spacing::kHz15) :
     tx_rx_delay(tx_rx_delay_),
     logger([]() -> srslog::basic_logger& {
+      srslog::init();
       auto& l = srslog::fetch_basic_logger("SCHED", true);
       l.set_level(srslog::basic_levels::debug);
       return l;
