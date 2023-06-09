@@ -16,6 +16,7 @@
 #include "../mac_ul/mac_scheduler_ul_buffer_state_updater.h"
 #include "mac_scheduler_adapter.h"
 #include "rnti_manager.h"
+#include "uci_cell_decoder.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/async/manual_event.h"
@@ -71,8 +72,10 @@ private:
   class cell_handler final : public mac_cell_rach_handler, public mac_cell_control_information_handler
   {
   public:
-    cell_handler() = default;
-    cell_handler(du_cell_index_t cell_idx_, srsran_scheduler_adapter& parent_) : cell_idx(cell_idx_), parent(&parent_)
+    cell_handler(du_cell_index_t                                 cell_idx_,
+                 srsran_scheduler_adapter&                       parent_,
+                 const sched_cell_configuration_request_message& sched_cfg) :
+      uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler), cell_idx(cell_idx_), parent(&parent_)
     {
     }
 
@@ -81,6 +84,8 @@ private:
     void handle_crc(const mac_crc_indication_message& msg) override;
 
     void handle_uci(const mac_uci_indication_message& msg) override;
+
+    uci_cell_decoder uci_decoder;
 
   private:
     du_cell_index_t           cell_idx = INVALID_DU_CELL_INDEX;
@@ -119,7 +124,7 @@ private:
   std::array<ue_notification_context, MAX_NOF_DU_UES> sched_cfg_notif_map;
 
   /// Handler for each DU cell.
-  std::array<cell_handler, MAX_NOF_DU_CELLS> cell_handlers;
+  slotted_id_table<du_cell_index_t, cell_handler, MAX_NOF_DU_CELLS> cell_handlers;
 };
 
 } // namespace srsran

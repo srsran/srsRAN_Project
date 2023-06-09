@@ -15,6 +15,7 @@
 #include "vrb_alloc.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/du_types.h"
@@ -436,6 +437,8 @@ struct pucch_info {
     pucch_format_3 format_3;
     pucch_format_4 format_4;
   };
+  /// In case the PUCCH will contain CSI bits, this struct contains information how those bits are to be decoded.
+  optional<csi_report_configuration> csi_rep_cfg;
 };
 
 struct ul_sched_result {
