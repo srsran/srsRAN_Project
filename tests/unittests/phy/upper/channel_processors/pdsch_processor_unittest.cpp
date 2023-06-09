@@ -215,7 +215,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.mod, pdu.codewords[codeword].modulation);
       ASSERT_EQ(entry.config.Nref, pdu.tbs_lbrm_bytes * 8);
       ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
-      ASSERT_EQ(entry.config.nof_ch_symbols, Nre);
+      ASSERT_EQ(entry.config.nof_ch_symbols, Nre * entry.config.nof_layers);
       ASSERT_EQ(span<const uint8_t>(entry.transport_block), span<const uint8_t>(data[codeword]));
     }
   }
@@ -270,7 +270,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
 
 INSTANTIATE_TEST_SUITE_P(PdschProcessorUnittest,
                          PdschProcessorFixture,
-                         testing::Combine(testing::Values(1),
+                         testing::Combine(testing::Values(1, 2),
                                           testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
                                           testing::Values(dmrs_type::options::TYPE1)));
 

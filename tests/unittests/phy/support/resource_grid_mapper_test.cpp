@@ -54,7 +54,8 @@ static bool operator==(span<const cf_t> lhs, span<const cf_t> rhs)
 
 // Asserts that the contents of the resource grid match the golden symbols for the give allocation pattern.
 static void assert_grid(const re_buffer_reader&     golden,
-                        re_pattern_list&            allocation,
+                        const re_pattern_list&      allocation,
+                        const re_pattern_list&      reserved,
                         const resource_grid_reader& grid,
                         unsigned                    nof_grid_rb)
 {
@@ -63,6 +64,7 @@ static void assert_grid(const re_buffer_reader&     golden,
     // RE mask for an OFDM symbol.
     bounded_bitset<MAX_RB * NRE> re_mask(nof_grid_rb * NRE);
     allocation.get_inclusion_mask(re_mask, i_symbol);
+    reserved.get_exclusion_mask(re_mask, i_symbol);
 
     // View of the golden data for an OFDM symbol.
     unsigned              re_count = re_mask.count();
@@ -92,6 +94,14 @@ static void assert_grid(const re_buffer_reader&     golden,
     // Advance views.
     re_offset += re_count;
   }
+}
+
+static void assert_grid(const re_buffer_reader&     golden,
+                        const re_pattern_list&      allocation,
+                        const resource_grid_reader& grid,
+                        unsigned                    nof_grid_rb)
+{
+  assert_grid(golden, allocation, re_pattern_list(), grid, nof_grid_rb);
 }
 
 namespace {
@@ -180,23 +190,41 @@ protected:
   }
 
   // Generates the golden RE sequence parting from the input symbols and applying precoding based on the provided
-  // precoding configuration and allocation patterns.
+  // precoding configuration and allocation and reserved RE patterns.
   const re_buffer_reader& generate_golden(const re_buffer_reader&        input,
-                                          const re_pattern_list          allocation,
-                                          const precoding_configuration& configuration)
+                                          const re_pattern_list&         allocation,
+                                          const precoding_configuration& configuration,
+                                          const re_pattern_list&         reserved)
   {
     // Get dimensions.
-    unsigned nof_re     = input.get_nof_re();
     unsigned nof_layers = configuration.get_nof_layers();
     unsigned nof_ports  = configuration.get_nof_ports();
 
-    EXPECT_EQ(nof_re, allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB)))
+    // RE pattern containing both the allocation and the reserved RE patterns.
+    re_pattern_list both;
+    both.merge(allocation);
+    both.merge(reserved);
+
+    // Get the number of RE in the allocation pattern.
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Get the number of RE in the reserved pattern.
+    unsigned nof_reserved_re = reserved.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Number of REs in the data pattern which are also reserved.
+    unsigned nof_overlapping_re = nof_data_re + nof_reserved_re -
+                                  both.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Subtract the reserved REs overlapping with data from the total number of data RE.
+    nof_data_re -= nof_overlapping_re;
+
+    EXPECT_EQ(nof_data_re, input.get_nof_re())
         << "Input number of RE does not match the number of RE allocations in the allocation pattern";
 
     EXPECT_EQ(nof_layers, input.get_nof_slices()) << "Input and precoding matrix number of layers don't match.";
 
     // Resize buffer.
-    golden_data.resize(nof_ports, nof_re);
+    golden_data.resize(nof_ports, nof_data_re);
 
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       srsvec::zero(golden_data.get_slice(i_port));
@@ -206,6 +234,7 @@ protected:
     for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
       bounded_bitset<MAX_RB * NRE> re_pattern_symbol(MAX_RB * NRE);
       allocation.get_inclusion_mask(re_pattern_symbol, i_symbol);
+      reserved.get_exclusion_mask(re_pattern_symbol, i_symbol);
 
       re_pattern_symbol.for_each(0, re_pattern_symbol.size(), [&](unsigned i_re) {
         // PRG of each RE.
@@ -224,9 +253,19 @@ protected:
       });
     }
 
-    EXPECT_EQ(nof_re, i_re_buffer) << "The number of RE of the golden sequence does not match the number of input RE.";
+    EXPECT_EQ(nof_data_re, i_re_buffer)
+        << "The number of RE of the golden sequence does not match the number of input RE.";
 
     return golden_data;
+  }
+
+  // Generates the golden RE sequence parting from the input symbols and applying precoding based on the provided
+  // precoding configuration and allocation patterns.
+  const re_buffer_reader& generate_golden(const re_buffer_reader&        input,
+                                          const re_pattern_list&         allocation,
+                                          const precoding_configuration& configuration)
+  {
+    return generate_golden(input, allocation, configuration, re_pattern_list());
   }
 
   // Generates a precoding configuration with the specified dimensions and random precoding coefficients.
@@ -536,6 +575,72 @@ TEST_P(ResourceGridMapperFixture, MultiplePrg)
 
     // Assert resource grid contents.
     assert_grid(golden, allocation, *grid, nof_rb);
+  }
+}
+
+TEST_P(ResourceGridMapperFixture, MultiplePrgReservedREs)
+{
+  const MultiplePRGParams& test_case = GetParam();
+
+  unsigned nof_rb    = std::get<0>(test_case);
+  unsigned nof_ports = std::get<1>(test_case);
+  unsigned prg_size  = std::get<2>(test_case);
+
+  // Create resource grid.
+  std::unique_ptr<resource_grid> grid = rg_factory->create(nof_ports, MAX_NSYMB_PER_SLOT, nof_rb * NRE);
+
+  // Number of subcarriers in an OFDM symbol.
+  unsigned nof_subc = nof_rb * NRE;
+
+  // Number of RE that fit in a PRG for an OFDM symbol.
+  unsigned nof_re_prg = prg_size * NRE;
+
+  for (unsigned nof_layers = 1; nof_layers <= nof_ports; ++nof_layers) {
+    // Initialize grid to zero.
+    grid->set_all_zero();
+
+    // Number of PRG that the data spans.
+    unsigned nof_prg = divide_ceil(nof_subc, nof_re_prg);
+
+    // Create a random precoding configuration
+    precoding_configuration precoding_config = generate_random_precoding(nof_layers, nof_ports, nof_prg, prg_size);
+
+    // Generate resource grid allocation.
+    re_pattern_list allocation = generate_random_allocation(nof_rb);
+    re_pattern_list reserved   = generate_random_allocation(nof_rb);
+
+    // RE pattern containing both the allocation and the reserved RE patterns.
+    re_pattern_list both;
+    both.merge(allocation);
+    both.merge(reserved);
+
+    // Get the number of RE in the allocation pattern.
+    unsigned nof_data_re = allocation.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Get the number of RE in the reserved pattern.
+    unsigned nof_reserved_re = reserved.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Number of REs in the data pattern which are also reserved.
+    unsigned nof_overlapping_re = nof_data_re + nof_reserved_re -
+                                  both.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, ~bounded_bitset<MAX_RB>(MAX_RB));
+
+    // Subtract the reserved REs overlapping with data from the total number of data RE.
+    nof_data_re -= nof_overlapping_re;
+
+    // Generate random RE arranged by layers.
+    const re_buffer_reader& input_data = generate_random_data(nof_layers, nof_data_re);
+
+    // Get the resource grid mapper.
+    resource_grid_mapper& mapper = grid->get_mapper();
+
+    // Map into the resource grid.
+    mapper.map(input_data, allocation, precoding_config, reserved);
+
+    // Generate the golden precoded data.
+    const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config, reserved);
+
+    // Assert resource grid contents.
+    assert_grid(golden, allocation, reserved, *grid, nof_rb);
   }
 }
 

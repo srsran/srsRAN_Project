@@ -143,27 +143,3 @@ precoding_configuration srsran::make_wideband_two_layer_two_ports(unsigned i_cod
 
   return result;
 }
-
-precoding_configuration srsran::make_nzp_csi(unsigned nof_ports)
-{
-  static constexpr interval<unsigned, true> nof_ports_range(1, precoding_constants::MAX_NOF_PORTS);
-
-  srsran_assert(nof_ports_range.contains(nof_ports),
-                "The number of ports (i.e., {}) is out of the valid range {}.",
-                nof_ports,
-                nof_ports_range);
-
-  precoding_configuration result;
-  result.resize(nof_ports, nof_ports, 1, MAX_NOF_PRBS);
-
-  cf_t normalised_weight = 1.0F / std::sqrt(static_cast<float>(nof_ports));
-
-  // Set weights per port.
-  for (unsigned i_layer = 0; i_layer != nof_ports; ++i_layer) {
-    for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-      cf_t weight = (i_layer == i_port) ? normalised_weight : 0.0F;
-      result.set_coefficient(weight, i_layer, i_port, 0);
-    }
-  }
-  return result;
-}

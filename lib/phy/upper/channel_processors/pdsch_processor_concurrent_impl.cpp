@@ -43,7 +43,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   encoder_config.mod            = modulation;
   encoder_config.Nref           = pdu.tbs_lbrm_bytes * 8;
   encoder_config.nof_layers     = nof_layers;
-  encoder_config.nof_ch_symbols = nof_re_pdsch;
+  encoder_config.nof_ch_symbols = nof_re_pdsch * nof_layers;
 
   // Clear the buffer.
   d_segments.clear();
@@ -217,7 +217,7 @@ void pdsch_processor_concurrent_impl::assert_pdu(const pdsch_processor::pdu_t& p
       pdu.nof_cdm_groups_without_data,
       get_max_nof_cdm_groups_without_data(dmrs_config));
   srsran_assert(nof_layers != 0, "No transmit layers are active.");
-  srsran_assert(nof_layers == 1, "Only one layer is currently supported. {} layers requested.", nof_layers);
+  srsran_assert(nof_layers <= 2, "Only 1 or 2 layers are currently supported. {} layers requested.", nof_layers);
 
   srsran_assert(pdu.codewords.size() == nof_codewords,
                 "Expected {} codewords and got {} for {} layers.",

@@ -69,13 +69,13 @@ bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu)
     return false;
   }
 
-  // Only one layer is currently supported.
-  if (pdu.precoding.get_nof_layers() != 1) {
+  // Only one or two antenna ports are currently supported.
+  if ((pdu.precoding.get_nof_ports() == 0) || (pdu.precoding.get_nof_ports() > 2)) {
     return false;
   }
 
-  // Only one or two antenna ports are currently supported.
-  if ((pdu.precoding.get_nof_ports() == 0) || (pdu.precoding.get_nof_ports() > 2)) {
+  // The number of layers cannot be zero or larger than the number of ports.
+  if ((pdu.precoding.get_nof_layers() == 0) || (pdu.precoding.get_nof_layers() > pdu.precoding.get_nof_ports())) {
     return false;
   }
 
@@ -176,7 +176,7 @@ void pdsch_processor_impl::assert_pdu(const pdsch_processor::pdu_t& pdu) const
       pdu.nof_cdm_groups_without_data,
       get_max_nof_cdm_groups_without_data(dmrs_config));
   srsran_assert(nof_layers != 0, "No transmit layers are active.");
-  srsran_assert(nof_layers == 1, "Only one layer is currently supported. {} layers requested.", nof_layers);
+  srsran_assert(nof_layers <= 2, "Only 1 or 2 layers are currently supported. {} layers requested.", nof_layers);
 
   srsran_assert(pdu.codewords.size() == nof_codewords,
                 "Expected {} codewords and got {} for {} layers.",
@@ -231,7 +231,7 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
   encoder_config.mod            = modulation;
   encoder_config.Nref           = pdu.tbs_lbrm_bytes * 8;
   encoder_config.nof_layers     = nof_layers;
-  encoder_config.nof_ch_symbols = Nre;
+  encoder_config.nof_ch_symbols = Nre * nof_layers;
 
   // Prepare codeword size.
   span<uint8_t> codeword = tmp_codeword.first(Nre * nof_layers * get_bits_per_symbol(modulation));

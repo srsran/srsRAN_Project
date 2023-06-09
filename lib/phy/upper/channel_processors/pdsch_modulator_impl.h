@@ -49,12 +49,14 @@ private:
   /// \param[in] data_re PDSCH resource elements that have been already mapped to layers.
   /// \param[in] config PDSCH modulator configuration parameters.
   /// \note The number of layers and codewords is deduced from the parameters.
-  void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const config_t& config);
+  static void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const config_t& config);
 
-  /// Temporary modulated data.
-  static_bit_buffer<MAX_CODEWORD_SIZE>                           temp_b_hat;
-  std::array<cf_t, MAX_CODEWORD_SIZE>                            temp_pdsch_symbols;
-  static_re_buffer<MAX_PORTS, MAX_RB * NRE * MAX_NSYMB_PER_SLOT> temp_re;
+  /// Temporary buffer for scrambled sequence.
+  static_bit_buffer<MAX_CODEWORD_SIZE> temp_b_hat;
+  /// Temporary buffer for the PDSCH modulated symbols.
+  std::array<cf_t, MAX_CODEWORD_SIZE> temp_pdsch_symbols;
+  /// Temporary buffer for the PDSCH layer-mapped RE.
+  static_re_buffer<precoding_constants::MAX_NOF_LAYERS, MAX_RB * NRE * MAX_NSYMB_PER_SLOT> temp_re;
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.

@@ -109,7 +109,7 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
 
   // Number of RE per layer, as per TS38.211 Section 7.3.1.3-1.
   unsigned nof_re_layer = nof_re / nof_layers;
-  srsran_assert((nof_re % nof_layers == 0), "The number of modulated symbols cannot be equally split between layers.");
+  srsran_assert((nof_re % nof_layers == 0), "The number of modulated symbols must be equally split between layers.");
 
   // Resize the RE buffer.
   if ((nof_layers != temp_re.get_nof_slices()) || (nof_re_layer != temp_re.get_nof_re())) {

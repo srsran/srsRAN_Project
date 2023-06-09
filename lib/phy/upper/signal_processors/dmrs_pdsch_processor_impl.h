@@ -62,19 +62,14 @@ private:
   /// \param[in] config Provides the required parameters to calculate the sequences.
   void sequence_generation(span<cf_t> sequence, unsigned symbol, const config_t& config) const;
 
-  /// \brief Implements TS 38.211 section 7.4.1.1.2 Mapping to physical resources.
+  /// \brief Applies the corresponding set of CDM codes to the DM-RS sequence.
   ///
-  /// This method implements the signal mapping as described in TS 38.211 section 7.4.1.1.2.
-  ///
-  /// \param[out] mapper      Resource grid mapping interface.
-  /// \param[in] sequence     Generated sequence for the given symbol.
-  /// \param[in] allocation   DM-RS allocation pattern.
-  /// \param[in] config       Configuration parameters.
-  /// \note The method expects \c base_mask to start with \c NRE entries of zero-padding (i.e., set to \c false).
-  void mapping(resource_grid_mapper&  mapper,
-               span<const cf_t>       sequence,
-               const re_pattern_list& allocation,
-               const config_t&        config);
+  /// \param[out] re_buffer_symbol Buffer where the output DM-RS sequences belonging to each DM-RS port are stored.
+  /// \param[in] sequence The DM-RS sequence.
+  /// \param[in] symbol OFDM symbol corresponding to the input DM-RS sequence.
+  /// \param[in] config PDSCH DM-RS configuration parameters.
+  static void
+  apply_cdm(re_buffer_writer& re_buffer_symbol, span<const cf_t> sequence, unsigned symbol, const config_t& config);
 
   /// Temporal resource element storage.
   static_re_buffer<MAX_PORTS, MAX_DMRS_PER_SYMBOL * MAX_DMRS_SYMBOLS> temp_re;

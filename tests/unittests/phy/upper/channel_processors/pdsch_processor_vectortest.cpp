@@ -148,7 +148,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   const test_case_context&      context   = test_case.context;
   const pdsch_processor::pdu_t& config    = context.pdu;
 
-  resource_grid_writer_spy grid_actual(1, context.rg_nof_symb, context.rg_nof_rb, "info");
+  resource_grid_writer_spy grid_actual(2, context.rg_nof_symb, context.rg_nof_rb, "info");
   resource_grid_mapper_spy mapper(grid_actual);
 
   // Read input data as a bit-packed transport block.
