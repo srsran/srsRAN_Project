@@ -289,20 +289,21 @@ async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer_request(const cu
   return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
 }
 
-cu_cp_user_location_info_nr rrc_ue_impl::handle_rrc_ue_release()
+rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
 {
   // prepare location info to return
-  cu_cp_user_location_info_nr user_location_info;
-  user_location_info.nr_cgi      = context.cell.cgi;
-  user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
-  user_location_info.tai.tac     = context.cell.tac;
+  rrc_ue_release_context release_context;
+  release_context.user_location_info.nr_cgi      = context.cell.cgi;
+  release_context.user_location_info.tai.plmn_id = context.cell.cgi.plmn_hex;
+  release_context.user_location_info.tai.tac     = context.cell.tac;
 
   dl_dcch_msg_s dl_dcch_msg;
   dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
 
-  send_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  // pack DL CCCH msg
+  release_context.rrc_release_pdu = pack_into_pdu(dl_dcch_msg);
 
-  return user_location_info;
+  return release_context;
 }
 
 rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()

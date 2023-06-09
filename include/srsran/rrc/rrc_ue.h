@@ -258,6 +258,11 @@ public:
   virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
+struct rrc_ue_release_context {
+  cu_cp_user_location_info_nr user_location_info;
+  byte_buffer                 rrc_release_pdu;
+};
+
 /// Handle control messages.
 class rrc_ue_control_message_handler
 {
@@ -274,9 +279,9 @@ public:
   virtual async_task<bool>
   handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
 
-  /// \brief Handle an RRC UE Release.
-  /// \returns The location info of the UE.
-  virtual cu_cp_user_location_info_nr handle_rrc_ue_release() = 0;
+  /// \brief Get the RRC UE release context.
+  /// \returns The release context of the UE.
+  virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 };
 
 /// Handler to initialize the security context from NGAP.
