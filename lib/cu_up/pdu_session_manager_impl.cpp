@@ -188,10 +188,6 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  srsran_assert(session.drb_to_setup_list_ng_ran.size() <= 1,
-                "PDU Session {} cannot be created: Current implementation assumes one DRB per PDU session!",
-                session.pdu_session_id);
-
   // Handle DRB setup
   for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     drb_setup_result drb_result = handle_drb_to_setup_item(*new_session, drb_to_setup);
