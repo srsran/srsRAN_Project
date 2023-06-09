@@ -141,6 +141,17 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
       pdcp_rb_type::drb);
 }
 
+TEST_F(up_resource_manager_test, when_pdu_session_setup_with_two_qos_flows_both_are_mapped_on_own_drb)
+{
+  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup(1, 2);
+  ASSERT_TRUE(manager->validate_request(msg));
+  up_config_update update = manager->calculate_update(msg);
+
+  // Verify created DRBs.
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 2);
+}
+
 TEST_F(up_resource_manager_test, when_pdu_session_gets_modified_new_drb_is_set_up)
 {
   // Preamble.
