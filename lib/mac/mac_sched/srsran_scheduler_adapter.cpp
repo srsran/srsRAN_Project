@@ -268,15 +268,15 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   }
 }
 
-static optional<uci_indication::uci_pdu::csi_report>
+static optional<csi_report_data>
 decode_csi(uci_pusch_or_pucch_f2_3_4_detection_status                            csi_status,
            const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi1_bits,
            const optional<uint8_t>&                                              ri,
            const optional<uint8_t>&                                              pmi)
 {
-  optional<uci_indication::uci_pdu::csi_report> rep;
+  optional<csi_report_data> rep;
 
-  if (csi_status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+  if (csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
     rep.emplace();
 
     // Convert CSI-1 bits to CSI report.
@@ -287,10 +287,16 @@ decode_csi(uci_pusch_or_pucch_f2_3_4_detection_status                           
     unsigned wb_cqi = (static_cast<unsigned>(csi1_bits.test(0)) << 3) +
                       (static_cast<unsigned>(csi1_bits.test(1)) << 2) +
                       (static_cast<unsigned>(csi1_bits.test(2)) << 1) + (static_cast<unsigned>(csi1_bits.test(3)));
-    rep->cqi = wb_cqi;
+    rep->first_tb_wideband_cqi = wb_cqi;
 
-    rep->ri  = ri;  // TODO: Support RI decoding.
-    rep->pmi = pmi; // TODO: Support RI decoding.
+    if (ri.has_value()) {
+      rep->ri = csi_report_data::ri_type{*ri}; // TODO: Support RI decoding.
+    }
+
+    if (pmi.has_value()) {
+      rep->pmi.emplace();
+      rep->pmi->type = csi_report_pmi::two_antenna_port{*pmi}; // TODO: Support PMI decoding.
+    }
   }
 
   return rep;

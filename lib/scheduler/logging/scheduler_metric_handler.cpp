@@ -51,13 +51,12 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
-void scheduler_metrics_handler::handle_csi_report(du_ue_index_t                              ue_index,
-                                                  const uci_indication::uci_pdu::csi_report& csi)
+void scheduler_metrics_handler::handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
-    if (csi.cqi.has_value()) {
-      u.last_cqi = *csi.cqi;
+    if (csi.first_tb_wideband_cqi.has_value()) {
+      u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
     }
   }
 }

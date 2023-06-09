@@ -9,6 +9,7 @@
  */
 
 #include "scheduler_event_logger.h"
+#include "srsran/ran/csi_report/csi_report_formatters.h"
 
 using namespace srsran;
 
@@ -102,14 +103,14 @@ void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
 {
   if (mode == debug) {
     fmt::format_to(fmtbuf, "\n- CSI: ue={} rnti={:#x}:", csi.ue_index, csi.rnti);
-    if (csi.csi.cqi.has_value()) {
-      fmt::format_to(fmtbuf, " cqi={}", csi.csi.cqi.value());
+    if (csi.csi.first_tb_wideband_cqi.has_value()) {
+      fmt::format_to(fmtbuf, " cqi={}", *csi.csi.first_tb_wideband_cqi);
     }
     if (csi.csi.ri.has_value()) {
       fmt::format_to(fmtbuf, " ri={}", csi.csi.ri.value());
     }
     if (csi.csi.pmi.has_value()) {
-      fmt::format_to(fmtbuf, " pmi={}", csi.csi.pmi.value());
+      fmt::format_to(fmtbuf, " pmi={}", *csi.csi.pmi);
     }
   }
 }

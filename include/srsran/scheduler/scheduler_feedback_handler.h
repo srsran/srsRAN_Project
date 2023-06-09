@@ -15,6 +15,7 @@
 #include "srsran/adt/variant.h"
 #include "srsran/mac/bsr_format.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
@@ -63,11 +64,6 @@ struct ul_crc_indication {
 /// \brief UCI indication for a given UE.
 struct uci_indication {
   struct uci_pdu {
-    struct csi_report {
-      optional<uint8_t> cqi;
-      optional<uint8_t> ri;
-      optional<uint8_t> pmi;
-    };
     struct uci_pucch_f0_or_f1_pdu {
       constexpr static size_t                                      NOF_HARQS_PER_UCI = 2;
       bool                                                         sr_detected;
@@ -77,7 +73,7 @@ struct uci_indication {
     };
     struct uci_pusch_pdu {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      optional<csi_report>                                                        csi;
+      optional<csi_report_data>                                                   csi;
     };
     struct uci_pucch_f2_or_f3_or_f4_pdu {
       /// Maximum number of SR bits expected on the PUCCH transmission.
@@ -85,7 +81,7 @@ struct uci_indication {
 
       bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                                    sr_info;
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      optional<csi_report>                                                        csi;
+      optional<csi_report_data>                                                   csi;
       /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
       optional<float> ul_sinr;
     };

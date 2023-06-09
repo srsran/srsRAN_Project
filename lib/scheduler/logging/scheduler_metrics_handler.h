@@ -38,7 +38,7 @@ public:
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Register CSI report metric.
-  void handle_csi_report(du_ue_index_t ue_index, const uci_indication::uci_pdu::csi_report& csi);
+  void handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);

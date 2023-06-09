@@ -84,7 +84,7 @@ private:
   void log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const;
 
   void handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const mac_harq_ack_report_status> harq_bits);
-  void handle_csi(ue_cell& ue_cc, const uci_indication::uci_pdu::csi_report& csi_rep);
+  void handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep);
 
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ue_db;

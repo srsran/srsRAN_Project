@@ -42,24 +42,6 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-void ue_cell::handle_csi_report(const uci_indication::uci_pdu::csi_report& csi)
-{
-  // TODO: Remove this function. This temporary, while we do not integrate the new CSI report structs with the rest of
-  // the scheduler.
-  csi_report_data report;
-  if (csi.cqi.has_value()) {
-    report.first_tb_wideband_cqi = *csi.cqi;
-  }
-  if (csi.ri.has_value()) {
-    report.ri = *csi.ri;
-  }
-  if (csi.pmi.has_value()) {
-    report.pmi.emplace();
-    report.pmi->type = csi_report_pmi::two_antenna_port{*csi.pmi};
-  }
-  channel_state.handle_csi_report(report);
-}
-
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                          unsigned                                     pending_bytes) const
 {

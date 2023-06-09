@@ -60,9 +60,6 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
-  /// Update UE with the latest CSI report for a given cell.
-  void handle_csi_report(const uci_indication::uci_pdu::csi_report& csi);
-
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                   unsigned                                     pending_bytes) const;
