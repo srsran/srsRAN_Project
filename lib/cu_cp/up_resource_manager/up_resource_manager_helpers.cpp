@@ -141,7 +141,7 @@ bool srsran::srs_cu_cp::is_valid(const cu_cp_pdu_session_resource_modify_request
     // Reject request if QoS flow to remove doesn't exist.
     for (const auto& qos_flow : pdu_session.transfer.qos_flow_to_release_list) {
       if (context.qos_flow_map.find(qos_flow.qos_flow_id) == context.qos_flow_map.end()) {
-        logger.error("QoS flow ID {} doesn't exist", qos_flow.qos_flow_id);
+        logger.error("{} doesn't exist", qos_flow.qos_flow_id);
         return false;
       }
     }
@@ -220,7 +220,7 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     up_pdu_session_context_update new_ctxt(pdu_session.pdu_session_id);
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {
       auto drb_id = allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, logger);
-      logger.debug("Allocated QoS flow ID {} to DRB ID {} with 5QI {}",
+      logger.debug("Allocated {} to {} with {}",
                    flow_item.qos_flow_id,
                    drb_id,
                    new_ctxt.drb_to_add.at(drb_id).qos_params.qos_characteristics.get_five_qi());
@@ -255,7 +255,7 @@ five_qi_t srsran::srs_cu_cp::get_five_qi(const qos_flow_add_or_mod_item& qos_flo
 
   // Check if we have a valid config for the selected 5QI.
   if (!is_valid(five_qi, cfg, logger)) {
-    logger.error("No valid config for 5QI {}", five_qi_to_uint(five_qi));
+    logger.error("No valid config for {}", five_qi);
     return five_qi_t::invalid;
   }
 
@@ -278,27 +278,27 @@ up_config_update srsran::srs_cu_cp::calculate_update(const cu_cp_pdu_session_res
     for (const auto& flow_item : modify_item.transfer.qos_flow_add_or_modify_request_list) {
       auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
       if (drb_id == drb_id_t::invalid) {
-        logger.error("Couldn't allocate QoS flow ID {}", flow_item.qos_flow_id);
+        logger.error("Couldn't allocate {}", flow_item.qos_flow_id);
         update.pdu_sessions_failed_to_modify_list.push_back(modify_item.pdu_session_id);
       } else {
         srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end() ||
                           ctxt_update.drb_to_add.find(drb_id) != ctxt_update.drb_to_add.end(),
                       "{} has to exist in current PDU session context or in context update",
                       drb_id);
-        logger.debug("Allocated QoS flow ID {} to {}", flow_item.qos_flow_id, drb_id);
+        logger.debug("Allocated {} to {}", flow_item.qos_flow_id, drb_id);
       }
     }
 
     for (const auto& flow_item : modify_item.transfer.qos_flow_to_release_list) {
       auto drb_id = context.qos_flow_map.at(flow_item.qos_flow_id);
-      logger.debug("Releasing QoS flow ID {} on {}", flow_item.qos_flow_id, drb_id);
+      logger.debug("Releasing {} on {}", flow_item.qos_flow_id, drb_id);
 
       // Release DRB if this is the only flow mapped to it.
       const auto& pdu_session_ctxt = context.pdu_sessions.at(modify_item.pdu_session_id);
       srsran_assert(std::find(pdu_session_ctxt.drbs.at(drb_id).qos_flows.begin(),
                               pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
                               flow_item.qos_flow_id) != pdu_session_ctxt.drbs.at(drb_id).qos_flows.end(),
-                    "QoS flow ID {} not mapped on {}",
+                    "{} not mapped on {}",
                     flow_item.qos_flow_id,
                     drb_id);
       if (pdu_session_ctxt.drbs.at(drb_id).qos_flows.size() == 1) {
