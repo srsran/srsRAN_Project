@@ -9,6 +9,7 @@
  */
 
 #include "rrc_reestablishment_procedure.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -75,5 +76,11 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
   rrc_reest.rrc_transaction_id = transaction.id();
   rrc_reest.crit_exts.set_rrc_reest();
 
-  rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg, old_ue_index);
+  // if the UE requests to reestablish RRC connection in the last serving gNB-DU, the DL RRC MESSAGE TRANSFER message
+  // shall include old gNB-DU UE F1AP ID, see TS 38.401 section 8.7
+  if (get_du_index_from_ue_index(old_ue_index) == get_du_index_from_ue_index(context.ue_index)) {
+    rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg, old_ue_index);
+  } else {
+    rrc_ue.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+  }
 }
