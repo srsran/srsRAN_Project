@@ -156,7 +156,7 @@ csi_report_get_pmi_sizes_typeI_single_panel_mode1(unsigned                 N1,
     return {log2_ceil(N1 * O1), log2_ceil(N2 * O2), 0, 1};
   }
 
-  report_error("Unhandled case with  ri={} nof_csi_rs_antenna_ports={} N2={}.", ri, nof_csi_rs_antenna_ports, N2);
+  report_error("Unhandled case with ri={} nof_csi_rs_antenna_ports={} N2={}.", ri, nof_csi_rs_antenna_ports, N2);
 }
 
 static unsigned csi_report_get_size_pmi_one_port()
@@ -179,7 +179,7 @@ static unsigned csi_report_get_size_pmi_typeI_single_panel_4ports_mode1(unsigned
 {
   unsigned count = 0;
 
-  // Select values N1, N2, O1 and O2 from TS38.214 Table 5.2.2.2.1-2;
+  // Select values N1, N2, O1 and O2 from TS38.214 Table 5.2.2.2.1-2.
   unsigned N1 = 2;
   unsigned N2 = 1;
   unsigned O1 = 4;
