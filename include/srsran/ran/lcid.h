@@ -164,7 +164,12 @@ struct formatter<srsran::drb_id_t> {
   template <typename FormatContext>
   auto format(srsran::drb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o));
+    switch (o) {
+      case srsran::drb_id_t::invalid:
+        return format_to(ctx.out(), "invalid DRB");
+      default:
+        return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o));
+    }
   }
 };
 
