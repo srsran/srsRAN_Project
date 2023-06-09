@@ -45,7 +45,6 @@ struct up_context {
   std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions; // Map of existing PDU sessions.
 
   /// Hash-maps for quick access.
-  std::map<five_qi_t, drb_id_t>        five_qi_map;  // Maps QoS flow characteristics to existing DRBs.
   std::map<drb_id_t, pdu_session_id_t> drb_map;      // Maps DRB ID to corresponding PDU session.
   std::map<qos_flow_id_t, drb_id_t>    qos_flow_map; // Maps QoS flow to corresponding DRB.
 };
@@ -73,6 +72,7 @@ struct up_config_update {
   std::map<pdu_session_id_t, up_pdu_session_context_update>
                                 pdu_sessions_to_modify_list; // List of PDU sessions to be modified.
   std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
+  std::vector<pdu_session_id_t> pdu_sessions_failed_to_modify_list; // List of PDU sessions that failed to be removed.
 };
 
 // Response given back to the UP resource manager containing the full context

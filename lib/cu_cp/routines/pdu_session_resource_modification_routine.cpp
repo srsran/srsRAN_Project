@@ -285,6 +285,13 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
       result.pdu_sessions_modified_list.push_back(pdu_session_to_mod.second);
     }
     rrc_ue_up_resource_manager.apply_config_update(result);
+
+    for (const auto& psi : next_config.pdu_sessions_failed_to_modify_list) {
+      cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+      failed_item.pdu_session_id                                         = psi;
+      failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+      response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+    }
   } else {
     logger.error("ue={}: \"{}\" failed.", modify_request.ue_index, name());
     mark_all_sessions_as_failed(response_msg, modify_request);

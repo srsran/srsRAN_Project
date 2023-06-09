@@ -51,9 +51,6 @@ inline void apply_update_for_new_drbs(up_pdu_session_context&                   
     // Add to DRB-to-PDU session look-up table.
     context.drb_map.emplace(drb.first, pdu_session_context.id);
 
-    // add FiveQI to map of existing QoS groups.
-    context.five_qi_map.emplace(drb.second.qos_params.qos_characteristics.get_five_qi(), drb.first);
-
     // add QoS flows of the DRB to the map.
     for (const auto& qos_flow_id : drb.second.qos_flows) {
       context.qos_flow_map.insert({qos_flow_id, drb.first});
@@ -71,9 +68,6 @@ inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_sessi
     for (const auto& flow_id : pdu_session_context.drbs.at(drb_id).qos_flows) {
       context.qos_flow_map.erase(flow_id);
     }
-
-    // Remove associated 5QI.
-    context.five_qi_map.erase(pdu_session_context.drbs.at(drb_id).qos_params.qos_characteristics.get_five_qi());
 
     // Now remove DRB from PDU session and DRB map.
     pdu_session_context.drbs.erase(drb_id);
