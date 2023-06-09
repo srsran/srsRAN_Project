@@ -15,6 +15,7 @@
 #include "vrb_alloc.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
@@ -39,13 +40,10 @@
 
 namespace srsran {
 
-/// The precoding and beamforming information to be associated with PDCCH, PDSCH, CSI-RS and SSB PDUs.
-struct precoding_and_beamforming_info {
+/// The precoding information to be associated with PDCCH, PDSCH, CSI-RS and SSB PDUs.
+struct pdsch_precoding_info {
   /// Precoding Resource Block Group (PRG) information.
-  struct prg_info {
-    /// Index of the precoding matrix (PMI). Values: {0,...,65535}. For no precoding, zero should be used.
-    uint16_t pmi;
-  };
+  using prg_info = csi_report_pmi;
 
   /// \brief Size in RBs of a precoding resource block group (PRG) to which same precoding and digital beamforming gets
   /// applied. Values: {1,...,275}.
@@ -97,7 +95,7 @@ struct dci_context_information {
   /// Starting symbol of the Search Space.
   unsigned starting_symbol;
   /// Precoding and beamforming info used for this DCI.
-  optional<precoding_and_beamforming_info> bf;
+  optional<pdsch_precoding_info> bf;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
   /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
@@ -167,8 +165,8 @@ struct pdsch_information {
   dci_dl_format         dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
   harq_id_t harq_id;
-  /// Precoding and beamforming information of the PDSCH.
-  optional<precoding_and_beamforming_info> precoding_and_beamforming;
+  /// Precoding information of the PDSCH.
+  optional<pdsch_precoding_info> precoding;
 };
 
 struct dl_msg_lc_info {

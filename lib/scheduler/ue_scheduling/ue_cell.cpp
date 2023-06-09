@@ -29,15 +29,12 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
+  channel_state(expert_cfg_),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
-  if (expert_cfg.ul_mcs.start() != expert_cfg.ul_mcs.stop()) {
-    update_pusch_snr(expert_cfg.initial_ul_sinr);
-  }
-  ue_metrics.latest_wb_cqi = expert_cfg.initial_cqi;
 }
 
 void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)
@@ -47,15 +44,20 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
 
 void ue_cell::handle_csi_report(const uci_indication::uci_pdu::csi_report& csi)
 {
+  // TODO: Remove this function. This temporary, while we do not integrate the new CSI report structs with the rest of
+  // the scheduler.
+  csi_report_data report;
   if (csi.cqi.has_value()) {
-    ue_metrics.latest_wb_cqi = *csi.cqi;
+    report.first_tb_wideband_cqi = *csi.cqi;
   }
   if (csi.ri.has_value()) {
-    ue_metrics.latest_ri = *csi.ri;
+    report.ri = *csi.ri;
   }
   if (csi.pmi.has_value()) {
-    ue_metrics.latest_pmi = *csi.pmi;
+    report.pmi.emplace();
+    report.pmi->type = csi_report_pmi::two_antenna_port{*csi.pmi};
   }
+  channel_state.handle_csi_report(report);
 }
 
 grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
@@ -71,7 +73,8 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
   if (expert_cfg.dl_mcs.start() == expert_cfg.dl_mcs.stop()) {
     mcs = expert_cfg.dl_mcs.start();
   } else {
-    optional<sch_mcs_index> estimated_mcs = map_cqi_to_mcs(get_latest_wb_cqi(), pdsch_cfg.mcs_table);
+    optional<sch_mcs_index> estimated_mcs =
+        map_cqi_to_mcs(channel_state.get_wideband_cqi().to_uint(), pdsch_cfg.mcs_table);
     if (estimated_mcs.has_value()) {
       mcs = std::min(std::max(estimated_mcs.value(), expert_cfg.dl_mcs.start()), expert_cfg.dl_mcs.stop());
     } else {
@@ -112,20 +115,19 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
       pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg, get_nof_ul_layers());
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  double        ul_snr{ue_metrics.pusch_snr_db};
   sch_mcs_index mcs{0};
   if (expert_cfg.ul_mcs.start() == expert_cfg.ul_mcs.stop()) {
     // Fixed MCS.
     mcs = expert_cfg.ul_mcs.start();
   } else {
     // MCS is estimated from SNR.
-    mcs = map_snr_to_mcs_ul(ul_snr, pusch_cfg.mcs_table);
+    mcs = map_snr_to_mcs_ul(channel_state.get_pusch_snr(), pusch_cfg.mcs_table);
     mcs = std::min(std::max(mcs, expert_cfg.ul_mcs.start()), expert_cfg.ul_mcs.stop());
   }
 
@@ -160,7 +162,9 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
     // Update PUSCH SNR reported from PHY.
-    update_pusch_snr(crc_pdu.ul_sinr_metric);
+    if (crc_pdu.ul_sinr_metric.has_value()) {
+      channel_state.update_pusch_snr(crc_pdu.ul_sinr_metric.value());
+    }
   }
 
   return tbs;

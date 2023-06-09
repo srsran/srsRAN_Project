@@ -8,8 +8,9 @@
  */
 
 #include "sch_pdu_builder.h"
-#include "../support/dmrs_helpers.h"
-#include "../support/tbs_calculator.h"
+#include "../ue_scheduling/ue_channel_state_manager.h"
+#include "dmrs_helpers.h"
+#include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -467,16 +468,16 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.tb_size_bytes   = tbs_bytes;
 }
 
-void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
-                                     const pdsch_config_params&   pdsch_cfg,
-                                     sch_mcs_tbs                  mcs_tbs_info,
-                                     rnti_t                       rnti,
-                                     const ue_cell_configuration& ue_cell_cfg,
-                                     search_space_id              ss_id,
-                                     const dci_1_1_configuration& dci_cfg,
-                                     const crb_interval&          crbs,
-                                     const dl_harq_process&       h_dl,
-                                     uint16_t                     pmi)
+void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
+                                     const pdsch_config_params&      pdsch_cfg,
+                                     sch_mcs_tbs                     mcs_tbs_info,
+                                     rnti_t                          rnti,
+                                     const ue_cell_configuration&    ue_cell_cfg,
+                                     search_space_id                 ss_id,
+                                     const dci_1_1_configuration&    dci_cfg,
+                                     const crb_interval&             crbs,
+                                     const dl_harq_process&          h_dl,
+                                     const ue_channel_state_manager& cs_mgr)
 {
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
   const search_space_info&     ss_info        = ue_cell_cfg.search_space(ss_id);
@@ -512,12 +513,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.
-  if (ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant > 1) {
-    pdsch.precoding_and_beamforming.emplace();
-    pdsch.precoding_and_beamforming->nof_rbs_per_prg = crbs.length();
-    pdsch.precoding_and_beamforming->prg_infos.resize(1);
-    pdsch.precoding_and_beamforming->prg_infos[0].pmi = pmi;
-  }
+  pdsch.precoding = cs_mgr.get_precoding(pdsch_cfg.nof_layers, prbs);
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
