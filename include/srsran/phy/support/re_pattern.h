@@ -102,6 +102,26 @@ struct re_pattern {
   void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 };
 
+/// \brief Checks if two RE patterns are equal.
+///
+/// Two RE patterns are equal if their attributes are equal.
+inline bool operator==(const re_pattern& pattern1, const re_pattern& pattern2)
+{
+  if (pattern1.symbols != pattern2.symbols) {
+    return false;
+  }
+
+  if (pattern1.prb_mask != pattern2.prb_mask) {
+    return false;
+  }
+
+  if (pattern1.re_mask != pattern2.re_mask) {
+    return false;
+  }
+
+  return true;
+}
+
 /// Describes a resource element pattern list.
 class re_pattern_list
 {

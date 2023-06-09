@@ -43,7 +43,7 @@ if (USE_PHY_TESTVECTORS)
 
     add_executable(nzp_csi_rs_generator_test nzp_csi_rs_generator_test.cpp)
     target_link_libraries(nzp_csi_rs_generator_test srsran_signal_processors srsvec srsran_sequence_generators srslog
-            srsran_upper_phy_support gtest gtest_main)
+            srsran_upper_phy_support gtest gtest_main resource_grid_mapper_test_doubles)
     add_test(nzp_csi_rs_generator_test nzp_csi_rs_generator_test)
     add_test_vector(nzp_csi_rs_generator_test nzp_csi_rs_generator_test_data.tar.gz "")
 

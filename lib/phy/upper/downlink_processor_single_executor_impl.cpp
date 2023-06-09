@@ -97,7 +97,9 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   increase_pending_pdus();
 
   executor.execute([this, config]() {
-    csi_rs_proc->map(current_grid->get_writer(), config);
+    resource_grid_mapper& mapper = current_grid->get_mapper();
+
+    csi_rs_proc->map(mapper, config);
 
     decrease_pending_pdus_and_try_sending_grid();
   });

@@ -84,7 +84,7 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
     }
 
     // Resize the mask to the highest subcarrier, ceiling to PRB.
-    symbol_re_mask.resize(divide_ceil(i_highest_subc, NRE) * NRE);
+    symbol_re_mask.resize(divide_ceil(i_highest_subc + 1, NRE) * NRE);
 
     // Number of RE to be allocated for the current symbol.
     unsigned nof_re_symbol = symbol_re_mask.count();

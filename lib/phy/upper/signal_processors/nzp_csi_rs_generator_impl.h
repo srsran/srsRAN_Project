@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
@@ -44,6 +45,9 @@ private:
     /// Time code sequences \f$w_t\f$.
     static_vector<float, 4> w_t;
   };
+
+  /// Temporary RE storage.
+  static_re_buffer<CSI_RS_MAX_PORTS, MAX_SEQ_LEN * MAX_NSYMB_PER_SLOT> data;
 
   /// FD-CDM2 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-3.
   static const std::array<const cdm_sequence, 2> fd_cdm2_table;
@@ -89,7 +93,8 @@ public:
     srsran_assert(prg, "Invalid pseudo random generator.");
   }
 
-  void map(resource_grid_writer& grid, const config_t& config) override;
+  // See interface for documentation.
+  void map(resource_grid_mapper& mapper, const config_t& config) override;
 };
 
 } // namespace srsran

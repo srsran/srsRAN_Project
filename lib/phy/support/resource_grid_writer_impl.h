@@ -10,7 +10,6 @@
 
 #pragma once
 #include "resource_grid_dimensions.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 
 namespace srsran {
