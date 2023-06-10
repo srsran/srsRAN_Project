@@ -38,7 +38,7 @@ void ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
 
   // Update recommended number of layers based on RI.
   if (csi_report.ri.has_value()) {
-    recommended_dl_layers = csi_report.ri.value().to_uint() + 1;
+    recommended_dl_layers = csi_report.ri.value().to_uint();
   }
 
   if (csi_report.pmi.has_value()) {

@@ -9,6 +9,7 @@
  */
 
 #include "uci_cell_decoder.h"
+#include "srsran/ran/csi_report/csi_report_unpacking.h"
 
 using namespace srsran;
 
@@ -72,6 +73,18 @@ static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4
   return ret;
 }
 
+static csi_report_data decode_csi_bits(const mac_uci_pdu::pucch_f2_or_f3_or_f4_type& pucch,
+                                       const csi_report_configuration&               csi_rep_cfg)
+{
+  // Convert UCI CSI1 bits to "csi_report_packed".
+  csi_report_packed csi_bits(pucch.uci_part1_or_csi_part1_info->payload.size());
+  for (unsigned k = 0; k != csi_bits.size(); ++k) {
+    csi_bits.set(k, pucch.uci_part1_or_csi_part1_info->payload.test(k));
+  }
+
+  return csi_report_unpack_pucch(csi_bits, csi_rep_cfg);
+}
+
 uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& msg)
 {
   // Convert MAC UCI indication to srsRAN scheduler UCI indication.
@@ -80,8 +93,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
   ind.cell_index = cell_index;
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
     uci_indication::uci_pdu& uci_pdu = ind.ucis.emplace_back();
-    ind.ucis[i].crnti                = msg.ucis[i].rnti;
-    ind.ucis[i].ue_index             = rnti_table[msg.ucis[i].rnti];
+    uci_pdu.crnti                    = msg.ucis[i].rnti;
+    uci_pdu.ue_index                 = rnti_table[msg.ucis[i].rnti];
     if (ind.ucis[i].ue_index == INVALID_DU_UE_INDEX) {
       ind.ucis.pop_back();
       logger.info("rnti={}: Discarding UCI PDU. Cause: The RNTI does not exist.", uci_pdu.crnti);
@@ -157,6 +170,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
+
       if (pucch.ul_sinr.has_value()) {
         pdu.ul_sinr.emplace(pucch.ul_sinr.value());
       }
@@ -168,14 +182,39 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
             convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().harq_status, pucch.harq_info->payload);
 
         // Report ACK for RLF detection purposes.
-        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-          rlf_handler.handle_ack(ind.ucis[i].ue_index, pdu.harqs[j] == mac_harq_ack_report_status::ack);
+        for (const mac_harq_ack_report_status& harq_st : pdu.harqs) {
+          rlf_handler.handle_ack(ind.ucis[i].ue_index, harq_st == mac_harq_ack_report_status::ack);
         }
       }
 
-      if (pucch.uci_part1_or_csi_part1_info.has_value()) {
-        pdu.csi = decode_csi(
-            pucch.uci_part1_or_csi_part1_info->status, pucch.uci_part1_or_csi_part1_info->payload, pucch.ri, pucch.pmi);
+      // Check if the UCI has been correctly decoded.
+      if (pucch.uci_part1_or_csi_part1_info.has_value() and
+          pucch.uci_part1_or_csi_part1_info->status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        // Decode CSI bits given the CSI report config previously stored in the grid.
+        const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
+
+        // Search for CSI report config with matching RNTI.
+        for (const auto& expected_slot_uci : slot_ucis) {
+          if (expected_slot_uci.rnti == uci_pdu.crnti) {
+            pdu.csi = decode_csi_bits(pucch, expected_slot_uci.csi_rep_cfg);
+
+            // TODO: Temporary: Support proper RI and PMI decoding.
+            if (pucch.ri.has_value()) {
+              pdu.csi->ri = csi_report_data::ri_type{*pucch.ri};
+            }
+            if (pucch.pmi.has_value()) {
+              pdu.csi->pmi.emplace();
+              pdu.csi->pmi->type = csi_report_pmi::two_antenna_port{*pucch.pmi};
+            }
+            break;
+          }
+        }
+        if (not pdu.csi.has_value()) {
+          logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
+                         cell_index,
+                         uci_pdu.ue_index,
+                         uci_pdu.crnti);
+        }
       }
 
       ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);

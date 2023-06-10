@@ -37,7 +37,7 @@ public:
 
 private:
   struct uci_context {
-    rnti_t                   rnti;
+    rnti_t                   rnti = INVALID_RNTI;
     csi_report_configuration csi_rep_cfg;
   };
 
