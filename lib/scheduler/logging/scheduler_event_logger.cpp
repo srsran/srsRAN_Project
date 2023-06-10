@@ -110,7 +110,7 @@ void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
       fmt::format_to(fmtbuf, " ri={}", csi.csi.ri.value());
     }
     if (csi.csi.pmi.has_value()) {
-      fmt::format_to(fmtbuf, " pmi={}", *csi.csi.pmi);
+      fmt::format_to(fmtbuf, " {}", *csi.csi.pmi);
     }
   }
 }
