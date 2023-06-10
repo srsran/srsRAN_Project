@@ -390,7 +390,7 @@ struct test_mode_ue_appconfig {
   /// Channel Quality Indicator to use for the test UE.
   unsigned cqi = 15;
   /// Rank Indicator to use for the test UE. This value has to be lower than the number of ports.
-  unsigned ri = 0;
+  unsigned ri = 1;
   /// Precoding Matrix Indicator to use for the test UE.
   unsigned pmi = 0;
 };

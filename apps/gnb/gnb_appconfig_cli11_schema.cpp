@@ -641,7 +641,7 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(0, 3));
   app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 1));
+      ->check(CLI::Range(1, 2));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)

@@ -453,13 +453,16 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
 
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
-  if ((config.test_mode_cfg.test_ue.ri > 0 or config.test_mode_cfg.test_ue.pmi > 0) and
-      not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
-    fmt::print("RI and PMI must be equal to zero for test mode UE configured to use DCI format 1_0\n");
+  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+    fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n",
+               config.test_mode_cfg.test_ue.ri,
+               config.test_mode_cfg.test_ue.pmi);
     return false;
   }
-  if (config.test_mode_cfg.test_ue.ri >= config.common_cell_cfg.pdsch_cfg.nof_ports) {
-    fmt::print("RI and PMI must be equal to zero for test mode UE configured to use DCI format 1_0\n");
+  if (config.test_mode_cfg.test_ue.ri > config.common_cell_cfg.pdsch_cfg.nof_ports) {
+    fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports\n",
+               config.test_mode_cfg.test_ue.ri,
+               config.common_cell_cfg.pdsch_cfg.nof_ports);
     return false;
   }
   return true;
