@@ -17,12 +17,15 @@
 namespace srsran {
 namespace fapi_adaptor {
 
+class precoding_matrix_repository;
+
 /// Helper function that converts from a PDSCH FAPI PDU to a PDSCH processor PDU.
-void convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&     proc_pdu,
-                               const fapi::dl_pdsch_pdu&   fapi_pdu,
-                               uint16_t                    sfn,
-                               uint16_t                    slot,
-                               span<const re_pattern_list> csi_re_pattern_list);
+void convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&            proc_pdu,
+                               const fapi::dl_pdsch_pdu&          fapi_pdu,
+                               uint16_t                           sfn,
+                               uint16_t                           slot,
+                               span<const re_pattern_list>        csi_re_pattern_list,
+                               const precoding_matrix_repository& pm_repo);
 
 } // namespace fapi_adaptor
 } // namespace srsran

@@ -816,7 +816,7 @@ public:
   /// Returns a transmission precoding and beamforming PDU builder of this PDSCH PDU.
   tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
-    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
     return builder;
   }

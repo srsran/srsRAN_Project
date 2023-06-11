@@ -48,6 +48,7 @@
 #include "phy_factory.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
@@ -767,19 +768,22 @@ int main(int argc, char** argv)
   std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
   unsigned                    sector = du_cfg.size() - 1;
   subcarrier_spacing          scs    = du_cfg.front().scs_common;
+  auto pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cfg.front().dl_carrier.nof_ant);
 
-  auto phy_adaptor = build_phy_fapi_adaptor(sector,
-                                            scs,
-                                            scs,
-                                            upper->get_downlink_processor_pool(),
-                                            upper->get_downlink_resource_grid_pool(),
-                                            upper->get_uplink_request_processor(),
-                                            upper->get_uplink_resource_grid_pool(),
-                                            upper->get_uplink_slot_pdu_repository(),
-                                            upper->get_downlink_pdu_validator(),
-                                            upper->get_uplink_pdu_validator(),
-                                            generate_prach_config_tlv(du_cfg),
-                                            generate_carrier_config_tlv(gnb_cfg));
+  auto phy_adaptor =
+      build_phy_fapi_adaptor(sector,
+                             scs,
+                             scs,
+                             upper->get_downlink_processor_pool(),
+                             upper->get_downlink_resource_grid_pool(),
+                             upper->get_uplink_request_processor(),
+                             upper->get_uplink_resource_grid_pool(),
+                             upper->get_uplink_slot_pdu_repository(),
+                             upper->get_downlink_pdu_validator(),
+                             upper->get_uplink_pdu_validator(),
+                             generate_prach_config_tlv(du_cfg),
+                             generate_carrier_config_tlv(gnb_cfg),
+                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
@@ -793,7 +797,13 @@ int main(int argc, char** argv)
     // Create gateway loggers and intercept MAC adaptor calls.
     logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
     report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_dummy);
+    mac_adaptor = build_mac_fapi_adaptor(
+        0,
+        scs,
+        *logging_slot_gateway,
+        last_msg_dummy,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
     logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
@@ -805,7 +815,13 @@ int main(int argc, char** argv)
     phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
     phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
+    mac_adaptor = build_mac_fapi_adaptor(
+        0,
+        scs,
+        phy_adaptor->get_slot_message_gateway(),
+        last_msg_dummy,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
     report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());

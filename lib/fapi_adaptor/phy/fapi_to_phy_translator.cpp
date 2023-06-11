@@ -150,7 +150,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
                                                        const downlink_pdu_validator&       dl_pdu_validator,
                                                        srslog::basic_logger&               logger,
                                                        subcarrier_spacing                  scs_common,
-                                                       uint16_t                            cell_bandwidth_prb)
+                                                       uint16_t                            cell_bandwidth_prb,
+                                                       const precoding_matrix_repository&  pm_repo)
 {
   downlink_pdus pdus;
   const auto&   csi_re_patterns = generate_csi_re_pattern_list(msg, cell_bandwidth_prb);
@@ -196,7 +197,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
       }
       case fapi::dl_pdu_type::PDSCH: {
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
-        convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns);
+        convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot, csi_re_patterns, pm_repo);
         if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
           logger.warning(
               "Unsupported PDSCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
@@ -246,7 +247,7 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
       slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, current_slot_controller.get_slot(), sector_id);
 
   const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(
-      msg, dl_pdu_validator, logger, scs_common, carrier_cfg.dl_grid_size[to_numerology_value(scs_common)]);
+      msg, dl_pdu_validator, logger, scs_common, carrier_cfg.dl_grid_size[to_numerology_value(scs_common)], *pm_repo);
 
   // Process the PDUs
   for (const auto& ssb : pdus.ssb) {

@@ -405,6 +405,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.ss_set_type = search_space_set_type::type1;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
+  pdsch.nof_layers  = 1U;
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
