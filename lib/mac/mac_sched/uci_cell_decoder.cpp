@@ -97,7 +97,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
     uci_pdu.ue_index                 = rnti_table[msg.ucis[i].rnti];
     if (ind.ucis[i].ue_index == INVALID_DU_UE_INDEX) {
       ind.ucis.pop_back();
-      logger.info("rnti={}: Discarding UCI PDU. Cause: The RNTI does not exist.", uci_pdu.crnti);
+      logger.info("rnti={}: Discarding UCI PDU. Cause: No UE with provided RNTI exists.", uci_pdu.crnti);
       continue;
     }
 

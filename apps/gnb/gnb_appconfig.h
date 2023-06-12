@@ -103,7 +103,7 @@ struct pdsch_appconfig {
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  /// Number of antenna ports.
+  /// Number of antenna ports. If empty, the \c nof_ports is derived from the number of DL antennas.
   optional<unsigned> nof_ports;
 };
 

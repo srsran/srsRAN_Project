@@ -17,7 +17,7 @@
 namespace srsran {
 
 /// \brief This classes manages all the information related with the channel state that has been received from the UE
-/// via CSI or via gNB PHY measurements.
+/// via CSI (e.g. CQI) or via gNB PHY measurements (e.g. UL SINR).
 class ue_channel_state_manager
 {
 public:

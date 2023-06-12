@@ -274,7 +274,9 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (config.pdsch_cfg.nof_ports.has_value() and config.nof_antennas_dl < *config.pdsch_cfg.nof_ports) {
-    fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n");
+    fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n",
+               *config.pdsch_cfg.nof_ports,
+               config.nof_antennas_dl);
     return false;
   }
 
@@ -459,16 +461,14 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
   if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
-    fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n",
-               config.test_mode_cfg.test_ue.ri,
-               config.test_mode_cfg.test_ue.pmi);
+    fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }
   unsigned nof_ports = config.common_cell_cfg.pdsch_cfg.nof_ports.has_value()
                            ? *config.common_cell_cfg.pdsch_cfg.nof_ports
                            : config.common_cell_cfg.nof_antennas_dl;
   if (config.test_mode_cfg.test_ue.ri > nof_ports) {
-    fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports\n",
+    fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports ({} > {})\n",
                config.test_mode_cfg.test_ue.ri,
                config.common_cell_cfg.pdsch_cfg.nof_ports);
     return false;

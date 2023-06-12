@@ -22,6 +22,8 @@ namespace srsran {
 
 class uci_cell_decoder
 {
+  /// \brief Size, in number of slots, of the ring buffer used to store the pending UCIs to be decoded. This size
+  /// should account for potential latencies in the PHY in forwarding the decoded UCI to the MAC.
   static constexpr size_t MAX_GRID_SIZE = 80;
 
 public:

@@ -98,7 +98,7 @@ struct dci_context_information {
   cce_position cces;
   /// Starting symbol of the Search Space.
   unsigned starting_symbol;
-  /// Precoding and beamforming info used for this DCI.
+  /// Precoding info used for this DCI. This field is empty in case of 1 antenna port.
   optional<pdcch_precoding_info> precoding_info;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
@@ -169,7 +169,7 @@ struct pdsch_information {
   dci_dl_format         dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
   harq_id_t harq_id;
-  /// Precoding information of the PDSCH.
+  /// Precoding information for the PDSCH. This field is empty in case of 1-antenna port setups.
   optional<pdsch_precoding_info> precoding;
 };
 

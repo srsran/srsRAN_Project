@@ -1156,14 +1156,15 @@ static csi_report_configuration create_csi_report_configuration(const csi_meas_c
   csi_report_configuration csi_rep = {};
   csi_rep.pmi_codebook             = pmi_codebook_type::one;
 
-  // TODO: support more CSI resource sets.
-
-  csi_rep.nof_csi_rs_resources =
-      variant_get<csi_resource_config::csi_im_resource_set_list>(csi_meas.csi_res_cfg_list[1].csi_rs_res_set_list)
-          .size();
-
   // TODO: support more CSI reports.
   const csi_report_config& csi_rep_cfg = csi_meas.csi_report_cfg_list[0];
+
+  // TODO: support more CSI resource sets.
+  nzp_csi_rs_res_set_id_t nzp_csi_set_id =
+      variant_get<csi_resource_config::nzp_csi_rs_ssb>(
+          csi_meas.csi_res_cfg_list[csi_rep_cfg.res_for_channel_meas].csi_rs_res_set_list)
+          .nzp_csi_rs_res_set_list[0];
+  csi_rep.nof_csi_rs_resources = csi_meas.nzp_csi_rs_res_set_list[nzp_csi_set_id].nzp_csi_rs_res.size();
 
   // Enable indicators
   switch (csi_rep_cfg.report_qty_type) {
@@ -1201,7 +1202,7 @@ static csi_report_configuration create_csi_report_configuration(const csi_meas_c
 
         csi_rep.ri_restriction = panel.typei_single_panel_ri_restriction;
       } else {
-        report_fatal_error("Codebook type1 panel not supported");
+        report_fatal_error("Codebook panel type not supported");
       }
     } else {
       report_fatal_error("Codebook type not supported");
