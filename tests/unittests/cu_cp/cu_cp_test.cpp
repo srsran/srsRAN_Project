@@ -10,6 +10,9 @@
 
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/ran/cu_types.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -420,13 +423,15 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
 TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_release_request_is_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  pci_t               pci      = 0;
-  rnti_t              crnti    = to_rnti(0x4601);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  pci_t               pci       = 0;
+  rnti_t              crnti     = to_rnti(0x4601);
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -446,12 +451,15 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
 TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_release_request_is_not_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -465,6 +473,34 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+/* AMF initiated UE Context Release                                                 */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to_du)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+
+  // Inject UE Context Release Command
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id));
+
+  // check that the UE Context Release Command with RRC Container was sent to the DU
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  ASSERT_TRUE(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 /* DU Initiated UE Context Release                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -472,13 +508,15 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context_release_request_is_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Request
   cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0))
@@ -499,13 +537,15 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
 TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   // Attach second UE with RRC Reestablishment Request
   {

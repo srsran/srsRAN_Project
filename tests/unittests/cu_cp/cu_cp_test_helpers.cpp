@@ -9,7 +9,10 @@
  */
 
 #include "cu_cp_test_helpers.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/ran/cu_types.h"
 #include "srsran/support/async/async_test_utils.h"
+#include <utility>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -67,7 +70,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            gnb_du_ue_f1ap_id_t du_ue_id,
                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
                                            pci_t               pci,
-                                           rnti_t              crnti)
+                                           rnti_t              crnti,
+                                           amf_ue_id_t         amf_ue_id,
+                                           ran_ue_id_t         ran_ue_id)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response();
@@ -77,8 +82,11 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
+
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request(pci);
@@ -88,17 +96,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-
-  // check that UE has been added
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
-}
 
-void cu_cp_test::receive_ngap_dl_info_transfer()
-{
-  // Inject NGAP DL message using random AMF UE ID
-  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t  ran_ue_id        = uint_to_ran_ue_id(0);
+  // Inject NGAP DL message
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
   cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
 }
