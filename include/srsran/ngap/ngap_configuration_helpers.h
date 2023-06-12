@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ngap_configuration.h"
+#include "srsran/ran/s_nssai.h"
 
 namespace srsran {
 namespace config_helpers {
@@ -25,6 +26,9 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = "00101";
   cfg.tac           = 7;
+  s_nssai_t slice_cfg;
+  slice_cfg.sst = 1;
+  cfg.slice_configurations.push_back(slice_cfg);
 
   return cfg;
 }
