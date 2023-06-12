@@ -401,9 +401,41 @@ public:
     static_assert(std::is_unsigned<Integer>::value, "push_back only works for unsigned integers");
     unsigned bitpos = size();
     resize(size() + nof_bits);
+    if (LowestInfoBitIsMSB) {
+      for (unsigned bit_index = 0; bit_index != bitpos; ++bit_index) {
+        set(bit_index, test(bit_index + nof_bits));
+      }
+    }
     for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
       set(bitpos + bit_index, (val >> (nof_bits - 1 - bit_index)) & 1U);
     }
+  }
+
+  /// \brief Extracts \c nof_bits starting from \c startpos.
+  ///
+  /// \return An unsigned integer containing \c nof_bits of the set where starting with the most significant bit and
+  /// finishing with the most significant bit.
+  /// \remark An assertion is triggered if the bit range exceed the set size.
+  template <typename Integer = unsigned>
+  Integer extract(unsigned startpos, unsigned nof_bits) const
+  {
+    static_assert(std::is_unsigned<Integer>::value, "Extract only works for unsigned integers");
+    srsran_assert(nof_bits <= sizeof(Integer) * 8, "The number of bits exceeds the destination bit-width.");
+    srsran_assert(startpos + nof_bits <= size(),
+                  "The start position (i.e., {}) plus the number of bits (i.e., {}) exceed the current size (i.e., {})",
+                  startpos,
+                  nof_bits,
+                  size());
+
+    Integer val = 0;
+
+    for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
+      if (test(startpos + bit_index)) {
+        val |= 1U << (nof_bits - 1 - bit_index);
+      }
+    }
+
+    return val;
   }
 
   /// \brief Kronecker product of the bitset with another bitset.

@@ -827,6 +827,62 @@ TEST(BoundedBitset, push_back)
   }
 }
 
+TEST(BoundedBitset, extract)
+{
+  static constexpr uint64_t            nof_values = 100;
+  bounded_bitset<64 * nof_values>      bitset;
+  std::vector<std::array<uint64_t, 3>> data;
+
+  for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
+    uint64_t size  = test_rgen::uniform_int(1, 64);
+    uint64_t value = (test_rgen::get()() & mask_lsb_ones<uint64_t>(size));
+
+    bitset.push_back(value, size);
+
+    data.push_back({offset, size, value});
+
+    offset += size;
+  }
+
+  for (const auto& entry : data) {
+    uint64_t offset = entry[0];
+    uint64_t size   = entry[1];
+    uint64_t value  = entry[2];
+
+    ASSERT_EQ(bitset.extract(offset, size), value);
+
+    offset += size;
+  }
+}
+
+TEST(BoundedBitset, extract_inverted)
+{
+  static constexpr uint64_t             nof_values = 10;
+  bounded_bitset<64 * nof_values, true> bitset;
+  std::vector<std::array<uint64_t, 3>>  data;
+
+  for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
+    uint64_t size  = test_rgen::uniform_int(1, 64);
+    uint64_t value = (test_rgen::get()() & mask_lsb_ones<uint64_t>(size));
+
+    bitset.push_back(value, size);
+
+    data.push_back({offset, size, value});
+
+    offset += size;
+  }
+
+  for (const auto& entry : data) {
+    uint64_t offset = entry[0];
+    uint64_t size   = entry[1];
+    uint64_t value  = entry[2];
+
+    ASSERT_EQ(bitset.extract(offset, size), value);
+
+    offset += size;
+  }
+}
+
 TEST(BoundedBitset, fold_and_accumulate)
 {
   size_t fold_size = 20;
