@@ -10,6 +10,7 @@
 
 #include "ldpc_encoder_avx2.h"
 #include "avx2_support.h"
+#include "srsran/srsvec/binary.h"
 #include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
@@ -155,13 +156,17 @@ void ldpc_encoder_avx2::systematic_bits_inner()
 
   mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
-  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
-
   span<uint8_t> aux_tmp(auxiliary_buffer);
   srsvec::zero(aux_tmp.first(auxiliary_used_size * AVX2_SIZE_BYTE));
 
   // For each BG information node...
   for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_AVX2_PH) {
+    std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
+    span<int8_t>                             blk = span<int8_t>(tmp_blk).first(2 * lifting_size);
+    srsvec::copy(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size));
+    srsvec::copy(blk.last(lifting_size), codeblock.plain_span(i_blk, lifting_size));
+    std::for_each(blk.begin(), blk.end(), [](int8_t& v) { v &= 1U; });
+
     // and for each BG check node...
     for (unsigned m = 0, i_aux = 0; (m != BG_M_PH) && (i_aux != auxiliary_used_size); ++m) {
       unsigned node_shift = current_graph->get_lifted_node(m, k);
@@ -169,14 +174,11 @@ void ldpc_encoder_avx2::systematic_bits_inner()
         i_aux += NODE_SIZE_AVX2_PH;
         continue;
       }
-      srsvec::circ_shift_backward(
-          rotated_node.plain_span(0, lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
 
-      for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
-        __m256i tmp_epi8 = _mm256_and_si256(rotated_node.get_at(j), _mm256_set1_epi8(1));
-        auxiliary.set_at(i_aux, _mm256_xor_si256(auxiliary.get_at(i_aux), tmp_epi8));
-        ++i_aux;
-      }
+      srsvec::binary_xor(auxiliary.plain_span(i_aux, lifting_size),
+                         blk.subspan(node_shift, lifting_size),
+                         auxiliary.plain_span(i_aux, lifting_size));
+      i_aux += NODE_SIZE_AVX2_PH;
     }
   }
 }
