@@ -13,6 +13,7 @@ include:
   - project: softwareradiosystems/ci/srsran_project_packaging
     ref: "1"
     file: .gitlab/ci-shared/package.yml
+  - local: .gitlab/ci/src_cache.yml
 
 stages:
   - build and unit tests
@@ -60,21 +61,9 @@ variables:
     description: must be one version supported in the specified OS
     value: ""
 
-###############################
-# Cache related code to reuse #
-###############################
-
-.cache_src_set: &cache_src_set
-  - key: srsgnb-src
-    paths: [$CI_PROJECT_DIR]
-    untracked: false
-    policy: push
-    when: on_success
-
-.cache_src_get: &cache_src_get
-  - key: srsgnb-src
-    paths: [$CI_PROJECT_DIR]
-    policy: pull
+################
+# Build caches #
+################
 
 .cache_build_set: &cache_build_set
   - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
@@ -85,44 +74,6 @@ variables:
   - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
     paths: [ccache]
     policy: pull
-
-#############################
-# Git source downloader job #
-#############################
-
-push_src_cache:
-  stage: .pre
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  script:
-    - echo "Saving git repo in cache"
-  cache:
-    - *cache_src_set
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
-
-pull_src_cache:
-  stage: .pre
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  variables:
-    GIT_STRATEGY: none
-  needs:
-    - job: push_src_cache
-      artifacts: false
-      optional: true
-  script:
-    - echo "Reading git repo in cache"
-  cache:
-    - *cache_src_get
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
 
 #################
 # Template jobs #
@@ -150,17 +101,13 @@ pull_src_cache:
     # CI
     DOCKER_BUILDER_VERSION: "1.8.3"
     SAVE_ARTIFACTS: "" # Empty by default
-    GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
+    GIT_STRATEGY: none
   needs:
-    - job: pull_src_cache
-      artifacts: false
-      optional: true
+    - !reference [.fetch_src_cache, needs]
   resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   before_script:
-    - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
-    - git fetch --depth=1 origin $CI_COMMIT_SHA
-    - git reset --hard $CI_COMMIT_SHA
+    - !reference [.fetch_src_cache, before_script]
     - |
       build_srsgnb() {
         if [ -n "${UHD_VERSION}" ]; then
@@ -312,7 +259,7 @@ pull_src_cache:
       - build/Testing/Temporary/MemoryChecker.*.log
     expire_in: 10 minutes
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
 
 # Basic builds (MR and update cache on Nightly)
 
@@ -390,7 +337,7 @@ smoke release cached:
       when: never
     - if: $ON_MR
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke tsan cached:
@@ -404,7 +351,7 @@ smoke tsan cached:
       when: never
     - if: $ON_MR
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke rhel cached:
@@ -420,7 +367,7 @@ smoke rhel cached:
       when: manual
       allow_failure: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke archlinux cached:
@@ -436,7 +383,7 @@ smoke archlinux cached:
       when: manual
       allow_failure: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke release clean:
@@ -446,28 +393,22 @@ smoke release clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
 
 smoke tsan clean:
   extends: .smoke tsan
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 smoke rhel clean:
   extends: .smoke rhel
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 smoke archlinux clean:
   extends: .smoke archlinux
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 # Intermediate commits
 
@@ -505,7 +446,7 @@ intermediate commits:
         sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 valgrind changed tests:
@@ -550,7 +491,7 @@ valgrind changed tests:
       build_srsgnb
     - launch_tests
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 ###########
@@ -569,7 +510,7 @@ smoke release update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke tsan update cache:
@@ -582,7 +523,7 @@ smoke tsan update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke rhel update cache:
@@ -593,7 +534,7 @@ smoke rhel update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke archlinux update cache:
@@ -604,7 +545,7 @@ smoke archlinux update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 # High priority smoke checks. Some of them save the binary for e2e tests
@@ -1200,5 +1141,5 @@ custom-build:
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
