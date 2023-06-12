@@ -176,7 +176,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot)) {
       // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
       // the slots for CSI.
-      if (cell_cfg.dl_carrier.nof_ant > 1) {
+      if (cell_cfg.dl_carrier.nof_ant > 1U) {
         continue;
       }
       // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
@@ -420,7 +420,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
-  if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot)) {
+  if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and cell_cfg.dl_carrier.nof_ant > 1U) {
     logger.debug("Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
                  pusch_alloc.slot);
     return false;
