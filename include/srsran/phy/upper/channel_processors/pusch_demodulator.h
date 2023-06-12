@@ -70,7 +70,7 @@ public:
 
   /// PUSCH demodulator result.
   struct demodulation_status {
-    /// Estimated Signal to Interference and Noise Ratio (SINR) at the output of the equalizer.
+    /// Estimated Signal-to-Interference-plus-Noise Ratio (SINR) at the output of the equalizer.
     optional<float> sinr_dB;
     /// Measured EVM.
     optional<float> evm;
