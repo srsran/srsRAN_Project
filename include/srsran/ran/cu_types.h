@@ -136,11 +136,11 @@ struct supported_plmns_item_t {
 
 struct sdap_config_t {
   pdu_session_id_t           pdu_session = pdu_session_id_t::invalid;
-  sdap_hdr_dl_cfg            sdap_hdr_dl;
-  sdap_hdr_ul_cfg            sdap_hdr_ul;
-  bool                       default_drb                 = false;
-  std::vector<qos_flow_id_t> mapped_qos_flows_to_add     = {};
-  std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
+  sdap_hdr_dl_cfg            sdap_hdr_dl = sdap_hdr_dl_cfg::absent;
+  sdap_hdr_ul_cfg            sdap_hdr_ul = sdap_hdr_ul_cfg::absent;
+  bool                       default_drb = false;
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_add;
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_release;
 };
 
 struct security_result_t {
