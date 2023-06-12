@@ -31,7 +31,7 @@ public:
                         span<ota_symbol_boundary_notifier*> ota_notifiers_);
 
   // See interface for documentation.
-  void on_new_symbol(slot_point slot, unsigned symbol_index) override;
+  void on_new_symbol(slot_symbol_point symbol_point) override;
 
 private:
   const unsigned                             nof_slot_offset_du_ru;

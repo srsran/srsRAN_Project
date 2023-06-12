@@ -16,22 +16,21 @@ using namespace ofh;
 /// Number of slots after the OTA when the repositories will be cleared.
 static constexpr unsigned delay_slots_to_clear = 10U;
 
-void ota_rx_symbol_handler::on_new_symbol(slot_point slot, unsigned symbol_index)
+void ota_rx_symbol_handler::on_new_symbol(slot_symbol_point symbol_point)
 {
   if (!current_slot.valid()) {
-    current_slot = slot;
-    clear_slot_in_repositories(slot);
-
+    current_slot = symbol_point.get_slot();
+    clear_slot_in_repositories(current_slot);
     return;
   }
 
   // Same slot, do nothing.
-  if (slot == current_slot) {
+  if (symbol_point.get_slot() == current_slot) {
     return;
   }
 
-  current_slot = slot;
-  clear_slot_in_repositories(slot + delay_slots_to_clear);
+  current_slot = symbol_point.get_slot();
+  clear_slot_in_repositories(current_slot + delay_slots_to_clear);
 }
 
 void ota_rx_symbol_handler::clear_slot_in_repositories(slot_point slot)

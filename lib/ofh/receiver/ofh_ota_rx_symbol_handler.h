@@ -29,7 +29,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_new_symbol(slot_point slot, unsigned symbol_index) override;
+  void on_new_symbol(slot_symbol_point symbol_point) override;
 
 private:
   /// Clears the given slot in the registered repositories.

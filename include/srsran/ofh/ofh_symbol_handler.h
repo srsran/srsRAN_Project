@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/slot_point.h"
+#include "srsran/ofh/slot_symbol_point.h"
 
 namespace srsran {
 namespace ofh {
@@ -49,9 +49,8 @@ public:
   virtual ~symbol_handler() = default;
 
   /// \brief Callback function called on a new OFDM symbol timing event.
-  /// \param[in] slot_point Current slot information (including slot, subframe, frame and sfn).
-  /// \param[in] symbol     Symbol index inside the current slot indicated by \c slot_point.
-  virtual void handle_new_symbol(slot_point slot, unsigned symbol) = 0;
+  /// \param[in] symbol_point Current slot and symbol point.
+  virtual void handle_new_symbol(slot_symbol_point symbol_point) = 0;
 };
 
 } // namespace ofh

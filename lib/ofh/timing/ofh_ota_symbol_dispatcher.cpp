@@ -13,48 +13,48 @@
 using namespace srsran;
 using namespace ofh;
 
-void ota_symbol_dispatcher::on_new_symbol(slot_point slot, unsigned symbol_index)
+void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
 {
   // Handle the new symbol.
   for (auto* handler : symbol_handlers) {
-    handler->handle_new_symbol(slot, symbol_index);
+    handler->handle_new_symbol(symbol_point);
   }
 
   // Call OTA notifiers.
   for (auto* notifier : ota_notifiers) {
-    notifier->on_new_symbol(slot, symbol_index);
+    notifier->on_new_symbol(symbol_point);
   }
 
   // First incoming slot, notify always.
   if (!current_slot.valid()) {
-    current_slot = slot;
-    logger.debug("First slot is {}, notifying slot={}", slot, slot + nof_slot_offset_du_ru);
-    time_notifier->on_tti_boundary(slot + nof_slot_offset_du_ru);
+    current_slot = symbol_point.get_slot();
+    logger.debug("First slot is {}, notifying slot={}", current_slot, current_slot + nof_slot_offset_du_ru);
+    time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 
     return;
   }
 
   // Skip if the slot did not change.
-  if (slot == current_slot) {
+  if (symbol_point.get_slot() == current_slot) {
     return;
   }
 
   // At this point, notify the change of slot.
-  slot_point expected_slot = current_slot + 1;
-  if (expected_slot != slot) {
-    logger.warning("Detected a non-consecutive slot change. current_slot={} , new_slot={}", current_slot, slot);
+  if ((current_slot + 1) != symbol_point.get_slot()) {
+    logger.warning(
+        "Detected a non-consecutive slot change. current_slot={} , new_slot={}", current_slot, symbol_point.get_slot());
   }
 
-  if (symbol_index == half_slot_symbol) {
-    time_notifier->on_ul_half_slot_boundary(slot);
+  if (symbol_point.get_symbol_index() == half_slot_symbol) {
+    time_notifier->on_ul_half_slot_boundary(symbol_point.get_slot());
   }
 
-  if (symbol_index == full_slot_symbol) {
-    time_notifier->on_ul_full_slot_boundary(slot);
+  if (symbol_point.get_symbol_index() == full_slot_symbol) {
+    time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
   }
 
-  current_slot = slot;
-  time_notifier->on_tti_boundary(slot + nof_slot_offset_du_ru);
+  current_slot = symbol_point.get_slot();
+  time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 }
 
 ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                            nof_slot_offset_du_ru_,
