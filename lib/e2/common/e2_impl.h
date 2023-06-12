@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "e2sm_kpm_asn1_packer.h"
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/ran/nr_cgi.h"
 #include <map>
 #include <memory>

@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../procedures/e2_indication_procedure.h"
-#include "e2sm_kpm_asn1_packer.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
@@ -61,11 +60,11 @@ public:
   void add_e2sm_service_unique(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer);
 
 private:
-  std::map<int, e2_subscription_t>  subscriptions;
+  std::map<int, e2_subscription_t>                  subscriptions;
   std::map<uint16_t, std::unique_ptr<e2sm_handler>> e2sm_packer_list;
-  e2sm_interface&                   e2sm_iface;
-  e2_message_notifier&              notif;
-  srslog::basic_logger&             logger;
+  e2sm_interface&                                   e2sm_iface;
+  e2_message_notifier&                              notif;
+  srslog::basic_logger&                             logger;
 };
 
 } // namespace srsran

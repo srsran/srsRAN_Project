@@ -12,7 +12,7 @@
 
 #include "lib/e2/common/e2_subscription_manager_impl.h"
 #include "lib/e2/common/e2ap_asn1_packer.h"
-#include "lib/e2/common/e2sm_kpm_impl.h"
+#include "lib/e2/e2sm/e2sm_kpm_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"

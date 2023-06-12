@@ -14,9 +14,10 @@ set(SOURCES
     common/e2_factory.cpp
     common/e2_impl.cpp
     common/e2_subscription_manager_impl.cpp
-    common/e2sm_kpm_impl.cpp
-    common/e2sm_kpm_asn1_packer.cpp
+    e2sm/e2sm_kpm_impl.cpp
+    e2sm/e2sm_kpm_asn1_packer.cpp
     common/e2_du_metrics_manager.cpp
+    e2sm/e2sm_factory.cpp
  )
 
 add_library(srsran_e2 STATIC ${SOURCES})

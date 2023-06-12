@@ -158,18 +158,9 @@ void e2_impl::set_allowed_ran_functions(const uint16_t ran_function_id)
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
     logger.info("Added RAN function with id {}", ran_function_id);
     auto ran_oid = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
-    if (ran_oid == "E2SM-KPM") {
-      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
-      std::unique_ptr<e2sm_handler> e2sm_handler = std::make_unique<e2sm_kpm_asn1_packer>();
-      subscription_mngr.add_e2sm_service(ran_function_id, std::move(e2sm_handler));
-    } else if (ran_oid == "E2SM-RC") {
-      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
-      // TODO add E2SM-RC handler
-    } else if (ran_oid == "E2SM-NI") {
-      logger.info("Added RAN function with id {} and OID {}", ran_function_id, ran_oid);
-      // TODO add E2SM-NI handler
-    } else {
-      logger.warning("Not adding RAN function with id {} and OID {}", ran_function_id, ran_oid);
+    std::unique_ptr<e2sm_handler> e2sm_handler = create_e2sm(ran_oid);
+    if (e2sm_handler == nullptr) {
+      logger.error("Failed to create E2SM handler for OID {} - not supported", ran_oid);
     }
   } else {
     logger.warning("RAN function with id {} is not a candidate", ran_function_id);
