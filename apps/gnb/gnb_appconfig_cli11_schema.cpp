@@ -241,7 +241,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  pdsch_params.nof_ports,
                  "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
       ->capture_default_str()
-      ->check(CLI::IsMember({1, 2}));
+      ->check(CLI::IsMember({1, 2, 4}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -796,7 +796,7 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(0, 3));
   app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
       ->capture_default_str()
-      ->check(CLI::Range(1, 2));
+      ->check(CLI::Range(1, 4));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)

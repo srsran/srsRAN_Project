@@ -268,10 +268,6 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     fmt::print("The number of UL antennas cannot be zero.\n");
     return false;
   }
-  if (config.nof_antennas_ul != config.nof_antennas_dl) {
-    fmt::print("Different number of UL and DL antennas is not currently supported.\n");
-    return false;
-  }
   if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
       config.channel_bw_mhz > srsran::bs_channel_bandwidth_fr1::MHz50) {
     fmt::print("Maximum Channel BW with SCS common 15kHz is 50MHz.\n");
