@@ -78,12 +78,6 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
   drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
 
-  srsran_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
-                "{} of PDU Session {} cannot be created: Current implementation assumes one QoS "
-                "flow per DRB!",
-                drb_to_setup.drb_id,
-                new_session.pdu_session_id);
-
   // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
   new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
                                             new_drb->pdcp->get_tx_lower_interface());
