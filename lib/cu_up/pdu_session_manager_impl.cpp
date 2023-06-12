@@ -235,6 +235,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                           drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
 
+    // Apply QoS flows
+    for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
+      // TODO
+      logger.warning("Unsupported modification of QoS flow. qos_flow_id={}", qos_flow_info.qos_flow_id);
+    }
+
     // Add result
     drb_result.success = true;
     pdu_session_result.drb_modification_results.push_back(drb_result);
