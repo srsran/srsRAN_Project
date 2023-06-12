@@ -13,6 +13,7 @@
 #include "ngap_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ngap/ngap.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
