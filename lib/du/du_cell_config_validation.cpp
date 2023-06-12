@@ -195,6 +195,29 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
+{
+  const bwp_downlink_dedicated&     bwp = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp;
+  const search_space_configuration& ss2 = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back();
+  const bool                        fallback_dci_format_in_ss2 =
+      ss2.is_common_search_space() or
+      not(variant_get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
+          search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
+
+  if (fallback_dci_format_in_ss2) {
+    CHECK_TRUE(cell_cfg.dl_carrier.nof_ant == 1,
+               "Nof. DL antennas {} cannot be greater than 1 when using fallback DCI format\n",
+               cell_cfg.dl_carrier.nof_ant);
+
+    if (bwp.pdsch_cfg.has_value()) {
+      CHECK_TRUE(bwp.pdsch_cfg->mcs_table != pdsch_mcs_table::qam256,
+                 "256QAM MCS table cannot be used for PDSCH with fallback DCI format in SearchSpace#2");
+    }
+  }
+
+  return {};
+}
+
 static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
 {
   const ssb_configuration& ssb_cfg = cell_cfg.ssb_cfg;
@@ -293,6 +316,27 @@ static check_outcome check_ul_config_common(const du_cell_config& cell_cfg)
     CHECK_TRUE(pusch.msg3_delta_power.to_int() % 2 == 0,
                "The value set {} for msg3_delta_power must be a multiple of 2",
                pusch.msg3_delta_power.to_int());
+  }
+  return {};
+}
+
+static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
+{
+  if (not cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value()) {
+    return {};
+  }
+
+  const bwp_uplink_dedicated& bwp = cell_cfg.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp;
+  if (bwp.pusch_cfg.has_value()) {
+    const search_space_configuration& ss2 = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back();
+    const bool                        fallback_dci_format_in_ss2 =
+        ss2.is_common_search_space() or
+        not(variant_get<search_space_configuration::ue_specific_dci_format>(ss2.get_monitored_dci_formats()) ==
+            search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
+    if (fallback_dci_format_in_ss2) {
+      CHECK_TRUE(bwp.pusch_cfg->mcs_table != pusch_mcs_table::qam256,
+                 "256QAM MCS table cannot be used for PUSCH with fallback DCI format in SearchSpace#2");
+    }
   }
   return {};
 }
@@ -480,6 +524,8 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   HANDLE_ERROR(config_validators::validate_csi_meas_cfg(cell_cfg.ue_ded_serv_cell_cfg, cell_cfg.tdd_ul_dl_cfg_common));
+  HANDLE_ERROR(check_dl_config_dedicated(cell_cfg));
+  HANDLE_ERROR(check_ul_config_dedicated(cell_cfg));
   // TODO: Remaining.
   return {};
 }

@@ -341,7 +341,7 @@ ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_con
   return cfg;
 }
 
-pusch_config srsran::config_helpers::make_default_pusch_config()
+pusch_config srsran::config_helpers::make_default_pusch_config(const cell_config_builder_params& params)
 {
   pusch_config cfg{};
   // TODO: Verify whether its the correct Transmission Configuration we want to support.
@@ -563,7 +563,9 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
 
   // > SRS config.
-  ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
+  if (not params.fallback_dci_format_in_ss2) {
+    ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
+  }
 
   return ul_config;
 }

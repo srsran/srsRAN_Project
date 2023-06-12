@@ -232,6 +232,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
     param.nof_dl_ports        = get_nof_dl_ports(base_cell);
     param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
+    param.fallback_dci_format_in_ss2 =
+        config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common or
+        not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
@@ -431,9 +434,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
+    // Set DL MCS table.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = config.common_cell_cfg.pdsch_cfg.mcs_table;
-    out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table =
-        config.common_cell_cfg.pusch_cfg.mcs_table;
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
@@ -463,6 +465,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
     }
+    // Set UL MCS table.
+    out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table =
+        config.common_cell_cfg.pusch_cfg.mcs_table;
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
     }

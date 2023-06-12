@@ -47,7 +47,7 @@ ssb_configuration make_default_ssb_config(const cell_config_builder_params& para
 
 uplink_config make_default_ue_uplink_config(const cell_config_builder_params& params = {});
 
-pusch_config make_default_pusch_config();
+pusch_config make_default_pusch_config(const cell_config_builder_params& params = {});
 
 srs_config make_default_srs_config(const cell_config_builder_params& params);
 
