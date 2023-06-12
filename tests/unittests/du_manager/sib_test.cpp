@@ -16,17 +16,11 @@
 #include <gtest/gtest.h>
 #include <string>
 
-class srs_sib19_test : public ::testing::Test
+TEST(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
 {
-protected:
-  void SetUp() override {}
+  using namespace srsran;
 
-  void               TearDown() override {}
-  srsran::ntn_config ntn_cfg;
-};
-
-TEST_F(srs_sib19_test, make_asn1_rrc_cell_sib19_buffer)
-{
+  ntn_config ntn_cfg;
   // Create an NTN configuration to use in the test
   ntn_cfg.epoch_time.sfn             = 1;
   ntn_cfg.epoch_time.subframe_number = 9;

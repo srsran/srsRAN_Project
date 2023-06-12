@@ -25,7 +25,7 @@ struct position_velocity_t {
 
 struct ta_common_t {
   unsigned ta_common;
-  int  ta_common_drift;
+  int      ta_common_drift;
   unsigned ta_common_drift_variant;
 };
 
