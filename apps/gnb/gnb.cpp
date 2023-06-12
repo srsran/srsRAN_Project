@@ -77,13 +77,14 @@ static std::atomic<bool> is_running = {true};
 // NGAP configuration.
 static srsran::sctp_network_gateway_config ngap_nw_config;
 const std::string                          srsgnb_version = "0.1";
+const int                                  MAX_CONFIG_FILES(10);
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
   format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
-  app.set_config("-c,", config_file, "Read config from file", false);
+  app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
 
 /// This function takes the populated appconfig and generates (sub)-component configurations.
