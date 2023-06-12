@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/sdap/sdap_config.h"
 
 namespace srsran {
 
@@ -74,8 +75,8 @@ public:
   virtual sdap_tx_sdu_handler& get_sdap_tx_sdu_handler()                = 0;
 
   virtual void
-  add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config_t sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) = 0;
-  virtual void remove_mapping(drb_id_t drb_id)                                                                   = 0;
+  add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) = 0;
+  virtual void remove_mapping(drb_id_t drb_id)                                                                 = 0;
 };
 
 } // namespace srs_cu_up

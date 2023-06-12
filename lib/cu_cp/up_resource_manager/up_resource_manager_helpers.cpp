@@ -327,8 +327,8 @@ sdap_config_t srsran::srs_cu_cp::set_rrc_sdap_config(const up_drb_context& conte
   sdap_config_t sdap_cfg;
   sdap_cfg.pdu_session = context.pdu_session_id;
   sdap_cfg.default_drb = context.default_drb;
-  sdap_cfg.sdap_hdr_dl = "absent";
-  sdap_cfg.sdap_hdr_ul = "absent";
+  sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg::absent;
+  sdap_cfg.sdap_hdr_ul = sdap_hdr_ul_cfg::absent;
   for (const auto& qos_flow : context.qos_flows) {
     sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
   }

@@ -104,8 +104,9 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     logger.debug(
         "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
+    sdap_config sdap_cfg = make_sdap_drb_config(drb_to_setup.sdap_cfg);
     new_session.sdap->add_mapping(
-        qos_flow.qos_flow_id, drb_to_setup.drb_id, drb_to_setup.sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
+        qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
     new_qos_flow->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
     new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
 

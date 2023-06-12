@@ -59,7 +59,7 @@ public:
   }
 
   void
-  add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config_t sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
+  add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
   {
     std::unique_lock<std::mutex> tx_lock(tx_map_mutex);
     std::unique_lock<std::mutex> rx_lock(rx_map_mutex);
@@ -84,6 +84,7 @@ public:
         ue_index, pdu_session_id, qfi, drb_id, ue_inactivity_timer, rx_sdu_notifier);
     rx_map.insert({drb_id, std::move(rx)});
   }
+
   void remove_mapping(drb_id_t drb_id) final
   {
     std::unique_lock<std::mutex> tx_lock(tx_map_mutex);
