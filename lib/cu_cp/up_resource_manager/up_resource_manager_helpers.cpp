@@ -14,7 +14,7 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 // Verifies if any of the PDU sessions to be setup/modified already contains a DRB with the given ID.
-bool includes_drb_to_setup(const up_config_update& config_update, drb_id_t drb_id)
+bool contains_drb(const up_config_update& config_update, drb_id_t drb_id)
 {
   for (const auto& setup_item : config_update.pdu_sessions_to_setup_list) {
     for (const auto& drb_item : setup_item.second.drb_to_add) {
@@ -34,7 +34,7 @@ bool includes_drb_to_setup(const up_config_update& config_update, drb_id_t drb_i
   return false;
 }
 
-bool includes_drb(const up_context& context, drb_id_t new_drb_id)
+bool contains_drb(const up_context& context, drb_id_t new_drb_id)
 {
   for (const auto& drb : context.drb_map) {
     if (drb.first == new_drb_id) {
@@ -44,7 +44,7 @@ bool includes_drb(const up_context& context, drb_id_t new_drb_id)
   return false;
 }
 
-bool includes_drb(const up_pdu_session_context_update& new_session_context, drb_id_t new_drb_id)
+bool contains_drb(const up_pdu_session_context_update& new_session_context, drb_id_t new_drb_id)
 {
   return (new_session_context.drb_to_add.find(new_drb_id) != new_session_context.drb_to_add.end());
 }
@@ -61,8 +61,8 @@ drb_id_t srsran::srs_cu_cp::allocate_drb_id(const up_pdu_session_context_update&
 
   drb_id_t new_drb_id = drb_id_t::drb1;
   // The new DRB ID must not be allocated already.
-  while (includes_drb(context, new_drb_id) || includes_drb_to_setup(config_update, new_drb_id) ||
-         includes_drb(new_session_context, new_drb_id)) {
+  while (contains_drb(context, new_drb_id) || contains_drb(config_update, new_drb_id) ||
+         contains_drb(new_session_context, new_drb_id)) {
     /// try next
     new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
     if (new_drb_id == drb_id_t::invalid) {
