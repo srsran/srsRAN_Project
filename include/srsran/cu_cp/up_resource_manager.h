@@ -70,8 +70,8 @@ struct up_config_update {
   std::map<pdu_session_id_t, up_pdu_session_context_update>
       pdu_sessions_to_setup_list; // List of PDU sessions to be added.
   std::map<pdu_session_id_t, up_pdu_session_context_update>
-                                pdu_sessions_to_modify_list; // List of PDU sessions to be modified.
-  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
+                                pdu_sessions_to_modify_list;        // List of PDU sessions to be modified.
+  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list;        // List of PDU sessions to be removed.
   std::vector<pdu_session_id_t> pdu_sessions_failed_to_modify_list; // List of PDU sessions that failed to be modified.
 };
 
