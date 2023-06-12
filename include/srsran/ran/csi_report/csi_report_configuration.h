@@ -39,7 +39,7 @@ enum class csi_report_quantities {
   cri_ri_pmi_cqi = 0,
   /// CSI report contains the quantities CRI, RI and wideband CQI.
   cri_ri_cqi,
-  /// CSI report contains the quantities CRI, RI, LI and wideband CQI.
+  /// CSI report contains the quantities CRI, RI, LI, PMI and wideband CQI.
   cri_ri_li_pmi_cqi,
   /// Other CSI report quantity configuration. Not supported.
   other
