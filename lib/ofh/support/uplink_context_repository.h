@@ -12,7 +12,6 @@
 
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include <bitset>

@@ -70,7 +70,7 @@ const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_
     }};
 
 void srsran::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
-                                                            unsigned int    symbol,
+                                                            unsigned        symbol,
                                                             const config_t& config) const
 {
   // Get signal amplitude.

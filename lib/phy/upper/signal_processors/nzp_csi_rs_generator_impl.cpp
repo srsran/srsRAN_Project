@@ -10,6 +10,7 @@
 
 #include "nzp_csi_rs_generator_impl.h"
 #include "srsran/phy/support/re_pattern.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/ran/csi_rs/csi_rs_pattern.h"
 

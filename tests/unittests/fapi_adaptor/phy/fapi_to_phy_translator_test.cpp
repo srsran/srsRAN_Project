@@ -107,7 +107,8 @@ protected:
   fapi_to_phy_translator         translator;
 
 public:
-  fapi_to_phy_translator_fixture() : rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI"))
+  fapi_to_phy_translator_fixture() :
+    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI"))
   {
   }
 };

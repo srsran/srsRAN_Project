@@ -8,6 +8,8 @@
  *
  */
 
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/srsvec/zero.h"
@@ -40,12 +42,12 @@ void test_all_zero(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
   // Verify all RE are zero.
   for (unsigned port = 0; port != nof_ports; ++port) {
     // Verify the grid for the port is empty.
-    TESTASSERT_EQ(true, grid->is_empty(port));
+    TESTASSERT_EQ(true, grid->get_reader().is_empty(port));
 
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(rg_data, port, symbol, 0);
+      grid->get_reader().get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t re = rg_data[subc];
@@ -91,17 +93,17 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   }
 
   // Put elements in resource grid
-  grid->put(port_gold, coordinates, symbols_gold);
+  grid->get_writer().put(port_gold, coordinates, symbols_gold);
 
   // Assert grid
   for (unsigned port = 0; port != nof_ports; ++port) {
     // Verify the grid for the port is NOT empty.
-    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+    TESTASSERT_EQ(port != port_gold, grid->get_reader().is_empty(port));
 
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(rg_data, port, symbol, 0);
+      grid->get_reader().get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -120,19 +122,6 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
         TESTASSERT_EQ(gold.imag(), value.imag());
       }
     }
-  }
-
-  // Get elements from grid
-  std::vector<cf_t> symbols(nof_elements);
-  grid->get(symbols, port_gold, coordinates);
-
-  // Assert symbols
-  for (unsigned i = 0; i != nof_elements; ++i) {
-    cf_t gold  = symbols_gold[i];
-    cf_t value = symbols[i];
-
-    TESTASSERT_EQ(gold.real(), value.real());
-    TESTASSERT_EQ(gold.imag(), value.imag());
   }
 }
 
@@ -171,7 +160,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   }
 
   // Put elements
-  span<const cf_t> symbol_buffer_put = grid->put(port_gold, symbol_idx, 0, mask, symbols_gold);
+  span<const cf_t> symbol_buffer_put = grid->get_writer().put(port_gold, symbol_idx, 0, mask, symbols_gold);
 
   // Make sure all symbols are used
   TESTASSERT(symbol_buffer_put.empty());
@@ -180,12 +169,12 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   unsigned count = 0;
   for (unsigned port = 0; port != nof_ports; ++port) {
     // Verify the grid for the port is NOT empty.
-    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+    TESTASSERT_EQ(port != port_gold, grid->get_reader().is_empty(port));
 
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(rg_data, port, symbol, 0);
+      grid->get_reader().get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -204,7 +193,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
 
   // Get elements
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  span<cf_t>                symbol_buffer_get = grid->get(symbols, port_gold, symbol_idx, 0, mask);
+  span<cf_t>                symbol_buffer_get = grid->get_reader().get(symbols, port_gold, symbol_idx, 0, mask);
 
   // Make sure all symbols are used
   TESTASSERT(symbol_buffer_get.empty(), "Symbol buffer - not empty.");
@@ -251,7 +240,7 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   }
 
   // Put elements.
-  span<const cf_t> symbol_buffer_put = grid->put(port_gold, symbol_idx, 0, mask, symbols_gold);
+  span<const cf_t> symbol_buffer_put = grid->get_writer().put(port_gold, symbol_idx, 0, mask, symbols_gold);
 
   // Make sure all symbols are used.
   TESTASSERT(symbol_buffer_put.empty());
@@ -260,12 +249,12 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   unsigned count = 0;
   for (unsigned port = 0; port != nof_ports; ++port) {
     // Verify the grid for the port is NOT empty.
-    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+    TESTASSERT_EQ(port != port_gold, grid->get_reader().is_empty(port));
 
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol.
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(rg_data, port, symbol, 0);
+      grid->get_reader().get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -284,7 +273,7 @@ void test_mask_bitset(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Get elements using the same mask.
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  span<cf_t>                symbol_buffer_get = grid->get(symbols, port_gold, symbol_idx, 0, mask);
+  span<cf_t>                symbol_buffer_get = grid->get_reader().get(symbols, port_gold, symbol_idx, 0, mask);
 
   // Make sure all symbols are used.
   TESTASSERT(symbol_buffer_get.empty(), "Symbol buffer - not empty.");
@@ -326,18 +315,18 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   }
 
   // Put element
-  grid->put(port_gold, symbol_idx, k_init, symbols_gold);
+  grid->get_writer().put(port_gold, symbol_idx, k_init, symbols_gold);
 
   // Assert grid
   unsigned count = 0;
   for (unsigned port = 0; port != nof_ports; ++port) {
     // Verify the grid for the port is NOT empty.
-    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+    TESTASSERT_EQ(port != port_gold, grid->get_reader().is_empty(port));
 
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(rg_data, port, symbol, 0);
+      grid->get_reader().get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -356,7 +345,7 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Get elements
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  grid->get(symbols, port_gold, symbol_idx, k_init);
+  grid->get_reader().get(symbols, port_gold, symbol_idx, k_init);
 
   // Assert symbols
   for (unsigned i = 0; i != nof_elements; ++i) {

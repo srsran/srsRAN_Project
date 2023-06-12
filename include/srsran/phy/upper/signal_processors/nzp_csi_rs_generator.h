@@ -12,13 +12,14 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_writer;
 
 /// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211
 /// Section 7.4.1.5.

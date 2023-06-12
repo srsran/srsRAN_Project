@@ -9,6 +9,7 @@
  */
 
 #include "ofh_uplane_uplink_symbol_manager.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -128,7 +129,7 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder
       nof_prbs_to_write = sect.nof_prbs;
     }
 
-    ul_data_context.grid->put(
+    ul_data_context.grid->get_writer().put(
         0,
         symbol,
         0,
@@ -144,7 +145,7 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const uplane_message_decoder
   }
 
   if (!ul_data_context.notified_symbols.test(symbol)) {
-    notifier.on_new_uplink_symbol({ul_data_context.context.slot, symbol}, *ul_data_context.grid);
+    notifier.on_new_uplink_symbol({ul_data_context.context.slot, symbol}, ul_data_context.grid->get_reader());
     ul_data_context.notified_symbols.set(symbol);
     logger.debug("Notifying new uplink symbol for slot={}, symbol={}", ul_data_context.context.slot, symbol);
   }

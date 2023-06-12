@@ -64,7 +64,10 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   rg_context.slot   = slot_point(1, 1, 1);
   rg_context.sector = 1;
 
-  handler.handle_dl_data(rg_context, rg);
+  handler.handle_dl_data(rg_context, rg.get_reader());
+
+  // Make sure no get method was called.
+  ASSERT_EQ(rg.get_reader_writer_count(), 0);
 
   // Assert Control-Plane.
   ASSERT_TRUE(cplane_spy.has_enqueue_section_type_1_method_been_called());
@@ -77,4 +80,6 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   // Assert User-Plane.
   ASSERT_TRUE(uplane_spy.has_enqueue_section_type_1_method_been_called());
   ASSERT_EQ(eaxc, uplane_spy.get_eaxc());
+
+  rg.reset();
 }

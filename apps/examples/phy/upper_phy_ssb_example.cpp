@@ -12,6 +12,8 @@
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
@@ -179,13 +181,13 @@ public:
         pdu.bch_payload       = {};
         pdu.ports             = {0};
 
-        ssb->process(rg, pdu);
+        ssb->process(rg.get_writer(), pdu);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);
       }
     }
 
     // Fill the empty resource grids with pseudo-random data.
-    if (rg.is_empty(0) && enable_random_data) {
+    if (rg.get_reader().is_empty(0) && enable_random_data) {
       unsigned mod_order = get_bits_per_symbol(data_modulation);
 
       unsigned nbits = MAX_NSYMB_PER_SLOT * nof_subcs * mod_order;
@@ -212,7 +214,7 @@ public:
       mapper.map(data_symbols, grid_allocation, precoding_config);
     }
 
-    gateway->send(rg_context, rg);
+    gateway->send(rg_context, rg.get_reader());
 
     // Raise TTI boundary and notify.
     tti_boundary = true;

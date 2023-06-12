@@ -71,16 +71,20 @@ protected:
                                                          {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22},
                                                          1,
                                                          0xaabb};
-  resource_grid_reader_spy                rg_reader_spy;
   const ru_compression_params             comp_params = GetParam();
   ether::eth_frame_pool                   ether_pool;
   data_flow_uplane_downlink_data_impl     data_flow;
   ether::testing::vlan_frame_builder_spy* vlan_builder;
   ecpri::testing::packet_builder_spy*     ecpri_builder;
   ofh_uplane_packet_builder_spy*          uplane_builder;
+  resource_grid_reader_spy                rg_reader_spy;
 
   ofh_data_flow_uplane_downlink_data_impl_fixture() :
-    nof_symbols(3), ru_nof_prbs(273), du_nof_prbs(273), data_flow(get_config())
+    nof_symbols(3),
+    ru_nof_prbs(273),
+    du_nof_prbs(273),
+    data_flow(get_config()),
+    rg_reader_spy(1, nof_symbols, du_nof_prbs)
   {
     initialize_grid_reader();
   }

@@ -13,7 +13,6 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/re_pattern.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
@@ -23,6 +22,8 @@
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes the PDSCH processor interface.
 class pdsch_processor

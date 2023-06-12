@@ -12,6 +12,8 @@
 #include "ofh_uplane_fragment_size_calculator.h"
 #include "scoped_frame_buffer.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 
 using namespace srsran;
 using namespace ofh;

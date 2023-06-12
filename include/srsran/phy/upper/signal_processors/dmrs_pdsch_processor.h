@@ -11,13 +11,14 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes a DMRS for PDSCH processor interface.
 class dmrs_pdsch_processor

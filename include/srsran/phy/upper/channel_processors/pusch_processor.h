@@ -12,7 +12,6 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/re_pattern.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/channel_processors/pusch_processor_result_notifier.h"
 #include "srsran/phy/upper/dmrs_mapping.h"

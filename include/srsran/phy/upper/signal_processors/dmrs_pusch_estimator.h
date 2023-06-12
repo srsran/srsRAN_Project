@@ -14,7 +14,6 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -22,6 +21,8 @@
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
+
+class resource_grid_reader;
 
 /// DM-RS-based PUSCH channel estimator interface.
 class dmrs_pusch_estimator

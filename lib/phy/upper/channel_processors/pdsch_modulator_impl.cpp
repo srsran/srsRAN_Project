@@ -9,6 +9,7 @@
  */
 
 #include "pdsch_modulator_impl.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/sc_prod.h"
 #include "srsran/support/math_utils.h"
