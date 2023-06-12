@@ -76,7 +76,6 @@ static std::string config_file;
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
 static srsran::sctp_network_gateway_config ngap_nw_config;
-const std::string                          srsgnb_version = "0.1";
 const int                                  MAX_CONFIG_FILES(10);
 
 static void populate_cli11_generic_args(CLI::App& app)
