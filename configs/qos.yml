@@ -1,0 +1,134 @@
+# Quality of Service (QoS) example configurations for 5QI 1, 2, 5, 7 and 9
+# Based on 5QI characteristics in TS 23.501 table 5.7.4-1
+
+qos:
+  -
+    five_qi: 1 # E.g. Conversational Voice
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+        rx:
+          sn: 12
+          t-reassembly: 50
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_du:
+      backoff_timer: 10
+    f1u_cu_up:
+      backoff_timer: 10     
+  -
+    five_qi: 2 # E.g. Conversational Video
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+        rx:
+          sn: 12
+          t-reassembly: 50
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_du:
+      backoff_timer: 10
+    f1u_cu_up:
+      backoff_timer: 10     
+  -
+    five_qi: 5 # E.g. IMS signaling
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 12
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+        rx:
+          sn: 12
+          t-reassembly: 80
+          t-status-prohibit: 10
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_du:
+      backoff_timer: 10
+    f1u_cu_up:
+      backoff_timer: 10      
+  -
+    five_qi: 7 # E.g. Voice, Video (live streaming)
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+        rx:
+          sn: 12
+          t-reassembly: 50
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_du:
+      backoff_timer: 10
+    f1u_cu_up:
+      backoff_timer: 10          
+  -
+    five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 12
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+        rx:
+          sn: 12
+          t-reassembly: 80
+          t-status-prohibit: 10
+    pdcp:
+      integrity_required: false
+      tx:
+        sn: 12
+        discard_timer: -1
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 80
+        out_of_order_delivery: false
+    f1u_du:
+      backoff_timer: 10
+    f1u_cu_up:
+      backoff_timer: 10
