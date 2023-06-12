@@ -849,7 +849,7 @@ TEST(BoundedBitset, extract)
     uint64_t size   = entry[1];
     uint64_t value  = entry[2];
 
-    ASSERT_EQ(bitset.extract(offset, size), value);
+    ASSERT_EQ(bitset.extract<uint64_t>(offset, size), value);
 
     offset += size;
   }
@@ -877,7 +877,7 @@ TEST(BoundedBitset, extract_inverted)
     uint64_t size   = entry[1];
     uint64_t value  = entry[2];
 
-    ASSERT_EQ(bitset.extract(offset, size), value);
+    ASSERT_EQ(bitset.extract<uint64_t>(offset, size), value);
 
     offset += size;
   }

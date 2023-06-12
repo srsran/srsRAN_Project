@@ -420,7 +420,10 @@ public:
   Integer extract(unsigned startpos, unsigned nof_bits) const
   {
     static_assert(std::is_unsigned<Integer>::value, "Extract only works for unsigned integers");
-    srsran_assert(nof_bits <= sizeof(Integer) * 8, "The number of bits exceeds the destination bit-width.");
+    srsran_assert(nof_bits <= sizeof(Integer) * 8,
+                  "The number of bits (i.e., {}) exceeds the destination bit-width (i.e., {}).",
+                  nof_bits,
+                  sizeof(Integer) * 8);
     srsran_assert(startpos + nof_bits <= size(),
                   "The start position (i.e., {}) plus the number of bits (i.e., {}) exceed the current size (i.e., {})",
                   startpos,
