@@ -330,7 +330,7 @@ variables:
 smoke release cached:
   extends: .smoke release
   variables:
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -343,7 +343,7 @@ smoke release cached:
 smoke tsan cached:
   extends: .smoke tsan
   variables:
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
@@ -357,7 +357,7 @@ smoke tsan cached:
 smoke rhel cached:
   extends: .smoke rhel
   variables:
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -373,7 +373,7 @@ smoke rhel cached:
 smoke archlinux cached:
   extends: .smoke archlinux
   variables:
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -429,7 +429,7 @@ intermediate commits:
     INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
@@ -468,7 +468,7 @@ valgrind changed tests:
     ENABLE_AVX512: "False"
     CLEAN_BUILD: "False"
     TEST_MODE: valgrind
-    KUBERNETES_MEMORY_REQUEST: 6Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
   script:
