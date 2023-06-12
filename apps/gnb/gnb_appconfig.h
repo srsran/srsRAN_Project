@@ -23,6 +23,7 @@
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
@@ -545,6 +546,9 @@ struct gnb_appconfig {
 
   /// \brief QoS configuration.
   std::vector<qos_appconfig> qos_cfg;
+
+  /// \brief Network slice configuration.
+  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
 
   /// Expert physical layer configuration.
   expert_upper_phy_appconfig expert_phy_cfg;

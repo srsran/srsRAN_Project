@@ -136,6 +136,14 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
 }
 
+static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
+{
+  app.add_option("--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
+  app.add_option("--sd", slice_params.sd, "Service Differentiator")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffffff));
+}
+
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
@@ -990,6 +998,23 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   };
   app.add_option_function<std::vector<std::string>>(
       "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // Slicing parameters.
+  auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    // Prepare the radio bearers
+    gnb_cfg.slice_cfg.resize(values.size());
+
+    // Format every QoS setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("Slicing parameters");
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
+      configure_cli11_slicing_args(subapp, gnb_cfg.slice_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--slicing", slicing_lambda, "Network slicing configuration");
 
   // Expert PHY section.
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();

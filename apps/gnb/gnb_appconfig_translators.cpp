@@ -27,11 +27,12 @@ static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
-  srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
-  out_cfg.ngap_config.gnb_id             = config.gnb_id;
-  out_cfg.ngap_config.ran_node_name      = config.ran_node_name;
-  out_cfg.ngap_config.plmn               = config.common_cell_cfg.plmn;
-  out_cfg.ngap_config.tac                = config.common_cell_cfg.tac;
+  srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
+  out_cfg.ngap_config.gnb_id               = config.gnb_id;
+  out_cfg.ngap_config.ran_node_name        = config.ran_node_name;
+  out_cfg.ngap_config.plmn                 = config.common_cell_cfg.plmn;
+  out_cfg.ngap_config.tac                  = config.common_cell_cfg.tac;
+  out_cfg.ngap_config.slice_configurations = config.slice_cfg;
 
   out_cfg.rrc_config.drb_config = generate_cu_cp_qos_config(config);
 
