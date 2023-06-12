@@ -110,7 +110,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
     param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports   = base_cell.pdsch_cfg.nof_ports;
+    if (base_cell.pdsch_cfg.nof_ports.has_value()) {
+      param.nof_dl_ports = *base_cell.pdsch_cfg.nof_ports;
+    } else {
+      param.nof_dl_ports = base_cell.nof_antennas_dl;
+    }
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));

@@ -229,7 +229,9 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
          "MCS table to use PDSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
-  app.add_option("--nof_ports", pdsch_params.nof_ports, "Number of ports for PDSCH")
+  app.add_option("--nof_ports",
+                 pdsch_params.nof_ports,
+                 "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2}));
 }

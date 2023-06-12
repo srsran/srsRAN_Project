@@ -273,6 +273,11 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
+  if (config.pdsch_cfg.nof_ports.has_value() and config.nof_antennas_dl < *config.pdsch_cfg.nof_ports) {
+    fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n");
+    return false;
+  }
+
   return true;
 }
 
@@ -459,7 +464,10 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
                config.test_mode_cfg.test_ue.pmi);
     return false;
   }
-  if (config.test_mode_cfg.test_ue.ri > config.common_cell_cfg.pdsch_cfg.nof_ports) {
+  unsigned nof_ports = config.common_cell_cfg.pdsch_cfg.nof_ports.has_value()
+                           ? *config.common_cell_cfg.pdsch_cfg.nof_ports
+                           : config.common_cell_cfg.nof_antennas_dl;
+  if (config.test_mode_cfg.test_ue.ri > nof_ports) {
     fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports\n",
                config.test_mode_cfg.test_ue.ri,
                config.common_cell_cfg.pdsch_cfg.nof_ports);

@@ -104,7 +104,7 @@ struct pdsch_appconfig {
   /// MCS table to use for PDSCH
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   /// Number of antenna ports.
-  unsigned nof_ports = 1;
+  optional<unsigned> nof_ports;
 };
 
 /// PUSCH application configuration.
