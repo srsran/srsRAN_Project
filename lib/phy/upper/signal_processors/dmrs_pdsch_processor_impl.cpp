@@ -17,7 +17,7 @@
 using namespace srsran;
 
 // Resource element allocation patterns within a resource block for PDSCH DM-RS type 1.
-static re_prb_mask get_re_mask_type_1(unsigned cdm_group_id)
+static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
 {
   static constexpr unsigned MAX_CDM_GROUPS_TYPE1 = 2;
 
@@ -29,7 +29,7 @@ static re_prb_mask get_re_mask_type_1(unsigned cdm_group_id)
 };
 
 // Resource element allocation patterns within a resource block for PDSCH DM-RS type 2.
-static re_prb_mask get_re_mask_type_2(unsigned cdm_group_id)
+static const re_prb_mask& get_re_mask_type_2(unsigned cdm_group_id)
 {
   static constexpr unsigned MAX_CDM_GROUPS_TYPE2 = 3;
 

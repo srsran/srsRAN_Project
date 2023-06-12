@@ -8,9 +8,9 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "dmrs_pdsch_processor_test_data.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
-#include "../../support/resource_grid_mapper_test_doubles.h"
 
 using namespace srsran;
 

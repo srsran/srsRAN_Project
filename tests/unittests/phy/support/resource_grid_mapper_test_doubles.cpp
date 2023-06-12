@@ -14,8 +14,8 @@ using namespace srsran;
 
 void resource_grid_mapper_spy::map(const re_buffer_reader& input,
                                    const re_pattern_list&  pattern,
-                                   const precoding_configuration& /* precoding */,
-                                   const re_pattern_list&  reserved)
+                                   const re_pattern_list&  reserved,
+                                   const precoding_configuration& /* precoding */)
 {
   unsigned i_re = 0;
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
@@ -59,5 +59,5 @@ void resource_grid_mapper_spy::map(const re_buffer_reader& input,
                                    const precoding_configuration& /* precoding */)
 {
   // Map with an empty list of reserved RE patterns.
-  map(input, pattern, precoding_configuration(), re_pattern_list());
+  map(input, pattern, re_pattern_list(), precoding_configuration());
 }

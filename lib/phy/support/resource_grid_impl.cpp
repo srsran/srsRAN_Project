@@ -261,8 +261,8 @@ bool resource_grid_impl::is_empty(unsigned port) const
 
 void resource_grid_impl::map(const re_buffer_reader&        input,
                              const re_pattern_list&         pattern,
-                             const precoding_configuration& precoding,
-                             const re_pattern_list&         reserved)
+                             const re_pattern_list&         reserved,
+                             const precoding_configuration& precoding)
 {
   unsigned nof_layers = precoding.get_nof_layers();
 
@@ -370,8 +370,10 @@ void resource_grid_impl::map(const re_buffer_reader&        input,
                 input.get_nof_re());
 }
 
-void resource_grid_impl::map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding)
+void resource_grid_impl::map(const re_buffer_reader&        input,
+                             const re_pattern_list&         pattern,
+                             const precoding_configuration& precoding)
 {
   // Map with an empty list of reserved RE patterns.
-  map(input, pattern, precoding, re_pattern_list());
+  map(input, pattern, re_pattern_list(), precoding);
 }

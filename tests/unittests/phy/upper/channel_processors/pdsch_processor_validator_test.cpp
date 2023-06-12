@@ -8,8 +8,8 @@
  *
  */
 
-#include "../../support/resource_grid_test_doubles.h"
 #include "../../support/resource_grid_mapper_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"

@@ -43,15 +43,14 @@ private:
   /// Temporal output buffer, used to store the Resource Elements after precoding.
   static_re_buffer<precoding_constants::MAX_NOF_PORTS, MAX_RB * NRE> precoding_buffer;
 
-  void map(const re_buffer_reader&        input,
-           const re_pattern_list&         pattern,
-           const precoding_configuration& precoding) override;
+  void
+  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override;
 
   // See interface for documentation.
   void map(const re_buffer_reader&        input,
            const re_pattern_list&         pattern,
-           const precoding_configuration& precoding,
-           const re_pattern_list&         reserved) override;
+           const re_pattern_list&         reserved,
+           const precoding_configuration& precoding) override;
 
 public:
   resource_grid_impl(unsigned                          nof_ports,

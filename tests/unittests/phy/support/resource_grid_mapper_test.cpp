@@ -634,7 +634,7 @@ TEST_P(ResourceGridMapperFixture, MultiplePrgReservedREs)
     resource_grid_mapper& mapper = grid->get_mapper();
 
     // Map into the resource grid.
-    mapper.map(input_data, allocation, precoding_config, reserved);
+    mapper.map(input_data, allocation, reserved, precoding_config);
 
     // Generate the golden precoded data.
     const re_buffer_reader& golden = generate_golden(input_data, allocation, precoding_config, reserved);

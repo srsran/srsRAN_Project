@@ -34,8 +34,8 @@ public:
   /// \param[in] reserved Reserved resource elements, to be excluded from the allocation pattern.
   void map(const re_buffer_reader& input,
            const re_pattern_list&  pattern,
-           const precoding_configuration& /* precoding */,
-           const re_pattern_list& reserved) override;
+           const re_pattern_list&  reserved,
+           const precoding_configuration& /* precoding */) override;
 
   /// \brief Maps the input resource elements using a resource grid writer spy.
   ///

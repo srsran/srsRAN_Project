@@ -87,7 +87,7 @@ void pdsch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_rea
   allocation.merge(pdsch_pattern);
 
   // Map into the resource grid.
-  mapper.map(data_re, allocation, config.precoding, reserved);
+  mapper.map(data_re, allocation, reserved, config.precoding);
 }
 
 void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
@@ -112,24 +112,24 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
   srsran_assert((nof_re % nof_layers == 0), "The number of modulated symbols must be equally split between layers.");
 
   // Resize the RE buffer.
-  if ((nof_layers != temp_re.get_nof_slices()) || (nof_re_layer != temp_re.get_nof_re())) {
-    temp_re.resize(nof_layers, nof_re_layer);
-  }
+  temp_re.resize(nof_layers, nof_re_layer);
 
   // Scramble.
   const bit_buffer& b_hat = scramble(codewords[0], 0, config);
 
-  // View over the temporal PDSCH symbols buffer.
-  span<cf_t> pdsch_symbols(temp_pdsch_symbols.begin(), nof_re);
+  // View over the PDSCH symbols buffer. For a single layer, skip layer mapping and use the final destination RE buffer.
+  span<cf_t> pdsch_symbols = (nof_layers == 1) ? temp_re.get_slice(0) : span<cf_t>(temp_pdsch_symbols).first(nof_re);
 
   // Modulate codeword.
   modulate(pdsch_symbols, b_hat, mod, config.scaling);
 
-  // Apply TS 38.211 Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
-  for (unsigned i = 0; i != nof_re_layer; ++i) {
-    // Apply layer mapping for codeword 0.
-    for (unsigned layer = 0; layer != nof_layers; ++layer) {
-      temp_re.get_slice(layer)[i] = pdsch_symbols[nof_layers * i + layer];
+  if (nof_layers > 1) {
+    // Apply TS 38.211 Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
+    for (unsigned i = 0; i != nof_re_layer; ++i) {
+      // Apply layer mapping for codeword 0.
+      for (unsigned layer = 0; layer != nof_layers; ++layer) {
+        temp_re.get_slice(layer)[i] = pdsch_symbols[nof_layers * i + layer];
+      }
     }
   }
 
