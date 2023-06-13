@@ -39,8 +39,7 @@ public:
 
   sdap_rx_pdu_handler& get_sdap_rx_pdu_handler(drb_id_t drb_id) final
   {
-    std::unique_lock<std::mutex> lock(rx_map_mutex);
-    auto                         rx_it = rx_map.find(drb_id);
+    auto rx_it = rx_map.find(drb_id);
     srsran_assert(rx_it != rx_map.end(), "Cannot find QFI mapping for {} in PDU session {}", drb_id, pdu_session_id);
     return *rx_it->second;
   };
@@ -49,8 +48,7 @@ public:
   /// Handle the incoming SDU and redirect to mapped DRB.
   void handle_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final
   {
-    std::unique_lock<std::mutex> lock(tx_map_mutex);
-    auto                         tx_it = tx_map.find(qos_flow_id);
+    auto tx_it = tx_map.find(qos_flow_id);
     if (tx_it == tx_map.end()) {
       logger.warning("No mapping for SDU with qfi={} in PDU session {}", qos_flow_id, pdu_session_id);
       return;
@@ -61,9 +59,6 @@ public:
   void
   add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
   {
-    std::unique_lock<std::mutex> tx_lock(tx_map_mutex);
-    std::unique_lock<std::mutex> rx_lock(rx_map_mutex);
-
     // check preconditions
     if (tx_map.find(qfi) != tx_map.end()) {
       logger.error("Cannot overwrite existing DL mapping for qfi={} in PDU session {}", qfi, pdu_session_id);
@@ -87,9 +82,6 @@ public:
 
   void remove_mapping(drb_id_t drb_id) final
   {
-    std::unique_lock<std::mutex> tx_lock(tx_map_mutex);
-    std::unique_lock<std::mutex> rx_lock(rx_map_mutex);
-
     // remove TX mapping
     for (auto tx_it = tx_map.begin(); tx_it != tx_map.end();) {
       if (tx_it->second->get_drb_id() == drb_id) {
@@ -111,9 +103,7 @@ private:
   sdap_rx_sdu_notifier& rx_sdu_notifier;
 
   std::unordered_map<qos_flow_id_t, std::unique_ptr<sdap_entity_tx_impl>> tx_map;
-  std::mutex                                                              tx_map_mutex;
   std::unordered_map<drb_id_t, std::unique_ptr<sdap_entity_rx_impl>>      rx_map;
-  std::mutex                                                              rx_map_mutex;
 };
 
 } // namespace srs_cu_up
