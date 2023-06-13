@@ -165,7 +165,7 @@ inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
   return snssai;
 }
 
-inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1_ap_asn1(sdap_hdr_ul_cfg hdr_cfg)
+inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_hdr_ul_cfg hdr_cfg)
 {
   asn1::e1ap::sdap_hdr_ul_opts::options asn1_hdr_ul_opts;
 
@@ -178,7 +178,7 @@ inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1_ap_asn1(sdap_
   return asn1_hdr_ul_opts;
 }
 
-inline asn1::e1ap::sdap_hdr_dl_opts::options sdap_hdr_dl_cfg_to_e1_ap_asn1(sdap_hdr_dl_cfg hdr_cfg)
+inline asn1::e1ap::sdap_hdr_dl_opts::options sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_hdr_dl_cfg hdr_cfg)
 {
   asn1::e1ap::sdap_hdr_dl_opts::options asn1_hdr_dl_opts;
 
@@ -204,8 +204,8 @@ inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(sdap_config_t sdap_cfg)
     asn1_sdap_cfg.default_drb = asn1::e1ap::default_drb_opts::options::false_value;
   }
 
-  asn1_sdap_cfg.sdap_hdr_ul.value = sdap_hdr_ul_cfg_to_e1_ap_asn1(sdap_cfg.sdap_hdr_ul);
-  asn1_sdap_cfg.sdap_hdr_dl.value = sdap_hdr_dl_cfg_to_e1_ap_asn1(sdap_cfg.sdap_hdr_dl);
+  asn1_sdap_cfg.sdap_hdr_ul.value = sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_ul);
+  asn1_sdap_cfg.sdap_hdr_dl.value = sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_dl);
 
   return asn1_sdap_cfg;
 }
