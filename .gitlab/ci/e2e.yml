@@ -40,12 +40,14 @@ variables:
   RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.5.2
 
 .prepare_test:
+  variables:
+    KUBECONFIG_VAR_NAME: ""
   before_script:
     - |
+      eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
-      export KUBECONFIG=$KUBE_CONFIG
-      kubectl config set current-context kubernetes-admin@srs-k8s-lab
-
+      export KUBECONFIG=$K_PATH
+      
 .e2e-run:
   stage: e2e
   resource_group: e2e
@@ -56,6 +58,7 @@ variables:
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
+    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
   tags:
     - on-prem-amd64
   extends:
@@ -201,6 +204,7 @@ android:
     TESTBED: "android"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   needs:
     - job: "smoke release update cache"
       artifacts: true
