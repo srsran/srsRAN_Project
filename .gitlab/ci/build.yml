@@ -329,6 +329,7 @@ variables:
 
 smoke release cached:
   extends: .smoke release
+  timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
@@ -342,6 +343,7 @@ smoke release cached:
 
 smoke tsan cached:
   extends: .smoke tsan
+  timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
@@ -356,6 +358,7 @@ smoke tsan cached:
 
 smoke rhel cached:
   extends: .smoke rhel
+  timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
@@ -372,6 +375,7 @@ smoke rhel cached:
 
 smoke archlinux cached:
   extends: .smoke archlinux
+  timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
@@ -419,6 +423,7 @@ intermediate commits:
     - if: $ON_MR
       when: manual
       allow_failure: false
+  timeout: 45 min
   variables:
     OS: ubuntu-22.04
     TEST_MODE: none
@@ -459,6 +464,7 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
+  timeout: 45 min
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
