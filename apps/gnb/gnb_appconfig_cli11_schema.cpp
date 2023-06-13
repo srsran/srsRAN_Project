@@ -612,7 +612,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
       ->check(CLI::Range(-43, -12));
   app.add_option("--pcg_p_nr_fr1",
                  cell_params.pcg_cfg.p_nr_fr1,
-                 "p_nr_fr1, max. tot. TX power to be used by the UE in this NR cell group across in FR1")
+                 "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
       ->capture_default_str()
       ->check(CLI::Range(-30, 33));
 
