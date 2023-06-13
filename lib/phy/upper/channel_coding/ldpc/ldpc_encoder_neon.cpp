@@ -149,6 +149,43 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
   }
 }
 
+void myxor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
+{
+  unsigned i = 0;
+
+  const int8_t* in0_ptr = reinterpret_cast<const int8_t*>(in0.data());
+  const int8_t* in1_ptr = reinterpret_cast<const int8_t*>(in1.data());
+  int8_t*       out_ptr = reinterpret_cast<int8_t*>(out.data());
+
+  for (unsigned i_end = (out.size() / 16) * 16; i != i_end; i += 16) {
+    int8x16_t in0_ = vld1q_s8(in0_ptr + i);
+    int8x16_t in1_ = vld1q_s8(in1_ptr + i);
+
+    vst1q_s8(out_ptr + i, veorq_s8(in0_, in1_));
+  }
+
+  for (unsigned i_end = out.size(); i != i_end; ++i) {
+    out[i] = in0[i] ^ in1[i];
+  }
+}
+
+void myand_one(span<int8_t> out, span<const int8_t> in)
+{
+  unsigned i = 0;
+
+  const int8_t* in0_ptr = reinterpret_cast<const int8_t*>(in.data());
+  int8_t*       out_ptr = reinterpret_cast<int8_t*>(out.data());
+  for (unsigned i_end = (out.size() / 16) * 16; i != i_end; i += 16) {
+    int8x16_t in0_ = vld1q_s8(in0_ptr + i);
+
+    vst1q_s8(out_ptr + i, vandq_s8(in0_, vdupq_n_s8(1)));
+  }
+
+  for (unsigned i_end = out.size(); i != i_end; ++i) {
+    out[i] = in[i] & 1;
+  }
+}
+
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_NEON_PH>
 void ldpc_encoder_neon::systematic_bits_inner()
 {
@@ -159,27 +196,33 @@ void ldpc_encoder_neon::systematic_bits_inner()
   span<uint8_t> aux_tmp(auxiliary_buffer);
   srsvec::zero(aux_tmp.first(auxiliary_used_size * NEON_SIZE_BYTE));
 
-  // For each BG information node...
-  for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_NEON_PH) {
-    std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
-    span<int8_t>                             blk = span<int8_t>(tmp_blk).first(2 * lifting_size);
-    srsvec::copy(blk.first(lifting_size), codeblock.plain_span(i_blk, lifting_size));
-    srsvec::copy(blk.last(lifting_size), codeblock.plain_span(i_blk, lifting_size));
-    std::for_each(blk.begin(), blk.end(), [](int8_t& v) { v &= 1U; });
+  const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
-    // and for each BG check node...
-    for (unsigned m = 0, i_aux = 0; (m != BG_M_PH) && (i_aux != auxiliary_used_size); ++m) {
-      unsigned node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        i_aux += NODE_SIZE_NEON_PH;
-        continue;
-      }
+  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
+  span<int8_t>                             blk           = span<int8_t>(tmp_blk).first(2 * lifting_size);
+  unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
 
-      srsvec::binary_xor(auxiliary.plain_span(i_aux, lifting_size),
-                         blk.subspan(node_shift, lifting_size),
-                         auxiliary.plain_span(i_aux, lifting_size));
-      i_aux += NODE_SIZE_NEON_PH;
+  for (const auto& element : parity_check_sparse) {
+    unsigned m          = std::get<0>(element);
+    unsigned k          = std::get<1>(element);
+    unsigned node_shift = std::get<2>(element);
+
+    unsigned i_aux = m * NODE_SIZE_NEON_PH;
+    unsigned i_blk = k * NODE_SIZE_NEON_PH;
+
+    if (i_aux >= auxiliary_used_size) {
+      continue;
     }
+
+    if (i_blk != current_i_blk) {
+      current_i_blk = i_blk;
+      myand_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      myand_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+    }
+
+    myxor(auxiliary.plain_span(i_aux, lifting_size),
+          blk.subspan(node_shift, lifting_size),
+          auxiliary.plain_span(i_aux, lifting_size));
   }
 }
 
