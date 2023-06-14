@@ -13,6 +13,7 @@
 #include "ngap_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ran/bcd_helpers.h"
@@ -237,7 +238,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
 
     if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
       qos_flow_setup_req_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+          asn1::enum_to_bool(asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute);
     }
 
     if (asn1_flow_item.erab_id_present) {

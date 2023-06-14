@@ -215,8 +215,8 @@ struct cu_cp_qos_flow_level_qos_params {
   qos_characteristics_t          qos_characteristics;
   cu_cp_alloc_and_retention_prio alloc_and_retention_prio;
   optional<cu_cp_gbr_qos_info>   gbr_qos_info;
-  optional<std::string>          add_qos_flow_info;
-  optional<std::string>          reflective_qos_attribute;
+  optional<bool>                 add_qos_flow_info;
+  optional<bool>                 reflective_qos_attribute;
 };
 
 struct qos_flow_setup_request_item {
@@ -491,19 +491,19 @@ struct cu_cp_ue_context_modification_request {
   slotted_id_vector<drb_id_t, cu_cp_drbs_to_be_modified_item>  drbs_to_be_modified_list;
   std::vector<srb_id_t>                                        srbs_to_be_released_list;
   std::vector<drb_id_t>                                        drbs_to_be_released_list;
-  optional<std::string>                                        inactivity_monitoring_request;
+  optional<bool>                                               inactivity_monitoring_request;
   optional<cu_cp_rat_freq_prio_info>                           rat_freq_prio_info;
-  optional<std::string>                                        drx_cfg_ind;
+  optional<bool>                                               drx_cfg_ind;
   optional<cu_cp_rlc_fail_ind>                                 rlc_fail_ind;
   byte_buffer                                                  ul_tx_direct_current_list_info;
-  optional<std::string>                                        gnb_du_cfg_query;
+  optional<bool>                                               gnb_du_cfg_query;
   optional<uint64_t>                                           gnb_du_ue_ambr_ul;
-  optional<std::string>                                        execute_dupl;
-  optional<std::string>                                        rrc_delivery_status_request;
+  optional<bool>                                               execute_dupl;
+  optional<bool>                                               rrc_delivery_status_request;
   optional<cu_cp_res_coordination_transfer_info>               res_coordination_transfer_info;
   optional<uint8_t>                                            serving_cell_mo;
-  optional<std::string>                                        need_for_gap;
-  optional<std::string>                                        full_cfg;
+  optional<bool>                                               need_for_gap;
+  optional<bool>                                               full_cfg;
 };
 
 struct cu_cp_du_to_cu_rrc_info {
@@ -557,12 +557,12 @@ struct cu_cp_ue_context_modification_response {
   slotted_id_vector<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
   std::vector<cu_cp_scell_failed_to_setup_mod_item>                        scell_failed_to_setup_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
-  optional<std::string>                                                    inactivity_monitoring_resp;
+  optional<bool>                                                           inactivity_monitoring_resp;
   optional<srsran::rnti_t>                                                 c_rnti;
   std::vector<cu_cp_associated_scell_item>                                 associated_scell_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_modified_list;
-  optional<std::string>                                                    full_cfg;
+  optional<bool>                                                           full_cfg;
 
   // UE Context Modification Failure
   optional<cause_t> cause;
@@ -743,7 +743,7 @@ struct cu_cp_paging_message {
   std::vector<cu_cp_tai_list_for_paging_item> tai_list_for_paging;
   optional<uint8_t>                           paging_prio;
   optional<cu_cp_ue_radio_cap_for_paging>     ue_radio_cap_for_paging;
-  optional<std::string>                       paging_origin;
+  optional<bool>                              paging_origin;
   optional<cu_cp_assist_data_for_paging>      assist_data_for_paging;
 };
 
