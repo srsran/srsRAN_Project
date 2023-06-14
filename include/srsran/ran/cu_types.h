@@ -12,6 +12,7 @@
 
 #include "five_qi.h"
 #include "nr_cgi.h"
+#include "qos_prio_level.h"
 #include "s_nssai.h"
 #include "srsran/adt/optional.h"
 #include "srsran/sdap/sdap_config.h"
@@ -88,7 +89,7 @@ struct packet_error_rate_t {
 };
 
 struct dyn_5qi_descriptor_t {
-  uint8_t               qos_prio_level;
+  qos_prio_level_t      qos_prio_level;
   uint16_t              packet_delay_budget;
   packet_error_rate_t   packet_error_rate;
   optional<five_qi_t>   five_qi;
@@ -98,10 +99,10 @@ struct dyn_5qi_descriptor_t {
 };
 
 struct non_dyn_5qi_descriptor_t {
-  five_qi_t          five_qi;
-  optional<uint8_t>  qos_prio_level;
-  optional<uint16_t> averaging_win;
-  optional<uint16_t> max_data_burst_volume;
+  five_qi_t                  five_qi;
+  optional<qos_prio_level_t> qos_prio_level;
+  optional<uint16_t>         averaging_win;
+  optional<uint16_t>         max_data_burst_volume;
 };
 
 struct qos_characteristics_t {

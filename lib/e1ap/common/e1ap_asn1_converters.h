@@ -18,6 +18,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/qos_prio_level.h"
 #include <string>
 #include <vector>
 
@@ -1102,7 +1103,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
       dyn_5qi_descriptor_t dyn_5qi;
-      dyn_5qi.qos_prio_level                 = asn1_dyn_5qi.qos_prio_level;
+      dyn_5qi.qos_prio_level                 = uint_to_qos_prio_level(asn1_dyn_5qi.qos_prio_level);
       dyn_5qi.packet_delay_budget            = asn1_dyn_5qi.packet_delay_budget;
       dyn_5qi.packet_error_rate.per_exponent = asn1_dyn_5qi.packet_error_rate.per_exponent;
       dyn_5qi.packet_error_rate.per_scalar   = asn1_dyn_5qi.packet_error_rate.per_scalar;
@@ -1127,7 +1128,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
       non_dyn_5qi_descriptor_t non_dyn_5qi;
       non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
       if (asn1_non_dyn_5qi.qos_prio_level_present) {
-        non_dyn_5qi.qos_prio_level = asn1_non_dyn_5qi.qos_prio_level;
+        non_dyn_5qi.qos_prio_level = uint_to_qos_prio_level(asn1_non_dyn_5qi.qos_prio_level);
       }
       if (asn1_non_dyn_5qi.averaging_win_present) {
         non_dyn_5qi.averaging_win = asn1_non_dyn_5qi.averaging_win;

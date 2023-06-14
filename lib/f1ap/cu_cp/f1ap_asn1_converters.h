@@ -129,9 +129,9 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   asn1::f1ap::qos_characteristics_c asn1_qos_characteristics;
 
   if (qos_characteristics.dyn_5qi.has_value()) {
-    auto& asn1_dyn_5qi                          = asn1_qos_characteristics.set_dyn_5qi();
-    asn1_dyn_5qi.qos_prio_level                 = qos_characteristics.dyn_5qi.value().qos_prio_level;
-    asn1_dyn_5qi.packet_delay_budget            = qos_characteristics.dyn_5qi.value().packet_delay_budget;
+    auto& asn1_dyn_5qi               = asn1_qos_characteristics.set_dyn_5qi();
+    asn1_dyn_5qi.qos_prio_level      = qos_prio_level_to_uint(qos_characteristics.dyn_5qi.value().qos_prio_level);
+    asn1_dyn_5qi.packet_delay_budget = qos_characteristics.dyn_5qi.value().packet_delay_budget;
     asn1_dyn_5qi.packet_error_rate.per_scalar   = qos_characteristics.dyn_5qi.value().packet_error_rate.per_scalar;
     asn1_dyn_5qi.packet_error_rate.per_exponent = qos_characteristics.dyn_5qi.value().packet_error_rate.per_exponent;
 
@@ -162,7 +162,8 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
 
     if (qos_characteristics.non_dyn_5qi.value().qos_prio_level.has_value()) {
       asn1_non_dyn_5qi.qos_prio_level_present = true;
-      asn1_non_dyn_5qi.qos_prio_level         = qos_characteristics.non_dyn_5qi.value().qos_prio_level.value();
+      asn1_non_dyn_5qi.qos_prio_level =
+          qos_prio_level_to_uint(qos_characteristics.non_dyn_5qi.value().qos_prio_level.value());
     }
 
     if (qos_characteristics.non_dyn_5qi.value().averaging_win.has_value()) {
