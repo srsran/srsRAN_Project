@@ -36,6 +36,8 @@ public:
   {
     // Mark the tx precoding and beamforming pdu as used when this builder is called.
     pdu.trp_scheme = 0U;
+    // Initialize number of digital beamforming interfaces.
+    pdu.dig_bf_interfaces = 0U;
   }
 
   /// Sets the basic parameters for the fields of the tranmission precoding and beamforming PDU.
