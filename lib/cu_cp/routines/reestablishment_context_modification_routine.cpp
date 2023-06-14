@@ -137,7 +137,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 bool reestablishment_context_modification_routine::generate_bearer_context_modification_request_for_new_ul_tnl()
 {
   bearer_context_modification_request.ue_index                 = ue_index;
-  bearer_context_modification_request.new_ul_tnl_info_required = "true";
+  bearer_context_modification_request.new_ul_tnl_info_required = true;
 
   // Request new UL TNL info for all DRBs
   std::vector<pdu_session_id_t>          pdu_session_ids              = rrc_ue_up_resource_manager.get_pdu_sessions();

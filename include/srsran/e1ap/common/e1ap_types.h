@@ -83,10 +83,10 @@ struct e1ap_qos_flow_level_qos_params {
   qos_characteristics_t                qos_characteristics;
   e1ap_ng_ran_alloc_and_retention_prio ng_ran_alloc_retention_prio;
   optional<e1ap_gbr_qos_flow_info>     gbr_qos_flow_info;
-  optional<std::string>                reflective_qos_attribute;
-  optional<std::string>                add_qos_info;
+  optional<bool>                       reflective_qos_attribute;
+  optional<bool>                       add_qos_info;
   optional<uint8_t>                    paging_policy_ind;
-  optional<std::string>                reflective_qos_ind;
+  optional<bool>                       reflective_qos_ind;
 };
 
 struct e1ap_qos_flow_qos_param_item {
@@ -270,7 +270,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
   optional<sdap_config_t>                                        sdap_cfg;
   optional<e1ap_pdcp_config>                                     pdcp_cfg;
   optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
-  optional<std::string>                                          pdcp_sn_status_request;
+  optional<bool>                                                 pdcp_sn_status_request;
   std::vector<e1ap_up_params_item>                               dl_up_params;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_add;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_modify;

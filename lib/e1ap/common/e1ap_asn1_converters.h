@@ -1173,13 +1173,13 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     // Add reflective qos attribute
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute);
     }
 
     // Add add qos info
     if (asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info_present) {
       flow_map_item.qos_flow_level_qos_params.add_qos_info =
-          asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info);
     }
 
     // Add paging policy ind
@@ -1191,7 +1191,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     // Add reflective qos ind
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_ind =
-          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind);
     }
 
     // Add qos flow map ind

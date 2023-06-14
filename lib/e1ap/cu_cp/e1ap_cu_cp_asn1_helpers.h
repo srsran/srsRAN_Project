@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/qos_prio_level.h"
 
@@ -109,15 +110,15 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   // reflective qos attribute
   if (qos_flow_level_params.reflective_qos_attribute.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
-                         qos_flow_level_params.reflective_qos_attribute.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
+                       qos_flow_level_params.reflective_qos_attribute.value());
   }
 
   // add qos info
   if (qos_flow_level_params.add_qos_info.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
-                         qos_flow_level_params.add_qos_info.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
+                       qos_flow_level_params.add_qos_info.value());
   }
 
   // paging policy ind
@@ -130,8 +131,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   // reflective qos ind
   if (qos_flow_level_params.reflective_qos_ind.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
-                         qos_flow_level_params.reflective_qos_ind.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
+                       qos_flow_level_params.reflective_qos_ind.value());
   }
 
   // qos flow map ind
@@ -509,9 +510,9 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_context_mod_request_s&       asn1_request,
                                                           const e1ap_bearer_context_modification_request& request)
 {
-  if (request.new_ul_tnl_info_required == std::string("true")) {
+  if (request.new_ul_tnl_info_required.has_value()) {
     asn1_request->new_ul_tnl_info_required_present = true;
-    asn1_request->new_ul_tnl_info_required.value   = asn1::e1ap::new_ul_tnl_info_required_opts::required;
+    asn1::bool_to_enum(asn1_request->new_ul_tnl_info_required, request.new_ul_tnl_info_required.value());
   }
 
   // ng ran bearer context mod
