@@ -137,7 +137,7 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
   codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
   auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_neon;
 
-  span<uint8_t>       codeblock(codeblock_buffer);
+  span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * NEON_SIZE_BYTE);
   span<const uint8_t> in_tmp = in;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
     srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
@@ -147,9 +147,12 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
     srsvec::zero(codeblock.first(tail_bytes));
     codeblock = codeblock.last(codeblock.size() - tail_bytes);
   }
+  srsvec::zero(codeblock);
 }
 
-void myxor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
+// Computes the XOR logical operation (modulo-2 sum) between the contents of "in0" and "in1". The result is stored in
+// "out". The representation is unpacked (1 byte represents 1 bit).
+static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
 {
   unsigned i = 0;
 
@@ -169,7 +172,10 @@ void myxor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
   }
 }
 
-void myand_one(span<int8_t> out, span<const int8_t> in)
+// Computes the AND logical operation between the contents of "in"  (one byte represents one bit) and "1". The r>
+// stored in "out". This is done to set filler bits (represented by a large even number) to zero, as understood >
+// encoder.
+static void fast_and_one(span<int8_t> out, span<const int8_t> in)
 {
   unsigned i = 0;
 
@@ -193,14 +199,13 @@ void ldpc_encoder_neon::systematic_bits_inner()
 
   neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
-  span<uint8_t> aux_tmp(auxiliary_buffer);
-  srsvec::zero(aux_tmp.first(auxiliary_used_size * NEON_SIZE_BYTE));
-
   const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
-  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk;
+  std::array<int8_t, 2 * MAX_LIFTING_SIZE> tmp_blk       = {};
   span<int8_t>                             blk           = span<int8_t>(tmp_blk).first(2 * lifting_size);
   unsigned                                 current_i_blk = std::numeric_limits<unsigned>::max();
+
+  std::array<bool, BG_M_PH> m_mask = {};
 
   for (const auto& element : parity_check_sparse) {
     unsigned m          = std::get<0>(element);
@@ -216,13 +221,24 @@ void ldpc_encoder_neon::systematic_bits_inner()
 
     if (i_blk != current_i_blk) {
       current_i_blk = i_blk;
-      myand_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
-      myand_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      fast_and_one(blk.first(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
+      fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
     }
 
-    myxor(auxiliary.plain_span(i_aux, lifting_size),
-          blk.subspan(node_shift, lifting_size),
-          auxiliary.plain_span(i_aux, lifting_size));
+    span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, lifting_size);
+
+    // If m >= 4, we can write directly to the codeblock buffer.
+    if (m >= 4) {
+      unsigned offset = (bg_K + m) * NODE_SIZE_NEON_PH * NEON_SIZE_BYTE;
+      plain_auxiliary = span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
+    }
+
+    if (m_mask[m]) {
+      fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
+    } else {
+      srsvec::copy(plain_auxiliary, blk.subspan(node_shift, lifting_size));
+      m_mask[m] = true;
+    }
   }
 }
 
@@ -334,9 +350,9 @@ void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
     // Second chunk of parity bits.
     int8x16_t block_1 = veorq_s8(auxiliary.get_at(j), rotated_j);
     codeblock.set_at(skip1 + j, block_1);
-    // third chunk of parity bits
+    // Third chunk of parity bits.
     codeblock.set_at(skip2 + j, veorq_s8(auxiliary.get_at(NODE_SIZE_NEON_PH + j), block_1));
-    // fourth chunk of parity bits
+    // Fourth chunk of parity bits.
     codeblock.set_at(skip3 + j, veorq_s8(auxiliary.get_at(node_size_x_3 + j), rotated_j));
   }
 }
@@ -393,30 +409,28 @@ void ldpc_encoder_neon::ext_region_inner()
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // Encode the extended region.
-  unsigned skip     = (bg_K + 4) * NODE_SIZE_NEON_PH;
-  unsigned skip_aux = 4 * NODE_SIZE_NEON_PH;
   for (unsigned m = 4; m != nof_layers; ++m) {
-    // The systematic part has already been computed.
-    for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
-      codeblock.set_at(skip + j, auxiliary.get_at(skip_aux + j));
-    }
+    unsigned skip = (bg_K + m) * NODE_SIZE_NEON_PH;
 
-    // Sum the contribution due to the high-rate region, with the proper circular shifts.
     for (unsigned k = 0; k != 4; ++k) {
       unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
       if (node_shift == NO_EDGE) {
         continue;
       }
+
+      // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
+      // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
+      // high-rate region (also stored in codeblock), with the proper circular shifts.
       srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size),
                                   codeblock.plain_span((bg_K + k) * NODE_SIZE_NEON_PH, lifting_size),
                                   node_shift);
+
       for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
         codeblock.set_at(skip + j, veorq_s8(codeblock.get_at(skip + j), rotated_node.get_at(j)));
       }
     }
     skip += NODE_SIZE_NEON_PH;
-    skip_aux += NODE_SIZE_NEON_PH;
   }
 }
 
