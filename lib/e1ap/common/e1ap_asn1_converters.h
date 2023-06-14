@@ -222,7 +222,8 @@ inline sdap_hdr_ul_cfg e1ap_asn1_to_sdap_hdr_ul_cfg(asn1::e1ap::sdap_hdr_ul_opts
       hdr_cfg = sdap_hdr_ul_cfg::present;
       break;
     default:
-      srsran_assert(false, "Invalid SDAP-Header-UL option ({})", asn1_hdr_ul_opts);
+      srsran_assertion_failure("Invalid SDAP-Header-UL option ({})", asn1_hdr_ul_opts);
+      hdr_cfg = {};
   }
 
   return hdr_cfg;
@@ -240,7 +241,8 @@ inline sdap_hdr_dl_cfg e1ap_asn1_to_sdap_hdr_dl_cfg(asn1::e1ap::sdap_hdr_dl_opts
       hdr_cfg = sdap_hdr_dl_cfg::present;
       break;
     default:
-      srsran_assert(false, "Invalid SDAP-Header-DL option ({})", asn1_hdr_dl_opts);
+      srsran_assertion_failure("Invalid SDAP-Header-DL option ({})", asn1_hdr_dl_opts);
+      hdr_cfg = {};
   }
 
   return hdr_cfg;
