@@ -517,6 +517,11 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_context_mod_request_s&       asn1_request,
                                                           const e1ap_bearer_context_modification_request& request)
 {
+  if (request.new_ul_tnl_info_required == std::string("true")) {
+    asn1_request->new_ul_tnl_info_required_present = true;
+    asn1_request->new_ul_tnl_info_required.value   = asn1::e1ap::new_ul_tnl_info_required_opts::required;
+  }
+
   // ng ran bearer context mod
   if (request.ng_ran_bearer_context_mod_request.has_value()) {
     asn1_request->sys_bearer_context_mod_request_present = true;

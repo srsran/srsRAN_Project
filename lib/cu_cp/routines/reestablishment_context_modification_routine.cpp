@@ -44,8 +44,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   {
     // prepare first BearerContextModificationRequest
-    bearer_context_modification_request.ue_index                 = ue_index;
-    bearer_context_modification_request.new_ul_tnl_info_required = "true";
+    generate_bearer_context_modification_request_for_new_ul_tnl();
 
     // call E1AP procedure and wait for BearerContextModificationResponse
     CORO_AWAIT_VALUE(bearer_context_modification_response,
@@ -118,6 +117,33 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   // we are done
   CORO_RETURN(true);
+}
+
+bool reestablishment_context_modification_routine::generate_bearer_context_modification_request_for_new_ul_tnl()
+{
+  bearer_context_modification_request.ue_index                 = ue_index;
+  bearer_context_modification_request.new_ul_tnl_info_required = "true";
+
+  // Request new UL TNL info for all DRBs
+  std::vector<pdu_session_id_t> pdu_session_ids = rrc_ue_up_resource_manager.get_pdu_sessions();
+  logger.error("PDU sessions size {}", pdu_session_ids.size());
+  e1ap_ng_ran_bearer_context_mod_request ngran_bearer_context_mod_req = {};
+  for (const pdu_session_id_t& psi : pdu_session_ids) {
+    e1ap_pdu_session_res_to_modify_item pdu_sess_mod_item;
+    pdu_sess_mod_item.pdu_session_id = psi;
+
+    const std::map<drb_id_t, up_drb_context>& drbs = rrc_ue_up_resource_manager.get_pdu_session_context(psi).drbs;
+    for (const std::pair<const drb_id_t, up_drb_context>& drb : drbs) {
+      e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
+      drb_to_mod.drb_id                         = drb.first;
+      pdu_sess_mod_item.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
+    }
+
+    ngran_bearer_context_mod_req.pdu_session_res_to_modify_list.emplace(psi, pdu_sess_mod_item);
+  }
+
+  bearer_context_modification_request.ng_ran_bearer_context_mod_request = ngran_bearer_context_mod_req;
+  return true;
 }
 
 bool reestablishment_context_modification_routine::generate_ue_context_modification_request(
