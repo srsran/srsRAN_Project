@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../e1ap/common/test_helpers.h"
 #include "du_processor_routine_manager_test_helpers.h"
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"

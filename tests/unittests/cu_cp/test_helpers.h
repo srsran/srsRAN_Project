@@ -31,12 +31,6 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
-/// \brief Generate a random gnb_cu_cp_ue_e1ap_id
-gnb_cu_cp_ue_e1ap_id_t generate_random_gnb_cu_cp_ue_e1ap_id();
-
-/// \brief Generate a random gnb_cu_up_ue_e1ap_id
-gnb_cu_up_ue_e1ap_id_t generate_random_gnb_cu_up_ue_e1ap_id();
-
 /// \brief Generate a random gnb_cu_ue_f1ap_id
 gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
 
