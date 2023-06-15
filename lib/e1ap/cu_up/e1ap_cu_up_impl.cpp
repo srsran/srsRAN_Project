@@ -307,7 +307,6 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
       return;
     }
 
-    bearer_context_mod.ue_index = ue_ctxt.ue_index;
     fill_e1ap_bearer_context_modification_request(bearer_context_mod, msg);
   }
 
