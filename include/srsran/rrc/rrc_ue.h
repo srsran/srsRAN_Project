@@ -306,6 +306,7 @@ struct rrc_reestablishment_ue_context_t {
   ue_index_t                          ue_index = ue_index_t::invalid;
   security::security_context          sec_context;
   optional<asn1::rrc_nr::ue_nr_cap_s> capabilities;
+  up_context                          up_ctx;
 };
 
 /// Interface to notify about RRC Reestablishment Requests.

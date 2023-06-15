@@ -120,6 +120,8 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       context.capabilities = reest_context.capabilities.value();
     }
 
+    context.get_up_manager().set_up_context(reest_context.up_ctx);
+
     // Get RX short MAC
     security::sec_short_mac_i short_mac     = {};
     uint16_t                  short_mac_int = htons(msg.rrc_reest_request.ue_id.short_mac_i.to_number());
@@ -316,6 +318,8 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
   if (context.capabilities.has_value()) {
     rrc_reest_context.capabilities = context.capabilities.value();
   }
+  up_resource_manager& old_up_manager = context.get_up_manager();
+  rrc_reest_context.up_ctx            = old_up_manager.get_up_context();
 
   return rrc_reest_context;
 }

@@ -54,7 +54,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle BearerContextModificationResponse and fill subsequent UE context modification
     if (!generate_ue_context_modification_request(
             ue_context_mod_request, bearer_context_modification_response.pdu_session_resource_modified_list)) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
   }
