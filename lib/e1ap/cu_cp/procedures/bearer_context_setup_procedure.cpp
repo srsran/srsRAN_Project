@@ -27,6 +27,8 @@ void bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_bea
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   // Subscribe to respective publisher to receive BEARER CONTEXT SETUP RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ue_ctxt.bearer_ev_mng.context_setup_outcome);
 
@@ -69,6 +71,8 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::create_bearer
     // Add CU-UP UE E1AP ID to UE context
     ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id.value);
     fill_e1ap_bearer_context_setup_response(res, resp);
+
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
     logger.debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause.value));
@@ -81,6 +85,8 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::create_bearer
   } else {
     logger.warning("BearerContextSetupResponse timeout");
     res.success = false;
+
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
 
   return res;
