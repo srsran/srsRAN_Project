@@ -41,7 +41,7 @@ variables:
 
 .prepare_test:
   variables:
-    KUBECONFIG_VAR_NAME: ""
+    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
   before_script:
     - |
       eval K_PATH="\$$KUBECONFIG_VAR_NAME"
