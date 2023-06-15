@@ -125,6 +125,11 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
+  // Set up SRB2
+  cu_cp_srbs_to_be_setup_mod_item srb2;
+  srb2.srb_id = srb_id_t::srb2;
+  ue_context_mod_req.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
+
   for (const auto& e1ap_item : e1ap_pdu_session_resource_modify_list) {
     cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
