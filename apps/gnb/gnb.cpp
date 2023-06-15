@@ -656,7 +656,7 @@ int main(int argc, char** argv)
   worker_manager workers{gnb_cfg};
 
   f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1", *f1ap_p), f1ap_du_to_cu_adapter("DU-F1", *f1ap_p);
-  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP", *e1ap_p);
+  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
