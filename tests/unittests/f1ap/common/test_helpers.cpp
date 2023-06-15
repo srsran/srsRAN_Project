@@ -1,0 +1,26 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "test_helpers.h"
+#include "srsran/support/test_utils.h"
+
+using namespace srsran;
+
+gnb_cu_ue_f1ap_id_t srsran::generate_random_gnb_cu_ue_f1ap_id()
+{
+  return int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min), gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
+}
+
+gnb_du_ue_f1ap_id_t srsran::generate_random_gnb_du_ue_f1ap_id()
+{
+  return int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min), gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+}

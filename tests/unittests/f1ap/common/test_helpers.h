@@ -18,6 +18,12 @@
 
 namespace srsran {
 
+/// \brief Generate a random gnb_cu_ue_f1ap_id
+gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
+
+/// \brief Generate a random gnb_du_ue_f1ap_id
+gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
+
 inline bool is_f1ap_pdu_packable(const asn1::f1ap::f1ap_pdu_c& pdu)
 {
   byte_buffer   buffer;

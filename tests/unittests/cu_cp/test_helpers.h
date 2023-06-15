@@ -31,12 +31,6 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
-/// \brief Generate a random gnb_cu_ue_f1ap_id
-gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
-
-/// \brief Generate a random gnb_du_ue_f1ap_id
-gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
-
 struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
   dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
