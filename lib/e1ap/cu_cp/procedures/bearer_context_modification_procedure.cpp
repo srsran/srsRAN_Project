@@ -28,6 +28,8 @@ void bearer_context_modification_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   // Subscribe to respective publisher to receive BEARER CONTEXT MODIFICATION RESPONSE/FAILURE message.
   transaction_sink.subscribe_to(ue_ctxt.bearer_ev_mng.context_modification_outcome);
 
@@ -67,6 +69,8 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
       logger.debug("Containerized BearerContextModificationResponse: {}", js.to_string());
     }
     fill_e1ap_bearer_context_modification_response(res, resp);
+
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
     logger.debug("Received BearerContextModificationFailure cause={}", get_cause_str(fail->cause.value));
@@ -76,9 +80,13 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
       logger.debug("Containerized BearerContextModificationFailure: {}", js.to_string());
     }
     fill_e1ap_bearer_context_modification_response(res, fail);
+
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   } else {
     logger.warning("BearerContextModificationResponse timeout");
     res.success = false;
+
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
   return res;
 }
