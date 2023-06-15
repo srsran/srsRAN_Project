@@ -354,9 +354,7 @@ void e1ap_cu_cp_impl::update_ue_context(ue_index_t ue_index, ue_index_t old_ue_i
     return;
   }
 
-  auto& old_ue                 = ue_ctxt_list[old_ue_index];
-  auto& new_ue_ctxt            = ue_ctxt_list.add_ue(ue_index, old_ue.cu_cp_ue_e1ap_id);
-  new_ue_ctxt.cu_up_ue_e1ap_id = old_ue.cu_up_ue_e1ap_id;
+  logger.debug("Updating UE Context from ue_index={} to ue_index={}", old_ue_index, ue_index);
 
-  ue_ctxt_list.remove_ue(old_ue_index);
+  ue_ctxt_list.update_ue_index(ue_index, old_ue_index);
 }
