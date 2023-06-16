@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Unit tests for the DU UE configuration procedure.
+
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
@@ -87,6 +90,11 @@ protected:
       ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));
       ASSERT_TRUE(drb_it->mac_lc_ch_cfg_present);
       ASSERT_TRUE(drb_it->rlc_cfg_present);
+    }
+
+    ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), req.drbs_to_rem.size());
+    for (unsigned i = 0; i != req.drbs_to_rem.size(); ++i) {
+      ASSERT_EQ(req.drbs_to_rem[i], (drb_id_t)cell_group.rlc_bearer_to_release_list[i]);
     }
   }
 
@@ -285,4 +293,21 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   ASSERT_TRUE(resp.du_to_cu_rrc_container.empty());
   ASSERT_TRUE(resp.drbs_setup.empty());
   ASSERT_TRUE(resp.drbs_failed_to_setup.empty());
+}
+
+TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_container)
+{
+  // Run procedure to create DRB1.
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+
+  // Run procedure to delete DRB1.
+  req             = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  req.drbs_to_rem = {drb_id_t::drb1};
+
+  res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true));
 }
