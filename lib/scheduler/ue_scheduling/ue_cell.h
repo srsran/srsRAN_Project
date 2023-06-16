@@ -107,8 +107,7 @@ public:
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
   get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
-  /// \brief Set UE fallback state. When in "fallback" mode, only the search spaces of cellConfigCommon are used. The UE
-  /// should automatically leave this mode, when a SR/CSI is received.
+  /// \brief Set UE fallback state.
   void set_fallback_state(bool fallback_state_)
   {
     if (fallback_state_ != is_fallback_mode) {
@@ -123,7 +122,9 @@ private:
   ue_cell_configuration             ue_cfg;
   srslog::basic_logger&             logger;
 
-  /// \brief Fallback state of the UE.
+  /// \brief Fallback state of the UE. When in "fallback" mode, only the search spaces of cellConfigCommon are used.
+  /// The UE should automatically leave this mode, when a SR/CSI is received, since, in order to send SR/CSI the UE must
+  /// already have applied a dedicated config.
   bool is_fallback_mode = false;
 
   metrics ue_metrics;
