@@ -100,6 +100,11 @@ void ue_configuration_procedure::update_ue_context()
   // > Move DU UE DRBs to be removed out of the UE bearer manager.
   // Note: This DRB pointer will remain valid and accessible from other layers until we update the latter.
   for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
+    if (ue->bearers.drbs().count(drb_to_rem) == 0) {
+      logger.warning(
+          "ue={}: Failed to release DRB-Id={}. Cause: DRB with provided ID does not exist.", ue->ue_index, drb_to_rem);
+      continue;
+    }
     srsran_assert(std::any_of(prev_cell_group.rlc_bearers.begin(),
                               prev_cell_group.rlc_bearers.end(),
                               [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; }),

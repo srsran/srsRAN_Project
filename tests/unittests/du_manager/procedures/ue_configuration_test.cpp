@@ -307,8 +307,26 @@ TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_conta
   // Run procedure to delete DRB1.
   req             = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
   req.drbs_to_rem = {drb_id_t::drb1};
+  res             = this->configure_ue(req);
 
-  res = this->configure_ue(req);
   ASSERT_TRUE(res.result);
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true));
+}
+
+TEST_F(ue_config_tester, when_drb_to_be_released_does_not_exist_then_request_is_ignored)
+{
+  // Run procedure to create DRB1.
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+
+  // Run procedure to delete non-existent DRB.
+  req             = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  req.drbs_to_rem = {drb_id_t::drb2};
+  res             = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  auto req_no_drb_release = req;
+  req_no_drb_release.drbs_to_rem.clear();
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req_no_drb_release, res.du_to_cu_rrc_container, true));
 }
