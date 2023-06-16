@@ -269,12 +269,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
     du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
 
-    // If any dependent parameter needs to be updated, this is the place.
-    if (update_msg1_frequency_start) {
-      rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
-          du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
-    }
-
     // Parameters for PUSCH-Config.
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.emplace();
@@ -323,6 +317,19 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     b_offsets.beta_offset_csi_p1_idx_2 = base_cell.pusch_cfg.b_offset_csi_p1_idx_2;
     b_offsets.beta_offset_csi_p2_idx_1 = base_cell.pusch_cfg.b_offset_csi_p2_idx_1;
     b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.b_offset_csi_p2_idx_2;
+
+    // CSI related parameters.
+    if (out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
+      for (auto& nzp_csi_res : out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().nzp_csi_rs_res_list) {
+        nzp_csi_res.pwr_ctrl_offset = base_cell.csi_cfg.pwr_ctrl_offset;
+      }
+    }
+
+    // If any dependent parameter needs to be updated, this is the place.
+    if (update_msg1_frequency_start) {
+      rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
+          du_pucch_cfg, out_cell.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
+    }
 
     logger.info(
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "

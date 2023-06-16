@@ -544,6 +544,15 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
       ->check(CLI::IsMember({1, 2, 4}));
 }
 
+static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
+{
+  app.add_option("--pwr_ctrl_offset",
+                 csi_params.pwr_ctrl_offset,
+                 "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-8, 15));
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -655,6 +664,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // Paging configuration.
   CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
   configure_cli11_paging_args(*paging_subcmd, cell_params.paging_cfg);
+
+  // CSI configuration;
+  CLI::App* csi_subcmd = app.add_subcommand("csi", "CSI-Meas parameters");
+  configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

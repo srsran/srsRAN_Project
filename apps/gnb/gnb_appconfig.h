@@ -215,6 +215,12 @@ struct ssb_appconfig {
   ssb_pss_to_sss_epre pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
 };
 
+struct csi_appconfig {
+  /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
+  /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
+  int pwr_ctrl_offset = 0;
+};
+
 /// Base cell configuration.
 struct base_cell_appconfig {
   /// Physical cell identifier.
@@ -257,6 +263,8 @@ struct base_cell_appconfig {
   optional<tdd_ul_dl_appconfig> tdd_ul_dl_cfg;
   /// Paging configuration.
   paging_appconfig paging_cfg;
+  /// CSI configuration.
+  csi_appconfig csi_cfg;
 };
 
 /// Cell configuration
