@@ -235,6 +235,29 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   return true;
 }
 
+/// \brief Finds if there a BSR with positive buffer size in the list of decoded subPDUs.
+static bool contains_positive_bsr(const mac_ul_sch_pdu& decoded_subpdus)
+{
+  for (const auto& subpdu : decoded_subpdus) {
+    if (subpdu.lcid() == lcid_ul_sch_t::SHORT_TRUNC_BSR || subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR) {
+      lcg_bsr_report rep = decode_sbsr(subpdu.payload());
+      if (rep.buffer_size > 0) {
+        return true;
+      }
+    }
+    if (subpdu.lcid() == lcid_ul_sch_t::LONG_TRUNC_BSR || subpdu.lcid() == lcid_ul_sch_t::LONG_BSR) {
+      auto bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
+      long_bsr_report lbsr_report = decode_lbsr(bsr_fmt, subpdu.payload());
+      for (const auto& l : lbsr_report.list) {
+        if (l.buffer_size > 0) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
 {
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
@@ -253,9 +276,11 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
           return;
         }
 
-        // >> Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
-        sched.handle_ul_sched_command(
-            mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
+        // >> In case no positive BSR was provided, we force a SR in the scheduler to complete the RA procedure.
+        if (not contains_positive_bsr(ctx.decoded_subpdus)) {
+          sched.handle_ul_sched_command(
+              mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
+        }
       })) {
     logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
   }
