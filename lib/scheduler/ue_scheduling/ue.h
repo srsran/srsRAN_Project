@@ -72,7 +72,12 @@ public:
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
   /// \brief Handle received SR indication.
-  void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
+  void handle_sr_indication()
+  {
+    // Reception of SR means that the UE has applied its dedicated configuration.
+    ue_cells[0]->set_fallback_state(false);
+    ul_lc_ch_mgr.handle_sr_indication();
+  }
 
   /// \brief Once an UL grant is given, the SR status of the UE must be reset.
   void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }
@@ -83,11 +88,6 @@ public:
   /// \brief Handles MAC CE indication.
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& msg)
   {
-    if (msg.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-      // When Contention Resolution Identity CE is required (e.g. RRC Setup, RRC Reestablishment), we force fallback
-      // mode to be used.
-      get_cell(to_ue_cell_index(0)).set_fallback_state(true);
-    }
     dl_lc_ch_mgr.handle_mac_ce_indication(msg.ce_lcid);
   }
 

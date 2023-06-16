@@ -81,6 +81,13 @@ public:
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
+  /// Update UE with the latest CSI report for a given cell.
+  void handle_csi_report(const csi_report_data& csi_report)
+  {
+    set_fallback_state(false);
+    channel_state.handle_csi_report(csi_report);
+  }
+
   /// \brief Get the current UE cell metrics.
   const metrics& get_metrics() const { return ue_metrics; }
   metrics&       get_metrics() { return ue_metrics; }
@@ -101,8 +108,14 @@ public:
   get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
 
   /// \brief Set UE fallback state. When in "fallback" mode, only the search spaces of cellConfigCommon are used. The UE
-  /// should automatically leave this mode, when a CRC=OK is received.
-  void set_fallback_state(bool fallback_state_) { is_fallback_mode = fallback_state_; }
+  /// should automatically leave this mode, when a SR/CSI is received.
+  void set_fallback_state(bool fallback_state_)
+  {
+    if (fallback_state_ != is_fallback_mode) {
+      logger.debug("ue={} rnti={:#x}: {} fallback mode", ue_index, rnti(), fallback_state_ ? "Leaving" : "Entering");
+    }
+    is_fallback_mode = fallback_state_;
+  }
 
 private:
   rnti_t                            crnti_;

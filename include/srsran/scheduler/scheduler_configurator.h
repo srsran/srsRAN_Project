@@ -93,10 +93,13 @@ struct sched_ue_config_request {
   std::vector<cell_config_dedicated> cells;
 };
 
-/// UE Creation Request.
+/// Request to create a new UE in scheduler.
 struct sched_ue_creation_request_message {
-  du_ue_index_t           ue_index;
-  rnti_t                  crnti;
+  du_ue_index_t ue_index;
+  rnti_t        crnti;
+  /// Whether the UE starts in fallback mode, i.e. without using its dedicated configuration.
+  bool starts_in_fallback;
+  /// Configuration to be applied to the new UE.
   sched_ue_config_request cfg;
 };
 

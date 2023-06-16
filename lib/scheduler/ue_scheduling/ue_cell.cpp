@@ -134,12 +134,6 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   if (tbs >= 0) {
     // HARQ with matching ID and UCI slot was found.
 
-    // If the UE is in fallback mode and the CRC was successful, leave fallback mode.
-    if (is_fallback_mode and crc_pdu.tb_crc_success) {
-      logger.debug("ue={} rnti={:#x}: Leaving fallback mode", ue_index, rnti());
-      is_fallback_mode = false;
-    }
-
     // Update PUSCH KO count metrics.
     ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
@@ -219,6 +213,19 @@ static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_dci_rnti_type) const
 {
   const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
+
+  // In fallback mode state, only use search spaces configured in CellConfigCommon.
+  if (is_fallback_mode) {
+    static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> active_search_spaces;
+    srsran_assert(not required_dci_rnti_type.has_value() or
+                      required_dci_rnti_type == dci_ul_rnti_config_type::c_rnti_f0_0,
+                  "Invalid required dci-rnti parameter");
+    for (const search_space_configuration& ss :
+         ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+    }
+    return active_search_spaces;
+  }
 
   auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
     return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
