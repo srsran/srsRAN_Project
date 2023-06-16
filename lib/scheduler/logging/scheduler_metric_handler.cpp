@@ -58,6 +58,9 @@ void scheduler_metrics_handler::handle_csi_report(du_ue_index_t ue_index, const 
     if (csi.first_tb_wideband_cqi.has_value()) {
       u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
     }
+    if (csi.ri.has_value()) {
+      u.last_ri = csi.ri->to_uint();
+    }
   }
 }
 
@@ -174,6 +177,7 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.pci           = pci;
   ret.rnti          = rnti;
   ret.cqi           = last_cqi;
+  ret.ri            = last_ri;
   uint8_t mcs       = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;

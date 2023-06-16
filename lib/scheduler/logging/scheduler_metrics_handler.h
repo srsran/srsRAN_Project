@@ -80,7 +80,8 @@ private:
     pci_t               pci;
     du_ue_index_t       ue_index;
     rnti_t              rnti;
-    unsigned            last_cqi = 0;
+    uint8_t             last_cqi = 0;
+    uint8_t             last_ri  = 0;
     unsigned            last_bsr = 0;
     non_persistent_data data;
 

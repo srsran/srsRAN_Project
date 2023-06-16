@@ -19,8 +19,8 @@ using namespace srsran;
 void metrics_plotter_stdout::print_header()
 {
   fmt::print("\n");
-  fmt::print("           -------------DL----------------|------------------UL--------------------\n");
-  fmt::print(" pci rnti  cqi  mcs  brate   ok  nok  (%) | pusch  mcs  brate   ok  nok  (%)    bsr\n");
+  fmt::print("           -----------------DL----------------|------------------UL--------------------\n");
+  fmt::print(" pci rnti  cqi  ri  mcs  brate   ok  nok  (%) | pusch  mcs  brate   ok  nok  (%)    bsr\n");
 }
 
 void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_metrics)
@@ -41,6 +41,12 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
       fmt::print("  {:>3}", int(ue.cqi));
     } else {
       fmt::print("  {:>3.3}", "n/a");
+    }
+
+    if (ue.ri != 0) {
+      fmt::print("  {:>2}", int(ue.ri));
+    } else {
+      fmt::print("  {:>2.3}", "n/a");
     }
 
     if (not std::isnan(ue.dl_mcs.to_uint())) {
