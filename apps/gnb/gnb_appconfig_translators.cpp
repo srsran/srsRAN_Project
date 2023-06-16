@@ -322,9 +322,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     if (out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.has_value()) {
       // Set CQI table according to the MCS table used for PDSCH.
       if (not out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.empty()) {
-        if (out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].cqi_table.has_value()) {
-          out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].cqi_table.reset();
-        }
+        out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].cqi_table.reset();
         out_cell.ue_ded_serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].cqi_table.emplace();
         switch (base_cell.pdsch_cfg.mcs_table) {
           case pdsch_mcs_table::qam64:
