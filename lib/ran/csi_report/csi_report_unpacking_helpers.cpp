@@ -307,24 +307,29 @@ units::bits srsran::get_csi_report_size_cri_ri_li_pmi_cqi(const csi_report_confi
 csi_report_data srsran::csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_report_packed&        packed,
                                                                   const csi_report_configuration& config)
 {
+  csi_report_data data;
+
   // Validate input size.
   units::bits csi_report_size = get_csi_report_pucch_size(config);
   srsran_assert(csi_report_size <= csi_report_max_size,
                 "The report size (i.e., {}) exceeds the maximum report size (i.e., {})",
                 csi_report_size,
                 csi_report_max_size);
-  srsran_assert(packed.size() == csi_report_size.value(),
-                "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
-                units::bits(packed.size()),
-                csi_report_size);
+  if (packed.size() != csi_report_size.value()) {
+    srslog::fetch_basic_logger("MAC").warning(
+        "The number of packed bits (i.e., {}) is not equal to the CSI report size (i.e., {})",
+        units::bits(packed.size()),
+        csi_report_size);
+    // Return empty data.
+    return data;
+  }
 
   // Gets RI, LI, CQI and CRI field sizes as the rank was one.
   ri_li_cqi_cri_sizes sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
 
   // Unpacks bits following the order in TS38.212 Table 6.3.1.1.2-7.
-  unsigned        count = 0;
-  csi_report_data data;
+  unsigned count = 0;
 
   // CRI.
   unsigned cri = 0;
