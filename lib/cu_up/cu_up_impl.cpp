@@ -179,6 +179,10 @@ void process_successful_pdu_resource_modification_outcome(
     for (const auto& drb_modified_item : result.drb_modification_results) {
       e1ap_drb_modified_item_ng_ran e1ap_mod_item;
       e1ap_mod_item.drb_id = drb_modified_item.drb_id;
+
+      e1ap_up_params_item up_param_item;
+      up_param_item.up_tnl_info = drb_modified_item.gtp_tunnel;
+      e1ap_mod_item.ul_up_transport_params.push_back(up_param_item);
       modified_item.drb_modified_list_ng_ran.emplace(e1ap_mod_item.drb_id, e1ap_mod_item);
     }
 
