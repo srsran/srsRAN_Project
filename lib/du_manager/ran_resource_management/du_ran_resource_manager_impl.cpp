@@ -118,7 +118,12 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Deallocate removed SRBs / DRBs.
-  // TODO
+  for (drb_id_t drb_id : upd_req.drbs_to_rem) {
+    auto it = std::find_if(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [drb_id](const rlc_bearer_config& b) {
+      return b.drb_id == drb_id;
+    });
+    ue_mcg.rlc_bearers.erase(it);
+  }
 
   // > Allocate new or modified bearers.
   for (srb_id_t srb_id : upd_req.srbs_to_setup) {

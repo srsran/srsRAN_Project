@@ -94,7 +94,8 @@ protected:
 
     ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), req.drbs_to_rem.size());
     for (unsigned i = 0; i != req.drbs_to_rem.size(); ++i) {
-      ASSERT_EQ(req.drbs_to_rem[i], (drb_id_t)cell_group.rlc_bearer_to_release_list[i]);
+      uint8_t lcid = LCID_MIN_DRB - 1 + (unsigned)req.drbs_to_rem[i];
+      ASSERT_EQ(lcid, cell_group.rlc_bearer_to_release_list[i]);
     }
   }
 
