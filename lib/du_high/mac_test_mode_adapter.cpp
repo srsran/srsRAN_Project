@@ -156,19 +156,24 @@ public:
 private:
   void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
-    static constexpr size_t CQI_BITLENGTH = 4;
+    static constexpr size_t CQI_BITLEN = 4;
+    static constexpr size_t RI_BITLEN  = 1;
+    static constexpr size_t PMI_BITLEN = 2;
 
     if (ue_cfg_req.cells.empty() or not ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
       return;
     }
 
-    uint8_t packed_bits = bit_reverse(test_ue_cfg.cqi) >> (64U - CQI_BITLENGTH);
+    // Note: We have to reverse the bit order for CQI, RI and PMI because the current CSI payload bounded_bitset is
+    // representing bits in the reverse order of what is stated in the spec.
+    // TODO: Reverse the bit ordering once CSI payload is fixed.
+    uint8_t packed_bits = bit_reverse(test_ue_cfg.cqi) >> (64U - CQI_BITLEN);
     if (ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports == 1) {
-      payload.resize(4);
+      payload.resize(CQI_BITLEN);
     } else {
-      payload.resize(7);
-      packed_bits = packed_bits << 3;
-      packed_bits += ((test_ue_cfg.ri - 1) << 2) + test_ue_cfg.pmi;
+      payload.resize(CQI_BITLEN + RI_BITLEN + PMI_BITLEN);
+      packed_bits = packed_bits << (RI_BITLEN + PMI_BITLEN);
+      packed_bits += ((test_ue_cfg.ri - 1) << PMI_BITLEN) + test_ue_cfg.pmi;
     }
     payload.from_uint64(packed_bits);
   }
