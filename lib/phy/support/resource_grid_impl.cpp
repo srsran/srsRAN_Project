@@ -29,6 +29,12 @@ resource_grid_impl::resource_grid_impl(unsigned                          nof_por
 {
   // Reserve memory for the internal buffer.
   rg_buffer.reserve({nof_subc, nof_symb, nof_ports});
+
+  // Set all the resource elements to zero.
+  for (unsigned port = 0; port != nof_ports; ++port) {
+    srsvec::zero(rg_buffer.get_view<static_cast<unsigned>(resource_grid_dimensions::port)>({port}));
+    empty[port] = true;
+  }
 }
 
 void resource_grid_impl::set_all_zero()
