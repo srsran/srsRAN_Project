@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "meas_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
@@ -613,10 +614,6 @@ struct cu_cp_radio_bearer_config {
   bool                                              srb3_to_release_present = false;
 };
 
-struct cu_cp_meas_config {
-  // TODO: add meas config
-};
-
 struct cu_cp_master_key_upd {
   bool        key_set_change_ind = false;
   uint8_t     next_hop_chaining_count;
@@ -648,7 +645,7 @@ struct cu_cp_rrc_recfg_v1530_ies {
 struct cu_cp_rrc_reconfiguration_procedure_request {
   optional<cu_cp_radio_bearer_config> radio_bearer_cfg;
   byte_buffer                         secondary_cell_group;
-  optional<cu_cp_meas_config>         meas_cfg;
+  optional<cu_cp_meas_cfg>            meas_cfg;
   optional<cu_cp_rrc_recfg_v1530_ies> non_crit_ext;
 };
 
