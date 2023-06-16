@@ -43,11 +43,7 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
       fmt::print("  {:>3.3}", "n/a");
     }
 
-    if (ue.ri != 0) {
-      fmt::print("  {:>2}", int(ue.ri));
-    } else {
-      fmt::print("  {:>2.3}", "n/a");
-    }
+    fmt::print("  {:>2}", int(ue.ri));
 
     if (not std::isnan(ue.dl_mcs.to_uint())) {
       fmt::print("   {:>2}", int(ue.dl_mcs.to_uint()));
