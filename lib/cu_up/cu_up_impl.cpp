@@ -153,6 +153,7 @@ void process_successful_pdu_resource_modification_outcome(
         e1ap_up_params_item up_param_item;
         up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
         res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
+        logger.debug("Adding DRB up mod. TEID=0x={}", up_param_item.up_tnl_info.gtp_teid);
 
         for (const auto& flow_item : drb_setup_item.qos_flow_results) {
           if (flow_item.success) {
@@ -234,6 +235,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
 e1ap_bearer_context_modification_response
 cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
 {
+  logger.debug("Handling bearer context modification request ue={}", msg.ue_index);
+
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
@@ -243,6 +246,9 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   e1ap_bearer_context_modification_response response = {};
   response.ue_index                                  = ue_ctxt->get_index();
   response.success                                   = true;
+
+  bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
+  logger.error("new ul tnl info {} {}", new_ul_tnl_info_required, msg.new_ul_tnl_info_required);
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified
@@ -257,7 +263,8 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
-      pdu_session_modification_result session_result = ue_ctxt->modify_pdu_session(pdu_session_item);
+      pdu_session_modification_result session_result =
+          ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
                                                            response.pdu_session_resource_failed_to_modify_list,
                                                            session_result,

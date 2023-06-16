@@ -165,7 +165,8 @@ TEST_F(pdu_session_manager_test, when_unexisting_pdu_session_is_modified_operati
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
   pdu_session_modify_item.pdu_session_id = uint_to_pdu_session_id(1);
 
-  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+  pdu_session_modification_result modification_result =
+      pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
 
   // check successful outcome
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
@@ -230,7 +231,9 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(valid_drb_to_remove);
 
   // attempt to remove bearers
-  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+  pdu_session_modification_result modification_result =
+      pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
 
