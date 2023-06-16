@@ -14,6 +14,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {
 
@@ -52,11 +53,11 @@ private:
   static void map(resource_grid_mapper& mapper, const re_buffer_reader& data_re, const config_t& config);
 
   /// Temporary buffer for scrambled sequence.
-  static_bit_buffer<MAX_CODEWORD_SIZE> temp_b_hat;
+  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_b_hat;
   /// Temporary buffer for the PDSCH modulated symbols.
-  std::array<cf_t, MAX_CODEWORD_SIZE> temp_pdsch_symbols;
+  std::array<cf_t, pdsch_constants::CODEWORD_MAX_SYMBOLS> temp_pdsch_symbols;
   /// Temporary buffer for the PDSCH layer-mapped RE.
-  static_re_buffer<precoding_constants::MAX_NOF_LAYERS, MAX_RB * NRE * MAX_NSYMB_PER_SLOT> temp_re;
+  static_re_buffer<pdsch_constants::MAX_NOF_LAYERS, pdsch_constants::CODEWORD_MAX_NOF_RE> temp_re;
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.

@@ -29,17 +29,8 @@ class resource_grid_mapper;
 class pdsch_processor
 {
 public:
-  /// \brief Maximum number of resource elements per resource block in a shared channel transmission.
-  /// As per TS 38.214 section 5.1.3.2 Transport block size determination.
-  static constexpr unsigned MAX_NRE_PER_RB = 156;
   /// Defines the maximum number of codewords that can be encoded in a PDSCH transmission.
   static constexpr unsigned MAX_NOF_TRANSPORT_BLOCKS = 2;
-  /// \brief Defines the maximum number of layers per codeword.
-  /// As per TS 38.211 table Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
-  static constexpr unsigned MAX_LAYER_PER_CODEWORD = 4;
-  /// Defines the maximum codeword size.
-  static constexpr unsigned MAX_CODEWORD_SIZE =
-      MAX_RB * MAX_NRE_PER_RB * MODULATION_MAX_BITS_PER_SYMBOL * MAX_LAYER_PER_CODEWORD;
 
   /// \brief Describes a codeword configuration.
   /// \note The transport block size is given by the transport block data size.

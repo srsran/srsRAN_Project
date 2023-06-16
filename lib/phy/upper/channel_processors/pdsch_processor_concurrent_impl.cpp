@@ -168,7 +168,7 @@ void pdsch_processor_concurrent_impl::process(resource_grid_mapper&             
   modulator_config.precoding                   = pdu.precoding;
 
   // Prepare encoded codewords.
-  static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords = {temp_packed_codeword};
+  static_vector<bit_buffer, pdsch_constants::MAX_NOF_CODEWORDS> codewords = {temp_packed_codeword};
 
   // Actual modulation.
   modulator->modulate(mapper, codewords, modulator_config);

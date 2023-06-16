@@ -15,6 +15,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/support/executors/task_executor.h"
 #include <condition_variable>
@@ -87,11 +88,11 @@ private:
   std::mutex              cb_count_mutex;
   std::condition_variable cb_count_cvar;
 
-  std::unique_ptr<pdsch_modulator>                      modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                 dmrs;
-  std::array<uint8_t, MAX_CODEWORD_SIZE>                temp_codeword;
-  static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE> temp_packed_codeword;
-  task_executor&                                        executor;
+  std::unique_ptr<pdsch_modulator>                                modulator;
+  std::unique_ptr<dmrs_pdsch_processor>                           dmrs;
+  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_codeword;
+  static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()>   temp_packed_codeword;
+  task_executor&                                                  executor;
 };
 
 } // namespace srsran

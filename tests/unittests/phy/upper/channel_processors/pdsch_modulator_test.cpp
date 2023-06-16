@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
@@ -51,7 +52,7 @@ int main()
     srsvec::bit_pack(packed_data, data);
 
     // Prepare codewords.
-    static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+    static_vector<bit_buffer, pdsch_constants::MAX_NOF_CODEWORDS> codewords;
     codewords.emplace_back(packed_data);
 
     // Modulate.

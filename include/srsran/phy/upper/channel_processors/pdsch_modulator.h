@@ -32,12 +32,6 @@ class resource_grid_mapper;
 class pdsch_modulator
 {
 public:
-  /// Defines the maximum number of codewords per PDSCH transmission.
-  static constexpr unsigned MAX_NOF_CODEWORDS = 2;
-
-  /// Defines the maximum number of RE per codeword in a PDSCH transmission.
-  static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS / 2;
-
   /// Describes the necessary parameters to modulate a PDSCH transmission.
   struct config_t {
     /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.

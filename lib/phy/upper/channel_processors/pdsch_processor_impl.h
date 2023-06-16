@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 
 namespace srsran {
 
@@ -78,11 +79,12 @@ private:
   /// \param[in] pdu     Provides the PDSCH processor PDU.
   void put_dmrs(resource_grid_mapper& mapper, const pdu_t& pdu);
 
-  std::unique_ptr<pdsch_encoder>                                                              encoder;
-  std::unique_ptr<pdsch_modulator>                                                            modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                                                       dmrs;
-  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS>                temp_codewords;
-  std::array<static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_packed_codewords;
+  std::unique_ptr<pdsch_encoder>                                  encoder;
+  std::unique_ptr<pdsch_modulator>                                modulator;
+  std::unique_ptr<dmrs_pdsch_processor>                           dmrs;
+  std::array<uint8_t, pdsch_constants::CODEWORD_MAX_SIZE.value()> temp_unpacked_codeword;
+  std::array<static_bit_buffer<pdsch_constants::CODEWORD_MAX_SIZE.value()>, MAX_NOF_TRANSPORT_BLOCKS>
+      temp_packed_codewords;
 };
 
 } // namespace srsran

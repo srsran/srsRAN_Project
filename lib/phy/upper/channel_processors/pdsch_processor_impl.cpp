@@ -116,7 +116,7 @@ void pdsch_processor_impl::process(resource_grid_mapper&                        
   unsigned nof_re_pdsch = compute_nof_data_re(pdu);
 
   // Prepare encoded codewords.
-  static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+  static_vector<bit_buffer, pdsch_constants::MAX_NOF_CODEWORDS> codewords;
 
   // Encode each codeword.
   for (unsigned codeword_id = 0; codeword_id != nof_codewords; ++codeword_id) {
@@ -222,7 +222,7 @@ const bit_buffer& pdsch_processor_impl::encode(span<const uint8_t> data,
   // Select codeword specific parameters.
   unsigned          rv           = pdu.codewords[codeword_id].rv;
   modulation_scheme modulation   = pdu.codewords[codeword_id].modulation;
-  span<uint8_t>     tmp_codeword = temp_codewords[codeword_id];
+  span<uint8_t>     tmp_codeword = temp_unpacked_codeword;
 
   // Prepare encoder configuration.
   segmenter_config encoder_config;
