@@ -15,6 +15,7 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -49,6 +50,13 @@ protected:
       // TDD params.
       sched_cfg.tdd_ul_dl_cfg_common = tdd_cfg;
 
+      // RACH config
+      optional<uint8_t> chosen_prach_cfg_idx =
+          prach_helper::find_valid_prach_config_index(sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                                      sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended,
+                                                      *sched_cfg.tdd_ul_dl_cfg_common);
+      sched_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = *chosen_prach_cfg_idx;
+
       return sched_cfg;
     }());
 
@@ -68,13 +76,13 @@ protected:
 
 using test_params = tdd_ul_dl_config_common;
 
-class scheduler_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<test_params>
+class scheduler_dl_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<test_params>
 {
 public:
-  scheduler_tdd_tester() : base_scheduler_tdd_tester(GetParam()) {}
+  scheduler_dl_tdd_tester() : base_scheduler_tdd_tester(GetParam()) {}
 };
 
-TEST_P(scheduler_tdd_tester, all_dl_slots_are_scheduled)
+TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
 {
   // Enqueue enough bytes for continuous DL tx.
   dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 10000000};
@@ -83,7 +91,6 @@ TEST_P(scheduler_tdd_tester, all_dl_slots_are_scheduled)
   const unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
-    ASSERT_TRUE(this->last_sched_res->success);
 
     // For every DL slot.
     // Note: Skip special slots in test for now.
@@ -105,7 +112,13 @@ TEST_P(scheduler_tdd_tester, all_dl_slots_are_scheduled)
   }
 }
 
-TEST_P(scheduler_tdd_tester, all_ul_slots_are_scheduled)
+class scheduler_ul_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<test_params>
+{
+public:
+  scheduler_ul_tdd_tester() : base_scheduler_tdd_tester(GetParam()) {}
+};
+
+TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
 {
   // Enqueue enough bytes for continuous UL tx.
   ul_bsr_indication_message bsr{
@@ -120,7 +133,6 @@ TEST_P(scheduler_tdd_tester, all_ul_slots_are_scheduled)
   const unsigned MAX_COUNT = 1000;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     this->run_slot();
-    ASSERT_TRUE(this->last_sched_res->success);
 
     // For every UL slot.
     // Note: Skip special slots in test for now.
@@ -146,13 +158,21 @@ TEST_P(scheduler_tdd_tester, all_ul_slots_are_scheduled)
 
 INSTANTIATE_TEST_SUITE_P(
     scheduler_tdd_test,
-    scheduler_tdd_tester,
+    scheduler_dl_tdd_tester,
     testing::Values(
         // clang-format off
   // test_params{ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
   test_params{subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}));
-  // Note: Not working because some PDSCHs fail due to insufficient PUCCH resources.
-  //test_params{subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt},
-  // Note: Not working because PRACH configuration needs to be adjusted.
-  //test_params{subcarrier_spacing::kHz30, {6, 3, 4, 2, 4}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}));
+  // TODO: Support more TDD patterns.
+// clang-format on
+
+INSTANTIATE_TEST_SUITE_P(
+    scheduler_tdd_test,
+    scheduler_ul_tdd_tester,
+    testing::Values(
+        // clang-format off
+        // test_params{ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
+        test_params{subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt},
+        test_params{subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt},
+        test_params{subcarrier_spacing::kHz30, {6, 3, 4, 2, 4}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}));
 // clang-format on

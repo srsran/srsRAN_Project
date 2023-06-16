@@ -39,10 +39,11 @@ nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool
   }
 
   // UL case.
-  const unsigned ul_pattern_start = period_slots - pattern->nof_ul_slots;
+  const unsigned ul_pattern_start = pattern->dl_ul_tx_period_nof_slots - pattern->nof_ul_slots;
   if (slot_idx_period >= ul_pattern_start) {
     return cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  } else if (slot_idx_period == ul_pattern_start - 1) {
+  }
+  if (slot_idx_period == ul_pattern_start - 1) {
     return pattern->nof_ul_symbols;
   }
   return 0;
