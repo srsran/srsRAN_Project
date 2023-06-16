@@ -58,8 +58,13 @@ public:
   test_cell_adapter(const srs_du::du_test_config::test_ue_config& test_ue_cfg_,
                     mac_cell_control_information_handler&         adapted_,
                     mac_pdu_handler&                              pdu_handler_,
-                    std::function<void()>                         dl_bs_notifier_) :
-    test_ue_cfg(test_ue_cfg_), adapted(adapted_), pdu_handler(pdu_handler_), dl_bs_notifier(dl_bs_notifier_)
+                    std::function<void()>                         dl_bs_notifier_,
+                    const sched_ue_config_request&                ue_cfg_req_) :
+    test_ue_cfg(test_ue_cfg_),
+    adapted(adapted_),
+    pdu_handler(pdu_handler_),
+    dl_bs_notifier(dl_bs_notifier_),
+    ue_cfg_req(ue_cfg_req_)
   {
   }
 
@@ -126,8 +131,7 @@ public:
         }
         if (pusch.csi_part1_info.has_value()) {
           pusch.csi_part1_info->csi_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-          pusch.csi_part1_info->payload.resize(4);
-          pusch.csi_part1_info->payload.from_uint64(bit_reverse(test_ue_cfg.cqi) >> (64U - 4U));
+          fill_csi_bits(pusch.csi_part1_info->payload);
         }
         pusch.pmi = test_ue_cfg.pmi;
         pusch.ri  = test_ue_cfg.ri;
@@ -139,13 +143,10 @@ public:
         }
         if (f2.uci_part1_or_csi_part1_info.has_value()) {
           f2.uci_part1_or_csi_part1_info->status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-          f2.uci_part1_or_csi_part1_info->payload.resize(4);
-          f2.uci_part1_or_csi_part1_info->payload.from_uint64(bit_reverse(test_ue_cfg.cqi) >> (64U - 4U));
           f2.uci_part1_or_csi_part1_info->payload_type =
               mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+          fill_csi_bits(f2.uci_part1_or_csi_part1_info->payload);
         }
-        f2.pmi = test_ue_cfg.pmi;
-        f2.ri  = test_ue_cfg.ri;
       }
     }
 
@@ -153,16 +154,36 @@ public:
   }
 
 private:
+  void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
+  {
+    static constexpr size_t CQI_BITLENGTH = 4;
+
+    if (ue_cfg_req.cells.empty() or not ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
+      return;
+    }
+
+    uint8_t packed_bits = bit_reverse(test_ue_cfg.cqi) >> (64U - CQI_BITLENGTH);
+    if (ue_cfg_req.cells[0].serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[0].res_mapping.nof_ports == 1) {
+      payload.resize(4);
+    } else {
+      payload.resize(7);
+      packed_bits = packed_bits << 3;
+      packed_bits += ((test_ue_cfg.ri - 1) << 2) + test_ue_cfg.pmi;
+    }
+    payload.from_uint64(packed_bits);
+  }
+
   const srs_du::du_test_config::test_ue_config& test_ue_cfg;
   mac_cell_control_information_handler&         adapted;
   mac_pdu_handler&                              pdu_handler;
   std::function<void()>                         dl_bs_notifier;
+  sched_ue_config_request                       ue_cfg_req;
   bool                                          msg4_rx_flag = false;
 };
 
 mac_test_mode_adapter::mac_test_mode_adapter(std::unique_ptr<mac_interface>                mac_ptr_,
-                                             const srs_du::du_test_config::test_ue_config& test_ue_cfg) :
-  test_ue(test_ue_cfg), mac_adapted(std::move(mac_ptr_))
+                                             const srs_du::du_test_config::test_ue_config& test_ue_cfg_) :
+  test_ue(test_ue_cfg_), mac_adapted(std::move(mac_ptr_))
 {
 }
 
@@ -179,8 +200,12 @@ mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_ha
           {test_ue_index, lcid_t::LCID_SRB1, TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE});
     };
 
-    cell_info_handler[cell_index] = std::make_unique<test_cell_adapter>(
-        test_ue, mac_adapted->get_control_info_handler(cell_index), mac_adapted->get_pdu_handler(), func_dl_bs_push);
+    cell_info_handler[cell_index] =
+        std::make_unique<test_cell_adapter>(test_ue,
+                                            mac_adapted->get_control_info_handler(cell_index),
+                                            mac_adapted->get_pdu_handler(),
+                                            func_dl_bs_push,
+                                            test_ue_cfg);
   }
   return *cell_info_handler[cell_index];
 }
@@ -223,6 +248,9 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
 
     // Add adapters to the UE config bearers before passing it to MAC.
     cfg_adapted.bearers = adapt_bearers(cfg.bearers);
+
+    // Save config of test mode UE.
+    test_ue_cfg = cfg_adapted.sched_cfg;
   }
 
   // Forward UE creation request to MAC.

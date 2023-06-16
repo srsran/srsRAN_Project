@@ -198,9 +198,6 @@ struct mac_uci_pdu {
     optional<harq_information>               harq_info;
     optional<uci_payload_or_csi_information> uci_part1_or_csi_part1_info;
     optional<uci_payload_or_csi_information> uci_part2_or_csi_part2_info;
-    // Note: Temporary for UE in test mode. Later, they will be decoded from the CSI bits.
-    optional<uint8_t> pmi;
-    optional<uint8_t> ri;
   };
 
   rnti_t                                                              rnti;

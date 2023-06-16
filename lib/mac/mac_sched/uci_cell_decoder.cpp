@@ -197,15 +197,6 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         for (const auto& expected_slot_uci : slot_ucis) {
           if (expected_slot_uci.rnti == uci_pdu.crnti) {
             pdu.csi = decode_csi_bits(pucch, expected_slot_uci.csi_rep_cfg);
-
-            // TODO: Temporary: Support proper RI and PMI decoding.
-            if (pucch.ri.has_value()) {
-              pdu.csi->ri = csi_report_data::ri_type{*pucch.ri};
-            }
-            if (pucch.pmi.has_value()) {
-              pdu.csi->pmi.emplace();
-              pdu.csi->pmi->type = csi_report_pmi::two_antenna_port{*pucch.pmi};
-            }
             break;
           }
         }

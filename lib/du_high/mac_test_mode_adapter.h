@@ -68,6 +68,8 @@ private:
   std::vector<std::unique_ptr<mac_cell_control_information_handler>> cell_info_handler;
 
   du_ue_index_t test_ue_index = INVALID_DU_UE_INDEX;
+
+  sched_ue_config_request test_ue_cfg;
 };
 
 } // namespace srsran
