@@ -29,9 +29,8 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
   const auto& f1_setup_req = msg_notifier.last_f1ap_msg.pdu.init_msg().value.f1_setup_request();
-  ASSERT_FALSE(f1_setup_req->gnb_du_served_cells_list.value[0]
-                   ->gnb_du_served_cells_item()
-                   .served_cell_info.meas_timing_cfg.empty());
+  ASSERT_FALSE(
+      f1_setup_req->gnb_du_served_cells_list[0]->gnb_du_served_cells_item().served_cell_info.meas_timing_cfg.empty());
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());

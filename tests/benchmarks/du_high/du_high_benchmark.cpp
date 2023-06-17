@@ -86,7 +86,7 @@ private:
         f1ap_message f1ap_msg;
         f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
         f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
-        f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
+        f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.resize(1);
         f1ap_msg_handler->handle_message(f1ap_msg);
       } break;
       case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
@@ -95,7 +95,7 @@ private:
         // Note: Use UM because AM requires status PDUs.
         auto& drb1 = msg.pdu.init_msg()
                          .value.ue_context_mod_request()
-                         ->drbs_to_be_setup_mod_list.value[0]
+                         ->drbs_to_be_setup_mod_list[0]
                          ->drbs_to_be_setup_mod_item();
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
         drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =

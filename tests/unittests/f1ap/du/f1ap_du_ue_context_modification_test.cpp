@@ -85,8 +85,8 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(resp->drbs_modified_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_mod_list_present);
   ASSERT_TRUE(resp->drbs_setup_mod_list_present);
-  ASSERT_EQ(resp->drbs_setup_mod_list->size(), 1);
-  auto& drb_setup = resp->drbs_setup_mod_list.value[0].value().drbs_setup_mod_item();
+  ASSERT_EQ(resp->drbs_setup_mod_list.size(), 1);
+  auto& drb_setup = resp->drbs_setup_mod_list[0].value().drbs_setup_mod_item();
   ASSERT_EQ(drb_setup.drb_id, 1);
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
   ASSERT_EQ(
@@ -97,7 +97,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
       this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
           .dluptnl_info_list[0]
           .tp_address.to_bitstring());
-  ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
+  ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
 
@@ -122,11 +122,11 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);
   ASSERT_TRUE(resp->drbs_failed_to_be_setup_mod_list_present);
-  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list->size(), 1);
-  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list.value[0].value().drbs_failed_to_be_setup_mod_item().drb_id, 1);
+  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list.size(), 1);
+  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list[0].value().drbs_failed_to_be_setup_mod_item().drb_id, 1);
   ASSERT_FALSE(resp->drbs_setup_mod_list_present);
-  ASSERT_EQ(resp->drbs_setup_mod_list->size(), 0);
-  ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
+  ASSERT_EQ(resp->drbs_setup_mod_list.size(), 0);
+  ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
 
@@ -143,11 +143,11 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(resp->drbs_modified_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_setup_mod_list_present);
   ASSERT_TRUE(resp->drbs_setup_mod_list_present);
-  ASSERT_EQ(resp->drbs_setup_mod_list->size(), 2);
-  auto& drb1_setup = resp->drbs_setup_mod_list.value[0].value().drbs_setup_mod_item();
+  ASSERT_EQ(resp->drbs_setup_mod_list.size(), 2);
+  auto& drb1_setup = resp->drbs_setup_mod_list[0].value().drbs_setup_mod_item();
   ASSERT_EQ(drb1_setup.drb_id, 1);
   ASSERT_EQ(drb1_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
-  auto& drb2_setup = resp->drbs_setup_mod_list.value[1].value().drbs_setup_mod_item();
+  auto& drb2_setup = resp->drbs_setup_mod_list[1].value().drbs_setup_mod_item();
   ASSERT_EQ(drb2_setup.drb_id, 2);
   ASSERT_EQ(drb2_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
 }

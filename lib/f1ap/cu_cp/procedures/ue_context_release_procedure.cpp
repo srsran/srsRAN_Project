@@ -21,12 +21,12 @@ ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&
                                                            srslog::basic_logger&                  logger_) :
   ue_ctxt_list(ue_ctx_list_), ue_ctxt(ue_ctxt_list[cmd_.ue_index]), f1ap_notifier(f1ap_notif_), logger(logger_)
 {
-  command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
-  command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  command->cause.value             = cause_to_f1ap_cause(cmd_.cause);
+  command->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
+  command->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  command->cause             = cause_to_f1ap_cause(cmd_.cause);
   if (!cmd_.rrc_release_pdu.empty()) {
     command->rrc_container_present = true;
-    command->rrc_container.value   = cmd_.rrc_release_pdu.copy();
+    command->rrc_container         = cmd_.rrc_release_pdu.copy();
   }
 }
 
@@ -73,7 +73,7 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
 
   ue_index_t ret = ue_index_t::invalid;
 
-  if (msg->gnb_du_ue_f1ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
+  if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;
     ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
   }

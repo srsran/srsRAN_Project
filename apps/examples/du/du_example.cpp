@@ -207,9 +207,9 @@ public:
       response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
 
       auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
-      resp->gnb_du_ue_f1ap_id->value  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
-      resp->gnb_cu_ue_f1ap_id->value  = 0;
-      resp->srb_id->value             = srb_id_to_uint(srb_id_t::srb0);
+      resp->gnb_du_ue_f1ap_id         = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
+      resp->gnb_cu_ue_f1ap_id         = 0;
+      resp->srb_id                    = srb_id_to_uint(srb_id_t::srb0);
       static constexpr uint8_t msg4[] = {
           0x20, 0x40, 0x03, 0x82, 0xe0, 0x05, 0x80, 0x08, 0x8b, 0xd7, 0x63, 0x80, 0x83, 0x0f, 0x00, 0x03, 0xe1,
           0x02, 0x04, 0x68, 0x3c, 0x08, 0x01, 0x05, 0x10, 0x48, 0x24, 0x06, 0x54, 0x00, 0x07, 0xc0, 0x00, 0x00,
@@ -227,7 +227,7 @@ public:
 
       // Copy DU-to-CU RRC container stored in the F1AP "INITIAL UL RRC MESSAGE TRANSFER" to masterCellGroup field of
       // the unpacked RRC Setup message.
-      const auto&          src  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.value;
+      const auto&          src  = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container;
       asn1::dyn_octstring& dest = msg4_rrc.msg.c1().rrc_setup().crit_exts.rrc_setup().master_cell_group;
       dest                      = src.copy();
 
@@ -237,8 +237,8 @@ public:
       msg4_rrc.pack(w_bref);
 
       // Store the packed RRC setup message in the RRC container field of the F1 DL RRC Message that is sent to the DU.
-      resp->rrc_container.value.resize(msg4_pdu.length());
-      std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
+      resp->rrc_container.resize(msg4_pdu.length());
+      std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.begin());
     } else if (msg.pdu.init_msg().value.type().value ==
                asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
       // Generate a dummy F1 Setup response message and pass it back to the DU.
@@ -247,10 +247,10 @@ public:
 
       auto& setup_res = response.pdu.successful_outcome().value.f1_setup_resp();
       // Use the same transaction ID as in the request message.
-      setup_res->transaction_id.value = msg.pdu.init_msg().value.f1_setup_request()->transaction_id.value;
-      setup_res->gnb_cu_name_present  = true;
-      setup_res->gnb_cu_name.value.from_string("srsCU");
-      setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
+      setup_res->transaction_id      = msg.pdu.init_msg().value.f1_setup_request()->transaction_id;
+      setup_res->gnb_cu_name_present = true;
+      setup_res->gnb_cu_name.from_string("srsCU");
+      setup_res->gnb_cu_rrc_version.latest_rrc_version.from_number(2);
     } else {
       srsran::byte_buffer buffer;
       asn1::bit_ref       bref(buffer);

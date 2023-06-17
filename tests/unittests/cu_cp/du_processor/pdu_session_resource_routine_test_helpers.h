@@ -39,8 +39,8 @@ protected:
 
     fill_f1ap_ue_context_modification_request(ctx_mod, request);
 
-    ctx_mod->gnb_du_ue_f1ap_id->value = 0;
-    ctx_mod->gnb_cu_ue_f1ap_id->value = 1;
+    ctx_mod->gnb_du_ue_f1ap_id = 0;
+    ctx_mod->gnb_cu_ue_f1ap_id = 1;
 
     byte_buffer   packed_pdu;
     asn1::bit_ref bref(packed_pdu);

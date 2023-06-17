@@ -71,22 +71,22 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1_setup_request_s& setup_req = msg.pdu.init_msg().value.f1_setup_request();
 
-  setup_req->transaction_id.value = transaction.id();
+  setup_req->transaction_id = transaction.id();
 
   // DU-global parameters.
-  setup_req->gnb_du_id->value    = request.gnb_du_id;
+  setup_req->gnb_du_id           = request.gnb_du_id;
   setup_req->gnb_du_name_present = not request.gnb_du_name.empty();
   if (setup_req->gnb_du_name_present) {
-    setup_req->gnb_du_name.value.from_string(request.gnb_du_name);
+    setup_req->gnb_du_name.from_string(request.gnb_du_name);
   }
-  setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(request.rrc_version);
+  setup_req->gnb_du_rrc_version.latest_rrc_version.from_number(request.rrc_version);
 
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.value.resize(request.served_cells.size());
+  setup_req->gnb_du_served_cells_list.resize(request.served_cells.size());
   for (unsigned i = 0; i != request.served_cells.size(); ++i) {
     const f1_cell_setup_params& cell_cfg = request.served_cells[i];
-    setup_req->gnb_du_served_cells_list.value[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
-    gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
+    setup_req->gnb_du_served_cells_list[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
+    gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list[i]->gnb_du_served_cells_item();
 
     // Fill Served PLMNs
     f1ap_cell.served_cell_info.served_plmns.resize(1);
@@ -167,7 +167,7 @@ bool f1ap_du_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = std::chrono::seconds{f1_setup_fail.time_to_wait->to_number()};
+  time_to_wait = std::chrono::seconds{f1_setup_fail.time_to_wait.to_number()};
   return true;
 }
 
@@ -194,7 +194,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     res.success = false;
   } else {
     logger.debug("Received PDU with unsuccessful outcome cause={}",
-                 get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause.value));
+                 get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause));
     res.success = false;
   }
   return res;

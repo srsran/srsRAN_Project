@@ -59,7 +59,7 @@ void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
 
   if (not u.cu_ue_id.has_value()) {
     u.cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id.value);
+        this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
   }
 
   // Handle response from DU.

@@ -95,8 +95,8 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
   }
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
   ASSERT_TRUE(is_ue_context_release_complete_valid(cu_notifier.last_f1ap_msgs.back(),
-                                                   (gnb_du_ue_f1ap_id_t)cmd->gnb_du_ue_f1ap_id->value,
-                                                   (gnb_cu_ue_f1ap_id_t)cmd->gnb_cu_ue_f1ap_id->value));
+                                                   (gnb_du_ue_f1ap_id_t)cmd->gnb_du_ue_f1ap_id,
+                                                   (gnb_cu_ue_f1ap_id_t)cmd->gnb_cu_ue_f1ap_id));
 }
 
 TEST_F(du_high_tester, when_du_high_is_stopped_then_ues_are_removed)

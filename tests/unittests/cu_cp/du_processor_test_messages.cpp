@@ -28,7 +28,7 @@ void srsran::srs_cu_cp::generate_f1_setup_request_base(cu_cp_f1_setup_request& f
 {
   f1ap_message f1setup_msg                                                              = generate_f1_setup_request(0);
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
-  f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list->clear();
+  f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.clear();
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
 }
 
@@ -36,17 +36,15 @@ void srsran::srs_cu_cp::generate_f1_setup_request_with_too_many_cells(cu_cp_f1_s
 {
   f1ap_message f1setup_msg  = generate_f1_setup_request(0);
   auto&        f1_setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
-  f1_setup_req->gnb_du_served_cells_list->clear();
+  f1_setup_req->gnb_du_served_cells_list.clear();
 
   f1_setup_req->gnb_du_served_cells_list_present = true;
-  f1_setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
-  f1_setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
 
   for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS + 1;
        du_cell_idx_int++) {
-    f1_setup_req->gnb_du_served_cells_list.value.push_back({});
-    f1_setup_req->gnb_du_served_cells_list.value.back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
-    f1_setup_req->gnb_du_served_cells_list.value.back()->gnb_du_served_cells_item() =
+    f1_setup_req->gnb_du_served_cells_list.push_back({});
+    f1_setup_req->gnb_du_served_cells_list.back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
+    f1_setup_req->gnb_du_served_cells_list.back()->gnb_du_served_cells_item() =
         generate_served_cells_item(du_cell_idx_int, du_cell_idx_int);
   }
   fill_f1_setup_request(f1_setup_request, f1setup_msg.pdu.init_msg().value.f1_setup_request());
