@@ -39,7 +39,7 @@ struct cli_triggered_list_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cli_triggered_list_r16_c() = default;
@@ -88,7 +88,7 @@ struct cells_triggered_list_item_c_ {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cells_triggered_list_item_c_() = default;
@@ -193,7 +193,7 @@ struct var_log_meas_cfg_r16_ies_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     report_type_c_() = default;
@@ -278,7 +278,7 @@ struct var_meas_cfg_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     s_measure_cfg_c_() = default;
@@ -361,7 +361,7 @@ struct var_meas_idle_cfg_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<meas_idle_dur_r16_opts> meas_idle_dur_r16_e_;
+  using meas_idle_dur_r16_e_ = enumerated<meas_idle_dur_r16_opts>;
 
   // member variables
   meas_idle_carrier_list_nr_r16_l_    meas_idle_carrier_list_nr_r16;

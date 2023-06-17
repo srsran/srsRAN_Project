@@ -44,7 +44,7 @@ struct gnss_id_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gnss_id_r16_opts, true> gnss_id_r16_e_;
+  using gnss_id_r16_e_ = enumerated<gnss_id_r16_opts, true>;
 
   // member variables
   bool           ext = false;
@@ -64,7 +64,7 @@ struct sbas_id_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sbas_id_r16_opts, true> sbas_id_r16_e_;
+  using sbas_id_r16_e_ = enumerated<sbas_id_r16_opts, true>;
 
   // member variables
   bool           ext = false;
@@ -109,7 +109,7 @@ struct npn_id_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_id_r16_c() = default;
@@ -160,7 +160,7 @@ struct npn_id_info_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<cell_reserved_for_oper_r16_opts> cell_reserved_for_oper_r16_e_;
+  using cell_reserved_for_oper_r16_e_ = enumerated<cell_reserved_for_oper_r16_opts>;
 
   // member variables
   bool                          ext                     = false;
@@ -190,7 +190,7 @@ struct plmn_id_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<cell_reserved_for_oper_opts> cell_reserved_for_oper_e_;
+  using cell_reserved_for_oper_e_ = enumerated<cell_reserved_for_oper_opts>;
   using tracking_area_list_r17_l_ = bounded_array<fixed_bitstring<24>, 12>;
 
   // member variables
@@ -231,7 +231,7 @@ struct plmn_id_eutra_5_gc_c {
     const char* to_string() const;
     int8_t      to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   plmn_id_eutra_5_gc_c() = default;
@@ -281,7 +281,7 @@ struct cell_id_eutra_5_gc_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cell_id_eutra_5_gc_c() = default;
@@ -330,7 +330,7 @@ struct freq_component_r17_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<freq_component_r17_opts> freq_component_r17_e;
+using freq_component_r17_e = enumerated<freq_component_r17_opts>;
 
 // MeasQuantityResults ::= SEQUENCE
 struct meas_quant_results_s {
@@ -386,7 +386,7 @@ struct default_dc_location_r17_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   default_dc_location_r17_c() = default;
@@ -487,7 +487,7 @@ struct cc_group_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     offset_to_default_r17_c_() = default;
@@ -616,7 +616,7 @@ struct need_for_ncsg_intra_freq_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gap_ind_intra_r17_opts> gap_ind_intra_r17_e_;
+  using gap_ind_intra_r17_e_ = enumerated<gap_ind_intra_r17_opts>;
 
   // member variables
   uint8_t              serv_cell_id_r17 = 0;
@@ -635,7 +635,7 @@ struct need_for_ncsg_nr_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gap_ind_r17_opts> gap_ind_r17_e_;
+  using gap_ind_r17_e_ = enumerated<gap_ind_r17_opts>;
 
   // member variables
   uint16_t       band_nr_r17 = 1;
@@ -724,7 +724,7 @@ struct meas_result_nr_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<first_triggered_event_opts> first_triggered_event_e_;
+    using first_triggered_event_e_ = enumerated<first_triggered_event_opts>;
 
     // member variables
     bool                     time_between_events_r17_present = false;
@@ -762,7 +762,7 @@ struct need_for_ncsg_eutra_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gap_ind_r17_opts> gap_ind_r17_e_;
+  using gap_ind_r17_e_ = enumerated<gap_ind_r17_opts>;
 
   // member variables
   uint16_t       band_eutra_r17 = 1;
@@ -800,7 +800,7 @@ struct ul_tx_direct_current_carrier_info_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     serv_cell_info_r16_c_() = default;
@@ -883,7 +883,7 @@ struct wlan_rtt_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rtt_units_r16_opts, true> rtt_units_r16_e_;
+  using rtt_units_r16_e_ = enumerated<rtt_units_r16_opts, true>;
 
   // member variables
   bool             ext                      = false;
@@ -990,7 +990,7 @@ struct need_for_gaps_intra_freq_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gap_ind_intra_r16_opts> gap_ind_intra_r16_e_;
+  using gap_ind_intra_r16_e_ = enumerated<gap_ind_intra_r16_opts>;
 
   // member variables
   uint8_t              serv_cell_id_r16 = 0;
@@ -1009,7 +1009,7 @@ struct need_for_gaps_nr_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<gap_ind_r16_opts> gap_ind_r16_e_;
+  using gap_ind_r16_e_ = enumerated<gap_ind_r16_opts>;
 
   // member variables
   uint16_t       band_nr_r16 = 1;
@@ -1117,7 +1117,7 @@ struct sl_rlc_mode_ind_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     sl_mode_r16_c_() = default;
@@ -1187,7 +1187,7 @@ struct affected_carrier_freq_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<interference_direction_r16_opts> interference_direction_r16_e_;
+  using interference_direction_r16_e_ = enumerated<interference_direction_r16_opts>;
 
   // member variables
   uint32_t                      carrier_freq_r16 = 0;
@@ -1316,7 +1316,7 @@ struct per_ra_info_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   per_ra_info_r16_c() = default;
@@ -1398,7 +1398,7 @@ struct reduced_aggr_bw_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<reduced_aggr_bw_opts> reduced_aggr_bw_e;
+using reduced_aggr_bw_e = enumerated<reduced_aggr_bw_opts>;
 
 // ReducedAggregatedBandwidth-r17 ::= ENUMERATED
 struct reduced_aggr_bw_r17_opts {
@@ -1408,7 +1408,7 @@ struct reduced_aggr_bw_r17_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<reduced_aggr_bw_r17_opts> reduced_aggr_bw_r17_e;
+using reduced_aggr_bw_r17_e = enumerated<reduced_aggr_bw_r17_opts>;
 
 // ResultsPerSSB-IndexList-r16 ::= SEQUENCE (SIZE (1..32)) OF ResultsPerSSB-IndexIdle-r16
 using results_per_ssb_idx_list_r16_l = dyn_array<results_per_ssb_idx_idle_r16_s>;
@@ -1457,13 +1457,13 @@ struct sl_drx_cfg_uc_semi_static_r17_s {
       const char* to_string() const;
       uint16_t    to_number() const;
     };
-    typedef enumerated<milli_seconds_opts> milli_seconds_e_;
+    using milli_seconds_e_ = enumerated<milli_seconds_opts>;
     struct types_opts {
       enum options { sub_milli_seconds, milli_seconds, nulltype } value;
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     sl_drx_on_dur_timer_r17_c_() = default;
@@ -1535,7 +1535,7 @@ struct sl_drx_cfg_uc_semi_static_r17_s {
       const char* to_string() const;
       uint16_t    to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     sl_drx_cycle_start_offset_r17_c_() = default;
@@ -1794,7 +1794,7 @@ struct sl_tx_res_req_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_cast_type_r16_opts> sl_cast_type_r16_e_;
+  using sl_cast_type_r16_e_         = enumerated<sl_cast_type_r16_opts>;
   using sl_rlc_mode_ind_list_r16_l_ = dyn_array<sl_rlc_mode_ind_r16_s>;
   using sl_qos_info_list_r16_l_     = dyn_array<sl_qos_info_r16_s>;
   using sl_type_tx_sync_list_r16_l_ = bounded_array<sl_type_tx_sync_r16_e, 8>;
@@ -1861,7 +1861,7 @@ struct visited_pscell_info_r17_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       nr_cell_id_r17_c_() = default;
@@ -1909,7 +1909,7 @@ struct visited_pscell_info_r17_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       eutra_cell_id_r17_c_() = default;
@@ -1956,7 +1956,7 @@ struct visited_pscell_info_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     visited_cell_id_r17_c_() = default;
@@ -2042,7 +2042,7 @@ struct mu_si_m_assist_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<musim_preferred_rrc_state_r17_opts> musim_preferred_rrc_state_r17_e_;
+  using musim_preferred_rrc_state_r17_e_ = enumerated<musim_preferred_rrc_state_r17_opts>;
 
   // member variables
   bool                             musim_preferred_rrc_state_r17_present = false;
@@ -2235,7 +2235,7 @@ struct min_sched_offset_pref_ext_r17_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_480k_hz_r17_opts> preferred_k0_scs_480k_hz_r17_e_;
+    using preferred_k0_scs_480k_hz_r17_e_ = enumerated<preferred_k0_scs_480k_hz_r17_opts>;
     struct preferred_k0_scs_960k_hz_r17_opts {
       enum options { sl8, sl16, sl32, sl48, nulltype } value;
       typedef uint8_t number_type;
@@ -2243,7 +2243,7 @@ struct min_sched_offset_pref_ext_r17_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_960k_hz_r17_opts> preferred_k0_scs_960k_hz_r17_e_;
+    using preferred_k0_scs_960k_hz_r17_e_ = enumerated<preferred_k0_scs_960k_hz_r17_opts>;
 
     // member variables
     bool                            preferred_k0_scs_480k_hz_r17_present = false;
@@ -2259,7 +2259,7 @@ struct min_sched_offset_pref_ext_r17_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_480k_hz_r17_opts> preferred_k2_scs_480k_hz_r17_e_;
+    using preferred_k2_scs_480k_hz_r17_e_ = enumerated<preferred_k2_scs_480k_hz_r17_opts>;
     struct preferred_k2_scs_960k_hz_r17_opts {
       enum options { sl8, sl16, sl32, sl48, nulltype } value;
       typedef uint8_t number_type;
@@ -2267,7 +2267,7 @@ struct min_sched_offset_pref_ext_r17_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_960k_hz_r17_opts> preferred_k2_scs_960k_hz_r17_e_;
+    using preferred_k2_scs_960k_hz_r17_e_ = enumerated<preferred_k2_scs_960k_hz_r17_opts>;
 
     // member variables
     bool                            preferred_k2_scs_480k_hz_r17_present = false;
@@ -2402,7 +2402,7 @@ struct sib_type_r17_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<sib_type_r17_opts> sib_type_r17_e;
+using sib_type_r17_e = enumerated<sib_type_r17_opts>;
 
 // SL-TrafficPatternInfo-r16 ::= SEQUENCE
 struct sl_traffic_pattern_info_r16_s {
@@ -2413,7 +2413,7 @@ struct sl_traffic_pattern_info_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<traffic_periodicity_r16_opts> traffic_periodicity_r16_e_;
+  using traffic_periodicity_r16_e_ = enumerated<traffic_periodicity_r16_opts>;
 
   // member variables
   traffic_periodicity_r16_e_ traffic_periodicity_r16;
@@ -2435,7 +2435,7 @@ struct sl_tx_res_req_v1700_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_drx_ind_r17_opts> sl_drx_ind_r17_e_;
+  using sl_drx_ind_r17_e_ = enumerated<sl_drx_ind_r17_opts>;
 
   // member variables
   bool                            ext                    = false;
@@ -2459,7 +2459,7 @@ struct sl_tx_res_req_comm_relay_r17_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sl_tx_res_req_comm_relay_r17_c() = default;
@@ -2555,7 +2555,7 @@ struct cho_candidate_cell_r17_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cho_candidate_cell_r17_c() = default;
@@ -2665,7 +2665,7 @@ struct drx_pref_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<preferred_drx_inactivity_timer_r16_opts> preferred_drx_inactivity_timer_r16_e_;
+  using preferred_drx_inactivity_timer_r16_e_ = enumerated<preferred_drx_inactivity_timer_r16_opts>;
   struct preferred_drx_long_cycle_r16_opts {
     enum options {
       ms10,
@@ -2707,7 +2707,7 @@ struct drx_pref_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<preferred_drx_long_cycle_r16_opts> preferred_drx_long_cycle_r16_e_;
+  using preferred_drx_long_cycle_r16_e_ = enumerated<preferred_drx_long_cycle_r16_opts>;
   struct preferred_drx_short_cycle_r16_opts {
     enum options {
       ms2,
@@ -2749,7 +2749,7 @@ struct drx_pref_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<preferred_drx_short_cycle_r16_opts> preferred_drx_short_cycle_r16_e_;
+  using preferred_drx_short_cycle_r16_e_ = enumerated<preferred_drx_short_cycle_r16_opts>;
 
   // member variables
   bool                                  preferred_drx_inactivity_timer_r16_present  = false;
@@ -3033,7 +3033,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_15k_hz_r16_opts> preferred_k0_scs_15k_hz_r16_e_;
+    using preferred_k0_scs_15k_hz_r16_e_ = enumerated<preferred_k0_scs_15k_hz_r16_opts>;
     struct preferred_k0_scs_30k_hz_r16_opts {
       enum options { sl1, sl2, sl4, sl6, nulltype } value;
       typedef uint8_t number_type;
@@ -3041,7 +3041,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_30k_hz_r16_opts> preferred_k0_scs_30k_hz_r16_e_;
+    using preferred_k0_scs_30k_hz_r16_e_ = enumerated<preferred_k0_scs_30k_hz_r16_opts>;
     struct preferred_k0_scs_60k_hz_r16_opts {
       enum options { sl2, sl4, sl8, sl12, nulltype } value;
       typedef uint8_t number_type;
@@ -3049,7 +3049,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_60k_hz_r16_opts> preferred_k0_scs_60k_hz_r16_e_;
+    using preferred_k0_scs_60k_hz_r16_e_ = enumerated<preferred_k0_scs_60k_hz_r16_opts>;
     struct preferred_k0_scs_120k_hz_r16_opts {
       enum options { sl2, sl4, sl8, sl12, nulltype } value;
       typedef uint8_t number_type;
@@ -3057,7 +3057,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k0_scs_120k_hz_r16_opts> preferred_k0_scs_120k_hz_r16_e_;
+    using preferred_k0_scs_120k_hz_r16_e_ = enumerated<preferred_k0_scs_120k_hz_r16_opts>;
 
     // member variables
     bool                            preferred_k0_scs_15k_hz_r16_present  = false;
@@ -3077,7 +3077,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_15k_hz_r16_opts> preferred_k2_scs_15k_hz_r16_e_;
+    using preferred_k2_scs_15k_hz_r16_e_ = enumerated<preferred_k2_scs_15k_hz_r16_opts>;
     struct preferred_k2_scs_30k_hz_r16_opts {
       enum options { sl1, sl2, sl4, sl6, nulltype } value;
       typedef uint8_t number_type;
@@ -3085,7 +3085,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_30k_hz_r16_opts> preferred_k2_scs_30k_hz_r16_e_;
+    using preferred_k2_scs_30k_hz_r16_e_ = enumerated<preferred_k2_scs_30k_hz_r16_opts>;
     struct preferred_k2_scs_60k_hz_r16_opts {
       enum options { sl2, sl4, sl8, sl12, nulltype } value;
       typedef uint8_t number_type;
@@ -3093,7 +3093,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_60k_hz_r16_opts> preferred_k2_scs_60k_hz_r16_e_;
+    using preferred_k2_scs_60k_hz_r16_e_ = enumerated<preferred_k2_scs_60k_hz_r16_opts>;
     struct preferred_k2_scs_120k_hz_r16_opts {
       enum options { sl2, sl4, sl8, sl12, nulltype } value;
       typedef uint8_t number_type;
@@ -3101,7 +3101,7 @@ struct min_sched_offset_pref_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<preferred_k2_scs_120k_hz_r16_opts> preferred_k2_scs_120k_hz_r16_e_;
+    using preferred_k2_scs_120k_hz_r16_e_ = enumerated<preferred_k2_scs_120k_hz_r16_opts>;
 
     // member variables
     bool                            preferred_k2_scs_15k_hz_r16_present  = false;
@@ -3136,7 +3136,7 @@ struct nr_prs_meas_info_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts, true> types;
+    using types = enumerated<types_opts, true>;
 
     // choice methods
     nr_meas_prs_repeat_and_offset_r16_c_() = default;
@@ -3208,7 +3208,7 @@ struct nr_prs_meas_info_r16_s {
     float       to_number() const;
     const char* to_number_string() const;
   };
-  typedef enumerated<nr_meas_prs_len_r16_opts> nr_meas_prs_len_r16_e_;
+  using nr_meas_prs_len_r16_e_ = enumerated<nr_meas_prs_len_r16_opts>;
 
   // member variables
   bool                                 ext                = false;
@@ -3233,7 +3233,7 @@ struct nr_time_stamp_r17_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     nr_slot_r17_c_() = default;
@@ -3319,7 +3319,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<msg1_fdm_r16_opts> msg1_fdm_r16_e_;
+  using msg1_fdm_r16_e_ = enumerated<msg1_fdm_r16_opts>;
   struct msg1_fdmcfra_r16_opts {
     enum options { one, two, four, eight, nulltype } value;
     typedef uint8_t number_type;
@@ -3327,7 +3327,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<msg1_fdmcfra_r16_opts> msg1_fdmcfra_r16_e_;
+  using msg1_fdmcfra_r16_e_ = enumerated<msg1_fdmcfra_r16_opts>;
   struct msg1_scs_from_prach_cfg_idx_r16_opts {
     enum options { khz1dot25, khz5, spare2, spare1, nulltype } value;
     typedef float number_type;
@@ -3336,7 +3336,7 @@ struct ra_info_common_r16_s {
     float       to_number() const;
     const char* to_number_string() const;
   };
-  typedef enumerated<msg1_scs_from_prach_cfg_idx_r16_opts> msg1_scs_from_prach_cfg_idx_r16_e_;
+  using msg1_scs_from_prach_cfg_idx_r16_e_ = enumerated<msg1_scs_from_prach_cfg_idx_r16_opts>;
   struct msg1_scs_from_prach_cfg_idx_cfra_r16_opts {
     enum options { khz1dot25, khz5, spare2, spare1, nulltype } value;
     typedef float number_type;
@@ -3345,7 +3345,7 @@ struct ra_info_common_r16_s {
     float       to_number() const;
     const char* to_number_string() const;
   };
-  typedef enumerated<msg1_scs_from_prach_cfg_idx_cfra_r16_opts> msg1_scs_from_prach_cfg_idx_cfra_r16_e_;
+  using msg1_scs_from_prach_cfg_idx_cfra_r16_e_ = enumerated<msg1_scs_from_prach_cfg_idx_cfra_r16_opts>;
   struct msg_a_ro_fdm_r17_opts {
     enum options { one, two, four, eight, nulltype } value;
     typedef uint8_t number_type;
@@ -3353,7 +3353,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<msg_a_ro_fdm_r17_opts> msg_a_ro_fdm_r17_e_;
+  using msg_a_ro_fdm_r17_e_ = enumerated<msg_a_ro_fdm_r17_opts>;
   struct msg_a_ro_fdmcfra_r17_opts {
     enum options { one, two, four, eight, nulltype } value;
     typedef uint8_t number_type;
@@ -3361,7 +3361,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<msg_a_ro_fdmcfra_r17_opts> msg_a_ro_fdmcfra_r17_e_;
+  using msg_a_ro_fdmcfra_r17_e_ = enumerated<msg_a_ro_fdmcfra_r17_opts>;
   struct msg_a_scs_from_prach_cfg_idx_r17_opts {
     enum options { khz1dot25, khz5, spare2, spare1, nulltype } value;
     typedef float number_type;
@@ -3370,7 +3370,7 @@ struct ra_info_common_r16_s {
     float       to_number() const;
     const char* to_number_string() const;
   };
-  typedef enumerated<msg_a_scs_from_prach_cfg_idx_r17_opts> msg_a_scs_from_prach_cfg_idx_r17_e_;
+  using msg_a_scs_from_prach_cfg_idx_r17_e_ = enumerated<msg_a_scs_from_prach_cfg_idx_r17_opts>;
   struct msg_a_trans_max_r17_opts {
     enum options { n1, n2, n4, n6, n8, n10, n20, n50, n100, n200, nulltype } value;
     typedef uint8_t number_type;
@@ -3378,7 +3378,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<msg_a_trans_max_r17_opts> msg_a_trans_max_r17_e_;
+  using msg_a_trans_max_r17_e_ = enumerated<msg_a_trans_max_r17_opts>;
   struct nrof_msg_a_po_fdm_r17_opts {
     enum options { one, two, four, eight, nulltype } value;
     typedef uint8_t number_type;
@@ -3386,7 +3386,7 @@ struct ra_info_common_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<nrof_msg_a_po_fdm_r17_opts> nrof_msg_a_po_fdm_r17_e_;
+  using nrof_msg_a_po_fdm_r17_e_       = enumerated<nrof_msg_a_po_fdm_r17_opts>;
   using intended_sibs_r17_l_           = bounded_array<sib_type_r17_e, 32>;
   using ssbs_for_si_acquisition_r17_l_ = dyn_array<uint8_t>;
 
@@ -3523,7 +3523,7 @@ struct release_pref_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<preferred_rrc_state_r16_opts> preferred_rrc_state_r16_e_;
+  using preferred_rrc_state_r16_e_ = enumerated<preferred_rrc_state_r16_opts>;
 
   // member variables
   preferred_rrc_state_r16_e_ preferred_rrc_state_r16;
@@ -3594,14 +3594,14 @@ struct sl_tx_res_req_disc_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_cast_type_disc_r17_opts> sl_cast_type_disc_r17_e_;
+  using sl_cast_type_disc_r17_e_         = enumerated<sl_cast_type_disc_r17_opts>;
   using sl_type_tx_sync_list_disc_r17_l_ = bounded_array<sl_type_tx_sync_r16_e, 8>;
   struct sl_discovery_type_r17_opts {
     enum options { relay, non_relay, nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_discovery_type_r17_opts> sl_discovery_type_r17_e_;
+  using sl_discovery_type_r17_e_ = enumerated<sl_discovery_type_r17_opts>;
 
   // member variables
   bool                             ext                               = false;
@@ -3634,7 +3634,7 @@ struct ue_assist_info_v1700_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<scg_deactivation_pref_r17_opts> scg_deactivation_pref_r17_e_;
+  using scg_deactivation_pref_r17_e_ = enumerated<scg_deactivation_pref_r17_opts>;
 
   // member variables
   bool                               ul_gap_fr2_pref_r17_present                = false;
@@ -3723,7 +3723,7 @@ struct visited_cell_info_r16_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       nr_cell_id_r16_c_() = default;
@@ -3771,7 +3771,7 @@ struct visited_cell_info_r16_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       eutra_cell_id_r16_c_() = default;
@@ -3818,7 +3818,7 @@ struct visited_cell_info_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     visited_cell_id_r16_c_() = default;
@@ -3904,7 +3904,7 @@ struct fail_info_daps_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<fail_type_r16_opts> fail_type_r16_e_;
+  using fail_type_r16_e_ = enumerated<fail_type_r16_opts>;
 
   // member variables
   fail_type_r16_e_ fail_type_r16;
@@ -3935,7 +3935,7 @@ struct meas_report_app_layer_r17_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<app_layer_session_status_r17_opts> app_layer_session_status_r17_e_;
+  using app_layer_session_status_r17_e_ = enumerated<app_layer_session_status_r17_opts>;
 
   // member variables
   bool                            app_layer_session_status_r17_present = false;
@@ -4106,7 +4106,7 @@ struct meas_results_sl_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts, true> types;
+    using types = enumerated<types_opts, true>;
 
     // choice methods
     types       type() const { return types::meas_result_nr_sl_r16; }
@@ -4172,7 +4172,7 @@ struct ra_report_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     cell_id_r16_c_() = default;
@@ -4239,7 +4239,7 @@ struct ra_report_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<ra_purpose_r16_opts> ra_purpose_r16_e_;
+  using ra_purpose_r16_e_ = enumerated<ra_purpose_r16_opts>;
 
   // member variables
   bool                 ext                        = false;
@@ -4265,7 +4265,7 @@ struct rrc_recfg_complete_v1560_ies_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     scg_resp_c_() = default;
@@ -4351,7 +4351,7 @@ struct sl_fail_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_fail_r16_opts> sl_fail_r16_e_;
+  using sl_fail_r16_e_ = enumerated<sl_fail_r16_opts>;
 
   // member variables
   fixed_bitstring<24> sl_dest_id_r16;
@@ -4527,7 +4527,7 @@ struct delay_budget_report_c {
     const char* to_string() const;
     int16_t     to_number() const;
   };
-  typedef enumerated<type1_opts> type1_e_;
+  using type1_e_ = enumerated<type1_opts>;
   struct types_opts {
     enum options { type1, /*...*/ nulltype } value;
     typedef uint8_t number_type;
@@ -4535,7 +4535,7 @@ struct delay_budget_report_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts, true> types;
+  using types = enumerated<types_opts, true>;
 
   // choice methods
   types       type() const { return types::type1; }
@@ -4557,7 +4557,7 @@ struct fail_info_rlc_bearer_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<fail_type_opts> fail_type_e_;
+  using fail_type_e_ = enumerated<fail_type_opts>;
 
   // member variables
   uint8_t      cell_group_id = 0;
@@ -4601,7 +4601,7 @@ struct fail_report_mcg_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<fail_type_r16_opts> fail_type_r16_e_;
+  using fail_type_r16_e_ = enumerated<fail_type_r16_opts>;
 
   // member variables
   bool                      ext                   = false;
@@ -4639,7 +4639,7 @@ struct fail_report_scg_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<fail_type_opts> fail_type_e_;
+  using fail_type_e_ = enumerated<fail_type_opts>;
   struct fail_type_v1610_opts {
     enum options {
       scg_lbt_fail_r16,
@@ -4657,7 +4657,7 @@ struct fail_report_scg_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<fail_type_v1610_opts> fail_type_v1610_e_;
+  using fail_type_v1610_e_ = enumerated<fail_type_v1610_opts>;
   struct prev_pscell_id_r17_s_ {
     uint16_t pci_r17          = 0;
     uint32_t carrier_freq_r17 = 0;
@@ -4709,7 +4709,7 @@ struct fail_report_scg_eutra_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<fail_type_opts> fail_type_e_;
+  using fail_type_e_ = enumerated<fail_type_opts>;
 
   // member variables
   bool                              ext = false;
@@ -4803,7 +4803,7 @@ struct location_meas_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts, true, 2> types;
+  using types = enumerated<types_opts, true, 2>;
 
   // choice methods
   location_meas_info_c() = default;
@@ -4884,7 +4884,7 @@ struct meas_results_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts, true, 3> types;
+    using types = enumerated<types_opts, true, 3>;
 
     // choice methods
     meas_result_neigh_cells_c_() = default;
@@ -5038,7 +5038,7 @@ struct pos_sib_req_info_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<pos_sib_type_r16_opts, true, 7> pos_sib_type_r16_e_;
+  using pos_sib_type_r16_e_ = enumerated<pos_sib_type_r16_opts, true, 7>;
 
   // member variables
   bool                gnss_id_r16_present = false;
@@ -5069,7 +5069,7 @@ struct rlf_report_r16_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       prev_pcell_id_r16_c_() = default;
@@ -5118,7 +5118,7 @@ struct rlf_report_r16_c {
 
           const char* to_string() const;
         };
-        typedef enumerated<types_opts> types;
+        using types = enumerated<types_opts>;
 
         // choice methods
         nr_failed_pcell_id_r16_c_() = default;
@@ -5166,7 +5166,7 @@ struct rlf_report_r16_c {
 
           const char* to_string() const;
         };
-        typedef enumerated<types_opts> types;
+        using types = enumerated<types_opts>;
 
         // choice methods
         eutra_failed_pcell_id_r16_c_() = default;
@@ -5213,7 +5213,7 @@ struct rlf_report_r16_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       failed_pcell_id_r16_c_() = default;
@@ -5261,7 +5261,7 @@ struct rlf_report_r16_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       reconnect_cell_id_r16_c_() = default;
@@ -5308,7 +5308,7 @@ struct rlf_report_r16_c {
 
       const char* to_string() const;
     };
-    typedef enumerated<conn_fail_type_r16_opts> conn_fail_type_r16_e_;
+    using conn_fail_type_r16_e_ = enumerated<conn_fail_type_r16_opts>;
     struct rlf_cause_r16_opts {
       enum options {
         t310_expiry,
@@ -5326,20 +5326,20 @@ struct rlf_report_r16_c {
       const char* to_string() const;
       uint16_t    to_number() const;
     };
-    typedef enumerated<rlf_cause_r16_opts> rlf_cause_r16_e_;
+    using rlf_cause_r16_e_ = enumerated<rlf_cause_r16_opts>;
     struct last_ho_type_r17_opts {
       enum options { cho, daps, spare2, spare1, nulltype } value;
 
       const char* to_string() const;
     };
-    typedef enumerated<last_ho_type_r17_opts> last_ho_type_r17_e_;
+    using last_ho_type_r17_e_ = enumerated<last_ho_type_r17_opts>;
     struct cho_cell_id_r17_c_ {
       struct types_opts {
         enum options { cell_global_id_r17, pci_arfcn_r17, nulltype } value;
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       cho_cell_id_r17_c_() = default;
@@ -5444,7 +5444,7 @@ struct rlf_report_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   rlf_report_r16_c() = default;
@@ -5519,7 +5519,7 @@ struct rrc_resume_complete_v1610_ies_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     scg_resp_r16_c_() = default;
@@ -5566,7 +5566,7 @@ struct rrc_resume_complete_v1610_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<mob_state_r16_opts> mob_state_r16_e_;
+  using mob_state_r16_e_ = enumerated<mob_state_r16_opts>;
 
   // member variables
   bool                            idle_meas_available_r16_present    = false;
@@ -5599,7 +5599,7 @@ struct rrc_setup_complete_v1610_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<mob_state_r16_opts> mob_state_r16_e_;
+  using mob_state_r16_e_ = enumerated<mob_state_r16_opts>;
 
   // member variables
   bool                           iab_node_ind_r16_present        = false;
@@ -5637,7 +5637,7 @@ struct s_nssai_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   s_nssai_c() = default;
@@ -5710,7 +5710,7 @@ struct sib_req_info_r16_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<sib_req_info_r16_opts> sib_req_info_r16_e;
+using sib_req_info_r16_e = enumerated<sib_req_info_r16_opts>;
 
 // SL-FailureList-r16 ::= SEQUENCE (SIZE (1..32)) OF SL-Failure-r16
 using sl_fail_list_r16_l = dyn_array<sl_fail_r16_s>;
@@ -5725,7 +5725,7 @@ struct sidelink_ue_info_nr_v1700_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<ue_type_r17_opts> ue_type_r17_e_;
+  using ue_type_r17_e_ = enumerated<ue_type_r17_opts>;
 
   // member variables
   bool                                   ue_type_r17_present                = false;
@@ -5806,7 +5806,7 @@ struct ue_positioning_assist_info_v1720_ies_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<ue_tx_teg_timing_error_margin_value_r17_opts> ue_tx_teg_timing_error_margin_value_r17_e_;
+  using ue_tx_teg_timing_error_margin_value_r17_e_ = enumerated<ue_tx_teg_timing_error_margin_value_r17_opts>;
 
   // member variables
   bool                                       ue_tx_teg_timing_error_margin_value_r17_present = false;
@@ -5889,7 +5889,7 @@ struct iab_other_info_r16_ies_s {
 
           const char* to_string() const;
         };
-        typedef enumerated<types_opts, true> types;
+        using types = enumerated<types_opts, true>;
 
         // choice methods
         iab_ip_v6_address_req_r16_c_() = default;
@@ -5945,7 +5945,7 @@ struct iab_other_info_r16_ies_s {
 
           const char* to_string() const;
         };
-        typedef enumerated<types_opts, true> types;
+        using types = enumerated<types_opts, true>;
 
         // choice methods
         iab_ip_v6_report_r16_c_() = default;
@@ -5999,7 +5999,7 @@ struct iab_other_info_r16_ies_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts, true> types;
+    using types = enumerated<types_opts, true>;
 
     // choice methods
     ip_info_type_r16_c_() = default;
@@ -6151,7 +6151,7 @@ struct rrc_setup_complete_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<guami_type_opts> guami_type_e_;
+  using guami_type_e_   = enumerated<guami_type_opts>;
   using s_nssai_list_l_ = dyn_array<s_nssai_c>;
   struct ng_5_g_s_tmsi_value_c_ {
     struct types_opts {
@@ -6159,7 +6159,7 @@ struct rrc_setup_complete_ies_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ng_5_g_s_tmsi_value_c_() = default;
@@ -6356,7 +6356,7 @@ struct ul_ded_msg_segment_r16_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rrc_msg_segment_type_r16_opts> rrc_msg_segment_type_r16_e_;
+  using rrc_msg_segment_type_r16_e_ = enumerated<rrc_msg_segment_type_r16_opts>;
 
   // member variables
   bool                        non_crit_ext_present = false;
@@ -6417,7 +6417,7 @@ struct counter_check_resp_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6463,7 +6463,7 @@ struct ded_sib_request_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6508,7 +6508,7 @@ struct fail_info_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6553,7 +6553,7 @@ struct iab_other_info_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6599,7 +6599,7 @@ struct location_meas_ind_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6644,7 +6644,7 @@ struct mb_si_nterest_ind_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6689,7 +6689,7 @@ struct mcg_fail_info_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6734,7 +6734,7 @@ struct meas_report_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6779,7 +6779,7 @@ struct rrc_recfg_complete_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6825,7 +6825,7 @@ struct rrc_reest_complete_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6871,7 +6871,7 @@ struct rrc_resume_complete_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6917,7 +6917,7 @@ struct rrc_setup_complete_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -6963,7 +6963,7 @@ struct scg_fail_info_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7008,7 +7008,7 @@ struct scg_fail_info_eutra_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7053,7 +7053,7 @@ struct security_mode_complete_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7099,7 +7099,7 @@ struct security_mode_fail_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7145,7 +7145,7 @@ struct sidelink_ue_info_nr_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7190,7 +7190,7 @@ struct ue_assist_info_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7235,7 +7235,7 @@ struct ue_cap_info_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7281,7 +7281,7 @@ struct ue_info_resp_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7327,7 +7327,7 @@ struct ue_positioning_assist_info_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7372,7 +7372,7 @@ struct ul_ded_msg_segment_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7417,7 +7417,7 @@ struct ul_info_transfer_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7463,7 +7463,7 @@ struct ul_info_transfer_irat_r16_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       c1_c_() = default;
@@ -7499,7 +7499,7 @@ struct ul_info_transfer_irat_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7545,7 +7545,7 @@ struct ul_info_transfer_mrdc_s {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       c1_c_() = default;
@@ -7581,7 +7581,7 @@ struct ul_info_transfer_mrdc_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -7644,7 +7644,7 @@ struct ul_dcch_msg_type_c {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     c1_c_() = default;
@@ -7881,7 +7881,7 @@ struct ul_dcch_msg_type_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       c2_c_() = default;
@@ -8034,7 +8034,7 @@ struct ul_dcch_msg_type_c {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     msg_class_ext_c_() = default;
@@ -8068,7 +8068,7 @@ struct ul_dcch_msg_type_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ul_dcch_msg_type_c() = default;

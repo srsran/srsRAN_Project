@@ -17,8 +17,6 @@
 #pragma once
 
 #include "srsran/asn1/asn1_utils.h"
-#include <cstdio>
-#include <stdarg.h>
 
 namespace asn1 {
 namespace e1ap {
@@ -239,7 +237,7 @@ struct drb_activity_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<drb_activity_opts, true> drb_activity_e;
+using drb_activity_e = enumerated<drb_activity_opts, true>;
 
 // DRB-Activity-ItemExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using drb_activity_item_ext_ies_o = protocol_ext_empty_o;
@@ -250,7 +248,7 @@ struct pdu_session_res_activity_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdu_session_res_activity_opts, true> pdu_session_res_activity_e;
+using pdu_session_res_activity_e = enumerated<pdu_session_res_activity_opts, true>;
 
 // PDU-Session-Resource-Activity-ItemExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using pdu_session_res_activity_item_ext_ies_o = protocol_ext_empty_o;
@@ -304,7 +302,7 @@ struct ue_activity_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_activity_opts, true> ue_activity_e;
+using ue_activity_e = enumerated<ue_activity_opts, true>;
 
 // ActivityInformation ::= CHOICE
 struct activity_info_c {
@@ -313,7 +311,7 @@ struct activity_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   activity_info_c() = default;
@@ -440,7 +438,7 @@ struct bearer_context_inactivity_notif_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -505,7 +503,7 @@ struct cell_group_info_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nof_tunnels; }
@@ -534,7 +532,7 @@ struct dl_tx_stop_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<dl_tx_stop_opts, true> dl_tx_stop_e;
+using dl_tx_stop_e = enumerated<dl_tx_stop_opts, true>;
 
 // RAT-Type ::= ENUMERATED
 struct rat_type_opts {
@@ -542,7 +540,7 @@ struct rat_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rat_type_opts, true> rat_type_e;
+using rat_type_e = enumerated<rat_type_opts, true>;
 
 // UL-Configuration ::= ENUMERATED
 struct ul_cfg_opts {
@@ -550,7 +548,7 @@ struct ul_cfg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ul_cfg_opts, true> ul_cfg_e;
+using ul_cfg_e = enumerated<ul_cfg_opts, true>;
 
 // Cell-Group-Information-Item ::= SEQUENCE
 struct cell_group_info_item_s {
@@ -652,7 +650,7 @@ struct eutran_bearer_context_mod_confirm_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drb_confirm_modified_list_eutran; }
@@ -684,7 +682,7 @@ struct ng_ran_bearer_context_mod_confirm_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_res_confirm_modified_list; }
@@ -717,7 +715,7 @@ struct sys_bearer_context_mod_confirm_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_mod_confirm_c() = default;
@@ -783,7 +781,7 @@ struct bearer_context_mod_confirm_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -847,7 +845,7 @@ struct type_of_error_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<type_of_error_opts, true> type_of_error_e;
+using type_of_error_e = enumerated<type_of_error_opts, true>;
 
 // Cause-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 using cause_ext_ies_o = protocol_ies_empty_o;
@@ -866,7 +864,7 @@ struct cause_misc_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_misc_opts, true> cause_misc_e;
+using cause_misc_e = enumerated<cause_misc_opts, true>;
 
 // CauseProtocol ::= ENUMERATED
 struct cause_protocol_opts {
@@ -884,7 +882,7 @@ struct cause_protocol_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_protocol_opts, true> cause_protocol_e;
+using cause_protocol_e = enumerated<cause_protocol_opts, true>;
 
 // CauseRadioNetwork ::= ENUMERATED
 struct cause_radio_network_opts {
@@ -929,7 +927,7 @@ struct cause_radio_network_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_radio_network_opts, true, 9> cause_radio_network_e;
+using cause_radio_network_e = enumerated<cause_radio_network_opts, true, 9>;
 
 // CauseTransport ::= ENUMERATED
 struct cause_transport_opts {
@@ -937,7 +935,7 @@ struct cause_transport_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_transport_opts, true, 1> cause_transport_e;
+using cause_transport_e = enumerated<cause_transport_opts, true, 1>;
 
 // CriticalityDiagnostics-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using crit_diagnostics_ext_ies_o = protocol_ext_empty_o;
@@ -968,7 +966,7 @@ struct trigger_msg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<trigger_msg_opts> trigger_msg_e;
+using trigger_msg_e = enumerated<trigger_msg_opts>;
 
 // Cause ::= CHOICE
 struct cause_c {
@@ -979,7 +977,7 @@ struct cause_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cause_c() = default;
@@ -1088,7 +1086,7 @@ struct bearer_context_mod_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1160,7 +1158,7 @@ struct dyn_5qi_descriptor_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -1204,7 +1202,7 @@ struct gbr_qos_flow_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::alt_qos_para_set_list; }
@@ -1236,7 +1234,7 @@ struct non_dyn_5qi_descriptor_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -1301,7 +1299,7 @@ struct dyn_5qi_descriptor_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<delay_crit_opts> delay_crit_e_;
+  using delay_crit_e_ = enumerated<delay_crit_opts>;
 
   // member variables
   bool                                 five_qi_present               = false;
@@ -1338,7 +1336,7 @@ struct ehc_dl_params_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::max_c_id_ehc_dl; }
@@ -1434,7 +1432,7 @@ struct pre_emption_cap_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pre_emption_cap_opts> pre_emption_cap_e;
+using pre_emption_cap_e = enumerated<pre_emption_cap_opts>;
 
 // Pre-emptionVulnerability ::= ENUMERATED
 struct pre_emption_vulnerability_opts {
@@ -1442,7 +1440,7 @@ struct pre_emption_vulnerability_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pre_emption_vulnerability_opts> pre_emption_vulnerability_e;
+using pre_emption_vulnerability_e = enumerated<pre_emption_vulnerability_opts>;
 
 // QoS-Characteristics-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 using qos_characteristics_ext_ies_o = protocol_ies_empty_o;
@@ -1453,7 +1451,7 @@ struct qos_flow_map_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<qos_flow_map_ind_opts, true> qos_flow_map_ind_e;
+using qos_flow_map_ind_e = enumerated<qos_flow_map_ind_opts, true>;
 
 // QosMonitoringDisabled ::= ENUMERATED
 struct qos_monitoring_disabled_opts {
@@ -1461,7 +1459,7 @@ struct qos_monitoring_disabled_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<qos_monitoring_disabled_opts, true> qos_monitoring_disabled_e;
+using qos_monitoring_disabled_e = enumerated<qos_monitoring_disabled_opts, true>;
 
 // QosMonitoringRequest ::= ENUMERATED
 struct qos_monitoring_request_opts {
@@ -1469,7 +1467,7 @@ struct qos_monitoring_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<qos_monitoring_request_opts> qos_monitoring_request_e;
+using qos_monitoring_request_e = enumerated<qos_monitoring_request_opts>;
 
 // TSCTrafficCharacteristics-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using tsc_traffic_characteristics_ext_ies_o = protocol_ext_empty_o;
@@ -1519,7 +1517,7 @@ struct ehc_common_params_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<ehc_c_id_len_opts, true> ehc_c_id_len_e_;
+  using ehc_c_id_len_e_ = enumerated<ehc_c_id_len_opts, true>;
 
   // member variables
   bool                                ie_exts_present = false;
@@ -1539,7 +1537,7 @@ struct ehc_dl_params_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<drb_continue_ehc_dl_opts, true, 1> drb_continue_ehc_dl_e_;
+  using drb_continue_ehc_dl_e_ = enumerated<drb_continue_ehc_dl_opts, true, 1>;
 
   // member variables
   drb_continue_ehc_dl_e_                            drb_continue_ehc_dl;
@@ -1563,7 +1561,7 @@ struct ehc_ul_params_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<drb_continue_ehc_ul_opts, true, 1> drb_continue_ehc_ul_e_;
+  using drb_continue_ehc_ul_e_ = enumerated<drb_continue_ehc_ul_opts, true, 1>;
 
   // member variables
   bool                            ie_exts_present = false;
@@ -1636,7 +1634,7 @@ struct qos_characteristics_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   qos_characteristics_c() = default;
@@ -1702,7 +1700,7 @@ struct qos_flow_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -1774,7 +1772,7 @@ struct qos_flow_level_qos_params_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -1822,7 +1820,7 @@ struct redundant_qos_flow_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<redundant_qos_flow_ind_opts> redundant_qos_flow_ind_e;
+using redundant_qos_flow_ind_e = enumerated<redundant_qos_flow_ind_opts>;
 
 using tsc_traffic_characteristics_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -1855,7 +1853,7 @@ struct add_pdcp_dupl_info_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<add_pdcp_dupl_info_opts, true> add_pdcp_dupl_info_e;
+using add_pdcp_dupl_info_e = enumerated<add_pdcp_dupl_info_opts, true>;
 
 // DAPSRequestInfo-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using daps_request_info_ext_ies_o = protocol_ext_empty_o;
@@ -1890,7 +1888,7 @@ struct discard_timer_extended_opts {
   float       to_number() const;
   const char* to_number_string() const;
 };
-typedef enumerated<discard_timer_extended_opts, true> discard_timer_extended_e;
+using discard_timer_extended_e = enumerated<discard_timer_extended_opts, true>;
 
 using ehc_params_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -1933,7 +1931,7 @@ struct pdcp_status_report_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdcp_status_report_ind_opts, true> pdcp_status_report_ind_e;
+using pdcp_status_report_ind_e = enumerated<pdcp_status_report_ind_opts, true>;
 
 struct qos_flow_item_ext_ies_container {
   template <class extT_>
@@ -1993,7 +1991,7 @@ struct qos_flow_qos_param_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -2072,19 +2070,19 @@ struct qos_flow_level_qos_params_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<reflective_qos_attribute_opts, true> reflective_qos_attribute_e_;
+  using reflective_qos_attribute_e_ = enumerated<reflective_qos_attribute_opts, true>;
   struct add_qos_info_opts {
     enum options { more_likely, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<add_qos_info_opts, true> add_qos_info_e_;
+  using add_qos_info_e_ = enumerated<add_qos_info_opts, true>;
   struct reflective_qos_ind_opts {
     enum options { enabled, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<reflective_qos_ind_opts, true> reflective_qos_ind_e_;
+  using reflective_qos_ind_e_ = enumerated<reflective_qos_ind_opts, true>;
 
   // member variables
   bool                                        gbr_qos_flow_info_present        = false;
@@ -2117,7 +2115,7 @@ struct rohc_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<continue_rohc_opts, true> continue_rohc_e_;
+  using continue_rohc_e_ = enumerated<continue_rohc_opts, true>;
 
   // member variables
   bool                   continue_rohc_present = false;
@@ -2183,7 +2181,7 @@ struct t_reordering_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<t_reordering_opts, true> t_reordering_e;
+using t_reordering_e = enumerated<t_reordering_opts, true>;
 
 // T-ReorderingTimer-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using t_reordering_timer_ext_ies_o = protocol_ext_empty_o;
@@ -2197,7 +2195,7 @@ struct up_params_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::qos_map_info; }
@@ -2227,7 +2225,7 @@ struct up_tnl_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   up_tnl_info_c() = default;
@@ -2279,7 +2277,7 @@ struct ul_only_rohc_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<continue_rohc_opts, true> continue_rohc_e_;
+  using continue_rohc_e_ = enumerated<continue_rohc_opts, true>;
 
   // member variables
   bool                           continue_rohc_present = false;
@@ -2304,7 +2302,7 @@ struct daps_request_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<daps_ind_opts, true> daps_ind_e_;
+  using daps_ind_e_ = enumerated<daps_ind_opts, true>;
 
   // member variables
   bool                                ext             = false;
@@ -2346,7 +2344,7 @@ struct data_forwarding_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::data_forwardingto_ng_ran_qos_flow_info_list; }
@@ -2381,7 +2379,7 @@ struct data_forwarding_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<data_forwarding_request_opts, true> data_forwarding_request_e;
+using data_forwarding_request_e = enumerated<data_forwarding_request_opts, true>;
 
 // DataForwardingtoE-UTRANInformationListItem-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using data_forwardingto_e_utran_info_list_item_ext_ies_o = protocol_ext_empty_o;
@@ -2392,7 +2390,7 @@ struct default_drb_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<default_drb_opts, true> default_drb_e;
+using default_drb_e = enumerated<default_drb_opts, true>;
 
 // DiscardTimer ::= ENUMERATED
 struct discard_timer_opts {
@@ -2420,7 +2418,7 @@ struct discard_timer_opts {
   const char* to_string() const;
   int16_t     to_number() const;
 };
-typedef enumerated<discard_timer_opts> discard_timer_e;
+using discard_timer_e = enumerated<discard_timer_opts>;
 
 // Duplication-Activation ::= ENUMERATED
 struct dupl_activation_opts {
@@ -2428,7 +2426,7 @@ struct dupl_activation_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<dupl_activation_opts, true> dupl_activation_e;
+using dupl_activation_e = enumerated<dupl_activation_opts, true>;
 
 // EarlyDataForwardingIndicator ::= ENUMERATED
 struct early_data_forwarding_ind_opts {
@@ -2436,7 +2434,7 @@ struct early_data_forwarding_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<early_data_forwarding_ind_opts, true> early_data_forwarding_ind_e;
+using early_data_forwarding_ind_e = enumerated<early_data_forwarding_ind_opts, true>;
 
 // EarlyForwardingCOUNTInfo ::= CHOICE
 struct early_forwarding_count_info_c {
@@ -2445,7 +2443,7 @@ struct early_forwarding_count_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   early_forwarding_count_info_c() = default;
@@ -2508,7 +2506,7 @@ struct early_forwarding_count_req_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<early_forwarding_count_req_opts, true> early_forwarding_count_req_e;
+using early_forwarding_count_req_e = enumerated<early_forwarding_count_req_opts, true>;
 
 // IgnoreMappingRuleIndication ::= ENUMERATED
 struct ignore_map_rule_ind_opts {
@@ -2516,7 +2514,7 @@ struct ignore_map_rule_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ignore_map_rule_ind_opts, true> ignore_map_rule_ind_e;
+using ignore_map_rule_ind_e = enumerated<ignore_map_rule_ind_opts, true>;
 
 // MaxIPrate ::= ENUMERATED
 struct max_ip_rate_opts {
@@ -2526,7 +2524,7 @@ struct max_ip_rate_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<max_ip_rate_opts, true> max_ip_rate_e;
+using max_ip_rate_e = enumerated<max_ip_rate_opts, true>;
 
 // MaximumIPdatarate-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using max_ip_datarate_ext_ies_o = protocol_ext_empty_o;
@@ -2537,7 +2535,7 @@ struct out_of_order_delivery_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<out_of_order_delivery_opts, true> out_of_order_delivery_e;
+using out_of_order_delivery_e = enumerated<out_of_order_delivery_opts, true>;
 
 // PDCP-Configuration-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 struct pdcp_cfg_ext_ies_o {
@@ -2548,7 +2546,7 @@ struct pdcp_cfg_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -2591,7 +2589,7 @@ struct pdcp_data_recovery_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdcp_data_recovery_opts, true> pdcp_data_recovery_e;
+using pdcp_data_recovery_e = enumerated<pdcp_data_recovery_opts, true>;
 
 // PDCP-Duplication ::= ENUMERATED
 struct pdcp_dupl_opts {
@@ -2599,7 +2597,7 @@ struct pdcp_dupl_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdcp_dupl_opts, true> pdcp_dupl_e;
+using pdcp_dupl_e = enumerated<pdcp_dupl_opts, true>;
 
 // PDCP-Reestablishment ::= ENUMERATED
 struct pdcp_reest_opts {
@@ -2607,7 +2605,7 @@ struct pdcp_reest_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdcp_reest_opts, true> pdcp_reest_e;
+using pdcp_reest_e = enumerated<pdcp_reest_opts, true>;
 
 // PDCP-SN-Size ::= ENUMERATED
 struct pdcp_sn_size_opts {
@@ -2617,7 +2615,7 @@ struct pdcp_sn_size_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<pdcp_sn_size_opts, true> pdcp_sn_size_e;
+using pdcp_sn_size_e = enumerated<pdcp_sn_size_opts, true>;
 
 // PDCP-SN-Status-Information-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using pdcp_sn_status_info_ext_ies_o = protocol_ext_empty_o;
@@ -2668,7 +2666,7 @@ struct qos_flows_drb_remap_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<qos_flows_drb_remap_opts, true> qos_flows_drb_remap_e;
+using qos_flows_drb_remap_e = enumerated<qos_flows_drb_remap_opts, true>;
 
 // QoS-Flows-to-be-forwarded-List ::= SEQUENCE (SIZE (1..64)) OF QoS-Flows-to-be-forwarded-Item
 using qos_flows_to_be_forwarded_list_l = dyn_array<qos_flows_to_be_forwarded_item_s>;
@@ -2686,7 +2684,7 @@ struct rlc_mode_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rlc_mode_opts, true> rlc_mode_e;
+using rlc_mode_e = enumerated<rlc_mode_opts, true>;
 
 // ROHC-Parameters ::= CHOICE
 struct rohc_params_c {
@@ -2695,7 +2693,7 @@ struct rohc_params_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   rohc_params_c() = default;
@@ -2758,7 +2756,7 @@ struct sdap_hdr_dl_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<sdap_hdr_dl_opts, true> sdap_hdr_dl_e;
+using sdap_hdr_dl_e = enumerated<sdap_hdr_dl_opts, true>;
 
 // SDAP-Header-UL ::= ENUMERATED
 struct sdap_hdr_ul_opts {
@@ -2766,7 +2764,7 @@ struct sdap_hdr_ul_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<sdap_hdr_ul_opts, true> sdap_hdr_ul_e;
+using sdap_hdr_ul_e = enumerated<sdap_hdr_ul_opts, true>;
 
 using t_reordering_timer_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -2819,7 +2817,7 @@ struct ul_data_split_thres_opts {
   const char* to_string() const;
   int32_t     to_number() const;
 };
-typedef enumerated<ul_data_split_thres_opts, true> ul_data_split_thres_e;
+using ul_data_split_thres_e = enumerated<ul_data_split_thres_opts, true>;
 
 // UP-Parameters-Item ::= SEQUENCE
 struct up_params_item_s {
@@ -2841,7 +2839,7 @@ struct confidentiality_protection_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<confidentiality_protection_ind_opts, true> confidentiality_protection_ind_e;
+using confidentiality_protection_ind_e = enumerated<confidentiality_protection_ind_opts, true>;
 
 // DRB-To-Modify-Item-NG-RAN-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 struct drb_to_modify_item_ng_ran_ext_ies_o {
@@ -2860,7 +2858,7 @@ struct drb_to_modify_item_ng_ran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -2913,7 +2911,7 @@ struct drb_to_setup_item_ng_ran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -2959,7 +2957,7 @@ struct drb_to_setup_mod_item_ng_ran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -3056,7 +3054,7 @@ struct integrity_protection_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<integrity_protection_ind_opts, true> integrity_protection_ind_e;
+using integrity_protection_ind_e = enumerated<integrity_protection_ind_opts, true>;
 
 using max_ip_datarate_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -3152,7 +3150,7 @@ struct pdcp_sn_status_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdcp_sn_status_request_opts, true> pdcp_sn_status_request_e;
+using pdcp_sn_status_request_e = enumerated<pdcp_sn_status_request_opts, true>;
 
 // QoS-Flow-QoS-Parameter-List ::= SEQUENCE (SIZE (1..64)) OF QoS-Flow-QoS-Parameter-Item
 using qos_flow_qos_param_list_l = dyn_array<qos_flow_qos_param_item_s>;
@@ -3448,7 +3446,7 @@ struct drb_to_setup_mod_item_eutran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::data_forwarding_source_ip_address; }
@@ -3510,7 +3508,7 @@ struct pdu_session_res_to_modify_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -3565,7 +3563,7 @@ struct pdu_session_res_to_rem_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cause; }
@@ -3605,7 +3603,7 @@ struct pdu_session_res_to_setup_mod_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -3648,7 +3646,7 @@ struct pdu_session_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdu_session_type_opts, true> pdu_session_type_e;
+using pdu_session_type_e = enumerated<pdu_session_type_opts, true>;
 
 using drb_to_modify_item_eutran_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -3843,7 +3841,7 @@ struct ciphering_algorithm_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ciphering_algorithm_opts, true> ciphering_algorithm_e;
+using ciphering_algorithm_e = enumerated<ciphering_algorithm_opts, true>;
 
 // DRB-To-Modify-List-EUTRAN ::= SEQUENCE (SIZE (1..32)) OF DRB-To-Modify-Item-EUTRAN
 using drb_to_modify_list_eutran_l = dyn_array<drb_to_modify_item_eutran_s>;
@@ -3860,7 +3858,7 @@ struct integrity_protection_algorithm_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<integrity_protection_algorithm_opts, true> integrity_protection_algorithm_e;
+using integrity_protection_algorithm_e = enumerated<integrity_protection_algorithm_opts, true>;
 
 // PDU-Session-Resource-To-Modify-List ::= SEQUENCE (SIZE (1..256)) OF PDU-Session-Resource-To-Modify-Item
 using pdu_session_res_to_modify_list_l = dyn_array<pdu_session_res_to_modify_item_s>;
@@ -3895,7 +3893,7 @@ struct eutran_bearer_context_mod_request_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3952,7 +3950,7 @@ struct ng_ran_bearer_context_mod_request_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4037,7 +4035,7 @@ struct activity_notif_level_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<activity_notif_level_opts, true> activity_notif_level_e;
+using activity_notif_level_e = enumerated<activity_notif_level_opts, true>;
 
 // BearerContextStatusChange ::= ENUMERATED
 struct bearer_context_status_change_opts {
@@ -4045,7 +4043,7 @@ struct bearer_context_status_change_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<bearer_context_status_change_opts, true> bearer_context_status_change_e;
+using bearer_context_status_change_e = enumerated<bearer_context_status_change_opts, true>;
 
 // DataDiscardRequired ::= ENUMERATED
 struct data_discard_required_opts {
@@ -4053,7 +4051,7 @@ struct data_discard_required_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<data_discard_required_opts, true> data_discard_required_e;
+using data_discard_required_e = enumerated<data_discard_required_opts, true>;
 
 // New-UL-TNL-Information-Required ::= ENUMERATED
 struct new_ul_tnl_info_required_opts {
@@ -4061,7 +4059,7 @@ struct new_ul_tnl_info_required_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<new_ul_tnl_info_required_opts, true> new_ul_tnl_info_required_e;
+using new_ul_tnl_info_required_e = enumerated<new_ul_tnl_info_required_opts, true>;
 
 using security_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4129,7 +4127,7 @@ struct sys_bearer_context_mod_request_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_mod_request_c() = default;
@@ -4210,7 +4208,7 @@ struct bearer_context_mod_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4392,7 +4390,7 @@ struct pdu_session_res_required_to_modify_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::redundant_n_g_dl_up_tnl_info; }
@@ -4489,7 +4487,7 @@ struct eutran_bearer_context_mod_required_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4531,7 +4529,7 @@ struct ng_ran_bearer_context_mod_required_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4614,7 +4612,7 @@ struct sys_bearer_context_mod_required_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_mod_required_c() = default;
@@ -4680,7 +4678,7 @@ struct bearer_context_mod_required_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4772,7 +4770,7 @@ struct drb_modified_item_ng_ran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -4820,7 +4818,7 @@ struct confidentiality_protection_result_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<confidentiality_protection_result_opts, true> confidentiality_protection_result_e;
+using confidentiality_protection_result_e = enumerated<confidentiality_protection_result_opts, true>;
 
 using drb_failed_item_ng_ran_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4957,7 +4955,7 @@ struct integrity_protection_result_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<integrity_protection_result_opts, true> integrity_protection_result_e;
+using integrity_protection_result_e = enumerated<integrity_protection_result_opts, true>;
 
 // QoS-Flow-Removed-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using qos_flow_remd_item_ext_ies_o = protocol_ext_empty_o;
@@ -5001,7 +4999,7 @@ struct drb_setup_mod_item_eutran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::data_forwarding_source_ip_address; }
@@ -5042,7 +5040,7 @@ struct pdu_session_res_modified_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::redundant_n_g_dl_up_tnl_info; }
@@ -5074,7 +5072,7 @@ struct pdu_session_res_setup_mod_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::redundant_n_g_dl_up_tnl_info; }
@@ -5106,7 +5104,7 @@ struct qos_flow_remd_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<qos_flow_released_in_session_opts, true> qos_flow_released_in_session_e_;
+  using qos_flow_released_in_session_e_ = enumerated<qos_flow_released_in_session_opts, true>;
 
   // member variables
   bool                                 ext                                       = false;
@@ -5206,8 +5204,8 @@ struct drb_remd_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<drb_released_in_session_opts, true> drb_released_in_session_e_;
-  using qos_flow_remd_list_l_ = dyn_array<qos_flow_remd_item_s>;
+  using drb_released_in_session_e_ = enumerated<drb_released_in_session_opts, true>;
+  using qos_flow_remd_list_l_      = dyn_array<qos_flow_remd_item_s>;
 
   // member variables
   bool                            ext                                  = false;
@@ -5364,7 +5362,7 @@ struct eutran_bearer_context_mod_resp_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5424,7 +5422,7 @@ struct ng_ran_bearer_context_mod_resp_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5524,7 +5522,7 @@ struct sys_bearer_context_mod_resp_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_mod_resp_c() = default;
@@ -5590,7 +5588,7 @@ struct bearer_context_mod_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5654,7 +5652,7 @@ struct bearer_context_release_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5723,7 +5721,7 @@ struct bearer_context_release_complete_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5817,7 +5815,7 @@ struct bearer_context_release_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5884,7 +5882,7 @@ struct bearer_context_setup_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5949,7 +5947,7 @@ struct links_to_log_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<links_to_log_opts, true> links_to_log_e;
+using links_to_log_e = enumerated<links_to_log_opts, true>;
 
 // M4Configuration-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using m4_cfg_ext_ies_o = protocol_ext_empty_o;
@@ -5962,7 +5960,7 @@ struct m4period_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<m4period_opts, true> m4period_e;
+using m4period_e = enumerated<m4period_opts, true>;
 
 // M6Configuration-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using m6_cfg_ext_ies_o = protocol_ext_empty_o;
@@ -5992,7 +5990,7 @@ struct m6report_interv_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<m6report_interv_opts, true> m6report_interv_e;
+using m6report_interv_e = enumerated<m6report_interv_opts, true>;
 
 // M7Configuration-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using m7_cfg_ext_ies_o = protocol_ext_empty_o;
@@ -6005,7 +6003,7 @@ struct r_sn_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<r_sn_opts, true> r_sn_e;
+using r_sn_e = enumerated<r_sn_opts, true>;
 
 // RedundantPDUSessionInformation-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using redundant_pdu_session_info_ext_ies_o = protocol_ext_empty_o;
@@ -6089,7 +6087,7 @@ struct drb_to_setup_item_eutran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::data_forwarding_source_ip_address; }
@@ -6152,7 +6150,7 @@ struct pdu_session_res_to_setup_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -6219,7 +6217,7 @@ struct mdt_activation_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mdt_activation_opts, true> mdt_activation_e;
+using mdt_activation_e = enumerated<mdt_activation_opts, true>;
 
 // MDT-Configuration-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
 using mdt_cfg_ext_ies_o = protocol_ext_empty_o;
@@ -6231,7 +6229,7 @@ struct mdt_mode_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mdt_mode_c() = default;
@@ -6361,7 +6359,7 @@ struct eutran_bearer_context_setup_request_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6405,7 +6403,7 @@ struct ng_ran_bearer_context_setup_request_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_res_to_setup_list; }
@@ -6457,7 +6455,7 @@ struct trace_activation_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -6505,7 +6503,7 @@ struct trace_depth_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<trace_depth_opts, true> trace_depth_e;
+using trace_depth_e = enumerated<trace_depth_opts, true>;
 
 // AdditionalHandoverInfo ::= ENUMERATED
 struct add_ho_info_opts {
@@ -6513,7 +6511,7 @@ struct add_ho_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<add_ho_info_opts, true> add_ho_info_e;
+using add_ho_info_e = enumerated<add_ho_info_opts, true>;
 
 // CHOInitiation ::= ENUMERATED
 struct cho_initiation_opts {
@@ -6521,7 +6519,7 @@ struct cho_initiation_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cho_initiation_opts, true> cho_initiation_e;
+using cho_initiation_e = enumerated<cho_initiation_opts, true>;
 
 // DirectForwardingPathAvailability ::= ENUMERATED
 struct direct_forwarding_path_availability_opts {
@@ -6529,7 +6527,7 @@ struct direct_forwarding_path_availability_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<direct_forwarding_path_availability_opts, true, 1> direct_forwarding_path_availability_e;
+using direct_forwarding_path_availability_e = enumerated<direct_forwarding_path_availability_opts, true, 1>;
 
 // MDTPLMNList ::= SEQUENCE (SIZE (1..16)) OF OCTET STRING (SIZE (3))
 using mdt_plmn_list_l = bounded_array<fixed_octstring<3, true>, 16>;
@@ -6541,7 +6539,7 @@ struct npn_context_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_context_info_c() = default;
@@ -6614,7 +6612,7 @@ struct sys_bearer_context_setup_request_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_setup_request_c() = default;
@@ -6734,7 +6732,7 @@ struct bearer_context_setup_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6864,7 +6862,7 @@ struct drb_setup_item_eutran_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::data_forwarding_source_ip_address; }
@@ -6899,7 +6897,7 @@ struct pdu_session_res_setup_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -6956,7 +6954,7 @@ struct drb_setup_item_eutran_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<s1_dl_up_unchanged_opts, true> s1_dl_up_unchanged_e_;
+  using s1_dl_up_unchanged_e_ = enumerated<s1_dl_up_unchanged_opts, true>;
 
   // member variables
   bool                                                      ext                               = false;
@@ -7017,7 +7015,7 @@ struct pdu_session_res_setup_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<ng_dl_up_unchanged_opts, true> ng_dl_up_unchanged_e_;
+  using ng_dl_up_unchanged_e_ = enumerated<ng_dl_up_unchanged_opts, true>;
 
   // member variables
   bool                                         ext                                           = false;
@@ -7062,7 +7060,7 @@ struct eutran_bearer_context_setup_resp_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7104,7 +7102,7 @@ struct ng_ran_bearer_context_setup_resp_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7179,7 +7177,7 @@ struct sys_bearer_context_setup_resp_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_bearer_context_setup_resp_c() = default;
@@ -7245,7 +7243,7 @@ struct bearer_context_setup_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7326,7 +7324,7 @@ struct cp_tnl_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::endpoint_ip_address_and_port; }
@@ -7356,7 +7354,7 @@ struct cp_tnl_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cp_tnl_info_c() = default;
@@ -7405,7 +7403,7 @@ struct privacy_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<privacy_ind_opts, true> privacy_ind_e;
+using privacy_ind_e = enumerated<privacy_ind_opts, true>;
 
 // CellTrafficTraceIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 struct cell_traffic_trace_ies_o {
@@ -7424,7 +7422,7 @@ struct cell_traffic_trace_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7524,7 +7522,7 @@ struct dl_data_notif_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7785,7 +7783,7 @@ struct data_usage_per_pdu_session_report_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<secondary_rat_type_opts, true> secondary_rat_type_e_;
+  using secondary_rat_type_e_            = enumerated<secondary_rat_type_opts, true>;
   using pdu_session_timed_report_list_l_ = dyn_array<mrdc_data_usage_report_item_s>;
 
   // member variables
@@ -7814,7 +7812,7 @@ struct data_usage_per_qos_flow_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<secondary_rat_type_opts, true> secondary_rat_type_e_;
+  using secondary_rat_type_e_         = enumerated<secondary_rat_type_opts, true>;
   using qos_flow_timed_report_list_l_ = dyn_array<mrdc_data_usage_report_item_s>;
 
   // member variables
@@ -7844,7 +7842,7 @@ struct data_usage_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7907,7 +7905,7 @@ struct deactiv_trace_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -8117,7 +8115,7 @@ struct npn_support_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_support_info_c() = default;
@@ -8220,7 +8218,7 @@ struct gnb_cu_cp_tnl_a_to_rem_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tnl_assoc_transport_layer_address_gnb_cu_up; }
@@ -8283,7 +8281,7 @@ struct private_ie_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   private_ie_id_c() = default;
@@ -8340,7 +8338,7 @@ struct supported_plmns_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -8381,7 +8379,7 @@ struct tnl_assoc_usage_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<tnl_assoc_usage_opts, true> tnl_assoc_usage_e;
+using tnl_assoc_usage_e = enumerated<tnl_assoc_usage_opts, true>;
 
 using transport_up_layer_addresses_info_to_add_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8428,7 +8426,7 @@ struct ue_associated_lc_e1_conn_item_res_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_associated_lc_e1_conn_item; }
@@ -8463,7 +8461,7 @@ struct eutran_gnb_cu_up_counter_check_request_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_subject_to_counter_check_list_eutran; }
@@ -8611,7 +8609,7 @@ struct ng_ran_gnb_cu_up_counter_check_request_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_subject_to_counter_check_list_ng_ran; }
@@ -8657,7 +8655,7 @@ struct reset_all_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<reset_all_opts, true> reset_all_e;
+using reset_all_e = enumerated<reset_all_opts, true>;
 
 // ResetType-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-IES
 using reset_type_ext_ies_o = protocol_ies_empty_o;
@@ -8727,7 +8725,7 @@ struct ue_associated_lc_e1_conn_item_res_ack_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_associated_lc_e1_conn_item; }
@@ -8780,7 +8778,7 @@ struct cn_support_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<cn_support_opts, true> cn_support_e;
+using cn_support_e = enumerated<cn_support_opts, true>;
 
 using extended_gnb_cu_cp_name_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8841,7 +8839,7 @@ struct gnb_cu_up_overload_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<gnb_cu_up_overload_info_opts> gnb_cu_up_overload_info_e;
+using gnb_cu_up_overload_info_e = enumerated<gnb_cu_up_overload_info_opts>;
 
 // GNB-CU-UP-TNLA-To-Remove-List ::= SEQUENCE (SIZE (1..32)) OF GNB-CU-UP-TNLA-To-Remove-Item
 using gnb_cu_up_tnl_a_to_rem_list_l = dyn_array<gnb_cu_up_tnl_a_to_rem_item_s>;
@@ -8886,7 +8884,7 @@ struct regist_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<regist_request_opts, true> regist_request_e;
+using regist_request_e = enumerated<regist_request_opts, true>;
 
 // ReportingPeriodicity ::= ENUMERATED
 struct report_periodicity_opts {
@@ -8915,7 +8913,7 @@ struct report_periodicity_opts {
   const char* to_string() const;
   uint32_t    to_number() const;
 };
-typedef enumerated<report_periodicity_opts, true> report_periodicity_e;
+using report_periodicity_e = enumerated<report_periodicity_opts, true>;
 
 // ResetType ::= CHOICE
 struct reset_type_c {
@@ -8924,7 +8922,7 @@ struct reset_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   reset_type_c() = default;
@@ -8993,7 +8991,7 @@ struct sys_gnb_cu_up_counter_check_request_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sys_gnb_cu_up_counter_check_request_c() = default;
@@ -9078,7 +9076,7 @@ struct time_to_wait_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<time_to_wait_opts, true> time_to_wait_e;
+using time_to_wait_e = enumerated<time_to_wait_opts, true>;
 
 using transport_layer_address_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -9116,7 +9114,7 @@ struct e1_release_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9160,7 +9158,7 @@ struct e1_release_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::transaction_id; }
@@ -9197,7 +9195,7 @@ struct early_forwarding_sn_transfer_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9248,7 +9246,7 @@ struct error_ind_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9305,7 +9303,7 @@ struct gnb_cu_cp_cfg_upd_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9359,7 +9357,7 @@ struct gnb_cu_cp_cfg_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9416,7 +9414,7 @@ struct gnb_cu_cp_cfg_upd_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9476,7 +9474,7 @@ struct gnb_cu_cp_e1_setup_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9530,7 +9528,7 @@ struct gnb_cu_cp_e1_setup_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9586,7 +9584,7 @@ struct gnb_cu_cp_e1_setup_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9644,7 +9642,7 @@ struct gnb_cu_cp_meas_results_info_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9690,7 +9688,7 @@ struct gnb_cu_up_cfg_upd_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9736,7 +9734,7 @@ struct gnb_cu_up_cfg_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9792,7 +9790,7 @@ struct gnb_cu_up_cfg_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9851,7 +9849,7 @@ struct gnb_cu_up_counter_check_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9897,7 +9895,7 @@ struct gnb_cu_up_e1_setup_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9953,7 +9951,7 @@ struct gnb_cu_up_e1_setup_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10019,7 +10017,7 @@ struct gnb_cu_up_e1_setup_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10067,7 +10065,7 @@ struct gnb_cu_up_status_ind_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10111,7 +10109,7 @@ struct iab_up_tnl_address_upd_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10157,7 +10155,7 @@ struct iab_up_tnl_address_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10205,7 +10203,7 @@ struct iab_up_tnl_address_upd_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10249,7 +10247,7 @@ struct iabpsk_notif_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10291,7 +10289,7 @@ struct mrdc_data_usage_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10338,7 +10336,7 @@ struct e1ap_private_ies_empty_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nulltype; }
@@ -10361,7 +10359,7 @@ struct reset_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10407,7 +10405,7 @@ struct reset_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10451,7 +10449,7 @@ struct res_status_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10507,7 +10505,7 @@ struct res_status_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10557,7 +10555,7 @@ struct res_status_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10610,7 +10608,7 @@ struct res_status_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10658,7 +10656,7 @@ struct trace_start_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -10702,7 +10700,7 @@ struct ul_data_notif_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -11499,7 +11497,7 @@ struct e1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     init_msg_c() = default;
@@ -11627,7 +11625,7 @@ struct e1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     successful_outcome_c() = default;
@@ -11700,7 +11698,7 @@ struct e1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     unsuccessful_outcome_c() = default;
@@ -11797,7 +11795,7 @@ struct e1ap_pdu_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts, true> types;
+  using types = enumerated<types_opts, true>;
 
   // choice methods
   e1ap_pdu_c() = default;

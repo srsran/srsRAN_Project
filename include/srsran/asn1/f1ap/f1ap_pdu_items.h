@@ -34,7 +34,7 @@ struct associated_scell_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::associated_scell_item; }
@@ -69,7 +69,7 @@ struct bap_hdr_rewriting_added_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bap_hdr_rewriting_added_list_item; }
@@ -106,7 +106,7 @@ struct bap_hdr_rewriting_remd_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bap_hdr_rewriting_remd_list_item; }
@@ -142,7 +142,7 @@ struct bh_routing_info_added_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_routing_info_added_list_item; }
@@ -174,7 +174,7 @@ struct bh_routing_info_remd_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_routing_info_remd_list_item; }
@@ -214,7 +214,7 @@ struct bh_chs_failed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_failed_to_be_modified_item; }
@@ -251,7 +251,7 @@ struct bh_chs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_failed_to_be_setup_item; }
@@ -288,7 +288,7 @@ struct bh_chs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_failed_to_be_setup_mod_item; }
@@ -325,7 +325,7 @@ struct bh_chs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_modified_item; }
@@ -361,7 +361,7 @@ struct bh_chs_required_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_required_to_be_released_item; }
@@ -398,7 +398,7 @@ struct bh_chs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_setup_item; }
@@ -433,7 +433,7 @@ struct bh_chs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_setup_mod_item; }
@@ -469,7 +469,7 @@ struct bh_chs_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_to_be_modified_item; }
@@ -505,7 +505,7 @@ struct bh_chs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_to_be_released_item; }
@@ -541,7 +541,7 @@ struct bh_chs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_to_be_setup_item; }
@@ -577,7 +577,7 @@ struct bh_chs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::bh_chs_to_be_setup_mod_item; }
@@ -613,7 +613,7 @@ struct broadcast_to_be_cancelled_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_to_be_cancelled_item; }
@@ -650,7 +650,7 @@ struct broadcast_m_rbs_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_to_be_modified_item; }
@@ -682,7 +682,7 @@ struct broadcast_m_rbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_to_be_released_item; }
@@ -714,7 +714,7 @@ struct broadcast_m_rbs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_to_be_setup_mod_item; }
@@ -761,7 +761,7 @@ struct broadcast_m_rbs_failed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_failed_to_be_modified_item; }
@@ -793,7 +793,7 @@ struct broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_failed_to_be_setup_mod_item; }
@@ -828,7 +828,7 @@ struct broadcast_m_rbs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_modified_item; }
@@ -860,7 +860,7 @@ struct broadcast_m_rbs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_setup_mod_item; }
@@ -912,7 +912,7 @@ struct broadcast_m_rbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_to_be_setup_item; }
@@ -949,7 +949,7 @@ struct broadcast_m_rbs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_failed_to_be_setup_item; }
@@ -981,7 +981,7 @@ struct broadcast_m_rbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::broadcast_m_rbs_setup_item; }
@@ -1022,7 +1022,7 @@ struct candidate_sp_cell_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::candidate_sp_cell_item; }
@@ -1057,7 +1057,7 @@ struct cells_broadcast_cancelled_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_broadcast_cancelled_item; }
@@ -1094,7 +1094,7 @@ struct cells_broadcast_completed_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_broadcast_completed_item; }
@@ -1131,7 +1131,7 @@ struct cells_failed_to_be_activ_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_failed_to_be_activ_list_item; }
@@ -1168,7 +1168,7 @@ struct cells_status_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_status_item; }
@@ -1203,7 +1203,7 @@ struct cells_to_be_broadcast_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_to_be_broadcast_item; }
@@ -1239,7 +1239,7 @@ struct cells_to_be_activ_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_to_be_activ_list_item; }
@@ -1275,7 +1275,7 @@ struct cells_to_be_barred_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_to_be_barred_item; }
@@ -1310,7 +1310,7 @@ struct cells_to_be_deactiv_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::cells_to_be_deactiv_list_item; }
@@ -1346,7 +1346,7 @@ struct dl_up_tnl_address_to_upd_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::dl_up_tnl_address_to_upd_list_item; }
@@ -1383,7 +1383,7 @@ struct drb_activity_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drb_activity_item; }
@@ -1418,7 +1418,7 @@ struct drb_notify_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drb_notify_item; }
@@ -1453,7 +1453,7 @@ struct drbs_failed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_failed_to_be_modified_item; }
@@ -1490,7 +1490,7 @@ struct drbs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_failed_to_be_setup_item; }
@@ -1525,7 +1525,7 @@ struct drbs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_failed_to_be_setup_mod_item; }
@@ -1562,7 +1562,7 @@ struct drbs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_modified_item; }
@@ -1597,7 +1597,7 @@ struct drbs_modified_conf_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_modified_conf_item; }
@@ -1632,7 +1632,7 @@ struct drbs_required_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_required_to_be_modified_item; }
@@ -1669,7 +1669,7 @@ struct drbs_required_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_required_to_be_released_item; }
@@ -1706,7 +1706,7 @@ struct drbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_setup_item; }
@@ -1741,7 +1741,7 @@ struct drbs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_setup_mod_item; }
@@ -1776,7 +1776,7 @@ struct drbs_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_to_be_modified_item; }
@@ -1811,7 +1811,7 @@ struct drbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_to_be_released_item; }
@@ -1846,7 +1846,7 @@ struct drbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_to_be_setup_item; }
@@ -1881,7 +1881,7 @@ struct drbs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::drbs_to_be_setup_mod_item; }
@@ -1916,7 +1916,7 @@ struct ded_si_delivery_needed_ue_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ded_si_delivery_needed_ue_item; }
@@ -1953,7 +1953,7 @@ struct gnb_cu_tnl_assoc_failed_to_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_cu_tnl_assoc_failed_to_setup_item; }
@@ -1985,7 +1985,7 @@ struct gnb_cu_tnl_assoc_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_cu_tnl_assoc_setup_item; }
@@ -2017,7 +2017,7 @@ struct gnb_cu_tnl_assoc_to_add_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_cu_tnl_assoc_to_add_item; }
@@ -2049,7 +2049,7 @@ struct gnb_cu_tnl_assoc_to_rem_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_cu_tnl_assoc_to_rem_item; }
@@ -2081,7 +2081,7 @@ struct gnb_cu_tnl_assoc_to_upd_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_cu_tnl_assoc_to_upd_item; }
@@ -2113,7 +2113,7 @@ struct gnb_du_served_cells_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_du_served_cells_item; }
@@ -2145,7 +2145,7 @@ struct gnb_du_tnl_assoc_to_rem_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::gnb_du_tnl_assoc_to_rem_item; }
@@ -2177,7 +2177,7 @@ struct iab_allocated_tnl_address_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::iab_allocated_tnl_address_item; }
@@ -2209,7 +2209,7 @@ struct iab_tnl_addresses_to_rem_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::iab_tnl_addresses_to_rem_item; }
@@ -2241,7 +2241,7 @@ struct mc_paging_cell_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::mc_paging_cell_item; }
@@ -2275,7 +2275,7 @@ struct multicast_f1_u_context_failed_to_be_setup_item_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_f1_u_context_failed_to_be_setup_item; }
@@ -2312,7 +2312,7 @@ struct multicast_f1_u_context_setup_item_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_f1_u_context_setup_item; }
@@ -2346,7 +2346,7 @@ struct multicast_f1_u_context_to_be_setup_item_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_f1_u_context_to_be_setup_item; }
@@ -2378,7 +2378,7 @@ struct multicast_m_rbs_failed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_failed_to_be_modified_item; }
@@ -2410,7 +2410,7 @@ struct multicast_m_rbs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_failed_to_be_setup_item; }
@@ -2442,7 +2442,7 @@ struct multicast_m_rbs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_failed_to_be_setup_mod_item; }
@@ -2477,7 +2477,7 @@ struct multicast_m_rbs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_modified_item; }
@@ -2509,7 +2509,7 @@ struct multicast_m_rbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_setup_item; }
@@ -2541,7 +2541,7 @@ struct multicast_m_rbs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_setup_mod_item; }
@@ -2573,7 +2573,7 @@ struct multicast_m_rbs_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_to_be_modified_item; }
@@ -2605,7 +2605,7 @@ struct multicast_m_rbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_to_be_released_item; }
@@ -2637,7 +2637,7 @@ struct multicast_m_rbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_to_be_setup_item; }
@@ -2669,7 +2669,7 @@ struct multicast_m_rbs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::multicast_m_rbs_to_be_setup_mod_item; }
@@ -2701,7 +2701,7 @@ struct nr_cgi_list_for_restart_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nr_cgi_list_for_restart_item; }
@@ -2733,7 +2733,7 @@ struct neighbour_cell_info_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::neighbour_cell_info_item; }
@@ -2765,7 +2765,7 @@ struct pws_failed_nr_cgi_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pws_failed_nr_cgi_item; }
@@ -2797,7 +2797,7 @@ struct paging_cell_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::paging_cell_item; }
@@ -2829,7 +2829,7 @@ struct potential_sp_cell_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::potential_sp_cell_item; }
@@ -2861,7 +2861,7 @@ struct protected_eutra_res_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::protected_eutra_res_item; }
@@ -2893,7 +2893,7 @@ struct scell_failedto_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::scell_failedto_setup_item; }
@@ -2925,7 +2925,7 @@ struct scell_failedto_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::scell_failedto_setup_mod_item; }
@@ -2957,7 +2957,7 @@ struct scell_to_be_remd_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::scell_to_be_remd_item; }
@@ -2989,7 +2989,7 @@ struct scell_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::scell_to_be_setup_item; }
@@ -3021,7 +3021,7 @@ struct scell_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::scell_to_be_setup_mod_item; }
@@ -3053,7 +3053,7 @@ struct sl_drbs_failed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_failed_to_be_modified_item; }
@@ -3085,7 +3085,7 @@ struct sl_drbs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_failed_to_be_setup_item; }
@@ -3117,7 +3117,7 @@ struct sl_drbs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_failed_to_be_setup_mod_item; }
@@ -3149,7 +3149,7 @@ struct sl_drbs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_modified_item; }
@@ -3181,7 +3181,7 @@ struct sl_drbs_modified_conf_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_modified_conf_item; }
@@ -3213,7 +3213,7 @@ struct sl_drbs_required_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_required_to_be_modified_item; }
@@ -3245,7 +3245,7 @@ struct sl_drbs_required_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_required_to_be_released_item; }
@@ -3277,7 +3277,7 @@ struct sl_drbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_setup_item; }
@@ -3309,7 +3309,7 @@ struct sl_drbs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_setup_mod_item; }
@@ -3341,7 +3341,7 @@ struct sl_drbs_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_to_be_modified_item; }
@@ -3373,7 +3373,7 @@ struct sl_drbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_to_be_released_item; }
@@ -3405,7 +3405,7 @@ struct sl_drbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_to_be_setup_item; }
@@ -3437,7 +3437,7 @@ struct sl_drbs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sl_drbs_to_be_setup_mod_item; }
@@ -3469,7 +3469,7 @@ struct srbs_failed_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_failed_to_be_setup_item; }
@@ -3501,7 +3501,7 @@ struct srbs_failed_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_failed_to_be_setup_mod_item; }
@@ -3533,7 +3533,7 @@ struct srbs_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_modified_item; }
@@ -3565,7 +3565,7 @@ struct srbs_required_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_required_to_be_released_item; }
@@ -3597,7 +3597,7 @@ struct srbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_setup_item; }
@@ -3629,7 +3629,7 @@ struct srbs_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_setup_mod_item; }
@@ -3661,7 +3661,7 @@ struct srbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_to_be_released_item; }
@@ -3693,7 +3693,7 @@ struct srbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_to_be_setup_item; }
@@ -3725,7 +3725,7 @@ struct srbs_to_be_setup_mod_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srbs_to_be_setup_mod_item; }
@@ -3757,7 +3757,7 @@ struct served_cells_to_add_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::served_cells_to_add_item; }
@@ -3789,7 +3789,7 @@ struct served_cells_to_delete_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::served_cells_to_delete_item; }
@@ -3821,7 +3821,7 @@ struct served_cells_to_modify_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::served_cells_to_modify_item; }
@@ -3853,7 +3853,7 @@ struct serving_cell_mo_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::serving_cell_mo_list_item; }
@@ -3885,7 +3885,7 @@ struct ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_confirmed_to_be_modified_item; }
@@ -3920,7 +3920,7 @@ struct ue_multicast_m_rbs_required_to_be_modified_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_required_to_be_modified_item; }
@@ -3955,7 +3955,7 @@ struct ue_multicast_m_rbs_required_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_required_to_be_released_item; }
@@ -3990,7 +3990,7 @@ struct ue_multicast_m_rbs_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_setup_item; }
@@ -4022,7 +4022,7 @@ struct ue_multicast_m_rbs_to_be_released_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_to_be_released_item; }
@@ -4054,7 +4054,7 @@ struct ue_multicast_m_rbs_to_be_setup_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_to_be_setup_item; }
@@ -4086,7 +4086,7 @@ struct ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_multicast_m_rbs_to_be_setup_at_modify_item; }
@@ -4121,7 +4121,7 @@ struct ue_id_list_for_paging_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_id_list_for_paging_item; }
@@ -4153,7 +4153,7 @@ struct ul_up_tnl_address_to_upd_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ul_up_tnl_address_to_upd_list_item; }
@@ -4185,7 +4185,7 @@ struct ul_up_tnl_info_to_upd_list_item_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ul_up_tnl_info_to_upd_list_item; }

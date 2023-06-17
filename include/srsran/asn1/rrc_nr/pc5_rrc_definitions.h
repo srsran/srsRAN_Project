@@ -74,7 +74,7 @@ struct band_params_sidelink_v1710_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<tx_iuc_scheme2_mode2_sidelink_r17_opts> tx_iuc_scheme2_mode2_sidelink_r17_e_;
+  using tx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<tx_iuc_scheme2_mode2_sidelink_r17_opts>;
 
   // member variables
   bool                                 tx_iuc_scheme1_mode2_sidelink_r17_present = false;
@@ -103,7 +103,7 @@ struct band_sidelink_pc5_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<harq_rx_process_sidelink_r16_opts> harq_rx_process_sidelink_r16_e_;
+    using harq_rx_process_sidelink_r16_e_ = enumerated<harq_rx_process_sidelink_r16_opts>;
     struct pscch_rx_sidelink_r16_opts {
       enum options { value1, value2, nulltype } value;
       typedef uint8_t number_type;
@@ -111,7 +111,7 @@ struct band_sidelink_pc5_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<pscch_rx_sidelink_r16_opts> pscch_rx_sidelink_r16_e_;
+    using pscch_rx_sidelink_r16_e_ = enumerated<pscch_rx_sidelink_r16_opts>;
     struct scs_cp_pattern_rx_sidelink_r16_c_ {
       struct fr1_r16_s_ {
         bool                scs_15k_hz_r16_present = false;
@@ -134,7 +134,7 @@ struct band_sidelink_pc5_r16_s {
         const char* to_string() const;
         uint8_t     to_number() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       scs_cp_pattern_rx_sidelink_r16_c_() = default;
@@ -192,7 +192,7 @@ struct band_sidelink_pc5_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<csi_rs_ports_sidelink_r16_opts> csi_rs_ports_sidelink_r16_e_;
+    using csi_rs_ports_sidelink_r16_e_ = enumerated<csi_rs_ports_sidelink_r16_opts>;
 
     // member variables
     csi_rs_ports_sidelink_r16_e_ csi_rs_ports_sidelink_r16;
@@ -204,7 +204,7 @@ struct band_sidelink_pc5_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<rx_iuc_scheme2_mode2_sidelink_r17_opts> rx_iuc_scheme2_mode2_sidelink_r17_e_;
+  using rx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<rx_iuc_scheme2_mode2_sidelink_r17_opts>;
 
   // member variables
   bool                ext                                          = false;
@@ -293,7 +293,7 @@ struct meas_report_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -337,7 +337,7 @@ struct notif_msg_sidelink_r17_ies_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<ind_type_r17_opts> ind_type_r17_e_;
+  using ind_type_r17_e_ = enumerated<ind_type_r17_opts>;
 
   // member variables
   bool            ind_type_r17_present = false;
@@ -359,7 +359,7 @@ struct notif_msg_sidelink_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -438,7 +438,7 @@ struct rrc_recfg_complete_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -495,7 +495,7 @@ struct rrc_recfg_fail_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -570,7 +570,7 @@ struct sl_rlc_cfg_pc5_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sl_rlc_cfg_pc5_r16_c() = default;
@@ -633,7 +633,7 @@ struct sl_pdcp_cfg_pc5_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<sl_pdcp_sn_size_r16_opts> sl_pdcp_sn_size_r16_e_;
+  using sl_pdcp_sn_size_r16_e_ = enumerated<sl_pdcp_sn_size_r16_opts>;
 
   // member variables
   bool                   ext                                  = false;
@@ -673,7 +673,7 @@ struct sl_sdap_cfg_pc5_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_sdap_hdr_r16_opts> sl_sdap_hdr_r16_e_;
+  using sl_sdap_hdr_r16_e_ = enumerated<sl_sdap_hdr_r16_opts>;
 
   // member variables
   bool                                       ext = false;
@@ -716,7 +716,7 @@ struct sl_csi_rs_cfg_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     sl_csi_rs_freq_alloc_r16_c_() = default;
@@ -826,7 +826,7 @@ struct rrc_recfg_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -905,7 +905,7 @@ struct sl_sib_req_info_r17_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<sl_sib_req_info_r17_opts, true> sl_sib_req_info_r17_e;
+using sl_sib_req_info_r17_e = enumerated<sl_sib_req_info_r17_opts, true>;
 
 // SL-PagingInfo-RemoteUE-r17 ::= SEQUENCE
 struct sl_paging_info_remote_ue_r17_s {
@@ -945,7 +945,7 @@ struct remote_ue_info_sidelink_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -1004,7 +1004,7 @@ struct sbcch_sl_bch_msg_type_c {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     c1_c_() = default;
@@ -1038,7 +1038,7 @@ struct sbcch_sl_bch_msg_type_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sbcch_sl_bch_msg_type_c() = default;
@@ -1096,7 +1096,7 @@ struct access_stratum_release_sidelink_r16_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<access_stratum_release_sidelink_r16_opts, true> access_stratum_release_sidelink_r16_e;
+using access_stratum_release_sidelink_r16_e = enumerated<access_stratum_release_sidelink_r16_opts, true>;
 
 // PDCP-ParametersSidelink-r16 ::= SEQUENCE
 struct pdcp_params_sidelink_r16_s {
@@ -1196,7 +1196,7 @@ struct ue_assist_info_sidelink_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -1241,7 +1241,7 @@ struct ue_cap_enquiry_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -1287,7 +1287,7 @@ struct ue_cap_info_sidelink_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -1333,7 +1333,7 @@ struct uu_msg_transfer_sidelink_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     crit_exts_c_() = default;
@@ -1388,7 +1388,7 @@ struct s_cch_msg_type_c {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     c1_c_() = default;
@@ -1521,7 +1521,7 @@ struct s_cch_msg_type_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       c2_c_() = default;
@@ -1576,7 +1576,7 @@ struct s_cch_msg_type_c {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     msg_class_ext_c_() = default;
@@ -1610,7 +1610,7 @@ struct s_cch_msg_type_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   s_cch_msg_type_c() = default;

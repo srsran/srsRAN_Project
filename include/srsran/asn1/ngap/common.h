@@ -564,7 +564,7 @@ struct private_ie_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   private_ie_id_c() = default;
@@ -616,7 +616,7 @@ struct ngap_private_ies_empty_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nulltype; }
