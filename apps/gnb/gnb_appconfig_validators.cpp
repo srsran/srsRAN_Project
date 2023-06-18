@@ -476,6 +476,37 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
   return valid;
 }
 
+static bool validate_pdcch_appconfig(const gnb_appconfig& config)
+{
+  for (const auto& cell : config.cells_cfg) {
+    const base_cell_appconfig& base_cell = cell.cell;
+    const auto                 band =
+        base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        base_cell.channel_bw_mhz, base_cell.common_scs, band_helper::get_freq_range(band));
+    if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
+      const uint8_t  ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
+      const unsigned cs0_idx = base_cell.pdcch_cfg.common.coreset0_index.value();
+      if (not band_helper::is_ss0_and_coreset0_index_valid(
+              base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx)) {
+        fmt::print("Invalid combination of CORESET#0 index={} and SearchSpace#0 index={}\n");
+        return false;
+      }
+    }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() > nof_crbs) {
+      fmt::print("Invalid CORESET#1 RBs start={}\n");
+      return false;
+    }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value() > nof_crbs) {
+      fmt::print("Invalid CORESET#1 length in RBs={}\n");
+      return false;
+    }
+  }
+  return true;
+}
+
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
   if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
@@ -544,6 +575,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_cells_appconfig(config.cells_cfg)) {
+    return false;
+  }
+
+  if (!validate_pdcch_appconfig(config)) {
     return false;
   }
 

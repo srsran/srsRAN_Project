@@ -241,7 +241,8 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
   app.add_option("--coreset1_duration",
                  ded_params.coreset1_duration.emplace(),
                  "Duration of CORESET 1 in number of OFDM symbols")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(1, 3));
   auto coreset1_duration_verify_callback = [&]() {
     CLI::Option* coreset1_duration_cfg = app.get_option("coreset1_duration");
     if (coreset1_duration_cfg->empty()) {
