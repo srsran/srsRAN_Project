@@ -76,6 +76,7 @@ public:
   virtual ~nzp_csi_rs_generator_factory()                                        = default;
   virtual std::unique_ptr<nzp_csi_rs_generator>               create()           = 0;
   virtual std::unique_ptr<nzp_csi_rs_configuration_validator> create_validator() = 0;
+  std::unique_ptr<nzp_csi_rs_generator>                       create(srslog::basic_logger& logger);
 };
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
