@@ -1304,3 +1304,34 @@ n_ta_offset srsran::band_helper::get_ta_offset(nr_band band)
     return n_ta_offset::n13792;
   }
 }
+
+bool srsran::band_helper::is_ss0_and_coreset0_index_valid(unsigned           dl_arfcn,
+                                                          nr_band            band,
+                                                          unsigned           n_rbs,
+                                                          subcarrier_spacing scs_common,
+                                                          subcarrier_spacing scs_ssb,
+                                                          uint8_t            ss0_idx,
+                                                          unsigned           cset0_idx)
+{
+  srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
+                "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
+
+  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
+
+  // Iterate over different SSB candidates and verify the validity of CORESET#0 index.
+  ssb_freq_location ssb = du_cfg.get_next_ssb_location();
+  while (ssb.is_valid) {
+    // Iterate over the searchSpace0_indices and corresponding configurations.
+    optional<unsigned> coreset0_idx = get_coreset0_index(
+        band, n_rbs, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb, du_cfg.get_ssb_first_symbol(), ss0_idx);
+
+    if (coreset0_idx.has_value() and coreset0_idx.value() == cset0_idx) {
+      return true;
+    }
+
+    ssb = du_cfg.get_next_ssb_location();
+  }
+
+  return false;
+}
