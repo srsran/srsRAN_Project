@@ -49,11 +49,11 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     auto& setup_resp = e1ap_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
 
     if (msg.gnb_cu_cp_name.has_value()) {
-      setup_resp->gnb_cu_cp_name.value.from_string(msg.gnb_cu_cp_name.value());
+      setup_resp->gnb_cu_cp_name.from_string(msg.gnb_cu_cp_name.value());
     }
 
     // set values handled by E1AP
-    e1ap_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id.value = current_transaction_id;
+    e1ap_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id = current_transaction_id;
 
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
@@ -62,13 +62,13 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     e1ap_msg.pdu.set_unsuccessful_outcome();
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
     e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
-    auto& setup_fail        = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
-    setup_fail->cause.value = cause_to_asn1_cause(msg.cause.value());
+    auto& setup_fail  = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+    setup_fail->cause = cause_to_asn1_cause(msg.cause.value());
 
     // set values handled by E1
-    setup_fail->transaction_id.value = current_transaction_id;
-    setup_fail->cause.value.set_radio_network();
-    setup_fail->cause.value.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
+    setup_fail->transaction_id = current_transaction_id;
+    setup_fail->cause.set_radio_network();
+    setup_fail->cause.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
 
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
@@ -108,7 +108,7 @@ e1ap_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_s
   auto& bearer_context_setup_request = e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
 
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
-  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
 
   return launch_async<bearer_context_setup_procedure>(e1ap_msg, ue_ctxt, pdu_notifier, logger);
 }
@@ -134,9 +134,9 @@ e1ap_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_co
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
-  auto& bearer_context_mod_request                       = e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
-  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+  auto& bearer_context_mod_request                 = e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  bearer_context_mod_request->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
@@ -160,9 +160,9 @@ e1ap_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
-  auto& bearer_context_release_cmd                       = e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
-  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
-  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+  auto& bearer_context_release_cmd                 = e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 
@@ -215,7 +215,7 @@ void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
-      current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
+      current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id;
       cu_up_e1_setup_request req = {};
       fill_e1ap_cu_up_e1_setup_request(req, msg.value.gnb_cu_up_e1_setup_request());
       cu_up_processor_notifier.on_cu_up_e1_setup_request_received(req);
@@ -233,33 +233,33 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
 {
   cu_cp_inactivity_notification inactivity_notification;
 
-  if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value))) {
+  if (!ue_ctxt_list.contains(int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id))) {
     logger.error("Can't find UE - dropping InactivityNotification");
     return;
   }
 
   // Get UE context
-  e1ap_ue_context& ue_ctxt         = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value)];
+  e1ap_ue_context& ue_ctxt         = ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id)];
   inactivity_notification.ue_index = ue_ctxt.ue_index;
 
-  switch (msg->activity_info->type()) {
+  switch (msg->activity_info.type()) {
     // DRB activity notification level
     case asn1::e1ap::activity_info_c::types_opts::options::drb_activity_list: {
       // add inactive drbs to common type message
-      for (const auto& drb : msg->activity_info.value.drb_activity_list()) {
+      for (const auto& drb : msg->activity_info.drb_activity_list()) {
         if (drb.drb_activity == asn1::e1ap::drb_activity_opts::options::not_active) {
           inactivity_notification.inactive_drbs.emplace_back(uint_to_drb_id(drb.drb_id));
         }
       }
       // if all drbs are inactive, release ue
-      if (inactivity_notification.inactive_drbs.size() == msg->activity_info.value.drb_activity_list().size()) {
+      if (inactivity_notification.inactive_drbs.size() == msg->activity_info.drb_activity_list().size()) {
         inactivity_notification.ue_inactive = true;
       }
     } break;
     // PDU Session activity notification level
     case asn1::e1ap::activity_info_c::types_opts::options::pdu_session_res_activity_list: {
       // add inactive pdu sessions to common type message
-      for (const auto& pdu_session : msg->activity_info.value.pdu_session_res_activity_list()) {
+      for (const auto& pdu_session : msg->activity_info.pdu_session_res_activity_list()) {
         if (pdu_session.pdu_session_res_activity == asn1::e1ap::pdu_session_res_activity_opts::options::not_active) {
           inactivity_notification.inactive_pdu_sessions.emplace_back(
               uint_to_pdu_session_id(pdu_session.pdu_session_id));
@@ -267,20 +267,20 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
       }
       // if all pdu sessions are inactive, release ue
       if (inactivity_notification.inactive_pdu_sessions.size() ==
-          msg->activity_info.value.pdu_session_res_activity_list().size()) {
+          msg->activity_info.pdu_session_res_activity_list().size()) {
         inactivity_notification.ue_inactive = true;
       }
     } break;
     // UE activity notification level
     case asn1::e1ap::activity_info_c::types_opts::options::ue_activity: {
-      if (msg->activity_info.value.ue_activity() == asn1::e1ap::ue_activity_opts::options::not_active) {
+      if (msg->activity_info.ue_activity() == asn1::e1ap::ue_activity_opts::options::not_active) {
         // if ue is inactive, release ue
         inactivity_notification.ue_inactive = true;
       }
     } break;
     default:
       logger.error("Received Bearer Context Inactivity Notification with unsupported type {}",
-                   msg->activity_info->type().to_string());
+                   msg->activity_info.type().to_string());
       return;
   }
 
@@ -292,16 +292,15 @@ void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_out
 {
   switch (outcome.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id->value)]
+      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id)]
           .bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id->value)]
+      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id)]
           .bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_resp());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_release_complete: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(
-                       outcome.value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id->value)]
+      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id)]
           .bearer_ev_mng.context_release_complete.set(outcome.value.bearer_context_release_complete());
     } break;
     default:
@@ -324,11 +323,11 @@ void e1ap_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful
 {
   switch (outcome.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id->value)]
+      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id)]
           .bearer_ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
-      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_fail()->gnb_cu_cp_ue_e1ap_id->value)]
+      ue_ctxt_list[int_to_gnb_cu_cp_ue_e1ap_id(outcome.value.bearer_context_mod_fail()->gnb_cu_cp_ue_e1ap_id)]
           .bearer_ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
     } break;
     default:

@@ -72,11 +72,11 @@ void cu_cp_e1_setup_procedure::send_e1_setup_request()
 
   if (request.gnb_cu_cp_name.has_value()) {
     setup_req->gnb_cu_cp_name_present = true;
-    setup_req->gnb_cu_cp_name.value.from_string(request.gnb_cu_cp_name.value());
+    setup_req->gnb_cu_cp_name.from_string(request.gnb_cu_cp_name.value());
   }
 
   // set values handled by E1
-  setup_req->transaction_id.value = transaction.id();
+  setup_req->transaction_id = transaction.id();
 
   // send request
   cu_up_notifier.on_new_message(msg);
@@ -109,7 +109,7 @@ bool cu_cp_e1_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = std::chrono::seconds{e1_setup_fail.time_to_wait->to_number()};
+  time_to_wait = std::chrono::seconds{e1_setup_fail.time_to_wait.to_number()};
   return true;
 }
 
@@ -133,7 +133,7 @@ cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
     logger.error("\"{}\" failed.", name());
   } else {
     logger.debug("Received PDU with unsuccessful outcome cause={}",
-                 get_cause_str(cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail()->cause.value));
+                 get_cause_str(cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail()->cause));
     fill_e1ap_cu_cp_e1_setup_response(res, cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail());
 
     logger.error("\"{}\" failed.", name());

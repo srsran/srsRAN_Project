@@ -69,17 +69,17 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::create_bearer
     }
 
     // Add CU-UP UE E1AP ID to UE context
-    ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id.value);
+    ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id);
     fill_e1ap_bearer_context_setup_response(res, resp);
 
     logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
-    logger.debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause.value));
+    logger.debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause));
 
     // Add CU-UP UE E1AP ID to UE context
     if (fail->gnb_cu_up_ue_e1ap_id_present) {
-      ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id.value);
+      ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id);
     }
     fill_e1ap_bearer_context_setup_response(res, fail);
   } else {

@@ -478,12 +478,11 @@ struct bearer_context_inactivity_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<activity_info_c>                               activity_info;
+  uint64_t        gnb_cu_cp_ue_e1ap_id;
+  uint64_t        gnb_cu_up_ue_e1ap_id;
+  activity_info_c activity_info;
 
   // sequence methods
-  bearer_context_inactivity_notif_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -821,13 +820,12 @@ struct bearer_context_mod_confirm_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      sys_bearer_context_mod_confirm_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<sys_bearer_context_mod_confirm_c>              sys_bearer_context_mod_confirm;
+  bool                             sys_bearer_context_mod_confirm_present = false;
+  uint64_t                         gnb_cu_cp_ue_e1ap_id;
+  uint64_t                         gnb_cu_up_ue_e1ap_id;
+  sys_bearer_context_mod_confirm_c sys_bearer_context_mod_confirm;
 
   // sequence methods
-  bearer_context_mod_confirm_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1128,14 +1126,13 @@ struct bearer_context_mod_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_cp_ue_e1ap_id;
+  uint64_t           gnb_cu_up_ue_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  bearer_context_mod_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1278,15 +1275,14 @@ struct dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                extended_packet_delay_budget_present = false;
-  bool                                                cn_packet_delay_budget_dl_present    = false;
-  bool                                                cn_packet_delay_budget_ul_present    = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> extended_packet_delay_budget;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     extended_packet_delay_budget_present = false;
+  bool     cn_packet_delay_budget_dl_present    = false;
+  bool     cn_packet_delay_budget_ul_present    = false;
+  uint32_t extended_packet_delay_budget;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1393,13 +1389,12 @@ struct non_dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                cn_packet_delay_budget_dl_present = false;
-  bool                                                cn_packet_delay_budget_ul_present = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     cn_packet_delay_budget_dl_present = false;
+  bool     cn_packet_delay_budget_ul_present = false;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  non_dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1938,13 +1933,12 @@ struct qos_flow_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              qos_flow_map_ind_present                  = false;
-  bool                                              data_forwarding_source_ip_address_present = false;
-  ie_field_s<qos_flow_map_ind_e>                    qos_flow_map_ind;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> data_forwarding_source_ip_address;
+  bool                                  qos_flow_map_ind_present                  = false;
+  bool                                  data_forwarding_source_ip_address_present = false;
+  qos_flow_map_ind_e                    qos_flow_map_ind;
+  bounded_bitstring<1, 160, true, true> data_forwarding_source_ip_address;
 
   // sequence methods
-  qos_flow_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -2045,19 +2039,18 @@ struct qos_flow_level_qos_params_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                               qos_monitoring_request_present            = false;
-  bool                                               mcg_offered_gbr_qos_flow_info_present     = false;
-  bool                                               qos_monitoring_report_freq_present        = false;
-  bool                                               qos_monitoring_disabled_present           = false;
-  bool                                               data_forwarding_source_ip_address_present = false;
-  ie_field_s<qos_monitoring_request_e>               qos_monitoring_request;
-  ie_field_s<gbr_qos_flow_info_s>                    mcg_offered_gbr_qos_flow_info;
-  ie_field_s<integer<uint16_t, 1, 1800, true, true>> qos_monitoring_report_freq;
-  ie_field_s<qos_monitoring_disabled_e>              qos_monitoring_disabled;
-  ie_field_s<bounded_bitstring<1, 160, true, true>>  data_forwarding_source_ip_address;
+  bool                                  qos_monitoring_request_present            = false;
+  bool                                  mcg_offered_gbr_qos_flow_info_present     = false;
+  bool                                  qos_monitoring_report_freq_present        = false;
+  bool                                  qos_monitoring_disabled_present           = false;
+  bool                                  data_forwarding_source_ip_address_present = false;
+  qos_monitoring_request_e              qos_monitoring_request;
+  gbr_qos_flow_info_s                   mcg_offered_gbr_qos_flow_info;
+  uint16_t                              qos_monitoring_report_freq;
+  qos_monitoring_disabled_e             qos_monitoring_disabled;
+  bounded_bitstring<1, 160, true, true> data_forwarding_source_ip_address;
 
   // sequence methods
-  qos_flow_level_qos_params_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -2631,13 +2624,12 @@ struct qos_flow_qos_param_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                      redundant_qos_flow_ind_present      = false;
-  bool                                      tsc_traffic_characteristics_present = false;
-  ie_field_s<redundant_qos_flow_ind_e>      redundant_qos_flow_ind;
-  ie_field_s<tsc_traffic_characteristics_s> tsc_traffic_characteristics;
+  bool                          redundant_qos_flow_ind_present      = false;
+  bool                          tsc_traffic_characteristics_present = false;
+  redundant_qos_flow_ind_e      redundant_qos_flow_ind;
+  tsc_traffic_characteristics_s tsc_traffic_characteristics;
 
   // sequence methods
-  qos_flow_qos_param_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3077,17 +3069,16 @@ struct pdcp_cfg_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                 pdcp_status_report_ind_present = false;
-  bool                                 add_pdcp_dupl_info_present     = false;
-  bool                                 ehc_params_present             = false;
-  bool                                 discard_timer_extended_present = false;
-  ie_field_s<pdcp_status_report_ind_e> pdcp_status_report_ind;
-  ie_field_s<add_pdcp_dupl_info_e>     add_pdcp_dupl_info;
-  ie_field_s<ehc_params_s>             ehc_params;
-  ie_field_s<discard_timer_extended_e> discard_timer_extended;
+  bool                     pdcp_status_report_ind_present = false;
+  bool                     add_pdcp_dupl_info_present     = false;
+  bool                     ehc_params_present             = false;
+  bool                     discard_timer_extended_present = false;
+  pdcp_status_report_ind_e pdcp_status_report_ind;
+  add_pdcp_dupl_info_e     add_pdcp_dupl_info;
+  ehc_params_s             ehc_params;
+  discard_timer_extended_e discard_timer_extended;
 
   // sequence methods
-  pdcp_cfg_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3187,21 +3178,20 @@ struct drb_to_modify_item_ng_ran_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                 old_qos_flow_map_ul_endmarkerexpected_present = false;
-  bool                                                 drb_qos_present                               = false;
-  bool                                                 early_forwarding_count_req_present            = false;
-  bool                                                 early_forwarding_count_info_present           = false;
-  bool                                                 daps_request_info_present                     = false;
-  bool                                                 early_data_forwarding_ind_present             = false;
-  ie_field_s<dyn_seq_of<qos_flow_item_s, 1, 64, true>> old_qos_flow_map_ul_endmarkerexpected;
-  ie_field_s<qos_flow_level_qos_params_s>              drb_qos;
-  ie_field_s<early_forwarding_count_req_e>             early_forwarding_count_req;
-  ie_field_s<early_forwarding_count_info_c>            early_forwarding_count_info;
-  ie_field_s<daps_request_info_s>                      daps_request_info;
-  ie_field_s<early_data_forwarding_ind_e>              early_data_forwarding_ind;
+  bool                          old_qos_flow_map_ul_endmarkerexpected_present = false;
+  bool                          drb_qos_present                               = false;
+  bool                          early_forwarding_count_req_present            = false;
+  bool                          early_forwarding_count_info_present           = false;
+  bool                          daps_request_info_present                     = false;
+  bool                          early_data_forwarding_ind_present             = false;
+  qos_flow_list_l               old_qos_flow_map_ul_endmarkerexpected;
+  qos_flow_level_qos_params_s   drb_qos;
+  early_forwarding_count_req_e  early_forwarding_count_req;
+  early_forwarding_count_info_c early_forwarding_count_info;
+  daps_request_info_s           daps_request_info;
+  early_data_forwarding_ind_e   early_data_forwarding_ind;
 
   // sequence methods
-  drb_to_modify_item_ng_ran_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3259,17 +3249,16 @@ struct drb_to_setup_item_ng_ran_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                    drb_qos_present             = false;
-  bool                                    daps_request_info_present   = false;
-  bool                                    ignore_map_rule_ind_present = false;
-  bool                                    qos_flows_drb_remap_present = false;
-  ie_field_s<qos_flow_level_qos_params_s> drb_qos;
-  ie_field_s<daps_request_info_s>         daps_request_info;
-  ie_field_s<ignore_map_rule_ind_e>       ignore_map_rule_ind;
-  ie_field_s<qos_flows_drb_remap_e>       qos_flows_drb_remap;
+  bool                        drb_qos_present             = false;
+  bool                        daps_request_info_present   = false;
+  bool                        ignore_map_rule_ind_present = false;
+  bool                        qos_flows_drb_remap_present = false;
+  qos_flow_level_qos_params_s drb_qos;
+  daps_request_info_s         daps_request_info;
+  ignore_map_rule_ind_e       ignore_map_rule_ind;
+  qos_flows_drb_remap_e       qos_flows_drb_remap;
 
   // sequence methods
-  drb_to_setup_item_ng_ran_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3304,15 +3293,14 @@ struct drb_to_setup_mod_item_ng_ran_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                    drb_qos_present             = false;
-  bool                                    ignore_map_rule_ind_present = false;
-  bool                                    daps_request_info_present   = false;
-  ie_field_s<qos_flow_level_qos_params_s> drb_qos;
-  ie_field_s<ignore_map_rule_ind_e>       ignore_map_rule_ind;
-  ie_field_s<daps_request_info_s>         daps_request_info;
+  bool                        drb_qos_present             = false;
+  bool                        ignore_map_rule_ind_present = false;
+  bool                        daps_request_info_present   = false;
+  qos_flow_level_qos_params_s drb_qos;
+  ignore_map_rule_ind_e       ignore_map_rule_ind;
+  daps_request_info_s         daps_request_info;
 
   // sequence methods
-  drb_to_setup_mod_item_ng_ran_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3731,15 +3719,14 @@ struct pdu_session_res_to_modify_item_ext_ies_container {
   bool                                  redundant_common_network_instance_present   = false;
   bool                                  data_forwardingto_e_utran_info_list_present = false;
   bool                                  security_ind_modify_present                 = false;
-  ie_field_s<snssai_s>                  snssai;
-  ie_field_s<unbounded_octstring<true>> common_network_instance;
-  ie_field_s<up_tnl_info_c>             redundant_n_g_ul_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>> redundant_common_network_instance;
-  ie_field_s<dyn_seq_of<data_forwardingto_e_utran_info_list_item_s, 1, 256, true>> data_forwardingto_e_utran_info_list;
-  ie_field_s<security_ind_s>                                                       security_ind_modify;
+  snssai_s                              snssai;
+  unbounded_octstring<true>             common_network_instance;
+  up_tnl_info_c                         redundant_n_g_ul_up_tnl_info;
+  unbounded_octstring<true>             redundant_common_network_instance;
+  data_forwardingto_e_utran_info_list_l data_forwardingto_e_utran_info_list;
+  security_ind_s                        security_ind_modify;
 
   // sequence methods
-  pdu_session_res_to_modify_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3794,17 +3781,16 @@ struct pdu_session_res_to_setup_mod_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              network_instance_present                  = false;
-  bool                                              common_network_instance_present           = false;
-  bool                                              redundant_n_g_ul_up_tnl_info_present      = false;
-  bool                                              redundant_common_network_instance_present = false;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>> network_instance;
-  ie_field_s<unbounded_octstring<true>>             common_network_instance;
-  ie_field_s<up_tnl_info_c>                         redundant_n_g_ul_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>             redundant_common_network_instance;
+  bool                      network_instance_present                  = false;
+  bool                      common_network_instance_present           = false;
+  bool                      redundant_n_g_ul_up_tnl_info_present      = false;
+  bool                      redundant_common_network_instance_present = false;
+  uint16_t                  network_instance;
+  unbounded_octstring<true> common_network_instance;
+  up_tnl_info_c             redundant_n_g_ul_up_tnl_info;
+  unbounded_octstring<true> redundant_common_network_instance;
 
   // sequence methods
-  pdu_session_res_to_setup_mod_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4083,19 +4069,18 @@ struct eutran_bearer_context_mod_request_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                drb_to_setup_mod_list_eutran_present = false;
-  bool                                                                drb_to_modify_list_eutran_present    = false;
-  bool                                                                drb_to_rem_list_eutran_present       = false;
-  bool                                                                sub_profile_id_for_rfp_present       = false;
-  bool                                                                add_rrm_prio_idx_present             = false;
-  ie_field_s<dyn_seq_of<drb_to_setup_mod_item_eutran_s, 1, 32, true>> drb_to_setup_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_to_modify_item_eutran_s, 1, 32, true>>    drb_to_modify_list_eutran;
-  ie_field_s<dyn_seq_of<drb_to_rem_item_eutran_s, 1, 32, true>>       drb_to_rem_list_eutran;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                   sub_profile_id_for_rfp;
-  ie_field_s<fixed_bitstring<32, false, true>>                        add_rrm_prio_idx;
+  bool                             drb_to_setup_mod_list_eutran_present = false;
+  bool                             drb_to_modify_list_eutran_present    = false;
+  bool                             drb_to_rem_list_eutran_present       = false;
+  bool                             sub_profile_id_for_rfp_present       = false;
+  bool                             add_rrm_prio_idx_present             = false;
+  drb_to_setup_mod_list_eutran_l   drb_to_setup_mod_list_eutran;
+  drb_to_modify_list_eutran_l      drb_to_modify_list_eutran;
+  drb_to_rem_list_eutran_l         drb_to_rem_list_eutran;
+  uint16_t                         sub_profile_id_for_rfp;
+  fixed_bitstring<32, false, true> add_rrm_prio_idx;
 
   // sequence methods
-  eutran_bearer_context_mod_request_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4106,15 +4091,14 @@ struct ng_ran_bearer_context_mod_request_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool pdu_session_res_to_setup_mod_list_present = false;
-  bool pdu_session_res_to_modify_list_present    = false;
-  bool pdu_session_res_to_rem_list_present       = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_setup_mod_item_s, 1, 256, true>> pdu_session_res_to_setup_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_modify_item_s, 1, 256, true>>    pdu_session_res_to_modify_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true>>       pdu_session_res_to_rem_list;
+  bool                                pdu_session_res_to_setup_mod_list_present = false;
+  bool                                pdu_session_res_to_modify_list_present    = false;
+  bool                                pdu_session_res_to_rem_list_present       = false;
+  pdu_session_res_to_setup_mod_list_l pdu_session_res_to_setup_mod_list;
+  pdu_session_res_to_modify_list_l    pdu_session_res_to_modify_list;
+  pdu_session_res_to_rem_list_l       pdu_session_res_to_rem_list;
 
   // sequence methods
-  ng_ran_bearer_context_mod_request_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4268,33 +4252,32 @@ struct bearer_context_mod_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                        security_info_present                           = false;
-  bool                                                        ue_dl_aggr_max_bit_rate_present                 = false;
-  bool                                                        ue_dl_max_integrity_protected_data_rate_present = false;
-  bool                                                        bearer_context_status_change_present            = false;
-  bool                                                        new_ul_tnl_info_required_present                = false;
-  bool                                                        ue_inactivity_timer_present                     = false;
-  bool                                                        data_discard_required_present                   = false;
-  bool                                                        sys_bearer_context_mod_request_present          = false;
-  bool                                                        ran_ue_id_present                               = false;
-  bool                                                        gnb_du_id_present                               = false;
-  bool                                                        activity_notif_level_present                    = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>   gnb_cu_up_ue_e1ap_id;
-  ie_field_s<security_info_s>                                 security_info;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ue_dl_aggr_max_bit_rate;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>> ue_dl_max_integrity_protected_data_rate;
-  ie_field_s<bearer_context_status_change_e>                  bearer_context_status_change;
-  ie_field_s<new_ul_tnl_info_required_e>                      new_ul_tnl_info_required;
-  ie_field_s<integer<uint16_t, 1, 7200, true, true>>          ue_inactivity_timer;
-  ie_field_s<data_discard_required_e>                         data_discard_required;
-  ie_field_s<sys_bearer_context_mod_request_c>                sys_bearer_context_mod_request;
-  ie_field_s<fixed_octstring<8, true>>                        ran_ue_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_du_id;
-  ie_field_s<activity_notif_level_e>                          activity_notif_level;
+  bool                             security_info_present                           = false;
+  bool                             ue_dl_aggr_max_bit_rate_present                 = false;
+  bool                             ue_dl_max_integrity_protected_data_rate_present = false;
+  bool                             bearer_context_status_change_present            = false;
+  bool                             new_ul_tnl_info_required_present                = false;
+  bool                             ue_inactivity_timer_present                     = false;
+  bool                             data_discard_required_present                   = false;
+  bool                             sys_bearer_context_mod_request_present          = false;
+  bool                             ran_ue_id_present                               = false;
+  bool                             gnb_du_id_present                               = false;
+  bool                             activity_notif_level_present                    = false;
+  uint64_t                         gnb_cu_cp_ue_e1ap_id;
+  uint64_t                         gnb_cu_up_ue_e1ap_id;
+  security_info_s                  security_info;
+  uint64_t                         ue_dl_aggr_max_bit_rate;
+  uint64_t                         ue_dl_max_integrity_protected_data_rate;
+  bearer_context_status_change_e   bearer_context_status_change;
+  new_ul_tnl_info_required_e       new_ul_tnl_info_required;
+  uint16_t                         ue_inactivity_timer;
+  data_discard_required_e          data_discard_required;
+  sys_bearer_context_mod_request_c sys_bearer_context_mod_request;
+  fixed_octstring<8, true>         ran_ue_id;
+  uint64_t                         gnb_du_id;
+  activity_notif_level_e           activity_notif_level;
 
   // sequence methods
-  bearer_context_mod_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4570,13 +4553,12 @@ struct eutran_bearer_context_mod_required_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool drb_required_to_modify_list_eutran_present = false;
-  bool drb_required_to_rem_list_eutran_present    = false;
-  ie_field_s<dyn_seq_of<drb_required_to_modify_item_eutran_s, 1, 32, true>> drb_required_to_modify_list_eutran;
-  ie_field_s<dyn_seq_of<drb_required_to_rem_item_eutran_s, 1, 32, true>>    drb_required_to_rem_list_eutran;
+  bool                                 drb_required_to_modify_list_eutran_present = false;
+  bool                                 drb_required_to_rem_list_eutran_present    = false;
+  drb_required_to_modify_list_eutran_l drb_required_to_modify_list_eutran;
+  drb_required_to_rem_list_eutran_l    drb_required_to_rem_list_eutran;
 
   // sequence methods
-  eutran_bearer_context_mod_required_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4587,14 +4569,12 @@ struct ng_ran_bearer_context_mod_required_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool pdu_session_res_required_to_modify_list_present = false;
-  bool pdu_session_res_to_rem_list_present             = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_required_to_modify_item_s, 1, 256, true>>
-                                                                      pdu_session_res_required_to_modify_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_to_rem_item_s, 1, 256, true>> pdu_session_res_to_rem_list;
+  bool                                      pdu_session_res_required_to_modify_list_present = false;
+  bool                                      pdu_session_res_to_rem_list_present             = false;
+  pdu_session_res_required_to_modify_list_l pdu_session_res_required_to_modify_list;
+  pdu_session_res_to_rem_list_l             pdu_session_res_to_rem_list;
 
   // sequence methods
-  ng_ran_bearer_context_mod_required_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4718,12 +4698,11 @@ struct bearer_context_mod_required_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<sys_bearer_context_mod_required_c>             sys_bearer_context_mod_required;
+  uint64_t                          gnb_cu_cp_ue_e1ap_id;
+  uint64_t                          gnb_cu_up_ue_e1ap_id;
+  sys_bearer_context_mod_required_c sys_bearer_context_mod_required;
 
   // sequence methods
-  bearer_context_mod_required_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4876,13 +4855,12 @@ struct drb_modified_item_ng_ran_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                 early_forwarding_count_info_present           = false;
-  bool                                                 old_qos_flow_map_ul_endmarkerexpected_present = false;
-  ie_field_s<early_forwarding_count_info_c>            early_forwarding_count_info;
-  ie_field_s<dyn_seq_of<qos_flow_item_s, 1, 64, true>> old_qos_flow_map_ul_endmarkerexpected;
+  bool                          early_forwarding_count_info_present           = false;
+  bool                          old_qos_flow_map_ul_endmarkerexpected_present = false;
+  early_forwarding_count_info_c early_forwarding_count_info;
+  qos_flow_list_l               old_qos_flow_map_ul_endmarkerexpected;
 
   // sequence methods
-  drb_modified_item_ng_ran_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5474,19 +5452,18 @@ struct eutran_bearer_context_mod_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                              drb_setup_mod_list_eutran_present        = false;
-  bool                                                              drb_failed_mod_list_eutran_present       = false;
-  bool                                                              drb_modified_list_eutran_present         = false;
-  bool                                                              drb_failed_to_modify_list_eutran_present = false;
-  bool                                                              retainability_meass_info_present         = false;
-  ie_field_s<dyn_seq_of<drb_setup_mod_item_eutran_s, 1, 32, true>>  drb_setup_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_mod_item_eutran_s, 1, 32, true>> drb_failed_mod_list_eutran;
-  ie_field_s<dyn_seq_of<drb_modified_item_eutran_s, 1, 32, true>>   drb_modified_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_to_modify_item_eutran_s, 1, 32, true>> drb_failed_to_modify_list_eutran;
-  ie_field_s<dyn_seq_of<drb_remd_item_s, 1, 32, true>>                    retainability_meass_info;
+  bool                               drb_setup_mod_list_eutran_present        = false;
+  bool                               drb_failed_mod_list_eutran_present       = false;
+  bool                               drb_modified_list_eutran_present         = false;
+  bool                               drb_failed_to_modify_list_eutran_present = false;
+  bool                               retainability_meass_info_present         = false;
+  drb_setup_mod_list_eutran_l        drb_setup_mod_list_eutran;
+  drb_failed_mod_list_eutran_l       drb_failed_mod_list_eutran;
+  drb_modified_list_eutran_l         drb_modified_list_eutran;
+  drb_failed_to_modify_list_eutran_l drb_failed_to_modify_list_eutran;
+  retainability_meass_info_l         retainability_meass_info;
 
   // sequence methods
-  eutran_bearer_context_mod_resp_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5497,19 +5474,18 @@ struct ng_ran_bearer_context_mod_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool pdu_session_res_setup_mod_list_present        = false;
-  bool pdu_session_res_failed_mod_list_present       = false;
-  bool pdu_session_res_modified_list_present         = false;
-  bool pdu_session_res_failed_to_modify_list_present = false;
-  bool retainability_meass_info_present              = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_setup_mod_item_s, 1, 256, true>>        pdu_session_res_setup_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_mod_item_s, 1, 256, true>>       pdu_session_res_failed_mod_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_modified_item_s, 1, 256, true>>         pdu_session_res_modified_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_to_modify_item_s, 1, 256, true>> pdu_session_res_failed_to_modify_list;
-  ie_field_s<dyn_seq_of<drb_remd_item_s, 1, 32, true>>                          retainability_meass_info;
+  bool                                    pdu_session_res_setup_mod_list_present        = false;
+  bool                                    pdu_session_res_failed_mod_list_present       = false;
+  bool                                    pdu_session_res_modified_list_present         = false;
+  bool                                    pdu_session_res_failed_to_modify_list_present = false;
+  bool                                    retainability_meass_info_present              = false;
+  pdu_session_res_setup_mod_list_l        pdu_session_res_setup_mod_list;
+  pdu_session_res_failed_mod_list_l       pdu_session_res_failed_mod_list;
+  pdu_session_res_modified_list_l         pdu_session_res_modified_list;
+  pdu_session_res_failed_to_modify_list_l pdu_session_res_failed_to_modify_list;
+  retainability_meass_info_l              retainability_meass_info;
 
   // sequence methods
-  ng_ran_bearer_context_mod_resp_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5628,13 +5604,12 @@ struct bearer_context_mod_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      sys_bearer_context_mod_resp_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<sys_bearer_context_mod_resp_c>                 sys_bearer_context_mod_resp;
+  bool                          sys_bearer_context_mod_resp_present = false;
+  uint64_t                      gnb_cu_cp_ue_e1ap_id;
+  uint64_t                      gnb_cu_up_ue_e1ap_id;
+  sys_bearer_context_mod_resp_c sys_bearer_context_mod_resp;
 
   // sequence methods
-  bearer_context_mod_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5692,12 +5667,11 @@ struct bearer_context_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_cp_ue_e1ap_id;
+  uint64_t gnb_cu_up_ue_e1ap_id;
+  cause_c  cause;
 
   // sequence methods
-  bearer_context_release_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5763,15 +5737,14 @@ struct bearer_context_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present         = false;
-  bool                                                      retainability_meass_info_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
-  ie_field_s<dyn_seq_of<drb_remd_item_s, 1, 32, true>>      retainability_meass_info;
+  bool                       crit_diagnostics_present         = false;
+  bool                       retainability_meass_info_present = false;
+  uint64_t                   gnb_cu_cp_ue_e1ap_id;
+  uint64_t                   gnb_cu_up_ue_e1ap_id;
+  crit_diagnostics_s         crit_diagnostics;
+  retainability_meass_info_l retainability_meass_info;
 
   // sequence methods
-  bearer_context_release_complete_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5857,14 +5830,13 @@ struct bearer_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      drb_status_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<drb_status_item_s, 1, 32, true>>    drb_status_list;
-  ie_field_s<cause_c>                                       cause;
+  bool              drb_status_list_present = false;
+  uint64_t          gnb_cu_cp_ue_e1ap_id;
+  uint64_t          gnb_cu_up_ue_e1ap_id;
+  drb_status_list_l drb_status_list;
+  cause_c           cause;
 
   // sequence methods
-  bearer_context_release_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5924,15 +5896,14 @@ struct bearer_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_cu_up_ue_e1ap_id_present = false;
-  bool                                                      crit_diagnostics_present     = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               gnb_cu_up_ue_e1ap_id_present = false;
+  bool               crit_diagnostics_present     = false;
+  uint64_t           gnb_cu_cp_ue_e1ap_id;
+  uint64_t           gnb_cu_up_ue_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  bearer_context_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -6277,17 +6248,16 @@ struct pdu_session_res_to_setup_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                     common_network_instance_present           = false;
-  bool                                     redundant_n_g_ul_up_tnl_info_present      = false;
-  bool                                     redundant_common_network_instance_present = false;
-  bool                                     redundant_pdu_session_info_present        = false;
-  ie_field_s<unbounded_octstring<true>>    common_network_instance;
-  ie_field_s<up_tnl_info_c>                redundant_n_g_ul_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>    redundant_common_network_instance;
-  ie_field_s<redundant_pdu_session_info_s> redundant_pdu_session_info;
+  bool                         common_network_instance_present           = false;
+  bool                         redundant_n_g_ul_up_tnl_info_present      = false;
+  bool                         redundant_common_network_instance_present = false;
+  bool                         redundant_pdu_session_info_present        = false;
+  unbounded_octstring<true>    common_network_instance;
+  up_tnl_info_c                redundant_n_g_ul_up_tnl_info;
+  unbounded_octstring<true>    redundant_common_network_instance;
+  redundant_pdu_session_info_s redundant_pdu_session_info;
 
   // sequence methods
-  pdu_session_res_to_setup_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -6587,14 +6557,13 @@ struct eutran_bearer_context_setup_request_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                            sub_profile_id_for_rfp_present = false;
-  bool                                                            add_rrm_prio_idx_present       = false;
-  ie_field_s<dyn_seq_of<drb_to_setup_item_eutran_s, 1, 32, true>> drb_to_setup_list_eutran;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>               sub_profile_id_for_rfp;
-  ie_field_s<fixed_bitstring<32, false, true>>                    add_rrm_prio_idx;
+  bool                             sub_profile_id_for_rfp_present = false;
+  bool                             add_rrm_prio_idx_present       = false;
+  drb_to_setup_list_eutran_l       drb_to_setup_list_eutran;
+  uint16_t                         sub_profile_id_for_rfp;
+  fixed_bitstring<32, false, true> add_rrm_prio_idx;
 
   // sequence methods
-  eutran_bearer_context_setup_request_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -6674,13 +6643,12 @@ struct trace_activation_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                              mdt_cfg_present                     = false;
-  bool                                                              trace_collection_entity_uri_present = false;
-  ie_field_s<mdt_cfg_s>                                             mdt_cfg;
-  ie_field_s<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> trace_collection_entity_uri;
+  bool                                                  mdt_cfg_present                     = false;
+  bool                                                  trace_collection_entity_uri_present = false;
+  mdt_cfg_s                                             mdt_cfg;
+  visible_string<0, MAX_ASN_STRING_LENGTH, false, true> trace_collection_entity_uri;
 
   // sequence methods
-  trace_activation_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -6809,39 +6777,38 @@ struct bearer_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                          ue_dl_max_integrity_protected_data_rate_present = false;
-  bool                                                          ue_inactivity_timer_present                     = false;
-  bool                                                          bearer_context_status_change_present            = false;
-  bool                                                          ran_ue_id_present                               = false;
-  bool                                                          gnb_du_id_present                               = false;
-  bool                                                          trace_activation_present                        = false;
-  bool                                                          npn_context_info_present                        = false;
-  bool                                                          management_based_mdt_plmn_list_present          = false;
-  bool                                                          cho_initiation_present                          = false;
-  bool                                                          add_ho_info_present                             = false;
-  bool                                                          direct_forwarding_path_availability_present     = false;
-  bool                                                          gnb_cu_up_ue_e1ap_id_present                    = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<security_info_s>                                   security_info;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>>   ue_dl_aggr_max_bit_rate;
-  ie_field_s<integer<uint64_t, 0, 4000000000000, true, true>>   ue_dl_max_integrity_protected_data_rate;
-  ie_field_s<fixed_octstring<3, true>>                          serving_plmn;
-  ie_field_s<activity_notif_level_e>                            activity_notif_level;
-  ie_field_s<integer<uint16_t, 1, 7200, true, true>>            ue_inactivity_timer;
-  ie_field_s<bearer_context_status_change_e>                    bearer_context_status_change;
-  ie_field_s<sys_bearer_context_setup_request_c>                sys_bearer_context_setup_request;
-  ie_field_s<fixed_octstring<8, true>>                          ran_ue_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>    gnb_du_id;
-  ie_field_s<trace_activation_s>                                trace_activation;
-  ie_field_s<npn_context_info_c>                                npn_context_info;
-  ie_field_s<dyn_seq_of<fixed_octstring<3, true>, 1, 16, true>> management_based_mdt_plmn_list;
-  ie_field_s<cho_initiation_e>                                  cho_initiation;
-  ie_field_s<add_ho_info_e>                                     add_ho_info;
-  ie_field_s<direct_forwarding_path_availability_e>             direct_forwarding_path_availability;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_up_ue_e1ap_id;
+  bool                                  ue_dl_max_integrity_protected_data_rate_present = false;
+  bool                                  ue_inactivity_timer_present                     = false;
+  bool                                  bearer_context_status_change_present            = false;
+  bool                                  ran_ue_id_present                               = false;
+  bool                                  gnb_du_id_present                               = false;
+  bool                                  trace_activation_present                        = false;
+  bool                                  npn_context_info_present                        = false;
+  bool                                  management_based_mdt_plmn_list_present          = false;
+  bool                                  cho_initiation_present                          = false;
+  bool                                  add_ho_info_present                             = false;
+  bool                                  direct_forwarding_path_availability_present     = false;
+  bool                                  gnb_cu_up_ue_e1ap_id_present                    = false;
+  uint64_t                              gnb_cu_cp_ue_e1ap_id;
+  security_info_s                       security_info;
+  uint64_t                              ue_dl_aggr_max_bit_rate;
+  uint64_t                              ue_dl_max_integrity_protected_data_rate;
+  fixed_octstring<3, true>              serving_plmn;
+  activity_notif_level_e                activity_notif_level;
+  uint16_t                              ue_inactivity_timer;
+  bearer_context_status_change_e        bearer_context_status_change;
+  sys_bearer_context_setup_request_c    sys_bearer_context_setup_request;
+  fixed_octstring<8, true>              ran_ue_id;
+  uint64_t                              gnb_du_id;
+  trace_activation_s                    trace_activation;
+  npn_context_info_c                    npn_context_info;
+  mdt_plmn_list_l                       management_based_mdt_plmn_list;
+  cho_initiation_e                      cho_initiation;
+  add_ho_info_e                         add_ho_info;
+  direct_forwarding_path_availability_e direct_forwarding_path_availability;
+  uint64_t                              gnb_cu_up_ue_e1ap_id;
 
   // sequence methods
-  bearer_context_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -6996,13 +6963,12 @@ struct pdu_session_res_setup_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                     redundant_n_g_dl_up_tnl_info_present    = false;
-  bool                                     redundant_pdu_session_info_used_present = false;
-  ie_field_s<up_tnl_info_c>                redundant_n_g_dl_up_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s> redundant_pdu_session_info_used;
+  bool                         redundant_n_g_dl_up_tnl_info_present    = false;
+  bool                         redundant_pdu_session_info_used_present = false;
+  up_tnl_info_c                redundant_n_g_dl_up_tnl_info;
+  redundant_pdu_session_info_s redundant_pdu_session_info_used;
 
   // sequence methods
-  pdu_session_res_setup_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7143,12 +7109,11 @@ struct eutran_bearer_context_setup_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                          drb_failed_list_eutran_present = false;
-  ie_field_s<dyn_seq_of<drb_setup_item_eutran_s, 1, 32, true>>  drb_setup_list_eutran;
-  ie_field_s<dyn_seq_of<drb_failed_item_eutran_s, 1, 32, true>> drb_failed_list_eutran;
+  bool                     drb_failed_list_eutran_present = false;
+  drb_setup_list_eutran_l  drb_setup_list_eutran;
+  drb_failed_list_eutran_l drb_failed_list_eutran;
 
   // sequence methods
-  eutran_bearer_context_setup_resp_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7159,12 +7124,11 @@ struct ng_ran_bearer_context_setup_resp_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                pdu_session_res_failed_list_present = false;
-  ie_field_s<dyn_seq_of<pdu_session_res_setup_item_s, 1, 256, true>>  pdu_session_res_setup_list;
-  ie_field_s<dyn_seq_of<pdu_session_res_failed_item_s, 1, 256, true>> pdu_session_res_failed_list;
+  bool                          pdu_session_res_failed_list_present = false;
+  pdu_session_res_setup_list_l  pdu_session_res_setup_list;
+  pdu_session_res_failed_list_l pdu_session_res_failed_list;
 
   // sequence methods
-  ng_ran_bearer_context_setup_resp_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7283,12 +7247,11 @@ struct bearer_context_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<sys_bearer_context_setup_resp_c>               sys_bearer_context_setup_resp;
+  uint64_t                        gnb_cu_cp_ue_e1ap_id;
+  uint64_t                        gnb_cu_up_ue_e1ap_id;
+  sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
 
   // sequence methods
-  bearer_context_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7471,17 +7434,16 @@ struct cell_traffic_trace_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                              privacy_ind_present = false;
-  bool                                                              ur_iaddress_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_cu_up_ue_e1ap_id;
-  ie_field_s<fixed_octstring<8, true>>                              trace_id;
-  ie_field_s<bounded_bitstring<1, 160, true, true>>                 trace_collection_entity_ip_address;
-  ie_field_s<privacy_ind_e>                                         privacy_ind;
-  ie_field_s<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> ur_iaddress;
+  bool                                                  privacy_ind_present = false;
+  bool                                                  ur_iaddress_present = false;
+  uint64_t                                              gnb_cu_cp_ue_e1ap_id;
+  uint64_t                                              gnb_cu_up_ue_e1ap_id;
+  fixed_octstring<8, true>                              trace_id;
+  bounded_bitstring<1, 160, true, true>                 trace_collection_entity_ip_address;
+  privacy_ind_e                                         privacy_ind;
+  visible_string<0, MAX_ASN_STRING_LENGTH, false, true> ur_iaddress;
 
   // sequence methods
-  cell_traffic_trace_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7564,15 +7526,14 @@ struct dl_data_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               ppi_present                        = false;
-  bool                                                               pdu_session_to_notify_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_up_ue_e1ap_id;
-  ie_field_s<integer<uint8_t, 0, 7, true, true>>                     ppi;
-  ie_field_s<dyn_seq_of<pdu_session_to_notify_item_s, 1, 256, true>> pdu_session_to_notify_list;
+  bool                         ppi_present                        = false;
+  bool                         pdu_session_to_notify_list_present = false;
+  uint64_t                     gnb_cu_cp_ue_e1ap_id;
+  uint64_t                     gnb_cu_up_ue_e1ap_id;
+  uint8_t                      ppi;
+  pdu_session_to_notify_list_l pdu_session_to_notify_list;
 
   // sequence methods
-  dl_data_notif_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7882,12 +7843,11 @@ struct data_usage_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<data_usage_report_item_s, 1, 32, true>> data_usage_report_list;
+  uint64_t                 gnb_cu_cp_ue_e1ap_id;
+  uint64_t                 gnb_cu_up_ue_e1ap_id;
+  data_usage_report_list_l data_usage_report_list;
 
   // sequence methods
-  data_usage_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7945,12 +7905,11 @@ struct deactiv_trace_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<fixed_octstring<8, true>>                      trace_id;
+  uint64_t                 gnb_cu_cp_ue_e1ap_id;
+  uint64_t                 gnb_cu_up_ue_e1ap_id;
+  fixed_octstring<8, true> trace_id;
 
   // sequence methods
-  deactiv_trace_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8665,15 +8624,14 @@ struct supported_plmns_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                   npn_support_info_present             = false;
-  bool                                                                   extended_slice_support_list_present  = false;
-  bool                                                                   extended_nr_cgi_support_list_present = false;
-  ie_field_s<npn_support_info_c>                                         npn_support_info;
-  ie_field_s<dyn_seq_of<slice_support_item_s, 1, 65535, true>>           extended_slice_support_list;
-  ie_field_s<dyn_seq_of<extended_nr_cgi_support_item_s, 1, 16384, true>> extended_nr_cgi_support_list;
+  bool                           npn_support_info_present             = false;
+  bool                           extended_slice_support_list_present  = false;
+  bool                           extended_nr_cgi_support_list_present = false;
+  npn_support_info_c             npn_support_info;
+  extended_slice_support_list_l  extended_slice_support_list;
+  extended_nr_cgi_support_list_l extended_nr_cgi_support_list;
 
   // sequence methods
-  supported_plmns_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10740,11 +10698,10 @@ struct e1_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
+  uint16_t transaction_id;
+  cause_c  cause;
 
   // sequence methods
-  e1_release_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10761,12 +10718,11 @@ struct early_forwarding_sn_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                    gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                    gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<drbs_subject_to_early_forwarding_item_s, 1, 32, true>> drbs_subject_to_early_forwarding_list;
+  uint64_t                                gnb_cu_cp_ue_e1ap_id;
+  uint64_t                                gnb_cu_up_ue_e1ap_id;
+  drbs_subject_to_early_forwarding_list_l drbs_subject_to_early_forwarding_list;
 
   // sequence methods
-  early_forwarding_sn_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10780,18 +10736,17 @@ struct error_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_cu_cp_ue_e1ap_id_present = false;
-  bool                                                      gnb_cu_up_ue_e1ap_id_present = false;
-  bool                                                      cause_present                = false;
-  bool                                                      crit_diagnostics_present     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               gnb_cu_cp_ue_e1ap_id_present = false;
+  bool               gnb_cu_up_ue_e1ap_id_present = false;
+  bool               cause_present                = false;
+  bool               crit_diagnostics_present     = false;
+  uint16_t           transaction_id;
+  uint64_t           gnb_cu_cp_ue_e1ap_id;
+  uint64_t           gnb_cu_up_ue_e1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  error_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10805,22 +10760,21 @@ struct gnb_cu_cp_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               gnb_cu_cp_name_present               = false;
-  bool                                                               gnb_cu_cp_tnl_a_to_add_list_present  = false;
-  bool                                                               gnb_cu_cp_tnl_a_to_rem_list_present  = false;
-  bool                                                               gnb_cu_cp_tnl_a_to_upd_list_present  = false;
-  bool                                                               transport_layer_address_info_present = false;
-  bool                                                               extended_gnb_cu_cp_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                  transaction_id;
-  ie_field_s<printable_string<1, 150, true, true>>                   gnb_cu_cp_name;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnl_a_to_add_item_s, 1, 32, true>> gnb_cu_cp_tnl_a_to_add_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnl_a_to_rem_item_s, 1, 32, true>> gnb_cu_cp_tnl_a_to_rem_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnl_a_to_upd_item_s, 1, 32, true>> gnb_cu_cp_tnl_a_to_upd_list;
-  ie_field_s<transport_layer_address_info_s>                         transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_cp_name_s>                              extended_gnb_cu_cp_name;
+  bool                                 gnb_cu_cp_name_present               = false;
+  bool                                 gnb_cu_cp_tnl_a_to_add_list_present  = false;
+  bool                                 gnb_cu_cp_tnl_a_to_rem_list_present  = false;
+  bool                                 gnb_cu_cp_tnl_a_to_upd_list_present  = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_cp_name_present      = false;
+  uint16_t                             transaction_id;
+  printable_string<1, 150, true, true> gnb_cu_cp_name;
+  gnb_cu_cp_tnl_a_to_add_list_l        gnb_cu_cp_tnl_a_to_add_list;
+  gnb_cu_cp_tnl_a_to_rem_list_l        gnb_cu_cp_tnl_a_to_rem_list;
+  gnb_cu_cp_tnl_a_to_upd_list_l        gnb_cu_cp_tnl_a_to_upd_list;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_cp_name_s            extended_gnb_cu_cp_name;
 
   // sequence methods
-  gnb_cu_cp_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10834,18 +10788,17 @@ struct gnb_cu_cp_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present                     = false;
-  bool                                              gnb_cu_cp_tnl_a_setup_list_present           = false;
-  bool                                              gnb_cu_cp_tnl_a_failed_to_setup_list_present = false;
-  bool                                              transport_layer_address_info_present         = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnl_a_setup_item_s, 1, 32, true>>           gnb_cu_cp_tnl_a_setup_list;
-  ie_field_s<dyn_seq_of<gnb_cu_cp_tnl_a_failed_to_setup_item_s, 1, 32, true>> gnb_cu_cp_tnl_a_failed_to_setup_list;
-  ie_field_s<transport_layer_address_info_s>                                  transport_layer_address_info;
+  bool                                   crit_diagnostics_present                     = false;
+  bool                                   gnb_cu_cp_tnl_a_setup_list_present           = false;
+  bool                                   gnb_cu_cp_tnl_a_failed_to_setup_list_present = false;
+  bool                                   transport_layer_address_info_present         = false;
+  uint16_t                               transaction_id;
+  crit_diagnostics_s                     crit_diagnostics;
+  gnb_cu_cp_tnl_a_setup_list_l           gnb_cu_cp_tnl_a_setup_list;
+  gnb_cu_cp_tnl_a_failed_to_setup_list_l gnb_cu_cp_tnl_a_failed_to_setup_list;
+  transport_layer_address_info_s         transport_layer_address_info;
 
   // sequence methods
-  gnb_cu_cp_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10859,15 +10812,14 @@ struct gnb_cu_cp_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_cu_cp_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10881,15 +10833,14 @@ struct gnb_cu_cp_e1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_cu_cp_e1_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10903,16 +10854,15 @@ struct gnb_cu_cp_e1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              gnb_cu_cp_name_present               = false;
-  bool                                              transport_layer_address_info_present = false;
-  bool                                              extended_gnb_cu_cp_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_cp_name;
-  ie_field_s<transport_layer_address_info_s>        transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_cp_name_s>             extended_gnb_cu_cp_name;
+  bool                                 gnb_cu_cp_name_present               = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_cp_name_present      = false;
+  uint16_t                             transaction_id;
+  printable_string<1, 150, true, true> gnb_cu_cp_name;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_cp_name_s            extended_gnb_cu_cp_name;
 
   // sequence methods
-  gnb_cu_cp_e1_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10926,21 +10876,20 @@ struct gnb_cu_cp_e1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                        gnb_cu_up_name_present               = false;
-  bool                                                        gnb_cu_up_capacity_present           = false;
-  bool                                                        transport_layer_address_info_present = false;
-  bool                                                        extended_gnb_cu_up_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>           transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true>>            gnb_cu_up_name;
-  ie_field_s<cn_support_e>                                    cn_support;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>> supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true>>          gnb_cu_up_capacity;
-  ie_field_s<transport_layer_address_info_s>                  transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_up_name_s>                       extended_gnb_cu_up_name;
+  bool                                 gnb_cu_up_name_present               = false;
+  bool                                 gnb_cu_up_capacity_present           = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_up_name_present      = false;
+  uint16_t                             transaction_id;
+  uint64_t                             gnb_cu_up_id;
+  printable_string<1, 150, true, true> gnb_cu_up_name;
+  cn_support_e                         cn_support;
+  supported_plmns_list_l               supported_plmns;
+  uint16_t                             gnb_cu_up_capacity;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
 
   // sequence methods
-  gnb_cu_cp_e1_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10954,12 +10903,11 @@ struct gnb_cu_cp_meas_results_info_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<drb_meas_results_info_item_s, 1, 32, true>> drb_meas_results_info_list;
+  uint64_t                     gnb_cu_cp_ue_e1ap_id;
+  uint64_t                     gnb_cu_up_ue_e1ap_id;
+  drb_meas_results_info_list_l drb_meas_results_info_list;
 
   // sequence methods
-  gnb_cu_cp_meas_results_info_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10973,23 +10921,22 @@ struct gnb_cu_up_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               gnb_cu_up_name_present               = false;
-  bool                                                               supported_plmns_present              = false;
-  bool                                                               gnb_cu_up_capacity_present           = false;
-  bool                                                               gnb_cu_up_tnl_a_to_rem_list_present  = false;
-  bool                                                               transport_layer_address_info_present = false;
-  bool                                                               extended_gnb_cu_up_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                  transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>         gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true>>                   gnb_cu_up_name;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>>        supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true>>                 gnb_cu_up_capacity;
-  ie_field_s<dyn_seq_of<gnb_cu_up_tnl_a_to_rem_item_s, 1, 32, true>> gnb_cu_up_tnl_a_to_rem_list;
-  ie_field_s<transport_layer_address_info_s>                         transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_up_name_s>                              extended_gnb_cu_up_name;
+  bool                                 gnb_cu_up_name_present               = false;
+  bool                                 supported_plmns_present              = false;
+  bool                                 gnb_cu_up_capacity_present           = false;
+  bool                                 gnb_cu_up_tnl_a_to_rem_list_present  = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_up_name_present      = false;
+  uint16_t                             transaction_id;
+  uint64_t                             gnb_cu_up_id;
+  printable_string<1, 150, true, true> gnb_cu_up_name;
+  supported_plmns_list_l               supported_plmns;
+  uint16_t                             gnb_cu_up_capacity;
+  gnb_cu_up_tnl_a_to_rem_list_l        gnb_cu_up_tnl_a_to_rem_list;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
 
   // sequence methods
-  gnb_cu_up_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11003,14 +10950,13 @@ struct gnb_cu_up_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present             = false;
-  bool                                              transport_layer_address_info_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
-  ie_field_s<transport_layer_address_info_s>        transport_layer_address_info;
+  bool                           crit_diagnostics_present             = false;
+  bool                           transport_layer_address_info_present = false;
+  uint16_t                       transaction_id;
+  crit_diagnostics_s             crit_diagnostics;
+  transport_layer_address_info_s transport_layer_address_info;
 
   // sequence methods
-  gnb_cu_up_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11024,15 +10970,14 @@ struct gnb_cu_up_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_cu_up_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11046,12 +10991,11 @@ struct gnb_cu_up_counter_check_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<sys_gnb_cu_up_counter_check_request_c>         sys_gnb_cu_up_counter_check_request;
+  uint64_t                              gnb_cu_cp_ue_e1ap_id;
+  uint64_t                              gnb_cu_up_ue_e1ap_id;
+  sys_gnb_cu_up_counter_check_request_c sys_gnb_cu_up_counter_check_request;
 
   // sequence methods
-  gnb_cu_up_counter_check_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11065,15 +11009,14 @@ struct gnb_cu_up_e1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_cu_up_e1_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11087,21 +11030,20 @@ struct gnb_cu_up_e1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                        gnb_cu_up_name_present               = false;
-  bool                                                        gnb_cu_up_capacity_present           = false;
-  bool                                                        transport_layer_address_info_present = false;
-  bool                                                        extended_gnb_cu_up_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>           transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>>  gnb_cu_up_id;
-  ie_field_s<printable_string<1, 150, true, true>>            gnb_cu_up_name;
-  ie_field_s<cn_support_e>                                    cn_support;
-  ie_field_s<dyn_seq_of<supported_plmns_item_s, 1, 12, true>> supported_plmns;
-  ie_field_s<integer<uint16_t, 0, 255, false, true>>          gnb_cu_up_capacity;
-  ie_field_s<transport_layer_address_info_s>                  transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_up_name_s>                       extended_gnb_cu_up_name;
+  bool                                 gnb_cu_up_name_present               = false;
+  bool                                 gnb_cu_up_capacity_present           = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_up_name_present      = false;
+  uint16_t                             transaction_id;
+  uint64_t                             gnb_cu_up_id;
+  printable_string<1, 150, true, true> gnb_cu_up_name;
+  cn_support_e                         cn_support;
+  supported_plmns_list_l               supported_plmns;
+  uint16_t                             gnb_cu_up_capacity;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_up_name_s            extended_gnb_cu_up_name;
 
   // sequence methods
-  gnb_cu_up_e1_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11115,16 +11057,15 @@ struct gnb_cu_up_e1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              gnb_cu_cp_name_present               = false;
-  bool                                              transport_layer_address_info_present = false;
-  bool                                              extended_gnb_cu_cp_name_present      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_cp_name;
-  ie_field_s<transport_layer_address_info_s>        transport_layer_address_info;
-  ie_field_s<extended_gnb_cu_cp_name_s>             extended_gnb_cu_cp_name;
+  bool                                 gnb_cu_cp_name_present               = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 extended_gnb_cu_cp_name_present      = false;
+  uint16_t                             transaction_id;
+  printable_string<1, 150, true, true> gnb_cu_cp_name;
+  transport_layer_address_info_s       transport_layer_address_info;
+  extended_gnb_cu_cp_name_s            extended_gnb_cu_cp_name;
 
   // sequence methods
-  gnb_cu_up_e1_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11138,11 +11079,10 @@ struct gnb_cu_up_status_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<gnb_cu_up_overload_info_e>             gnb_cu_up_overload_info;
+  uint16_t                  transaction_id;
+  gnb_cu_up_overload_info_e gnb_cu_up_overload_info;
 
   // sequence methods
-  gnb_cu_up_status_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11156,12 +11096,11 @@ struct iab_up_tnl_address_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                dl_up_tnl_address_to_upd_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                   transaction_id;
-  ie_field_s<dyn_seq_of<dl_up_tnl_address_to_upd_item_s, 1, 8, true>> dl_up_tnl_address_to_upd_list;
+  bool                            dl_up_tnl_address_to_upd_list_present = false;
+  uint16_t                        transaction_id;
+  dl_up_tnl_address_to_upd_list_l dl_up_tnl_address_to_upd_list;
 
   // sequence methods
-  iab_up_tnl_address_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11175,14 +11114,13 @@ struct iab_up_tnl_address_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                crit_diagnostics_present              = false;
-  bool                                                                ul_up_tnl_address_to_upd_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                   transaction_id;
-  ie_field_s<crit_diagnostics_s>                                      crit_diagnostics;
-  ie_field_s<dyn_seq_of<ul_up_tnl_address_to_upd_item_s, 1, 8, true>> ul_up_tnl_address_to_upd_list;
+  bool                            crit_diagnostics_present              = false;
+  bool                            ul_up_tnl_address_to_upd_list_present = false;
+  uint16_t                        transaction_id;
+  crit_diagnostics_s              crit_diagnostics;
+  ul_up_tnl_address_to_upd_list_l ul_up_tnl_address_to_upd_list;
 
   // sequence methods
-  iab_up_tnl_address_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11196,15 +11134,14 @@ struct iab_up_tnl_address_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  iab_up_tnl_address_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11218,11 +11155,10 @@ struct iabpsk_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                     transaction_id;
-  ie_field_s<dyn_seq_of<iab_donor_cu_up_psk_info_item_s, 1, 256, true>> iab_donor_cu_up_psk_info;
+  uint16_t                   transaction_id;
+  iab_donor_cu_up_psk_info_l iab_donor_cu_up_psk_info;
 
   // sequence methods
-  iabpsk_notif_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11236,12 +11172,11 @@ struct mrdc_data_usage_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>               gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>               gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<pdu_session_res_data_usage_item_s, 1, 256, true>> pdu_session_res_data_usage_list;
+  uint64_t                          gnb_cu_cp_ue_e1ap_id;
+  uint64_t                          gnb_cu_up_ue_e1ap_id;
+  pdu_session_res_data_usage_list_l pdu_session_res_data_usage_list;
 
   // sequence methods
-  mrdc_data_usage_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11291,12 +11226,11 @@ struct reset_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<reset_type_c>                          reset_type;
+  uint16_t     transaction_id;
+  cause_c      cause;
+  reset_type_c reset_type;
 
   // sequence methods
-  reset_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11310,15 +11244,13 @@ struct reset_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              ue_associated_lc_e1_conn_list_res_ack_present = false;
-  bool                                              crit_diagnostics_present                      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_e1_conn_item_res_ack_o>, 1, 65536, true>>
-                                 ue_associated_lc_e1_conn_list_res_ack;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                                    ue_associated_lc_e1_conn_list_res_ack_present = false;
+  bool                                    crit_diagnostics_present                      = false;
+  uint16_t                                transaction_id;
+  ue_associated_lc_e1_conn_list_res_ack_l ue_associated_lc_e1_conn_list_res_ack;
+  crit_diagnostics_s                      crit_diagnostics;
 
   // sequence methods
-  reset_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11332,16 +11264,15 @@ struct res_status_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_up_meas_id_present = false;
-  bool                                               crit_diagnostics_present  = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_cp_meas_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_up_meas_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool               gnb_cu_up_meas_id_present = false;
+  bool               crit_diagnostics_present  = false;
+  uint16_t           transaction_id;
+  uint16_t           gnb_cu_cp_meas_id;
+  uint16_t           gnb_cu_up_meas_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  res_status_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11355,18 +11286,17 @@ struct res_status_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_up_meas_id_present      = false;
-  bool                                               report_characteristics_present = false;
-  bool                                               report_periodicity_present     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_cp_meas_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_up_meas_id;
-  ie_field_s<regist_request_e>                       regist_request;
-  ie_field_s<fixed_bitstring<36, false, true>>       report_characteristics;
-  ie_field_s<report_periodicity_e>                   report_periodicity;
+  bool                             gnb_cu_up_meas_id_present      = false;
+  bool                             report_characteristics_present = false;
+  bool                             report_periodicity_present     = false;
+  uint16_t                         transaction_id;
+  uint16_t                         gnb_cu_cp_meas_id;
+  uint16_t                         gnb_cu_up_meas_id;
+  regist_request_e                 regist_request;
+  fixed_bitstring<36, false, true> report_characteristics;
+  report_periodicity_e             report_periodicity;
 
   // sequence methods
-  res_status_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11380,14 +11310,13 @@ struct res_status_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_cp_meas_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_up_meas_id;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  uint16_t           gnb_cu_cp_meas_id;
+  uint16_t           gnb_cu_up_meas_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  res_status_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11401,16 +11330,15 @@ struct res_status_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               gnb_cu_up_meas_id_present          = false;
-  bool                                               tnl_available_capacity_ind_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_cp_meas_id;
-  ie_field_s<integer<uint16_t, 1, 4095, true, true>> gnb_cu_up_meas_id;
-  ie_field_s<tnl_available_capacity_ind_s>           tnl_available_capacity_ind;
-  ie_field_s<hw_capacity_ind_s>                      hw_capacity_ind;
+  bool                         gnb_cu_up_meas_id_present          = false;
+  bool                         tnl_available_capacity_ind_present = false;
+  uint16_t                     transaction_id;
+  uint16_t                     gnb_cu_cp_meas_id;
+  uint16_t                     gnb_cu_up_meas_id;
+  tnl_available_capacity_ind_s tnl_available_capacity_ind;
+  hw_capacity_ind_s            hw_capacity_ind;
 
   // sequence methods
-  res_status_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11424,12 +11352,11 @@ struct trace_start_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_up_ue_e1ap_id;
-  ie_field_s<trace_activation_s>                            trace_activation;
+  uint64_t           gnb_cu_cp_ue_e1ap_id;
+  uint64_t           gnb_cu_up_ue_e1ap_id;
+  trace_activation_s trace_activation;
 
   // sequence methods
-  trace_start_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11443,12 +11370,11 @@ struct ul_data_notif_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_cp_ue_e1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>          gnb_cu_up_ue_e1ap_id;
-  ie_field_s<dyn_seq_of<pdu_session_to_notify_item_s, 1, 256, true>> pdu_session_to_notify_list;
+  uint64_t                     gnb_cu_cp_ue_e1ap_id;
+  uint64_t                     gnb_cu_up_ue_e1ap_id;
+  pdu_session_to_notify_list_l pdu_session_to_notify_list;
 
   // sequence methods
-  ul_data_notif_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;

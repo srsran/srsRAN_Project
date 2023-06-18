@@ -233,32 +233,31 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
                                                    const e1ap_bearer_context_setup_request&    request)
 {
   // security info
-  asn1_request->security_info.value.security_algorithm.ciphering_algorithm =
+  asn1_request->security_info.security_algorithm.ciphering_algorithm =
       ciphering_algorithm_to_e1ap_asn1(request.security_info.security_algorithm.ciphering_algo);
   if (request.security_info.security_algorithm.integrity_protection_algorithm.has_value()) {
-    asn1_request->security_info.value.security_algorithm.integrity_protection_algorithm_present = true;
-    asn1_request->security_info.value.security_algorithm.integrity_protection_algorithm =
-        integrity_algorithm_to_e1ap_asn1(
-            request.security_info.security_algorithm.integrity_protection_algorithm.value());
+    asn1_request->security_info.security_algorithm.integrity_protection_algorithm_present = true;
+    asn1_request->security_info.security_algorithm.integrity_protection_algorithm = integrity_algorithm_to_e1ap_asn1(
+        request.security_info.security_algorithm.integrity_protection_algorithm.value());
   }
-  asn1_request->security_info.value.up_securitykey.encryption_key =
+  asn1_request->security_info.up_securitykey.encryption_key =
       request.security_info.up_security_key.encryption_key.copy();
-  asn1_request->security_info.value.up_securitykey.integrity_protection_key =
+  asn1_request->security_info.up_securitykey.integrity_protection_key =
       request.security_info.up_security_key.integrity_protection_key.copy();
 
   // ue dl aggregate maximum bit rate
-  asn1_request->ue_dl_aggr_max_bit_rate.value = request.ue_dl_aggregate_maximum_bit_rate;
+  asn1_request->ue_dl_aggr_max_bit_rate = request.ue_dl_aggregate_maximum_bit_rate;
 
   // serving plmn
-  asn1_request->serving_plmn.value.from_number(plmn_string_to_bcd(request.serving_plmn));
+  asn1_request->serving_plmn.from_number(plmn_string_to_bcd(request.serving_plmn));
 
   // activity notification level
-  asn1::string_to_enum(asn1_request->activity_notif_level.value, request.activity_notif_level);
+  asn1::string_to_enum(asn1_request->activity_notif_level, request.activity_notif_level);
 
   // pdu session resource to setup list
-  asn1_request->sys_bearer_context_setup_request.value.set_ng_ran_bearer_context_setup_request();
+  asn1_request->sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
   auto& ng_ran_bearer_context_setup_request =
-      asn1_request->sys_bearer_context_setup_request.value.ng_ran_bearer_context_setup_request();
+      asn1_request->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
 
   for (const auto& pdu_session_res_item : request.pdu_session_res_to_setup_list) {
     asn1::protocol_ie_field_s<asn1::e1ap::ng_ran_bearer_context_setup_request_o> bearer_request_item;
@@ -352,33 +351,31 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   // ue dl maximum integrity protection data rate
   if (request.ue_dl_maximum_integrity_protected_data_rate.has_value()) {
     asn1_request->ue_dl_max_integrity_protected_data_rate_present = true;
-    asn1_request->ue_dl_max_integrity_protected_data_rate.value =
-        request.ue_dl_maximum_integrity_protected_data_rate.value();
+    asn1_request->ue_dl_max_integrity_protected_data_rate = request.ue_dl_maximum_integrity_protected_data_rate.value();
   }
 
   // ue inactivity timer
   if (request.ue_inactivity_timer.has_value()) {
     asn1_request->ue_inactivity_timer_present = true;
-    asn1_request->ue_inactivity_timer.value   = request.ue_inactivity_timer.value().count();
+    asn1_request->ue_inactivity_timer         = request.ue_inactivity_timer.value().count();
   }
 
   // bearer context status change
   if (request.bearer_context_status_change.has_value()) {
     asn1_request->bearer_context_status_change_present = true;
-    asn1::string_to_enum(asn1_request->bearer_context_status_change.value,
-                         request.bearer_context_status_change.value());
+    asn1::string_to_enum(asn1_request->bearer_context_status_change, request.bearer_context_status_change.value());
   }
 
   // ran ue id
   if (request.ran_ue_id.has_value()) {
     asn1_request->ran_ue_id_present = true;
-    asn1_request->ran_ue_id.value.from_number(ran_ue_id_to_uint(request.ran_ue_id.value()));
+    asn1_request->ran_ue_id.from_number(ran_ue_id_to_uint(request.ran_ue_id.value()));
   }
 
   // gnb du id
   if (request.gnb_du_id.has_value()) {
     asn1_request->gnb_du_id_present = true;
-    asn1_request->gnb_du_id.value   = request.gnb_du_id.value();
+    asn1_request->gnb_du_id         = request.gnb_du_id.value();
   }
 }
 
@@ -387,7 +384,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
                                         const asn1::e1ap::bearer_context_setup_resp_s& asn1_bearer_context_setup_resp)
 {
   // Fail if E-UTRAN bearer context setup is returned
-  if (asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp->type() ==
+  if (asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp.type() ==
       asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
     res.success = false;
     res.cause   = cause_t::protocol;
@@ -396,9 +393,9 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
     res.success = true;
 
     auto& asn1_bearer_context_setup_response =
-        asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp->ng_ran_bearer_context_setup_resp();
+        asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp.ng_ran_bearer_context_setup_resp();
 
-    for (const auto& asn1_res_setup_item : asn1_bearer_context_setup_response.pdu_session_res_setup_list.value) {
+    for (const auto& asn1_res_setup_item : asn1_bearer_context_setup_response.pdu_session_res_setup_list) {
       e1ap_pdu_session_resource_setup_modification_item res_setup_item;
       res_setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_setup_item.pdu_session_id);
 
@@ -494,7 +491,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
     // Add pdu session res failed list
     if (asn1_bearer_context_setup_response.pdu_session_res_failed_list_present) {
-      for (const auto& asn1_failed_item : asn1_bearer_context_setup_response.pdu_session_res_failed_list.value) {
+      for (const auto& asn1_failed_item : asn1_bearer_context_setup_response.pdu_session_res_failed_list) {
         e1ap_pdu_session_resource_failed_item failed_item;
 
         failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
@@ -511,7 +508,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
                                         const asn1::e1ap::bearer_context_setup_fail_s& e1ap_bearer_context_setup_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cause(e1ap_bearer_context_setup_fail->cause.value);
+  res.cause   = e1ap_cause_to_cause(e1ap_bearer_context_setup_fail->cause);
   if (e1ap_bearer_context_setup_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }
@@ -523,9 +520,8 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
   // ng ran bearer context mod
   if (request.ng_ran_bearer_context_mod_request.has_value()) {
     asn1_request->sys_bearer_context_mod_request_present = true;
-    asn1_request->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
-    auto& asn1_bearer_context_mod =
-        asn1_request->sys_bearer_context_mod_request.value.ng_ran_bearer_context_mod_request();
+    asn1_request->sys_bearer_context_mod_request.set_ng_ran_bearer_context_mod_request();
+    auto& asn1_bearer_context_mod = asn1_request->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
 
     if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
       asn1_bearer_context_mod.pdu_session_res_to_modify_list_present = true;
@@ -561,7 +557,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           asn1_res_to_mod_item.drb_to_rem_list_ng_ran.push_back(asn1_drb_to_rem_item);
         }
 
-        asn1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
+        asn1_bearer_context_mod.pdu_session_res_to_modify_list.push_back(asn1_res_to_mod_item);
       }
     }
 
@@ -638,7 +634,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           asn1_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran.push_back(asn1_drb_to_setup_mod_item);
         }
 
-        asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list.value.push_back(asn1_res_to_setup_mod_item);
+        asn1_bearer_context_mod.pdu_session_res_to_setup_mod_list.push_back(asn1_res_to_setup_mod_item);
       }
     }
   }
@@ -651,7 +647,7 @@ inline void fill_e1ap_bearer_context_modification_response(
   res.success = true;
   if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp_present) {
     // Fail if E-UTRAN bearer context setup is returned
-    if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp->type() ==
+    if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp.type() ==
         asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
       res.success = false;
       res.cause   = cause_t::protocol;
@@ -659,11 +655,11 @@ inline void fill_e1ap_bearer_context_modification_response(
     } else {
       // Add NG RAN bearer context modification response
       auto& asn1_bearer_context_mod_response =
-          asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp->ng_ran_bearer_context_mod_resp();
+          asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp.ng_ran_bearer_context_mod_resp();
 
       // Add PDU session resource setup list
       if (asn1_bearer_context_mod_response.pdu_session_res_setup_mod_list_present) {
-        for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_setup_mod_list.value) {
+        for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_setup_mod_list) {
           e1ap_pdu_session_resource_setup_modification_item res_mod_item;
           res_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_mod_item.pdu_session_id);
 
@@ -756,7 +752,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
       // Add PDU session resource failed list
       if (asn1_bearer_context_mod_response.pdu_session_res_failed_mod_list_present) {
-        for (const auto& asn1_failed_item : asn1_bearer_context_mod_response.pdu_session_res_failed_mod_list.value) {
+        for (const auto& asn1_failed_item : asn1_bearer_context_mod_response.pdu_session_res_failed_mod_list) {
           e1ap_pdu_session_resource_failed_item failed_item;
 
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
@@ -768,7 +764,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
       // Add PDU session resource modified list
       if (asn1_bearer_context_mod_response.pdu_session_res_modified_list_present) {
-        for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_modified_list.value) {
+        for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_modified_list) {
           e1ap_pdu_session_resource_modified_item res_mod_item;
 
           res_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_mod_item.pdu_session_id);
@@ -924,8 +920,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
       // Add PDU session resource failed to modify list
       if (asn1_bearer_context_mod_response.pdu_session_res_failed_to_modify_list_present) {
-        for (const auto& asn1_failed_item :
-             asn1_bearer_context_mod_response.pdu_session_res_failed_to_modify_list.value) {
+        for (const auto& asn1_failed_item : asn1_bearer_context_mod_response.pdu_session_res_failed_to_modify_list) {
           e1ap_pdu_session_resource_failed_item failed_item;
 
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
@@ -943,7 +938,7 @@ inline void fill_e1ap_bearer_context_modification_response(
     const asn1::e1ap::bearer_context_mod_fail_s& asn1_bearer_context_modification_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cause(asn1_bearer_context_modification_fail->cause.value);
+  res.cause   = e1ap_cause_to_cause(asn1_bearer_context_modification_fail->cause);
   if (asn1_bearer_context_modification_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }
@@ -952,7 +947,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_release_cmd_s&  asn1_command,
                                                      const e1ap_bearer_context_release_command& command)
 {
-  asn1_command->cause.value = cause_to_asn1_cause(command.cause);
+  asn1_command->cause = cause_to_asn1_cause(command.cause);
 }
 
 } // namespace srs_cu_cp
