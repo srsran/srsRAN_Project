@@ -80,15 +80,15 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_UE_MSG);
 
-  auto& init_ue_msg                       = ngap_msg.pdu.init_msg().value.init_ue_msg();
-  init_ue_msg->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  auto& init_ue_msg           = ngap_msg.pdu.init_msg().value.init_ue_msg();
+  init_ue_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
 
-  init_ue_msg->nas_pdu.value.resize(msg.nas_pdu.length());
-  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), init_ue_msg->nas_pdu.value.begin());
+  init_ue_msg->nas_pdu.resize(msg.nas_pdu.length());
+  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), init_ue_msg->nas_pdu.begin());
 
-  init_ue_msg->rrc_establishment_cause.value.value = msg.establishment_cause.value;
+  init_ue_msg->rrc_establishment_cause.value = msg.establishment_cause.value;
 
-  auto& user_loc_info_nr       = init_ue_msg->user_location_info.value.set_user_location_info_nr();
+  auto& user_loc_info_nr       = init_ue_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = msg.nr_cgi;
   user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
   user_loc_info_nr.tai.tac.from_number(msg.tac);
@@ -98,9 +98,9 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
   if (msg.five_g_s_tmsi.has_value()) {
     init_ue_msg->five_g_s_tmsi_present = true;
-    init_ue_msg->five_g_s_tmsi.value.amf_set_id.from_number(context.current_guami.amf_set_id);
-    init_ue_msg->five_g_s_tmsi.value.amf_pointer.from_number(context.current_guami.amf_pointer);
-    init_ue_msg->five_g_s_tmsi.value.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
+    init_ue_msg->five_g_s_tmsi.amf_set_id.from_number(context.current_guami.amf_set_id);
+    init_ue_msg->five_g_s_tmsi.amf_pointer.from_number(context.current_guami.amf_pointer);
+    init_ue_msg->five_g_s_tmsi.five_g_tmsi.from_number(msg.five_g_s_tmsi.value().five_g_tmsi);
   }
 
   // TODO: Add missing optional values
@@ -125,19 +125,19 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
 
   auto& ul_nas_transport_msg = ngap_msg.pdu.init_msg().value.ul_nas_transport();
 
-  ul_nas_transport_msg->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ul_nas_transport_msg->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
 
   amf_ue_id_t amf_ue_id = ue->get_amf_ue_id();
   if (amf_ue_id == amf_ue_id_t::invalid) {
     logger.warning("ue={} UE AMF ID not found!", msg.ue_index);
     return;
   }
-  ul_nas_transport_msg->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(amf_ue_id);
+  ul_nas_transport_msg->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
 
-  ul_nas_transport_msg->nas_pdu.value.resize(msg.nas_pdu.length());
-  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), ul_nas_transport_msg->nas_pdu.value.begin());
+  ul_nas_transport_msg->nas_pdu.resize(msg.nas_pdu.length());
+  std::copy(msg.nas_pdu.begin(), msg.nas_pdu.end(), ul_nas_transport_msg->nas_pdu.begin());
 
-  auto& user_loc_info_nr       = ul_nas_transport_msg->user_location_info.value.set_user_location_info_nr();
+  auto& user_loc_info_nr       = ul_nas_transport_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = msg.nr_cgi;
   user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
   user_loc_info_nr.tai.tac.from_number(msg.tac);
@@ -211,7 +211,7 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
 
 void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
 {
-  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id));
   if (ue_index == ue_index_t::invalid) {
     logger.warning("ue={} does not exist - dropping PDU", ue_index);
     return;
@@ -228,13 +228,13 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
-    logger.debug("ue={} Received AMF UE ID={}", ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
-    ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
+    logger.debug("ue={} Received AMF UE ID={}", ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
+    ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
   }
 
   byte_buffer nas_pdu;
-  nas_pdu.resize(msg->nas_pdu.value.size());
-  std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
+  nas_pdu.resize(msg->nas_pdu.size());
+  std::copy(msg->nas_pdu.begin(), msg->nas_pdu.end(), nas_pdu.begin());
   logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
 
   ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
@@ -242,7 +242,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
 {
-  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id));
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping InitialContextSetupRequest", ue_index);
@@ -252,7 +252,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   logger.info("ue={} Received InitialContextSetupRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
-  ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
+  ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id));
 
   // start routine
   task_sched.schedule_async_task(ue_index,
@@ -262,13 +262,13 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
-  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest (ran_ue_id={}, amf_ue_id={})",
                    ue_index,
-                   request->ran_ue_ngap_id.value,
-                   request->amf_ue_ngap_id.value);
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
     return;
   }
 
@@ -276,14 +276,14 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   // Store information in UE context
   if (request->ue_aggr_max_bit_rate_present) {
-    ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl);
+    ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl);
   }
 
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
   msg.ue_index     = ue_index;
   msg.serving_plmn = context.plmn;
-  fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
+  fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine
@@ -293,19 +293,19 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   // Handle optional parameters
   if (request->nas_pdu_present) {
-    handle_nas_pdu(logger, request->nas_pdu.value, *ue);
+    handle_nas_pdu(logger, request->nas_pdu, *ue);
   }
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
 {
-  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping PduSessionResourceModifyRequest (ran_ue_id={}, amf_ue_id={})",
                    ue_index,
-                   request->ran_ue_ngap_id.value,
-                   request->amf_ue_ngap_id.value);
+                   request->ran_ue_ngap_id,
+                   request->amf_ue_ngap_id);
     return;
   }
 
@@ -318,7 +318,7 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
   // Convert to common type
   cu_cp_pdu_session_resource_modify_request msg;
   msg.ue_index = ue_index;
-  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req.value);
+  fill_cu_cp_pdu_session_resource_modify_request(msg, request->pdu_session_res_modify_list_mod_req);
 
   // start routine
   task_sched.schedule_async_task(ue_index,
@@ -328,13 +328,13 @@ void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu
 
 void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)
 {
-  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id.value));
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id));
   ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand (ran_ue_id={}, amf_ue_id={})",
                    ue_index,
-                   command->ran_ue_ngap_id.value,
-                   command->amf_ue_ngap_id.value);
+                   command->ran_ue_ngap_id,
+                   command->amf_ue_ngap_id);
     return;
   }
 
@@ -343,8 +343,8 @@ void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pd
   // Handle optional NAS PDU
   if (command->nas_pdu_present) {
     byte_buffer nas_pdu;
-    nas_pdu.resize(command->nas_pdu.value.size());
-    std::copy(command->nas_pdu.value.begin(), command->nas_pdu.value.end(), nas_pdu.begin());
+    nas_pdu.resize(command->nas_pdu.size());
+    std::copy(command->nas_pdu.begin(), command->nas_pdu.end(), nas_pdu.begin());
     logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
 
     ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
@@ -364,11 +364,11 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 {
   amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
-  if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
-    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids->amf_ue_ngap_id());
-  } else if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
-    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().amf_ue_ngap_id);
-    ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().ran_ue_ngap_id);
+  if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
+    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.amf_ue_ngap_id());
+  } else if (cmd->ue_ngap_ids.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
+    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().amf_ue_ngap_id);
+    ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids.ue_ngap_id_pair().ran_ue_ngap_id);
   }
   ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
@@ -400,8 +400,8 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
 
   auto& asn1_ue_context_release_complete = ngap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  asn1_ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
-  asn1_ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+  asn1_ue_context_release_complete->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  asn1_ue_context_release_complete->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
@@ -416,7 +416,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 {
   logger.info("Received Paging");
 
-  if (msg->ue_paging_id.value.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
+  if (msg->ue_paging_id.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
     logger.error("Unsupportet UE Paging ID");
     return;
   }
@@ -433,10 +433,10 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   ue_index_t ue_index = ue_index_t::invalid;
   ngap_ue*   ue       = nullptr;
   if (msg->amf_ue_ngap_id_present) {
-    ue_index = ue_manager.get_ue_index(uint_to_amf_ue_id(msg->amf_ue_ngap_id.value));
+    ue_index = ue_manager.get_ue_index(uint_to_amf_ue_id(msg->amf_ue_ngap_id));
     ue       = ue_manager.find_ngap_ue(ue_index);
   } else if (msg->ran_ue_ngap_id_present) {
-    ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value));
+    ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id));
     ue       = ue_manager.find_ngap_ue(ue_index);
   }
 
@@ -446,7 +446,7 @@ void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
   } else {
     std::string cause = "";
     if (msg->cause_present) {
-      cause = asn1_cause_to_string(msg->cause.value);
+      cause = asn1_cause_to_string(msg->cause);
     }
 
     logger.info("ue={} Received ErrorIndication (ran_ue_id={}) - cause {}", ue_index, ue->get_ran_ue_id(), cause);
@@ -496,8 +496,8 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
 
   auto& ue_context_release_request = ngap_msg.pdu.init_msg().value.ue_context_release_request();
 
-  ue_context_release_request->ran_ue_ngap_id.value.value = ran_ue_id_to_uint(ue->get_ran_ue_id());
-  ue_context_release_request->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(ue->get_amf_ue_id());
+  ue_context_release_request->ran_ue_ngap_id = ran_ue_id_to_uint(ue->get_ran_ue_id());
+  ue_context_release_request->amf_ue_ngap_id = amf_ue_id_to_uint(ue->get_amf_ue_id());
 
   // Add PDU Session IDs
   if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
@@ -505,11 +505,11 @@ void ngap_impl::handle_ue_context_release_request(const cu_cp_ue_context_release
     for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
       asn1::ngap::pdu_session_res_item_cxt_rel_req_s pdu_session_item;
       pdu_session_item.pdu_session_id = pdu_session_id_to_uint(session_id);
-      ue_context_release_request->pdu_session_res_list_cxt_rel_req.value.push_back(pdu_session_item);
+      ue_context_release_request->pdu_session_res_list_cxt_rel_req.push_back(pdu_session_item);
     }
   }
 
-  ue_context_release_request->cause.value.set_radio_network();
+  ue_context_release_request->cause.set_radio_network();
   // TODO: Add sub causes to common type
   // ue_context_release_request->cause.value.radio_network() =
   //     asn1::ngap::cause_radio_network_opts::options::user_inactivity;

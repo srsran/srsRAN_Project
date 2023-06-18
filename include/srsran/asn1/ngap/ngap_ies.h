@@ -499,15 +499,14 @@ struct plmn_support_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                         npn_support_present                 = false;
-  bool                                                         extended_slice_support_list_present = false;
-  bool                                                         onboarding_support_present          = false;
-  ie_field_s<npn_support_c>                                    npn_support;
-  ie_field_s<dyn_seq_of<slice_support_item_s, 1, 65535, true>> extended_slice_support_list;
-  ie_field_s<onboarding_support_e>                             onboarding_support;
+  bool                          npn_support_present                 = false;
+  bool                          extended_slice_support_list_present = false;
+  bool                          onboarding_support_present          = false;
+  npn_support_c                 npn_support;
+  extended_slice_support_list_l extended_slice_support_list;
+  onboarding_support_e          onboarding_support;
 
   // sequence methods
-  plmn_support_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -2826,13 +2825,12 @@ struct assist_data_for_paging_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                           npn_paging_assist_info_present           = false;
-  bool                                           paging_assis_datafor_c_ecapab_ue_present = false;
-  ie_field_s<npn_paging_assist_info_c>           npn_paging_assist_info;
-  ie_field_s<paging_assis_datafor_c_ecapab_ue_s> paging_assis_datafor_c_ecapab_ue;
+  bool                               npn_paging_assist_info_present           = false;
+  bool                               paging_assis_datafor_c_ecapab_ue_present = false;
+  npn_paging_assist_info_c           npn_paging_assist_info;
+  paging_assis_datafor_c_ecapab_ue_s paging_assis_datafor_c_ecapab_ue;
 
   // sequence methods
-  assist_data_for_paging_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -3896,15 +3894,14 @@ struct broadcast_plmn_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                          npn_support_present                     = false;
-  bool                                                          extended_tai_slice_support_list_present = false;
-  bool                                                          tai_nsag_support_list_present           = false;
-  ie_field_s<npn_support_c>                                     npn_support;
-  ie_field_s<dyn_seq_of<slice_support_item_s, 1, 65535, true>>  extended_tai_slice_support_list;
-  ie_field_s<dyn_seq_of<tai_nsag_support_item_s, 1, 256, true>> tai_nsag_support_list;
+  bool                          npn_support_present                     = false;
+  bool                          extended_tai_slice_support_list_present = false;
+  bool                          tai_nsag_support_list_present           = false;
+  npn_support_c                 npn_support;
+  extended_slice_support_list_l extended_tai_slice_support_list;
+  tai_nsag_support_list_l       tai_nsag_support_list;
 
   // sequence methods
-  broadcast_plmn_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5060,23 +5057,22 @@ struct core_network_assist_info_for_inactive_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                             eutra_paginge_drx_info_present             = false;
-  bool                                             extended_ue_id_idx_value_present           = false;
-  bool                                             ue_radio_cap_for_paging_present            = false;
-  bool                                             mico_all_plmn_present                      = false;
-  bool                                             nr_paginge_drx_info_present                = false;
-  bool                                             paging_cause_ind_for_voice_service_present = false;
-  bool                                             pe_ip_sassist_info_present                 = false;
-  ie_field_s<eutra_paginge_drx_info_s>             eutra_paginge_drx_info;
-  ie_field_s<fixed_bitstring<16, false, true>>     extended_ue_id_idx_value;
-  ie_field_s<ue_radio_cap_for_paging_s>            ue_radio_cap_for_paging;
-  ie_field_s<mico_all_plmn_e>                      mico_all_plmn;
-  ie_field_s<nr_paginge_drx_info_s>                nr_paginge_drx_info;
-  ie_field_s<paging_cause_ind_for_voice_service_e> paging_cause_ind_for_voice_service;
-  ie_field_s<pe_ip_sassist_info_s>                 pe_ip_sassist_info;
+  bool                                 eutra_paginge_drx_info_present             = false;
+  bool                                 extended_ue_id_idx_value_present           = false;
+  bool                                 ue_radio_cap_for_paging_present            = false;
+  bool                                 mico_all_plmn_present                      = false;
+  bool                                 nr_paginge_drx_info_present                = false;
+  bool                                 paging_cause_ind_for_voice_service_present = false;
+  bool                                 pe_ip_sassist_info_present                 = false;
+  eutra_paginge_drx_info_s             eutra_paginge_drx_info;
+  fixed_bitstring<16, false, true>     extended_ue_id_idx_value;
+  ue_radio_cap_for_paging_s            ue_radio_cap_for_paging;
+  mico_all_plmn_e                      mico_all_plmn;
+  nr_paginge_drx_info_s                nr_paginge_drx_info;
+  paging_cause_ind_for_voice_service_e paging_cause_ind_for_voice_service;
+  pe_ip_sassist_info_s                 pe_ip_sassist_info;
 
   // sequence methods
-  core_network_assist_info_for_inactive_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5884,17 +5880,16 @@ struct mob_restrict_list_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                        last_eutran_plmn_id_present              = false;
-  bool                                        cn_type_restricts_for_serving_present    = false;
-  bool                                        cn_type_restricts_for_equivalent_present = false;
-  bool                                        npn_mob_info_present                     = false;
-  ie_field_s<fixed_octstring<3, true>>        last_eutran_plmn_id;
-  ie_field_s<cn_type_restricts_for_serving_e> cn_type_restricts_for_serving;
-  ie_field_s<dyn_seq_of<cn_type_restricts_for_equivalent_item_s, 1, 15, true>> cn_type_restricts_for_equivalent;
-  ie_field_s<npn_mob_info_c>                                                   npn_mob_info;
+  bool                               last_eutran_plmn_id_present              = false;
+  bool                               cn_type_restricts_for_serving_present    = false;
+  bool                               cn_type_restricts_for_equivalent_present = false;
+  bool                               npn_mob_info_present                     = false;
+  fixed_octstring<3, true>           last_eutran_plmn_id;
+  cn_type_restricts_for_serving_e    cn_type_restricts_for_serving;
+  cn_type_restricts_for_equivalent_l cn_type_restricts_for_equivalent;
+  npn_mob_info_c                     npn_mob_info;
 
   // sequence methods
-  mob_restrict_list_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8174,15 +8169,14 @@ struct dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                extended_packet_delay_budget_present = false;
-  bool                                                cn_packet_delay_budget_dl_present    = false;
-  bool                                                cn_packet_delay_budget_ul_present    = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> extended_packet_delay_budget;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     extended_packet_delay_budget_present = false;
+  bool     cn_packet_delay_budget_dl_present    = false;
+  bool     cn_packet_delay_budget_ul_present    = false;
+  uint32_t extended_packet_delay_budget;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8267,13 +8261,12 @@ struct erab_info_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              source_tnla_ddr_info_present      = false;
-  bool                                              source_node_tnla_ddr_info_present = false;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_tnla_ddr_info;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_node_tnla_ddr_info;
+  bool                                  source_tnla_ddr_info_present      = false;
+  bool                                  source_node_tnla_ddr_info_present = false;
+  bounded_bitstring<1, 160, true, true> source_tnla_ddr_info;
+  bounded_bitstring<1, 160, true, true> source_node_tnla_ddr_info;
 
   // sequence methods
-  erab_info_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9186,19 +9179,18 @@ struct ho_cmd_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                               add_dl_forwarding_up_tnl_info_present  = false;
-  bool                                                               ul_forwarding_up_tnl_info_present      = false;
-  bool                                                               add_ul_forwarding_up_tnl_info_present  = false;
-  bool                                                               data_forwarding_resp_erab_list_present = false;
-  bool                                                               qos_flow_failed_to_setup_list_present  = false;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>   add_dl_forwarding_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                              ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>             qos_flow_failed_to_setup_list;
+  bool                             add_dl_forwarding_up_tnl_info_present  = false;
+  bool                             ul_forwarding_up_tnl_info_present      = false;
+  bool                             add_ul_forwarding_up_tnl_info_present  = false;
+  bool                             data_forwarding_resp_erab_list_present = false;
+  bool                             qos_flow_failed_to_setup_list_present  = false;
+  qos_flow_per_tnl_info_list_l     add_dl_forwarding_up_tnl_info;
+  up_transport_layer_info_c        ul_forwarding_up_tnl_info;
+  up_transport_layer_info_list_l   add_ul_forwarding_up_tnl_info;
+  data_forwarding_resp_erab_list_l data_forwarding_resp_erab_list;
+  qos_flow_list_with_cause_l       qos_flow_failed_to_setup_list;
 
   // sequence methods
-  ho_cmd_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9637,15 +9629,14 @@ struct user_location_info_nr_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                         pscell_info_present     = false;
-  bool                                         n_id_present            = false;
-  bool                                         nr_ntn_tai_info_present = false;
-  ie_field_s<ngran_cgi_c>                      pscell_info;
-  ie_field_s<fixed_bitstring<44, false, true>> n_id;
-  ie_field_s<nr_ntn_tai_info_s>                nr_ntn_tai_info;
+  bool                             pscell_info_present     = false;
+  bool                             n_id_present            = false;
+  bool                             nr_ntn_tai_info_present = false;
+  ngran_cgi_c                      pscell_info;
+  fixed_bitstring<44, false, true> n_id;
+  nr_ntn_tai_info_s                nr_ntn_tai_info;
 
   // sequence methods
-  user_location_info_nr_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10561,13 +10552,12 @@ struct m1_cfg_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                 include_beam_meass_ind_present = false;
-  bool                                 beam_meass_report_cfg_present  = false;
-  ie_field_s<include_beam_meass_ind_e> include_beam_meass_ind;
-  ie_field_s<beam_meass_report_cfg_s>  beam_meass_report_cfg;
+  bool                     include_beam_meass_ind_present = false;
+  bool                     beam_meass_report_cfg_present  = false;
+  include_beam_meass_ind_e include_beam_meass_ind;
+  beam_meass_report_cfg_s  beam_meass_report_cfg;
 
   // sequence methods
-  m1_cfg_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10624,13 +10614,12 @@ struct m6_cfg_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                   m6_report_amount_present              = false;
-  bool                                                                   excess_packet_delay_thres_cfg_present = false;
-  ie_field_s<m6_report_amount_mdt_e>                                     m6_report_amount;
-  ie_field_s<dyn_seq_of<excess_packet_delay_thres_item_s, 1, 255, true>> excess_packet_delay_thres_cfg;
+  bool                            m6_report_amount_present              = false;
+  bool                            excess_packet_delay_thres_cfg_present = false;
+  m6_report_amount_mdt_e          m6_report_amount;
+  excess_packet_delay_thres_cfg_l excess_packet_delay_thres_cfg;
 
   // sequence methods
-  m6_cfg_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11401,13 +11390,12 @@ struct trace_activation_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                              mdt_cfg_present                     = false;
-  bool                                                              trace_collection_entity_uri_present = false;
-  ie_field_s<mdt_cfg_s>                                             mdt_cfg;
-  ie_field_s<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> trace_collection_entity_uri;
+  bool                                                  mdt_cfg_present                     = false;
+  bool                                                  trace_collection_entity_uri_present = false;
+  mdt_cfg_s                                             mdt_cfg;
+  visible_string<0, MAX_ASN_STRING_LENGTH, false, true> trace_collection_entity_uri;
 
   // sequence methods
-  trace_activation_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11743,25 +11731,24 @@ struct ho_request_ack_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                 add_dl_up_tnl_info_for_ho_list_present = false;
-  bool                                                                 ul_forwarding_up_tnl_info_present      = false;
-  bool                                                                 add_ul_forwarding_up_tnl_info_present  = false;
-  bool                                                                 data_forwarding_resp_erab_list_present = false;
-  bool                                                                 redundant_dl_ngu_up_tnl_info_present   = false;
-  bool                                                                 used_r_sn_info_present                 = false;
-  bool                                                                 global_ran_node_id_present             = false;
-  bool                                                                 mbs_support_ind_present                = false;
-  ie_field_s<dyn_seq_of<add_dl_up_tnl_info_for_ho_item_s, 1, 3, true>> add_dl_up_tnl_info_for_ho_list;
-  ie_field_s<up_transport_layer_info_c>                                ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>   add_ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
-  ie_field_s<up_transport_layer_info_c>                                       redundant_dl_ngu_up_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                                    used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                            global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                               mbs_support_ind;
+  bool                             add_dl_up_tnl_info_for_ho_list_present = false;
+  bool                             ul_forwarding_up_tnl_info_present      = false;
+  bool                             add_ul_forwarding_up_tnl_info_present  = false;
+  bool                             data_forwarding_resp_erab_list_present = false;
+  bool                             redundant_dl_ngu_up_tnl_info_present   = false;
+  bool                             used_r_sn_info_present                 = false;
+  bool                             global_ran_node_id_present             = false;
+  bool                             mbs_support_ind_present                = false;
+  add_dl_up_tnl_info_for_ho_list_l add_dl_up_tnl_info_for_ho_list;
+  up_transport_layer_info_c        ul_forwarding_up_tnl_info;
+  up_transport_layer_info_list_l   add_ul_forwarding_up_tnl_info;
+  data_forwarding_resp_erab_list_l data_forwarding_resp_erab_list;
+  up_transport_layer_info_c        redundant_dl_ngu_up_tnl_info;
+  redundant_pdu_session_info_s     used_r_sn_info;
+  global_ran_node_id_c             global_ran_node_id;
+  mbs_support_ind_e                mbs_support_ind;
 
   // sequence methods
-  ho_request_ack_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -13217,13 +13204,12 @@ struct pdu_session_res_modify_item_mod_req_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                         s_nssai_present                                    = false;
-  bool                                         pdu_session_expected_ue_activity_behaviour_present = false;
-  ie_field_s<s_nssai_s>                        s_nssai;
-  ie_field_s<expected_ue_activity_behaviour_s> pdu_session_expected_ue_activity_behaviour;
+  bool                             s_nssai_present                                    = false;
+  bool                             pdu_session_expected_ue_activity_behaviour_present = false;
+  s_nssai_s                        s_nssai;
+  expected_ue_activity_behaviour_s pdu_session_expected_ue_activity_behaviour;
 
   // sequence methods
-  pdu_session_res_modify_item_mod_req_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -13556,13 +13542,12 @@ struct supported_ta_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                      cfg_tac_ind_present = false;
-  bool                      rat_info_present    = false;
-  ie_field_s<cfg_tac_ind_e> cfg_tac_ind;
-  ie_field_s<rat_info_e>    rat_info;
+  bool          cfg_tac_ind_present = false;
+  bool          rat_info_present    = false;
+  cfg_tac_ind_e cfg_tac_ind;
+  rat_info_e    rat_info;
 
   // sequence methods
-  supported_ta_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -14514,13 +14499,12 @@ struct non_dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                cn_packet_delay_budget_dl_present = false;
-  bool                                                cn_packet_delay_budget_ul_present = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     cn_packet_delay_budget_dl_present = false;
+  bool     cn_packet_delay_budget_ul_present = false;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  non_dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -14761,13 +14745,12 @@ struct qos_flow_level_qos_params_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                               qos_monitoring_request_present     = false;
-  bool                                               qos_monitoring_report_freq_present = false;
-  ie_field_s<qos_monitoring_request_e>               qos_monitoring_request;
-  ie_field_s<integer<uint16_t, 1, 1800, true, true>> qos_monitoring_report_freq;
+  bool                     qos_monitoring_request_present     = false;
+  bool                     qos_monitoring_report_freq_present = false;
+  qos_monitoring_request_e qos_monitoring_request;
+  uint16_t                 qos_monitoring_report_freq;
 
   // sequence methods
-  qos_flow_level_qos_params_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15347,14 +15330,13 @@ struct mbs_session_setup_or_mod_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                  mbs_session_tnl_info5_gc_present = false;
-  bool                                                                  mbs_session_fsa_id_list_present  = false;
-  ie_field_s<mbs_session_tnl_info5_gc_c>                                mbs_session_tnl_info5_gc;
-  ie_field_s<dyn_seq_of<mbs_qos_flows_to_be_setup_item_s, 1, 64, true>> mbs_qos_flows_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<fixed_octstring<3, true>, 1, 64, true>>         mbs_session_fsa_id_list;
+  bool                             mbs_session_tnl_info5_gc_present = false;
+  bool                             mbs_session_fsa_id_list_present  = false;
+  mbs_session_tnl_info5_gc_c       mbs_session_tnl_info5_gc;
+  mbs_qos_flows_to_be_setup_list_l mbs_qos_flows_to_be_setup_mod_list;
+  mbs_session_fsa_id_list_l        mbs_session_fsa_id_list;
 
   // sequence methods
-  mbs_session_setup_or_mod_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15587,18 +15569,17 @@ struct multicast_session_upd_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                           mbs_service_area_present                   = false;
-  bool                           mbs_qos_flows_to_be_setup_mod_list_present = false;
-  bool                           mbs_qos_flow_to_release_list_present       = false;
-  bool                           mbs_session_tnl_info5_gc_present           = false;
-  ie_field_s<mbs_session_id_s>   mbs_session_id;
-  ie_field_s<mbs_service_area_c> mbs_service_area;
-  ie_field_s<dyn_seq_of<mbs_qos_flows_to_be_setup_item_s, 1, 64, true>> mbs_qos_flows_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>       mbs_qos_flow_to_release_list;
-  ie_field_s<mbs_session_tnl_info5_gc_c>                                mbs_session_tnl_info5_gc;
+  bool                             mbs_service_area_present                   = false;
+  bool                             mbs_qos_flows_to_be_setup_mod_list_present = false;
+  bool                             mbs_qos_flow_to_release_list_present       = false;
+  bool                             mbs_session_tnl_info5_gc_present           = false;
+  mbs_session_id_s                 mbs_session_id;
+  mbs_service_area_c               mbs_service_area;
+  mbs_qos_flows_to_be_setup_list_l mbs_qos_flows_to_be_setup_mod_list;
+  qos_flow_list_with_cause_l       mbs_qos_flow_to_release_list;
+  mbs_session_tnl_info5_gc_c       mbs_session_tnl_info5_gc;
 
   // sequence methods
-  multicast_session_upd_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15745,15 +15726,14 @@ struct qos_flow_info_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              ul_forwarding_present             = false;
-  bool                                              source_tnla_ddr_info_present      = false;
-  bool                                              source_node_tnla_ddr_info_present = false;
-  ie_field_s<ul_forwarding_e>                       ul_forwarding;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_tnla_ddr_info;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_node_tnla_ddr_info;
+  bool                                  ul_forwarding_present             = false;
+  bool                                  source_tnla_ddr_info_present      = false;
+  bool                                  source_node_tnla_ddr_info_present = false;
+  ul_forwarding_e                       ul_forwarding;
+  bounded_bitstring<1, 160, true, true> source_tnla_ddr_info;
+  bounded_bitstring<1, 160, true, true> source_node_tnla_ddr_info;
 
   // sequence methods
-  qos_flow_info_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15894,13 +15874,12 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                    redundant_ul_ngu_up_tnl_info_present  = false;
-  bool                                                                    add_redundant_ngu_up_tnl_info_present = false;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
+  bool                                redundant_ul_ngu_up_tnl_info_present  = false;
+  bool                                add_redundant_ngu_up_tnl_info_present = false;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
 
   // sequence methods
-  pdu_session_res_modify_confirm_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16094,19 +16073,18 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                   secondary_rat_usage_info_present               = false;
-  bool                                   security_result_present                        = false;
-  bool                                   redundant_dl_qos_flow_per_tnl_info_present     = false;
-  bool                                   add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool                                   global_ran_node_id_present                     = false;
-  ie_field_s<secondary_rat_usage_info_s> secondary_rat_usage_info;
-  ie_field_s<security_result_s>          security_result;
-  ie_field_s<qos_flow_per_tnl_info_s>    redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<global_ran_node_id_c>                                 global_ran_node_id;
+  bool                         secondary_rat_usage_info_present               = false;
+  bool                         security_result_present                        = false;
+  bool                         redundant_dl_qos_flow_per_tnl_info_present     = false;
+  bool                         add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                         global_ran_node_id_present                     = false;
+  secondary_rat_usage_info_s   secondary_rat_usage_info;
+  security_result_s            security_result;
+  qos_flow_per_tnl_info_s      redundant_dl_qos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_list_l add_redundant_dl_qos_flow_per_tnl_info;
+  global_ran_node_id_c         global_ran_node_id;
 
   // sequence methods
-  pdu_session_res_modify_ind_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16339,13 +16317,12 @@ struct qos_flow_add_or_modify_request_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                      tsc_traffic_characteristics_present = false;
-  bool                                      redundant_qos_flow_ind_present      = false;
-  ie_field_s<tsc_traffic_characteristics_s> tsc_traffic_characteristics;
-  ie_field_s<redundant_qos_flow_ind_e>      redundant_qos_flow_ind;
+  bool                          tsc_traffic_characteristics_present = false;
+  bool                          redundant_qos_flow_ind_present      = false;
+  tsc_traffic_characteristics_s tsc_traffic_characteristics;
+  redundant_qos_flow_ind_e      redundant_qos_flow_ind;
 
   // sequence methods
-  qos_flow_add_or_modify_request_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16406,13 +16383,12 @@ struct ul_ngu_up_tnl_modify_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                  redundant_ul_ngu_up_tnl_info_present = false;
-  bool                                  redundant_dl_ngu_up_tnl_info_present = false;
-  ie_field_s<up_transport_layer_info_c> redundant_ul_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c> redundant_dl_ngu_up_tnl_info;
+  bool                      redundant_ul_ngu_up_tnl_info_present = false;
+  bool                      redundant_dl_ngu_up_tnl_info_present = false;
+  up_transport_layer_info_c redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_c redundant_dl_ngu_up_tnl_info;
 
   // sequence methods
-  ul_ngu_up_tnl_modify_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16551,36 +16527,34 @@ struct pdu_session_res_modify_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                        pdu_session_aggr_max_bit_rate_present           = false;
-  bool                                        ul_ngu_up_tnl_modify_list_present               = false;
-  bool                                        network_instance_present                        = false;
-  bool                                        qos_flow_add_or_modify_request_list_present     = false;
-  bool                                        qos_flow_to_release_list_present                = false;
-  bool                                        add_ul_ngu_up_tnl_info_present                  = false;
-  bool                                        common_network_instance_present                 = false;
-  bool                                        add_redundant_ul_ngu_up_tnl_info_present        = false;
-  bool                                        redundant_common_network_instance_present       = false;
-  bool                                        redundant_ul_ngu_up_tnl_info_present            = false;
-  bool                                        security_ind_present                            = false;
-  bool                                        mbs_session_setupor_modify_request_list_present = false;
-  bool                                        mbs_session_to_release_list_present             = false;
-  ie_field_s<pdu_session_aggr_max_bit_rate_s> pdu_session_aggr_max_bit_rate;
-  ie_field_s<dyn_seq_of<ul_ngu_up_tnl_modify_item_s, 1, 4, true>>            ul_ngu_up_tnl_modify_list;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                          network_instance;
-  ie_field_s<dyn_seq_of<qos_flow_add_or_modify_request_item_s, 1, 64, true>> qos_flow_add_or_modify_request_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>            qos_flow_to_release_list;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>         add_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                      common_network_instance;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>         add_redundant_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                      redundant_common_network_instance;
-  ie_field_s<up_transport_layer_info_c>                                      redundant_ul_ngu_up_tnl_info;
-  ie_field_s<security_ind_s>                                                 security_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setupor_modify_request_item_s, 1, 32, true>>
-                                                                     mbs_session_setupor_modify_request_list;
-  ie_field_s<dyn_seq_of<mbs_session_to_release_item_s, 1, 32, true>> mbs_session_to_release_list;
+  bool                                      pdu_session_aggr_max_bit_rate_present           = false;
+  bool                                      ul_ngu_up_tnl_modify_list_present               = false;
+  bool                                      network_instance_present                        = false;
+  bool                                      qos_flow_add_or_modify_request_list_present     = false;
+  bool                                      qos_flow_to_release_list_present                = false;
+  bool                                      add_ul_ngu_up_tnl_info_present                  = false;
+  bool                                      common_network_instance_present                 = false;
+  bool                                      add_redundant_ul_ngu_up_tnl_info_present        = false;
+  bool                                      redundant_common_network_instance_present       = false;
+  bool                                      redundant_ul_ngu_up_tnl_info_present            = false;
+  bool                                      security_ind_present                            = false;
+  bool                                      mbs_session_setupor_modify_request_list_present = false;
+  bool                                      mbs_session_to_release_list_present             = false;
+  pdu_session_aggr_max_bit_rate_s           pdu_session_aggr_max_bit_rate;
+  ul_ngu_up_tnl_modify_list_l               ul_ngu_up_tnl_modify_list;
+  uint16_t                                  network_instance;
+  qos_flow_add_or_modify_request_list_l     qos_flow_add_or_modify_request_list;
+  qos_flow_list_with_cause_l                qos_flow_to_release_list;
+  up_transport_layer_info_list_l            add_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>                 common_network_instance;
+  up_transport_layer_info_list_l            add_redundant_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>                 redundant_common_network_instance;
+  up_transport_layer_info_c                 redundant_ul_ngu_up_tnl_info;
+  security_ind_s                            security_ind;
+  mbs_session_setupor_modify_request_list_l mbs_session_setupor_modify_request_list;
+  mbs_session_to_release_list_l             mbs_session_to_release_list;
 
   // sequence methods
-  pdu_session_res_modify_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16718,27 +16692,26 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool add_ngu_up_tnl_info_present                      = false;
-  bool redundant_dl_ngu_up_tnl_info_present             = false;
-  bool redundant_ul_ngu_up_tnl_info_present             = false;
-  bool add_redundant_dl_qos_flow_per_tnl_info_present   = false;
-  bool add_redundant_ngu_up_tnl_info_present            = false;
-  bool secondary_rat_usage_info_present                 = false;
-  bool mbs_support_ind_present                          = false;
-  bool mbs_session_setupor_modify_resp_list_present     = false;
-  bool mbs_session_failedto_setupor_modify_list_present = false;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_dl_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>        add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
-  ie_field_s<secondary_rat_usage_info_s>                                  secondary_rat_usage_info;
-  ie_field_s<mbs_support_ind_e>                                           mbs_support_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setup_resp_item_s, 1, 32, true>>      mbs_session_setupor_modify_resp_list;
-  ie_field_s<dyn_seq_of<mbs_session_failedto_setup_item_s, 1, 32, true>>  mbs_session_failedto_setupor_modify_list;
+  bool                                add_ngu_up_tnl_info_present                      = false;
+  bool                                redundant_dl_ngu_up_tnl_info_present             = false;
+  bool                                redundant_ul_ngu_up_tnl_info_present             = false;
+  bool                                add_redundant_dl_qos_flow_per_tnl_info_present   = false;
+  bool                                add_redundant_ngu_up_tnl_info_present            = false;
+  bool                                secondary_rat_usage_info_present                 = false;
+  bool                                mbs_support_ind_present                          = false;
+  bool                                mbs_session_setupor_modify_resp_list_present     = false;
+  bool                                mbs_session_failedto_setupor_modify_list_present = false;
+  up_transport_layer_info_pair_list_l add_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_dl_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  qos_flow_per_tnl_info_list_l        add_redundant_dl_qos_flow_per_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
+  secondary_rat_usage_info_s          secondary_rat_usage_info;
+  mbs_support_ind_e                   mbs_support_ind;
+  mbs_session_setup_resp_list_l       mbs_session_setupor_modify_resp_list;
+  mbs_session_failedto_setup_list_l   mbs_session_failedto_setupor_modify_list;
 
   // sequence methods
-  pdu_session_res_modify_resp_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16964,13 +16937,12 @@ struct pdu_session_res_notify_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                          secondary_rat_usage_info_present = false;
-  bool                                                          qos_flow_feedback_list_present   = false;
-  ie_field_s<secondary_rat_usage_info_s>                        secondary_rat_usage_info;
-  ie_field_s<dyn_seq_of<qos_flow_feedback_item_s, 1, 64, true>> qos_flow_feedback_list;
+  bool                       secondary_rat_usage_info_present = false;
+  bool                       qos_flow_feedback_list_present   = false;
+  secondary_rat_usage_info_s secondary_rat_usage_info;
+  qos_flow_feedback_list_l   qos_flow_feedback_list;
 
   // sequence methods
-  pdu_session_res_notify_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17101,13 +17073,12 @@ struct qos_flow_setup_request_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                      tsc_traffic_characteristics_present = false;
-  bool                                      redundant_qos_flow_ind_present      = false;
-  ie_field_s<tsc_traffic_characteristics_s> tsc_traffic_characteristics;
-  ie_field_s<redundant_qos_flow_ind_e>      redundant_qos_flow_ind;
+  bool                          tsc_traffic_characteristics_present = false;
+  bool                          redundant_qos_flow_ind_present      = false;
+  tsc_traffic_characteristics_s tsc_traffic_characteristics;
+  redundant_qos_flow_ind_e      redundant_qos_flow_ind;
 
   // sequence methods
-  qos_flow_setup_request_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17249,36 +17220,35 @@ struct pdu_session_res_setup_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                        pdu_session_aggr_max_bit_rate_present       = false;
-  bool                                        add_ul_ngu_up_tnl_info_present              = false;
-  bool                                        data_forwarding_not_possible_present        = false;
-  bool                                        security_ind_present                        = false;
-  bool                                        network_instance_present                    = false;
-  bool                                        common_network_instance_present             = false;
-  bool                                        direct_forwarding_path_availability_present = false;
-  bool                                        redundant_ul_ngu_up_tnl_info_present        = false;
-  bool                                        add_redundant_ul_ngu_up_tnl_info_present    = false;
-  bool                                        redundant_common_network_instance_present   = false;
-  bool                                        redundant_pdu_session_info_present          = false;
-  bool                                        mbs_session_setup_request_list_present      = false;
-  ie_field_s<pdu_session_aggr_max_bit_rate_s> pdu_session_aggr_max_bit_rate;
-  ie_field_s<up_transport_layer_info_c>       ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>    add_ul_ngu_up_tnl_info;
-  ie_field_s<data_forwarding_not_possible_e>                            data_forwarding_not_possible;
-  ie_field_s<pdu_session_type_e>                                        pdu_session_type;
-  ie_field_s<security_ind_s>                                            security_ind;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                     network_instance;
-  ie_field_s<dyn_seq_of<qos_flow_setup_request_item_s, 1, 64, true>>    qos_flow_setup_request_list;
-  ie_field_s<unbounded_octstring<true>>                                 common_network_instance;
-  ie_field_s<direct_forwarding_path_availability_e>                     direct_forwarding_path_availability;
-  ie_field_s<up_transport_layer_info_c>                                 redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>    add_redundant_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                 redundant_common_network_instance;
-  ie_field_s<redundant_pdu_session_info_s>                              redundant_pdu_session_info;
-  ie_field_s<dyn_seq_of<mbs_session_setup_request_item_s, 1, 32, true>> mbs_session_setup_request_list;
+  bool                                  pdu_session_aggr_max_bit_rate_present       = false;
+  bool                                  add_ul_ngu_up_tnl_info_present              = false;
+  bool                                  data_forwarding_not_possible_present        = false;
+  bool                                  security_ind_present                        = false;
+  bool                                  network_instance_present                    = false;
+  bool                                  common_network_instance_present             = false;
+  bool                                  direct_forwarding_path_availability_present = false;
+  bool                                  redundant_ul_ngu_up_tnl_info_present        = false;
+  bool                                  add_redundant_ul_ngu_up_tnl_info_present    = false;
+  bool                                  redundant_common_network_instance_present   = false;
+  bool                                  redundant_pdu_session_info_present          = false;
+  bool                                  mbs_session_setup_request_list_present      = false;
+  pdu_session_aggr_max_bit_rate_s       pdu_session_aggr_max_bit_rate;
+  up_transport_layer_info_c             ul_ngu_up_tnl_info;
+  up_transport_layer_info_list_l        add_ul_ngu_up_tnl_info;
+  data_forwarding_not_possible_e        data_forwarding_not_possible;
+  pdu_session_type_e                    pdu_session_type;
+  security_ind_s                        security_ind;
+  uint16_t                              network_instance;
+  qos_flow_setup_request_list_l         qos_flow_setup_request_list;
+  unbounded_octstring<true>             common_network_instance;
+  direct_forwarding_path_availability_e direct_forwarding_path_availability;
+  up_transport_layer_info_c             redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_list_l        add_redundant_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>             redundant_common_network_instance;
+  redundant_pdu_session_info_s          redundant_pdu_session_info;
+  mbs_session_setup_request_list_l      mbs_session_setup_request_list;
 
   // sequence methods
-  pdu_session_res_setup_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17360,23 +17330,22 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                redundant_dl_qos_flow_per_tnl_info_present     = false;
-  bool                                add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool                                used_r_sn_info_present                         = false;
-  bool                                global_ran_node_id_present                     = false;
-  bool                                mbs_support_ind_present                        = false;
-  bool                                mbs_session_setup_resp_list_present            = false;
-  bool                                mbs_session_failedto_setup_list_present        = false;
-  ie_field_s<qos_flow_per_tnl_info_s> redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>       add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                               used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                       global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                          mbs_support_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setup_resp_item_s, 1, 32, true>>     mbs_session_setup_resp_list;
-  ie_field_s<dyn_seq_of<mbs_session_failedto_setup_item_s, 1, 32, true>> mbs_session_failedto_setup_list;
+  bool                              redundant_dl_qos_flow_per_tnl_info_present     = false;
+  bool                              add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                              used_r_sn_info_present                         = false;
+  bool                              global_ran_node_id_present                     = false;
+  bool                              mbs_support_ind_present                        = false;
+  bool                              mbs_session_setup_resp_list_present            = false;
+  bool                              mbs_session_failedto_setup_list_present        = false;
+  qos_flow_per_tnl_info_s           redundant_dl_qos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_list_l      add_redundant_dl_qos_flow_per_tnl_info;
+  redundant_pdu_session_info_s      used_r_sn_info;
+  global_ran_node_id_c              global_ran_node_id;
+  mbs_support_ind_e                 mbs_support_ind;
+  mbs_session_setup_resp_list_l     mbs_session_setup_resp_list;
+  mbs_session_failedto_setup_list_l mbs_session_failedto_setup_list;
 
   // sequence methods
-  pdu_session_res_setup_resp_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17470,15 +17439,14 @@ struct qos_flow_params_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                cn_packet_delay_budget_dl_present = false;
-  bool                                                cn_packet_delay_budget_ul_present = false;
-  bool                                                burst_arrival_time_dl_present     = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
-  ie_field_s<unbounded_octstring<true>>               burst_arrival_time_dl;
+  bool                      cn_packet_delay_budget_dl_present = false;
+  bool                      cn_packet_delay_budget_ul_present = false;
+  bool                      burst_arrival_time_dl_present     = false;
+  uint32_t                  cn_packet_delay_budget_dl;
+  uint32_t                  cn_packet_delay_budget_ul;
+  unbounded_octstring<true> burst_arrival_time_dl;
 
   // sequence methods
-  qos_flow_params_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17559,17 +17527,16 @@ struct path_switch_request_ack_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                    add_ngu_up_tnl_info_present           = false;
-  bool                                                                    redundant_ul_ngu_up_tnl_info_present  = false;
-  bool                                                                    add_redundant_ngu_up_tnl_info_present = false;
-  bool                                                                    qos_flow_params_list_present          = false;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_params_item_s, 1, 64, true>>             qos_flow_params_list;
+  bool                                add_ngu_up_tnl_info_present           = false;
+  bool                                redundant_ul_ngu_up_tnl_info_present  = false;
+  bool                                add_redundant_ngu_up_tnl_info_present = false;
+  bool                                qos_flow_params_list_present          = false;
+  up_transport_layer_info_pair_list_l add_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
+  qos_flow_params_list_l              qos_flow_params_list;
 
   // sequence methods
-  path_switch_request_ack_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17759,23 +17726,22 @@ struct path_switch_request_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool add_dl_qos_flow_per_tnl_info_present           = false;
-  bool redundant_dl_ngu_up_tnl_info_present           = false;
-  bool redundant_dl_ngu_tnl_info_reused_present       = false;
-  bool add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool used_r_sn_info_present                         = false;
-  bool global_ran_node_id_present                     = false;
-  bool mbs_support_ind_present                        = false;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_dl_qos_flow_per_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                            redundant_dl_ngu_up_tnl_info;
-  ie_field_s<dl_ngu_tnl_info_reused_e>                             redundant_dl_ngu_tnl_info_reused;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                         used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                 global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                    mbs_support_ind;
+  bool                         add_dl_qos_flow_per_tnl_info_present           = false;
+  bool                         redundant_dl_ngu_up_tnl_info_present           = false;
+  bool                         redundant_dl_ngu_tnl_info_reused_present       = false;
+  bool                         add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                         used_r_sn_info_present                         = false;
+  bool                         global_ran_node_id_present                     = false;
+  bool                         mbs_support_ind_present                        = false;
+  qos_flow_per_tnl_info_list_l add_dl_qos_flow_per_tnl_info;
+  up_transport_layer_info_c    redundant_dl_ngu_up_tnl_info;
+  dl_ngu_tnl_info_reused_e     redundant_dl_ngu_tnl_info_reused;
+  qos_flow_per_tnl_info_list_l add_redundant_dl_qos_flow_per_tnl_info;
+  redundant_pdu_session_info_s used_r_sn_info;
+  global_ran_node_id_c         global_ran_node_id;
+  mbs_support_ind_e            mbs_support_ind;
 
   // sequence methods
-  path_switch_request_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -18022,24 +17988,22 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_cont
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool s_gnb_ue_x2ap_id_present                             = false;
-  bool ue_history_info_from_the_ue_present                  = false;
-  bool source_node_id_present                               = false;
-  bool ue_context_ref_at_source_present                     = false;
-  bool mbs_active_session_info_sourceto_target_list_present = false;
-  bool q_mcc_onfig_info_present                             = false;
-  bool ngap_ie_support_info_request_list_present            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> s_gnb_ue_x2ap_id;
-  ie_field_s<ue_history_info_from_the_ue_c>                 ue_history_info_from_the_ue;
-  ie_field_s<source_node_id_c>                              source_node_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> ue_context_ref_at_source;
-  ie_field_s<dyn_seq_of<mbs_active_session_info_sourceto_target_item_s, 1, 256, true>>
-                                                                           mbs_active_session_info_sourceto_target_list;
-  ie_field_s<q_mcc_onfig_info_s>                                           q_mcc_onfig_info;
-  ie_field_s<dyn_seq_of<ngap_ie_support_info_request_item_s, 1, 32, true>> ngap_ie_support_info_request_list;
+  bool                                           s_gnb_ue_x2ap_id_present                             = false;
+  bool                                           ue_history_info_from_the_ue_present                  = false;
+  bool                                           source_node_id_present                               = false;
+  bool                                           ue_context_ref_at_source_present                     = false;
+  bool                                           mbs_active_session_info_sourceto_target_list_present = false;
+  bool                                           q_mcc_onfig_info_present                             = false;
+  bool                                           ngap_ie_support_info_request_list_present            = false;
+  uint64_t                                       s_gnb_ue_x2ap_id;
+  ue_history_info_from_the_ue_c                  ue_history_info_from_the_ue;
+  source_node_id_c                               source_node_id;
+  uint64_t                                       ue_context_ref_at_source;
+  mbs_active_session_info_sourceto_target_list_l mbs_active_session_info_sourceto_target_list;
+  q_mcc_onfig_info_s                             q_mcc_onfig_info;
+  ngap_ie_support_info_request_list_l            ngap_ie_support_info_request_list;
 
   // sequence methods
-  source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -18171,18 +18135,16 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_cont
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool daps_resp_info_list_present                          = false;
-  bool direct_forwarding_path_availability_present          = false;
-  bool mbs_active_session_info_targetto_source_list_present = false;
-  bool ngap_ie_support_info_resp_list_present               = false;
-  ie_field_s<dyn_seq_of<daps_resp_info_item_s, 1, 32, true>> daps_resp_info_list;
-  ie_field_s<direct_forwarding_path_availability_e>          direct_forwarding_path_availability;
-  ie_field_s<dyn_seq_of<mbs_active_session_info_targetto_source_item_s, 1, 256, true>>
-                                                                        mbs_active_session_info_targetto_source_list;
-  ie_field_s<dyn_seq_of<ngap_ie_support_info_resp_item_s, 1, 32, true>> ngap_ie_support_info_resp_list;
+  bool                                           daps_resp_info_list_present                          = false;
+  bool                                           direct_forwarding_path_availability_present          = false;
+  bool                                           mbs_active_session_info_targetto_source_list_present = false;
+  bool                                           ngap_ie_support_info_resp_list_present               = false;
+  daps_resp_info_list_l                          daps_resp_info_list;
+  direct_forwarding_path_availability_e          direct_forwarding_path_availability;
+  mbs_active_session_info_targetto_source_list_l mbs_active_session_info_targetto_source_list;
+  ngap_ie_support_info_resp_list_l               ngap_ie_support_info_resp_list;
 
   // sequence methods
-  target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;

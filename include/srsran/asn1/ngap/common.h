@@ -551,12 +551,6 @@ namespace ngap {
  *                              Struct Definitions
  ******************************************************************************/
 
-// INTEGER (0..4294967295) ::= INTEGER (0..4294967295)
-using ran_ue_ngap_id_t = integer<uint64_t, 0, 4294967295, false, true>;
-
-// INTEGER (0..1099511627775) ::= INTEGER (0..1099511627775)
-using amf_ue_ngap_id_t = integer<uint64_t, 0, 1099511627775, false, true>;
-
 // PrivateIE-ID ::= CHOICE
 struct private_ie_id_c {
   struct types_opts {
