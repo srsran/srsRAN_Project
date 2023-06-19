@@ -162,7 +162,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
 
-    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+    for (const auto& e1ap_drb_item : e1ap_item.drb_modified_list_ng_ran) {
       // Catch implementation limitations.
       if (!e1ap_drb_item.flow_failed_list.empty()) {
         logger.warning("Non-empty QoS flow failed list not supported");
@@ -176,9 +176,13 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
       }
 
       item.transfer.qos_flow_add_or_modify_response_list.emplace();
-      for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+
+      // re-establish old flows
+      const up_drb_context& drb_up_context = rrc_ue_up_resource_manager.get_drb_context(e1ap_drb_item.drb_id);
+
+      for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
         qos_flow_add_or_mod_response_item qos_flow;
-        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+        qos_flow.qos_flow_id = flow_id;
         item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
       }
 
@@ -195,6 +199,18 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // Add rlc mode
         drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
+        // fill QoS info
+        drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
+        drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
+        drb_setup_mod_item.qos_info.notif_ctrl = "active";
+        // Fill QoS flows for UE context modification.
+        for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
+          // Add mapped flows and extract required QoS info from original NGAP request
+          cu_cp_flows_mapped_to_drb_item mapped_flow_item;
+          mapped_flow_item.qos_flow_id               = flow_id;
+          mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
+          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
+        }
         ue_context_mod_req.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
       }
     }
