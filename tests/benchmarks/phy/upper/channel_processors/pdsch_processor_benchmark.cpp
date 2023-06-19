@@ -76,7 +76,7 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, true, false, false, false, true, false, false};
-static constexpr unsigned                         nof_pdsch_processor_concurrent_threads = 4;
+static unsigned                                   nof_pdsch_processor_concurrent_threads = 4;
 static std::unique_ptr<task_worker_pool>          worker_pool                            = nullptr;
 static std::unique_ptr<task_worker_pool_executor> executor                               = nullptr;
 
@@ -369,9 +369,14 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
   return test_case_set;
 }
 
-// Instantiates the PDSCH processor and validator.
-static std::tuple<std::unique_ptr<pdsch_processor>, std::unique_ptr<pdsch_pdu_validator>> create_processor()
+static pdsch_processor_factory& get_processor_factory()
 {
+  static std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = nullptr;
+
+  if (pdsch_proc_factory) {
+    return *pdsch_proc_factory;
+  }
+
   // Create pseudo-random sequence generator.
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
@@ -415,15 +420,25 @@ static std::tuple<std::unique_ptr<pdsch_processor>, std::unique_ptr<pdsch_pdu_va
   std::shared_ptr<pdsch_encoder_factory> pdsch_enc_factory = create_pdsch_encoder_factory_sw(pdsch_enc_config);
   TESTASSERT(pdsch_enc_factory);
 
-  // Create PDSCH processor.
-  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory = nullptr;
-
+  // Create generic PDSCH processor.
   if (pdsch_processor_type == "generic") {
     pdsch_proc_factory =
         create_pdsch_processor_factory_sw(pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_gen_factory);
   }
 
-  if (pdsch_processor_type == "concurrent") {
+  // Create concurrent PDSCH processor.
+  if (pdsch_processor_type.find("concurrent") != std::string::npos) {
+    std::size_t pos = pdsch_processor_type.find(":");
+    if (pos + 1 < pdsch_processor_type.size()) {
+      std::string str                        = pdsch_processor_type.substr(pos + 1);
+      nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
+    }
+    fmt::print("nof_pdsch_processor_concurrent_threads={}\n", nof_pdsch_processor_concurrent_threads);
+
+    worker_pool = std::make_unique<task_worker_pool>(
+        nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc", os_thread_realtime_priority::max());
+    executor = std::make_unique<task_worker_pool_executor>(*worker_pool);
+
     pdsch_proc_factory = create_pdsch_concurrent_processor_factory_sw(ldpc_segm_tx_factory,
                                                                       ldpc_enc_factory,
                                                                       ldpc_rm_factory,
@@ -434,15 +449,19 @@ static std::tuple<std::unique_ptr<pdsch_processor>, std::unique_ptr<pdsch_pdu_va
   }
   TESTASSERT(pdsch_proc_factory);
 
-  // Create PDSCH processor.
-  std::unique_ptr<pdsch_processor> processor = pdsch_proc_factory->create();
-  TESTASSERT(processor);
+  return *pdsch_proc_factory;
+}
 
-  // Create PDSCH processor validator.
-  std::unique_ptr<pdsch_pdu_validator> validator = pdsch_proc_factory->create_validator();
-  TESTASSERT(validator);
+// Instantiates the PDSCH processor and validator.
+static std::unique_ptr<pdsch_pdu_validator> create_validator()
+{
+  return get_processor_factory().create_validator();
+}
 
-  return std::make_tuple(std::move(processor), std::move(validator));
+// Instantiates the PDSCH processor and validator.
+static std::unique_ptr<pdsch_processor> create_processor()
+{
+  return get_processor_factory().create();
 }
 
 // Creates a resource grid.
@@ -458,7 +477,7 @@ static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, u
 
 static void thread_process(const pdsch_processor::pdu_t& config, span<const uint8_t> data)
 {
-  std::unique_ptr<pdsch_processor> proc(std::get<0>(create_processor()));
+  std::unique_ptr<pdsch_processor> proc = create_processor();
 
   // Create grid.
   std::unique_ptr<resource_grid> grid = create_resource_grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB * NRE);
@@ -534,7 +553,7 @@ int main(int argc, char** argv)
     std::vector<uint8_t> data(tbs / 8);
     std::generate(data.begin(), data.end(), [&rgen]() { return static_cast<uint8_t>(rgen() & 0xff); });
 
-    std::unique_ptr<pdsch_pdu_validator> validator(std::move(std::get<1>(create_processor())));
+    std::unique_ptr<pdsch_pdu_validator> validator = create_validator();
 
     // Make sure the configuration is valid.
     TESTASSERT(validator->is_valid(config));
@@ -542,11 +561,6 @@ int main(int argc, char** argv)
     // Reset finish counter.
     finish_count = 0;
     thread_quit  = false;
-
-    if (pdsch_processor_type == "concurrent") {
-      worker_pool = std::make_unique<task_worker_pool>(nof_pdsch_processor_concurrent_threads, 1024, "pdsch_proc");
-      executor    = std::make_unique<task_worker_pool_executor>(*worker_pool);
-    }
 
     // Prepare threads for the current case.
     std::vector<unique_thread> threads(nof_threads);
