@@ -10,9 +10,16 @@
 
 #include "f1ap_cu_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
+
+gnb_cu_ue_f1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_ue_f1ap_id()
+{
+  return int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min), gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
+}
 
 f1ap_cu_test::f1ap_cu_test()
 {

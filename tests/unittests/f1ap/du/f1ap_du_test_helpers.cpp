@@ -15,6 +15,12 @@
 using namespace srsran;
 using namespace srs_du;
 
+gnb_du_ue_f1ap_id_t srsran::srs_du::generate_random_gnb_du_ue_f1ap_id()
+{
+  return int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min), gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+}
+
 f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message      request_msg = {};
