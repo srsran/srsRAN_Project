@@ -173,7 +173,7 @@ private:
     } else {
       payload.resize(CQI_BITLEN + RI_BITLEN + PMI_BITLEN);
       packed_bits = packed_bits << (RI_BITLEN + PMI_BITLEN);
-      packed_bits += ((test_ue_cfg.ri - 1) << PMI_BITLEN) + test_ue_cfg.pmi;
+      packed_bits += (test_ue_cfg.ri - 1) + (test_ue_cfg.pmi << RI_BITLEN);
     }
     payload.from_uint64(packed_bits);
   }
