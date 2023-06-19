@@ -194,11 +194,16 @@ def iperf(
     iperf command between an UE and a EPC
     """
 
+    iperf_success = True
+
     # For each attached UE
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         # Start IPerf Server
         task, iperf_request = iperf_start(ue_stub, ue_attached_info, epc, protocol, direction, iperf_duration, bitrate)
-        iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, bitrate_threshold_ratio)
+        iperf_success &= iperf_wait_until_finish(ue_attached_info, epc, task, iperf_request, bitrate_threshold_ratio)
+
+    if not iperf_success:
+        pytest.fail("iperf did not achieve the expected data rate.")
 
 
 def iperf_start(
@@ -241,7 +246,7 @@ def iperf_wait_until_finish(
     task: grpc.Future,
     iperf_request: IPerfRequest,
     bitrate_threshold_ratio: float,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
-):
+) -> bool:
     """
     Wait until the requested iperf has finished.
     """
@@ -259,6 +264,7 @@ def iperf_wait_until_finish(
     )
 
     # Assertion
+    iperf_success = True
     if iperf_request.direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
         if iperf_data.downlink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
             logging.warning(
@@ -266,6 +272,7 @@ def iperf_wait_until_finish(
                 iperf_request.bitrate,
                 iperf_data.downlink.bits_per_second,
             )
+            iperf_success = False
     if iperf_request.direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
         if iperf_data.uplink.bits_per_second < bitrate_threshold_ratio * iperf_request.bitrate:
             logging.warning(
@@ -273,6 +280,8 @@ def iperf_wait_until_finish(
                 iperf_request.bitrate,
                 iperf_data.uplink.bits_per_second,
             )
+            iperf_success = False
+    return iperf_success
 
 
 def _iperf_proto_to_str(proto):
