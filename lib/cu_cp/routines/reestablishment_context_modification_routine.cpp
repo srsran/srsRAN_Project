@@ -56,6 +56,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
       logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
+
+    bearer_context_modification_request = {};
   }
 
   {

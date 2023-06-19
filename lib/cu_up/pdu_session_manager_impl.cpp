@@ -249,7 +249,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
       f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(new_f1u_ul_teid);
       drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
-      logger.error("New TNL info required for DRB. drb_id={}, pdu_session_id={} f1u_ul_teid={}.",
+      logger.debug("New UL TNL info required for DRB. drb_id={}, pdu_session_id={} f1u_ul_teid={}.",
                    drb_to_mod.drb_id,
                    session.pdu_session_id,
                    f1u_ul_tunnel_addr.gtp_teid);
