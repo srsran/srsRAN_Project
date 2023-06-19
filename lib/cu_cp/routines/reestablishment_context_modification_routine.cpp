@@ -262,6 +262,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
         }
 
         // set pdcp reestablishment
+        e1ap_drb_item.pdcp_cfg.emplace(e1ap_pdcp_config{});
         e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
 
         e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
