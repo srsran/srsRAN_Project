@@ -21,6 +21,7 @@
  */
 
 #include "scheduler_event_logger.h"
+#include "srsran/ran/csi_report/csi_report_formatters.h"
 
 using namespace srsran;
 
@@ -113,7 +114,16 @@ void scheduler_event_logger::enqueue_impl(const sr_event& sr)
 void scheduler_event_logger::enqueue_impl(const csi_report_event& csi)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- CSI: ue={} rnti={:#x} cqi={}", csi.ue_index, csi.rnti, csi.wb_cqi);
+    fmt::format_to(fmtbuf, "\n- CSI: ue={} rnti={:#x}:", csi.ue_index, csi.rnti);
+    if (csi.csi.first_tb_wideband_cqi.has_value()) {
+      fmt::format_to(fmtbuf, " cqi={}", *csi.csi.first_tb_wideband_cqi);
+    }
+    if (csi.csi.ri.has_value()) {
+      fmt::format_to(fmtbuf, " ri={}", csi.csi.ri.value());
+    }
+    if (csi.csi.pmi.has_value()) {
+      fmt::format_to(fmtbuf, " {}", *csi.csi.pmi);
+    }
   }
 }
 

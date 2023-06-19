@@ -55,7 +55,7 @@ protected:
 
     compressor = create_iq_compressor(params.type, test_case.iq_scaling, std::get<0>(GetParam()));
     ASSERT_NE(compressor, nullptr);
-    decompressor = create_iq_decompressor(params.type);
+    decompressor = create_iq_decompressor(params.type, std::get<0>(GetParam()));
     ASSERT_NE(decompressor, nullptr);
   }
 
@@ -188,6 +188,10 @@ INSTANTIATE_TEST_SUITE_P(OFHCompressionTestSuite,
                                                               ,
                                                               "avx512"
 #endif // HAVE_AVX512
+#ifdef HAVE_NEON
+                                                              ,
+                                                              "neon"
+#endif // HAVE_NEON
                                                               ),
                                             ::testing::ValuesIn(ofh_compression_test_data)));
 

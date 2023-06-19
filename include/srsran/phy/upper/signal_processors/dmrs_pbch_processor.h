@@ -23,10 +23,12 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/constants.h"
 #include "srsran/ran/pci.h"
 
 namespace srsran {
+
+class resource_grid_writer;
 
 /// Describes a DMRS for PBCH processor interface.
 class dmrs_pbch_processor

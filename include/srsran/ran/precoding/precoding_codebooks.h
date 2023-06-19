@@ -50,6 +50,15 @@ precoding_configuration make_wideband_one_layer_one_port(unsigned nof_ports, uns
 /// precoding_constants::MAX_NOF_LAYERS}.
 precoding_configuration make_wideband_identity(unsigned nof_streams);
 
+/// \brief Constructs a wideband precoder configuration for one layer mapped into all transmit ports.
+///
+/// Creates a precoding configuration for all the channel bandwidth. The coefficients dimensions correspond to one layer
+/// and a given number of ports. All weights are set so that an identical signal is generated for each antenna port.
+///
+/// \param[in] nof_ports Number of ports available for transmitting.
+/// \return A wideband precoding configuration for one layer and \c nof_ports.
+precoding_configuration make_wideband_one_layer_all_ports(unsigned nof_ports);
+
 /// \brief Constructs a wideband precoder configuration for one layer mapped into two transmit ports.
 ///
 /// Creates a precoding configuration for all the channel bandwidth. The coefficients dimensions correspond to one layer

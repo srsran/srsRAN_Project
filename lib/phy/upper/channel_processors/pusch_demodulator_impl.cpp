@@ -25,6 +25,7 @@
 
 #include "pusch_demodulator_impl.h"
 #include "srsran/ran/sch_dmrs_power.h"
+#include "srsran/srsvec/mean.h"
 
 using namespace srsran;
 
@@ -68,6 +69,12 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
   equalizer->equalize(
       eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
+
+  // Estimate Signal-to-Interference-plus-Noise Ratio.
+  float mean_noise_var = srsvec::mean(eq_noise_vars.get_data());
+  if (mean_noise_var > 0.0) {
+    status.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
+  }
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
   srsran_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),

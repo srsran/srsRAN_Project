@@ -56,4 +56,13 @@ inline constexpr bool variant_holds_alternative(const variant<Types...>& v) noex
   return mpark::holds_alternative<T, Types...>(v);
 }
 
+/// \brief Reads the value of the variant given the index.
+/// \param[in] v Variant to examine.
+/// \return Reference to the value stored in the variant.
+template <size_t Idx, typename... Types>
+inline constexpr const auto& variant_get(const variant<Types...>& v)
+{
+  return mpark::get<Idx, Types...>(v);
+}
+
 } // namespace srsran

@@ -22,6 +22,7 @@
 
 #include "ofdm_demodulator_impl.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/prod.h"

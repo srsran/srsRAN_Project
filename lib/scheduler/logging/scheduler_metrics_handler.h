@@ -49,9 +49,8 @@ public:
   /// \brief Register CRC indication.
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
-  /// \brief Register CSI report (CQI) metric.
-  void handle_csi_report(du_ue_index_t                                                         ue_index,
-                         const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi);
+  /// \brief Register CSI report metric.
+  void handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
@@ -93,7 +92,8 @@ private:
     pci_t               pci;
     du_ue_index_t       ue_index;
     rnti_t              rnti;
-    unsigned            last_cqi = 0;
+    uint8_t             last_cqi = 0;
+    uint8_t             last_ri  = 1;
     unsigned            last_bsr = 0;
     non_persistent_data data;
 

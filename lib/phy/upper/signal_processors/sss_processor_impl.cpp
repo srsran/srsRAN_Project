@@ -21,6 +21,7 @@
  */
 
 #include "sss_processor_impl.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/srsvec/prod.h"
 #include "srsran/srsvec/sc_prod.h"
 

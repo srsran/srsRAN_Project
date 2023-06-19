@@ -23,8 +23,8 @@
 #pragma once
 
 #include "../../ran/gnb_format.h"
-#include "../mac_config.h"
 #include "../mac_config_interfaces.h"
+#include "mac_config.h"
 #include "mac_scheduler_configurator.h"
 #include "srsran/adt/span.h"
 #include "srsran/mac/mac.h"
@@ -36,7 +36,7 @@ class mac_ue_create_request_procedure
 {
 public:
   explicit mac_ue_create_request_procedure(const mac_ue_create_request& req_,
-                                           mac_common_config_t&         cfg_,
+                                           mac_control_config&          cfg_,
                                            mac_ctrl_configurator&       mac_ctrl_,
                                            mac_ul_configurator&         mac_ul_,
                                            mac_dl_configurator&         mac_dl_,
@@ -103,7 +103,7 @@ private:
   }
 
   const mac_ue_create_request req;
-  mac_common_config_t&        cfg;
+  mac_control_config&         cfg;
   srslog::basic_logger&       logger;
   mac_ctrl_configurator&      ctrl_unit;
   mac_ul_configurator&        ul_unit;

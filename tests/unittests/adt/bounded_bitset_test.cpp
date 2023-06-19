@@ -456,6 +456,20 @@ TYPED_TEST(bounded_bitset_tester, binary_format_is_mirror_of_binary_format_rever
   ASSERT_EQ(str, str2_reverse);
 }
 
+TYPED_TEST(bounded_bitset_tester, bit_positions_format_is_agnostic_to_reverse)
+{
+  static constexpr size_t         N        = TestFixture::bitset_type::max_size();
+  static constexpr bool           BitOrder = TestFixture::bitset_type::bit_order();
+  std::vector<bool>               vec      = this->create_random_vector(this->get_random_size());
+  bounded_bitset<N, BitOrder>     bitmap(vec.begin(), vec.end());
+  bounded_bitset<N, not BitOrder> bitmap_reversed(vec.begin(), vec.end());
+
+  std::string str         = fmt::format("{:n}", bitmap);
+  std::string str_reverse = fmt::format("{:n}", bitmap_reversed);
+
+  ASSERT_EQ(str, str_reverse);
+}
+
 TYPED_TEST(bounded_bitset_tester, hex_format_is_mirror_of_hex_format_reverse)
 {
   static constexpr size_t         N        = TestFixture::bitset_type::max_size();
@@ -525,10 +539,13 @@ TEST(bounded_bitset_test, one_word_bitset_format)
   ASSERT_EQ(fmt::format("{:br}", bitset), "10000100000000000000000");
   ASSERT_EQ(fmt::format("{:x}", bitset), "000021");
   ASSERT_EQ(fmt::format("{:xr}", bitset), "420000");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "0 5");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "0 5");
   ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:n}", bitset), fmt::format("{:nr}", bitset));
 
   bitset.set(22);
   bitset_reversed.set(22);
@@ -536,10 +553,61 @@ TEST(bounded_bitset_test, one_word_bitset_format)
   ASSERT_EQ(fmt::format("{:br}", bitset), "10000100000000000000001");
   ASSERT_EQ(fmt::format("{:x}", bitset), "400021");
   ASSERT_EQ(fmt::format("{:xr}", bitset), "420001");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "0 5 22");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "0 5 22");
   ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+}
+
+TEST(bounded_bitset_test, contiguous_bitset_format)
+{
+  bounded_bitset<25> bitset(9);
+  bitset.set(1);
+  bitset.set(2);
+  bitset.set(3);
+  bounded_bitset<25, true> bitset_reversed(9);
+  bitset_reversed.set(1);
+  bitset_reversed.set(2);
+  bitset_reversed.set(3);
+
+  ASSERT_EQ(fmt::format("{:b}", bitset), "000001110");
+  ASSERT_EQ(fmt::format("{:br}", bitset), "011100000");
+  ASSERT_EQ(fmt::format("{:x}", bitset), "00e");
+  ASSERT_EQ(fmt::format("{:xr}", bitset), "0e0");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "[1, 4)");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "[1, 4)");
+  ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:n}", bitset), fmt::format("{:nr}", bitset));
+
+  bitset.reset();
+  bitset_reversed.reset();
+  bitset.set(1);
+  bitset_reversed.set(1);
+  bitset.set(4);
+  bitset_reversed.set(4);
+  bitset.set(5);
+  bitset_reversed.set(5);
+  bitset.set(7);
+  bitset_reversed.set(7);
+  bitset.set(8);
+  bitset_reversed.set(8);
+
+  ASSERT_EQ(fmt::format("{:b}", bitset), "110110010");
+  ASSERT_EQ(fmt::format("{:br}", bitset), "010011011");
+  ASSERT_EQ(fmt::format("{:x}", bitset), "1b2");
+  ASSERT_EQ(fmt::format("{:xr}", bitset), "09b");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "1 4 5 7 8");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "1 4 5 7 8");
+  ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:n}", bitset), fmt::format("{:nr}", bitset));
 }
 
 TEST(bounded_bitset_test, two_word_bitset_format)
@@ -557,10 +625,13 @@ TEST(bounded_bitset_test, two_word_bitset_format)
             "1000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
   ASSERT_EQ(fmt::format("{:x}", bitset), "0000000000000000000000021");
   ASSERT_EQ(fmt::format("{:xr}", bitset), "8400000000000000000000000");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "0 5");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "0 5");
   ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:n}", bitset), fmt::format("{:nr}", bitset));
 
   bitset.set(99);
   bitset_reversed.set(99);
@@ -570,10 +641,13 @@ TEST(bounded_bitset_test, two_word_bitset_format)
             "1000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001");
   ASSERT_EQ(fmt::format("{:x}", bitset), "8000000000000000000000021");
   ASSERT_EQ(fmt::format("{:xr}", bitset), "8400000000000000000000001");
+  ASSERT_EQ(fmt::format("{:n}", bitset), "0 5 99");
+  ASSERT_EQ(fmt::format("{:n}", bitset_reversed), "0 5 99");
   ASSERT_EQ(fmt::format("{:b}", bitset), fmt::format("{:br}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:br}", bitset), fmt::format("{:b}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:x}", bitset), fmt::format("{:xr}", bitset_reversed));
   ASSERT_EQ(fmt::format("{:xr}", bitset), fmt::format("{:x}", bitset_reversed));
+  ASSERT_EQ(fmt::format("{:n}", bitset), fmt::format("{:nr}", bitset));
 }
 
 TEST(BoundedBitset, bitwise_resize)
@@ -762,6 +836,62 @@ TEST(BoundedBitset, push_back)
     bounded_bitset<10> bitset;
     bitset.push_back(0xbU, 4);
     ASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+  }
+}
+
+TEST(BoundedBitset, extract)
+{
+  static constexpr uint64_t            nof_values = 100;
+  bounded_bitset<64 * nof_values>      bitset;
+  std::vector<std::array<uint64_t, 3>> data;
+
+  for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
+    uint64_t size  = test_rgen::uniform_int(1, 64);
+    uint64_t value = (test_rgen::get()() & mask_lsb_ones<uint64_t>(size));
+
+    bitset.push_back(value, size);
+
+    data.push_back({offset, size, value});
+
+    offset += size;
+  }
+
+  for (const auto& entry : data) {
+    uint64_t offset = entry[0];
+    uint64_t size   = entry[1];
+    uint64_t value  = entry[2];
+
+    ASSERT_EQ(bitset.extract<uint64_t>(offset, size), value);
+
+    offset += size;
+  }
+}
+
+TEST(BoundedBitset, extract_inverted)
+{
+  static constexpr uint64_t             nof_values = 10;
+  bounded_bitset<64 * nof_values, true> bitset;
+  std::vector<std::array<uint64_t, 3>>  data;
+
+  for (unsigned i_value = 0, offset = 0; i_value != nof_values; ++i_value) {
+    uint64_t size  = test_rgen::uniform_int(1, 64);
+    uint64_t value = (test_rgen::get()() & mask_lsb_ones<uint64_t>(size));
+
+    bitset.push_back(value, size);
+
+    data.push_back({offset, size, value});
+
+    offset += size;
+  }
+
+  for (const auto& entry : data) {
+    uint64_t offset = entry[0];
+    uint64_t size   = entry[1];
+    uint64_t value  = entry[2];
+
+    ASSERT_EQ(bitset.extract<uint64_t>(offset, size), value);
+
+    offset += size;
   }
 }
 

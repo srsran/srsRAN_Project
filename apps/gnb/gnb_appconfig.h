@@ -27,12 +27,15 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/five_qi.h"
+#include "srsran/ran/ntn.h"
+#include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
@@ -50,6 +53,8 @@ struct prach_appconfig {
   unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
+  /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are valid.
+  int preamble_rx_target_pw = -100;
   /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
   optional<unsigned> total_nof_ra_preambles;
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
@@ -70,6 +75,20 @@ struct tdd_ul_dl_appconfig {
   unsigned nof_ul_slots = 3;
   /// Values: {0,...,maxNrofSymbols-1=13}.
   unsigned nof_ul_symbols = 0;
+};
+
+/// Paging related configuration. See TS 38.331, PCCH-Config.
+struct paging_appconfig {
+  /// SearchSpace to use for Paging. Values {0, 1}.
+  unsigned paging_search_space_id = 1;
+  /// Default Paging cycle in nof. Radio Frames. Values {32, 64, 128, 256}.
+  unsigned default_paging_cycle = 128;
+  /// Number of paging frames per DRX cycle. Values {oneT, halfT, quarterT, oneEighthT, oneSixteethT}.
+  pcch_config::nof_pf_per_drx_cycle nof_pf = pcch_config::nof_pf_per_drx_cycle::oneT;
+  /// Paging frame offset. Values {0,...,(T/nof_pf_per_paging_cycle) - 1}.
+  unsigned pf_offset = 0;
+  /// Number of paging occasions per paging frame. Values {1, 2, 4}.
+  unsigned nof_po_per_pf = 1;
 };
 
 /// PDCCH application configuration.
@@ -100,6 +119,8 @@ struct pdsch_appconfig {
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
   pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  /// Number of antenna ports. If empty, the \c nof_ports is derived from the number of DL antennas.
+  optional<unsigned> nof_ports;
 };
 
 /// PUSCH application configuration.
@@ -116,9 +137,37 @@ struct pusch_appconfig {
   std::vector<unsigned> rv_sequence = {0};
   /// MCS table to use for PUSCH
   pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
+  /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
+  int msg3_delta_preamble = 6;
+  /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0_nominal_with_grant = -76;
+
+  /// \c betaOffsetACK-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_ack_idx_1 = 9;
+  /// \c betaOffsetACK-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_ack_idx_2 = 9;
+  /// \c betaOffsetACK-Index3, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_ack_idx_3 = 9;
+  /// \c betaOffsetCSI-Part1-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_csi_p1_idx_1 = 9;
+  /// \c betaOffsetCSI-Part1-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_csi_p1_idx_2 = 9;
+  /// \c betaOffsetCSI-Part2-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_csi_p2_idx_1 = 9;
+  /// \c betaOffsetCSI-Part2-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
+  unsigned b_offset_csi_p2_idx_2 = 9;
+
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
+  /// Values {-6,...,8} and must be a multiple of 2.
+  int msg3_delta_power = 8;
 };
 
 struct pucch_appconfig {
+  /// \c PUCCH-ConfigCommon parameters.
+  /// \c p0-nominal, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
+  int p0_nominal = -90;
+
+  /// \c PUCCH-Config parameters.
   /// Number of PUCCH Format 1 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
   unsigned nof_ue_pucch_f1_res_harq = 3;
   /// Number of PUCCH Format 2 resources per UE for HARQ-ACK reporting. Values {1,...,8}.
@@ -150,6 +199,13 @@ struct pucch_appconfig {
   max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
 };
 
+/// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
+struct phy_cell_group_appconfig {
+  /// \brief \c p-NR-FR1, part of \c PhysicalCellGroupConfig, TS 38.331. Values: {-30,...,33}.
+  /// The maximum total TX power to be used by the UE in this NR cell group across all serving cells in FR1.
+  int p_nr_fr1 = 10;
+};
+
 /// Amplitude control application configuration.
 struct amplitude_control_appconfig {
   /// Baseband gain back-off. This accounts for the signal PAPR and is applied regardless of clipping settings.
@@ -158,6 +214,23 @@ struct amplitude_control_appconfig {
   float power_ceiling_dBFS = -0.1F;
   /// Clipping of the baseband samples. If enabled, the samples that exceed the power ceiling are clipped.
   bool enable_clipping = false;
+};
+
+struct ssb_appconfig {
+  /// SSB period in milliseconds.
+  unsigned ssb_period_msec = 10;
+  /// \brief \c ss-PBCH-BlockPower, part of \c ServingCellConfigCommonSIB, as per TS 38.331.
+  /// Average EPRE of the REs that carry secondary synchronization signals in dBm used for SSB transmission.
+  /// Values: {-60,..,70}
+  int ssb_block_power = -16;
+  /// PSS EPRE to SSS EPRE for SSB, as per TS 38.213, Section 4.1.
+  ssb_pss_to_sss_epre pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
+};
+
+struct csi_appconfig {
+  /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
+  /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
+  int pwr_ctrl_offset = 0;
 };
 
 /// Base cell configuration.
@@ -178,8 +251,12 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
-  /// SSB period in milliseconds.
-  unsigned ssb_period_msec = 10;
+  /// \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
+  int q_rx_lev_min = -70;
+  /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
+  int q_qual_min = -20;
+  /// SSB parameters.
+  ssb_appconfig ssb_cfg;
   /// PDCCH configuration.
   pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
@@ -190,10 +267,16 @@ struct base_cell_appconfig {
   pusch_appconfig pusch_cfg;
   /// PUCCH configuration.
   pucch_appconfig pucch_cfg;
+  /// Physical Cell Group parameters.
+  phy_cell_group_appconfig pcg_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// TDD slot configuration.
   optional<tdd_ul_dl_appconfig> tdd_ul_dl_cfg;
+  /// Paging configuration.
+  paging_appconfig paging_cfg;
+  /// CSI configuration.
+  csi_appconfig csi_cfg;
 };
 
 /// Cell configuration
@@ -380,6 +463,12 @@ struct test_mode_ue_appconfig {
   bool pdsch_active = true;
   /// Whether PUSCH grants are automatically assigned to the test UE.
   bool pusch_active = true;
+  /// Channel Quality Indicator to use for the test UE.
+  unsigned cqi = 15;
+  /// Rank Indicator to use for the test UE. This value has to be lower than the number of ports.
+  unsigned ri = 1;
+  /// Precoding Matrix Indicator to use for the test UE.
+  unsigned pmi = 0;
 };
 
 /// gNB app Test Mode configuration.
@@ -454,7 +543,7 @@ struct ru_ofh_cell_appconfig {
   /// RU Downlink port.
   std::vector<unsigned> ru_dl_port_id = {0, 1};
   /// RU Uplink port.
-  unsigned ru_ul_port_id = 0U;
+  std::vector<unsigned> ru_ul_port_id = {0, 1};
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.
@@ -532,11 +621,17 @@ struct gnb_appconfig {
   /// \brief QoS configuration.
   std::vector<qos_appconfig> qos_cfg;
 
+  /// \brief Network slice configuration.
+  std::vector<s_nssai_t> slice_cfg = {s_nssai_t{1}};
+
   /// Expert physical layer configuration.
   expert_upper_phy_appconfig expert_phy_cfg;
 
   /// Configuration for testing purposes.
   test_mode_appconfig test_mode_cfg = {};
+
+  /// \brief NTN configuration.
+  optional<ntn_config> ntn_cfg;
 };
 
 } // namespace srsran

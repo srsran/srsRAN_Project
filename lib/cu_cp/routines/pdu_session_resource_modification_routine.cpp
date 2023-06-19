@@ -64,6 +64,8 @@ void fill_e1ap_pdu_session_res_to_modify_list(
                            session.drb_to_add,
                            logger);
 
+    fill_drb_to_remove_list(e1ap_pdu_session_item.drb_to_rem_list_ng_ran, session.drb_to_remove);
+
     pdu_session_res_to_modify_list.emplace(pdu_session_cfg.pdu_session_id, e1ap_pdu_session_item);
   }
 }
@@ -222,8 +224,8 @@ void pdu_session_resource_modification_routine::operator()(
     }
   }
 
-  // Inform CU-UP about the new TEID for UL F1u traffic
-  {
+  // If needed, inform CU-UP about the new TEID for UL F1u traffic
+  if (bearer_context_modification_request.ng_ran_bearer_context_mod_request.has_value()) {
     // add remaining fields to BearerContextModificationRequest
     bearer_context_modification_request.ue_index = modify_request.ue_index;
 
@@ -238,7 +240,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }
@@ -246,36 +248,16 @@ void pdu_session_resource_modification_routine::operator()(
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
-      for (const auto& pdu_session_to_modify : next_config.pdu_sessions_to_modify_list) {
-        // Add radio bearer config
-        for (const auto& drb_to_add : pdu_session_to_modify.second.drb_to_add) {
-          cu_cp_drb_to_add_mod drb_to_add_mod;
-          drb_to_add_mod.drb_id   = drb_to_add.first;
-          drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
-
-          // Add CN association and SDAP config
-          cu_cp_cn_assoc cn_assoc;
-          cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
-          drb_to_add_mod.cn_assoc = cn_assoc;
-
-          cu_cp_radio_bearer_config radio_bearer_config;
-          radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
-          rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
+      // get NAS PDUs as received by AMF
+      std::map<pdu_session_id_t, byte_buffer> nas_pdus;
+      for (const auto& pdu_session : modify_request.pdu_session_res_modify_items) {
+        if (!pdu_session.nas_pdu.empty()) {
+          nas_pdus.emplace(pdu_session.pdu_session_id, pdu_session.nas_pdu);
         }
-
-        // set masterCellGroupConfig as received by DU
-        cu_cp_rrc_recfg_v1530_ies rrc_recfg_v1530_ies;
-        rrc_recfg_v1530_ies.master_cell_group =
-            ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
-
-        // append NAS PDUs as received by AMF
-        for (const auto& pdu_session : modify_request.pdu_session_res_modify_items) {
-          if (!pdu_session.nas_pdu.empty()) {
-            rrc_recfg_v1530_ies.ded_nas_msg_list.push_back(pdu_session.nas_pdu.copy());
-          }
-        }
-        rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
       }
+
+      fill_rrc_reconfig_args(
+          rrc_reconfig_args, {}, next_config.pdu_sessions_to_modify_list, ue_context_modification_response, nas_pdus);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
@@ -297,7 +279,8 @@ void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_modify_response&    
 {
   for (const auto& modify_item : modify_request.pdu_session_res_modify_items) {
     cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
-    failed_item.pdu_session_id = modify_item.pdu_session_id;
+    failed_item.pdu_session_id                                         = modify_item.pdu_session_id;
+    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
     response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
   }
 }
@@ -308,9 +291,19 @@ pdu_session_resource_modification_routine::generate_pdu_session_resource_modify_
   if (success) {
     logger.debug("ue={}: \"{}\" finalized.", modify_request.ue_index, name());
 
-    // TODO: Prepare update for UP resource manager.
+    // Prepare update for UP resource manager.
     up_config_update_result result;
+    for (const auto& pdu_session_to_mod : next_config.pdu_sessions_to_modify_list) {
+      result.pdu_sessions_modified_list.push_back(pdu_session_to_mod.second);
+    }
     rrc_ue_up_resource_manager.apply_config_update(result);
+
+    for (const auto& psi : next_config.pdu_sessions_failed_to_modify_list) {
+      cu_cp_pdu_session_resource_failed_to_modify_item failed_item;
+      failed_item.pdu_session_id                                         = psi;
+      failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
+      response_msg.pdu_session_res_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+    }
   } else {
     logger.error("ue={}: \"{}\" failed.", modify_request.ue_index, name());
     mark_all_sessions_as_failed(response_msg, modify_request);

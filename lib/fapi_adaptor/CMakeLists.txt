@@ -20,3 +20,11 @@
 
 add_subdirectory(mac)
 add_subdirectory(phy)
+
+set(SOURCES
+        precoding_matrix_mapper.cpp
+        precoding_matrix_repository.cpp
+        precoding_matrix_table_generator.cpp)
+
+add_library(srsran_fapi_precoding_matrix_tools STATIC ${SOURCES})
+target_link_libraries(srsran_fapi_precoding_matrix_tools srsran_ran srslog)

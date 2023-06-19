@@ -25,7 +25,6 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_processors/pucch_processor_result.h"
 #include "srsran/phy/upper/channel_processors/pucch_uci_message.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -34,6 +33,8 @@
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_reader;
 
 /// \brief PUCCH processor interface for all formats.
 ///

@@ -40,8 +40,6 @@ namespace ofh {
 
 /// Open Fronthaul data flow for User-Plane downlink data implementation configuration.
 struct data_flow_uplane_downlink_data_impl_config {
-  /// Number of symbols.
-  unsigned nof_symbols;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// VLAN frame parameters.
@@ -69,31 +67,31 @@ public:
   explicit data_flow_uplane_downlink_data_impl(data_flow_uplane_downlink_data_impl_config&& config);
 
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
-  void enqueue_section_type_1_message(const resource_grid_context& context,
-                                      const resource_grid_reader&  grid,
-                                      unsigned                     eaxc) override;
+  void enqueue_section_type_1_message(const data_flow_resource_grid_context& context,
+                                      const resource_grid_reader&            grid,
+                                      unsigned                               eaxc) override;
 
 private:
   /// Enqueues an User-Plane message burst.
-  void enqueue_section_type_1_message_symbol_burst(const resource_grid_context& context,
-                                                   const resource_grid_reader&  grid,
-                                                   unsigned                     eaxc);
+  void enqueue_section_type_1_message_symbol_burst(const data_flow_resource_grid_context& context,
+                                                   const resource_grid_reader&            grid,
+                                                   unsigned                               eaxc);
 
   /// Enqueues an User-Plane message symbol with the given context and grid.
-  unsigned enqueue_section_type_1_message_symbol(const resource_grid_context& context,
-                                                 const resource_grid_reader&  grid,
-                                                 unsigned                     symbol_id,
-                                                 unsigned                     start_prb,
-                                                 unsigned                     nof_prb,
+  unsigned enqueue_section_type_1_message_symbol(span<const cf_t>             iq_symbol_data,
+                                                 const uplane_message_params& params,
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);
 
+  /// Prepares the IQ data vector with the requested PRBs from the grid.
+  void prepare_iq_data_vector(unsigned symbol, unsigned port, const resource_grid_reader& grid);
+
 private:
-  const unsigned                             nof_symbols;
   const unsigned                             ru_nof_prbs;
   const ether::vlan_frame_params             vlan_params;
   const ru_compression_params                compr_params;
   sequence_identifier_generator              up_seq_gen;
+  std::vector<cf_t>                          iq_data_buffer;
   srslog::basic_logger&                      logger;
   std::shared_ptr<ether::eth_frame_pool>     frame_pool_ptr;
   ether::eth_frame_pool&                     frame_pool;

@@ -21,6 +21,7 @@
  */
 
 #include "dmrs_pbch_processor_impl.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;

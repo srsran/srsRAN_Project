@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/aligned_vec.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/executors/task_worker.h"

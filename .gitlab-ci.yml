@@ -25,16 +25,16 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
@@ -54,6 +54,15 @@ variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
+
+################################################################################
+## CI
+################################################################################
+autorebaser full:
+  extends: .autorebaser
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+      when: never
 
 ################################################################################
 ## Static
@@ -79,17 +88,12 @@ full-code-format:
   image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
   stage: static
   needs: []
-  tags:
-    - ${INFRASTRUCTURE_TAG}
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
-  rules:
-    - if: $ON_MR
-      variables:
-        ARTIFACT_EXTRA_PATH: "/index.html"
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    KUBERNETES_MEMORY_REQUEST: 6Gi
+    KUBERNETES_CPU_REQUEST: 4
   before_script:
     - |
       echo "
@@ -125,10 +129,15 @@ full-code-format:
 
 clang-tidy:
   extends: .codechecker
-  resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
+  rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+    - if: $ON_MR
+      when: manual
+      allow_failure: false
   variables:
     ANALYZER: clang-tidy
     ANALYZER_ARGS: --tidy-config .clang-tidy
+    ARTIFACT_EXTRA_PATH: "/index.html"
 
 cppcheck:
   extends: .codechecker
@@ -145,7 +154,8 @@ clangsa:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: manual
       allow_failure: true
-  interruptible: false      
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  interruptible: false
   variables:
     ANALYZER: clangsa
     ANALYZER_ARGS: --ctu
@@ -322,8 +332,6 @@ pages:
 
   needs:
     - job: unit coverage
-      artifacts: true
-    - job: clang-tidy
       artifacts: true
     - job: cppcheck
       artifacts: true

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
+#include "lib/mac/mac_sched/mac_scheduler_adapter.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/config/mac_cell_group_config_factory.h"
 #include "srsran/mac/mac_cell_result.h"
@@ -44,8 +45,8 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   req.pci              = params.pci;
   req.cell_index       = to_du_cell_index(0);
   req.scs_common       = params.scs_common;
-  req.dl_carrier       = config_helpers::make_default_carrier_configuration(params);
-  req.ul_carrier       = config_helpers::make_default_carrier_configuration(params);
+  req.dl_carrier       = config_helpers::make_default_dl_carrier_configuration(params);
+  req.ul_carrier       = config_helpers::make_default_ul_carrier_configuration(params);
   req.ssb_cfg          = config_helpers::make_default_ssb_config(params);
   req.cell_barred      = false;
   req.intra_freq_resel = false;
@@ -108,6 +109,19 @@ public:
     return next_sched_result;
   }
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
+};
+
+class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
+{
+public:
+  sched_result next_sched_result = {};
+
+  void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
+  {
+    return next_sched_result;
+  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

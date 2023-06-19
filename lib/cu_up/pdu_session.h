@@ -25,9 +25,8 @@
 #include "adapters/gtpu_adapters.h"
 #include "adapters/sdap_adapters.h"
 #include "drb_context.h"
-#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/gtpu/gtpu_tunnel_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
@@ -55,16 +54,13 @@ struct pdu_session {
     gtpu_rx_demux.remove_tunnel(local_teid);
   }
 
-  std::unique_ptr<sdap_entity> sdap;
-  std::unique_ptr<gtpu_tunnel> gtpu;
+  std::unique_ptr<sdap_entity>     sdap;
+  std::unique_ptr<gtpu_tunnel_ngu> gtpu;
 
   // Adapters between SDAP and GTPU
   gtpu_sdap_adapter gtpu_to_sdap_adapter;
   sdap_gtpu_adapter sdap_to_gtpu_adapter;
 
-  // Adapter SDAP->PDCP
-  // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
-  sdap_pdcp_adapter sdap_to_pdcp_adapter;
   pdcp_f1u_adapter  pdcp_to_f1u_adapter;
   pdu_session_id_t  pdu_session_id; //< PDU session ID (0-255)
   std::string       session_type;

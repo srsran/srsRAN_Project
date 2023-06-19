@@ -41,6 +41,7 @@ struct f1_cell_setup_params {
   subcarrier_spacing              scs_common;
   carrier_configuration           dl_carrier;
   optional<carrier_configuration> ul_carrier;
+  byte_buffer                     packed_meas_time_cfg;
   byte_buffer                     packed_mib;
   byte_buffer                     packed_sib1;
 };

@@ -34,6 +34,12 @@
 
 namespace srsran {
 
+/// \brief Generate a random gnb_cu_cp_ue_e1ap_id
+gnb_cu_cp_ue_e1ap_id_t generate_random_gnb_cu_cp_ue_e1ap_id();
+
+/// \brief Generate a random gnb_cu_up_ue_e1ap_id
+gnb_cu_up_ue_e1ap_id_t generate_random_gnb_cu_up_ue_e1ap_id();
+
 class dummy_e1ap_cu_up_processor_notifier : public srs_cu_cp::e1ap_cu_up_processor_notifier
 {
 public:

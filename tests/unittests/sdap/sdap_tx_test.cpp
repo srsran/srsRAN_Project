@@ -61,7 +61,8 @@ protected:
     // Create SDAP TX entity
     ue_inactivity_timer = timers.create_timer();
     ue_inactivity_timer.set(std::chrono::milliseconds(10000), [](timer_id_t) {});
-    sdap = std::make_unique<sdap_entity_tx_impl>(7, pdu_session_id_t::min, ue_inactivity_timer, *tester);
+    sdap = std::make_unique<sdap_entity_tx_impl>(
+        7, pdu_session_id_t::min, qos_flow_id_t::min, drb_id_t::drb1, ue_inactivity_timer, *tester);
   }
 
   void TearDown() override

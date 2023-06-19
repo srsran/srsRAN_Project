@@ -32,25 +32,33 @@
 
 using namespace srsran;
 
+namespace {
+
 struct radio_factory_entry {
   std::string                                     name;
   std::function<std::unique_ptr<radio_factory>()> make;
 };
 
-static const std::vector<radio_factory_entry> radio_factory_available_factories = {{
+} // namespace
+
+static const std::vector<radio_factory_entry> radio_factory_available_factories = {
 #ifdef ENABLE_UHD
     {"uhd", []() { return std::make_unique<radio_factory_uhd_impl>(); }},
 #endif // ENABLE_UHD
 #ifdef ENABLE_ZMQ
     {"zmq", []() { return std::make_unique<radio_factory_zmq_impl>(); }},
-#endif // ENABLE_UHD
-}};
+#endif // ENABLE_ZMQ
+};
 
 void srsran::print_available_radio_factories()
 {
+  if (radio_factory_available_factories.empty()) {
+    return;
+  }
+
   // Print available factories.
   fmt::print("Available radio types: ");
-  for (unsigned i = 0; i != radio_factory_available_factories.size(); ++i) {
+  for (unsigned i = 0, e = radio_factory_available_factories.size(); i != e; ++i) {
     if (i > 0) {
       if (i == radio_factory_available_factories.size() - 1) {
         fmt::print(" and ");
@@ -66,7 +74,7 @@ void srsran::print_available_radio_factories()
 std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_name)
 {
   if (radio_factory_available_factories.empty()) {
-    fmt::print("No available radio factories found.\n");
+    fmt::print("No radio devices available.\n");
     return nullptr;
   }
 

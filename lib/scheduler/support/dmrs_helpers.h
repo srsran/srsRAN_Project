@@ -25,6 +25,7 @@
 #include "../cell/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 #include "srsran/support/error_handling.h"
@@ -92,7 +93,10 @@ inline dmrs_information make_dmrs_info_common(const pdsch_time_domain_resource_a
 inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
                                                  pci_t                                        pci,
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
-                                                 const dmrs_downlink_config&                  dmrs_dl_cfg_ded)
+                                                 const dmrs_downlink_config&                  dmrs_dl_cfg_ded,
+                                                 unsigned                                     nof_layers,
+                                                 unsigned                                     nof_dl_antenna_ports,
+                                                 bool                                         are_both_cws_enabled)
 {
   dmrs_information dmrs{};
 
@@ -115,11 +119,17 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
   dmrs.n_scid             = false;
-  // Refer to the table in TS 38.212, section 7.3.1.2.2.
-  dmrs.num_dmrs_cdm_grps_no_data = 2;
-  // Port 1000.
+  const pdsch_antenna_ports_mapping ant_mapping =
+      get_pdsch_antenna_port_mapping(nof_layers,
+                                     nof_dl_antenna_ports,
+                                     dmrs.config_type,
+                                     dmrs_dl_cfg_ded.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1,
+                                     are_both_cws_enabled);
+  dmrs.num_dmrs_cdm_grps_no_data = ant_mapping.nof_dmrs_cdm_groups_without_data;
   dmrs.dmrs_ports.resize(12);
-  dmrs.dmrs_ports.set(0);
+  for (const auto port : ant_mapping.dmrs_ports) {
+    dmrs.dmrs_ports.set(port);
+  }
 
   return dmrs;
 }
@@ -183,7 +193,10 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
 inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                  pci_t                                        pci,
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
-                                                 const dmrs_uplink_config&                    dmrs_ul_cfg)
+                                                 const dmrs_uplink_config&                    dmrs_ul_cfg,
+                                                 unsigned                                     nof_layers,
+                                                 unsigned                                     nof_ul_antenna_ports,
+                                                 bool                                         are_both_cws_enabled)
 {
   dmrs_information dmrs{};
 

@@ -43,18 +43,6 @@ byte_buffer generate_container_with_cell_group_config();
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
 
-/// \brief Generate a random gnb_cu_cp_ue_e1ap_id
-gnb_cu_cp_ue_e1ap_id_t generate_random_gnb_cu_cp_ue_e1ap_id();
-
-/// \brief Generate a random gnb_cu_up_ue_e1ap_id
-gnb_cu_up_ue_e1ap_id_t generate_random_gnb_cu_up_ue_e1ap_id();
-
-/// \brief Generate a random gnb_cu_ue_f1ap_id
-gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
-
-/// \brief Generate a random gnb_du_ue_f1ap_id
-gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
-
 struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
   dummy_du_processor_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
@@ -95,12 +83,20 @@ private:
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
+// Configuration struct to parameterize the modification outcome
+struct pdu_session_modified_outcome_t {
+  pdu_session_id_t      psi;
+  std::vector<drb_id_t> drb_added;
+  std::vector<drb_id_t> drb_removed;
+};
+
 // Stuct to configure Bearer Context Setup/Modification result content.
 struct bearer_context_outcome_t {
   bool                outcome = false;
-  std::list<unsigned> pdu_sessions_setup_list;    // List of PDU session IDs that were successful to setup.
-  std::list<unsigned> pdu_sessions_failed_list;   // List of PDU sessions IDs that failed to be setup.
-  std::list<unsigned> pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
+  std::list<unsigned> pdu_sessions_setup_list;  // List of PDU session IDs that were successful to setup.
+  std::list<unsigned> pdu_sessions_failed_list; // List of PDU sessions IDs that failed to be setup.
+  std::list<pdu_session_modified_outcome_t>
+      pdu_sessions_modified_list; // List of PDU session IDs that were successfully modified.
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
@@ -161,27 +157,28 @@ public:
 
   void fill_pdu_session_modified_list(
       slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& e1ap_modified_list,
-      const std::list<unsigned>&                                                    outcome_modified_list)
+      const std::list<pdu_session_modified_outcome_t>&                              outcome_modified_list)
   {
-    for (const auto& psi : outcome_modified_list) {
+    for (const auto& modified_item : outcome_modified_list) {
       // add only the most relevant items
       e1ap_pdu_session_resource_modified_item res_mod_item;
-      res_mod_item.pdu_session_id = uint_to_pdu_session_id(psi);
+      res_mod_item.pdu_session_id = modified_item.psi;
 
-      // add a single DRB with the same ID like the PDU session it belongs to
-      drb_id_t                   drb_id = uint_to_drb_id(psi); // Note: we use the PDU session ID here also as DRB ID
-      e1ap_drb_setup_item_ng_ran drb_item;
-      drb_item.drb_id = drb_id;
+      for (const auto& drb_id : modified_item.drb_added) {
+        // add a single DRB with the same ID like the PDU session it belongs to
+        e1ap_drb_setup_item_ng_ran drb_item;
+        drb_item.drb_id = drb_id;
 
-      // add a QoS flow
-      e1ap_qos_flow_item qos_item;
-      qos_item.qos_flow_id = uint_to_qos_flow_id(psi + 1); // QoS flow has different ID than i
-      drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
+        // add a QoS flow
+        e1ap_qos_flow_item qos_item;
+        qos_item.qos_flow_id = uint_to_qos_flow_id(drb_id_to_uint(drb_id)); // QoS flow has same ID like DRB
+        drb_item.flow_setup_list.emplace(qos_item.qos_flow_id, qos_item);
 
-      // add one UP transport item
-      e1ap_up_params_item up_item;
-      drb_item.ul_up_transport_params.push_back(up_item);
-      res_mod_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+        // add one UP transport item
+        e1ap_up_params_item up_item;
+        drb_item.ul_up_transport_params.push_back(up_item);
+        res_mod_item.drb_setup_list_ng_ran.emplace(drb_id, drb_item);
+      }
 
       e1ap_modified_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
     }
@@ -292,6 +289,7 @@ struct ue_context_outcome_t {
   bool                outcome = false;
   std::list<unsigned> drb_success_list; // List of DRB IDs that were successful to setup.
   std::list<unsigned> drb_failed_list;  // List of DRB IDs that failed to be setup.
+  std::list<unsigned> drb_removed_list; // List of DRB IDs that were removed.
 };
 
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
@@ -360,6 +358,7 @@ private:
   {
     // only copy fields that are actually checked in unit tests
     target.drbs_to_be_setup_mod_list = source.drbs_to_be_setup_mod_list;
+    target.drbs_to_be_released_list  = source.drbs_to_be_released_list;
   }
 
   srslog::basic_logger& logger                   = srslog::fetch_basic_logger("TEST");

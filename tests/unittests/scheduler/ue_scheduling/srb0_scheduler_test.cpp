@@ -73,7 +73,7 @@ struct test_bench {
     res_grid{cell_cfg},
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
-    uci_alloc{pucch_alloc},
+    uci_alloc{cell_cfg, pucch_alloc},
     ue_db{dummy_notif},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)

@@ -22,11 +22,14 @@
 
 #include "mac_dl_processor.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 
-mac_dl_processor::mac_dl_processor(const mac_dl_config& mac_cfg, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
-  cfg(mac_cfg), ue_mng(cfg.mac_cfg, rnti_table_), sched_obj(sched_)
+mac_dl_processor::mac_dl_processor(const mac_dl_config&             mac_cfg,
+                                   mac_scheduler_cell_info_handler& sched_,
+                                   du_rnti_table&                   rnti_table_) :
+  cfg(mac_cfg), ue_mng(cfg.mac_cfg, rnti_table_), sched(sched_)
 {
 }
 
@@ -42,7 +45,7 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
   // Create MAC cell and add it to list.
   cells[cell_cfg_req.cell_index] =
       std::make_unique<mac_cell_processor>(cell_cfg_req,
-                                           sched_obj,
+                                           sched,
                                            ue_mng,
                                            cfg.phy_notifier.get_cell(cell_cfg_req.cell_index),
                                            cfg.cell_exec_mapper.executor(cell_cfg_req.cell_index),

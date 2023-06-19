@@ -42,6 +42,7 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
     ue_du_cells[i] = std::make_unique<ue_cell>(
         ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg, harq_timeout_notif);
+    ue_du_cells[i]->set_fallback_state(req.starts_in_fallback);
     ue_cells.push_back(ue_du_cells[i].get());
   }
 

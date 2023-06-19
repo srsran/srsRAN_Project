@@ -49,10 +49,10 @@ public:
   const optional<tdd_ul_dl_config_common> tdd_cfg_common;
 
   /// Imported from mac_cell_configuration.
-  /// For dl_carrier, only arfcn is currently used.
   carrier_configuration   dl_carrier;
   const ssb_configuration ssb_cfg;
   dmrs_typeA_position     dmrs_typeA_pos;
+  carrier_configuration   ul_carrier;
 
   /// List of PUCCH guardbands.
   const std::vector<sched_grid_resource> pucch_guardbands;

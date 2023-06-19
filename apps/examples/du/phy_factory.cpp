@@ -40,8 +40,16 @@ std::unique_ptr<upper_phy> srsran::create_upper_phy(const upper_phy_params&     
   std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);
   report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
 
+  // Create channel precoder factory.
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  report_fatal_error_if_not(precoding_factory, "Invalid channel precoder factory.");
+
+  // Create resource grid factory.
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  report_fatal_error_if_not(rg_factory, "Invalid resource grid factory.");
+
   // Create upper PHY factory.
-  std::unique_ptr<upper_phy_factory> upper_phy_factory = create_upper_phy_factory(dl_proc_factory);
+  std::unique_ptr<upper_phy_factory> upper_phy_factory = create_upper_phy_factory(dl_proc_factory, rg_factory);
   report_fatal_error_if_not(upper_phy_factory, "Invalid upper PHY factory.");
 
   static constexpr unsigned dl_pipeline_depth    = 8;

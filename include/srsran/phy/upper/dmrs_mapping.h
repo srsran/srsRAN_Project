@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/re_pattern.h"
+#include "srsran/phy/support/re_pattern.h"
 
 namespace srsran {
 

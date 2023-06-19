@@ -33,7 +33,8 @@ namespace srsran {
 struct scheduler_ue_metrics {
   pci_t         pci;
   rnti_t        rnti;
-  unsigned      cqi;
+  uint8_t       cqi;
+  uint8_t       ri;
   sch_mcs_index dl_mcs;
   double        dl_brate_kbps;
   unsigned      dl_nof_ok;

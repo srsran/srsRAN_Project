@@ -22,6 +22,7 @@
 
 #include "ofdm_modulator_impl.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/sc_prod.h"

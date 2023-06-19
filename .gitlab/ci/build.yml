@@ -20,11 +20,12 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/srsran_project_packaging
     ref: "1"
     file: .gitlab/ci-shared/package.yml
+  - local: .gitlab/ci/src_cache.yml
 
 stages:
   - build and unit tests
@@ -72,21 +73,9 @@ variables:
     description: must be one version supported in the specified OS
     value: ""
 
-###############################
-# Cache related code to reuse #
-###############################
-
-.cache_src_set: &cache_src_set
-  - key: srsgnb-src
-    paths: [$CI_PROJECT_DIR]
-    untracked: false
-    policy: push
-    when: on_success
-
-.cache_src_get: &cache_src_get
-  - key: srsgnb-src
-    paths: [$CI_PROJECT_DIR]
-    policy: pull
+################
+# Build caches #
+################
 
 .cache_build_set: &cache_build_set
   - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
@@ -97,44 +86,6 @@ variables:
   - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
     paths: [ccache]
     policy: pull
-
-#############################
-# Git source downloader job #
-#############################
-
-push_src_cache:
-  stage: .pre
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  script:
-    - echo "Saving git repo in cache"
-  cache:
-    - *cache_src_set
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
-
-pull_src_cache:
-  stage: .pre
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  variables:
-    GIT_STRATEGY: none
-  needs:
-    - job: push_src_cache
-      artifacts: false
-      optional: true
-  script:
-    - echo "Reading git repo in cache"
-  cache:
-    - *cache_src_get
-  parallel:
-    matrix:
-      - INFRASTRUCTURE_TAG: aws-spot-amd64
-      - INFRASTRUCTURE_TAG: aws-spot-arm64
 
 #################
 # Template jobs #
@@ -162,21 +113,15 @@ pull_src_cache:
     # CI
     DOCKER_BUILDER_VERSION: "1.8.3"
     SAVE_ARTIFACTS: "" # Empty by default
-    GIT_STRATEGY: none
     KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    GIT_STRATEGY: none
   needs:
-    - job: pull_src_cache
-      artifacts: false
-      optional: true
+    - !reference [.fetch_src_cache, needs]
   resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   before_script:
-    - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
-    - git fetch --depth=1 origin $CI_COMMIT_SHA
-    - git reset --hard $CI_COMMIT_SHA
+    - !reference [.fetch_src_cache, before_script]
     - |
       build_srsgnb() {
-        BUILD_ARGS=""
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
@@ -256,7 +201,6 @@ pull_src_cache:
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
             ctest_extra="-T memcheck --timeout 10800"
-            BUILD_ARGS="${BUILD_ARGS} -DEXIT_TIMEOUT=40"
             ;;
         esac
         if [ -n "${FINGERPRINT}" ]; then
@@ -327,7 +271,7 @@ pull_src_cache:
       - build/Testing/Temporary/MemoryChecker.*.log
     expire_in: 10 minutes
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
 
 # Basic builds (MR and update cache on Nightly)
 
@@ -397,23 +341,23 @@ pull_src_cache:
 
 smoke release cached:
   extends: .smoke release
+  timeout: 45 min
   variables:
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke tsan cached:
   extends: .smoke tsan
+  timeout: 45 min
   variables:
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
@@ -421,35 +365,41 @@ smoke tsan cached:
       when: never
     - if: $ON_MR
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke rhel cached:
   extends: .smoke rhel
+  timeout: 45 min
   variables:
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke archlinux cached:
   extends: .smoke archlinux
+  timeout: 45 min
   variables:
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 smoke release clean:
@@ -459,35 +409,33 @@ smoke release clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
 
 smoke tsan clean:
   extends: .smoke tsan
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 smoke rhel clean:
   extends: .smoke rhel
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 smoke archlinux clean:
   extends: .smoke archlinux
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-  cache:
-    - *cache_src_get
 
 # Intermediate commits
 
 intermediate commits:
   extends: .build_and_unit
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
+  timeout: 45 min
   variables:
     OS: ubuntu-22.04
     TEST_MODE: none
@@ -498,8 +446,7 @@ intermediate commits:
     INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
@@ -516,7 +463,7 @@ intermediate commits:
         sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 valgrind changed tests:
@@ -529,6 +476,7 @@ valgrind changed tests:
     - if: $ON_MR
       when: manual
       allow_failure: true
+  timeout: 45 min
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -538,7 +486,7 @@ valgrind changed tests:
     ENABLE_AVX512: "False"
     CLEAN_BUILD: "False"
     TEST_MODE: valgrind
-    KUBERNETES_MEMORY_REQUEST: 7Gi
+    # KUBERNETES_MEMORY_REQUEST: 6Gi
     MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
   script:
@@ -561,7 +509,7 @@ valgrind changed tests:
       build_srsgnb
     - launch_tests
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get
 
 ###########
@@ -580,7 +528,7 @@ smoke release update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke tsan update cache:
@@ -593,7 +541,7 @@ smoke tsan update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke rhel update cache:
@@ -604,7 +552,7 @@ smoke rhel update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 smoke archlinux update cache:
@@ -615,7 +563,7 @@ smoke archlinux update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_set
 
 # High priority smoke checks. Some of them save the binary for e2e tests
@@ -663,6 +611,7 @@ basic valgrind:
     COMPILER: gcc
     BUILD_TYPE: Debug
     INFRASTRUCTURE_TAG: aws-spot-amd64
+    BUILD_ARGS: -DEXIT_TIMEOUT=120
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     TEST_MODE: valgrind
@@ -700,7 +649,6 @@ package:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
     KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
   tags:
     - ${INFRASTRUCTURE_TAG}
@@ -1211,5 +1159,5 @@ custom-build:
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
   cache:
-    - *cache_src_get
+    - !reference [.fetch_src_cache,  cache]
     - *cache_build_get

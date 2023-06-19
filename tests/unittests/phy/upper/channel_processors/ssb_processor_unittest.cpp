@@ -44,7 +44,7 @@ int main()
   std::uniform_int_distribution<unsigned> offset_to_pointA_dist(0, 2199);
   std::uniform_int_distribution<unsigned> ssb_subcarrier_offset_dist(0, 11);
 
-  resource_grid_dummy grid;
+  resource_grid_writer_spy grid(0, 0, 0);
 
   std::shared_ptr<pbch_encoder_factory_spy>   encoder_factory_spy   = std::make_shared<pbch_encoder_factory_spy>();
   std::shared_ptr<pbch_modulator_factory_spy> modulator_factory_spy = std::make_shared<pbch_modulator_factory_spy>();

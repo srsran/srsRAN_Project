@@ -31,7 +31,7 @@ namespace mm512 {
 
 /// \brief Packs 16bit IQ values of a resource block using the specified width and big-endian format.
 ///
-/// \param[out] c_prbs  Output PRB storing compressed packed bytes.
+/// \param[out] c_prb   Output PRB storing compressed packed bytes.
 /// \param[in]  reg     AVX512 register storing 16bit IQ pairs of the PRB.
 /// \param[in] iq_width Bit width of the resulting packed IQ samples.
 void pack_prb_big_endian(ofh::compressed_prb& c_prb, __m512i reg, unsigned iq_width);

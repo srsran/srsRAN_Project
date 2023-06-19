@@ -80,7 +80,7 @@ protected:
   test_helpers::dummy_mac_pcap pcap;
 
   // Create a MAC config object.
-  mac_common_config_t         mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier, pcap};
+  mac_control_config          mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker};
   mac_ctrl_dummy_configurer   mac_ctrl;
   mac_ul_dummy_configurer     mac_ul;
   mac_dl_dummy_configurer     mac_dl;

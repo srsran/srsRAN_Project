@@ -52,7 +52,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_factory_config& config) override;
+  std::unique_ptr<phy_fapi_adaptor> create(phy_fapi_adaptor_factory_config&& config) override;
 
 private:
   downlink_processor_pool&      dl_processor_pool;

@@ -148,6 +148,14 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
   app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
 }
 
+static void configure_cli11_slicing_args(CLI::App& app, s_nssai_t& slice_params)
+{
+  app.add_option("--sst", slice_params.sst, "Slice Service Type")->capture_default_str()->check(CLI::Range(0, 255));
+  app.add_option("--sd", slice_params.sd, "Service Differentiator")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffffff));
+}
+
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address");
@@ -241,6 +249,11 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
          "MCS table to use PDSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+  app.add_option("--nof_ports",
+                 pdsch_params.nof_ports,
+                 "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -268,10 +281,89 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
          "MCS table to use PUSCH")
       ->default_str("qam64")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+  app.add_option("--msg3_delta_preamble",
+                 pusch_params.msg3_delta_preamble,
+                 "msg3-DeltaPreamble, Power offset between msg3 and RACH preamble transmission")
+      ->capture_default_str()
+      ->check(CLI::Range(-1, 6));
+  app.add_option("--p0_nominal_with_grant",
+                 pusch_params.p0_nominal_with_grant,
+                 "P0 value for PUSCH with grant (except msg3). Value in dBm. Valid values must be multiple of 2 and "
+                 "within the [-202, 24] interval.  Default: -76")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
+  app.add_option("--msg3_delta_power",
+                 pusch_params.msg3_delta_power,
+                 "Target power level at the network receiver side, in dBm. Valid values must be multiple of 2 and "
+                 "within the [-6, 8] interval. Default: 8")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-6, 8] interval";
+        if (pw < -6 or pw > 8 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
+  app.add_option("--b_offset_ack_idx_1", pusch_params.b_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option("--b_offset_ack_idx_2", pusch_params.b_offset_ack_idx_2, "betaOffsetACK-Index2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option("--b_offset_ack_idx_3", pusch_params.b_offset_ack_idx_3, "betaOffsetACK-Index3 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p1_idx_1", pusch_params.b_offset_csi_p1_idx_1, "b_offset_csi_p1_idx_1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p1_idx_2", pusch_params.b_offset_csi_p1_idx_2, "b_offset_csi_p1_idx_2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p2_idx_1", pusch_params.b_offset_csi_p2_idx_1, "b_offset_csi_p2_idx_1 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
+  app.add_option(
+         "--beta_offset_csi_p2_idx_2", pusch_params.b_offset_csi_p2_idx_2, "b_offset_csi_p2_idx_2 part of UCI-OnPUSCH")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 31));
 }
 
 static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params)
 {
+  app.add_option(
+         "--p0_nominal",
+         pucch_params.p0_nominal,
+         "Power control parameter P0 for PUCCH transmissions. Value in dBm. Valid values must be multiple of 2 and "
+         "within the [-202, 24] interval. Default: -90")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, 24] interval";
+        if (pw < -202 or pw > 24 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
   app.add_option("--f1_nof_ue_res_harq",
                  pucch_params.nof_ue_pucch_f1_res_harq,
                  "Number of PUCCH F1 resources available per UE for HARQ")
@@ -328,19 +420,32 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
            }
          },
          "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot25")
-      ->check([](const std::string& value) -> std::string {
-        if ((value == "dot08") || (value == "dot15") || (value == "dot25") || (value == "dot35") ||
-            (value == "dot45") || (value == "dot60") || (value == "dot80")) {
-          return "";
-        }
-
-        return "Invalid PUCCH F2 max code rate. \n"
-               "Valid profiles are: dot08, dot15, dot25, dot35, dot45, dot60, dot80";
-      });
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   app.add_option("--f2_intraslot_freq_hop",
                  pucch_params.f2_intraslot_freq_hopping,
                  "Enable intra-slot frequency hopping for PUCCH F2")
       ->capture_default_str();
+}
+
+static void configure_cli11_ssb_args(CLI::App& app, ssb_appconfig& ssb_params)
+{
+  app.add_option("--ssb_period", ssb_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({5, 10, 20}));
+  app.add_option("--ssb_block_power_dbm", ssb_params.ssb_block_power, "SS_PBCH_power_block in dBm")
+      ->capture_default_str()
+      ->check(CLI::Range(-60, 50));
+  app.add_option_function<unsigned>(
+         "--pss_to_sss_epre_db",
+         [&ssb_params](unsigned value) {
+           if (value == 0) {
+             ssb_params.pss_to_sss_epre = srsran::ssb_pss_to_sss_epre::dB_0;
+           } else if (value == 3) {
+             ssb_params.pss_to_sss_epre = srsran::ssb_pss_to_sss_epre::dB_3;
+           }
+         },
+         "SSB PSS to SSS EPRE ratio in dB {0, 3}")
+      ->check(CLI::IsMember({0, 3}));
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
@@ -367,6 +472,22 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
          "--prach_frequency_start", prach_params.prach_frequency_start, "PRACH message frequency offset in PRBs")
       ->capture_default_str()
       ->check(CLI::Range(0, 274));
+  app.add_option("--preamble_rx_target_pw",
+                 prach_params.preamble_rx_target_pw,
+                 "Target power level at the network receiver side, in dBm")
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        std::stringstream ss(value);
+        int               pw;
+        ss >> pw;
+        const std::string& error_message = "Must be a multiple of 2 and within the [-202, -60] interval";
+        // Bandwidth cannot be less than 5MHz.
+        if (pw < -202 or pw > -60 or pw % 2 != 0) {
+          return error_message;
+        }
+
+        return "";
+      });
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
@@ -401,6 +522,47 @@ static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& t
                  "TDD pattern nof. UL symbols at the end of the slot preceding the first full UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 13));
+}
+
+static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
+{
+  app.add_option("--pg_search_space_id", pg_params.paging_search_space_id, "SearchSpace to use for Paging")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1}));
+  app.add_option(
+         "--default_pg_cycle_in_rf", pg_params.default_paging_cycle, "Default Paging cycle in nof. Radio Frames")
+      ->capture_default_str()
+      ->check(CLI::IsMember({32, 64, 128, 256}));
+  app.add_option_function<std::string>(
+         "--nof_pf_per_paging_cycle",
+         [&pg_params](const std::string& value) {
+           if (value == "oneT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneT;
+           } else if (value == "halfT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::halfT;
+           } else if (value == "quarterT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::quarterT;
+           } else if (value == "oneEighthT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneEighthT;
+           } else if (value == "oneSixteethT") {
+             pg_params.nof_pf = pcch_config::nof_pf_per_drx_cycle::oneSixteethT;
+           }
+         },
+         "Number of paging frames per DRX cycle {oneT, halfT, quarterT, oneEighthT, oneSixteethT}. Default: oneT")
+      ->check(CLI::IsMember({"oneT", "halfT", "quarterT", "oneEighthT", "oneSixteethT"}, CLI::ignore_case));
+  app.add_option("--pf_offset", pg_params.pf_offset, "Paging frame offset")->capture_default_str();
+  app.add_option("--nof_po_per_pf", pg_params.nof_po_per_pf, "Number of paging occasions per paging frame")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 4}));
+}
+
+static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
+{
+  app.add_option("--pwr_ctrl_offset",
+                 csi_params.pwr_ctrl_offset,
+                 "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-8, 15));
 }
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
@@ -459,9 +621,25 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
-  app.add_option("--ssb_period", cell_params.ssb_period_msec, "Period of SSB scheduling in milliseconds")
+  app.add_option("--q_rx_lev_min",
+                 cell_params.q_rx_lev_min,
+                 "q-RxLevMin, required minimum received RSRP level for cell selection/re-selection, in dBm")
       ->capture_default_str()
-      ->check(CLI::IsMember({5, 10, 20}));
+      ->check(CLI::Range(-70, -22));
+  app.add_option("--q_qual_min",
+                 cell_params.q_qual_min,
+                 "q-QualMin, required minimum received RSRQ level for cell selection/re-selection, in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-43, -12));
+  app.add_option("--pcg_p_nr_fr1",
+                 cell_params.pcg_cfg.p_nr_fr1,
+                 "p-nr-fr1, maximum total TX power to be used by the UE in this NR cell group across in FR1")
+      ->capture_default_str()
+      ->check(CLI::Range(-30, 33));
+
+  // SSB configuration.
+  CLI::App* ssb_subcmd = app.add_subcommand("ssb", "SSB parameters");
+  configure_cli11_ssb_args(*ssb_subcmd, cell_params.ssb_cfg);
 
   // PDCCH configuration.
   CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");
@@ -494,6 +672,14 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
     }
   };
   app.callback(tdd_ul_dl_verify_callback);
+
+  // Paging configuration.
+  CLI::App* paging_subcmd = app.add_subcommand("paging", "Paging parameters");
+  configure_cli11_paging_args(*paging_subcmd, cell_params.paging_cfg);
+
+  // CSI configuration;
+  CLI::App* csi_subcmd = app.add_subcommand("csi", "CSI-Meas parameters");
+  configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)
@@ -614,6 +800,15 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(INVALID_RNTI, MAX_CRNTI));
   app.add_option("--pdsch_active", test_params.pdsch_active, "PDSCH enabled")->capture_default_str();
   app.add_option("--pusch_active", test_params.pusch_active, "PUSCH enabled")->capture_default_str();
+  app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 15));
+  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
+  app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)
@@ -723,9 +918,7 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
   app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
-  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
+  app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
 }
 
 static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
@@ -958,7 +1151,25 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       subapp.parse_from_stream(ss);
     }
   };
-  app.add_option_function<std::vector<std::string>>("--qos", qos_lambda, "qos");
+  app.add_option_function<std::vector<std::string>>(
+      "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+
+  // Slicing parameters.
+  auto slicing_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    // Prepare the radio bearers
+    gnb_cfg.slice_cfg.resize(values.size());
+
+    // Format every QoS setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("Slicing parameters");
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
+      configure_cli11_slicing_args(subapp, gnb_cfg.slice_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--slicing", slicing_lambda, "Network slicing configuration");
 
   // Expert PHY section.
   CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();

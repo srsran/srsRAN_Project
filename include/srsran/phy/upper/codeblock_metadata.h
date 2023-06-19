@@ -84,8 +84,10 @@ struct codeblock_metadata {
 /// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
 static constexpr units::bits MAX_SEG_LENGTH{22 * 384};
 
-/// Maximum number of segments per transport block.
-static constexpr unsigned MAX_NOF_SEGMENTS = 52;
+/// \brief Maximum number of segments per transport block.
+///
+/// It assumes 156 resource elements for a maximum of 275 PRB, four layers and eight bits per RE.
+static constexpr unsigned MAX_NOF_SEGMENTS = (156 * 275 * 4 * 8) / MAX_SEG_LENGTH.value();
 
 /// \brief Describes an LDPC segment or codeblock.
 ///

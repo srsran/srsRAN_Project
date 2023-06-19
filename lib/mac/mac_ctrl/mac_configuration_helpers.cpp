@@ -27,9 +27,10 @@ using namespace srsran;
 sched_ue_creation_request_message srsran::make_scheduler_ue_creation_request(const mac_ue_create_request& request)
 {
   sched_ue_creation_request_message ret{};
-  ret.ue_index = request.ue_index;
-  ret.crnti    = request.crnti;
-  ret.cfg      = request.sched_cfg;
+  ret.ue_index           = request.ue_index;
+  ret.crnti              = request.crnti;
+  ret.starts_in_fallback = true;
+  ret.cfg                = request.sched_cfg;
   return ret;
 }
 

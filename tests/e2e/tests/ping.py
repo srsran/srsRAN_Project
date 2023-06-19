@@ -144,7 +144,7 @@ def test_zmq_valgrind(
     - Ignore if the ping fails or ue can't attach
     - Fails only if ue/gnb/epc crashes
     """
-    gnb_stop_timeout = 60
+    gnb_stop_timeout = 150
     with suppress(grpc.RpcError, AssertionError, Failed):
         _ping(
             retina_manager=retina_manager,
@@ -160,7 +160,7 @@ def test_zmq_valgrind(
             time_alignment_calibration=0,
             log_search=False,
             always_download_artifacts=True,
-            pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=yes --error-exitcode=22",
+            pre_command="valgrind --leak-check=full --track-origins=yes --exit-on-first-error=no --error-exitcode=22",
             gnb_stop_timeout=gnb_stop_timeout,
         )
     stop((ue_1, ue_2, ue_3, ue_4), gnb, epc, retina_data, gnb_stop_timeout=gnb_stop_timeout)

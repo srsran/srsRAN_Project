@@ -42,6 +42,8 @@ public:
 
   void operator()(coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx);
 
+  static const char* name() { return "Bearer Context Modification Procedure"; }
+
 private:
   /// Send Bearer Context Modification Request to CU-UP.
   void send_bearer_context_modification_request();

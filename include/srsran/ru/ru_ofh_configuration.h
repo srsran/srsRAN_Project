@@ -52,8 +52,8 @@ struct ru_ofh_sector_configuration {
   unsigned ru_prach_port;
   /// RU Downlink ports.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_dl_ports;
-  /// RU Uplink port.
-  unsigned ru_ul_port;
+  /// RU Uplink ports.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_ul_ports;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.

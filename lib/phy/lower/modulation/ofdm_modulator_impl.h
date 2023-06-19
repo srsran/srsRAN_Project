@@ -25,7 +25,6 @@
 #include "phase_compensation_lut.h"
 #include "srsran/phy/generic_functions/dft_processor.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srsvec/aligned_vec.h"
 

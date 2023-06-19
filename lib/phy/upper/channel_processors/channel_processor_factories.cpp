@@ -959,11 +959,11 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
-  void process(resource_grid_writer&                                        grid,
+  void process(resource_grid_mapper&                                        mapper,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
   {
-    const auto&& func = [&]() { processor->process(grid, data, pdu); };
+    const auto&& func = [&]() { processor->process(mapper, data, pdu); };
 
     if (!enable_logging_broadcast && is_broadcast_rnti(pdu.rnti)) {
       func();

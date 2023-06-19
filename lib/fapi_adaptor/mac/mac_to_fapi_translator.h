@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/fapi/messages.h"
+#include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 
 namespace srsran {
@@ -40,11 +42,18 @@ namespace fapi_adaptor {
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  mac_to_fapi_translator(srslog::basic_logger&             logger_,
-                         fapi::slot_message_gateway&       msg_gw_,
-                         fapi::slot_last_message_notifier& last_msg_notifier_) :
-    logger(logger_), msg_gw(msg_gw_), last_msg_notifier(last_msg_notifier_)
+  mac_to_fapi_translator(srslog::basic_logger&                    logger_,
+                         fapi::slot_message_gateway&              msg_gw_,
+                         fapi::slot_last_message_notifier&        last_msg_notifier_,
+                         std::unique_ptr<precoding_matrix_mapper> pm_mapper_,
+                         unsigned                                 cell_nof_prbs_) :
+    logger(logger_),
+    pm_mapper(std::move(pm_mapper_)),
+    msg_gw(msg_gw_),
+    last_msg_notifier(last_msg_notifier_),
+    cell_nof_prbs(cell_nof_prbs_)
   {
+    srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
   }
 
   // See interface for documentation.
@@ -67,10 +76,14 @@ private:
 private:
   /// FAPI logger.
   srslog::basic_logger& logger;
+  /// Precoding matrix mapper.
+  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// Slot-specific last message notifier.
   fapi::slot_last_message_notifier& last_msg_notifier;
+  /// Cell number of resource blocks.
+  const unsigned cell_nof_prbs;
 };
 
 } // namespace fapi_adaptor

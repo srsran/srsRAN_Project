@@ -23,11 +23,12 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/pci.h"
 #include <memory>
 
 namespace srsran {
+
+class resource_grid_writer;
 
 /// Describes a SSS processor interface
 class sss_processor

@@ -54,6 +54,14 @@ struct cplane_idle_guard_period_section_fields {
   cplane_common_section_0_1_3_5_fields common_fields;
 };
 
+/// Open Fronthaul Control-Plane PRACH/mixed-numerology section fields.
+struct cplane_prach_mixed_num_section_fields {
+  cplane_common_section_0_1_3_5_fields common_fields;
+  /// The fequency offset with respect to the carrier center frequency in steps of one half the subcarrier spacings,
+  /// see O-RAN.WG4.CUS, 7.5.3.11.
+  int frequency_offset;
+};
+
 /// Open Fronthaul Control-Plane radio application header.
 struct cplane_radio_application_header {
   /// Data direction.
@@ -89,6 +97,17 @@ enum class cplane_fft_size : uint8_t {
   fft_3072 = 0x0e
 };
 
+/// Subcarrier spacing defined in defined in O-RAN.WG4.CUS, Table 7.5.2.13-3 (part of frameStructure field).
+enum class cplane_scs : uint8_t {
+  kHz15   = 0,
+  kHz30   = 0x01,
+  kHz60   = 0x02,
+  kHz120  = 0x03,
+  kHz1_25 = 0x0c,
+  kHz5    = 0x0e,
+  reserved
+};
+
 /// Open Fronthaul Control-Plane section type 0 parameters.
 struct cplane_section_type0_parameters {
   /// Control-Plane radio application header.
@@ -102,6 +121,26 @@ struct cplane_section_type0_parameters {
   /// FFT/iFFT size being used for all IQ data processing related to this message.
   cplane_fft_size fft_size;
   /// Time offset from the start of the slot to the start of cyclic prefix, see O-RAN.WG4.CUS, 7.5.2.12.
+  uint16_t time_offset;
+};
+
+/// Open Fronthaul Control-Plane section type 3 parameters.
+struct cplane_section_type3_parameters {
+  /// Control-Plane radio application header.
+  cplane_radio_application_header radio_hdr;
+  /// Control-Plane PRACH/mixed-numerology section fields.
+  cplane_prach_mixed_num_section_fields section_fields;
+  /// Compression parameters.
+  ru_compression_params comp_params;
+  /// Subcarrier spacing.
+  cplane_scs scs;
+  /// FFT/iFFT size being used for all IQ data processing related to this message.
+  cplane_fft_size fft_size;
+  /// Cyclic prefix length.
+  unsigned cpLength;
+  /// Time offset from the start of the slot to the start of cyclic prefix, see O-RAN.WG4.CUS, 7.5.2.12.
+  /// For the PRACH Control-Plane message the value may refer to the start of cyclic prefix or the start of PRACH
+  /// preamble depending on \c cpLength parameter value, see O-RAN.WG4.CUS, 4.4.3
   uint16_t time_offset;
 };
 

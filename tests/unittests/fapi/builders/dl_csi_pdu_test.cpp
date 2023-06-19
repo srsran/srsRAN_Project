@@ -31,16 +31,16 @@ TEST(dl_csi_pdu_builder, valid_basic_parameters_passes)
   dl_csi_rs_pdu         pdu;
   dl_csi_rs_pdu_builder builder(pdu);
 
-  unsigned                 start_rb     = 200;
-  unsigned                 nof_rb       = 150;
-  csi_rs_type              type         = csi_rs_type::CSI_RS_ZP;
-  unsigned                 row          = 10;
-  bounded_bitset<12, true> freq_domain  = {1, 0, 0};
-  unsigned                 sym_l0       = 2;
-  unsigned                 sym_l1       = 3;
-  csi_rs_cdm_type          cdm          = csi_rs_cdm_type::cdm8_FD2_TD4;
-  csi_rs_freq_density_type freq_density = csi_rs_freq_density_type::one;
-  unsigned                 scram_id     = 523;
+  unsigned                  start_rb     = 200;
+  unsigned                  nof_rb       = 150;
+  csi_rs_type               type         = csi_rs_type::CSI_RS_ZP;
+  unsigned                  row          = 10;
+  bounded_bitset<12, false> freq_domain  = {0, 0, 1};
+  unsigned                  sym_l0       = 2;
+  unsigned                  sym_l1       = 3;
+  csi_rs_cdm_type           cdm          = csi_rs_cdm_type::cdm8_FD2_TD4;
+  csi_rs_freq_density_type  freq_density = csi_rs_freq_density_type::one;
+  unsigned                  scram_id     = 523;
 
   builder.set_basic_parameters(start_rb, nof_rb, type, row, freq_domain, sym_l0, sym_l1, cdm, freq_density, scram_id);
 

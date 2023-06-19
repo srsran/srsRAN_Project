@@ -33,7 +33,7 @@ set(SOURCES
         )
 
 add_library(srsran_signal_processors STATIC ${SOURCES})
-target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_generic_funcs)
+target_link_libraries(srsran_signal_processors srsvec srsran_phy_support srsran_upper_phy_support srsran_ran srsran_generic_funcs )
 
 install(TARGETS srsran_signal_processors
         EXPORT srsran_export)

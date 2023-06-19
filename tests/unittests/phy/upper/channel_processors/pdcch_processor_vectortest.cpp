@@ -20,10 +20,10 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "pdcch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -104,7 +104,7 @@ TEST_P(PdcchProcessorFixture, FromVector)
   ASSERT_TRUE(validator->is_valid(test_case.config));
 
   // Create mapper.
-  resource_grid_mapper mapper(grid);
+  resource_grid_mapper_spy mapper(grid);
 
   // Process.
   processor->process(mapper, test_case.config);

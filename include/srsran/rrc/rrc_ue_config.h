@@ -33,7 +33,8 @@ struct rrc_ue_cfg_t {
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("RRC");
   asn1::rrc_nr::pdcp_cfg_s srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
   srsran::srs_cu_cp::up_resource_manager_cfg
-      up_cfg; ///< DRB manager configuration holds the bearer configs for all FiveQIs.
+                                  up_cfg; ///< DRB manager configuration holds the bearer configs for all FiveQIs.
+  asn1::rrc_nr::meas_timing_cfg_s meas_timing_cfg;
 };
 
 } // namespace srs_cu_cp

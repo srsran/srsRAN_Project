@@ -62,8 +62,10 @@ up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_reques
                                   const srslog::basic_logger&                      logger);
 
 // \brief Allocates a new DRB ID and returns it.
-drb_id_t
-allocate_drb_id(const up_context& context, const up_config_update& config_update, const srslog::basic_logger& logger);
+drb_id_t allocate_drb_id(const up_pdu_session_context_update& new_session_context,
+                         const up_context&                    context,
+                         const up_config_update&              config_update,
+                         const srslog::basic_logger&          logger);
 
 // \brief Returns valid RRC PDCP config for a given FiveQI
 pdcp_config   set_rrc_pdcp_config(five_qi_t five_qi, const up_resource_manager_cfg& cfg);

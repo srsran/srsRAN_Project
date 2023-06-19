@@ -24,6 +24,7 @@
 
 #include "e1ap_asn1_converters.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/qos_prio_level.h"
 
 namespace srsran {
 
@@ -71,7 +72,7 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
 
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level_present) {
           qos_support_item.non_dyn_5qi_descriptor.qos_prio_level =
-              asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level;
+              uint_to_qos_prio_level(asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level);
         }
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win_present) {
           qos_support_item.non_dyn_5qi_descriptor.averaging_win =
@@ -148,7 +149,7 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
 
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level_present) {
           qos_support_item.non_dyn_5qi_descriptor.qos_prio_level =
-              asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level;
+              uint_to_qos_prio_level(asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level);
         }
         if (asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win_present) {
           qos_support_item.non_dyn_5qi_descriptor.averaging_win =

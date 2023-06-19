@@ -33,6 +33,8 @@ public:
   virtual ~mac_paging_information_handler() = default;
 
   /// \brief Handles Paging information.
+  ///
+  /// \param msg Information of the paging message to schedule.
   virtual void handle_paging_information(const paging_information& msg) = 0;
 };
 

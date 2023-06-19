@@ -39,7 +39,6 @@ struct sdap_entity_creation_message {
   pdu_session_id_t      pdu_session_id;
   unique_timer&         ue_inactivity_timer;
   sdap_rx_sdu_notifier* rx_sdu_notifier;
-  sdap_tx_pdu_notifier* tx_pdu_notifier;
 };
 
 /// Creates an instance of a SDAP interface.

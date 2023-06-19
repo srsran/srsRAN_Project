@@ -323,7 +323,7 @@ public:
     rx_ind.sl_rx      = next_sl_tx - 4;
     rx_ind.cell_index = to_du_cell_index(0);
     rx_ind.pdus.push_back(mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
-    du_hi->get_pdu_handler(to_du_cell_index(0)).handle_rx_data_indication(std::move(rx_ind));
+    du_hi->get_pdu_handler().handle_rx_data_indication(std::move(rx_ind));
 
     // Wait for UE Context Modification Response to arrive to CU.
     while (not sim_cu_cp.ue_created) {

@@ -20,7 +20,7 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "6"
+    ref: "8"
     file: .gitlab/ci-shared/setup/all.yml
 
 variables:
@@ -52,12 +52,14 @@ variables:
   RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.5.2
 
 .prepare_test:
+  variables:
+    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
   before_script:
     - |
+      eval K_PATH="\$$KUBECONFIG_VAR_NAME"
       export FORCE_COLOR=1
-      export KUBECONFIG=$KUBE_CONFIG
-      kubectl config set current-context kubernetes-admin@srs-k8s-lab
-
+      export KUBECONFIG=$K_PATH
+      
 .e2e-run:
   stage: e2e
   resource_group: e2e
@@ -68,6 +70,7 @@ variables:
   variables:
     ARTIFACT_COMPRESSION_LEVEL: "slowest"
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "5G"
+    KUBECONFIG_VAR_NAME: "RETINA_LAB_KUBECONFIG"
   tags:
     - on-prem-amd64
   extends:
@@ -86,7 +89,7 @@ variables:
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
-    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL "${RETINA_ARGS}"
+    - retina-launcher --retina-request="${CI_PROJECT_DIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml" --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL "${RETINA_ARGS}"
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -158,7 +161,7 @@ zmq-valgrind:
     RETINA_ARGS: "gnb.all.pcap=True"
   interruptible: false
   needs:
-    - job: "basic debug"
+    - job: "basic valgrind"
       artifacts: true
 
 rf:
@@ -213,6 +216,7 @@ android:
     TESTBED: "android"
     MARKERS: "android"
     E2E_LOG_LEVEL: "warning"
+    KUBECONFIG_VAR_NAME: "RETINA_HIGH_PERFORMANCE_LAB_KUBECONFIG"
   needs:
     - job: "smoke release update cache"
       artifacts: true

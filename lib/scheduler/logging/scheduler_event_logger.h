@@ -67,9 +67,9 @@ public:
     rnti_t        rnti;
   };
   struct csi_report_event {
-    du_ue_index_t ue_index;
-    rnti_t        rnti;
-    unsigned      wb_cqi;
+    du_ue_index_t   ue_index;
+    rnti_t          rnti;
+    csi_report_data csi;
   };
   struct bsr_event {
     du_ue_index_t          ue_index;

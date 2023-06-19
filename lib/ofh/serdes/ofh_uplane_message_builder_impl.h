@@ -34,24 +34,15 @@ class network_order_binary_serializer;
 class uplane_message_builder_impl : public uplane_message_builder
 {
 public:
-  uplane_message_builder_impl(srslog::basic_logger& logger_,
-                              iq_compressor&        compressor_,
-                              unsigned              du_nof_prbs_,
-                              unsigned              ru_nof_prbs_) :
-    logger(logger_), compressor(compressor_), du_nof_prbs(du_nof_prbs_), ru_nof_prbs(ru_nof_prbs_), data_start_prb(0)
+  uplane_message_builder_impl(srslog::basic_logger& logger_, iq_compressor& compressor_) :
+    logger(logger_), compressor(compressor_)
   {
   }
 
   // See interface for documentation.
-  unsigned
-  build_message(span<uint8_t> buffer, const resource_grid_reader& grid, const uplane_message_params& config) override;
+  unsigned build_message(span<uint8_t> buffer, span<const cf_t> iq_data, const uplane_message_params& params) override;
 
 private:
-  /// Writes the IQ data from the given grid and context.
-  void write_resource_grid(network_order_binary_serializer& serializer,
-                           const resource_grid_reader&      grid,
-                           const uplane_message_params&     params);
-
   /// Serializes IQ symbols from a resource grid.
   void serialize_iq_data(network_order_binary_serializer& serializer,
                          span<const cf_t>                 symbols,
@@ -65,9 +56,6 @@ private:
 protected:
   srslog::basic_logger& logger;
   iq_compressor&        compressor;
-  const unsigned        du_nof_prbs;
-  const unsigned        ru_nof_prbs;
-  const unsigned        data_start_prb;
   const bool            ud_comp_length_support = false;
 };
 
@@ -75,11 +63,8 @@ protected:
 class ofh_uplane_message_builder_static_compression_impl : public uplane_message_builder_impl
 {
 public:
-  explicit ofh_uplane_message_builder_static_compression_impl(srslog::basic_logger& logger_,
-                                                              iq_compressor&        compressor_,
-                                                              unsigned              du_nof_prbs_,
-                                                              unsigned              ru_nof_prbs_) :
-    uplane_message_builder_impl(logger_, compressor_, du_nof_prbs_, ru_nof_prbs_)
+  ofh_uplane_message_builder_static_compression_impl(srslog::basic_logger& logger_, iq_compressor& compressor_) :
+    uplane_message_builder_impl(logger_, compressor_)
   {
   }
 

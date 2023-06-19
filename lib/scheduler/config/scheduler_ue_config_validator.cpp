@@ -280,8 +280,7 @@ srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request
                                                     .csi_rs_mapping_table_row = static_cast<unsigned>(row_idx),
                                                     .symbol_l0                = res_mapping.first_ofdm_symbol_in_td,
                                                     .cdm                      = res_mapping.cdm,
-                                                    .freq_density             = res_mapping.freq_density,
-                                                    .nof_ports                = res_mapping.nof_ports};
+                                                    .freq_density             = res_mapping.freq_density};
             // symbol_l1 is only used in some configuration, and might not be provided by the higher layers; in such
             // cases, we set an invalid value for symbol_l1, as a way to let the PHY know this value should not be used.
             csi_rs_cfg.symbol_l1 =

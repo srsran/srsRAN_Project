@@ -43,6 +43,14 @@ unsigned get_csi_rs_resource_mapping_row_number(uint8_t                         
                                                 csi_rs_cdm_type                  cdm_type,
                                                 const freq_allocation_mask_type& fd_alloc);
 
+/// \brief returns the number of CSI-RS ports corresponding to a CSI-RS mapping table entry.
+///
+/// The number of ports for each CSI-RS mapping format is defined in TS38.211 Table 7.4.1.5.3-1.
+///
+/// \param csi_rs_row_id CSI-RS mapping table row identifier, set as per the first column in TS38.211 Table 7.4.1.5.3-1.
+/// \return The number of ports for the specified CSI-RS mapping table entry.
+unsigned get_nof_csi_rs_ports(unsigned csi_rs_row_id);
+
 } // namespace csi_rs
 
 } // namespace srsran

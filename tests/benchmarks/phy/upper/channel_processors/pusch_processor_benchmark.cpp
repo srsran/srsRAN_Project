@@ -22,6 +22,8 @@
 
 #include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/support/benchmark_utils.h"
@@ -436,7 +438,7 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   return std::make_tuple(std::move(processor), std::move(validator));
 }
 
-static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, const resource_grid_reader* grid)
+static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, const resource_grid_reader& grid)
 {
   std::unique_ptr<pusch_processor> proc(std::get<0>(create_processor()));
 
@@ -487,7 +489,7 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
 
     // Process PDU.
     pusch_processor_result_notifier_adaptor result_notifier;
-    proc->process(data, softbuffer.get(), result_notifier, *grid, config);
+    proc->process(data, softbuffer.get(), result_notifier, grid, config);
 
     // Notify finish count.
     {
@@ -496,6 +498,17 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
       cvar_count.notify_all();
     }
   }
+}
+
+// Creates a resource grid.
+static std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
+{
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("generic");
+  TESTASSERT(precoding_factory != nullptr, "Invalid channel precoder factory.");
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoding_factory);
+  TESTASSERT(rg_factory != nullptr, "Invalid resource grid factory.");
+
+  return rg_factory->create(nof_ports, nof_symbols, nof_subc);
 }
 
 int main(int argc, char** argv)
@@ -550,7 +563,7 @@ int main(int argc, char** argv)
   span<const cf_t> re_view(random_re);
   for (unsigned i_rx_port = 0; i_rx_port != nof_rx_ports; ++i_rx_port) {
     for (unsigned i_symbol = 0; i_symbol != grid_nof_symbols; ++i_symbol) {
-      re_view = grid->put(i_rx_port, i_symbol, 0, re_mask, re_view);
+      re_view = grid->get_writer().put(i_rx_port, i_symbol, 0, re_mask, re_view);
     }
   }
 
@@ -587,7 +600,7 @@ int main(int argc, char** argv)
 
       // Create thread.
       thread = unique_thread("thread_" + std::to_string(thread_id), prio, cpuset, [&config, &tbs, &grid] {
-        thread_process(config, tbs, grid.get());
+        thread_process(config, tbs, grid.get()->get_reader());
       });
     }
 

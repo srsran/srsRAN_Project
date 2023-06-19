@@ -626,13 +626,13 @@ TEST_P(LowerPhyFixture, RxSymbolNotifiers)
     context.sector      = sector_id_dist(rgen);
     context.slot        = slot_point(to_numerology_value(scs), slot_dist(rgen));
     context.nof_symbols = 123;
-    resource_grid_spy rg_spy;
+    resource_grid_reader_spy rg_spy;
     puxch_notifier->on_rx_symbol(rg_spy, context);
     auto& entries = rx_symbol_notifier_spy.get_rx_symbol_events();
     ASSERT_EQ(entries.size(), 1);
     ASSERT_EQ(context, entries.back().context);
     ASSERT_EQ(&rg_spy, entries.back().grid);
-    ASSERT_EQ(rg_spy.get_total_count(), 0);
+    ASSERT_EQ(rg_spy.get_count(), 0);
   }
 
   // Assert only two error events.
@@ -654,7 +654,7 @@ TEST_P(LowerPhyFixture, RgHandler)
   context.slot   = slot_point(to_numerology_value(scs), slot_dist(rgen));
 
   // Prepare RG spy.
-  resource_grid_spy rg_spy;
+  resource_grid_reader_spy rg_spy;
 
   // Handle RG.
   rg_handler.handle_resource_grid(context, rg_spy);
@@ -665,6 +665,7 @@ TEST_P(LowerPhyFixture, RgHandler)
   auto& pdxch_entry = pdxch_entries.back();
   ASSERT_EQ(pdxch_entry.context, context);
   ASSERT_EQ(pdxch_entry.grid, &rg_spy);
+  ASSERT_EQ(rg_spy.get_count(), 0);
 }
 
 TEST_P(LowerPhyFixture, PrachRequestHandler)

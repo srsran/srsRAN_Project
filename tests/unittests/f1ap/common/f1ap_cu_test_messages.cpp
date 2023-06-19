@@ -50,7 +50,7 @@ asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = asn1::f1ap::nr_scs_opts::scs30;
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = asn1::f1ap::nr_nrb_opts::nrb51;
-  served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
+  served_cells_item.served_cell_info.meas_timing_cfg.from_string("101105af4084");
 
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
@@ -281,7 +281,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   // qos characteristics
   non_dyn_5qi_descriptor_t non_dyn_5qi;
   non_dyn_5qi.five_qi                                                        = uint_to_five_qi(8);
-  non_dyn_5qi.qos_prio_level                                                 = 1;
+  non_dyn_5qi.qos_prio_level                                                 = uint_to_qos_prio_level(1);
   non_dyn_5qi.averaging_win                                                  = 3;
   non_dyn_5qi.max_data_burst_volume                                          = 1000;
   drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;

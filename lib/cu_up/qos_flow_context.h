@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "adapters/sdap_adapters.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/ran/cu_types.h"
 
 namespace srsran {
@@ -49,7 +49,8 @@ struct qos_flow_context {
   // * ngran_alloc_and_retention_prio_s
   // * etc.
 
-  std::unique_ptr<pdcp_tx_lower_notifier>      pdcp_tx_notifier;
+  sdap_pdcp_adapter sdap_to_pdcp_adapter;
+
   std::unique_ptr<pdcp_rx_upper_data_notifier> sdap_rx_notifier;
 
   // std::unique_ptr<f1u_message_notifier> rx_notifier      = std::make_unique<f1u_message_null_notifier>();

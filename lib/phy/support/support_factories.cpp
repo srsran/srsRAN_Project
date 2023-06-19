@@ -26,14 +26,39 @@
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
 #include "resource_grid_pool_impl.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/ran/prach/prach_constants.h"
 
 using namespace srsran;
 
-std::unique_ptr<resource_grid> srsran::create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
+namespace {
+
+/// Factory that builds resource grid objects.
+class resource_grid_factory_impl : public resource_grid_factory
 {
-  return std::make_unique<resource_grid_impl>(nof_ports, nof_symbols, nof_subc);
-}
+public:
+  explicit resource_grid_factory_impl(std::shared_ptr<channel_precoder_factory> precoder_factory_) :
+    precoder_factory(std::move(precoder_factory_))
+  {
+    srsran_assert(precoder_factory, "Invalid channel precoder factory.");
+  }
+
+  /// \brief Creates a resource grid instance for a number of ports, symbols and subcarriers.
+  /// \param[in] nof_ports   Number of ports.
+  /// \param[in] nof_symbols Number of OFDM symbols.
+  /// \param[in] nof_subc    Number of subcarriers.
+  /// \return A resource grid object.
+  std::unique_ptr<resource_grid> create(unsigned nof_ports, unsigned nof_symb, unsigned nof_subc) override
+  {
+    return std::make_unique<resource_grid_impl>(nof_ports, nof_symb, nof_subc, precoder_factory->create());
+  }
+
+private:
+  // Channel precoder factory.
+  std::shared_ptr<channel_precoder_factory> precoder_factory;
+};
+
+} // namespace
 
 std::unique_ptr<resource_grid_pool>
 srsran::create_resource_grid_pool(unsigned                                      nof_sectors,
@@ -71,4 +96,10 @@ std::unique_ptr<prach_buffer> srsran::create_prach_buffer_short(unsigned max_nof
 std::unique_ptr<srsran::interpolator> srsran::create_interpolator()
 {
   return std::make_unique<interpolator_linear_impl>();
+}
+
+std::shared_ptr<resource_grid_factory>
+srsran::create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> precoder_factory)
+{
+  return std::make_shared<resource_grid_factory_impl>(std::move(precoder_factory));
 }

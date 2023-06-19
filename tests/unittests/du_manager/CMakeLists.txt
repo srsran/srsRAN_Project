@@ -41,6 +41,18 @@ target_link_libraries(ue_manager_test
 target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(ue_manager_test)
 
+
+add_executable(sib_test sib_test.cpp)
+target_link_libraries(sib_test
+        du_manager_test_helpers
+        srsran_du_manager
+        srsran_support
+        srslog
+        gtest
+        gtest_main)
+target_include_directories(sib_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(sib_test)
+
 add_executable(serving_cell_config_converter_test ../du_manager/serving_cell_config_converter_test.cpp)
 target_link_libraries(serving_cell_config_converter_test srsran_du_manager srsran_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
 add_test(serving_cell_config_converter_test serving_cell_config_converter_test)

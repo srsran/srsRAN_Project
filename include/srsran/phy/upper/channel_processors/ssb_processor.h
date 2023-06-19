@@ -23,12 +23,13 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/ssb_mapping.h"
 
 namespace srsran {
+
+class resource_grid_writer;
 
 /// Describes the SSB processor interface.
 class ssb_processor

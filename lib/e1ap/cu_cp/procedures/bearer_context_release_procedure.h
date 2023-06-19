@@ -43,6 +43,8 @@ public:
 
   void operator()(coro_context<async_task<void>>& ctx);
 
+  static const char* name() { return "Bearer Context Release Procedure"; }
+
 private:
   /// Send Bearer Context Release Command to CU-UP.
   void send_bearer_context_release_command();

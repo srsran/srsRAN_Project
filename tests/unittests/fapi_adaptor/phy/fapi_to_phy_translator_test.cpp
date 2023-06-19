@@ -25,6 +25,7 @@
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/uplink_processor.h"
@@ -115,11 +116,13 @@ protected:
                                            &ul_pdu_validator,
                                            scs_common,
                                            &prach_cfg,
-                                           &carrier_cfg};
+                                           &carrier_cfg,
+                                           std::move(std::get<1>(generate_precoding_matrix_tables(1)))};
   fapi_to_phy_translator         translator;
 
 public:
-  fapi_to_phy_translator_fixture() : rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI"))
+  fapi_to_phy_translator_fixture() :
+    grid(0, 0, 0), rg_pool(grid), pdu_repo(2), translator(std::move(config), srslog::fetch_basic_logger("FAPI"))
   {
   }
 };

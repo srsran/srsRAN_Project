@@ -38,6 +38,7 @@ target_link_libraries(pdsch_processor_validator_test
         srsran_phy_support
         srslog
         srsran_upper_phy_support
+        resource_grid_mapper_test_doubles
         gtest
         gtest_main)
 add_test(pdsch_processor_validator_test pdsch_processor_validator_test)
@@ -110,11 +111,16 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pdcch_encoder_test pdcch_encoder_test_data.tar.gz "")
 
     add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
-    target_link_libraries(pdcch_modulator_test srsran_channel_processors srslog srsran_channel_modulation srsran_sequence_generators)
+    target_link_libraries(pdcch_modulator_test
+            srsran_channel_processors
+            srslog
+            srsran_channel_modulation
+            srsran_sequence_generators
+            resource_grid_mapper_test_doubles)
     add_test_vector(pdcch_modulator_test pdcch_modulator_test_data.tar.gz "")
 
     add_executable(pdcch_processor_vectortest pdcch_processor_vectortest.cpp)
-    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    target_link_libraries(pdcch_processor_vectortest srsran_channel_processors srslog resource_grid_mapper_test_doubles gtest gtest_main)
     add_test_vector(pdcch_processor_vectortest pdcch_processor_test_data.tar.gz "")
 
     add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
@@ -122,11 +128,11 @@ if (USE_PHY_TESTVECTORS)
     add_test_vector(pdsch_encoder_test pdsch_encoder_test_data.tar.gz "")
 
     add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)
-    target_link_libraries(pdsch_modulator_test srsran_channel_processors srslog)
+    target_link_libraries(pdsch_modulator_test srsran_channel_processors srslog resource_grid_mapper_test_doubles)
     add_test_vector(pdsch_modulator_test pdsch_modulator_test_data.tar.gz "")
 
     add_executable(pdsch_processor_vectortest pdsch_processor_vectortest.cpp)
-    target_link_libraries(pdsch_processor_vectortest srsran_channel_processors srslog gtest gtest_main)
+    target_link_libraries(pdsch_processor_vectortest srsran_channel_processors srslog resource_grid_mapper_test_doubles gtest gtest_main)
     add_test_vector(pdsch_processor_vectortest pdsch_processor_test_data.tar.gz "")
 
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)

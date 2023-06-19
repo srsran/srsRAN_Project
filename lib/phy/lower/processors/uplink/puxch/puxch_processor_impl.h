@@ -29,7 +29,6 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

@@ -108,8 +108,9 @@ int main()
           unsigned port_idx = dist_port(rgen);
 
           // Generate random data in the resource grid.
-          resource_grid_reader_spy rg;
-          for (unsigned symbol_idx = 0, nsymb = get_nsymb_per_slot(cp); symbol_idx != nsymb; ++symbol_idx) {
+          unsigned                 nsymb = get_nsymb_per_slot(cp);
+          resource_grid_reader_spy rg(1, nsymb, nsubc);
+          for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             for (unsigned subc_idx = 0; subc_idx != nsubc; ++subc_idx) {
               resource_grid_reader_spy::expected_entry_t entry = {};
               entry.port                                       = port_idx;
@@ -128,7 +129,6 @@ int main()
           ofdm->modulate(output, rg, port_idx, slot_idx);
 
           // Check the number of calls to DFT processor match with the number of symbols.
-          unsigned nsymb = get_nsymb_per_slot(cp);
           TESTASSERT(dft.get_entries().size() == nsymb);
 
           // Iterate all symbols.

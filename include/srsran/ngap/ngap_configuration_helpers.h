@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ngap_configuration.h"
+#include "srsran/ran/s_nssai.h"
 
 namespace srsran {
 namespace config_helpers {
@@ -37,6 +38,9 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = "00101";
   cfg.tac           = 7;
+  s_nssai_t slice_cfg;
+  slice_cfg.sst = 1;
+  cfg.slice_configurations.push_back(slice_cfg);
 
   return cfg;
 }
@@ -45,17 +49,17 @@ inline srs_cu_cp::ngap_configuration make_default_ngap_config()
 inline bool is_valid_configuration(const srs_cu_cp::ngap_configuration& config)
 {
   if (config.ran_node_name.empty()) {
-    fmt::print("RAN node name is empty");
+    fmt::print("RAN node name is empty\n");
     return false;
   }
 
   if (config.plmn.empty()) {
-    fmt::print("PLMN id is empty");
+    fmt::print("PLMN id is empty\n");
     return false;
   }
 
   if (config.plmn.find("0x") != std::string::npos) {
-    fmt::print("PLMN must not contain 0x");
+    fmt::print("PLMN must not contain 0x\n");
     return false;
   }
 

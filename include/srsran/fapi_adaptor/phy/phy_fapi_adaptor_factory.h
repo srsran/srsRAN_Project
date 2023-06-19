@@ -24,6 +24,7 @@
 
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <memory>
 
@@ -50,6 +51,8 @@ struct phy_fapi_adaptor_factory_config {
   fapi::prach_config prach_cfg;
   /// Carrier configuration per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
   fapi::carrier_config carrier_cfg;
+  /// Precoding matrix repository.
+  std::unique_ptr<precoding_matrix_repository> pm_repo;
 };
 
 /// Factory to create \c phy_fapi_adaptor objects.
@@ -59,7 +62,7 @@ public:
   virtual ~phy_fapi_adaptor_factory() = default;
 
   /// Creates a \c phy_fapi_adaptor object using the given configuration.
-  virtual std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_factory_config& config) = 0;
+  virtual std::unique_ptr<phy_fapi_adaptor> create(phy_fapi_adaptor_factory_config&& config) = 0;
 };
 
 /// Creates a \c phy_fapi_adaptor_factory object.

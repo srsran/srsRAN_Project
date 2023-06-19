@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 
 namespace srsran {

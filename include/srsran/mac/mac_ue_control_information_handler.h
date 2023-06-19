@@ -39,9 +39,9 @@ class mac_ue_control_information_handler
 public:
   virtual ~mac_ue_control_information_handler() = default;
 
-  /// Marks that the DL buffer state for a given UE logical channel needs to be recomputed.
+  /// Forwards a new DL buffer state for a given UE and logical channel to the MAC.
   /// \param dl_bs Updated DL buffer state information for a logical channel.
-  virtual void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) = 0;
+  virtual void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) = 0;
 };
 
 } // namespace srsran

@@ -24,6 +24,7 @@
 
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/sdap/sdap_config.h"
 
 namespace srsran {
 
@@ -81,4 +82,14 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
 
   return cfg;
 }
+
+inline sdap_config make_sdap_drb_config(const sdap_config_t& e1ap_cfg)
+{
+  sdap_config cfg = {};
+  cfg.default_drb = e1ap_cfg.default_drb;
+  cfg.header_ul   = e1ap_cfg.sdap_hdr_ul;
+  cfg.header_dl   = e1ap_cfg.sdap_hdr_dl;
+  return cfg;
+}
+
 } // namespace srsran

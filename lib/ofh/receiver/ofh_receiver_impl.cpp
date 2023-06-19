@@ -33,7 +33,7 @@ static uplane_uplink_packet_handler_config get_packet_handler_config(const recei
   uplane_uplink_packet_handler_config out_cfg(*depen.logger, *depen.ul_cp_context_repo);
   out_cfg.is_prach_cp_enabled = config.is_prach_cp_enabled;
   out_cfg.ru_prach_port       = config.ru_prach_port;
-  out_cfg.ru_ul_data_port     = config.ru_ul_data_port;
+  out_cfg.ul_eaxc             = config.ru_ul_port;
   out_cfg.uplane_decoder      = std::move(depen.uplane_decoder);
   out_cfg.ecpri_decoder       = std::move(depen.ecpri_decoder);
   out_cfg.eth_frame_decoder   = std::move(depen.eth_frame_decoder);
@@ -50,14 +50,17 @@ static uplane_uplink_packet_handler_config get_packet_handler_config(const recei
 /// Returns an Open Fronthaul User-Plane uplink symbol manager configuration from the given receiver implementation
 /// configuration and handlers.
 static uplane_uplink_symbol_manager_config
-get_uplink_symbol_manager_config(const receiver_config&        config,
-                                 receiver_impl_dependencies&   depen,
-                                 uplane_uplink_packet_handler& packet_handler)
+get_uplink_symbol_manager_config(const receiver_config&                                 config,
+                                 receiver_impl_dependencies&                            depen,
+                                 uplane_uplink_packet_handler&                          packet_handler,
+                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_data_port)
 {
-  uplane_uplink_symbol_manager_config out_cfg(
-      *depen.logger, *depen.notifier, packet_handler, *depen.prach_context_repo, *depen.ul_slot_context_repo);
-
-  out_cfg.du_ul_nof_prbs = config.du_ul_slot_nof_prbs;
+  uplane_uplink_symbol_manager_config out_cfg(*depen.logger,
+                                              *depen.notifier,
+                                              packet_handler,
+                                              *depen.prach_context_repo,
+                                              *depen.ul_slot_context_repo,
+                                              ru_ul_data_port);
 
   return out_cfg;
 }
@@ -65,7 +68,7 @@ get_uplink_symbol_manager_config(const receiver_config&        config,
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen) :
   decompressor_sel(std::move(depen.decompressor_sel)),
   ul_packet_handler(get_packet_handler_config(config, depen)),
-  ul_symbol_manager(get_uplink_symbol_manager_config(config, depen, ul_packet_handler)),
+  ul_symbol_manager(get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ru_ul_port)),
   ota_rx_handler(*depen.ul_cp_context_repo, *depen.prach_context_repo, *depen.ul_slot_context_repo)
 {
 }

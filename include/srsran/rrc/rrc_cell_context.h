@@ -22,7 +22,11 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/pci.h"
+#include <cstdint>
 
 namespace srsran {
 
@@ -32,6 +36,7 @@ namespace srs_cu_cp {
 struct rrc_cell_context {
   nr_cell_global_id_t cgi;
   uint32_t            tac;
+  pci_t               pci;
 };
 
 } // namespace srs_cu_cp

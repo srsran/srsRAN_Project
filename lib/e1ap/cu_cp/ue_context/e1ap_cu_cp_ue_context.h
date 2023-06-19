@@ -26,6 +26,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/support/srsran_assert.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -59,7 +60,7 @@ public:
     return ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end();
   }
 
-  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t ue_index) { return ues.at(ue_index); }
+  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) { return ues.at(cu_cp_ue_e1ap_id); }
   e1ap_ue_context& operator[](ue_index_t ue_index) { return ues.at(ue_index_to_ue_e1ap_id.at(ue_index)); }
 
   e1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
@@ -73,15 +74,32 @@ public:
 
   void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
-    ue_index_to_ue_e1ap_id.erase(ues.at(cu_cp_ue_e1ap_id).ue_index);
+    srsran_assert(
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+
+    ue_index_t ue_index = ues.at(cu_cp_ue_e1ap_id).ue_index;
+
+    srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
+                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  ue_index);
+
+    ue_index_to_ue_e1ap_id.erase(ue_index);
     ues.erase(cu_cp_ue_e1ap_id);
   }
 
   void remove_ue(ue_index_t ue_index)
   {
-    gnb_cu_cp_ue_e1ap_id_t ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
+    srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
+                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  ue_index);
+
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
+
+    srsran_assert(
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+
     ue_index_to_ue_e1ap_id.erase(ue_index);
-    ues.erase(ue_e1ap_id);
+    ues.erase(cu_cp_ue_e1ap_id);
   }
 
   size_t size() const { return ues.size(); }
@@ -106,6 +124,26 @@ public:
     }
 
     return gnb_cu_cp_ue_e1ap_id_t::invalid;
+  }
+
+  void update_ue_index(ue_index_t ue_index, ue_index_t old_ue_index)
+  {
+    srsran_assert(ue_index_to_ue_e1ap_id.find(old_ue_index) != ue_index_to_ue_e1ap_id.end(),
+                  "GNB-CU-CP-UE-E1AP-ID for ue_index={} not found.",
+                  old_ue_index);
+
+    gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(old_ue_index);
+
+    srsran_assert(
+        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "UE context for gnb_cu_cp_ue_e1ap_id={} not found.", cu_cp_ue_e1ap_id);
+
+    // update ue_index
+    auto& ue_ctxt    = ues.at(cu_cp_ue_e1ap_id);
+    ue_ctxt.ue_index = ue_index;
+
+    // update lookup
+    ue_index_to_ue_e1ap_id.emplace(ue_index, cu_cp_ue_e1ap_id);
+    ue_index_to_ue_e1ap_id.erase(old_ue_index);
   }
 
 private:

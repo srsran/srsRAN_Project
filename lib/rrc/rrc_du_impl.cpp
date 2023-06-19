@@ -49,8 +49,8 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
   // Unpack DU to CU container
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
-  asn1::cbit_ref                 bref({msg.du_to_cu_container.begin(), msg.du_to_cu_container.end()});
-  if (cell_group_cfg.unpack(bref) != asn1::SRSASN_SUCCESS) {
+  asn1::cbit_ref                 bref_cell({msg.du_to_cu_container.begin(), msg.du_to_cu_container.end()});
+  if (cell_group_cfg.unpack(bref_cell) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to unpack DU to CU RRC container - aborting user creation");
     return nullptr;
   }
@@ -65,7 +65,21 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   ue_index_t   ue_index        = msg.ue_index;
   rrc_ue_cfg_t ue_cfg          = {};
   ue_cfg.up_cfg.five_qi_config = cfg.drb_config;
-  auto res                     = ue_db.emplace(ue_index,
+
+  asn1::cbit_ref bref_meas({msg.meas_time_cfg_packed.begin(), msg.meas_time_cfg_packed.end()});
+  if (ue_cfg.meas_timing_cfg.unpack(bref_meas) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to unpack Measurement Timing Config container - aborting user creation");
+    return nullptr;
+  }
+  if (ue_cfg.meas_timing_cfg.crit_exts.type() != meas_timing_cfg_s::crit_exts_c_::types_opts::c1 ||
+      ue_cfg.meas_timing_cfg.crit_exts.c1().type() !=
+          meas_timing_cfg_s::crit_exts_c_::c1_c_::types_opts::meas_timing_conf ||
+      ue_cfg.meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing.size() == 0) {
+    logger.error("Invalid Measurement Timing Config container - aborting user creation");
+    return nullptr;
+  }
+
+  auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,

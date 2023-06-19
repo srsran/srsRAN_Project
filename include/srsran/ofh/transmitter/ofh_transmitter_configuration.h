@@ -50,7 +50,7 @@ struct transmitter_config {
   /// Downlink data eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_data_eaxc;
   /// Uplink data eAxC.
-  unsigned ul_data_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.

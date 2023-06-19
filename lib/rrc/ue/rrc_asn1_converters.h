@@ -130,6 +130,32 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config pdcp_cfg)
   return rrc_pdcp_cfg;
 }
 
+inline asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_rrc_asn1(sdap_hdr_ul_cfg hdr_cfg)
+{
+  asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::options asn1_hdr_ul_opts;
+
+  if (hdr_cfg == sdap_hdr_ul_cfg::absent) {
+    asn1_hdr_ul_opts = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::options::absent;
+  } else {
+    asn1_hdr_ul_opts = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::options::present;
+  }
+
+  return asn1_hdr_ul_opts;
+}
+
+inline asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::options sdap_hdr_dl_cfg_to_rrc_asn1(sdap_hdr_dl_cfg hdr_cfg)
+{
+  asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::options asn1_hdr_dl_opts;
+
+  if (hdr_cfg == sdap_hdr_dl_cfg::absent) {
+    asn1_hdr_dl_opts = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::options::absent;
+  } else {
+    asn1_hdr_dl_opts = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::options::present;
+  }
+
+  return asn1_hdr_dl_opts;
+}
+
 /// \brief Converts type \c sdap_config to an RRC NR ASN.1 type.
 /// \param sdap_cfg sdap config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
@@ -141,10 +167,10 @@ inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(sdap_config_t sdap_cfg)
   asn1_sdap_cfg.pdu_session = pdu_session_id_to_uint(sdap_cfg.pdu_session);
 
   // sdap hdr dl
-  asn1::string_to_enum(asn1_sdap_cfg.sdap_hdr_dl, sdap_cfg.sdap_hdr_dl);
+  asn1_sdap_cfg.sdap_hdr_dl = sdap_hdr_dl_cfg_to_rrc_asn1(sdap_cfg.sdap_hdr_dl);
 
   // sdap hdr ul
-  asn1::string_to_enum(asn1_sdap_cfg.sdap_hdr_ul, sdap_cfg.sdap_hdr_ul);
+  asn1_sdap_cfg.sdap_hdr_ul = sdap_hdr_ul_cfg_to_rrc_asn1(sdap_cfg.sdap_hdr_ul);
 
   // default drb
   asn1_sdap_cfg.default_drb = sdap_cfg.default_drb;

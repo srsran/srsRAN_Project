@@ -21,12 +21,14 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_repository.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
 
-/// Fills the reserved RE patterns parameter of the PDSCH PDU.
+/// Fills the reserved RE pattern list field in a PDSCH PDU.
 static void fill_reserved_re_pattern(pdsch_processor::pdu_t&     proc_pdu,
                                      const fapi::dl_pdsch_pdu&   fapi_pdu,
                                      span<const re_pattern_list> csi_re_pattern_list)
@@ -178,11 +180,12 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, mapper);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&     proc_pdu,
-                                                     const fapi::dl_pdsch_pdu&   fapi_pdu,
-                                                     uint16_t                    sfn,
-                                                     uint16_t                    slot,
-                                                     span<const re_pattern_list> csi_re_pattern_list)
+void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&            proc_pdu,
+                                                     const fapi::dl_pdsch_pdu&          fapi_pdu,
+                                                     uint16_t                           sfn,
+                                                     uint16_t                           slot,
+                                                     span<const re_pattern_list>        csi_re_pattern_list,
+                                                     const precoding_matrix_repository& pm_repo)
 {
   proc_pdu.slot         = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.rnti         = fapi_pdu.rnti;
@@ -223,8 +226,10 @@ void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&    
 
   fill_reserved_re_pattern(proc_pdu, fapi_pdu, csi_re_pattern_list);
 
-  // :TODO: add the ports.
-  proc_pdu.ports = {0};
+  srsran_assert(fapi_pdu.precoding_and_beamforming.prgs.size() == 1U,
+                "Unsupported number of PRGs={}",
+                fapi_pdu.precoding_and_beamforming.prgs.size());
+  proc_pdu.precoding = pm_repo.get_precoding_configuration(fapi_pdu.precoding_and_beamforming.prgs.front().pm_index);
 
   // Fill PDSCH context for logging.
   proc_pdu.context = fapi_pdu.context;

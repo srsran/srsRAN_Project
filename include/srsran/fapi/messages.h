@@ -316,7 +316,7 @@ struct dl_pdsch_pdu {
   uint8_t                                              start_symbol_index;
   uint8_t                                              nr_of_symbols;
   // :TODO: PTRS
-  tx_precoding_and_beamforming_pdu         preconding_and_beamforming;
+  tx_precoding_and_beamforming_pdu         precoding_and_beamforming;
   uint8_t                                  power_control_offset_profile_nr;
   nzp_csi_rs_epre_to_ssb                   power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;

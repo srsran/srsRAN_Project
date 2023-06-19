@@ -24,6 +24,7 @@
 /// \brief PUCCH detector definition for Formats 0 and 1.
 
 #include "pucch_detector_impl.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/mean.h"
 

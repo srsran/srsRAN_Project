@@ -35,7 +35,7 @@ struct uplink_request_handler_impl_config {
   /// Uplink PRACH eAxC.
   optional<unsigned> ul_prach_eaxc;
   /// Uplink data eAxC.
-  unsigned ul_data_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
   /// Uplink slot context repository.
   std::shared_ptr<uplink_context_repository<ul_slot_context>> ul_slot_repo;
   /// Uplink PRACH context repository.
@@ -58,7 +58,7 @@ public:
 
 private:
   const optional<unsigned>                                     ul_prach_eaxc;
-  const unsigned                                               ul_data_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        ul_eaxc;
   std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_ptr;
   std::shared_ptr<uplink_context_repository<ul_prach_context>> ul_prach_repo_ptr;
   uplink_context_repository<ul_slot_context>&                  ul_slot_repo;

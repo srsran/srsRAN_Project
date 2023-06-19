@@ -34,6 +34,7 @@ template <typename... Args>
 [[gnu::noinline, noreturn]] inline bool srsran_terminate(const char* fmt, Args&&... args) noexcept
 {
   srslog::flush();
+  ::fflush(stdout);
   fmt::print(stderr, fmt, std::forward<Args>(args)...);
   std::abort();
 }
@@ -44,7 +45,8 @@ template <typename... Args>
 [[gnu::noinline, noreturn]] inline void report_error(const char* reason_fmt, Args&&... args) noexcept
 {
   srslog::flush();
-  fmt::print(stderr, "srsGNB ERROR: {}", fmt::format(reason_fmt, std::forward<Args>(args)...));
+  ::fflush(stdout);
+  fmt::print(stderr, "srsGNB ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 
   // Disable backtrace for SIGABRT.
   signal(SIGABRT, SIG_DFL);

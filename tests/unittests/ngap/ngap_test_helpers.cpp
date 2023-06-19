@@ -37,6 +37,9 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = "00101";
   cfg.tac           = 7;
+  s_nssai_t slice_cfg;
+  slice_cfg.sst = 1;
+  cfg.slice_configurations.push_back(slice_cfg);
 
   ngap = create_ngap(cfg, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 }

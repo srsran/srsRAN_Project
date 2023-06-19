@@ -1,0 +1,9 @@
+# Network slicing example configuration
+
+slicing:
+  -
+    sst: 1
+    sd: 1
+  -
+    sst: 2
+    sd: 42

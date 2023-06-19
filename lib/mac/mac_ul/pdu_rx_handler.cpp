@@ -21,7 +21,6 @@
  */
 
 #include "pdu_rx_handler.h"
-#include "srsran/support/timers.h"
 
 using namespace srsran;
 
@@ -64,12 +63,12 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   }
 };
 
-pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
-                               du_high_ue_executor_mapper& ue_exec_mapper_,
-                               scheduler_feedback_handler& sched_,
-                               mac_ul_ue_manager&          ue_manager_,
-                               du_rnti_table&              rnti_table_,
-                               mac_pcap&                   pcap_) :
+pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&                  ccch_notifier_,
+                               du_high_ue_executor_mapper&            ue_exec_mapper_,
+                               mac_scheduler_ul_buffer_state_updater& sched_,
+                               mac_ul_ue_manager&                     ue_manager_,
+                               du_rnti_table&                         rnti_table_,
+                               mac_pcap&                              pcap_) :
   ccch_notifier(ccch_notifier_),
   ue_exec_mapper(ue_exec_mapper_),
   logger(srslog::fetch_basic_logger("MAC")),
@@ -137,6 +136,10 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 
   // Push CCCH message to upper layers.
   ue->ul_bearers[LCID_SRB0]->on_new_sdu(byte_buffer_slice{std::move(ul_ccch_msg)});
+
+  // Notify the scheduler that a Contention Resolution CE needs to be scheduled.
+  sched.handle_dl_mac_ce_indication(mac_ce_scheduling_command{ue_index, lcid_dl_sch_t::UE_CON_RES_ID});
+
   return true;
 }
 
@@ -185,34 +188,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     case lcid_ul_sch_t::CCCH_SIZE_64:
       return handle_ccch_msg(ctx, subpdu);
     case lcid_ul_sch_t::SHORT_BSR:
-    case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
-      if (not is_du_ue_index_valid(ctx.ue_index)) {
-        logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
-                       create_prefix(ctx, subpdu));
-        return false;
-      }
-      // Decode Short BSR
-      bsr_format bsr_fmt =
-          subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR ? bsr_format::SHORT_BSR : bsr_format::SHORT_TRUNC_BSR;
-      lcg_bsr_report    sbsr_ce   = decode_sbsr(subpdu.payload());
-      ul_bsr_lcg_report sched_bsr = make_sched_lcg_report(sbsr_ce, bsr_fmt);
-
-      // Send UL BSR indication to Scheduler
-      ul_bsr_indication_message ul_bsr_ind{};
-      ul_bsr_ind.cell_index = ctx.cell_index_rx;
-      ul_bsr_ind.ue_index   = ctx.ue_index;
-      ul_bsr_ind.crnti      = ctx.pdu_rx.rnti;
-      ul_bsr_ind.type       = bsr_fmt;
-      if (sched_bsr.nof_bytes == 0) {
-        // Assume all LCGs are 0 if reported SBSR is 0.
-        for (unsigned j = 0; j <= MAX_LCG_ID; ++j) {
-          ul_bsr_ind.reported_lcgs.push_back(ul_bsr_lcg_report{uint_to_lcg_id(j), 0U});
-        }
-      } else {
-        ul_bsr_ind.reported_lcgs.push_back(sched_bsr);
-      }
-      sched.handle_ul_bsr_indication(ul_bsr_ind);
-    } break;
+    case lcid_ul_sch_t::SHORT_TRUNC_BSR:
     case lcid_ul_sch_t::LONG_BSR:
     case lcid_ul_sch_t::LONG_TRUNC_BSR: {
       if (not is_du_ue_index_valid(ctx.ue_index)) {
@@ -220,20 +196,21 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
                        create_prefix(ctx, subpdu));
         return false;
       }
-      // Decode Long BSR
-      bsr_format bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
-      long_bsr_report lbsr_ce = decode_lbsr(bsr_fmt, subpdu.payload());
-
-      // Send UL BSR indication to Scheduler
-      ul_bsr_indication_message ul_bsr_ind{};
-      ul_bsr_ind.cell_index = ctx.cell_index_rx;
-      ul_bsr_ind.ue_index   = ctx.ue_index;
-      ul_bsr_ind.crnti      = ctx.pdu_rx.rnti;
-      ul_bsr_ind.type       = bsr_fmt;
-      for (const lcg_bsr_report& lb : lbsr_ce.list) {
-        ul_bsr_ind.reported_lcgs.push_back(make_sched_lcg_report(lb, bsr_fmt));
+      // Forward decoded BSR to scheduler.
+      mac_bsr_ce_info bsr_ind{};
+      bsr_ind.cell_index = ctx.cell_index_rx;
+      bsr_ind.ue_index   = ctx.ue_index;
+      bsr_ind.rnti       = ctx.pdu_rx.rnti;
+      if (subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR or subpdu.lcid() == lcid_ul_sch_t::SHORT_TRUNC_BSR) {
+        bsr_ind.bsr_fmt =
+            subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR ? bsr_format::SHORT_BSR : bsr_format::SHORT_TRUNC_BSR;
+        bsr_ind.lcg_reports.push_back(decode_sbsr(subpdu.payload()));
+      } else {
+        bsr_ind.bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
+        long_bsr_report lbsr_report = decode_lbsr(bsr_ind.bsr_fmt, subpdu.payload());
+        bsr_ind.lcg_reports         = lbsr_report.list;
       }
-      sched.handle_ul_bsr_indication(ul_bsr_ind);
+      sched.handle_ul_bsr_indication(bsr_ind);
     } break;
     case lcid_ul_sch_t::CRNTI:
       // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
@@ -270,6 +247,29 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   return true;
 }
 
+/// \brief Finds if there a BSR with positive buffer size in the list of decoded subPDUs.
+static bool contains_positive_bsr(const mac_ul_sch_pdu& decoded_subpdus)
+{
+  for (const auto& subpdu : decoded_subpdus) {
+    if (subpdu.lcid() == lcid_ul_sch_t::SHORT_TRUNC_BSR || subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR) {
+      lcg_bsr_report rep = decode_sbsr(subpdu.payload());
+      if (rep.buffer_size > 0) {
+        return true;
+      }
+    }
+    if (subpdu.lcid() == lcid_ul_sch_t::LONG_TRUNC_BSR || subpdu.lcid() == lcid_ul_sch_t::LONG_BSR) {
+      auto bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
+      long_bsr_report lbsr_report = decode_lbsr(bsr_fmt, subpdu.payload());
+      for (const auto& l : lbsr_report.list) {
+        if (l.buffer_size > 0) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
 {
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
@@ -281,22 +281,18 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
-  // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+  // > Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
   if (not ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
-        // 3. Handle remaining subPDUs using old C-RNTI.
+        // >> Handle remaining subPDUs using old C-RNTI.
         if (not handle_rx_subpdus(ctx)) {
           return;
         }
 
-        // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
-        uci_indication uci{};
-        uci.cell_index = ctx.cell_index_rx;
-        uci.slot_rx    = ctx.slot_rx;
-        uci.ucis.resize(1);
-        uci.ucis[0].ue_index = ctx.ue_index;
-        uci.ucis[0].crnti    = ctx.pdu_rx.rnti;
-        uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
-        sched.handle_uci_indication(uci);
+        // >> In case no positive BSR was provided, we force a SR in the scheduler to complete the RA procedure.
+        if (not contains_positive_bsr(ctx.decoded_subpdus)) {
+          sched.handle_ul_sched_command(
+              mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
+        }
       })) {
     logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
   }

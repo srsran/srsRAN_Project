@@ -22,6 +22,7 @@
 
 #include "helpers.h"
 #include "srsran/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/support/srsran_test.h"
 
@@ -33,9 +34,11 @@ static void test_conversion_ok()
 {
   sib_information pdu          = build_valid_sib1_information_pdu();
   unsigned        nof_csi_pdus = 2;
+  unsigned        nof_prbs     = 51U;
 
   fapi::dl_pdsch_pdu fapi_pdu;
-  convert_pdsch_mac_to_fapi(fapi_pdu, pdu, nof_csi_pdus);
+  auto               pm_tools = generate_precoding_matrix_tables(1);
+  convert_pdsch_mac_to_fapi(fapi_pdu, pdu, nof_csi_pdus, *std::get<0>(pm_tools), nof_prbs);
 
   // BWP params
   const bwp_configuration& bwp_cfg = *pdu.pdsch_cfg.bwp_cfg;

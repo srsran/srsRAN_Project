@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
@@ -186,6 +187,8 @@ T swapbits(T p)
   return p ^ q ^ (q << k);
 }
 
+} // namespace detail
+
 /// \brief Knuth's 64-bit reverse. E.g. 0x0000000000000001 -> 0x8000000000000000.
 /// For more information see: https://matthewarcus.wordpress.com/2012/11/18/reversing-a-64-bit-word/
 /// \param n Number to reverse.
@@ -197,14 +200,12 @@ inline uint64_t bit_reverse(uint64_t n)
   static const uint64_t m2 = 0x00c0300c03f0003fLLU;
   static const uint64_t m3 = 0x00000ffc00003fffLLU;
   n                        = ((n >> 1U) & m0) | (n & m0) << 1U;
-  n                        = swapbits<uint64_t, m1, 4>(n);
-  n                        = swapbits<uint64_t, m2, 8>(n);
-  n                        = swapbits<uint64_t, m3, 20>(n);
+  n                        = detail::swapbits<uint64_t, m1, 4>(n);
+  n                        = detail::swapbits<uint64_t, m2, 8>(n);
+  n                        = detail::swapbits<uint64_t, m3, 20>(n);
   n                        = (n >> 34U) | (n << 30U);
   return n;
 }
-
-} // namespace detail
 
 /// \brief Counts the number of contiguous bits set to zero, starting from the MSB.
 /// \tparam Integer Integer type of received bitmap.
@@ -265,6 +266,10 @@ int count_ones(Integer value)
 /// fmt::print("{:x}", a); // prints "1".
 /// fmt::print("{:b}", b); // prints "01000".
 /// fmt::print("{:x}", b); // prints "8".
+///
+/// However, it does not affect the information bit position string representation, e.g.
+/// fmt::print("{:n}", a); // prints "0".
+/// fmt::print("{:n}", b); // prints "1".
 ///
 /// \tparam N Upper bound for bitset size in number of bits.
 /// \tparam LowestInfoBitIsMSB Bit index order in memory. If set to (false / true), the bit index 0 (Lowest Information
@@ -408,9 +413,44 @@ public:
     static_assert(std::is_unsigned<Integer>::value, "push_back only works for unsigned integers");
     unsigned bitpos = size();
     resize(size() + nof_bits);
+    if (LowestInfoBitIsMSB) {
+      for (unsigned bit_index = 0; bit_index != bitpos; ++bit_index) {
+        set(bit_index, test(bit_index + nof_bits));
+      }
+    }
     for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
       set(bitpos + bit_index, (val >> (nof_bits - 1 - bit_index)) & 1U);
     }
+  }
+
+  /// \brief Extracts \c nof_bits starting from \c startpos.
+  ///
+  /// \return An unsigned integer containing \c nof_bits of the set where starting with the most significant bit and
+  /// finishing with the most significant bit.
+  /// \remark An assertion is triggered if the bit range exceed the set size.
+  template <typename Integer = unsigned>
+  Integer extract(unsigned startpos, unsigned nof_bits) const
+  {
+    static_assert(std::is_unsigned<Integer>::value, "Extract only works for unsigned integers");
+    srsran_assert(nof_bits <= sizeof(Integer) * 8,
+                  "The number of bits (i.e., {}) exceeds the destination bit-width (i.e., {}).",
+                  nof_bits,
+                  sizeof(Integer) * 8);
+    srsran_assert(startpos + nof_bits <= size(),
+                  "The start position (i.e., {}) plus the number of bits (i.e., {}) exceed the current size (i.e., {})",
+                  startpos,
+                  nof_bits,
+                  size());
+
+    Integer val = 0;
+
+    for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
+      if (test(startpos + bit_index)) {
+        val |= 1U << (nof_bits - 1 - bit_index);
+      }
+    }
+
+    return val;
   }
 
   /// \brief Kronecker product of the bitset with another bitset.
@@ -712,7 +752,7 @@ public:
     assert_range_bounds_(startpos, endpos);
 
     if (LowestInfoBitIsMSB) {
-      int ret = find_first_(startpos, endpos, value);
+      int ret = find_first_(size() - endpos, size() - startpos, value);
       if (ret == -1) {
         return ret;
       }
@@ -786,7 +826,7 @@ public:
       value_count = size() - value_count;
     }
 
-    // Condition 3. The number of elements must match with the star to end number of elements.
+    // Condition 3. The number of elements must match with the start to end number of elements.
     return (value_count == static_cast<size_t>((endpos + 1) - startpos));
   }
 
@@ -941,6 +981,35 @@ public:
     for (unsigned i = 0, ie = size(); i != ie; ++i) {
       unpacked_bits[i] = test(i);
     }
+  }
+
+  /// \brief Generates a list of bit positions corresponding to the information bits set to one or zero.
+  ///
+  /// The bit positions correspond to the location of each bit within the information bit word stored in the bitset,
+  /// regardless of the bit index order in memory given by \ref LowestInfoBitIsMSB.
+  ///
+  /// \param[in] value Selects the bits whose positions are returned. Set to \c true to find ones, \c false for zeros.
+  /// \return A list containing the bit positions.
+  static_vector<size_t, N> get_bit_positions(bool value = true) const
+  {
+    static_vector<size_t, N> positions;
+
+    size_t i_bit = 0;
+    while (i_bit < size()) {
+      // Find the next bit position of the bit set to value.
+      int next_position = find_lowest(i_bit, size(), value);
+      if (next_position < 0) {
+        break;
+      }
+
+      // If a bit was found, add to the list.
+      positions.emplace_back(static_cast<size_t>(next_position));
+
+      // Exclude the evaluated bit range from the next search.
+      i_bit = next_position + 1;
+    }
+
+    return positions;
   }
 
 private:
@@ -1188,13 +1257,13 @@ private:
     } else {
       unsigned i = 0;
       for (; i != nof_words_() - 1; ++i) {
-        uint64_t w = detail::bit_reverse(buffer[i]);
+        uint64_t w = bit_reverse(buffer[i]);
         fmt::format_to(mem_buffer, "{:0>16x}", w);
       }
       // last word may not print 16 hex digits
       size_t   rem_bits   = size() - (size() / bits_per_word) * bits_per_word;
       size_t   rem_digits = divide_ceil(rem_bits, 4U);
-      uint64_t w          = detail::bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
+      uint64_t w          = bit_reverse(buffer[i]) >> (bits_per_word - rem_bits);
       fmt::format_to(mem_buffer, "{:0>{}x}", w, rem_digits);
     }
     return mem_buffer;
@@ -1290,9 +1359,8 @@ namespace fmt {
 /// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB>
 template <size_t N, bool LowestInfoBitIsMSB>
 struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
-  enum { hexadecimal, binary } mode = binary;
-  enum { forward, reverse } order   = forward;
-
+  enum { hexadecimal, binary, bit_positions } mode = binary;
+  enum { forward, reverse } order                  = forward;
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -1303,6 +1371,9 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
       }
       if (*it == 'r') {
         order = reverse;
+      }
+      if (*it == 'n') {
+        mode = bit_positions;
       }
       ++it;
     }
@@ -1317,6 +1388,28 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex(ctx.out(), order == reverse);
     }
+
+    if (mode == bit_positions) {
+      if (s.is_contiguous()) {
+        unsigned lowest  = s.find_lowest();
+        unsigned highest = s.find_highest();
+        if (lowest == highest) {
+          // Single value.
+          fmt::format_to(ctx.out(), "{}", lowest);
+        } else {
+          // Format as a range.
+          fmt::format_to(ctx.out(), "[{}, {})", lowest, highest + 1);
+        }
+
+      } else {
+        // Format as a list of bit positions.
+        srsran::static_vector<size_t, N> bit_pos = s.get_bit_positions();
+
+        fmt::format_to(ctx.out(), "{}", srsran::span<size_t>(bit_pos));
+      }
+      return ctx.out();
+    }
+
     return s.template to_string_of_bits(ctx.out(), order == reverse);
   }
 };

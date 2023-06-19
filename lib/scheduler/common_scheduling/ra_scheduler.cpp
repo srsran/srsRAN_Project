@@ -572,8 +572,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
         cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), vrbs.start(), vrbs.length()});
     msg3_info.mcs                      = sched_cfg.msg3_mcs_index;
-    msg3_info.tpc                      = 1;
-    msg3_info.csi_req                  = false;
+    // Determine TPC command based on Table 8.2-2, TS 38.213.
+    msg3_info.tpc     = (cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->msg3_delta_power.to_int() + 6) / 2;
+    msg3_info.csi_req = false;
 
     // Allocate Msg3 RBs.
     const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;

@@ -23,6 +23,7 @@
 #include "puxch_processor_impl.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 
 using namespace srsran;
 
@@ -66,14 +67,15 @@ void puxch_processor_impl::process_symbol(const baseband_gateway_buffer_reader& 
 
   // Demodulate each of the ports.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    demodulator->demodulate(*current_grid, samples.get_channel_buffer(i_port), i_port, symbol_index_subframe);
+    demodulator->demodulate(
+        current_grid->get_writer(), samples.get_channel_buffer(i_port), i_port, symbol_index_subframe);
   }
 
   // Notify.
   lower_phy_rx_symbol_context rx_symbol_context;
   rx_symbol_context.slot        = current_slot;
   rx_symbol_context.nof_symbols = context.nof_symbols;
-  notifier->on_rx_symbol(*current_grid, context);
+  notifier->on_rx_symbol(current_grid->get_reader(), context);
 }
 
 void puxch_processor_impl::handle_request(resource_grid& grid, const resource_grid_context& context)

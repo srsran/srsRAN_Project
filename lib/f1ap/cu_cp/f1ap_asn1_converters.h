@@ -141,9 +141,9 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
   asn1::f1ap::qos_characteristics_c asn1_qos_characteristics;
 
   if (qos_characteristics.dyn_5qi.has_value()) {
-    auto& asn1_dyn_5qi                          = asn1_qos_characteristics.set_dyn_5qi();
-    asn1_dyn_5qi.qos_prio_level                 = qos_characteristics.dyn_5qi.value().qos_prio_level;
-    asn1_dyn_5qi.packet_delay_budget            = qos_characteristics.dyn_5qi.value().packet_delay_budget;
+    auto& asn1_dyn_5qi               = asn1_qos_characteristics.set_dyn_5qi();
+    asn1_dyn_5qi.qos_prio_level      = qos_prio_level_to_uint(qos_characteristics.dyn_5qi.value().qos_prio_level);
+    asn1_dyn_5qi.packet_delay_budget = qos_characteristics.dyn_5qi.value().packet_delay_budget;
     asn1_dyn_5qi.packet_error_rate.per_scalar   = qos_characteristics.dyn_5qi.value().packet_error_rate.per_scalar;
     asn1_dyn_5qi.packet_error_rate.per_exponent = qos_characteristics.dyn_5qi.value().packet_error_rate.per_exponent;
 
@@ -174,7 +174,8 @@ qos_characteristics_to_f1ap_asn1(const qos_characteristics_t& qos_characteristic
 
     if (qos_characteristics.non_dyn_5qi.value().qos_prio_level.has_value()) {
       asn1_non_dyn_5qi.qos_prio_level_present = true;
-      asn1_non_dyn_5qi.qos_prio_level         = qos_characteristics.non_dyn_5qi.value().qos_prio_level.value();
+      asn1_non_dyn_5qi.qos_prio_level =
+          qos_prio_level_to_uint(qos_characteristics.non_dyn_5qi.value().qos_prio_level.value());
     }
 
     if (qos_characteristics.non_dyn_5qi.value().averaging_win.has_value()) {
@@ -219,11 +220,11 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   // assert valid conversion result
   srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_cap !=
                     asn1::f1ap::pre_emption_cap_e::nulltype,
-                "Invalid preemption type");
+                "Invalid preemption capability type");
 
   srsran_assert(asn1_drb_info.drb_qos.ngra_nalloc_retention_prio.pre_emption_vulnerability !=
                     asn1::f1ap::pre_emption_vulnerability_opts::nulltype,
-                "Invalid preemption type");
+                "Invalid preemption vulnerability type");
 
   // gbr qos info
   if (qos_info.drb_qos.gbr_qos_info.has_value()) {

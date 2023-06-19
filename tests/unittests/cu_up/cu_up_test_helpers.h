@@ -228,7 +228,7 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   auto& pdu_session_res_list = ng_ran_bearer_context_setup_req[0]->pdu_session_res_to_setup_list();
 
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_res_to_setup_item;
-  pdu_session_res_to_setup_item.pdu_session_id   = 1;
+  pdu_session_res_to_setup_item.pdu_session_id   = 2;
   pdu_session_res_to_setup_item.pdu_session_type = asn1::e1ap::pdu_session_type_e::ipv4;
   pdu_session_res_to_setup_item.snssai.sst.from_number(1);
   pdu_session_res_to_setup_item.security_ind.integrity_protection_ind =

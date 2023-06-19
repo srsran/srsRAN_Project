@@ -21,10 +21,10 @@
  */
 
 #include "pdu_session_manager_impl.h"
-#include "ue_context.h"
 
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
+#include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
 
@@ -48,6 +48,83 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   gtpu_rx_demux(gtpu_rx_demux_),
   f1u_gw(f1u_gw_)
 {
+}
+
+drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
+                                                                    const e1ap_drb_to_setup_item_ng_ran& drb_to_setup)
+{
+  // prepare DRB creation result
+  drb_setup_result drb_result = {};
+  drb_result.success          = false;
+  drb_result.cause            = cause_t::radio_network;
+  drb_result.drb_id           = drb_to_setup.drb_id;
+
+  // get DRB from list and create context
+  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
+  auto& new_drb = new_session.drbs.at(drb_to_setup.drb_id);
+
+  // Create PDCP entity
+  srsran::pdcp_entity_creation_message pdcp_msg = {};
+  pdcp_msg.ue_index                             = ue_index;
+  pdcp_msg.rb_id                                = drb_to_setup.drb_id;
+  pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
+  pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
+  pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
+  pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
+  pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
+  pdcp_msg.timers                               = timers;
+  new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
+
+  // Connect "PDCP-E1AP" adapter to E1AP
+  new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
+  new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
+
+  // Create  F1-U bearer
+  uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session.pdu_session_id, drb_to_setup.drb_id);
+  new_drb->f1u         = f1u_gw.create_cu_bearer(
+      ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
+  new_drb->f1u_ul_teid = int_to_gtp_teid(f1u_ul_teid);
+
+  up_transport_layer_info f1u_ul_tunnel_addr;
+  f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
+  f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
+  drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
+
+  // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
+  new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
+                                            new_drb->pdcp->get_tx_lower_interface());
+  new_drb->pdcp_to_f1u_adapter.connect_f1u(new_drb->f1u->get_tx_sdu_handler());
+
+  // Create QoS flows
+  for (auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
+    // prepare QoS flow creation result
+    qos_flow_setup_result flow_result = {};
+    flow_result.success               = false;
+    flow_result.cause                 = cause_t::radio_network;
+    flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
+
+    // create QoS flow context
+    auto& qos_flow                           = qos_flow_info;
+    new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
+    auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
+    logger.debug(
+        "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
+
+    sdap_config sdap_cfg = make_sdap_drb_config(drb_to_setup.sdap_cfg);
+    new_session.sdap->add_mapping(
+        qos_flow.qos_flow_id, drb_to_setup.drb_id, sdap_cfg, new_qos_flow->sdap_to_pdcp_adapter);
+    new_qos_flow->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
+    new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session.sdap->get_sdap_rx_pdu_handler(drb_to_setup.drb_id));
+
+    // Add QoS flow creation result
+    flow_result.success = true;
+    drb_result.qos_flow_results.push_back(flow_result);
+  }
+
+  // Add result
+  drb_result.success = true;
+
+  return drb_result;
 }
 
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
@@ -86,23 +163,20 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
-  sdap_entity_creation_message sdap_msg = {ue_index,
-                                           session.pdu_session_id,
-                                           ue_inactivity_timer,
-                                           &new_session->sdap_to_gtpu_adapter,
-                                           &new_session->sdap_to_pdcp_adapter};
-  new_session->sdap                     = create_sdap(sdap_msg);
+  sdap_entity_creation_message sdap_msg = {
+      ue_index, session.pdu_session_id, ue_inactivity_timer, &new_session->sdap_to_gtpu_adapter};
+  new_session->sdap = create_sdap(sdap_msg);
 
   // Create GTPU entity
-  gtpu_tunnel_creation_message msg = {};
-  msg.ue_index                     = ue_index;
-  msg.cfg.tx.peer_teid             = ul_tunnel_info.gtp_teid.value();
-  msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port             = net_config.upf_port;
-  msg.cfg.rx.local_teid            = new_session->local_teid;
-  msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                     = &gtpu_tx_notifier;
-  new_session->gtpu                = create_gtpu_tunnel(msg);
+  gtpu_tunnel_ngu_creation_message msg = {};
+  msg.ue_index                         = ue_index;
+  msg.cfg.tx.peer_teid                 = ul_tunnel_info.gtp_teid.value();
+  msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
+  msg.cfg.tx.peer_port                 = net_config.upf_port;
+  msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
+  msg.tx_upper                         = &gtpu_tx_notifier;
+  new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
@@ -115,90 +189,9 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  srsran_assert(session.drb_to_setup_list_ng_ran.size() <= 1,
-                "PDU Session {} cannot be created: Current implementation assumes one DRB per PDU session!",
-                session.pdu_session_id);
-
   // Handle DRB setup
   for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
-    // prepare DRB creation result
-    drb_setup_result drb_result = {};
-    drb_result.success          = false;
-    drb_result.cause            = cause_t::radio_network;
-    drb_result.drb_id           = drb_to_setup.drb_id;
-
-    // get DRB from list and create context
-    new_session->drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id));
-    auto& new_drb = new_session->drbs.at(drb_to_setup.drb_id);
-
-    // Create PDCP entity
-    srsran::pdcp_entity_creation_message pdcp_msg = {};
-    pdcp_msg.ue_index                             = ue_index;
-    pdcp_msg.rb_id                                = drb_to_setup.drb_id;
-    pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
-    pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
-    pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
-    pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
-    pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
-    pdcp_msg.timers                               = timers;
-    new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
-
-    // Connect "PDCP-E1AP" adapter to E1AP
-    new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
-    new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
-
-    // Create  F1-U bearer
-    uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb_to_setup.drb_id);
-    new_drb->f1u         = f1u_gw.create_cu_bearer(
-        ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter, timers);
-    new_drb->f1u_ul_teid = int_to_gtp_teid(f1u_ul_teid);
-
-    up_transport_layer_info f1u_ul_tunnel_addr;
-    f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
-    f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
-    drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
-
-    srsran_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
-                  "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
-                  "flow per DRB!",
-                  drb_to_setup.drb_id,
-                  session.pdu_session_id);
-
-    // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
-    new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
-                                              new_drb->pdcp->get_tx_lower_interface());
-    new_drb->pdcp_to_f1u_adapter.connect_f1u(new_drb->f1u->get_tx_sdu_handler());
-
-    // Create QoS flows
-    for (auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
-      // prepare QoS flow creation result
-      qos_flow_setup_result flow_result = {};
-      flow_result.success               = false;
-      flow_result.cause                 = cause_t::radio_network;
-      flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
-
-      // create QoS flow context
-      auto& qos_flow                           = qos_flow_info;
-      new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
-      auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
-      logger.debug(
-          "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
-
-      // TODO: somehow take the FiveQI and configure SDAP
-
-      // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
-      // Connect the DRB's "PDCP->SDAP adapter" directly to SDAP
-      new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_rx_pdu_handler());
-      // Connect SDAP's "SDAP->PDCP adapter" directly to PDCP
-      new_session->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
-
-      // Add QoS flow creation result
-      flow_result.success = true;
-      drb_result.qos_flow_results.push_back(flow_result);
-    }
-
-    // Add result
-    drb_result.success = true;
+    drb_setup_result drb_result = handle_drb_to_setup_item(*new_session, drb_to_setup);
     pdu_session_result.drb_setup_results.push_back(drb_result);
   }
 
@@ -223,18 +216,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
   // > DRB To Setup List
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
-    // prepare DRB creation result
-    drb_setup_result drb_result = {};
-    drb_result.success          = false;
-    drb_result.cause            = cause_t::radio_network;
-    drb_result.drb_id           = drb_to_setup.drb_id;
-
-    // TODO: handle session.drb_to_setup_list_ng_ran
-    logger.warning("Setup of new DRBs via PDU session modification is not supported: session={}, drb_id={}",
-                   session.pdu_session_id,
-                   drb_to_setup.drb_id);
-
-    // Add result - success == false
+    drb_setup_result drb_result = handle_drb_to_setup_item(*pdu_session, drb_to_setup);
     pdu_session_result.drb_setup_results.push_back(drb_result);
   }
 
@@ -265,18 +247,23 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                           drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
 
+    // Apply QoS flows
+    for (auto& qos_flow_info : drb_to_mod.flow_map_info) {
+      // TODO
+      logger.warning("Unsupported modification of QoS flow. qos_flow_id={}", qos_flow_info.qos_flow_id);
+    }
+
     // Add result
     drb_result.success = true;
-    pdu_session_result.drb_setup_results.push_back(drb_result);
+    pdu_session_result.drb_modification_results.push_back(drb_result);
   }
 
   // > DRB To Remove List
   for (const auto& drb_to_rem : session.drb_to_rem_list_ng_ran) {
-    // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
-    // disconnect SDAP->PDCP direct connection
-    pdu_session->sdap_to_pdcp_adapter.disconnect_pdcp();
+    // unmap all QFI that use this DRB
+    pdu_session->sdap->remove_mapping(drb_to_rem);
 
-    // remove DRB from PDU session
+    // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(drb_to_rem);
     if (drb_iter == pdu_session->drbs.end()) {
       logger.warning("Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem, session.pdu_session_id);
@@ -287,12 +274,14 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_to_rem,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
+
     // remove DRB (this will automatically disconnect from F1-U gateway)
     pdu_session->drbs.erase(drb_iter);
 
     logger.info("Removed DRB. drb_id={}, pdu_session_id={}.", drb_to_rem, session.pdu_session_id);
   }
 
+  pdu_session_result.success = true;
   return pdu_session_result;
 }
 

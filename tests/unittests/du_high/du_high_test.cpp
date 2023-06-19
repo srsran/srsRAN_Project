@@ -48,8 +48,7 @@ TEST_F(du_high_tester, when_ccch_msg_is_received_then_ue_context_is_created)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Add UE
-  du_obj.get_pdu_handler(to_du_cell_index(0))
-      .handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
+  du_obj.get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
 
   this->run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 1);
@@ -61,10 +60,8 @@ TEST_F(du_high_tester, when_two_concurrent_ccch_msg_are_received_then_two_ue_con
   cu_notifier.last_f1ap_msgs.clear();
 
   // Add two UEs.
-  du_obj.get_pdu_handler(to_du_cell_index(0))
-      .handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
-  du_obj.get_pdu_handler(to_du_cell_index(1))
-      .handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4602)));
+  du_obj.get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4601)));
+  du_obj.get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, to_rnti(0x4602)));
 
   this->run_until([this]() { return cu_notifier.last_f1ap_msgs.size() >= 2; });
   ASSERT_EQ(cu_notifier.last_f1ap_msgs.size(), 2);

@@ -22,13 +22,13 @@
 
 #include "ue_reconfiguration_procedure.h"
 #include "../../ran/gnb_format.h"
-#include "../mac_config.h"
+#include "mac_config.h"
 #include "mac_scheduler_configurator.h"
 
 using namespace srsran;
 
 mac_ue_reconfiguration_procedure::mac_ue_reconfiguration_procedure(const mac_ue_reconfiguration_request& req_,
-                                                                   mac_common_config_t&                  cfg_,
+                                                                   mac_control_config&                   cfg_,
                                                                    mac_ul_configurator&                  mac_ul_,
                                                                    mac_dl_configurator&                  mac_dl_,
                                                                    mac_scheduler_configurator&           sched_cfg_) :

@@ -303,7 +303,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
         rg_context.sector = dist_sector_id(rgen);
 
         // Request resource grid modulation for the current slot.
-        resource_grid_reader_spy rg_spy;
+        resource_grid_reader_spy rg_spy(0, 0, 0);
         pdxch_proc->get_request_handler().handle_request(rg_spy, rg_context);
 
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
@@ -367,9 +367,9 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
   unsigned late_slot    = 2;
   unsigned next_slot    = 4;
 
-  resource_grid_spy initial_rg_spy;
-  resource_grid_spy late_rg_spy;
-  resource_grid_spy next_rg_spy;
+  resource_grid_reader_spy initial_rg_spy(0, 0, 0);
+  resource_grid_reader_spy late_rg_spy(0, 0, 0);
+  resource_grid_reader_spy next_rg_spy(0, 0, 0);
 
   // Initial request.
   resource_grid_context initial_rg_context;
@@ -418,8 +418,8 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
         pdxch_proc->get_baseband().process_symbol(buffer.get_writer(), pdxch_context);
 
         // Assert OFDM modulator call only for initial and next slot.
-        const auto&        ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
-        resource_grid_spy* rg_spy           = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
+        const auto&               ofdm_mod_entries = ofdm_mod_spy->get_modulate_entries();
+        resource_grid_reader_spy* rg_spy           = (i_slot == initial_slot) ? &initial_rg_spy : &next_rg_spy;
         ASSERT_EQ(ofdm_mod_entries.size(), nof_tx_ports);
         for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
           const auto& ofdm_mod_entry = ofdm_mod_entries[i_port];
@@ -466,7 +466,7 @@ TEST_P(LowerPhyDownlinkProcessorFixture, OverflowRequest)
   pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
   pdxch_proc->connect(pdxch_proc_notifier_spy);
 
-  resource_grid_reader_spy rg_spy;
+  resource_grid_reader_spy rg_spy(0, 0, 0);
 
   // Generate requests.
   for (unsigned i_request = 0; i_request != request_queue_size + 1; ++i_request) {

@@ -25,6 +25,8 @@
 #include "ngap_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/security/security.h"
 #include <string>
@@ -37,28 +39,21 @@ namespace srs_cu_cp {
 // TODO: pass params using struct
 /// \brief Fills ASN.1 NGSetupRequest struct.
 /// \param[out] request The NGSetupRequest ASN.1 struct to fill.
-/// \param[in] global_gnb_id The global RAN node id
-/// \param[in] ran_node_name The RAN node name
-/// \param[in] plmn_id The BCD-encoded PLMN
-/// \param[in] tac The TAC
-inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
-                                       int                             global_gnb_id,
-                                       std::string                     ran_node_name,
-                                       std::string                     plmn_id,
-                                       int                             tac)
+/// \param[in] ngap_config The NGAP configuration
+inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request, const ngap_configuration& ngap_config)
 {
   // convert PLMN to BCD
-  uint32_t plmn_bcd = plmn_string_to_bcd(plmn_id);
+  uint32_t plmn_bcd = plmn_string_to_bcd(ngap_config.plmn);
 
   // fill global ran node id
   request->global_ran_node_id.value.set_global_gnb_id();
   request->global_ran_node_id.value.global_gnb_id().gnb_id.set_gnb_id();
-  request->global_ran_node_id.value.global_gnb_id().gnb_id.gnb_id().from_number(global_gnb_id);
+  request->global_ran_node_id.value.global_gnb_id().gnb_id.gnb_id().from_number(ngap_config.gnb_id);
   request->global_ran_node_id.value.global_gnb_id().plmn_id.from_number(plmn_bcd);
 
   // fill ran node name
   request->ran_node_name_present = true;
-  request->ran_node_name.value.from_string(ran_node_name);
+  request->ran_node_name.value.from_string(ngap_config.ran_node_name);
 
   // fill supported ta list
   // TODO: add support for more items
@@ -70,12 +65,18 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
   broadcast_plmn_item.plmn_id.from_number(plmn_bcd);
 
-  asn1::ngap::slice_support_item_s slice_support_item = {};
-  slice_support_item.s_nssai.sst.from_number(1); // TODO: Remove hardcoded value
-  broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+  for (const auto& slice_config : ngap_config.slice_configurations) {
+    asn1::ngap::slice_support_item_s slice_support_item = {};
+    slice_support_item.s_nssai.sst.from_number(slice_config.sst);
+    if (slice_config.sd.has_value()) {
+      slice_support_item.s_nssai.sd_present = true;
+      slice_support_item.s_nssai.sd.from_number(slice_config.sd.value());
+    }
+    broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
+  }
 
   supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
-  supported_ta_item.tac.from_number(tac);
+  supported_ta_item.tac.from_number(ngap_config.tac);
 
   request->supported_ta_list.value.push_back(supported_ta_item);
 
@@ -342,6 +343,15 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
     }
   }
 
+  if (asn1_modify_req_transfer->qos_flow_to_release_list_present) {
+    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list.value) {
+      qos_flow_with_cause_item qos_flow_release_item;
+      qos_flow_release_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
+      qos_flow_release_item.cause       = ngap_cause_to_cause(asn1_flow_item.cause);
+      modify_item.transfer.qos_flow_to_release_list.emplace(qos_flow_release_item.qos_flow_id, qos_flow_release_item);
+    }
+  }
+
   if (!asn1_session_item.nas_pdu.empty()) {
     modify_item.nas_pdu.resize(asn1_session_item.nas_pdu.size());
     std::copy(asn1_session_item.nas_pdu.begin(), asn1_session_item.nas_pdu.end(), modify_item.nas_pdu.begin());
@@ -443,7 +453,15 @@ inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
     }
   }
 
-  // TODO: Add pdu_session_res_failed_to_modify_list_mod_res support
+  // Fill PDU Session Resource failed to modify list
+  if (!cu_cp_resp.pdu_session_res_failed_to_modify_list.empty()) {
+    resp->pdu_session_res_failed_to_modify_list_mod_res_present = true;
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_failed_to_modify_list) {
+      asn1::ngap::pdu_session_res_failed_to_modify_item_mod_res_s resp_item;
+      pdu_session_res_failed_to_modify_item_to_asn1(resp_item, cu_cp_resp_item);
+      resp->pdu_session_res_failed_to_modify_list_mod_res->push_back(resp_item);
+    }
+  }
 }
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Release Comman ASN1 struct to common type.

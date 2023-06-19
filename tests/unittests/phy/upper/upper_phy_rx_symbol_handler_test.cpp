@@ -67,7 +67,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, rg);
+      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
     }
   }
 
@@ -84,7 +84,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 1);
-      rx_handler.handle_rx_symbol(ctx, rg);
+      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
     }
   }
 
@@ -100,7 +100,7 @@ protected:
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, rg);
+      rx_handler.handle_rx_symbol(ctx, rg.get_reader());
     }
   }
 

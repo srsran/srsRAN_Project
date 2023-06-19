@@ -26,7 +26,7 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config& config)
+std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(phy_fapi_adaptor_factory_config&& config)
 {
   phy_fapi_adaptor_impl_config adaptor_config;
   adaptor_config.sector_id            = config.sector_id;
@@ -41,8 +41,9 @@ std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const ph
   adaptor_config.dl_rg_pool           = &dl_rg_pool;
   adaptor_config.carrier_cfg          = &config.carrier_cfg;
   adaptor_config.prach_cfg            = &config.prach_cfg;
+  adaptor_config.pm_repo              = std::move(config.pm_repo);
 
-  return std::make_unique<phy_fapi_adaptor_impl>(adaptor_config);
+  return std::make_unique<phy_fapi_adaptor_impl>(std::move(adaptor_config));
 }
 
 std::unique_ptr<phy_fapi_adaptor_factory>

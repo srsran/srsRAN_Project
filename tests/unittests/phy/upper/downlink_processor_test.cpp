@@ -317,7 +317,7 @@ static void test_finish_without_processing_pdus_sends_the_grid()
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_spy grid;
+  resource_grid_spy grid(0, 0, 0);
   dl_processor->configure_resource_grid({slot, sector}, grid);
 
   // The resource grid should not have been set to zero yet.

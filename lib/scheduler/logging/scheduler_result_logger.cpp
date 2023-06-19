@@ -21,6 +21,7 @@
  */
 
 #include "scheduler_result_logger.h"
+#include "srsran/ran/csi_report/csi_report_formatters.h"
 
 using namespace srsran;
 
@@ -180,6 +181,10 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index,
                    ue_dl_grant.context.nof_retxs,
                    ue_dl_grant.context.k1);
+    if (ue_dl_grant.pdsch_cfg.precoding.has_value()) {
+      const auto& prg_type = ue_dl_grant.pdsch_cfg.precoding->prg_infos[0].type;
+      fmt::format_to(fmtbuf, " ri={} {}", prg_type.index() + 1, csi_report_pmi{prg_type});
+    }
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
       fmt::format_to(fmtbuf,
                      "{}lcid={}: size={}",

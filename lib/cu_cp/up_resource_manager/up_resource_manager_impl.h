@@ -43,11 +43,13 @@ public:
   up_config_update calculate_update(const cu_cp_pdu_session_resource_modify_request& pdu) override;
 
   bool                          apply_config_update(const up_config_update_result& config) override;
-  up_pdu_session_context        get_context(pdu_session_id_t psi) override;
-  up_drb_context                get_context(drb_id_t drb_id) override;
+  const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi) override;
+  const up_drb_context&         get_drb_context(drb_id_t drb_id) override;
   bool                          has_pdu_session(pdu_session_id_t pdu_session_id) override;
   size_t                        get_nof_drbs() override;
   size_t                        get_nof_pdu_sessions() override;
+  size_t                        get_nof_qos_flows(pdu_session_id_t psi) override;
+  size_t                        get_total_nof_qos_flows() override;
   std::vector<pdu_session_id_t> get_pdu_sessions() override;
 
 private:

@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/phy/constants.h"
-#include "srsran/phy/upper/re_pattern.h"
+#include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
@@ -57,6 +58,9 @@ private:
     static_vector<float, 4> w_t;
   };
 
+  /// Temporary RE storage.
+  static_re_buffer<CSI_RS_MAX_PORTS, MAX_SEQ_LEN * MAX_NSYMB_PER_SLOT> data;
+
   /// FD-CDM2 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-3.
   static const std::array<const cdm_sequence, 2> fd_cdm2_table;
   /// CDM4-FD2-TD2 sequence table, as defined in TS 38.211 Table 7.4.1.5.3-4.
@@ -79,16 +83,6 @@ private:
   /// \note The generated sequence length is determined by the size of the provided \c sequence.
   void generate_sequence(span<cf_t> sequence, unsigned symbol, const config_t& config) const;
 
-  /// \brief Generates the resource grid allocation patterns for the CSI-RS signals.
-  ///
-  /// This method implements the CSI-RS signal mapping as described in TS 38.211 Section 7.4.1.5.3.
-  ///
-  /// \param[out] pattern_list Provides a list of RE patterns that contain the CSI-RS mapping for each port.
-  /// \param[in] config Provides the higher layer parameters that determine the resource grid mapping.
-  ///
-  /// \note This method expects \c pattern_list to contain as many RE patterns as the number of ports in the config.
-  void build_grid_allocation(span<re_pattern> pattern_list, const config_t& config);
-
   /// \brief Applies the CDM codes to the NZP-CSI-RS sequence.
   ///
   /// This helper method takes an NZP-CSI-RS sequence pertaining to a single OFDM symbol, and applies the corresponding
@@ -108,10 +102,11 @@ private:
 public:
   nzp_csi_rs_generator_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(prg, "Invalid pseudo random generator.");
   }
 
-  void map(resource_grid_writer& grid, const config_t& config) override;
+  // See interface for documentation.
+  void map(resource_grid_mapper& mapper, const config_t& config) override;
 };
 
 } // namespace srsran

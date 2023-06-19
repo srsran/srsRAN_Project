@@ -57,7 +57,6 @@ struct up_context {
   std::map<pdu_session_id_t, up_pdu_session_context> pdu_sessions; // Map of existing PDU sessions.
 
   /// Hash-maps for quick access.
-  std::map<five_qi_t, drb_id_t>        five_qi_map;  // Maps QoS flow characteristics to existing DRBs.
   std::map<drb_id_t, pdu_session_id_t> drb_map;      // Maps DRB ID to corresponding PDU session.
   std::map<qos_flow_id_t, drb_id_t>    qos_flow_map; // Maps QoS flow to corresponding DRB.
 };
@@ -67,6 +66,7 @@ struct up_pdu_session_context_update {
   up_pdu_session_context_update(pdu_session_id_t id_) : id(id_){};
   pdu_session_id_t                   id;
   std::map<drb_id_t, up_drb_context> drb_to_add;
+  std::vector<drb_id_t>              drb_to_remove;
 };
 
 // Struct that contains all fields required to update the UP config based on an incoming
@@ -82,15 +82,16 @@ struct up_config_update {
   std::map<pdu_session_id_t, up_pdu_session_context_update>
       pdu_sessions_to_setup_list; // List of PDU sessions to be added.
   std::map<pdu_session_id_t, up_pdu_session_context_update>
-                                pdu_sessions_to_modify_list; // List of PDU sessions to be modified.
-  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list; // List of PDU sessions to be removed.
-  std::vector<drb_id_t>         drb_to_remove_list;
+                                pdu_sessions_to_modify_list;        // List of PDU sessions to be modified.
+  std::vector<pdu_session_id_t> pdu_sessions_to_remove_list;        // List of PDU sessions to be removed.
+  std::vector<pdu_session_id_t> pdu_sessions_failed_to_modify_list; // List of PDU sessions that failed to be modified.
 };
 
 // Response given back to the UP resource manager containing the full context
 // that could be setup.
 struct up_config_update_result {
-  std::vector<up_pdu_session_context_update> pdu_sessions_added_list; // List of DRBs that have been added.
+  std::vector<up_pdu_session_context_update> pdu_sessions_added_list;    // List of sessions that have been added.
+  std::vector<up_pdu_session_context_update> pdu_sessions_modified_list; // List of sessions that have been modified.
 };
 
 /// Object to manage user-plane (UP) resources including configs, PDU session, DRB and QoS flow
@@ -116,10 +117,10 @@ public:
   virtual bool apply_config_update(const up_config_update_result& config) = 0;
 
   /// \brief Return context for given PDU session ID.
-  virtual up_pdu_session_context get_context(pdu_session_id_t psi) = 0;
+  virtual const up_pdu_session_context& get_pdu_session_context(pdu_session_id_t psi) = 0;
 
   /// \brief Return context for a given DRB ID.
-  virtual up_drb_context get_context(drb_id_t drb_id) = 0;
+  virtual const up_drb_context& get_drb_context(drb_id_t drb_id) = 0;
 
   /// \brief Returns True if PDU session with given ID already exists.
   virtual bool has_pdu_session(pdu_session_id_t pdu_session_id) = 0;
@@ -129,6 +130,12 @@ public:
 
   /// \brief Returns the number of PDU sessions of the UE.
   virtual size_t get_nof_pdu_sessions() = 0;
+
+  /// \brief Returns the number of active QoS flows in a particular PDU sessions.
+  virtual size_t get_nof_qos_flows(pdu_session_id_t psi) = 0;
+
+  /// \brief Returns the number of *all* active QoS flows across all PDU sessions.
+  virtual size_t get_total_nof_qos_flows() = 0;
 
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;

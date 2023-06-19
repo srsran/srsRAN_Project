@@ -35,6 +35,7 @@ struct rrc_ue_creation_message {
   rrc_cell_context                cell;
   srb_notifiers_array             srbs;
   asn1::unbounded_octstring<true> du_to_cu_container;
+  byte_buffer                     meas_time_cfg_packed;
   rrc_ue_task_scheduler*          ue_task_sched;
 };
 

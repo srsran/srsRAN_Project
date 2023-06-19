@@ -24,32 +24,25 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/mask_types.h"
-#include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/phy/upper/re_pattern.h"
 #include "srsran/ran/modulation_scheme.h"
 #include "srsran/ran/pdsch/pdsch_context.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes the PDSCH processor interface.
 class pdsch_processor
 {
 public:
-  /// \brief Maximum number of resource elements per resource block in a shared channel transmission.
-  /// As per TS 38.214 section 5.1.3.2 Transport block size determination.
-  static constexpr unsigned MAX_NRE_PER_RB = 156;
   /// Defines the maximum number of codewords that can be encoded in a PDSCH transmission.
   static constexpr unsigned MAX_NOF_TRANSPORT_BLOCKS = 2;
-  /// \brief Defines the maximum number of layers per codeword.
-  /// As per TS 38.211 table Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
-  static constexpr unsigned MAX_LAYER_PER_CODEWORD = 4;
-  /// Defines the maximum codeword size.
-  static constexpr unsigned MAX_CODEWORD_SIZE =
-      MAX_RB * MAX_NRE_PER_RB * MODULATION_MAX_BITS_PER_SYMBOL * MAX_LAYER_PER_CODEWORD;
 
   /// \brief Describes a codeword configuration.
   /// \note The transport block size is given by the transport block data size.
@@ -82,8 +75,6 @@ public:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPDSCH if configured,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned n_id;
-    /// Port indexes the PDSCH transmission is mapped to. The number of ports indicates the number of layers.
-    static_vector<uint8_t, MAX_PORTS> ports;
     // Ignores the transmission scheme.
     // ...
     /// \brief Reference point for the PDSCH DM-RS subcarrier index \e k, as per TS38.211 Section 7.4.1.1.2.
@@ -150,18 +141,20 @@ public:
     float ratio_pdsch_dmrs_to_sss_dB;
     /// Ratio of PDSCH data EPRE to SSS EPRE in decibels.
     float ratio_pdsch_data_to_sss_dB;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.
   virtual ~pdsch_processor() = default;
 
   /// \brief Processes a PDSCH transmission.
-  /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] data Provides the codewords to transmit.
-  /// \param[in] pdu Provides the necessary parameters to process the PDSCH transmission.
+  /// \param[out] mapper Resource grid mapper interface.
+  /// \param[in] data The codewords to transmit.
+  /// \param[in] pdu Necessary parameters to process the PDSCH transmission.
   /// \remark The number of transport blocks must be equal to the number of codewords in \c pdu.
   /// \remark The size of each transport block is determined by <tt> data[TB index].size() </tt>
-  virtual void process(resource_grid_writer&                                        grid,
+  virtual void process(resource_grid_mapper&                                        mapper,
                        static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                        const pdu_t&                                                 pdu) = 0;
 };

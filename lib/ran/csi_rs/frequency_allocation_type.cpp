@@ -41,31 +41,13 @@ static unsigned get_bitpos_scale(unsigned row)
   return 2;
 }
 
-// Returns the number of bits in the frequency domain bitmap as per TS38.331 IE CSI-RS-ResourceMapping.
-static unsigned get_bitmap_size(unsigned row)
-{
-  if (row == 1) {
-    return 4;
-  }
-  if (row == 2) {
-    return 12;
-  }
-  if (row == 4) {
-    return 3;
-  }
-  return 6;
-}
-
 // Converts a frequency domain bitmap to the corresponding k_n values.
 void srsran::csi_rs::convert_freq_domain(freq_allocation_index_type&      dst,
                                          const freq_allocation_mask_type& src,
                                          unsigned                         row)
 {
   const unsigned scale = get_bitpos_scale(row);
-  const unsigned size  = get_bitmap_size(row);
-  for (unsigned i = size; i != 0; --i) {
-    if (src.test(i - 1)) {
-      dst.push_back(scale * (size - i));
-    }
+  for (const auto pos : src.get_bit_positions()) {
+    dst.push_back(scale * pos);
   }
 }

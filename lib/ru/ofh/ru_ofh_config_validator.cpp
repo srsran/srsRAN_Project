@@ -45,13 +45,12 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
 static bool check_dl_ports_if_broadcast_is_enabled(const ru_ofh_configuration& config)
 {
   for (const auto& sector : config.sector_configs) {
-    // When broadcast flag is enabled, two downlink ports are supported.
-    if (config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 2) {
+    if (!config.is_downlink_broadcast_enabled) {
       continue;
     }
 
-    // When broadcast flag is disabled, one downlink port is supported.
-    if (!config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 1) {
+    // When broadcast flag is enabled, two downlink ports are supported.
+    if (config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 2) {
       continue;
     }
 
@@ -82,9 +81,11 @@ static bool check_ports_id(const ru_ofh_configuration& config)
       return false;
     }
 
-    // Check uplink port.
-    if (!check_port_id(sector.ru_ul_port)) {
-      return false;
+    // Check uplink ports.
+    for (auto port : sector.ru_ul_ports) {
+      if (!check_port_id(port)) {
+        return false;
+      }
     }
 
     // Check downlink ports

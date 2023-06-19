@@ -130,7 +130,12 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Deallocate removed SRBs / DRBs.
-  // TODO
+  for (drb_id_t drb_id : upd_req.drbs_to_rem) {
+    auto it = std::find_if(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [drb_id](const rlc_bearer_config& b) {
+      return b.drb_id == drb_id;
+    });
+    ue_mcg.rlc_bearers.erase(it);
+  }
 
   // > Allocate new or modified bearers.
   for (srb_id_t srb_id : upd_req.srbs_to_setup) {
@@ -223,7 +228,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
     ue_res.mcg_cfg                           = config_helpers::make_initial_mac_cell_group_config();
     // TODO: Move to helper.
-    ue_res.pcg_cfg.p_nr_fr1            = 10;
+    ue_res.pcg_cfg.p_nr_fr1            = cell_cfg_list[0].pcg_params.p_nr_fr1.to_int();
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
     if (not pucch_res_mng.alloc_resources(ue_res)) {

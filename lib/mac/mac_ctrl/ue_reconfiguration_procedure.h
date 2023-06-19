@@ -27,14 +27,14 @@
 
 namespace srsran {
 
-struct mac_common_config_t;
+struct mac_control_config;
 class mac_scheduler_configurator;
 
 class mac_ue_reconfiguration_procedure
 {
 public:
   explicit mac_ue_reconfiguration_procedure(const mac_ue_reconfiguration_request& req_,
-                                            mac_common_config_t&                  cfg_,
+                                            mac_control_config&                   cfg_,
                                             mac_ul_configurator&                  mac_ul_,
                                             mac_dl_configurator&                  mac_dl_,
                                             mac_scheduler_configurator&           sched_cfg_);
@@ -47,7 +47,7 @@ private:
   mac_ue_reconfiguration_response handle_result(bool result);
 
   mac_ue_reconfiguration_request req;
-  mac_common_config_t&           cfg;
+  mac_control_config&            cfg;
   srslog::basic_logger&          logger;
   mac_ul_configurator&           ul_unit;
   mac_dl_configurator&           dl_unit;

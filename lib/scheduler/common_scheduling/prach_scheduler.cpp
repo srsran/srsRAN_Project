@@ -61,21 +61,18 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   start_slot_pusch_scs = prach_duration_info.start_slot_pusch_scs;
   prach_length_slots   = prach_duration_info.prach_length_slots;
 
-  // This is a safety margin that prevents PUCCH/PUSCH REs to be decoded by the PRACH decoder with short PRACH formats.
+  // This is a safety margin that prevents PUSCH REs to be decoded by the PRACH decoder with short PRACH formats.
   // TODO: remove them when the PHY is supports short PRACH with adjacent PUCCH/PUSCH.
   const unsigned prach_to_pusch_guardband = is_short_preamble(prach_cfg.format) ? 5U : 0U;
-  const unsigned pucch_to_prach_guardband = is_short_preamble(prach_cfg.format) ? 3U : 0U;
 
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
 
     const unsigned prach_nof_prbs =
         prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
-    // This is the start of the PRBs dedicated to PRACH, including a guardband between PUCCH and PRACH.
-    const uint8_t prb_start =
-        rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs - pucch_to_prach_guardband;
-    const prb_interval prach_prbs{prb_start,
-                                  prb_start + prach_nof_prbs + prach_to_pusch_guardband + pucch_to_prach_guardband};
+    // This is the start of the PRBs dedicated to PRACH.
+    const uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+    const prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs + prach_to_pusch_guardband};
     const crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
     if (is_long_preamble(prach_cfg.format)) {

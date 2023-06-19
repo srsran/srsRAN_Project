@@ -30,7 +30,7 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
     span<const unsigned>                                  eaxc_data_,
     std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
     std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane_) :
-  eaxc_data(eaxc_data_.begin(), eaxc_data_.end()),
+  dl_eaxc(eaxc_data_.begin(), eaxc_data_.end()),
   data_flow_cplane(std::move(data_flow_cplane_)),
   data_flow_uplane(std::move(data_flow_uplane_))
 {
@@ -41,12 +41,17 @@ downlink_handler_broadcast_impl::downlink_handler_broadcast_impl(
 void downlink_handler_broadcast_impl::handle_dl_data(const resource_grid_context& context,
                                                      const resource_grid_reader&  grid)
 {
-  for (auto eaxc : eaxc_data) {
+  for (auto eaxc : dl_eaxc) {
     // Control-Plane data flow.
     data_flow_cplane->enqueue_section_type_1_message(
         context.slot, eaxc, data_direction::downlink, filter_index_type::standard_channel_filter);
 
     // User-Plane data flow.
-    data_flow_uplane->enqueue_section_type_1_message(context, grid, eaxc);
+    // User-Plane data flow.
+    data_flow_resource_grid_context df_context;
+    df_context.slot   = context.slot;
+    df_context.sector = context.sector;
+    df_context.port   = 0;
+    data_flow_uplane->enqueue_section_type_1_message(df_context, grid, eaxc);
   }
 }

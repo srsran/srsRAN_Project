@@ -109,7 +109,7 @@ TEST_P(PUCCHDetectFixture, Format1Test)
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_data.received_symbols.read();
   ASSERT_EQ(grid_entries.size(), nof_res) << "The number of grid entries and the number of PUCCH REs do not match";
 
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(0, 0, 0);
 
   grid.write(grid_entries);
 
@@ -158,7 +158,7 @@ TEST_P(PUCCHDetectFixture, Format1Variance0Test)
   std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_data.received_symbols.read();
   ASSERT_EQ(grid_entries.size(), nof_res) << "The number of grid entries and the number of PUCCH REs do not match";
 
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(0, 0, 0);
 
   grid.write(grid_entries);
 

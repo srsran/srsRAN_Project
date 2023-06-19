@@ -26,7 +26,7 @@
 
 using namespace srsran;
 
-const resource_grid_reader_empty pdxch_processor_impl::empty_rg;
+const resource_grid_reader_empty pdxch_processor_impl::empty_rg(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
 
 void pdxch_processor_impl::connect(pdxch_processor_notifier& notifier_)
 {

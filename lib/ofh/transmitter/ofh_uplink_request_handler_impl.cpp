@@ -27,7 +27,7 @@ using namespace ofh;
 
 uplink_request_handler_impl::uplink_request_handler_impl(uplink_request_handler_impl_config&& config) :
   ul_prach_eaxc(config.ul_prach_eaxc),
-  ul_data_eaxc(config.ul_data_eaxc),
+  ul_eaxc(config.ul_data_eaxc),
   ul_slot_repo_ptr(config.ul_slot_repo),
   ul_prach_repo_ptr(config.ul_prach_repo),
   ul_slot_repo(*ul_slot_repo_ptr),
@@ -54,11 +54,11 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
   // Store the context in the repository.
-  ul_slot_context repo_context;
-  repo_context.context = context;
-  repo_context.grid    = &grid;
+  ul_slot_context repo_context(context, grid);
   ul_slot_repo.add(context.slot, repo_context);
 
-  data_flow->enqueue_section_type_1_message(
-      context.slot, ul_data_eaxc, data_direction::uplink, filter_index_type::standard_channel_filter);
+  for (auto eaxc : ul_eaxc) {
+    data_flow->enqueue_section_type_1_message(
+        context.slot, eaxc, data_direction::uplink, filter_index_type::standard_channel_filter);
+  }
 }

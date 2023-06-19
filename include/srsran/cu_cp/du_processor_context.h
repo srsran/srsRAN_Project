@@ -52,6 +52,8 @@ struct du_cell_context {
   uint32_t            tac;                                   /// tracking area code
   pci_t               pci;                                   /// Physical cell ID
   du_sys_info         sys_info;                              /// System information provided by DU
+  /// Contains the MeasurementTimingConfiguration inter-node message defined in TS 38.331
+  byte_buffer meas_time_cfg;
 };
 
 struct du_processor_context {

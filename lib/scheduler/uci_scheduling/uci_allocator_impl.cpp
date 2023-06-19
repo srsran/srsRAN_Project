@@ -30,8 +30,8 @@ constexpr static size_t DAI_MOD = 4;
 
 ////////////    C-tors and d-tors    ////////////
 
-uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
-  pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("SCHED"))
+uci_allocator_impl::uci_allocator_impl(const cell_configuration& cell_cfg_, pucch_allocator& pucch_alloc_) :
+  cell_cfg(cell_cfg_), pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -204,7 +204,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
                                                       const ue_cell_configuration&  ue_cell_cfg)
 {
   // [Implementation-defined] This is the only supported CSI format, for the time being.
-  const unsigned CSI_PART1_NOF_BITS = 4;
+  const unsigned CSI_PART1_NOF_BITS = cell_cfg.dl_carrier.nof_ant == 1 ? 4U : 7U;
 
   auto&          puschs         = slot_alloc.result.ul.puschs;
   ul_sched_info* existing_pusch = std::find_if(

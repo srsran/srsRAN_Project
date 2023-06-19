@@ -21,7 +21,7 @@
  */
 
 #include "downlink_processor_single_executor_impl.h"
-#include "srsran/phy/upper/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -59,7 +59,7 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
   increase_pending_pdus();
 
   executor.execute([this, pdu]() {
-    resource_grid_mapper mapper(*current_grid);
+    resource_grid_mapper& mapper = current_grid->get_mapper();
 
     pdcch_proc->process(mapper, pdu);
 
@@ -78,7 +78,8 @@ void downlink_processor_single_executor_impl::process_pdsch(
   increase_pending_pdus();
 
   executor.execute([this, data, pdu]() {
-    pdsch_proc->process(*current_grid, data, pdu);
+    resource_grid_mapper& mapper = current_grid->get_mapper();
+    pdsch_proc->process(mapper, data, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();
   });
@@ -93,7 +94,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   increase_pending_pdus();
 
   executor.execute([this, pdu]() {
-    ssb_proc->process(*current_grid, pdu);
+    ssb_proc->process(current_grid->get_writer(), pdu);
 
     decrease_pending_pdus_and_try_sending_grid();
   });
@@ -108,7 +109,9 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   increase_pending_pdus();
 
   executor.execute([this, config]() {
-    csi_rs_proc->map(*current_grid, config);
+    resource_grid_mapper& mapper = current_grid->get_mapper();
+
+    csi_rs_proc->map(mapper, config);
 
     decrease_pending_pdus_and_try_sending_grid();
   });
@@ -150,7 +153,7 @@ void downlink_processor_single_executor_impl::handle_resource_grid_send_opportun
 {
   std::lock_guard<std::mutex> lock(mutex);
   if (is_send_allowed && (pending_pdus == 0) && (current_grid != nullptr)) {
-    gateway.send(rg_context, *current_grid);
+    gateway.send(rg_context, current_grid->get_reader());
 
     is_send_allowed = false;
     current_grid    = nullptr;

@@ -37,7 +37,17 @@ enum class rb_id_type : uint8_t { every_rb_used, every_other_rb_used };
 enum class symbol_incr_type : uint8_t { current_symbol_number, increment_current_symbol_number };
 
 /// Filter index type.
-enum class filter_index_type { standard_channel_filter, ul_prach_preamble_1p25khz, reserved = 8 };
+enum class filter_index_type {
+  standard_channel_filter       = 0,
+  ul_prach_preamble_1p25khz     = 1,
+  ul_prach_preamble_5kHz        = 2,
+  ul_prach_preamble_short       = 3,
+  ul_prach_preamble_short_15kHz = 6,
+  ul_prach_preamble_short_30kHz = 7,
+  ul_nprach_preamble            = 4,
+  ul_prach_preamble_7p5kHz      = 5,
+  reserved                      = 8
+};
 
 /// Converts and returns the given filter type into an integer.
 constexpr unsigned to_value(filter_index_type filter_type)
@@ -53,6 +63,18 @@ constexpr filter_index_type to_filter_index_type(unsigned index)
       return filter_index_type::standard_channel_filter;
     case 1:
       return filter_index_type::ul_prach_preamble_1p25khz;
+    case 2:
+      return filter_index_type::ul_prach_preamble_5kHz;
+    case 3:
+      return filter_index_type::ul_prach_preamble_short;
+    case 4:
+      return filter_index_type::ul_nprach_preamble;
+    case 5:
+      return filter_index_type::ul_prach_preamble_7p5kHz;
+    case 6:
+      return filter_index_type::ul_prach_preamble_short_15kHz;
+    case 7:
+      return filter_index_type::ul_prach_preamble_short_30kHz;
     default:
       return filter_index_type::reserved;
   }

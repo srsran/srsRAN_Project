@@ -55,10 +55,7 @@ std::unique_ptr<cplane_message_builder> create_ofh_control_plane_packet_builder(
 
 /// Creates an Open Fronthaul User-Plane packet builder.
 std::unique_ptr<uplane_message_builder>
-create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger,
-                                                        iq_compressor&        compressor,
-                                                        unsigned              du_nof_prbs,
-                                                        unsigned              ru_nof_prbs);
+create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger, iq_compressor& compressor);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports static compression method.
 std::unique_ptr<uplane_message_decoder>

@@ -23,6 +23,7 @@ target_include_directories(e1ap_cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(e1ap_cu_cp_test_helpers e1ap_test_helpers srsran_e1ap srsran_pcap srsran_support e1ap_asn1 srslog)
 
 set(SOURCES
+        e1ap_cu_cp_ue_context_test.cpp
         e1ap_cu_cp_setup_procedure_test.cpp
         e1ap_cu_cp_bearer_context_setup_procedure_test.cpp
         e1ap_cu_cp_bearer_context_modification_procedure_test.cpp

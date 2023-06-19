@@ -20,8 +20,8 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "dmrs_pdcch_processor_test_data.h"
-#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsran;
@@ -48,7 +48,7 @@ int main()
     resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
 
     // Create resource grid mapper.
-    resource_grid_mapper mapper(grid);
+    resource_grid_mapper_spy mapper(grid);
 
     // Map DMRS-PDCCH using the test case arguments.
     dmrs_pdcch->map(mapper, test_case.config);

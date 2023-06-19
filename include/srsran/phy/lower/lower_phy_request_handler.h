@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "srsran/phy/support/prach_buffer.h"
-#include "srsran/phy/support/prach_buffer_context.h"
-#include "srsran/phy/support/resource_grid.h"
-#include "srsran/phy/support/resource_grid_context.h"
-
 namespace srsran {
+
+class resource_grid;
+class prach_buffer;
+struct prach_buffer_context;
+struct resource_grid_context;
 
 /// \brief Describes the lower physical layer request handler.
 ///

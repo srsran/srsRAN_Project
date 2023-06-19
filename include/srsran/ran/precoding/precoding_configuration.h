@@ -27,6 +27,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/ran/precoding/precoding_constants.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/srsvec/copy.h"
 
 namespace srsran {
@@ -188,7 +189,7 @@ private:
   enum class dims : unsigned { layer = 0, port, prg, all };
 
   /// Number of physical resource blocks per PRG.
-  unsigned prg_size = 0;
+  unsigned prg_size = MAX_NOF_PRBS;
   /// Internal data storage.
   static_tensor<static_cast<unsigned>(dims::all),
                 cf_t,

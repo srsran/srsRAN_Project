@@ -32,7 +32,7 @@ class csi_rs_processor_spy : public nzp_csi_rs_generator
   bool map_method_called = false;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& config) override { map_method_called = true; }
+  void map(resource_grid_mapper& grid, const config_t& config) override { map_method_called = true; }
 
   /// Returns true if the map method has been called, false otherwise.
   bool is_map_called() const { return map_method_called; }

@@ -24,6 +24,7 @@
 
 #include "../cell/cell_configuration.h"
 #include "../ue_scheduling/harq_process.h"
+#include "../ue_scheduling/ue_channel_state_manager.h"
 #include "../ue_scheduling/ue_configuration.h"
 #include "mcs_tbs_calculator.h"
 #include "srsran/scheduler/harq_id.h"
@@ -72,7 +73,8 @@ pdsch_config_params get_pdsch_config_f1_0_c_rnti(const ue_cell_configuration&   
 ///
 /// Returns parameters needed to compute the number of PRBs, MCS and TBS.
 pdsch_config_params get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
+                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                 unsigned                                     nof_layers);
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 ///
@@ -91,7 +93,8 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const ue_cell_configuration&   
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
 pusch_config_params get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg);
+                                                 const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                 unsigned                                     nof_layers);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by SI-RNTI.
 void build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch,
@@ -142,15 +145,16 @@ void build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                              bool                                is_new_data);
 
 /// \brief Builds PDSCH PDU for DCI format 1_1, scrambled by C-RNTI.
-void build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
-                             const pdsch_config_params&   pdsch_cfg,
-                             sch_mcs_tbs                  mcs_tbs_info,
-                             rnti_t                       rnti,
-                             const ue_cell_configuration& ue_cell_cfg,
-                             search_space_id              ss_id,
-                             const dci_1_1_configuration& dci_cfg,
-                             const crb_interval&          crbs,
-                             const dl_harq_process&       h_dl);
+void build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
+                             const pdsch_config_params&      pdsch_cfg,
+                             sch_mcs_tbs                     mcs_tbs_info,
+                             rnti_t                          rnti,
+                             const ue_cell_configuration&    ue_cell_cfg,
+                             search_space_id                 ss_id,
+                             const dci_1_1_configuration&    dci_cfg,
+                             const crb_interval&             crbs,
+                             const dl_harq_process&          h_dl,
+                             const ue_channel_state_manager& cs_mgr);
 
 /// \brief Builds PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

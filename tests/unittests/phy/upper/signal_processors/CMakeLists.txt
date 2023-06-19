@@ -24,38 +24,38 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(pss_processor_test pss_processor_test.cpp)
-target_link_libraries(pss_processor_test  srsran_signal_processors srsvec srslog)
+target_link_libraries(pss_processor_test srsran_signal_processors srsvec srslog)
 add_test(pss_processor_test pss_processor_test)
 
 add_executable(sss_processor_test sss_processor_test.cpp)
-target_link_libraries(sss_processor_test  srsran_signal_processors srsvec srslog)
+target_link_libraries(sss_processor_test srsran_signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
 
 if (USE_PHY_TESTVECTORS)
     add_executable(dmrs_pbch_processor_test dmrs_pbch_processor_test.cpp)
-    target_link_libraries(dmrs_pbch_processor_test  srsran_signal_processors srsvec srsran_sequence_generators srslog)
+    target_link_libraries(dmrs_pbch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog)
     add_test_vector(dmrs_pbch_processor_test dmrs_pbch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pdcch_processor_test dmrs_pdcch_processor_test.cpp)
-    target_link_libraries(dmrs_pdcch_processor_test  srsran_signal_processors srsvec srsran_sequence_generators srslog)
+    target_link_libraries(dmrs_pdcch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog resource_grid_mapper_test_doubles)
     add_test(dmrs_pdcch_processor_test dmrs_pdcch_processor_test)
     add_test_vector(dmrs_pdcch_processor_test dmrs_pdcch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pdsch_processor_test dmrs_pdsch_processor_test.cpp)
-    target_link_libraries(dmrs_pdsch_processor_test  srsran_signal_processors srsvec srsran_sequence_generators srslog)
+    target_link_libraries(dmrs_pdsch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog resource_grid_mapper_test_doubles)
     add_test_vector(dmrs_pdsch_processor_test dmrs_pdsch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)
-    target_link_libraries(dmrs_pucch_processor_test  srsran_signal_processors srsvec srsran_sequence_generators srslog srsran_support)
+    target_link_libraries(dmrs_pucch_processor_test srsran_signal_processors srsvec srsran_sequence_generators srslog srsran_support)
     add_test_vector(dmrs_pucch_processor_test dmrs_pucch_processor_test_data.tar.gz "")
 
     add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
-    target_link_libraries(dmrs_pusch_estimator_test  srsran_signal_processors srsran_sequence_generators srsran_phy_support srsvec srslog gtest gtest_main)
+    target_link_libraries(dmrs_pusch_estimator_test srsran_signal_processors srsran_sequence_generators srsran_phy_support srsvec srslog gtest gtest_main)
     add_test_vector(dmrs_pusch_estimator_test dmrs_pusch_estimator_test_data.tar.gz "")
 
     add_executable(nzp_csi_rs_generator_test nzp_csi_rs_generator_test.cpp)
     target_link_libraries(nzp_csi_rs_generator_test srsran_signal_processors srsvec srsran_sequence_generators srslog
-      srsran_upper_phy_support gtest gtest_main)
+            srsran_upper_phy_support gtest gtest_main resource_grid_mapper_test_doubles)
     add_test(nzp_csi_rs_generator_test nzp_csi_rs_generator_test)
     add_test_vector(nzp_csi_rs_generator_test nzp_csi_rs_generator_test_data.tar.gz "")
 

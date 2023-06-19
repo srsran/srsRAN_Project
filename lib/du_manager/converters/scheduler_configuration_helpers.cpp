@@ -47,9 +47,7 @@ sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_
   sched_req.dmrs_typeA_pos       = du_cfg.dmrs_typeA_pos;
   sched_req.tdd_ul_dl_cfg_common = du_cfg.tdd_ul_dl_cfg_common;
 
-  sched_req.nof_beams     = 1;
-  sched_req.nof_layers    = 1;
-  sched_req.nof_ant_ports = 1;
+  sched_req.nof_beams = 1;
 
   /// SIB1 parameters.
   sched_req.coreset0          = du_cfg.coreset0_idx;

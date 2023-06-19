@@ -326,17 +326,17 @@ TEST_F(pdu_session_resource_setup_test, when_setup_for_pdu_sessions_with_two_qos
   // it should be ready immediately
   ASSERT_TRUE(procedure_ready());
 
-  // Verify Bearer Context Setup request for one DRB with two QoS flows.
+  // Verify Bearer Context Setup request for two DRBs with one QoS flow each.
   ASSERT_TRUE(
       variant_holds_alternative<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value()));
   const auto& context_setup_req =
       variant_get<e1ap_bearer_context_setup_request>(e1ap_ctrl_notifier.first_e1ap_request.value());
   ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.size(), 1);
-  ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()->drb_to_setup_list_ng_ran.size(), 1);
+  ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()->drb_to_setup_list_ng_ran.size(), 2);
   ASSERT_EQ(context_setup_req.pdu_session_res_to_setup_list.begin()
                 ->drb_to_setup_list_ng_ran.begin()
                 ->qos_flow_info_to_be_setup.size(),
-            2);
+            1);
 
   // Failed list empty.
   VERIFY_EQUAL(pdu_session_res_failed_to_setup(), {});

@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsran/phy/upper/channel_modulation/evm_calculator.h"
 #include "srsran/phy/upper/channel_processors/pusch_demodulator.h"

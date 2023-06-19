@@ -141,3 +141,25 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
             this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
+
+TEST_F(f1ap_du_ue_context_modification_test,
+       when_multiple_drbs_are_to_be_setup_then_response_contains_the_drbs_in_the_drbs_setup_list)
+{
+  start_procedure({drb_id_t::drb1, drb_id_t::drb2});
+
+  // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
+  ASSERT_TRUE(was_ue_context_modification_response_sent());
+  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_FALSE(resp->srbs_setup_mod_list_present);
+  ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
+  ASSERT_FALSE(resp->drbs_modified_list_present);
+  ASSERT_FALSE(resp->drbs_failed_to_be_setup_mod_list_present);
+  ASSERT_TRUE(resp->drbs_setup_mod_list_present);
+  ASSERT_EQ(resp->drbs_setup_mod_list->size(), 2);
+  auto& drb1_setup = resp->drbs_setup_mod_list.value[0].value().drbs_setup_mod_item();
+  ASSERT_EQ(drb1_setup.drb_id, 1);
+  ASSERT_EQ(drb1_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
+  auto& drb2_setup = resp->drbs_setup_mod_list.value[1].value().drbs_setup_mod_item();
+  ASSERT_EQ(drb2_setup.drb_id, 2);
+  ASSERT_EQ(drb2_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
+}

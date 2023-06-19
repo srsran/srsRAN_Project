@@ -26,7 +26,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Generates and returns a FAPI-to-PHY translator configuration from the given PHY adaptor configuration.
-static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(const phy_fapi_adaptor_impl_config& config)
+static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(phy_fapi_adaptor_impl_config& config)
 {
   fapi_to_phy_translator_config fapi_config;
 
@@ -42,11 +42,12 @@ static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(cons
   fapi_config.carrier_cfg          = config.carrier_cfg;
   fapi_config.prach_cfg            = config.prach_cfg;
   fapi_config.scs_common           = config.scs_common;
+  fapi_config.pm_repo              = std::move(config.pm_repo);
 
   return fapi_config;
 }
 
-phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config) :
+phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(phy_fapi_adaptor_impl_config&& config) :
   fapi_translator(generate_fapi_to_phy_translator_config(config), srslog::fetch_basic_logger("FAPI")),
   time_translator(fapi_translator),
   results_translator(srslog::fetch_basic_logger("FAPI"))

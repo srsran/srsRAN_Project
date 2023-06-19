@@ -24,10 +24,11 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 
 namespace srsran {
+
+class resource_grid_writer;
 
 /// Setup configuration parameters.
 struct ofdm_demodulator_configuration {

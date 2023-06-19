@@ -21,6 +21,7 @@
  */
 
 #include "srsran/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <numeric>
@@ -31,13 +32,15 @@ using namespace fapi_adaptor;
 /// CORESET0 is configured for the cell.
 static constexpr bool is_coreset0_configured_for_cell = true;
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&    fapi_pdu,
-                                                     const sib_information& mac_pdu,
-                                                     unsigned               nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&            fapi_pdu,
+                                                     const sib_information&         mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
 }
 
 static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
@@ -126,7 +129,33 @@ static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder)
   builder.set_maintenance_v3_tx_power_info_parameters({}, {});
 }
 
-static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pdsch_information& pdsch_cfg)
+static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
+                                           const optional<pdsch_precoding_info>& mac_info,
+                                           const precoding_matrix_mapper&        pm_mapper,
+                                           unsigned                              nof_layers,
+                                           unsigned                              cell_nof_prbs)
+{
+  fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
+  pm_bf_builder.set_basic_parameters((mac_info) ? mac_info->nof_rbs_per_prg : cell_nof_prbs, 0);
+
+  if (!mac_info) {
+    mac_pdsch_precoding_info info;
+    pm_bf_builder.add_prg(pm_mapper.map(info, nof_layers), {});
+
+    return;
+  }
+
+  for (const auto& prg : mac_info->prg_infos) {
+    mac_pdsch_precoding_info info;
+    info.report = prg;
+    pm_bf_builder.add_prg(pm_mapper.map(info, nof_layers), {});
+  }
+}
+
+static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder&    builder,
+                                   const pdsch_information&       pdsch_cfg,
+                                   const precoding_matrix_mapper& pm_mapper,
+                                   unsigned                       cell_nof_prbs)
 {
   // Basic parameters.
   builder.set_basic_parameters(pdsch_cfg.rnti);
@@ -139,6 +168,9 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
 
   // Time allocation.
   fill_time_allocation(builder, pdsch_cfg.symbols);
+
+  // Precoding and beamforming.
+  fill_precoding_and_beamforming(builder, pdsch_cfg.precoding, pm_mapper, pdsch_cfg.nof_layers, cell_nof_prbs);
 }
 
 static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
@@ -200,15 +232,17 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
   return fapi::pdsch_trans_type::interleaved_other;
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const sib_information&      mac_pdu,
-                                                     unsigned                    nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
+                                                     const sib_information&         mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::subcarrier_0);
@@ -246,24 +280,28 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&    fapi_pdu,
-                                                     const rar_information& mac_pdu,
-                                                     unsigned               nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&            fapi_pdu,
+                                                     const rar_information&         mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const rar_information&      mac_pdu,
-                                                     unsigned                    nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
+                                                     const rar_information&         mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
@@ -301,24 +339,28 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu,
-                                                     const dl_msg_alloc& mac_pdu,
-                                                     unsigned            nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&            fapi_pdu,
+                                                     const dl_msg_alloc&            mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const dl_msg_alloc&         mac_pdu,
-                                                     unsigned                    nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
+                                                     const dl_msg_alloc&            mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
@@ -359,15 +401,17 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
-                                                     const dl_paging_allocation& mac_pdu,
-                                                     unsigned                    nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
+                                                     const dl_paging_allocation&    mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
@@ -405,11 +449,13 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_maintenance_v3_csi_rm_references(csi_rm_indexes);
 }
 
-void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&         fapi_pdu,
-                                                     const dl_paging_allocation& mac_pdu,
-                                                     unsigned                    nof_csi_pdus)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu&            fapi_pdu,
+                                                     const dl_paging_allocation&    mac_pdu,
+                                                     unsigned                       nof_csi_pdus,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
 }

@@ -97,7 +97,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
       asn1_drb.lcid = drb_setup.lcid.value();
     }
     asn1_drb.dl_up_tnl_info_to_be_setup_list.resize(drb_setup.dluptnl_info_list.size());
-    for (unsigned j = 0; j != du_response.drbs_setup.size(); ++j) {
+    for (unsigned j = 0; j != drb_setup.dluptnl_info_list.size(); ++j) {
       up_transport_layer_info_to_asn1(asn1_drb.dl_up_tnl_info_to_be_setup_list[j].dl_up_tnl_info,
                                       drb_setup.dluptnl_info_list[j]);
     }

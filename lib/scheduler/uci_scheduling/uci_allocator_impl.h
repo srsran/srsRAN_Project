@@ -32,7 +32,7 @@ namespace srsran {
 class uci_allocator_impl final : public uci_allocator
 {
 public:
-  explicit uci_allocator_impl(pucch_allocator& pucch_alloc_);
+  explicit uci_allocator_impl(const cell_configuration& cell_cfg_, pucch_allocator& pucch_alloc_);
 
   void slot_indication(slot_point sl_tx) override;
 
@@ -77,6 +77,8 @@ private:
   // \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns
   // nullptr.
   slot_alloc_list::ue_uci* get_uci_alloc(slot_point uci_slot, rnti_t rnti);
+
+  const cell_configuration& cell_cfg;
 
   pucch_allocator& pucch_alloc;
 

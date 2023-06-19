@@ -27,13 +27,16 @@ using namespace srsran;
 
 void bit_encoder::pack(uint64_t val, uint32_t n_bits)
 {
-  srsran_assert(n_bits < 64U, "Invalid number of bits={} passed to pack()", n_bits);
+  srsran_assert(n_bits <= 64U, "Invalid number of bits={} passed to pack()", n_bits);
   while (n_bits > 0U) {
     if (offset == 0U) {
       writer.append(0U);
     }
-    uint64_t mask = (1UL << n_bits) - 1UL; // bitmap of n_bits ones.
-    val           = val & mask;
+    // apply mask if required
+    if (n_bits < 64U) {
+      uint64_t mask = (1UL << n_bits) - 1UL; // bitmap of n_bits ones. (UB if n_bits == 64)
+      val           = val & mask;
+    }
     if (static_cast<uint32_t>(8U - offset) > n_bits) {
       // in case n_bits < number of bits left in current byte (ie, last iteration).
       auto shifted_val = static_cast<uint8_t>(val << (8U - offset - n_bits));
@@ -112,12 +115,12 @@ bool bit_decoder::unpack(T& val, uint32_t n_bits)
     }
     if ((uint32_t)(8U - offset) > n_bits) {
       uint8_t mask = (uint8_t)(1u << (8u - offset)) - (uint8_t)(1u << (8u - offset - n_bits));
-      val += ((uint32_t)((*it) & mask)) >> (8u - offset - n_bits);
+      val += ((uint8_t)((*it) & mask)) >> (8u - offset - n_bits);
       offset += n_bits;
       n_bits = 0;
     } else {
       auto mask = static_cast<uint8_t>((1u << (8u - offset)) - 1u);
-      val += ((uint32_t)((*it) & mask)) << (n_bits - 8 + offset);
+      val += ((T)((*it) & mask)) << (n_bits - 8 + offset);
       n_bits -= 8 - offset;
       offset = 0;
       ++it;

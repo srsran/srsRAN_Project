@@ -23,6 +23,7 @@
 #pragma once
 
 #include "interpolator.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
@@ -31,12 +32,23 @@
 
 namespace srsran {
 
-/// \brief Creates a generic resource grid instance for a number of ports, symbols and subcarriers.
-/// \param[in] nof_ports   Number of ports.
-/// \param[in] nof_symbols Number of OFDM symbols.
-/// \param[in] nof_subc    Number of subcarriers.
-/// \return A resource grid object.
-std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc);
+/// Factory that builds resource grids.
+class resource_grid_factory
+{
+public:
+  /// Default destructor.
+  virtual ~resource_grid_factory() = default;
+
+  /// Creates and returns an instance of a resource grid.
+  virtual std::unique_ptr<resource_grid> create(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc) = 0;
+};
+
+/// \brief Creates and returns a resource grid factory that instantiates resource grids.
+///
+/// \param[in] precoder_factory Channel precoder factory.
+/// \return A pointer to a resource grid factory.
+std::shared_ptr<resource_grid_factory>
+create_resource_grid_factory(std::shared_ptr<channel_precoder_factory> precoder_factory);
 
 /// \brief Creates a generic resource grid pool.
 /// \param[in] nof_sectors Number of radio sectors.

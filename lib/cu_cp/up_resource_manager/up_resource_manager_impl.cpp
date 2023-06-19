@@ -53,35 +53,76 @@ up_config_update up_resource_manager_impl::calculate_update(const cu_cp_pdu_sess
   return srsran::srs_cu_cp::calculate_update(pdu, context, cfg, logger);
 }
 
+inline void apply_update_for_new_drbs(up_pdu_session_context&                   pdu_session_context,
+                                      up_context&                               context,
+                                      const std::map<drb_id_t, up_drb_context>& drb_to_add)
+{
+  for (const auto& drb : drb_to_add) {
+    pdu_session_context.drbs.emplace(drb.first, drb.second);
+
+    // Add to DRB-to-PDU session look-up table.
+    context.drb_map.emplace(drb.first, pdu_session_context.id);
+
+    // add QoS flows of the DRB to the map.
+    for (const auto& qos_flow_id : drb.second.qos_flows) {
+      context.qos_flow_map.insert({qos_flow_id, drb.first});
+    }
+  }
+}
+
+inline void apply_update_for_removed_drbs(up_pdu_session_context&      pdu_session_context,
+                                          up_context&                  context,
+                                          const std::vector<drb_id_t>& drb_to_remove)
+{
+  // Remove DRB and all mapped flows.
+  for (const auto& drb_id : drb_to_remove) {
+    // First remove all QoS flows from map.
+    for (const auto& flow_id : pdu_session_context.drbs.at(drb_id).qos_flows) {
+      context.qos_flow_map.erase(flow_id);
+    }
+
+    // Now remove DRB from PDU session and DRB map.
+    pdu_session_context.drbs.erase(drb_id);
+    context.drb_map.erase(drb_id);
+  }
+}
+
 bool up_resource_manager_impl::apply_config_update(const up_config_update_result& result)
 {
   // Apply config update in an additive way.
   for (const auto& session : result.pdu_sessions_added_list) {
     // Create new PDU session context.
     up_pdu_session_context new_ctxt(session.id);
-    for (const auto& drb : session.drb_to_add) {
-      new_ctxt.drbs.emplace(drb.first, drb.second);
 
-      // Add to DRB-to-PDU session look-up table.
-      context.drb_map.emplace(drb.first, session.id);
-
-      // add FiveQI to map of existing QoS groups.
-      context.five_qi_map.emplace(drb.second.qos_params.qos_characteristics.get_five_qi(), drb.first);
-    }
+    // Add new DRBs.
+    apply_update_for_new_drbs(new_ctxt, context, session.drb_to_add);
 
     // Add PDU session to list of active sessions.
     context.pdu_sessions.emplace(new_ctxt.id, new_ctxt);
   }
+
+  for (const auto& mod_session : result.pdu_sessions_modified_list) {
+    srsran_assert(context.pdu_sessions.find(mod_session.id) != context.pdu_sessions.end(),
+                  "PDU session {} not allocated",
+                  mod_session.id);
+    auto& session_context = context.pdu_sessions.at(mod_session.id);
+
+    // Add new DRBs.
+    apply_update_for_new_drbs(session_context, context, mod_session.drb_to_add);
+
+    // Remove DRBs.
+    apply_update_for_removed_drbs(session_context, context, mod_session.drb_to_remove);
+  }
   return true;
 }
 
-up_pdu_session_context up_resource_manager_impl::get_context(pdu_session_id_t psi)
+const up_pdu_session_context& up_resource_manager_impl::get_pdu_session_context(pdu_session_id_t psi)
 {
   srsran_assert(context.pdu_sessions.find(psi) != context.pdu_sessions.end(), "PDU session {} not allocated", psi);
   return context.pdu_sessions.at(psi);
 }
 
-up_drb_context up_resource_manager_impl::get_context(drb_id_t drb_id)
+const up_drb_context& up_resource_manager_impl::get_drb_context(drb_id_t drb_id)
 {
   srsran_assert(context.drb_map.find(drb_id) != context.drb_map.end(), "DRB ID {} not allocated", drb_id);
   const auto& psi = context.drb_map.find(drb_id);
@@ -118,6 +159,30 @@ size_t up_resource_manager_impl::get_nof_drbs()
 size_t up_resource_manager_impl::get_nof_pdu_sessions()
 {
   return context.pdu_sessions.size();
+}
+
+size_t up_resource_manager_impl::get_nof_qos_flows(pdu_session_id_t psi)
+{
+  size_t nof_qos_flows = 0;
+
+  // Look up specified session
+  if (!has_pdu_session(psi)) {
+    logger.error("PDU session {} not allocated", psi);
+  } else {
+    // Return number of active flows for specified session only.
+    const auto& session = get_pdu_session_context(psi);
+    for (const auto& drb : session.drbs) {
+      nof_qos_flows += drb.second.qos_flows.size();
+    }
+  }
+
+  return nof_qos_flows;
+}
+
+size_t up_resource_manager_impl::get_total_nof_qos_flows()
+{
+  // Return number of active QoS flows in all active sessions.
+  return context.qos_flow_map.size();
 }
 
 std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()

@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../mac_config.h"
 #include "../mac_config_interfaces.h"
+#include "mac_config.h"
 
 namespace srsran {
 
@@ -31,7 +31,7 @@ class mac_ue_delete_procedure
 {
 public:
   explicit mac_ue_delete_procedure(const mac_ue_delete_request& msg,
-                                   mac_common_config_t&         cfg_,
+                                   mac_control_config&          cfg_,
                                    mac_ctrl_configurator&       mac_ctrl_,
                                    mac_ul_configurator&         mac_ul_,
                                    mac_dl_configurator&         mac_dl_,
@@ -76,7 +76,7 @@ public:
 
 private:
   mac_ue_delete_request       req;
-  mac_common_config_t&        cfg;
+  mac_control_config&         cfg;
   srslog::basic_logger&       logger;
   mac_ctrl_configurator&      ctrl_mac;
   mac_ul_configurator&        ul_mac;

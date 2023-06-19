@@ -20,8 +20,9 @@
  *
  */
 
+#include "srsran/adt/span.h"
 #include "srsran/support/bit_encoding.h"
-#include "srsran/support/test_utils.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 
@@ -113,6 +114,87 @@ void test_bit_encoder()
   s            = fmt::format("{}", enc);
   expected_str = "10101000 00001000 00010000 00011000 00000000 10";
   TESTASSERT_EQ(expected_str, s);
+
+  // TEST: encode full all 64 bit of a uint64_t
+  uint64_t large = 0xc000000000000001;
+  enc.pack(large, 64);
+
+  const uint8_t packed_vec[] = {
+      0b10101000,
+      0b00001000,
+      0b00010000,
+      0b00011000,
+      0b00000000,
+      0b10110000, // combined byte having MSBs of 0xc0
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x40, // two MSBs contain LSBs of 0x01
+  };
+
+  TESTASSERT(bytes == byte_buffer{packed_vec});
+}
+
+void test_bit_encoder_bool()
+{
+  byte_buffer bytes;
+  bit_encoder enc(bytes);
+  uint8_t     dummy          = 0;
+  bool        bit1           = true;
+  bool        bit0           = false;
+  byte_buffer expected_bytes = {0x02};
+
+  enc.pack(dummy, 6);
+  enc.pack(bit1, 1);
+  enc.pack(bit0, 1);
+
+  TESTASSERT(expected_bytes == bytes);
+}
+
+void test_bit_encoder_uint64_aligned()
+{
+  byte_buffer bytes;
+  bit_encoder enc(bytes);
+  uint64_t    val64          = 0xc00f00000000f001;
+  byte_buffer expected_bytes = {0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01};
+
+  TESTASSERT_EQ(0, enc.nof_bytes());
+  TESTASSERT_EQ(0, enc.nof_bits());
+  TESTASSERT_EQ(0, enc.next_bit_offset());
+
+  enc.pack(val64, 64);
+  TESTASSERT_EQ(8, enc.nof_bytes());
+  TESTASSERT_EQ(64, enc.nof_bits());
+  TESTASSERT_EQ(0, enc.next_bit_offset());
+  TESTASSERT(expected_bytes == bytes);
+}
+
+void test_bit_encoder_uint64_offset()
+{
+  byte_buffer bytes;
+  bit_encoder enc(bytes);
+  uint8_t     val1           = 1;
+  uint64_t    val64          = 0xc00f00000000f001;
+  byte_buffer expected_bytes = {0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80};
+
+  TESTASSERT_EQ(0, enc.nof_bytes());
+  TESTASSERT_EQ(0, enc.nof_bits());
+  TESTASSERT_EQ(0, enc.next_bit_offset());
+
+  enc.pack(val1, 1);
+  TESTASSERT_EQ(1, enc.nof_bytes());
+  TESTASSERT_EQ(1, enc.nof_bits());
+  TESTASSERT_EQ(1, enc.next_bit_offset());
+
+  enc.pack(val64, 64);
+  TESTASSERT_EQ(9, enc.nof_bytes());
+  TESTASSERT_EQ(65, enc.nof_bits());
+  TESTASSERT_EQ(1, enc.next_bit_offset());
+  TESTASSERT(expected_bytes == bytes);
 }
 
 void test_bit_decoder_empty_buffer()
@@ -226,9 +308,70 @@ void test_bit_decoder()
   TESTASSERT_EQ(4 * 8, dec.nof_bits());
 }
 
+void test_bit_decoder_bool()
+{
+  byte_buffer bytes = {0x02};
+  bit_decoder dec(bytes);
+  uint8_t     dummy;
+  bool        bit1, bit0;
+
+  TESTASSERT(dec.unpack(dummy, 6));
+  TESTASSERT(dec.unpack(bit1, 1));
+  TESTASSERT(dec.unpack(bit0, 1));
+
+  TESTASSERT_EQ(bit1, true);
+  TESTASSERT_EQ(bit0, false);
+}
+
+void test_bit_decoder_uint64_aligned()
+{
+  byte_buffer bytes = {0xc0, 0x0f, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x01};
+  bit_decoder dec(bytes);
+  uint64_t    val;
+
+  TESTASSERT_EQ(0, dec.nof_bytes());
+  TESTASSERT_EQ(0, dec.nof_bits());
+  TESTASSERT(bytes == dec.data());
+
+  TESTASSERT(dec.unpack(val, 64));
+  TESTASSERT_EQ(8, dec.nof_bytes());
+  TESTASSERT_EQ(64, dec.nof_bits());
+  TESTASSERT_EQ(0, dec.next_bit_offset());
+  TESTASSERT_EQ(val, 0xc00f00000000f001);
+}
+
+void test_bit_decoder_uint64_offset()
+{
+  byte_buffer bytes = {0xe0, 0x07, 0x80, 0x00, 0x00, 0x00, 0x78, 0x00, 0x80};
+  bit_decoder dec(bytes);
+  uint64_t    val;
+
+  TESTASSERT_EQ(0, dec.nof_bytes());
+  TESTASSERT_EQ(0, dec.nof_bits());
+  TESTASSERT(bytes == dec.data());
+
+  TESTASSERT(dec.unpack(val, 1));
+  TESTASSERT_EQ(1, dec.nof_bytes());
+  TESTASSERT_EQ(1, dec.nof_bits());
+  TESTASSERT_EQ(1, dec.next_bit_offset());
+  TESTASSERT_EQ(val, 1);
+
+  TESTASSERT(dec.unpack(val, 64));
+  TESTASSERT_EQ(9, dec.nof_bytes());
+  TESTASSERT_EQ(65, dec.nof_bits());
+  TESTASSERT_EQ(1, dec.next_bit_offset());
+  TESTASSERT_EQ(val, 0xc00f00000000f001);
+}
+
 int main()
 {
   test_bit_encoder();
+  test_bit_encoder_bool();
+  test_bit_encoder_uint64_aligned();
+  test_bit_encoder_uint64_offset();
   test_bit_decoder_empty_buffer();
   test_bit_decoder();
+  test_bit_decoder_bool();
+  test_bit_decoder_uint64_aligned();
+  test_bit_decoder_uint64_offset();
 }

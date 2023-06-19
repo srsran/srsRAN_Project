@@ -273,7 +273,7 @@ public:
     last_pushed_ul_ccch_msg = std::move(pdu);
   }
 
-  void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override
+  void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override
   {
     last_dl_bs = dl_bs;
   }

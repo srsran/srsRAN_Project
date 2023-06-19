@@ -337,7 +337,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   rx_softbuffer_spy softbuffer_spy;
 
   // Resource grid spy.
-  resource_grid_spy rg_spy;
+  resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
@@ -352,7 +352,7 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ASSERT_TRUE(validator->is_valid(pdu));
 
   // Calling resource grid and softbuffer methods are not permitted.
-  ASSERT_EQ(0, rg_spy.get_total_count());
+  ASSERT_EQ(0, rg_spy.get_count());
   ASSERT_EQ(0, softbuffer_spy.get_total_count());
 
   // Assert channel estimator inputs.
@@ -502,7 +502,7 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterInfo)
   rx_softbuffer_spy softbuffer_spy;
 
   // Resource grid spy.
-  resource_grid_spy rg_spy;
+  resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;
@@ -519,7 +519,7 @@ TEST_P(PuschProcessorFixture, HealthTestFormatterDebug)
   rx_softbuffer_spy softbuffer_spy;
 
   // Resource grid spy.
-  resource_grid_spy rg_spy;
+  resource_grid_reader_spy rg_spy;
 
   // Process PDU.
   pusch_processor_result_notifier_spy result_notifier;

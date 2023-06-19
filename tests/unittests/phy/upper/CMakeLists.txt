@@ -25,7 +25,6 @@ add_subdirectory(channel_coding)
 add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(equalization)
-add_subdirectory(precoding)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
@@ -46,10 +45,6 @@ gtest_discover_tests(hard_decision_test)
 add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
 target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog)
 add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
-
-add_executable(re_pattern_test re_pattern_test.cpp)
-target_link_libraries(re_pattern_test srsran_upper_phy_support srslog)
-add_test(re_pattern_test re_pattern_test)
 
 add_executable(rx_softbuffer_pool_test rx_softbuffer_pool_test.cpp)
 target_link_libraries(rx_softbuffer_pool_test srsran_upper_phy_support srslog)

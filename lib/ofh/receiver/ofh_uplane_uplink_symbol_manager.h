@@ -34,21 +34,21 @@ namespace ofh {
 
 /// User-Plane uplink symbol manager configuration.
 struct uplane_uplink_symbol_manager_config {
-  uplane_uplink_symbol_manager_config(srslog::basic_logger&                        logger_,
-                                      uplane_rx_symbol_notifier&                   notifier_,
-                                      uplane_uplink_packet_handler&                packet_handler_,
-                                      uplink_context_repository<ul_prach_context>& prach_repo_,
-                                      uplink_context_repository<ul_slot_context>&  ul_slot_repo_) :
+  uplane_uplink_symbol_manager_config(srslog::basic_logger&                                  logger_,
+                                      uplane_rx_symbol_notifier&                             notifier_,
+                                      uplane_uplink_packet_handler&                          packet_handler_,
+                                      uplink_context_repository<ul_prach_context>&           prach_repo_,
+                                      uplink_context_repository<ul_slot_context>&            ul_slot_repo_,
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_data_port_) :
     logger(logger_),
     notifier(notifier_),
     packet_handler(packet_handler_),
     prach_repo(prach_repo_),
-    ul_slot_repo(ul_slot_repo_)
+    ul_slot_repo(ul_slot_repo_),
+    ul_eaxc(ru_ul_data_port_)
   {
   }
 
-  /// DU number of uplink slot PRBs.
-  unsigned du_ul_nof_prbs;
   /// Logger.
   srslog::basic_logger& logger;
   /// User-Plane receive symbol notifier.
@@ -59,6 +59,8 @@ struct uplane_uplink_symbol_manager_config {
   uplink_context_repository<ul_prach_context>& prach_repo;
   /// uplink slot context repository.
   uplink_context_repository<ul_slot_context>& ul_slot_repo;
+  /// Uplink Radio Unit ports.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 };
 
 /// User-Plane uplink symbol manager.
@@ -72,18 +74,18 @@ public:
 
 private:
   /// Handles the PRACH PRBs given in the results.
-  void handle_prach_prbs(const uplane_message_decoder_results& results);
+  void handle_prach_prbs(const message_decoder_results& results);
 
   /// Handles the uplink grid PRBs given in the results.
-  void handle_grid_prbs(const uplane_message_decoder_results& results);
+  void handle_grid_prbs(const message_decoder_results& results);
 
 private:
-  const unsigned                               du_ul_nof_prbs;
-  srslog::basic_logger&                        logger;
-  uplane_rx_symbol_notifier&                   notifier;
-  uplane_uplink_packet_handler&                packet_handler;
-  uplink_context_repository<ul_prach_context>& prach_repo;
-  uplink_context_repository<ul_slot_context>&  ul_slot_repo;
+  srslog::basic_logger&                                 logger;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  uplane_rx_symbol_notifier&                            notifier;
+  uplane_uplink_packet_handler&                         packet_handler;
+  uplink_context_repository<ul_prach_context>&          prach_repo;
+  uplink_context_repository<ul_slot_context>&           ul_slot_repo;
 };
 
 } // namespace ofh

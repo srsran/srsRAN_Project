@@ -22,7 +22,6 @@
 
 #include "initial_cu_cp_setup_routine.h"
 #include "../../ngap/ngap_asn1_helpers.h"
-#include "srsran/asn1/ngap/ngap.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -57,7 +56,7 @@ async_task<ng_setup_response> initial_cu_cp_setup_routine::send_ng_setup_request
   // Prepare request to send to ng.
   ng_setup_request request_msg = {};
 
-  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg.gnb_id, ngap_cfg.ran_node_name, ngap_cfg.plmn, ngap_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg);
 
   // Initiate NG Setup Request.
   return ngap_ctrl_notifier.on_ng_setup_request(request_msg);

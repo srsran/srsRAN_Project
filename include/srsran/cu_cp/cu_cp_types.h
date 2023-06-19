@@ -25,6 +25,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"
@@ -256,11 +257,12 @@ struct cu_cp_associated_qos_flow {
   qos_flow_id_t         qos_flow_id = qos_flow_id_t::invalid;
   optional<std::string> qos_flow_map_ind;
 };
-
-struct cu_cp_qos_flow_failed_to_setup_item {
+struct qos_flow_with_cause_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
   cause_t       cause       = cause_t::nulltype;
 };
+
+using cu_cp_qos_flow_failed_to_setup_item = qos_flow_with_cause_item;
 
 struct cu_cp_qos_flow_per_tnl_information {
   up_transport_layer_info                                     up_tp_layer_info;
@@ -362,6 +364,7 @@ struct cu_cp_pdu_session_res_modify_request_transfer {
   // id-QosFlowAddOrModifyRequestList
   slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_item> qos_flow_add_or_modify_request_list;
   // id-QosFlowToReleaseList
+  slotted_id_vector<qos_flow_id_t, qos_flow_with_cause_item> qos_flow_to_release_list;
   // id-AdditionalUL-NGU-UP-TNLInformation
   // id-CommonNetworkInstance
   // id-AdditionalRedundantUL-NGU-UP-TNLInformation
@@ -386,6 +389,7 @@ struct qos_flow_add_or_mod_response_item {
 };
 
 struct cu_cp_pdu_session_res_modify_response_transfer {
+  std::vector<cu_cp_qos_flow_per_tnl_information>                               add_dl_qos_flow_per_tnl_info;
   optional<slotted_id_vector<qos_flow_id_t, qos_flow_add_or_mod_response_item>> qos_flow_add_or_modify_response_list;
 };
 
@@ -608,6 +612,12 @@ struct cu_cp_security_config {
 };
 
 struct cu_cp_radio_bearer_config {
+  /// \brief Returns true if at least one of the optional vectors/fields contains an element.
+  bool contains_values()
+  {
+    return (srb_to_add_mod_list.empty() || drb_to_add_mod_list.empty() || drb_to_release_list.empty() ||
+            !security_cfg.has_value());
+  }
   slotted_id_vector<srb_id_t, cu_cp_srb_to_add_mod> srb_to_add_mod_list;
   slotted_id_vector<drb_id_t, cu_cp_drb_to_add_mod> drb_to_add_mod_list;
   std::vector<drb_id_t>                             drb_to_release_list;

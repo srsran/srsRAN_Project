@@ -92,7 +92,7 @@ protected:
     ASSERT_TRUE(prg_factory);
 
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-        create_pusch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory);
+        create_pusch_demodulator_factory_sw(equalizer_factory, demod_factory, prg_factory, true);
     ASSERT_TRUE(pusch_demod_factory);
 
     // Create actual PUSCH demodulator.
@@ -139,7 +139,14 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
 
   std::vector<log_likelihood_ratio> sch_data(sch_expected.size());
 
-  demodulator->demodulate(sch_data, grid, chan_estimates, config);
+  pusch_demodulator::demodulation_status status = demodulator->demodulate(sch_data, grid, chan_estimates, config);
+
+  // Assert that EVM is present.
+  ASSERT_TRUE(status.evm.has_value());
+
+  // Assert SINR estimation is present and with the desired value.
+  ASSERT_TRUE(status.sinr_dB.has_value());
+  ASSERT_NEAR(status.sinr_dB.value(), test_case.context.sinr_dB, 0.5);
 
   // Assert shared channel data matches.
   ASSERT_EQ(span<const log_likelihood_ratio>(sch_expected), span<const log_likelihood_ratio>(sch_data));

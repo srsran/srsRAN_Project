@@ -35,12 +35,20 @@ namespace ofh {
 class uplink_cplane_context_repository
 {
   /// Maximun number of supported Control-Plane contexts per slot (uplink + PRACH).
-  static constexpr unsigned MAX_NOF_SUPPORTED_CP_CONTEXT_PER_SLOT = 2;
+  static constexpr unsigned MAX_NOF_SUPPORTED_CP_CONTEXT_PER_SLOT = 16;
 
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  using repo_entry = static_vector<cplane_section_type1_parameters, MAX_NOF_SUPPORTED_CP_CONTEXT_PER_SLOT>;
+  /// Repository entry.
+  struct ofh_message_data {
+    /// eAxC.
+    unsigned eaxc;
+    /// Control-Plane params.
+    cplane_section_type1_parameters cplane_params;
+  };
+
+  using repo_entry = static_vector<ofh_message_data, MAX_NOF_SUPPORTED_CP_CONTEXT_PER_SLOT>;
 
   std::vector<repo_entry> repo;
   unsigned                size = 0;
@@ -67,15 +75,16 @@ public:
   explicit uplink_cplane_context_repository(unsigned size_) : repo(size_), size(size_) {}
 
   /// Add the given context to the repo at the given slot.
-  void add(slot_point slot, const cplane_section_type1_parameters& context)
+  void add(slot_point slot, unsigned eaxc, const cplane_section_type1_parameters& context)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(slot).push_back(context);
+    entry(slot).push_back({eaxc, context});
   }
 
   /// Returns a context that matches the given slot, symbol and filter index or an error if it does not exist in the
   /// repository.
-  expected<cplane_section_type1_parameters> get(slot_point slot, unsigned symbol, filter_index_type filter_index) const
+  expected<cplane_section_type1_parameters>
+  get(slot_point slot, unsigned symbol, filter_index_type filter_index, unsigned eaxc) const
   {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -85,10 +94,11 @@ public:
     }
 
     for (const auto& context : ent) {
-      if (symbol >= context.radio_hdr.start_symbol &&
-          symbol < (context.radio_hdr.start_symbol + context.section_fields.common_fields.nof_symbols) &&
-          filter_index == context.radio_hdr.filter_index) {
-        return context;
+      const cplane_section_type1_parameters& cp_param = context.cplane_params;
+      if (context.eaxc == eaxc && symbol >= cp_param.radio_hdr.start_symbol &&
+          symbol < (cp_param.radio_hdr.start_symbol + cp_param.section_fields.common_fields.nof_symbols) &&
+          filter_index == cp_param.radio_hdr.filter_index) {
+        return cp_param;
       }
     }
 

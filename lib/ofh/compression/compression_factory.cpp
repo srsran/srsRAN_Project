@@ -34,6 +34,10 @@
 #include "iq_compression_bfp_avx512.h"
 #endif
 
+#ifdef HAVE_NEON
+#include "iq_compression_bfp_neon.h"
+#endif // HAVE_NEON
+
 using namespace srsran;
 using namespace ofh;
 
@@ -59,6 +63,11 @@ srsran::ofh::create_iq_compressor(compression_type type, float iq_scaling, const
       }
     }
 #endif
+#ifdef HAVE_NEON
+      if ((impl_type == "neon") || (impl_type == "auto")) {
+        return std::make_unique<iq_compression_bfp_neon>(iq_scaling);
+      }
+#endif // HAVE_NEON
       return std::make_unique<iq_compression_bfp_impl>(iq_scaling);
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();
@@ -95,6 +104,11 @@ std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor(compression
       }
     }
 #endif
+#ifdef HAVE_NEON
+      if ((impl_type == "neon") || (impl_type == "auto")) {
+        return std::make_unique<iq_compression_bfp_neon>();
+      }
+#endif // HAVE_NEON
       return std::make_unique<iq_compression_bfp_impl>();
     case compression_type::block_scaling:
       return std::make_unique<iq_compression_death_impl>();

@@ -21,6 +21,7 @@
  */
 
 #include "port_channel_estimator_average_impl.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/compare.h"
 #include "srsran/srsvec/copy.h"

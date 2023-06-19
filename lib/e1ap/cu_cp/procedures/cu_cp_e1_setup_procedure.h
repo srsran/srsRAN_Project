@@ -44,6 +44,8 @@ public:
 
   void operator()(coro_context<async_task<cu_cp_e1_setup_response>>& ctx);
 
+  static const char* name() { return "CU-CP E1 Setup Procedure"; }
+
 private:
   /// Send E1 SETUP REQUEST to CU-UP.
   void send_e1_setup_request();

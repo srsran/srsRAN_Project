@@ -186,13 +186,19 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     if (not cell_cfg.is_fully_ul_enabled(uci_slot)) {
       continue;
     }
-    // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
-    // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
-    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot) and
-        get_uci_alloc(grant.cell_index)
-                .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
-            max_harq_bits_per_uci) {
-      continue;
+    if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), uci_slot)) {
+      // NOTE: For TX with more than 1 antenna, the reported CSI is 7 bit, so we avoid multiplexing HARQ-ACK with CSI in
+      // the slots for CSI.
+      if (cell_cfg.dl_carrier.nof_ant > 1U) {
+        continue;
+      }
+      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
+      // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
+      if (get_uci_alloc(grant.cell_index)
+              .get_scheduled_pdsch_counter_in_ue_uci(get_res_alloc(grant.cell_index)[uci_slot], u.crnti) >=
+          max_harq_bits_per_uci) {
+        continue;
+      }
     }
     uci = get_uci_alloc(grant.cell_index)
               .alloc_uci_harq_ue(
@@ -218,7 +224,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
-      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_list[grant.time_res_index]);
+      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(
+          ue_cell_cfg, pdsch_list[grant.time_res_index], ue_cc->channel_state.get_nof_dl_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -298,7 +305,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             uci.dai,
                             mcs_tbs_info.value().mcs,
                             rv,
-                            h_dl);
+                            h_dl,
+                            ue_cc->channel_state.get_nof_dl_layers());
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
@@ -341,7 +349,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               grant.ss_id,
                               pdcch->dci.c_rnti_f1_1,
                               grant.crbs,
-                              h_dl);
+                              h_dl,
+                              ue_cc->channel_state);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DL DCI format");
@@ -423,6 +432,13 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
+  // We skip allocation of PUSCH in the slots with the CSI reporting over PUCCH.
+  if (is_csi_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot) and cell_cfg.dl_carrier.nof_ant > 1U) {
+    logger.debug("Allocation of PUSCH in slot={} skipped. Cause: this slot is for CSI reporting over PUCCH",
+                 pusch_alloc.slot);
+    return false;
+  }
+
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
     logger.warning("Failed to allocate PUSCH in slot={}. Cause: No space available in scheduler output list",
@@ -472,7 +488,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg, pusch_td_cfg);
+      pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg, pusch_td_cfg, ue_cc->channel_state.get_nof_ul_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -557,7 +573,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                             mcs_tbs_info.value().mcs,
                             rv,
                             h_ul,
-                            dai);
+                            dai,
+                            ue_cc->channel_state.get_nof_ul_layers());
       break;
     default:
       report_fatal_error("Unsupported PDCCH UL DCI format");

@@ -33,15 +33,6 @@ add_executable(mac_ctrl_test mac_ctrl_test.cpp)
 target_link_libraries(mac_ctrl_test srsran_pcap srsran_support srslog rrc_nr_asn1 srsran_mac)
 add_test(mac_ctrl_test mac_ctrl_test)
 
-add_executable(mac_dl_cfg_test mac_dl_cfg_test.cpp)
-target_link_libraries(mac_dl_cfg_test
-                      srsran_mac
-                      srsran_pcap
-                      srsran_support
-                      srslog
-                      sched_config)
-add_test(mac_dl_cfg_test mac_dl_cfg_test)
-
 add_executable(mac_ul_pdu_test mac_ul_pdu_test.cpp)
 target_link_libraries(mac_ul_pdu_test srsran_mac srsran_pcap srsran_support srslog gtest gtest_main)
 add_test(mac_ul_pdu_test mac_ul_pdu_test)
@@ -51,9 +42,11 @@ target_link_libraries(mac_ul_processor_test srsran_mac mac_test_helpers srsran_p
 add_test(mac_ul_processor_test mac_ul_processor_test)
 
 add_executable(mac_dl_test
+        mac_dl_cfg_test.cpp
         mac_dl_ue_manager_test.cpp
         mac_cell_processor_test.cpp
         dl_sch_pdu_assembler_test.cpp
         mac_rar_pdu_assembler_test.cpp)
 target_link_libraries(mac_dl_test srsran_mac mac_test_helpers srsran_pcap sched_config gtest gtest_main)
 gtest_discover_tests(mac_dl_test)
+add_test(mac_dl_test mac_dl_test)

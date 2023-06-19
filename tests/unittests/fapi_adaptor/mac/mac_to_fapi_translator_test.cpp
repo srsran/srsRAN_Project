@@ -25,6 +25,7 @@
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/support/srsran_test.h"
 
 using namespace srsran;
@@ -68,7 +69,10 @@ static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
 {
   slot_message_gateway_spy         gateway_spy;
   slot_last_message_notifier_dummy dummy_notifier;
-  mac_to_fapi_translator           translator(srslog::fetch_basic_logger("FAPI"), gateway_spy, dummy_notifier);
+  unsigned                         nof_prbs = 51U;
+  auto                             pm_tools = generate_precoding_matrix_tables(1);
+  mac_to_fapi_translator           translator(
+      srslog::fetch_basic_logger("FAPI"), gateway_spy, dummy_notifier, std::move(std::get<0>(pm_tools)), nof_prbs);
 
   TESTASSERT(!gateway_spy.has_dl_tti_request_method_called());
 

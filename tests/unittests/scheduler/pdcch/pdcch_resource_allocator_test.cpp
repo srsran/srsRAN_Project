@@ -94,6 +94,7 @@ protected:
   {
     sched_ue_creation_request_message ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
     ue_creation_req.crnti                             = rnti;
+    ue_creation_req.starts_in_fallback                = false;
     ue_creation_req.cfg.cells[0].serv_cell_cfg        = default_ue_cfg.cfg_dedicated();
     return ue_creation_req;
   }

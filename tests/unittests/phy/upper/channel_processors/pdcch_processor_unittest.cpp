@@ -24,8 +24,8 @@
 #include "../signal_processors/dmrs_pdcch_processor_test_doubles.h"
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsran/phy/upper/resource_grid_mapper.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/precoding/precoding_formatters.h"
 #include <random>
@@ -140,7 +140,7 @@ int main()
                 dmrs->reset();
 
                 // Create mapper.
-                resource_grid_mapper mapper(grid);
+                resource_grid_mapper& mapper = grid.get_mapper();
 
                 // Process PDU.
                 pdcch->process(mapper, pdu);

@@ -21,19 +21,38 @@
  */
 
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
-#include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
 #include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace ofh;
 using namespace srsran::ofh::testing;
 
-static constexpr unsigned eaxc            = 2U;
-static constexpr unsigned REPOSITORY_SIZE = 20U;
+static const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc            = {2};
+static constexpr unsigned                                    REPOSITORY_SIZE = 20U;
 
 namespace {
+
+/// Spy User-Plane received symbol notifier
+class uplane_rx_symbol_notifier_spy : public uplane_rx_symbol_notifier
+{
+  const resource_grid_reader* rg_reader = nullptr;
+
+public:
+  void on_new_uplink_symbol(const uplane_rx_symbol_context& context, const resource_grid_reader& grid) override
+  {
+    rg_reader = &grid;
+  }
+
+  void on_new_prach_window_data(const prach_buffer_context& context, const prach_buffer& buffer) override {}
+
+  const resource_grid_reader* get_reasource_grid_reader() const { return rg_reader; }
+};
 
 class prach_buffer_dummy : public prach_buffer
 {
@@ -60,6 +79,87 @@ public:
   {
     return buffer;
   }
+};
+
+class resource_grid_dummy : public resource_grid
+{
+  class resource_grid_mapper_dummy : public resource_grid_mapper
+  {
+  public:
+    void map(const re_buffer_reader&        input,
+             const re_pattern_list&         pattern,
+             const precoding_configuration& precoding) override
+    {
+    }
+
+    void map(const re_buffer_reader&        input,
+             const re_pattern_list&         pattern,
+             const re_pattern_list&         reserved,
+             const precoding_configuration& precoding) override
+    {
+    }
+  };
+
+  class resource_grid_writer_dummy : public resource_grid_writer
+  {
+  public:
+    unsigned get_nof_ports() const override { return 1; }
+    unsigned get_nof_subc() const override { return 1; }
+    unsigned get_nof_symbols() const override { return 1; }
+    void     put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
+    span<const cf_t>
+    put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
+    {
+      return {};
+    }
+
+    span<const cf_t> put(unsigned                            port,
+                         unsigned                            l,
+                         unsigned                            k_init,
+                         const bounded_bitset<NRE * MAX_RB>& mask,
+                         span<const cf_t>                    symbols) override
+    {
+      return {};
+    }
+
+    void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
+  };
+
+  class resource_grid_reader_dummy : public resource_grid_reader
+  {
+  public:
+    unsigned   get_nof_ports() const override { return 1; }
+    unsigned   get_nof_subc() const override { return 1; }
+    unsigned   get_nof_symbols() const override { return 1; }
+    bool       is_empty(unsigned port) const override { return true; }
+    span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+    {
+      return {};
+    }
+    span<cf_t> get(span<cf_t>                          symbols,
+                   unsigned                            port,
+                   unsigned                            l,
+                   unsigned                            k_init,
+                   const bounded_bitset<MAX_RB * NRE>& mask) const override
+    {
+      return {};
+    }
+
+    void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
+  };
+
+  resource_grid_reader_dummy reader;
+  resource_grid_writer_dummy writer;
+  resource_grid_mapper_dummy mapper;
+
+public:
+  void set_all_zero() override {}
+
+  resource_grid_writer& get_writer() override { return writer; }
+
+  const resource_grid_reader& get_reader() const override { return reader; }
+
+  resource_grid_mapper& get_mapper() override { return mapper; }
 };
 
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
@@ -121,10 +221,12 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_TRUE(data_flow->has_enqueue_section_type_1_method_been_called());
   const data_flow_cplane_scheduling_commands_spy::spy_info& info = data_flow->get_spy_info();
   ASSERT_EQ(rg_context.slot, info.slot);
-  ASSERT_EQ(eaxc, info.eaxc);
+  ASSERT_EQ(eaxc[0], info.eaxc);
   ASSERT_EQ(data_direction::uplink, info.direction);
 
   // Assert repository.
-  const ul_slot_context& slot_ctx = ul_slot_repo->get(rg_context.slot);
-  ASSERT_EQ(slot_ctx.grid, &rg);
+  ul_slot_context               slot_ctx = ul_slot_repo->get(rg_context.slot);
+  uplane_rx_symbol_notifier_spy notif_spy;
+  slot_ctx.notify_symbol(0, notif_spy);
+  ASSERT_EQ(notif_spy.get_reasource_grid_reader(), &rg.get_reader());
 }

@@ -94,7 +94,7 @@ private:
   struct ue_context {
     std::array<std::atomic<unsigned>, 2> ko_counters{};
     std::mutex                           notifier_mutex;
-    mac_ue_radio_link_notifier*          notifier;
+    mac_ue_radio_link_notifier*          notifier = nullptr;
   };
 
   std::array<ue_context, MAX_NOF_DU_UES> ues;

@@ -30,6 +30,7 @@
 namespace srsran {
 
 struct resource_grid_context;
+class resource_grid;
 
 /// \brief Downlink processor class that groups and process all the downlink channels within a slot.
 ///

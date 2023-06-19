@@ -21,7 +21,7 @@
 add_subdirectory(messages)
 
 add_library(srsran_mac_to_fapi_translator STATIC mac_to_fapi_translator.cpp)
-target_link_libraries(srsran_mac_to_fapi_translator srsran_mac_fapi_adaptors srsran_fapi)
+target_link_libraries(srsran_mac_to_fapi_translator srsran_mac_fapi_adaptors srsran_fapi_precoding_matrix_tools srsran_fapi)
 
 
 set(SOURCES

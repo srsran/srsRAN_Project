@@ -27,23 +27,27 @@
 
 namespace srsran {
 
-std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> build_phy_fapi_adaptor(unsigned                    sector_id,
-                                                                       subcarrier_spacing          scs,
-                                                                       subcarrier_spacing          scs_common,
-                                                                       downlink_processor_pool&    dl_processor_pool,
-                                                                       resource_grid_pool&         dl_rg_pool,
-                                                                       uplink_request_processor&   ul_request_processor,
-                                                                       resource_grid_pool&         ul_rg_pool,
-                                                                       uplink_slot_pdu_repository& ul_pdu_repository,
-                                                                       const downlink_pdu_validator& dl_pdu_validator,
-                                                                       const uplink_pdu_validator&   ul_pdu_validator,
-                                                                       const fapi::prach_config&     prach_cfg,
-                                                                       const fapi::carrier_config&   carrier_cfg);
+std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>
+build_phy_fapi_adaptor(unsigned                                                   sector_id,
+                       subcarrier_spacing                                         scs,
+                       subcarrier_spacing                                         scs_common,
+                       downlink_processor_pool&                                   dl_processor_pool,
+                       resource_grid_pool&                                        dl_rg_pool,
+                       uplink_request_processor&                                  ul_request_processor,
+                       resource_grid_pool&                                        ul_rg_pool,
+                       uplink_slot_pdu_repository&                                ul_pdu_repository,
+                       const downlink_pdu_validator&                              dl_pdu_validator,
+                       const uplink_pdu_validator&                                ul_pdu_validator,
+                       const fapi::prach_config&                                  prach_cfg,
+                       const fapi::carrier_config&                                carrier_cfg,
+                       std::unique_ptr<fapi_adaptor::precoding_matrix_repository> pm_repo);
 
 std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
-build_mac_fapi_adaptor(unsigned                          sector_id,
-                       subcarrier_spacing                scs,
-                       fapi::slot_message_gateway&       gateway,
-                       fapi::slot_last_message_notifier& last_msg_notifier);
+build_mac_fapi_adaptor(unsigned                                               sector_id,
+                       subcarrier_spacing                                     scs,
+                       fapi::slot_message_gateway&                            gateway,
+                       fapi::slot_last_message_notifier&                      last_msg_notifier,
+                       std::unique_ptr<fapi_adaptor::precoding_matrix_mapper> pm_mapper,
+                       unsigned                                               cell_nof_prbs);
 
 } // namespace srsran

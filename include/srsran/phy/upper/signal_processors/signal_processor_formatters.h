@@ -26,6 +26,7 @@
 #pragma once
 
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
+#include "srsran/ran/precoding/precoding_formatters.h"
 #include "srsran/support/format_utils.h"
 
 namespace fmt {
@@ -60,8 +61,7 @@ struct formatter<srsran::nzp_csi_rs_generator::config_t> {
     helper.format_if_verbose(ctx, "cp={}", nzp_csi_config.cp.to_string());
     helper.format_if_verbose(ctx, "sc_id={}", nzp_csi_config.scrambling_id);
     helper.format_if_verbose(ctx, "amplitude={}", nzp_csi_config.amplitude);
-    helper.format_if_verbose(ctx, "pmi={}", nzp_csi_config.pmi);
-    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(nzp_csi_config.ports));
+    helper.format_if_verbose(ctx, "precoding={}", nzp_csi_config.precoding);
 
     return ctx.out();
   }

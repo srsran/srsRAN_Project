@@ -29,7 +29,7 @@ using namespace ofh;
 /// Number of bytes used by 1 packed PRB with IQ samples compressed to 9 bits.
 static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
-bool mm512::iq_width_packing_supported(unsigned int iq_width)
+bool mm512::iq_width_packing_supported(unsigned iq_width)
 {
   if (iq_width == 9) {
     return true;
@@ -106,7 +106,7 @@ static void avx512_pack_prb_9b_big_endian(compressed_prb& c_prb, __m512i reg)
   c_prb.set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
-void mm512::pack_prb_big_endian(compressed_prb& c_prb, __m512i reg, unsigned int iq_width)
+void mm512::pack_prb_big_endian(compressed_prb& c_prb, __m512i reg, unsigned iq_width)
 {
   if (iq_width == 9) {
     return avx512_pack_prb_9b_big_endian(c_prb, reg);
@@ -152,9 +152,7 @@ static void avx512_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const u
   _mm512_mask_storeu_epi16(unpacked_iq_data.data(), 0xffffffff, unpacked_data_epi16);
 }
 
-void mm512::unpack_prb_big_endian(span<int16_t>       unpacked_iq_data,
-                                  span<const uint8_t> packed_data,
-                                  unsigned int        iq_width)
+void mm512::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
 {
   if (iq_width == 9) {
     return avx512_unpack_prb_9b_be(unpacked_iq_data, packed_data);

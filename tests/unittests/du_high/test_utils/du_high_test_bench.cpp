@@ -208,7 +208,7 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
-  du_obj.get_pdu_handler(to_du_cell_index(0)).handle_rx_data_indication(create_ccch_message(next_slot, rnti));
+  du_obj.get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
   run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });

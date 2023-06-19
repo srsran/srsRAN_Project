@@ -27,6 +27,7 @@
 #include "srsran/adt/variant.h"
 #include "srsran/mac/bsr_format.h"
 #include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
@@ -84,8 +85,7 @@ struct uci_indication {
     };
     struct uci_pusch_pdu {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part1;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part2;
+      optional<csi_report_data>                                                   csi;
     };
     struct uci_pucch_f2_or_f3_or_f4_pdu {
       /// Maximum number of SR bits expected on the PUCCH transmission.
@@ -93,9 +93,7 @@ struct uci_indication {
 
       bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                                    sr_info;
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part1;
-      /// CSI Part 2 is for PUCCH format 3 and 4.
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
+      optional<csi_report_data>                                                   csi;
       /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
       optional<float> ul_sinr;
     };
@@ -125,6 +123,7 @@ public:
   virtual void handle_uci_indication(const uci_indication& uci)               = 0;
 
   /// \brief Command scheduling of DL MAC CE for a given UE.
+  /// \param mac_ce DL MAC CE to be scheduled.
   virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;
 };
 

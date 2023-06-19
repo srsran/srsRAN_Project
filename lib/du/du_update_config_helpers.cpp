@@ -70,10 +70,11 @@ static unsigned greatest_used_rb_on_bwp_left_side(const pucch_resource& res, uns
 }
 
 unsigned srsran::config_helpers::compute_prach_frequency_start(const pucch_builder_params& user_params,
-                                                               unsigned                    bwp_size)
+                                                               unsigned                    bwp_size,
+                                                               bool                        is_long_prach)
 {
   // This is to preserve a guardband between the PUCCH and PRACH.
-  const unsigned pucch_to_prach_guardband = 3;
+  const unsigned pucch_to_prach_guardband = is_long_prach ? 0U : 3U;
 
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   const unsigned              nof_pucch_f2_res_f1 = 1U;

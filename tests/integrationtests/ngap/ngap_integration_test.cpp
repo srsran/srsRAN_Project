@@ -98,6 +98,9 @@ protected:
     cfg.ran_node_name = "srsgnb01";
     cfg.plmn          = "00101";
     cfg.tac           = 7;
+    s_nssai_t slice_cfg;
+    slice_cfg.sst = 1;
+    cfg.slice_configurations.push_back(slice_cfg);
 
     sctp_network_gateway_config nw_config;
     nw_config.connect_address   = "10.12.1.105";
@@ -129,7 +132,7 @@ protected:
 ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
 {
   ng_setup_request request_msg = {};
-  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg.gnb_id, ngap_cfg.ran_node_name, ngap_cfg.plmn, ngap_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg);
   return request_msg;
 }
 

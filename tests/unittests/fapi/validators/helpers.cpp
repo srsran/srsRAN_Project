@@ -254,7 +254,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.power_control_offset_ss_profile_nr = fapi::nzp_csi_rs_epre_to_ssb::dB3;
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
   pdu.dl_dmrs_symb_pos                   = 0;
-  pdu.preconding_and_beamforming         = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.precoding_and_beamforming          = build_valid_tx_precoding_and_beamforming_pdu();
 
   // Maintenance v3.
   pdu.pdsch_maintenance_v3.trans_type = srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;

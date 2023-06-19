@@ -338,7 +338,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, FlowFloodRequest)
           for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
             const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
             ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
-            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy));
+            ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy.get_writer()));
             ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
             ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
           }
@@ -376,9 +376,9 @@ TEST_P(LowerPhyUplinkProcessorFixture, LateRequest)
   unsigned late_slot    = 2;
   unsigned next_slot    = 4;
 
-  resource_grid_spy initial_rg_spy;
-  resource_grid_spy late_rg_spy;
-  resource_grid_spy next_rg_spy;
+  resource_grid_spy initial_rg_spy(0, 0, 0);
+  resource_grid_spy late_rg_spy(0, 0, 0);
+  resource_grid_spy next_rg_spy(0, 0, 0);
 
   // Initial request.
   resource_grid_context initial_rg_context;
@@ -530,7 +530,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, OverflowRequest)
         for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
           const auto& ofdm_demod_entry = ofdm_demod_entries[i_port];
           ASSERT_EQ(span<const cf_t>(ofdm_demod_entry.input), buffer[i_port]);
-          ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy));
+          ASSERT_EQ(static_cast<const void*>(ofdm_demod_entry.grid), static_cast<const void*>(&rg_spy.get_writer()));
           ASSERT_EQ(ofdm_demod_entry.port_index, i_port);
           ASSERT_EQ(ofdm_demod_entry.symbol_index, i_symbol_subframe);
         }

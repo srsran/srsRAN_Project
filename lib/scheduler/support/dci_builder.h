@@ -88,7 +88,8 @@ void build_dci_f1_1_c_rnti(dci_dl_info&                 dci,
                            unsigned                     dai,
                            sch_mcs_index                tb1_mcs_index,
                            uint8_t                      rv,
-                           const dl_harq_process&       h_dl);
+                           const dl_harq_process&       h_dl,
+                           unsigned                     nof_layers);
 
 /// Builds DCI f0_0 for TC-RNTI, used in Msg3 retxs.
 void build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
@@ -119,6 +120,7 @@ void build_dci_f0_1_c_rnti(dci_ul_info&                 dci,
                            sch_mcs_index                mcs_index,
                            uint8_t                      rv,
                            const ul_harq_process&       h_ul,
-                           unsigned                     total_dai);
+                           unsigned                     total_dai,
+                           unsigned                     nof_layers);
 
 } // namespace srsran

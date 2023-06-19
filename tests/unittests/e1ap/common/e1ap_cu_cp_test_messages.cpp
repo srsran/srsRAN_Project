@@ -174,8 +174,8 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
   drb_to_setup_item.drb_id                      = uint_to_drb_id(1);
   drb_to_setup_item.sdap_cfg.default_drb        = true;
-  drb_to_setup_item.sdap_cfg.sdap_hdr_ul        = "present";
-  drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
+  drb_to_setup_item.sdap_cfg.sdap_hdr_ul        = sdap_hdr_ul_cfg::present;
+  drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = sdap_hdr_dl_cfg::present;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::am;

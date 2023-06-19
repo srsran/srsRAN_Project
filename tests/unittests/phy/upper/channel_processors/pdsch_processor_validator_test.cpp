@@ -20,11 +20,13 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "../../support/resource_grid_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/ran/dmrs.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -41,7 +43,6 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          cyclic_prefix::NORMAL,
                                          {{modulation_scheme::QPSK, 0}},
                                          1,
-                                         {0},
                                          pdsch_processor::pdu_t::CRB0,
                                          {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},
                                          dmrs_type::TYPE1,
@@ -55,7 +56,8 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          3168,
                                          {},
                                          0,
-                                         0};
+                                         0,
+                                         make_single_port()};
 
 struct test_case_t {
   std::function<pdsch_processor::pdu_t()> get_pdu;
@@ -132,10 +134,10 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(Only contiguous allocation is currently supported\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.ports                  = {0, 1};
+       pdu.precoding              = make_wideband_identity(4);
        return pdu;
      },
-     R"(Only one layer is currently supported\. 2 layers requested\.)"},
+     R"(Only 1 or 2 layers are currently supported\. 4 layers requested\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.tbs_lbrm_bytes         = 0;
@@ -263,8 +265,9 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   // Make sure the configuration is invalid.
   ASSERT_FALSE(pdu_validator->is_valid(param.get_pdu()));
 
-  // Prepare resource grid.
+  // Prepare resource grid and resource grid mapper spies.
   resource_grid_writer_spy grid(0, 0, 0);
+  resource_grid_mapper_spy mapper(grid);
 
   // Prepare receive data.
   std::vector<uint8_t> data;
@@ -274,7 +277,7 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
 
   // Process pdsch PDU.
 #ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(grid, {data}, param.get_pdu()); }, param.expr);
+  ASSERT_DEATH({ pdsch_proc->process(mapper, {data}, param.get_pdu()); }, param.expr);
 #endif // ASSERTS_ENABLED
 }
 

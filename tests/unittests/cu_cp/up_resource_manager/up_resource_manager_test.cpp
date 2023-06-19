@@ -46,7 +46,61 @@ protected:
     pdcp_config p_cfg;
     p_cfg.rb_type                               = pdcp_rb_type::drb;
     cfg.five_qi_config[uint_to_five_qi(9)].pdcp = p_cfg;
+    cfg.five_qi_config[uint_to_five_qi(7)].pdcp = p_cfg;
     manager                                     = create_up_resource_manager(cfg);
+  }
+
+  void setup_initial_pdu_session()
+  {
+    cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
+    ASSERT_TRUE(manager->validate_request(msg));
+
+    // No DRB present
+    ASSERT_EQ(manager->get_nof_drbs(), 0);
+
+    // single PDU Session/DRB could be added
+    const auto&      psi    = uint_to_pdu_session_id(1);
+    up_config_update update = manager->calculate_update(msg);
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.at(psi).drb_to_add.size(), 1);
+
+    // Assume DRB setup was successful.
+    up_config_update_result result;
+    result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.at(psi));
+    manager->apply_config_update(result);
+
+    // Verify PDU session and DRB were added
+    ASSERT_EQ(manager->get_nof_drbs(), 1);
+    ASSERT_EQ(manager->get_nof_pdu_sessions(), 1);
+    ASSERT_EQ(manager->get_nof_qos_flows(psi), 1);
+    ASSERT_EQ(manager->get_total_nof_qos_flows(), 1);
+  }
+
+  // This helper modifies the existing PDU session by adding a new QoS flow that should be mapped on a new DRB.
+  void modify_pdu_session()
+  {
+    // Modify existing session.
+    cu_cp_pdu_session_resource_modify_request msg = generate_pdu_session_resource_modification();
+    const auto&                               psi = uint_to_pdu_session_id(1);
+
+    ASSERT_TRUE(manager->validate_request(msg));
+    up_config_update update = manager->calculate_update(msg);
+
+    // Verify calculated update.
+    ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 0);
+    ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 1);
+    ASSERT_EQ(update.pdu_sessions_to_modify_list.at(psi).drb_to_add.size(), 1);
+
+    // Apply update.
+    up_config_update_result result;
+    result.pdu_sessions_modified_list.push_back(update.pdu_sessions_to_modify_list.at(psi));
+    manager->apply_config_update(result);
+
+    // One PDU session with two QoS flows on two bearers.
+    ASSERT_EQ(manager->get_nof_pdu_sessions(), 1);
+    ASSERT_EQ(manager->get_total_nof_qos_flows(), 2);
+    ASSERT_EQ(manager->get_nof_drbs(), 2);
+    ASSERT_EQ(manager->get_nof_qos_flows(psi), 2);
   }
 
   void TearDown() override
@@ -61,25 +115,7 @@ public:
 
 TEST_F(up_resource_manager_test, when_initial_pdu_session_is_created_new_drb_is_set_up)
 {
-  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup();
-  ASSERT_TRUE(manager->validate_request(msg));
-
-  // No DRB present
-  ASSERT_EQ(manager->get_nof_drbs(), 0);
-
-  // single PDU Session/DRB could be added
-  up_config_update update = manager->calculate_update(msg);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
-  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 1);
-
-  // Assume DRB setup was successful.
-  up_config_update_result result;
-  result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)));
-  manager->apply_config_update(result);
-
-  // Verify PDU session and DRB were added
-  ASSERT_EQ(manager->get_nof_drbs(), 1);
-  ASSERT_EQ(manager->get_pdu_sessions().size(), 1);
+  setup_initial_pdu_session();
 }
 
 TEST_F(up_resource_manager_test, when_same_pdu_session_is_created_no_new_drb_is_set_up)
@@ -115,4 +151,85 @@ TEST_F(up_resource_manager_test, when_drb_is_added_pdcp_config_is_valid)
   ASSERT_EQ(
       update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add[uint_to_drb_id(1)].pdcp_cfg.rb_type,
       pdcp_rb_type::drb);
+}
+
+TEST_F(up_resource_manager_test, when_pdu_session_setup_with_two_qos_flows_both_are_mapped_on_own_drb)
+{
+  cu_cp_pdu_session_resource_setup_request msg = generate_pdu_session_resource_setup(1, 2);
+  ASSERT_TRUE(manager->validate_request(msg));
+  up_config_update update = manager->calculate_update(msg);
+
+  // Verify created DRBs.
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.at(uint_to_pdu_session_id(1)).drb_to_add.size(), 2);
+}
+
+TEST_F(up_resource_manager_test, when_pdu_session_gets_modified_new_drb_is_set_up)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+
+  // The actual test as fixture for later reuse.
+  modify_pdu_session();
+}
+
+TEST_F(up_resource_manager_test, when_inexiting_qos_flow_gets_removed_removal_fails)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+
+  // Modify existing session by trying to remove invalid/inexisting QoS flow.
+  cu_cp_pdu_session_resource_modify_request msg =
+      generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(9));
+
+  ASSERT_FALSE(manager->validate_request(msg));
+}
+
+/// Note: From TS 38.413 Sec 8.2.3.1 "PDU Session Resource Modify" it's not entirely clear what should happen in
+/// the case where all QoS flows of a PDU session are removed in a Resource Modify Request.
+/// The current assumption is that we reject the Modify Request as a PDU session resource release would be the
+/// expected command.
+TEST_F(up_resource_manager_test, when_only_existing_qos_flow_gets_removed_removal_fails)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+
+  // Modify existing session and remove only existing QoS flow.
+  cu_cp_pdu_session_resource_modify_request msg =
+      generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(1));
+
+  ASSERT_FALSE(manager->validate_request(msg));
+}
+
+TEST_F(up_resource_manager_test, when_existing_qos_flow_gets_removed_removal_succeeds_and_associated_drb_is_released)
+{
+  // Preamble.
+  setup_initial_pdu_session();
+  modify_pdu_session();
+
+  // Modify existing session and remove existing QoS flow.
+  cu_cp_pdu_session_resource_modify_request msg =
+      generate_pdu_session_resource_modification_with_qos_flow_removal(uint_to_qos_flow_id(2));
+  const auto& psi = uint_to_pdu_session_id(1);
+
+  ASSERT_TRUE(manager->validate_request(msg));
+
+  up_config_update update = manager->calculate_update(msg);
+
+  // Verify calculated update.
+  ASSERT_EQ(update.pdu_sessions_to_setup_list.size(), 0);
+  ASSERT_EQ(update.pdu_sessions_to_modify_list.size(), 1);
+  ASSERT_EQ(update.pdu_sessions_to_modify_list.at(psi).drb_to_add.size(), 0);
+  ASSERT_EQ(update.pdu_sessions_to_modify_list.at(psi).drb_to_remove.size(), 1);
+
+  // Apply update.
+  up_config_update_result result;
+  result.pdu_sessions_modified_list.push_back(update.pdu_sessions_to_modify_list.at(psi));
+  manager->apply_config_update(result);
+
+  // One PDU session with one QoS flows using one DRB.
+  ASSERT_EQ(manager->get_nof_pdu_sessions(), 1);
+  ASSERT_EQ(manager->get_total_nof_qos_flows(), 1);
+  ASSERT_EQ(manager->get_nof_drbs(), 1);
+  ASSERT_EQ(manager->get_nof_qos_flows(psi), 1);
 }

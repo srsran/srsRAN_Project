@@ -94,6 +94,14 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
     cell_res_alloc.next_context_update_result.rlc_bearers.back().lcid    = uint_to_lcid(3 + (unsigned)drb.drb_id);
     cell_res_alloc.next_context_update_result.rlc_bearers.back().rlc_cfg = make_default_srb_rlc_config();
   }
+  for (drb_id_t drb_id : req.drbs_to_rem) {
+    auto it = std::find_if(cell_res_alloc.next_context_update_result.rlc_bearers.begin(),
+                           cell_res_alloc.next_context_update_result.rlc_bearers.end(),
+                           [drb_id](const auto& b) { return b.drb_id == drb_id; });
+    if (it != cell_res_alloc.next_context_update_result.rlc_bearers.end()) {
+      cell_res_alloc.next_context_update_result.rlc_bearers.erase(it);
+    }
+  }
 
   // Run Procedure.
   async_task<f1ap_ue_context_update_response>         t = launch_async<ue_configuration_procedure>(req, ue_mng, params);

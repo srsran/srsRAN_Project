@@ -28,7 +28,6 @@
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_reader_empty.h"
 

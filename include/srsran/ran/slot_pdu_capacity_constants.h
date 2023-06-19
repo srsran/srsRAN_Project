@@ -97,4 +97,7 @@ static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = 8;
 /// [Implementation defined] Maximum number of HARQ VALUES per HARQ PDU.
 static constexpr size_t MAX_HARQ_VALUES_PER_HARQ_PDU = 8;
 
+/// [Implementation defined] Maximum number of logical antenna ports (parallel streams) per beamforming PDU.
+static constexpr size_t MAX_LOGICAL_ANTENNA_PORTS_PER_BEAMFORMING_PDU = 4;
+
 } // namespace srsran

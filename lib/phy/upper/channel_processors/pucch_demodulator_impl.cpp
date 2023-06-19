@@ -24,6 +24,7 @@
 /// \brief PUCCH demodulator implementation definition.
 
 #include "pucch_demodulator_impl.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 
 using namespace srsran;
 

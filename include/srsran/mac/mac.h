@@ -59,7 +59,7 @@ public:
   virtual mac_ue_configurator& get_ue_configurator() = 0;
 
   /// Returns PDU handler.
-  virtual mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) = 0;
+  virtual mac_pdu_handler& get_pdu_handler() = 0;
 
   /// Returns Paging handler.
   virtual mac_paging_information_handler& get_cell_paging_info_handler() = 0;

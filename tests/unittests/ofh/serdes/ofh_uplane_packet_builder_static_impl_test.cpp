@@ -23,7 +23,6 @@
 #include "../../../../lib/ofh/compression/iq_compression_none_impl.h"
 #include "../../../../lib/ofh/serdes/ofh_uplane_message_builder_impl.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/support_factories.h"
 #include "srsran/srsvec/zero.h"
 #include <gtest/gtest.h>
 
@@ -53,9 +52,6 @@ struct test_case_t {
   /// Expected output packet.
   std::vector<uint8_t> packet;
 };
-
-static constexpr unsigned N_PORTS   = 1;
-static constexpr unsigned N_SYMBOLS = 14;
 
 static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
     {{// PRB 0
@@ -119,31 +115,17 @@ static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
       0x8a, 0x02, 0x94, 0x02, 0x94, 0x02, 0x9e, 0x02, 0x9e, 0x02, 0xa8, 0x02, 0xa8, 0x02, 0xb2, 0x02, 0xb2,
       0x02, 0xbc, 0x02, 0xbc, 0x02, 0xc6, 0x02, 0xc6, 0x02, 0xd0, 0x02, 0xd0, 0x02, 0xda, 0x02, 0xda}}};
 
-static void init_resource_grid(resource_grid* grid, const test_case_t& test_case)
-{
-  static_vector<bool, MAX_RB * NRE> mask(test_case.params.nof_prb * NRE, true);
-  span<const cf_t>                  iq_data(test_case.iq_data);
-
-  grid->put(0, test_case.params.symbol_id, test_case.params.start_prb, mask, iq_data);
-}
-
 TEST(ofh_uplane_packet_builder_static_impl_test, non_compressed_packet_should_pass)
 {
   for (const test_case_t& test_case : ofh_uplane_builder_test_data) {
     // Create a compressor.
     iq_compression_none_impl compressor;
 
-    // Create User-Plane packet builder with static compression method.
-    ofh_uplane_message_builder_static_compression_impl builder(
-        srslog::fetch_basic_logger("TEST"), compressor, test_case.params.nof_prb, test_case.params.nof_prb);
-
-    // Prepare input data.
-    std::unique_ptr<resource_grid> grid = create_resource_grid(N_PORTS, N_SYMBOLS, test_case.params.nof_prb * NRE);
-    init_resource_grid(grid.get(), test_case);
+    ofh_uplane_message_builder_static_compression_impl builder(srslog::fetch_basic_logger("TEST"), compressor);
 
     // Prepare output buffer and build packet.
     std::vector<uint8_t> result_packet(test_case.packet.size(), 0);
-    builder.build_message(result_packet, *grid.get(), test_case.params);
+    builder.build_message(result_packet, test_case.iq_data, test_case.params);
 
     // First make sure basic header matches the expected one.
     units::bytes header_size = get_iq_data_offset_static_config();

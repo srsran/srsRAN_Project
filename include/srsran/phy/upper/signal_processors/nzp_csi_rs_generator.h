@@ -24,12 +24,14 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/ran/csi_rs/csi_rs_types.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211
 /// Section 7.4.1.5.
@@ -72,22 +74,17 @@ public:
     unsigned scrambling_id;
     /// Linear amplitude scaling factor.
     float amplitude;
-    /// \brief Precoding Matrix Indicator.
-    ///
-    /// Set to 0 for no precoding.
-    unsigned pmi;
-    /// \brief Port indexes to map the signal.
-    /// \remark This is so that the ports to be used can be arbitrarily ordered by higher layers.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding configuration.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.
   virtual ~nzp_csi_rs_generator() = default;
 
   /// \brief Generates and maps the NZP-CSI-RS, according to TS 38.211, Section 7.4.1.5.
-  /// \param [out] grid Provides the destination resource grid.
-  /// \param [in] config Provides the required configuration to generate and map the signal.
-  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
+  /// \param [out] mapper Resource grid mapper.
+  /// \param [in]  config Required configuration to generate and map the signal.
+  virtual void map(resource_grid_mapper& mapper, const config_t& config) = 0;
 };
 
 /// Describes the NZP-CSI-RS generator configuration validator interface.

@@ -42,6 +42,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   dl_carrier(msg.dl_carrier),
   ssb_cfg(msg.ssb_config),
   dmrs_typeA_pos(msg.dmrs_typeA_pos),
+  ul_carrier(msg.ul_carrier),
   pucch_guardbands(msg.pucch_guardbands),
   zp_csi_rs_list(msg.zp_csi_rs_list),
   csi_meas_cfg(msg.csi_meas_cfg),

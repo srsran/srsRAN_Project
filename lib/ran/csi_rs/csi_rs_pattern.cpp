@@ -22,6 +22,7 @@
 
 #include "srsran/ran/csi_rs/csi_rs_pattern.h"
 #include "srsran/adt/span.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -36,11 +37,9 @@ static void mapping_row_1(span<unsigned>                      k_bar,
                           const unsigned                      l_0,
                           const csi_rs_pattern_configuration& config)
 {
-  // Expected number of ports and frequency references.
-  constexpr unsigned NOF_PORTS = 1;
+  // Expected number of frequency references.
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 1: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 1: 1 k_ref is needed");
   srsran_assert(k_ref[0] <= 3, "CSI-RS Mapping Row 1: k_0 must be in the range 0..3 for row 1 mapping");
   srsran_assert(config.freq_density == csi_rs_freq_density_type::three, "CSI-RS Mapping Row 1: invalid density");
@@ -59,11 +58,9 @@ static void mapping_row_2(span<unsigned>                      k_bar,
                           const unsigned                      l_0,
                           const csi_rs_pattern_configuration& config)
 {
-  // Expected number of ports and frequency references.
-  constexpr unsigned NOF_PORTS = 1;
+  // Expected number of frequency references.
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 2: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 2: 1 k_ref is needed");
   srsran_assert(k_ref[0] < NRE, "CSI-RS Mapping Row 2: k_0 outside the valid range");
   srsran_assert(config.freq_density == csi_rs_freq_density_type::one ||
@@ -85,11 +82,9 @@ static void mapping_row_3(span<unsigned>                      k_bar,
                           const unsigned                      l_0,
                           const csi_rs_pattern_configuration& config)
 {
-  // Expected number of ports and frequency references.
-  constexpr unsigned NOF_PORTS = 2;
+  // Expected number of frequency references.
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 3: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 3: one k_ref is needed");
   srsran_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 3: k_0 outside of the valid range");
   srsran_assert(config.freq_density == csi_rs_freq_density_type::one ||
@@ -119,7 +114,6 @@ static void mapping_row_4(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 4;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 4: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 4: 1 k_ref is needed");
   srsran_assert(k_ref[0] < NRE - 3, "CSI-RS Mapping Row 4: k_0 outside of the valid range");
   srsran_assert(config.freq_density == csi_rs_freq_density_type::one, "CSI-RS Mapping Row 4: invalid density");
@@ -147,7 +141,6 @@ static void mapping_row_5(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 4;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 5: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 5: 1 k_ref is needed");
   srsran_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 5: k_0 outside of the valid range");
   srsran_assert(config.freq_density == csi_rs_freq_density_type::one, "CSI-RS Mapping Row 5: invalid density");
@@ -175,7 +168,6 @@ static void mapping_row_6(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 6: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 6: 4 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 6: k references outside of the valid range");
@@ -204,7 +196,6 @@ static void mapping_row_7(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 2;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 7: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 7: 2 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 7: k references outside of the valid range");
@@ -237,7 +228,6 @@ static void mapping_row_8(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 2;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 8: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 8: 2 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 8: k references outside of the valid range");
@@ -266,7 +256,6 @@ static void mapping_row_9(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 12;
   constexpr unsigned NOF_K_REF = 6;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 9: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 9: 6 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 9: k references outside of the valid range");
@@ -295,7 +284,6 @@ static void mapping_row_10(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 12;
   constexpr unsigned NOF_K_REF = 3;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 10: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 10: 3 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 10: k references outside of the valid range");
@@ -324,7 +312,6 @@ static void mapping_row_11(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 16;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 11: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 11: 4 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 11: k references outside of the valid range");
@@ -360,7 +347,6 @@ static void mapping_row_12(span<unsigned>                      k_bar,
   constexpr unsigned NOF_PORTS = 16;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.nof_ports == NOF_PORTS, "CSI-RS Mapping Row 12: invalid number of ports");
   srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 12: 4 k_ref are needed");
   srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 12: k references outside of the valid range");
@@ -451,12 +437,12 @@ static csi_rs_pattern build_re_patterns(span<const unsigned>                k_ba
 
 csi_rs_pattern srsran::get_csi_rs_pattern(const csi_rs_pattern_configuration& config)
 {
-  const unsigned nof_ports = config.nof_ports;
   const unsigned row       = config.csi_rs_mapping_table_row;
+  const unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(row);
 
   // Arrays to store the k_bar and l_bar symbol and RE positions for each port.
-  static_vector<unsigned, CSI_RS_MAX_NOF_PORTS> k_bar(config.nof_ports);
-  static_vector<unsigned, CSI_RS_MAX_NOF_PORTS> l_bar(config.nof_ports);
+  static_vector<unsigned, CSI_RS_MAX_NOF_PORTS> k_bar(nof_ports);
+  static_vector<unsigned, CSI_RS_MAX_NOF_PORTS> l_bar(nof_ports);
 
   // Assert that the mapping table row is valid and currently supported.
   srsran_assert(row <= 18 && row > 0, "Invalid mapping table row.");

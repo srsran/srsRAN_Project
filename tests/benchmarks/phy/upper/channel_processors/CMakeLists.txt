@@ -26,11 +26,13 @@ target_link_libraries(pdsch_processor_benchmark
         srsran_phy_support
         srsran_pusch_processor
         srsran_channel_equalizer
+        srsran_channel_precoder
         srsran_channel_processors
         srsran_sched
         srslog
         srsvec)
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t generic)
+add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P 2port_2layer_scs30_100MHz_256qam -t generic)
 add_test(pdsch_processor_benchmark pdsch_processor_benchmark -m silent -R 1 -B 1 -T 2 -P pdsch_scs15_5MHz_qpsk_min -t concurrent)
 
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
@@ -38,6 +40,7 @@ target_link_libraries(pusch_processor_benchmark
         srsran_phy_support
         srsran_pusch_processor
         srsran_channel_equalizer
+        srsran_channel_precoder
         srsran_channel_processors
         srsran_sched
         srslog

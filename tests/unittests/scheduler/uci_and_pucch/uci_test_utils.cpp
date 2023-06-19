@@ -129,7 +129,7 @@ test_bench::test_bench(const test_bench_params& params) :
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   ues(mac_notif),
   pucch_alloc{cell_cfg},
-  uci_alloc(pucch_alloc),
+  uci_alloc(cell_cfg, pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {

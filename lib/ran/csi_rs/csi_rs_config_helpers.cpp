@@ -120,3 +120,38 @@ unsigned srsran::csi_rs::get_csi_rs_resource_mapping_row_number(uint8_t         
   const unsigned invalid_row_index = 0;
   return invalid_row_index;
 }
+
+unsigned srsran::csi_rs::get_nof_csi_rs_ports(unsigned csi_rs_row_id)
+{
+  switch (csi_rs_row_id) {
+    case 1:
+    case 2:
+      return 1;
+    case 3:
+      return 2;
+    case 4:
+    case 5:
+      return 4;
+    case 6:
+    case 7:
+    case 8:
+      return 8;
+    case 9:
+    case 10:
+      return 12;
+    case 11:
+    case 12:
+      return 16;
+    case 13:
+    case 14:
+    case 15:
+      return 24;
+    case 16:
+    case 17:
+    case 18:
+      return 32;
+    default:
+      srsran_assertion_failure("Invalid CSI-RS mapping table row, i.e., {}.", csi_rs_row_id);
+      return 0;
+  }
+}

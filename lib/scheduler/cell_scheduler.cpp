@@ -44,7 +44,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger),
   prach_sch(cell_cfg),
   pucch_alloc(cell_cfg),
-  uci_alloc(pucch_alloc),
+  uci_alloc(cell_cfg, pucch_alloc),
   sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)

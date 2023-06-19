@@ -119,3 +119,39 @@ TEST(ofh_control_plane_packet_builder_impl_test, build_valid_invented_idle_packe
   ASSERT_EQ(packet, result_packet);
   ASSERT_EQ(nof_bytes, packet.size());
 }
+
+TEST(ofh_control_plane_packet_builder_impl_test, build_valid_prach_mixed_num_packet_should_pass)
+{
+  std::vector<uint8_t> packet = {0x13, 0xf4, 0x90, 0x40, 0x01, 0x03, 0x01, 0xe4, 0xc1, 0x00, 0x00, 0x00,
+                                 0x00, 0x10, 0x00, 0x0c, 0xff, 0xfc, 0x00, 0x00, 0xff, 0xf3, 0x34, 0x00};
+
+  std::vector<uint8_t> result_packet(packet.size(), 0);
+
+  cplane_section_type3_parameters packet_params;
+  packet_params.comp_params                     = {compression_type::none, 16};
+  packet_params.scs                             = cplane_scs::kHz30;
+  packet_params.time_offset                     = 484;
+  packet_params.cpLength                        = 0;
+  packet_params.fft_size                        = cplane_fft_size::fft_4096;
+  packet_params.section_fields.frequency_offset = -3276;
+
+  cplane_radio_application_header& header = packet_params.radio_hdr;
+  header.direction                        = data_direction::uplink;
+  header.filter_index                     = filter_index_type::ul_prach_preamble_short;
+  header.slot                             = slot_point(to_numerology_value(subcarrier_spacing::kHz30), 244, 19);
+  header.start_symbol                     = 0;
+
+  cplane_common_section_0_1_3_5_fields& common_section = packet_params.section_fields.common_fields;
+  common_section.section_id                            = 1;
+  common_section.prb_start                             = 0;
+  common_section.nof_prb                               = 12;
+  common_section.re_mask                               = 0xfff;
+  common_section.nof_symbols                           = 12;
+
+  cplane_message_builder_impl builder;
+
+  unsigned nof_bytes = builder.build_prach_mixed_numerology_message(result_packet, packet_params);
+
+  ASSERT_EQ(packet, result_packet);
+  ASSERT_EQ(nof_bytes, packet.size());
+}

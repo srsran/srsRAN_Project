@@ -49,8 +49,6 @@ struct csi_rs_pattern_configuration {
   csi_rs_cdm_type cdm;
   /// Frequency density configuration.
   csi_rs_freq_density_type freq_density;
-  /// Number of ports.
-  unsigned nof_ports;
 };
 
 /// Describes the CSI-RS pattern within a PRB for a given port.

@@ -39,10 +39,10 @@ enum class rrc_state { idle = 0, connected, connected_inactive };
 class rrc_ue_context_t
 {
 public:
-  rrc_ue_context_t(const ue_index_t       ue_index_,
-                   const rnti_t           c_rnti_,
-                   const rrc_cell_context cell_,
-                   const rrc_ue_cfg_t&    cfg_) :
+  rrc_ue_context_t(const ue_index_t        ue_index_,
+                   const rnti_t            c_rnti_,
+                   const rrc_cell_context& cell_,
+                   const rrc_ue_cfg_t&     cfg_) :
     ue_index(ue_index_), c_rnti(c_rnti_), cell(cell_), cfg(cfg_), up_mng(create_up_resource_manager(cfg_.up_cfg))
   {
   }
@@ -52,7 +52,7 @@ public:
   const ue_index_t                       ue_index; // UE index assigned by the DU processor
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell
-  const rrc_ue_cfg_t&                    cfg;
+  const rrc_ue_cfg_t                     cfg;
   rrc_state                              state = rrc_state::idle;
   std::unique_ptr<up_resource_manager>   up_mng;
   optional<uint32_t>                     five_g_tmsi;

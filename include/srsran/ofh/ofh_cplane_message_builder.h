@@ -55,6 +55,15 @@ public:
   /// \return Number of bytes serialized in the buffer.
   virtual unsigned build_idle_guard_period_message(span<uint8_t>                          buffer,
                                                    const cplane_section_type0_parameters& msg_params) = 0;
+
+  /// \brief Builds PRACH and mixed-numerology channel Control-Plane message into the given buffer using the given
+  /// \c parameters.
+  ///
+  /// \param[out] buffer    Buffer where the message will be built.
+  /// \param[in] msg_params Control-Plane parameters.
+  /// \return Number of bytes serialized in the buffer.
+  virtual unsigned build_prach_mixed_numerology_message(span<uint8_t>                          buffer,
+                                                        const cplane_section_type3_parameters& msg_params) = 0;
 };
 
 } // namespace ofh

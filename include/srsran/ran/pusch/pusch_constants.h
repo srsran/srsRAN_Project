@@ -40,7 +40,9 @@ static constexpr unsigned MAX_NRE_PER_RB = 156;
 /// As per TS38.214 Section 6.1.4.1 with \c mcs-Table set to \c qam256.
 static constexpr unsigned MAX_MODULATION_ORDER = 8;
 
-/// Maximum number of PUSCH transmission layers, as per TS38.211 Section 6.3.1.3.
+/// \brief Maximum number of PUSCH transmission layers.
+///
+/// As per TS38.211 Section 6.3.1.3.
 static constexpr unsigned MAX_NOF_LAYERS = 4;
 
 /// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum

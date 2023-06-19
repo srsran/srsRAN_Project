@@ -280,6 +280,21 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_ul_config_common(const du_cell_config& cell_cfg)
+{
+  const bwp_uplink_common& bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
+  if (bwp.pusch_cfg_common.has_value()) {
+    const pusch_config_common& pusch = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value();
+    CHECK_TRUE(pusch.msg3_delta_power.valid(),
+               "msg3_delta_power{} in pucch_config_common not in range [-6, 8]",
+               pusch.msg3_delta_power.to_int());
+    CHECK_TRUE(pusch.msg3_delta_power.to_int() % 2 == 0,
+               "The value set {} for msg3_delta_power must be a multiple of 2",
+               pusch.msg3_delta_power.to_int());
+  }
+  return {};
+}
+
 static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
 {
   if (not cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
@@ -317,6 +332,7 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");
   HANDLE_RETURN(is_coreset0_ss0_idx_valid(cell_cfg));
   HANDLE_RETURN(check_dl_config_common(cell_cfg));
+  HANDLE_RETURN(check_ul_config_common(cell_cfg));
   HANDLE_RETURN(check_ssb_configuration(cell_cfg));
   HANDLE_RETURN(check_tdd_ul_dl_config(cell_cfg));
   // TODO: Remaining.

@@ -25,6 +25,9 @@
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/error_handling.h"
@@ -54,7 +57,10 @@ public:
   };
 
   /// Constructs a resource spy.
-  resource_grid_writer_spy(unsigned max_ports_, unsigned max_symb_, unsigned max_prb_, std::string log_level = "none") :
+  resource_grid_writer_spy(unsigned    max_ports_ = 0,
+                           unsigned    max_symb_  = 0,
+                           unsigned    max_prb_   = 0,
+                           std::string log_level  = "none") :
     max_ports(max_ports_),
     max_symb(max_symb_),
     max_prb(max_prb_),
@@ -65,8 +71,18 @@ public:
   }
 
   // See interface for documentation.
+  unsigned get_nof_ports() const override { return max_ports; }
+
+  // See interface for documentation.
+  unsigned get_nof_subc() const override { return max_prb * NRE; }
+
+  // See interface for documentation.
+  unsigned get_nof_symbols() const override { return max_symb; }
+
+  // See interface for documentation.
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
   {
+    ++count;
     const cf_t* symbol_ptr = symbols.begin();
     for (const resource_grid_coordinate& coordinate : coordinates) {
       put(port, coordinate.symbol, coordinate.subcarrier, *(symbol_ptr++));
@@ -82,16 +98,17 @@ public:
                k_init,
                mask.size(),
                max_prb * NRE);
-    unsigned count = 0;
+    ++count;
+    unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask[k]) {
-        put(port, l, k_init + k, symbols[count]);
-        count++;
+        put(port, l, k_init + k, symbols[i_symb]);
+        i_symb++;
       }
     }
 
     // Consume buffer.
-    return symbols.last(symbols.size() - count);
+    return symbols.last(symbols.size() - i_symb);
   }
 
   span<const cf_t> put(unsigned                            port,
@@ -100,21 +117,23 @@ public:
                        const bounded_bitset<NRE * MAX_RB>& mask,
                        span<const cf_t>                    symbols) override
   {
-    unsigned count = 0;
+    ++count;
+    unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask.test(k)) {
-        put(port, l, k + k_init, symbols[count]);
-        count++;
+        put(port, l, k + k_init, symbols[i_symb]);
+        ++i_symb;
       }
     }
 
     // Consume buffer.
-    return symbols.last(symbols.size() - count);
+    return symbols.last(symbols.size() - i_symb);
   }
 
   // See interface for documentation.
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
+    ++count;
     for (unsigned i = 0; i != symbols.size(); ++i) {
       put(port, l, k_init + i, symbols[i]);
     }
@@ -175,8 +194,15 @@ public:
     }
   }
 
+  /// Get the number of times a \c put method has been called.
+  unsigned get_count() const { return count; }
+
   /// Clears any possible state.
-  void reset() { entries.clear(); }
+  void reset()
+  {
+    entries.clear();
+    count = 0;
+  }
 
 private:
   /// \brief Defines the resource grid indexing key as the tuple of the port, symbol and subcarrier indexes.
@@ -187,6 +213,9 @@ private:
 
   /// Stores the resource grid written entries.
   std::map<entry_key_t, cf_t> entries;
+
+  /// Counts the number of times a \c put method is called.
+  unsigned count = 0;
 
   /// Maximum number of ports.
   unsigned max_ports;
@@ -243,26 +272,28 @@ class resource_grid_reader_spy : public resource_grid_reader
 public:
   using expected_entry_t = resource_grid_writer_spy::expected_entry_t;
 
-  bool is_empty(unsigned port) const override { return entries.empty(); }
-  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
+  resource_grid_reader_spy(unsigned max_ports_ = 0, unsigned max_symb_ = 0, unsigned max_prb_ = 0) :
+    max_ports(max_ports_), max_symb(max_symb_), max_prb(max_prb_)
   {
-    TESTASSERT_EQ(symbols.size(), coordinates.size(), "Number of symbols and coordinates must be the equal.");
-    for (unsigned idx = 0; idx != coordinates.size(); ++idx) {
-      symbols[idx] = get(static_cast<uint8_t>(port), coordinates[idx].symbol, coordinates[idx].subcarrier);
-    }
   }
+
+  unsigned   get_nof_ports() const override { return max_ports; }
+  unsigned   get_nof_subc() const override { return max_prb * NRE; }
+  unsigned   get_nof_symbols() const override { return max_symb; }
+  bool       is_empty(unsigned port) const override { return entries.empty(); }
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
-    unsigned count = 0;
+    ++count;
+    unsigned i_symb = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask[k]) {
-        symbols[count] = get(static_cast<uint8_t>(port), l, k_init + k);
-        count++;
+        symbols[i_symb] = get(static_cast<uint8_t>(port), l, k_init + k);
+        i_symb++;
       }
     }
 
     // Consume buffer.
-    return symbols.last(symbols.size() - count);
+    return symbols.last(symbols.size() - i_symb);
   }
   span<cf_t> get(span<cf_t>                          symbols,
                  unsigned                            port,
@@ -270,6 +301,7 @@ public:
                  unsigned                            k_init,
                  const bounded_bitset<MAX_RB * NRE>& mask) const override
   {
+    ++count;
     mask.for_each(0, mask.size(), [&](unsigned i_subc) {
       symbols.front() = get(static_cast<uint8_t>(port), l, k_init + i_subc);
       symbols         = symbols.last(symbols.size() - 1);
@@ -280,6 +312,7 @@ public:
   }
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
+    ++count;
     cf_t* symbol_ptr = symbols.data();
     for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
       *(symbol_ptr++) = get(port, l, k);
@@ -300,10 +333,21 @@ public:
     entries.emplace(key, entry.value);
   }
 
+  unsigned get_count() const { return count; }
+
   /// Clears any possible state.
-  void reset() { entries.clear(); }
+  void reset()
+  {
+    entries.clear();
+    count = 0;
+  }
 
 private:
+  unsigned         max_ports;
+  unsigned         max_symb;
+  unsigned         max_prb;
+  mutable unsigned count = 0;
+
   /// \brief Defines the resource grid indexing key as the tuple of the port, symbol and subcarrier indexes.
   using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
 
@@ -327,10 +371,11 @@ private:
 };
 
 /// Describes a resource grid spy.
-class resource_grid_spy : public resource_grid
+class resource_grid_spy : public resource_grid, private resource_grid_mapper
 {
 public:
-  resource_grid_spy() : writer(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB)
+  resource_grid_spy(unsigned max_ports = 0, unsigned max_symb = 0, unsigned max_prb = 0) :
+    reader(max_ports, max_symb, max_prb), writer(max_ports, max_symb, max_prb)
   {
     // Do nothing.
   }
@@ -346,76 +391,39 @@ public:
 
   void set_empty(bool empty_) { empty = empty_; }
 
-  bool is_empty(unsigned port) const override { return empty; }
+  resource_grid_writer& get_writer() override { return writer; }
 
-  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
-  {
-    ++get_count;
-    reader.get(symbols, port, coordinates);
-  }
+  const resource_grid_reader& get_reader() const override { return reader; }
 
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
-  {
-    ++get_count;
-    return reader.get(symbols, port, l, k_init, mask);
-  }
-
-  span<cf_t> get(span<cf_t>                          symbols,
-                 unsigned                            port,
-                 unsigned                            l,
-                 unsigned                            k_init,
-                 const bounded_bitset<MAX_RB * NRE>& mask) const override
-  {
-    ++get_count;
-    return reader.get(symbols, port, l, k_init, mask);
-  }
-
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
-  {
-    ++get_count;
-    reader.get(symbols, port, l, k_init);
-  }
-
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
-  {
-    ++put_count;
-    writer.put(port, coordinates, symbols);
-  }
-
-  span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
-  {
-    ++put_count;
-    return writer.put(port, l, k_init, mask, symbols);
-  }
-
-  span<const cf_t> put(unsigned                            port,
-                       unsigned                            l,
-                       unsigned                            k_init,
-                       const bounded_bitset<NRE * MAX_RB>& mask,
-                       span<const cf_t>                    symbols) override
-  {
-    ++put_count;
-    return writer.put(port, l, k_init, mask, symbols);
-  }
-
-  void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
-  {
-    ++put_count;
-    writer.put(port, l, k_init, symbols);
-  }
   /// Returns true if the \c set_all_zero() method has been called, otherwise false.
   bool has_set_all_zero_method_been_called() const { return set_all_zero_count > 0; }
 
   /// Returns the global number of calls to any method.
-  unsigned get_total_count() const { return set_all_zero_count + put_count + get_count; }
+  unsigned get_total_count() const { return set_all_zero_count + reader.get_count() + writer.get_count(); }
 
   /// Resets all counters.
   void clear()
   {
     set_all_zero_count = 0;
-    put_count          = 0;
-    get_count          = 0;
+    reader.reset();
+    writer.reset();
+  }
+
+  resource_grid_mapper& get_mapper() override { return *this; }
+
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
+           const re_pattern_list& /* reserved */,
+           const precoding_configuration& /* precoding */) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
+  }
+
+  void map(const re_buffer_reader& /* input */,
+           const re_pattern_list& /* pattern */,
+           const precoding_configuration& /* precoding */) override
+  {
+    srsran_assertion_failure("Resource grid spy does not implement the resource grid mapper.");
   }
 
 private:
@@ -423,15 +431,13 @@ private:
   resource_grid_writer_spy writer;
   bool                     empty              = true;
   unsigned                 set_all_zero_count = 0;
-  unsigned                 put_count          = 0;
-  mutable unsigned         get_count          = 0;
 };
 
 /// \brief Describes a resource grid dummy used for testing classes that handle resource grids but do not use the
 /// interface.
 ///
 /// \note The test terminates if any component under test calls any method from the interface.
-class resource_grid_dummy : public resource_grid
+class resource_grid_dummy : public resource_grid, private resource_grid_mapper
 {
 private:
   /// Throws a assertion failure due to an overridden method call.
@@ -441,56 +447,44 @@ private:
         "Components using resource grid dummy are not allowed to call any method from the interface.");
   }
 
+  resource_grid_reader_spy reader;
+  resource_grid_writer_spy writer;
+
 public:
+  resource_grid_dummy() : reader(0, 0, 0), writer(0, 0, 0) {}
+
   unsigned set_all_zero_count = 0;
 
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
-  {
-    failure();
-  }
-  span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
-  {
-    failure();
-    return {};
-  }
-  span<const cf_t> put(unsigned                            port,
-                       unsigned                            l,
-                       unsigned                            k_init,
-                       const bounded_bitset<NRE * MAX_RB>& mask,
-                       span<const cf_t>                    symbols) override
-  {
-    failure();
-    return {};
-  }
-  void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override { failure(); }
-  bool is_empty(unsigned port) const override
-  {
-    failure();
-    return true;
-  }
-  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
-  {
-    failure();
-  }
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
-  {
-    failure();
-    return {};
-  }
-  span<cf_t> get(span<cf_t>                          symbols,
-                 unsigned                            port,
-                 unsigned                            l,
-                 unsigned                            k_init,
-                 const bounded_bitset<MAX_RB * NRE>& mask) const override
-  {
-    failure();
-    return {};
-  }
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { failure(); }
+  resource_grid_writer& get_writer() override { return writer; }
+
+  const resource_grid_reader& get_reader() const override { return reader; }
+
   void set_all_zero() override { ++set_all_zero_count; }
 
-  void clear_set_all_zero_count() { set_all_zero_count = 0; }
+  resource_grid_mapper& get_mapper() override { return *this; }
+
+  void map(const re_buffer_reader&        input /* input */,
+           const re_pattern_list&         pattern /* pattern */,
+           const re_pattern_list&         reserved /* reserved */,
+           const precoding_configuration& precoding /* precoding */) override
+  {
+    failure();
+  }
+
+  void
+  map(const re_buffer_reader& input, const re_pattern_list& pattern, const precoding_configuration& precoding) override
+  {
+    failure();
+  }
+
+  unsigned get_reader_writer_count() const { return reader.get_count() + writer.get_count(); }
+
+  void reset()
+  {
+    set_all_zero_count = 0;
+    reader.reset();
+    writer.reset();
+  }
 };
 
 } // namespace srsran

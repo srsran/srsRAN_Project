@@ -23,9 +23,13 @@
 #include "upper_phy_ssb_example.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/resource_grid_mapper.h"
+#include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/bit.h"
 #include <condition_variable>
 #include <mutex>
@@ -62,7 +66,7 @@ private:
   // Pseudo-random data and symbol buffers.
   static constexpr unsigned MAX_NRE_PER_SLOT = MAX_NSYMB_PER_SLOT * MAX_RB * NRE;
   static_bit_buffer<MAX_NRE_PER_SLOT * MODULATION_MAX_BITS_PER_SYMBOL> data;
-  static_vector<cf_t, MAX_NRE_PER_SLOT>                                data_symbols;
+  static_re_buffer<1, MAX_NRE_PER_SLOT>                                data_symbols;
 
 public:
   upper_phy_example_sw(srslog::basic_logger&                 logger_,
@@ -189,17 +193,17 @@ public:
         pdu.bch_payload       = {};
         pdu.ports             = {0};
 
-        ssb->process(rg, pdu);
+        ssb->process(rg.get_writer(), pdu);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);
       }
     }
 
     // Fill the empty resource grids with pseudo-random data.
-    if (rg.is_empty(0) && enable_random_data) {
+    if (rg.get_reader().is_empty(0) && enable_random_data) {
       unsigned mod_order = get_bits_per_symbol(data_modulation);
 
       unsigned nbits = MAX_NSYMB_PER_SLOT * nof_subcs * mod_order;
-      data_symbols.resize(MAX_NSYMB_PER_SLOT * nof_subcs);
+      data_symbols.resize(1, MAX_NSYMB_PER_SLOT * nof_subcs);
 
       // Generate the pseudo-random data bits.
       data.resize(nbits);
@@ -209,20 +213,20 @@ public:
       data.insert(rgen() & mask_lsb_ones<unsigned>(nbits % 8), (nbits / 8) * 8, nbits % 8);
 
       // Modulate the data into symbols.
-      data_modulator->modulate(data_symbols, data, data_modulation);
+      data_modulator->modulate(data_symbols.get_slice(0), data, data_modulation);
 
-      span<cf_t> data_span(data_symbols);
-      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-        unsigned offset = 0;
-        for (unsigned i_symbol = 0; i_symbol != nsymb_per_slot; ++i_symbol) {
-          // Write data into the resource grid.
-          rg.put(i_port, i_symbol, 0, data_span.subspan(offset, nof_subcs));
-          offset += nof_subcs;
-        }
-      }
+      // Precoding configuration for data. It transmits the data REs over all ports.
+      precoding_configuration precoding_config = make_wideband_one_layer_all_ports(nof_ports);
+
+      // Contiguous allocation pattern in time and frequency.
+      re_pattern grid_allocation(0, nof_subcs / NRE, 1, ~re_prb_mask(), ~symbol_slot_mask());
+
+      // Map the data symbols to the grid.
+      resource_grid_mapper& mapper = rg.get_mapper();
+      mapper.map(data_symbols, grid_allocation, precoding_config);
     }
 
-    gateway->send(rg_context, rg);
+    gateway->send(rg_context, rg.get_reader());
 
     // Raise TTI boundary and notify.
     tti_boundary = true;
@@ -303,6 +307,12 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
   std::shared_ptr<sss_processor_factory> sss_factory = create_sss_processor_factory_sw();
   ASSERT_FACTORY(sss_factory);
 
+  std::shared_ptr<channel_precoder_factory> precoder_factory = create_channel_precoder_factory("auto");
+  ASSERT_FACTORY(precoder_factory);
+
+  std::shared_ptr<resource_grid_factory> rg_factory = create_resource_grid_factory(precoder_factory);
+  ASSERT_FACTORY(rg_factory);
+
   ssb_processor_factory_sw_configuration ssb_factory_config;
   ssb_factory_config.encoder_factory                 = pbch_enc_factory;
   ssb_factory_config.modulator_factory               = pbch_mod_factory;
@@ -332,9 +342,9 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
 
     for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
       for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
-        dl_grids.push_back(create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, nof_subcs));
+        dl_grids.push_back(rg_factory->create(config.max_nof_ports, MAX_NSYMB_PER_SLOT, nof_subcs));
         ASSERT_FACTORY(dl_grids.back());
-        ul_grids.push_back(create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, nof_subcs));
+        ul_grids.push_back(rg_factory->create(config.max_nof_ports, MAX_NSYMB_PER_SLOT, nof_subcs));
         ASSERT_FACTORY(ul_grids.back());
       }
     }
@@ -343,7 +353,7 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
     dl_rg_pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(dl_grids));
     ASSERT_FACTORY(dl_rg_pool);
 
-    // Create DL resource grid pool.
+    // Create UL resource grid pool.
     ul_rg_pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(ul_grids));
     ASSERT_FACTORY(ul_rg_pool);
   }

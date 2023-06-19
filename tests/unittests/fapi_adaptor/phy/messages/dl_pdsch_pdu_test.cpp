@@ -22,6 +22,7 @@
 
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/support/test_utils.h"
 #include <random>
 
@@ -143,6 +144,9 @@ static void pdsch_conversion_test()
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
+  auto                               pm_tools = generate_precoding_matrix_tables(1);
+  const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
+
   for (auto cyclic_p : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto ref_point : {fapi::pdsch_ref_point_type::point_a, fapi::pdsch_ref_point_type::subcarrier_0}) {
       for (auto config_type : {dmrs_config_type::type1, dmrs_config_type::type2}) {
@@ -249,9 +253,11 @@ static void pdsch_conversion_test()
                         builder.set_maintenance_v3_bwp_parameters(trasn_type, coreset_start, initial_bwp_size);
                         builder.set_maintenance_v3_codeword_parameters(ldpc_graph, tb_size_lbrm_bytes, 0, 0);
                         builder.set_maintenance_v3_tx_power_info_parameters(dmrs_profile_sss, data_profile_sss);
+                        builder.get_tx_precoding_and_beamforming_pdu_builder().add_prg(0, {}).set_basic_parameters(51,
+                                                                                                                   0);
 
                         pdsch_processor::pdu_t proc_pdu;
-                        convert_pdsch_fapi_to_phy(proc_pdu, pdu, sfn, slot, {});
+                        convert_pdsch_fapi_to_phy(proc_pdu, pdu, sfn, slot, {}, pm_repo);
 
                         // Test basic parameters.
                         TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());

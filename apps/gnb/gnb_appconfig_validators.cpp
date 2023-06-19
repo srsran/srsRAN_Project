@@ -65,15 +65,47 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_appconfig& config)
   return true;
 }
 
-/// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise false.
-static bool validate_ru_ofh_appconfig(const ru_ofh_appconfig& config)
+/// Validates that the given Radio Unit ports are not duplicated. Returns true on success, otherwise false.
+static bool validate_ru_duplicated_ports(const std::vector<unsigned>& ru_ports)
 {
-  for (const auto& cell : config.cells) {
-    std::vector<unsigned> ports = cell.ru_dl_port_id;
-    std::sort(ports.begin(), ports.end());
+  std::vector<unsigned> ports = ru_ports;
+  std::sort(ports.begin(), ports.end());
 
-    if (std::unique(ports.begin(), ports.end()) != ports.end()) {
+  return std::unique(ports.begin(), ports.end()) == ports.end();
+}
+
+/// Validates the given Open Fronthaul Radio Unit application configuration. Returns true on success, otherwise
+/// false.
+static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
+{
+  const ru_ofh_appconfig& ofh_cfg = variant_get<ru_ofh_appconfig>(config.ru_cfg);
+
+  for (unsigned i = 0, e = config.cells_cfg.size(); i != e; ++i) {
+    const ru_ofh_cell_appconfig& ofh_cell = ofh_cfg.cells[i];
+    const base_cell_appconfig&   cell_cfg = config.cells_cfg[i].cell;
+
+    if (cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of uplink ports={} must match the number of reception antennas={}\n",
+                 cell_cfg.nof_antennas_ul,
+                 ofh_cell.ru_ul_port_id.size());
+
+      return false;
+    }
+
+    if (!ofh_cfg.is_downlink_broadcast_enabled && cell_cfg.nof_antennas_ul != ofh_cell.ru_ul_port_id.size()) {
+      fmt::print("RU number of downlink ports={} must match the number of transmission antennas={}\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
       fmt::print("Detected duplicated downlink port identifiers\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+      fmt::print("Detected duplicated uplink port identifiers\n");
 
       return false;
     }
@@ -285,6 +317,13 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
+  if (config.pdsch_cfg.nof_ports.has_value() and config.nof_antennas_dl < *config.pdsch_cfg.nof_ports) {
+    fmt::print("Number of PDSCH ports {} cannot be higher than the number of DL antennas {}\n",
+               *config.pdsch_cfg.nof_ports,
+               config.nof_antennas_dl);
+    return false;
+  }
+
   return true;
 }
 
@@ -463,6 +502,63 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
   return valid;
 }
 
+static bool validate_test_mode_appconfig(const gnb_appconfig& config)
+{
+  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+    fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
+    return false;
+  }
+  unsigned nof_ports = config.common_cell_cfg.pdsch_cfg.nof_ports.has_value()
+                           ? *config.common_cell_cfg.pdsch_cfg.nof_ports
+                           : config.common_cell_cfg.nof_antennas_dl;
+  if (config.test_mode_cfg.test_ue.ri > nof_ports) {
+    fmt::print("For test mode, RI cannot be higher than the number of DL antenna ports ({} > {})\n",
+               config.test_mode_cfg.test_ue.ri,
+               config.common_cell_cfg.pdsch_cfg.nof_ports);
+    return false;
+  }
+  return true;
+}
+
+static bool validate_ntn_config(const ntn_config ntn_cfg)
+{
+  bool valid = true;
+
+  if (ntn_cfg.cell_specific_koffset > 1023) {
+    fmt::print("Cell specific koffset must be in range [0, 1023].\n");
+    valid = false;
+  }
+  if (ntn_cfg.distance_threshold > 1000) {
+    fmt::print("Distance threshold must be in range [0, 1000].\n");
+    valid = false;
+  }
+  if (ntn_cfg.epoch_time.sfn > 65535) {
+    fmt::print("Epoch time SFN must be in range [0, 65535].\n");
+    valid = false;
+  }
+  if (ntn_cfg.epoch_time.subframe_number > 9) {
+    fmt::print("Epoch time subframe number must be in range [0, 9].\n");
+    valid = false;
+  }
+  if (ntn_cfg.k_mac > 512) {
+    fmt::print("K_MAC must be in range [0, 512].\n");
+    valid = false;
+  }
+  if (ntn_cfg.ta_info.ta_common > 66485757) {
+    fmt::print("TA common must be in range [0, 66485757].\n");
+    valid = false;
+  }
+  if (std::abs(ntn_cfg.ta_info.ta_common_drift) > 257303) {
+    fmt::print("TA common drift must be in range [-257303, 257303].\n");
+    valid = false;
+  }
+  if (ntn_cfg.ta_info.ta_common_drift_variant > 28949) {
+    fmt::print("TA common drift variant must be in range [0, 28949].\n");
+    valid = false;
+  }
+  return valid;
+}
+
 bool srsran::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -483,6 +579,12 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
 
   if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
     return false;
+  }
+
+  if (config.ntn_cfg.has_value()) {
+    if (!validate_ntn_config(config.ntn_cfg.value())) {
+      return false;
+    }
   }
 
   if (variant_holds_alternative<ru_sdr_appconfig>(config.ru_cfg)) {
@@ -519,13 +621,12 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_ofh_appconfig(ofh_cfg)) {
+    if (!validate_ru_ofh_appconfig(config)) {
       return false;
     }
   }
 
-  if (config.gnb_id_bit_length < 22 or config.gnb_id_bit_length > 32) {
-    fmt::print("gNB id bit length must be within the range [22,..,32].\n");
+  if (!validate_test_mode_appconfig(config)) {
     return false;
   }
 

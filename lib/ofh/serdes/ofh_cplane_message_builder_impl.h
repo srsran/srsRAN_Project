@@ -38,6 +38,10 @@ public:
   // See interface for documentation.
   unsigned build_idle_guard_period_message(span<uint8_t>                          buffer,
                                            const cplane_section_type0_parameters& msg_params) override;
+
+  // See interface for documentation.
+  unsigned build_prach_mixed_numerology_message(span<uint8_t>                          buffer,
+                                                const cplane_section_type3_parameters& msg_params) override;
 };
 
 } // namespace ofh

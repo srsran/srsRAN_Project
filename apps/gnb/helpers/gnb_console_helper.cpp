@@ -149,9 +149,8 @@ unsigned gnb_console_helper::derive_ssb_arfcn(const du_cell_config& cell)
   unsigned nof_crbs = band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz),
                                                      cell.scs_common,
                                                      band_helper::get_freq_range(cell.dl_carrier.band));
-  uint8_t  ss0_idx  = 0;
   optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-      cell.dl_carrier.arfcn, cell.dl_carrier.band, nof_crbs, cell.scs_common, cell.scs_common, ss0_idx);
+      cell.dl_carrier.arfcn, cell.dl_carrier.band, nof_crbs, cell.scs_common, cell.scs_common, cell.searchspace0_idx);
 
   srsran_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly");
   return ssb_freq_loc->ssb_arfcn;

@@ -26,6 +26,7 @@
 #include "pdsch_modulator_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/compare.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -146,10 +147,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
     pdu.codewords.back().modulation = modulations[dist_mod(rgen)];
     pdu.codewords.back().rv         = dist_rv(rgen);
   }
-  pdu.n_id = 0;
-  for (unsigned layer = 0; layer != nof_layers; ++layer) {
-    pdu.ports.emplace_back(layer);
-  }
+  pdu.n_id             = 0;
+  pdu.precoding        = make_wideband_identity(nof_layers);
   pdu.ref_point        = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
   pdu.dmrs_symbol_mask = symbol_slot_mask(nof_symbols_slot);
   while (pdu.dmrs_symbol_mask.none()) {
@@ -203,7 +202,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
   }
 
   // Use resource grid dummy, the PDSCH processor must not call any method.
-  resource_grid_dummy rg_dummy;
+  resource_grid_dummy   rg_dummy;
+  resource_grid_mapper& mapper_dummy = rg_dummy.get_mapper();
 
   // Reset spies.
   encoder_spy->reset();
@@ -211,7 +211,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
   dmrs_spy->reset();
 
   // Process PDU.
-  pdsch->process(rg_dummy, data, pdu);
+  pdsch->process(mapper_dummy, data, pdu);
 
   unsigned nof_layers_cw0 = nof_layers / nof_codewords;
   unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
@@ -227,7 +227,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
       ASSERT_EQ(entry.config.mod, pdu.codewords[codeword].modulation);
       ASSERT_EQ(entry.config.Nref, pdu.tbs_lbrm_bytes * 8);
       ASSERT_EQ(entry.config.nof_layers, codeword == 0 ? nof_layers_cw0 : nof_layers_cw1);
-      ASSERT_EQ(entry.config.nof_ch_symbols, Nre);
+      ASSERT_EQ(entry.config.nof_ch_symbols, Nre * entry.config.nof_layers);
       ASSERT_EQ(span<const uint8_t>(entry.transport_block), span<const uint8_t>(data[codeword]));
     }
   }
@@ -250,8 +250,8 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_EQ(entry.config.n_id, pdu.n_id);
     ASSERT_NEAR(entry.config.scaling, convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.reserved, pdu.reserved);
-    ASSERT_EQ(entry.config.ports, pdu.ports);
-    ASSERT_EQ(entry.grid_ptr, &rg_dummy);
+    ASSERT_EQ(entry.config.precoding, pdu.precoding);
+    ASSERT_EQ(entry.mapper, &mapper_dummy);
     for (unsigned codeword = 0; codeword != nof_codewords; ++codeword) {
       span<const uint8_t> codeword_encoder   = encoder_spy->get_entries()[codeword].codeword;
       const bit_buffer    codeword_modulator = entry.codewords[codeword];
@@ -275,14 +275,14 @@ TEST_P(PdschProcessorFixture, UnitTest)
     ASSERT_NEAR(entry.config.amplitude, convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB), amplitude_max_error);
     ASSERT_EQ(entry.config.symbols_mask, pdu.dmrs_symbol_mask);
     ASSERT_EQ(entry.config.rb_mask, rb_mask);
-    ASSERT_EQ(span<const uint8_t>(entry.config.ports), span<const uint8_t>(pdu.ports));
-    ASSERT_EQ(entry.grid, &rg_dummy);
+    ASSERT_EQ(entry.config.precoding, pdu.precoding);
+    ASSERT_EQ(entry.mapper, &mapper_dummy);
   }
 }
 
 INSTANTIATE_TEST_SUITE_P(PdschProcessorUnittest,
                          PdschProcessorFixture,
-                         testing::Combine(testing::Values(1),
+                         testing::Combine(testing::Values(1, 2),
                                           testing::Values(cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED),
                                           testing::Values(dmrs_type::options::TYPE1)));
 

@@ -33,7 +33,7 @@ class downlink_processor_null_executor : public downlink_processor
 {
 public:
   downlink_processor_null_executor(upper_phy_rg_gateway& gateway_, srslog::basic_logger& logger_) :
-    gateway(gateway_), logger(logger_)
+    rg_reader_empty(0, 0, 0), gateway(gateway_), logger(logger_)
   {
   }
 

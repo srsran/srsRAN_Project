@@ -63,6 +63,8 @@ struct phy_fapi_adaptor_impl_config {
   const fapi::prach_config* prach_cfg;
   /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config* carrier_cfg;
+  /// Precoding matrix repository.
+  std::unique_ptr<precoding_matrix_repository> pm_repo;
 };
 
 /// \brief PHY&ndash;FAPI bidirectional adaptor implementation.
@@ -70,7 +72,7 @@ class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
   /// Constructor for the PHY&ndash;FAPI bidirectional adaptor.
-  explicit phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config);
+  explicit phy_fapi_adaptor_impl(phy_fapi_adaptor_impl_config&& config);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;

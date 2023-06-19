@@ -35,10 +35,10 @@ static constexpr unsigned MIN_PRG_SIZE = 4;
 static constexpr unsigned MAX_NOF_PRG = divide_ceil(MAX_NOF_PRBS, MIN_PRG_SIZE);
 
 /// Maximum number of layers supported by the precoder.
-static constexpr unsigned MAX_NOF_LAYERS = 8;
+static constexpr unsigned MAX_NOF_LAYERS = 4;
 
 /// Maximum number of ports supported by the precoder.
-static constexpr unsigned MAX_NOF_PORTS = 16;
+static constexpr unsigned MAX_NOF_PORTS = 4;
 
 } // namespace precoding_constants
 

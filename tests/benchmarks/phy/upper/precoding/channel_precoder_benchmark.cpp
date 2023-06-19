@@ -21,7 +21,7 @@
  */
 
 #include "srsran/phy/constants.h"
-#include "srsran/phy/upper/precoding/precoding_factories.h"
+#include "srsran/phy/generic_functions/precoding/precoding_factories.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/srsran_test.h"
 #include <getopt.h>

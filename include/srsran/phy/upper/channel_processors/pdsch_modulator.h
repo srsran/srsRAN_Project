@@ -24,14 +24,16 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/resource_grid.h"
+#include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/phy/upper/re_pattern.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {
+
+class resource_grid_mapper;
 
 /// \brief Describes a PDSCH modulator interface.
 ///
@@ -42,12 +44,6 @@ namespace srsran {
 class pdsch_modulator
 {
 public:
-  /// Defines the maximum number of codewords per PDSCH transmission.
-  static constexpr unsigned MAX_NOF_CODEWORDS = 2;
-
-  /// Defines the maximum number of RE per codeword in a PDSCH transmission.
-  static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS / 2;
-
   /// Describes the necessary parameters to modulate a PDSCH transmission.
   struct config_t {
     /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.
@@ -78,10 +74,8 @@ public:
     float scaling;
     /// Reserved RE pattern where PDSCH is not mapped.
     re_pattern_list reserved;
-    /// Precoding matrix indicator.
-    unsigned pmi;
-    /// Port indexes the PDSCH transmission is mapped onto.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Precoding information for the PDSCH transmission.
+    precoding_configuration precoding;
   };
 
   /// Default destructor.
@@ -89,13 +83,13 @@ public:
 
   /// \brief Modulates a PDSCH codeword according to TS38.211 section 7.3.1 Physical downlink shared channel.
   ///
-  /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] codewords Provides the encoded codewords to modulate.
-  /// \param[in] config Provides the configuration reference.
+  /// \param[out] mapper Resource grid mapping interface.
+  /// \param[in] codewords The encoded codewords to modulate.
+  /// \param[in] config configuration parameters required for PDSCH modulation.
   /// \note The number of codewords shall be consistent with the number of layers.
   /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
   /// elements.
-  virtual void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) = 0;
+  virtual void modulate(resource_grid_mapper& mapper, span<const bit_buffer> codewords, const config_t& config) = 0;
 };
 
 } // namespace srsran

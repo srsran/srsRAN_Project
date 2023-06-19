@@ -20,10 +20,12 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_modulator_test_data.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
@@ -62,11 +64,12 @@ int main()
     srsvec::bit_pack(packed_data, data);
 
     // Prepare codewords.
-    static_vector<bit_buffer, pdsch_modulator::MAX_NOF_CODEWORDS> codewords;
+    static_vector<bit_buffer, pdsch_constants::MAX_NOF_CODEWORDS> codewords;
     codewords.emplace_back(packed_data);
 
     // Modulate.
-    pdsch->modulate(grid, codewords, test_case.config);
+    resource_grid_mapper_spy mapper(grid);
+    pdsch->modulate(mapper, codewords, test_case.config);
 
     // Read resource grid data.
     std::vector<resource_grid_writer_spy::expected_entry_t> rg_entries = test_case.symbols.read();

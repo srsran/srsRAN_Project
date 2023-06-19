@@ -107,40 +107,99 @@ void process_successful_pdu_resource_setup_mod_outcome(
                                     pdu_session_resource_setup_list,
     const pdu_session_setup_result& result)
 {
-  e1ap_pdu_session_resource_setup_modification_item res_setup_item;
-  res_setup_item.pdu_session_id    = result.pdu_session_id;
-  res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
-  for (const auto& drb_setup_item : result.drb_setup_results) {
-    if (drb_setup_item.success) {
-      e1ap_drb_setup_item_ng_ran res_drb_setup_item;
-      res_drb_setup_item.drb_id = drb_setup_item.drb_id;
+  if (result.success) {
+    e1ap_pdu_session_resource_setup_modification_item res_setup_item;
+    res_setup_item.pdu_session_id    = result.pdu_session_id;
+    res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
+    for (const auto& drb_setup_item : result.drb_setup_results) {
+      if (drb_setup_item.success) {
+        e1ap_drb_setup_item_ng_ran res_drb_setup_item;
+        res_drb_setup_item.drb_id = drb_setup_item.drb_id;
 
-      e1ap_up_params_item up_param_item;
-      up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
-      res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
+        e1ap_up_params_item up_param_item;
+        up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
+        res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
 
-      for (const auto& flow_item : drb_setup_item.qos_flow_results) {
-        if (flow_item.success) {
-          e1ap_qos_flow_item res_flow_setup_item;
-          res_flow_setup_item.qos_flow_id = flow_item.qos_flow_id;
-          res_drb_setup_item.flow_setup_list.emplace(flow_item.qos_flow_id, res_flow_setup_item);
-        } else {
-          e1ap_qos_flow_failed_item res_flow_failed_item;
-          res_flow_failed_item.qos_flow_id = flow_item.qos_flow_id;
-          res_flow_failed_item.cause       = flow_item.cause;
-          res_drb_setup_item.flow_failed_list.emplace(flow_item.qos_flow_id, res_flow_failed_item);
+        for (const auto& flow_item : drb_setup_item.qos_flow_results) {
+          if (flow_item.success) {
+            e1ap_qos_flow_item res_flow_setup_item;
+            res_flow_setup_item.qos_flow_id = flow_item.qos_flow_id;
+            res_drb_setup_item.flow_setup_list.emplace(flow_item.qos_flow_id, res_flow_setup_item);
+          } else {
+            e1ap_qos_flow_failed_item res_flow_failed_item;
+            res_flow_failed_item.qos_flow_id = flow_item.qos_flow_id;
+            res_flow_failed_item.cause       = flow_item.cause;
+            res_drb_setup_item.flow_failed_list.emplace(flow_item.qos_flow_id, res_flow_failed_item);
+          }
         }
-      }
-      res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, res_drb_setup_item);
-    } else {
-      e1ap_drb_failed_item_ng_ran asn1_drb_failed_item;
-      asn1_drb_failed_item.drb_id = drb_setup_item.drb_id;
-      asn1_drb_failed_item.cause  = drb_setup_item.cause;
+        res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, res_drb_setup_item);
+      } else {
+        e1ap_drb_failed_item_ng_ran asn1_drb_failed_item;
+        asn1_drb_failed_item.drb_id = drb_setup_item.drb_id;
+        asn1_drb_failed_item.cause  = drb_setup_item.cause;
 
-      res_setup_item.drb_failed_list_ng_ran.emplace(drb_setup_item.drb_id, asn1_drb_failed_item);
+        res_setup_item.drb_failed_list_ng_ran.emplace(drb_setup_item.drb_id, asn1_drb_failed_item);
+      }
     }
+    pdu_session_resource_setup_list.emplace(result.pdu_session_id, res_setup_item);
   }
-  pdu_session_resource_setup_list.emplace(result.pdu_session_id, res_setup_item);
+}
+
+void process_successful_pdu_resource_modification_outcome(
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& pdu_session_resource_modified_list,
+    slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>&
+                                           pdu_session_resource_failed_to_modify_list,
+    const pdu_session_modification_result& result,
+    const srslog::basic_logger&            logger)
+{
+  if (result.success) {
+    e1ap_pdu_session_resource_modified_item modified_item;
+    modified_item.pdu_session_id = result.pdu_session_id;
+
+    for (const auto& drb_setup_item : result.drb_setup_results) {
+      logger.debug("Adding DRB setup result item for ID {}", drb_setup_item.drb_id);
+      if (drb_setup_item.success) {
+        e1ap_drb_setup_item_ng_ran res_drb_setup_item;
+        res_drb_setup_item.drb_id = drb_setup_item.drb_id;
+
+        e1ap_up_params_item up_param_item;
+        up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
+        res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
+
+        for (const auto& flow_item : drb_setup_item.qos_flow_results) {
+          if (flow_item.success) {
+            e1ap_qos_flow_item res_flow_setup_item;
+            res_flow_setup_item.qos_flow_id = flow_item.qos_flow_id;
+            res_drb_setup_item.flow_setup_list.emplace(flow_item.qos_flow_id, res_flow_setup_item);
+          } else {
+            e1ap_qos_flow_failed_item res_flow_failed_item;
+            res_flow_failed_item.qos_flow_id = flow_item.qos_flow_id;
+            res_flow_failed_item.cause       = flow_item.cause;
+            res_drb_setup_item.flow_failed_list.emplace(flow_item.qos_flow_id, res_flow_failed_item);
+          }
+        }
+        modified_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, res_drb_setup_item);
+      } else {
+        e1ap_drb_failed_item_ng_ran asn1_drb_failed_item;
+        asn1_drb_failed_item.drb_id = drb_setup_item.drb_id;
+        asn1_drb_failed_item.cause  = drb_setup_item.cause;
+
+        modified_item.drb_failed_list_ng_ran.emplace(drb_setup_item.drb_id, asn1_drb_failed_item);
+      }
+    }
+    for (const auto& drb_modified_item : result.drb_modification_results) {
+      e1ap_drb_modified_item_ng_ran e1ap_mod_item;
+      e1ap_mod_item.drb_id = drb_modified_item.drb_id;
+      modified_item.drb_modified_list_ng_ran.emplace(e1ap_mod_item.drb_id, e1ap_mod_item);
+    }
+
+    pdu_session_resource_modified_list.emplace(modified_item.pdu_session_id, modified_item);
+  } else {
+    e1ap_pdu_session_resource_failed_item failed_item;
+    failed_item.pdu_session_id = result.pdu_session_id;
+    failed_item.cause          = cause_t::radio_network;
+    pdu_session_resource_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
+  }
 }
 
 e1ap_bearer_context_setup_response
@@ -187,32 +246,37 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
 e1ap_bearer_context_modification_response
 cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
 {
-  e1ap_bearer_context_modification_response response = {};
-  response.ue_index                                  = INVALID_UE_INDEX;
-  response.success                                   = false;
-
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
-    return response;
+    return {};
   }
+
+  e1ap_bearer_context_modification_response response = {};
+  response.ue_index                                  = ue_ctxt->get_index();
+  response.success                                   = true;
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified
     for (const auto& pdu_session_item :
          msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
       logger.debug("Setup/Modification of PDU session id {}", pdu_session_item.pdu_session_id);
-      pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session_item);
-      if (result.success) {
-        process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
-      }
+      pdu_session_setup_result session_result = ue_ctxt->setup_pdu_session(pdu_session_item);
+      process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
+      response.success &= session_result.success; // Update final result.
     }
 
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
-      pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
-      // TODO: handle failure case
+      pdu_session_modification_result session_result = ue_ctxt->modify_pdu_session(pdu_session_item);
+      process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
+                                                           response.pdu_session_resource_failed_to_modify_list,
+                                                           session_result,
+                                                           logger);
+      logger.debug("Modification {}", session_result.success ? "successful" : "failed");
+
+      response.success &= session_result.success; // Update final result.
     }
 
     // Traverse list of PDU sessions to be removed.
@@ -225,7 +289,6 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   }
 
   // 3. Create response
-  response.ue_index = ue_ctxt->get_index();
 
   response.success = true;
 

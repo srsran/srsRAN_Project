@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../support/resource_grid_test_doubles.h"
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "nzp_csi_rs_generator_test_data.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
@@ -80,12 +80,13 @@ TEST_P(NzpCsiRsGeneratorFixture, Vector)
 
   // Create resource grid.
   resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, test_case.config.start_rb + test_case.config.nof_rb);
+  resource_grid_mapper_spy mapper(grid);
 
   // The configuration must be valid.
   ASSERT_TRUE(validator->is_valid(test_case.config));
 
   // Map NZP-CSI-RS using the test case arguments.
-  generator->map(grid, test_case.config);
+  generator->map(mapper, test_case.config);
 
   // Load output golden data.
   const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

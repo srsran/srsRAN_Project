@@ -62,6 +62,7 @@ public:
 
   du_ue& create_ue(du_ue_index_t ue_index);
 
+  /// \brief Run DU UE configuration procedure to completion.
   f1ap_ue_context_update_response configure_ue(const f1ap_ue_context_update_request& req);
 
   ue_manager_dummy ue_mng;

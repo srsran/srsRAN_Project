@@ -24,6 +24,7 @@
 
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include <mutex>
 
@@ -65,6 +66,8 @@ struct fapi_to_phy_translator_config {
   const fapi::prach_config* prach_cfg;
   /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
   const fapi::carrier_config* carrier_cfg;
+  /// Precoding matrix repository.
+  std::unique_ptr<precoding_matrix_repository> pm_repo;
 };
 
 /// \brief FAPI-to-PHY message translator.
@@ -121,8 +124,9 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  explicit fapi_to_phy_translator(const fapi_to_phy_translator_config& config, srslog::basic_logger& logger_) :
+  explicit fapi_to_phy_translator(fapi_to_phy_translator_config&& config, srslog::basic_logger& logger_) :
     sector_id(config.sector_id),
+    pm_repo(std::move(config.pm_repo)),
     dl_processor_pool(*config.dl_processor_pool),
     dl_rg_pool(*config.dl_rg_pool),
     ul_request_processor(*config.ul_request_processor),
@@ -136,6 +140,7 @@ public:
     carrier_cfg(*config.carrier_cfg),
     logger(logger_)
   {
+    srsran_assert(pm_repo, "Invalid precoding matrix repository");
   }
 
   // See interface for documentation.
@@ -175,6 +180,8 @@ private:
 private:
   /// Sector identifier.
   const unsigned sector_id;
+  /// Precoding matrix repository.
+  std::unique_ptr<precoding_matrix_repository> pm_repo;
   /// Downlink processor pool.
   downlink_processor_pool& dl_processor_pool;
   /// Downlink resource grid pool.

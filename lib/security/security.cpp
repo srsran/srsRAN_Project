@@ -84,17 +84,17 @@ void security_context::generate_as_keys()
   // Generate K_up_enc and K_up_int
   security::generate_k_up(as_keys.k_up_enc, as_keys.k_up_int, k, sel_algos.cipher_algo, sel_algos.integ_algo);
 
-  logger.debug("K_gNB {}", security::sec_as_key_to_string(k));
-  logger.debug("RRC Integrity Key {}", security::sec_as_key_to_string(as_keys.k_rrc_int));
-  logger.debug("RRC Encryption Key {}", security::sec_as_key_to_string(as_keys.k_rrc_enc));
-  logger.debug("UP Encryption Key {}", security::sec_as_key_to_string(as_keys.k_up_enc));
-  logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(as_keys.k_up_int));
+  logger.debug(k.data(), k.size(), "K_gNB");
+  logger.debug(as_keys.k_rrc_int.data(), as_keys.k_rrc_int.size(), "RRC Integrity Key");
+  logger.debug(as_keys.k_rrc_enc.data(), as_keys.k_rrc_enc.size(), "RRC Encryption Key");
+  logger.debug(as_keys.k_up_int.data(), as_keys.k_up_int.size(), "UP Integrity Key");
+  logger.debug(as_keys.k_up_enc.data(), as_keys.k_up_enc.size(), "UP Encryption Key");
 }
 
 void security_context::horizontal_key_derivation(pci_t target_pci, unsigned target_ssb_arfcn)
 {
   logger.info("Regenerating KgNB with PCI={}, SSB-ARFCN={}", target_pci, target_ssb_arfcn);
-  logger.info("Old K_gNB (k_gnb) {}", security::sec_as_key_to_string(k));
+  logger.info(k.data(), k.size(), "Old K_gNB (k_gnb)");
 
   // Generate K_NG-RAN*
   sec_key k_ng_ran_star;

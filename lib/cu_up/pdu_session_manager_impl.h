@@ -22,12 +22,14 @@
 
 #pragma once
 
+#include "pdu_session.h"
 #include "pdu_session_manager.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -55,6 +57,9 @@ public:
 private:
   uint32_t allocate_local_teid(pdu_session_id_t pdu_session_id);
   uint32_t allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id);
+
+  drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
+                                            const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
   ue_index_t                                               ue_index;
   network_interface_config&                                net_config;

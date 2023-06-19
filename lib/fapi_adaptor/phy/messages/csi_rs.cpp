@@ -21,7 +21,9 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/csi_rs.h"
+#include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
 #include "srsran/ran/csi_rs/frequency_allocation_type.h"
+#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
@@ -66,9 +68,9 @@ void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::conf
   proc_pdu.scrambling_id = fapi_pdu.scramb_id;
 
   proc_pdu.amplitude = translate_amplitude(fapi_pdu.power_control_offset_ss_profile_nr);
-  // Disable precoding.
-  proc_pdu.pmi   = 0;
-  proc_pdu.ports = {0};
+
+  unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(fapi_pdu.row);
+  proc_pdu.precoding = make_wideband_identity(nof_ports);
 }
 
 void srsran::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&            pattern,
@@ -87,7 +89,6 @@ void srsran::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&     
   config.symbol_l1    = fapi_pdu.symb_L1;
   config.cdm          = fapi_pdu.cdm_type;
   config.freq_density = fapi_pdu.freq_density;
-  config.nof_ports    = 1;
 
   // Get the CSI-RS pattern.
   pattern = get_csi_rs_pattern(config);

@@ -46,7 +46,7 @@ public:
   void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) override;
 
 private:
-  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc_data;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
 };

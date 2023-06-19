@@ -30,7 +30,7 @@ using namespace ofh;
 /// Number of bytes used by 1 packed resource block with IQ samples compressed to 9 bits.
 static constexpr unsigned BYTES_PER_PRB_9BIT_COMPRESSION = 27;
 
-bool mm256::iq_width_packing_supported(unsigned int iq_width)
+bool mm256::iq_width_packing_supported(unsigned iq_width)
 {
   if (iq_width == 9) {
     return true;
@@ -166,7 +166,7 @@ static void avx2_pack_prbs_9b_big_endian(span<compressed_prb> c_prbs, __m256i r0
   c_prbs[1].set_stored_size(BYTES_PER_PRB_9BIT_COMPRESSION);
 }
 
-void mm256::pack_prbs_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2, unsigned int iq_width)
+void mm256::pack_prbs_big_endian(span<compressed_prb> c_prbs, __m256i r0, __m256i r1, __m256i r2, unsigned iq_width)
 {
   switch (iq_width) {
     case 9:
@@ -232,9 +232,7 @@ static void unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const uint8_t>
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(unpacked_iq_data.subspan(16, 8).data()), unpacked_data_1_epi16);
 }
 
-void mm256::unpack_prb_big_endian(span<int16_t>       unpacked_iq_data,
-                                  span<const uint8_t> packed_data,
-                                  unsigned int        iq_width)
+void mm256::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
 {
   switch (iq_width) {
     case 9:

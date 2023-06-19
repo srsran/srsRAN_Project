@@ -45,6 +45,8 @@ void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("\"{}\" initialized.", name());
+
   while (true) {
     transaction = ev_mng.transactions.create_transaction();
 
@@ -133,15 +135,20 @@ cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
 
     fill_e1ap_cu_cp_e1_setup_response(res, cu_cp_e1_setup_outcome.value().value.gnb_cu_cp_e1_setup_resp());
 
+    logger.debug("\"{}\" finalized.", name());
   } else if (cu_cp_e1_setup_outcome.has_value() or
              cu_cp_e1_setup_outcome.error().value.type().value !=
                  e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
     logger.error("Received PDU with unexpected type {}", cu_cp_e1_setup_outcome.value().value.type().to_string());
     res.success = false;
+
+    logger.error("\"{}\" failed.", name());
   } else {
     logger.debug("Received PDU with unsuccessful outcome cause={}",
                  get_cause_str(cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail()->cause.value));
     fill_e1ap_cu_cp_e1_setup_response(res, cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail());
+
+    logger.error("\"{}\" failed.", name());
   }
   return res;
 }

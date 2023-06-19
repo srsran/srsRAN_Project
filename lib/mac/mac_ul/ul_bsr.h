@@ -27,7 +27,6 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/mac/bsr_format.h"
-#include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 
@@ -63,8 +62,5 @@ long_bsr_report decode_lbsr(bsr_format format, byte_buffer_view payload);
 /// \param format The BSR format that determines the buffer size field length.
 /// \return The actual buffer size level in Bytes.
 uint32_t buff_size_field_to_bytes(size_t buff_size_index, bsr_format format);
-
-/// Converts BSR MAC CE (See 38.321, 6.1.3.1) to Scheduler UL BSR event type.
-ul_bsr_lcg_report make_sched_lcg_report(const lcg_bsr_report& ul_bsr_ce, bsr_format bsr_format);
 
 } // namespace srsran

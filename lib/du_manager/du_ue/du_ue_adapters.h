@@ -199,7 +199,7 @@ public:
       // Discard.
       return;
     }
-    mac->handle_dl_buffer_state_update_required(bs);
+    mac->handle_dl_buffer_state_update(bs);
   }
 
 private:

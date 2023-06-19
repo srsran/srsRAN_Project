@@ -60,6 +60,7 @@
 #include "phy_factory.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
@@ -88,14 +89,14 @@ static std::string config_file;
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
 static srsran::sctp_network_gateway_config ngap_nw_config;
-const std::string                          srsgnb_version = "0.1";
+const int                                  MAX_CONFIG_FILES(10);
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
   format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
-  app.set_config("-c,", config_file, "Read config from file", false);
+  app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
 
 /// This function takes the populated appconfig and generates (sub)-component configurations.
@@ -667,7 +668,7 @@ int main(int argc, char** argv)
   worker_manager workers{gnb_cfg};
 
   f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1", *f1ap_p), f1ap_du_to_cu_adapter("DU-F1", *f1ap_p);
-  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP", *e1ap_p);
+  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP-E1", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP-E1", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -779,19 +780,22 @@ int main(int argc, char** argv)
   std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
   unsigned                    sector = du_cfg.size() - 1;
   subcarrier_spacing          scs    = du_cfg.front().scs_common;
+  auto pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cfg.front().dl_carrier.nof_ant);
 
-  auto phy_adaptor = build_phy_fapi_adaptor(sector,
-                                            scs,
-                                            scs,
-                                            upper->get_downlink_processor_pool(),
-                                            upper->get_downlink_resource_grid_pool(),
-                                            upper->get_uplink_request_processor(),
-                                            upper->get_uplink_resource_grid_pool(),
-                                            upper->get_uplink_slot_pdu_repository(),
-                                            upper->get_downlink_pdu_validator(),
-                                            upper->get_uplink_pdu_validator(),
-                                            generate_prach_config_tlv(du_cfg),
-                                            generate_carrier_config_tlv(gnb_cfg));
+  auto phy_adaptor =
+      build_phy_fapi_adaptor(sector,
+                             scs,
+                             scs,
+                             upper->get_downlink_processor_pool(),
+                             upper->get_downlink_resource_grid_pool(),
+                             upper->get_uplink_request_processor(),
+                             upper->get_uplink_resource_grid_pool(),
+                             upper->get_uplink_slot_pdu_repository(),
+                             upper->get_downlink_pdu_validator(),
+                             upper->get_uplink_pdu_validator(),
+                             generate_prach_config_tlv(du_cfg),
+                             generate_carrier_config_tlv(gnb_cfg),
+                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
   report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
@@ -805,7 +809,13 @@ int main(int argc, char** argv)
     // Create gateway loggers and intercept MAC adaptor calls.
     logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
     report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_dummy);
+    mac_adaptor = build_mac_fapi_adaptor(
+        0,
+        scs,
+        *logging_slot_gateway,
+        last_msg_dummy,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
 
     // Create notification loggers.
     logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
@@ -817,7 +827,13 @@ int main(int argc, char** argv)
     phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
     phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
+    mac_adaptor = build_mac_fapi_adaptor(
+        0,
+        scs,
+        phy_adaptor->get_slot_message_gateway(),
+        last_msg_dummy,
+        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
+        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
     report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
@@ -848,7 +864,10 @@ int main(int argc, char** argv)
   if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.pusch_active};
+                                                                        gnb_cfg.test_mode_cfg.test_ue.pusch_active,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.cqi,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.pmi,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.ri};
   }
 
   srs_du::du_high du_obj(du_hi_cfg);
@@ -870,7 +889,7 @@ int main(int argc, char** argv)
   du_cell_index_t cell_id = to_du_cell_index(0);
   mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(cell_id));
   mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(cell_id));
-  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler(cell_id));
+  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler());
   mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
   // Start processing.

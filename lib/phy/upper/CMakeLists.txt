@@ -22,7 +22,6 @@ add_subdirectory(channel_coding)
 add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(equalization)
-add_subdirectory(precoding)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
@@ -41,7 +40,6 @@ target_link_libraries(srsran_upper_phy srsran_downlink_processor srsran_uplink_p
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
 add_library(srsran_upper_phy_support
-        re_pattern.cpp
         rb_allocation.cpp
         rx_softbuffer_pool_impl.cpp
         vrb_to_prb_mapper.cpp

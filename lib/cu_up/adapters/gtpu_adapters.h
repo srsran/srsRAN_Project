@@ -50,7 +50,7 @@ private:
 };
 
 /// Adapter between GTP-U and SDAP
-class gtpu_sdap_adapter : public gtpu_tunnel_rx_lower_layer_notifier
+class gtpu_sdap_adapter : public gtpu_tunnel_ngu_rx_lower_layer_notifier
 {
 public:
   gtpu_sdap_adapter()  = default;
@@ -58,10 +58,10 @@ public:
 
   void connect_sdap(sdap_tx_sdu_handler& sdap_handler_) { sdap_handler = &sdap_handler_; }
 
-  void on_new_sdu(byte_buffer sdu) override
+  void on_new_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) override
   {
     srsran_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
-    sdap_handler->handle_sdu(std::move(sdu));
+    sdap_handler->handle_sdu(std::move(sdu), qos_flow_id);
   }
 
 private:

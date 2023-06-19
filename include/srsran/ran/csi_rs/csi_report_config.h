@@ -177,8 +177,9 @@ struct csi_report_config {
     bool operator!=(const report_frequency_config& rhs) const { return !(rhs == *this); }
   };
 
-  /// \brief Which CQI table to use for CQI calculation.
+  /// \brief CQI table to use for CQI calculation.
   /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
+  /// \remark Value \c table4 is for Rel.16 or above only.
   enum class cqi_table_t { table1, table2, table3, table4 };
 
   /// Indicates one out of two possible BWP-dependent values for the subband size as indicated in TS 38.214,

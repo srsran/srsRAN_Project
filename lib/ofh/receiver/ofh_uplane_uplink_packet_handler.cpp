@@ -30,8 +30,8 @@ uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_
   is_prach_cp_enabled(config.is_prach_cp_enabled),
   cplane_repo(config.cplane_repo),
   vlan_params(config.vlan_params),
-  ru_prach_port(config.ru_prach_port),
-  ru_ul_data_port(config.ru_ul_data_port),
+  ul_prach_eaxc(config.ru_prach_port),
+  ul_eaxc(config.ul_eaxc),
   uplane_decoder(std::move(config.uplane_decoder)),
   ecpri_decoder(std::move(config.ecpri_decoder)),
   eth_frame_decoder(std::move(config.eth_frame_decoder))
@@ -41,37 +41,39 @@ uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_
   srsran_assert(eth_frame_decoder, "Invalid Ethernet frame decoder");
 }
 
-expected<uplane_message_decoder_results> uplane_uplink_packet_handler::decode_packet(span<const uint8_t> payload)
+expected<message_decoder_results> uplane_uplink_packet_handler::decode_packet(span<const uint8_t> payload)
 {
   ether::vlan_frame_params eth_params;
   span<const uint8_t>      ecpri_pdu = eth_frame_decoder->decode(payload, eth_params);
   if (ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params)) {
-    return {default_error_t()};
+    return {default_error_t({})};
   }
 
   ecpri::packet_parameters ecpri_params;
   span<const uint8_t>      ofh_pdu = ecpri_decoder->decode(ecpri_pdu, ecpri_params);
   if (ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params)) {
-    return {default_error_t()};
+    return {default_error_t({})};
   }
 
-  uplane_message_decoder_results uplane_results;
+  message_decoder_results results;
+  results.eaxc = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params).pc_id;
+  uplane_message_decoder_results& uplane_results = results.uplane_results;
   if (!uplane_decoder->decode(uplane_results, ofh_pdu)) {
-    return {default_error_t()};
+    return {default_error_t({})};
   }
 
-  if (should_uplane_packet_be_filtered(uplane_results)) {
-    return {default_error_t()};
+  if (should_uplane_packet_be_filtered(results)) {
+    return {default_error_t({})};
   }
 
-  return {std::move(uplane_results)};
+  return {std::move(results)};
 }
 
 bool uplane_uplink_packet_handler::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
     logger.debug("Dropping Open Fronthaul User-Plane packet as source MAC addresses doesn't match(detected={:x}, "
-                 "expected={:x}).",
+                 "expected={:x})",
                  span<const uint8_t>(eth_params.mac_src_address),
                  span<const uint8_t>(vlan_params.mac_src_address));
 
@@ -80,7 +82,7 @@ bool uplane_uplink_packet_handler::should_ethernet_frame_be_filtered(const ether
 
   if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
     logger.debug("Dropping Open Fronthaul User-Plane packet as destination MAC addresses doesn't match(detected={:x}, "
-                 "expected={:x}).",
+                 "expected={:x})",
                  span<const uint8_t>(eth_params.mac_dst_address),
                  span<const uint8_t>(vlan_params.mac_dst_address));
 
@@ -88,7 +90,7 @@ bool uplane_uplink_packet_handler::should_ethernet_frame_be_filtered(const ether
   }
 
   if (eth_params.eth_type != vlan_params.eth_type) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded Ethernet type is {} and it is expected {}.",
+    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded Ethernet type is {} and it is expected {}",
                  eth_params.eth_type,
                  vlan_params.eth_type);
 
@@ -101,14 +103,15 @@ bool uplane_uplink_packet_handler::should_ethernet_frame_be_filtered(const ether
 bool uplane_uplink_packet_handler::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
 {
   if (ecpri_params.header.msg_type != ecpri::message_type::iq_data) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eCPRI message type is not IQ data.");
+    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eCPRI message type is not IQ data");
 
     return true;
   }
 
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
-  if (ecpri_iq_params.pc_id != ru_ul_data_port && ecpri_iq_params.pc_id != ru_prach_port) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eAxC is {}.", ecpri_iq_params.pc_id);
+  if (std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end() &&
+      ecpri_iq_params.pc_id != ul_prach_eaxc) {
+    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eAxC is {}", ecpri_iq_params.pc_id);
 
     return true;
   }
@@ -117,12 +120,14 @@ bool uplane_uplink_packet_handler::should_ecpri_packet_be_filtered(const ecpri::
 
   return false;
 }
-bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(
-    const uplane_message_decoder_results& uplane_results) const
+bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(const message_decoder_results& results) const
 {
+  const uplane_message_decoder_results& uplane_results = results.uplane_results;
   if (uplane_results.params.filter_index == filter_index_type::reserved) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded filter index is {}.",
-                 to_value(uplane_results.params.filter_index));
+    logger.debug("Dropping Open Fronthaul User-Plane packet as decoded filter index={} for slot={}, symbol={}",
+                 to_value(uplane_results.params.filter_index),
+                 uplane_results.params.slot,
+                 uplane_results.params.symbol_id);
 
     return true;
   }
@@ -134,10 +139,14 @@ bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(
 
   const uplane_message_params&              params = uplane_results.params;
   expected<cplane_section_type1_parameters> cp_context =
-      cplane_repo.get(params.slot, params.symbol_id, params.filter_index);
+      cplane_repo.get(params.slot, params.symbol_id, params.filter_index, results.eaxc);
 
   if (!cp_context) {
-    logger.debug("Dropping Open Fronthaul User-Plane packet as no Control-Packet associated was found.");
+    logger.debug("Dropping Open Fronthaul User-Plane packet as no Control-Packet associated was found for slot={}, "
+                 "symbol={}, eAxC={}",
+                 params.slot,
+                 params.symbol_id,
+                 results.eaxc);
 
     return true;
   }

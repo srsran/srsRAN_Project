@@ -62,20 +62,36 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
   return 24;
 }
 
-carrier_configuration
-srsran::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
+static carrier_configuration make_default_carrier_configuration(const cell_config_builder_params& params, bool is_dl)
 {
   carrier_configuration cfg{};
-  cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
-  cfg.arfcn                                  = params.dl_arfcn;
-  cfg.nof_ant                                = 1;
-  cfg.band                                   = get_band(params);
+  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
+  cfg.band           = get_band(params);
+  if (is_dl) {
+    cfg.arfcn   = params.dl_arfcn;
+    cfg.nof_ant = params.nof_dl_ports;
+  } else {
+    cfg.arfcn   = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn, cfg.band);
+    cfg.nof_ant = 1;
+  }
   const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cfg.band, params.scs_common);
   srsran_assert(cfg.carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_channel_bw),
                 "Carrier BW {}Mhz must be greater than or equal to minimum channel BW {}Mhz",
                 cfg.carrier_bw_mhz,
                 min_channel_bandwidth_to_MHz(min_channel_bw));
   return cfg;
+}
+
+carrier_configuration
+srsran::config_helpers::make_default_dl_carrier_configuration(const cell_config_builder_params& params)
+{
+  return make_default_carrier_configuration(params, true);
+}
+
+carrier_configuration
+srsran::config_helpers::make_default_ul_carrier_configuration(const cell_config_builder_params& params)
+{
+  return make_default_carrier_configuration(params, false);
 }
 
 tdd_ul_dl_config_common
@@ -277,6 +293,7 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 6;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.preamble_rx_target_pw = -100;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   auto to_pusch_td_list = [](const std::initializer_list<unsigned>& k2s) {
     std::vector<pusch_time_domain_resource_allocation> vec;
@@ -298,9 +315,12 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
     cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = to_pusch_td_list({4, 5, 6, 7});
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
-  cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
-  cfg.init_ul_bwp.pucch_cfg_common->group_hopping         = pucch_group_hopping::NEITHER;
-  cfg.init_ul_bwp.pucch_cfg_common->p0_nominal            = -90;
+  cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common        = 11;
+  cfg.init_ul_bwp.pucch_cfg_common->group_hopping                = pucch_group_hopping::NEITHER;
+  cfg.init_ul_bwp.pucch_cfg_common->p0_nominal                   = -90;
+  cfg.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant = -76;
+  cfg.init_ul_bwp.pusch_cfg_common.value().msg3_delta_preamble   = 6;
+  cfg.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power      = 8;
 
   return cfg;
 }
@@ -585,7 +605,7 @@ nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(con
   res.res_id = static_cast<nzp_csi_rs_res_id_t>(0);
 
   // Fill csi_rs_resource_mapping.
-  res.res_mapping.fd_alloc                = {false, false, false, true};
+  res.res_mapping.fd_alloc                = {true, false, false, false};
   res.res_mapping.nof_ports               = 1;
   res.res_mapping.first_ofdm_symbol_in_td = 4;
   res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
@@ -670,6 +690,20 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
   cfg.report_freq_cfg.value().cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
   cfg.report_freq_cfg.value().pmi_format_ind = csi_report_config::pmi_format_indicator::wideband_pmi;
 
+  if (params.nof_dl_ports > 1) {
+    cfg.codebook_cfg.emplace();
+    codebook_config::type1                                                                     type1{};
+    codebook_config::type1::single_panel                                                       single_panel{};
+    codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction bitmap(6);
+    bitmap.fill(0, 6, true);
+    single_panel.nof_antenna_ports = bitmap;
+    single_panel.typei_single_panel_ri_restriction.resize(8);
+    single_panel.typei_single_panel_ri_restriction.from_uint64(0b11);
+    type1.sub_type                  = single_panel;
+    type1.codebook_mode             = 1;
+    cfg.codebook_cfg->codebook_type = type1;
+  }
+
   cfg.is_group_based_beam_reporting_enabled = false;
   cfg.cqi_table.emplace(csi_report_config::cqi_table_t::table1);
   cfg.subband_size = csi_report_config::subband_size_t::value1;
@@ -686,8 +720,16 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(0);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
+  if (params.nof_dl_ports == 1) {
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(11, true);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports = 1;
+  } else {
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(6);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(5, true);
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports = params.nof_dl_ports;
+    meas_cfg.nzp_csi_rs_res_list.back().res_mapping.cdm       = csi_rs_cdm_type::fd_CDM2;
+  }
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 2;
   // Resource 1.
@@ -750,12 +792,18 @@ zp_csi_rs_resource srsran::config_helpers::make_default_zp_csi_rs_resource(const
 {
   zp_csi_rs_resource res{};
   res.id = static_cast<zp_csi_rs_res_id_t>(0);
-  res.res_mapping.fd_alloc.reset();
-  res.res_mapping.fd_alloc.resize(12);
-  res.res_mapping.fd_alloc.set(0, true);
-  res.res_mapping.nof_ports               = 1;
+  if (params.nof_dl_ports == 1) {
+    res.res_mapping.fd_alloc.resize(12);
+    res.res_mapping.fd_alloc.set(8, true);
+    res.res_mapping.nof_ports = 1;
+    res.res_mapping.cdm       = csi_rs_cdm_type::no_CDM;
+  } else {
+    res.res_mapping.fd_alloc.resize(6);
+    res.res_mapping.fd_alloc.set(4, true);
+    res.res_mapping.nof_ports = params.nof_dl_ports;
+    res.res_mapping.cdm       = csi_rs_cdm_type::fd_CDM2;
+  }
   res.res_mapping.first_ofdm_symbol_in_td = 8;
-  res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
   res.res_mapping.freq_band_start_rb      = 0;
   res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
@@ -782,33 +830,49 @@ pdsch_config srsran::config_helpers::make_default_pdsch_config(const cell_config
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
-  // Resource 0.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  // Resource 1.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(1, true);
-  // Resource 2.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(2, true);
-  // Resource 3.
-  pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
-  pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
-  pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(3, true);
+  if (params.nof_dl_ports == 1) {
+    // Resource 0.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    // Resource 1.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(9, true);
+    // Resource 2.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(2);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(10, true);
+    // Resource 3.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(3);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(11, true);
 
-  pdsch_cfg.p_zp_csi_rs_res.emplace();
-  pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
-  pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(1),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(2),
-                                                   static_cast<zp_csi_rs_res_set_id_t>(3)};
+    pdsch_cfg.p_zp_csi_rs_res.emplace();
+    pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+    pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(1),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(2),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(3)};
+  } else {
+    // Resource 0.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    // Resource 1.
+    pdsch_cfg.zp_csi_rs_res_list.push_back(make_default_zp_csi_rs_resource(params));
+    pdsch_cfg.zp_csi_rs_res_list.back().id = static_cast<zp_csi_rs_res_id_t>(1);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(6);
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.reset();
+    pdsch_cfg.zp_csi_rs_res_list.back().res_mapping.fd_alloc.set(5, true);
+
+    pdsch_cfg.p_zp_csi_rs_res.emplace();
+    pdsch_cfg.p_zp_csi_rs_res->id                 = static_cast<zp_csi_rs_res_set_id_t>(0);
+    pdsch_cfg.p_zp_csi_rs_res->zp_csi_rs_res_list = {static_cast<zp_csi_rs_res_set_id_t>(0),
+                                                     static_cast<zp_csi_rs_res_set_id_t>(1)};
+  }
 
   return pdsch_cfg;
 }

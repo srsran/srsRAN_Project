@@ -29,6 +29,7 @@
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include <gtest/gtest.h>
+#include <vector>
 
 using namespace srsran;
 using namespace ofh;
@@ -38,16 +39,23 @@ namespace {
 /// Spy OFH User-Plane packet builder.
 class ofh_uplane_packet_builder_spy : public uplane_message_builder
 {
-  const resource_grid_reader*              rg_grid = nullptr;
-  static_vector<uplane_message_params, 14> uplane_msg_params;
+  static_vector<uplane_message_params, MAX_NSYMB_PER_SLOT> uplane_msg_params;
+  std::vector<std::vector<cf_t>>                           iq_data;
 
 public:
+  ofh_uplane_packet_builder_spy()
+  {
+    iq_data.resize(MAX_NSYMB_PER_SLOT);
+    for (auto& iq_symbol : iq_data) {
+      iq_symbol.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
+    }
+  }
+
   units::bytes get_header_size(const ru_compression_params& params) const override { return units::bytes(0); }
 
-  unsigned
-  build_message(span<uint8_t> buffer, const resource_grid_reader& grid, const uplane_message_params& params) override
+  unsigned build_message(span<uint8_t> buffer, span<const cf_t> grid, const uplane_message_params& params) override
   {
-    rg_grid = &grid;
+    std::copy(grid.begin(), grid.end(), iq_data[params.symbol_id].begin() + params.start_prb * NOF_SUBCARRIERS_PER_RB);
     uplane_msg_params.push_back(params);
 
     return 0;
@@ -60,7 +68,7 @@ public:
   span<const uplane_message_params> get_uplane_params() const { return uplane_msg_params; }
 
   /// Returns a pointer to the resource grid reader processed by this builder.
-  const resource_grid_reader* get_resource_grid() const { return rg_grid; }
+  span<const cf_t> get_iq_data(unsigned symbol) const { return iq_data[symbol]; }
 };
 
 } // namespace
@@ -70,6 +78,7 @@ class ofh_data_flow_uplane_downlink_data_impl_fixture : public ::testing::TestWi
 protected:
   const unsigned                          nof_symbols;
   const unsigned                          ru_nof_prbs;
+  const unsigned                          du_nof_prbs;
   const ether::vlan_frame_params          vlan_params = {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11},
                                                          {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x22},
                                                          1,
@@ -80,15 +89,23 @@ protected:
   ether::testing::vlan_frame_builder_spy* vlan_builder;
   ecpri::testing::packet_builder_spy*     ecpri_builder;
   ofh_uplane_packet_builder_spy*          uplane_builder;
+  resource_grid_reader_spy                rg_reader_spy;
 
-  ofh_data_flow_uplane_downlink_data_impl_fixture() : nof_symbols(3), ru_nof_prbs(273), data_flow(get_config()) {}
+  ofh_data_flow_uplane_downlink_data_impl_fixture() :
+    nof_symbols(3),
+    ru_nof_prbs(273),
+    du_nof_prbs(273),
+    data_flow(get_config()),
+    rg_reader_spy(1, nof_symbols, du_nof_prbs)
+  {
+    initialize_grid_reader();
+  }
 
   data_flow_uplane_downlink_data_impl_config get_config()
   {
     data_flow_uplane_downlink_data_impl_config config;
 
     config.logger         = &srslog::fetch_basic_logger("TEST");
-    config.nof_symbols    = nof_symbols;
     config.ru_nof_prbs    = ru_nof_prbs;
     config.vlan_params    = vlan_params;
     config.compr_params   = comp_params;
@@ -113,6 +130,16 @@ protected:
 
     return config;
   };
+
+  void initialize_grid_reader()
+  {
+    for (uint8_t symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
+      for (uint16_t k = 0, e = MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB; k != e; ++k) {
+        rg_reader_spy.write(
+            resource_grid_reader_spy::expected_entry_t{0, symbol, k, (k > 200) ? cf_t{1, 1} : cf_t{1, 0}});
+      }
+    }
+  }
 };
 
 static const std::array<ru_compression_params, 2> comp_params = {
@@ -125,11 +152,13 @@ INSTANTIATE_TEST_SUITE_P(compression_params,
 
 TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_type_1_message_success)
 {
-  resource_grid_context context;
-  resource_grid_dummy   grid;
-  unsigned              eaxc = 2;
+  data_flow_resource_grid_context context;
+  context.port   = 0;
+  context.sector = 0;
+  context.slot   = slot_point(0, 0, 0);
+  unsigned eaxc  = 2;
 
-  data_flow.enqueue_section_type_1_message(context, grid, eaxc);
+  data_flow.enqueue_section_type_1_message(context, rg_reader_spy, eaxc);
 
   // Assert VLAN parameters.
   const ether::vlan_frame_params& vlan = vlan_builder->get_vlan_frame_params();
@@ -155,7 +184,7 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
   span<const uplane_message_params>      uplane_params = uplane_builder->get_uplane_params();
   const std::vector<interval<unsigned>>& seg_prbs      = segmented_prbs[static_cast<unsigned>(comp_params.type)];
   ASSERT_EQ(uplane_builder->nof_built_packets(), nof_symbols * seg_prbs.size());
-  ASSERT_EQ(&grid, uplane_builder->get_resource_grid());
+
   unsigned symbol_id = 0;
   unsigned prb_index = 0;
   for (const auto& param : uplane_params) {
@@ -169,6 +198,14 @@ TEST_P(ofh_data_flow_uplane_downlink_data_impl_fixture, calling_enqueue_section_
     ASSERT_EQ(param.sect_type, section_type::type_1);
     ASSERT_EQ(param.compression_params.data_width, comp_params.data_width);
     ASSERT_EQ(param.compression_params.type, comp_params.type);
+
+    // Check the symbols.
+    std::vector<cf_t> iq_symbols(param.nof_prb * NOF_SUBCARRIERS_PER_RB, 0);
+    rg_reader_spy.get(iq_symbols, 0, symbol_id, param.start_prb * NOF_SUBCARRIERS_PER_RB);
+
+    ASSERT_EQ(span<const cf_t>(iq_symbols),
+              uplane_builder->get_iq_data(symbol_id).subspan(param.start_prb * NOF_SUBCARRIERS_PER_RB,
+                                                             param.nof_prb * NOF_SUBCARRIERS_PER_RB));
 
     // Increase the segmented PRB index.
     prb_index = (prb_index + 1) % seg_prbs.size();

@@ -21,8 +21,9 @@
  */
 
 #include "sch_pdu_builder.h"
-#include "../support/dmrs_helpers.h"
-#include "../support/tbs_calculator.h"
+#include "../ue_scheduling/ue_channel_state_manager.h"
+#include "dmrs_helpers.h"
+#include "tbs_calculator.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -96,26 +97,28 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const ue_cell_configura
 }
 
 pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                         unsigned                                     nof_layers)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
-  // TODO: Set appropriate nof. layers supported bu gNB and UE.
-  static constexpr unsigned nof_layers = 1;
+
+  // TODO: Update the value based on nof. CWs enabled.
+  static const bool are_both_cws_enabled = false;
 
   pdsch_config_params pdsch;
 
-  // TODO: Consider DMRS configured in PDSCH-Config. Need helpers from Phy.
-  if (ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value()) {
-    pdsch.dmrs =
-        make_dmrs_info_dedicated(pdsch_td_cfg,
-                                 ue_cell_cfg.cell_cfg_common.pci,
-                                 ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
-                                 ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value());
-  } else {
-    pdsch.dmrs = make_dmrs_info_common(
-        pdsch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
-  }
+  srsran_assert(ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),
+                "No DMRS configured in PDSCH configuration");
+  pdsch.dmrs =
+      make_dmrs_info_dedicated(pdsch_td_cfg,
+                               ue_cell_cfg.cell_cfg_common.pci,
+                               ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
+                               ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value(),
+                               nof_layers,
+                               ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant,
+                               are_both_cws_enabled);
+
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
@@ -219,11 +222,10 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const ue_cell_configura
 }
 
 pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg)
+                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                         unsigned                                     nof_layers)
 {
   const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
-  // TODO: Set appropriate nof. layers supported bu gNB and UE.
-  constexpr unsigned nof_layers = 1;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   constexpr unsigned tb_scaling_field = 0;
@@ -236,20 +238,22 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
+  // TODO: Update the value based on nof. CWs enabled.
+  static const bool are_both_cws_enabled = false;
 
   pusch_config_params pusch;
 
   // TODO: Consider DMRS configured in PUSCH-Config. Need helpers from Phy.
-  if (ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value()) {
-    pusch.dmrs = make_dmrs_info_dedicated(
-        pusch_td_cfg,
-        ue_cell_cfg.cell_cfg_common.pci,
-        ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
-        ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value());
-  } else {
-    pusch.dmrs = make_dmrs_info_common(
-        pusch_td_cfg, ue_cell_cfg.cell_cfg_common.pci, ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos);
-  }
+  srsran_assert(ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value(),
+                "No DMRS configured in PUSCH configuration");
+  pusch.dmrs = make_dmrs_info_dedicated(
+      pusch_td_cfg,
+      ue_cell_cfg.cell_cfg_common.pci,
+      ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
+      ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value(),
+      nof_layers,
+      ue_cell_cfg.cell_cfg_common.ul_carrier.nof_ant,
+      are_both_cws_enabled);
 
   pusch.symbols = pusch_td_cfg.symbols;
 
@@ -290,7 +294,8 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   pdsch.symbols     = symbols;
   pdsch.rbs         = vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
-  pdsch.n_id = cell_cfg.pci;
+  pdsch.n_id       = cell_cfg.pci;
+  pdsch.nof_layers = 1;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
   cw.rv_index          = dci_cfg.redundancy_version;
@@ -326,7 +331,8 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   pdsch.symbols     = symbols;
   pdsch.rbs         = vrbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
-  pdsch.n_id = cell_cfg.pci;
+  pdsch.n_id       = cell_cfg.pci;
+  pdsch.nof_layers = 1;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
   cw.mcs_index         = dci_cfg.modulation_coding_scheme;
@@ -370,6 +376,7 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
   pdsch.dmrs = dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
   pdsch.n_id           = cell_cfg.pci;
+  pdsch.nof_layers     = 1;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   pdsch.ss_set_type    = search_space_set_type::type1;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
@@ -411,6 +418,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.ss_set_type = search_space_set_type::type1;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
+  pdsch.nof_layers  = 1U;
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
@@ -461,7 +469,8 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
-  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
+  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->type);
+  pdsch.nof_layers = 1;
 
   // One Codeword.
   pdsch_codeword& cw = pdsch.codewords.emplace_back();
@@ -473,15 +482,16 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.tb_size_bytes   = tbs_bytes;
 }
 
-void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
-                                     const pdsch_config_params&   pdsch_cfg,
-                                     sch_mcs_tbs                  mcs_tbs_info,
-                                     rnti_t                       rnti,
-                                     const ue_cell_configuration& ue_cell_cfg,
-                                     search_space_id              ss_id,
-                                     const dci_1_1_configuration& dci_cfg,
-                                     const crb_interval&          crbs,
-                                     const dl_harq_process&       h_dl)
+void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
+                                     const pdsch_config_params&      pdsch_cfg,
+                                     sch_mcs_tbs                     mcs_tbs_info,
+                                     rnti_t                          rnti,
+                                     const ue_cell_configuration&    ue_cell_cfg,
+                                     search_space_id                 ss_id,
+                                     const dci_1_1_configuration&    dci_cfg,
+                                     const crb_interval&             crbs,
+                                     const dl_harq_process&          h_dl,
+                                     const ue_channel_state_manager& cs_mgr)
 {
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
   const search_space_info&     ss_info        = ue_cell_cfg.search_space(ss_id);
@@ -503,7 +513,8 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->type);
+  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->type);
+  pdsch.nof_layers = pdsch_cfg.nof_layers;
 
   // TODO: Add second Codeword when supported.
   // One Codeword.
@@ -514,6 +525,9 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&           pdsch,
   cw.mcs_table       = pdsch_cfg.mcs_table;
   cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
+
+  // Beamforming and precoding.
+  pdsch.precoding = cs_mgr.get_precoding(pdsch_cfg.nof_layers, prbs);
 }
 
 void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

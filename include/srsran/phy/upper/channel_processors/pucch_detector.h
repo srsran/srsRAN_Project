@@ -26,13 +26,14 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/pucch_uci_message.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_reader;
 
 /// PUCCH detector interface for Formats 0 and 1.
 class pucch_detector

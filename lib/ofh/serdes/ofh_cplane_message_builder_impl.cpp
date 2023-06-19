@@ -179,11 +179,34 @@ cplane_message_builder_impl::build_dl_ul_radio_channel_message(span<uint8_t>    
   return serializer.get_offset();
 }
 
+/// Converts subcarrier spacing to one of the values defined in O-RAN.WG4.CUS, Table 7.5.2.13-3.
+static cplane_scs to_cplane_scs_value(subcarrier_spacing scs)
+{
+  switch (scs) {
+    case subcarrier_spacing::kHz15:
+      return cplane_scs::kHz15;
+    case subcarrier_spacing::kHz30:
+      return cplane_scs::kHz30;
+    case subcarrier_spacing::kHz60:
+      return cplane_scs::kHz60;
+    case subcarrier_spacing::kHz120:
+      return cplane_scs::kHz120;
+    default:
+      return cplane_scs::reserved;
+  }
+}
+
+/// Encodes C-Plane subcarrier spacing.
+static uint8_t encode_cplane_scs(cplane_scs scs)
+{
+  return static_cast<uint8_t>(scs);
+}
+
 /// Encodes and returns the frame structure field. It is comprised by 4 LSB bits storing subcarrier spacing and
 /// 4 MSB bits stroing the FFT/iFFT size.
-static uint8_t encode_frame_structure(subcarrier_spacing scs, cplane_fft_size fft_size)
+static uint8_t encode_frame_structure(cplane_scs scs, cplane_fft_size fft_size)
 {
-  uint8_t value = to_numerology_value(scs);
+  uint8_t value = encode_cplane_scs(scs);
   return value | (static_cast<uint8_t>(fft_size) << 4u);
 }
 
@@ -244,7 +267,7 @@ unsigned cplane_message_builder_impl::build_idle_guard_period_message(span<uint8
   serializer.write(msg_params.time_offset);
 
   // Frame structure (1 Byte).
-  serializer.write(encode_frame_structure(msg_params.scs, cplane_fft_size::fft_noop));
+  serializer.write(encode_frame_structure(to_cplane_scs_value(msg_params.scs), cplane_fft_size::fft_noop));
 
   // CP length (2 Bytes).
   serializer.write(encode_cp_length(msg_params.scs, msg_params.cp));
@@ -254,6 +277,68 @@ unsigned cplane_message_builder_impl::build_idle_guard_period_message(span<uint8
 
   // Write the section fields. Only one section supported.
   serialize_section_0(serializer, msg_params.section_fields);
+
+  return serializer.get_offset();
+}
+
+/// Serializes the given section type 3 using the serializer.
+static void serialize_section_3(ofh::network_order_binary_serializer&        serializer,
+                                const cplane_prach_mixed_num_section_fields& section)
+{
+  // Write the common fields.
+  serialize_section_0_1_3_5_fields(serializer, section.common_fields);
+
+  // EF and BeamId field (2 Byte). Not supporting extensions.
+  static constexpr uint16_t ext_bytes = 0;
+  serializer.write(ext_bytes);
+
+  // The frequency offset (3 Bytes).
+  serializer.write(static_cast<uint8_t>(section.frequency_offset >> 16));
+  serializer.write(static_cast<uint16_t>(section.frequency_offset & 0xffff));
+
+  // Reserved (1 Byte).
+  serializer.write(static_cast<uint8_t>(0));
+}
+
+unsigned
+cplane_message_builder_impl::build_prach_mixed_numerology_message(span<uint8_t>                          buffer,
+                                                                  const cplane_section_type3_parameters& msg_params)
+{
+  ofh::network_order_binary_serializer serializer(buffer.data());
+
+  // Data direction + payload version + filter index (1 Byte).
+  serializer.write(encode_data_direction(msg_params.radio_hdr));
+
+  // Frame identifier (1 Byte).
+  serializer.write(uint8_t(msg_params.radio_hdr.slot.sfn()));
+
+  // Subframe and slot identifier (1 Byte).
+  serializer.write(encode_subframe_and_slot(msg_params.radio_hdr.slot));
+
+  // Slot identifier and start symbol (1 Byte).
+  serializer.write(encode_slot_and_start_symbol(msg_params.radio_hdr.slot, msg_params.radio_hdr.start_symbol));
+
+  // Only 1 section (1 Byte).
+  serializer.write(uint8_t(1U));
+
+  // Section type for idle/guard period message is 3 (1 Byte).
+  static constexpr uint8_t section_type = 3U;
+  serializer.write(section_type);
+
+  // Time offset (2 Bytes).
+  serializer.write(msg_params.time_offset);
+
+  // Frame structure (1 Byte).
+  serializer.write(encode_frame_structure(msg_params.scs, msg_params.fft_size));
+
+  // Cyclic prefix length (2 Bytes).
+  serializer.write(static_cast<uint16_t>(msg_params.cpLength));
+
+  // Compression header (1 Byte).
+  serialize_compression_header(serializer, msg_params.comp_params);
+
+  // Write the section fields. Only one section supported.
+  serialize_section_3(serializer, msg_params.section_fields);
 
   return serializer.get_offset();
 }

@@ -25,7 +25,6 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
 #include "srsran/ofh/ofh_uplane_message_properties.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/support/units.h"
 
 namespace srsran {
@@ -46,11 +45,11 @@ public:
   /// \brief Builds a User Plane message given the \c config parameters, places result in \c buffer.
   ///
   /// \param[out] buffer Buffer where the message will be built.
-  /// \param[in] grid    Resource grid with IQ samples.
+  /// \param[in] iq_data IQ samples.
   /// \param[in] config  User plane message parameters.
   /// \return Number of bytes serialized in the buffer.
   virtual unsigned
-  build_message(span<uint8_t> buffer, const resource_grid_reader& grid, const uplane_message_params& params) = 0;
+  build_message(span<uint8_t> buffer, span<const cf_t> iq_data, const uplane_message_params& params) = 0;
 };
 
 } // namespace ofh

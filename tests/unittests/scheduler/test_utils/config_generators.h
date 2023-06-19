@@ -42,8 +42,8 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.cell_index     = to_du_cell_index(0);
   sched_req.pci            = params.pci;
   sched_req.scs_common     = params.scs_common;
-  sched_req.dl_carrier     = config_helpers::make_default_carrier_configuration(params);
-  sched_req.ul_carrier     = config_helpers::make_default_carrier_configuration(params);
+  sched_req.dl_carrier     = config_helpers::make_default_dl_carrier_configuration(params);
+  sched_req.ul_carrier     = config_helpers::make_default_ul_carrier_configuration(params);
   sched_req.dl_cfg_common  = config_helpers::make_default_dl_config_common(params);
   sched_req.ul_cfg_common  = config_helpers::make_default_ul_config_common(params);
   sched_req.ssb_config     = config_helpers::make_default_ssb_config(params);
@@ -52,9 +52,7 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
     sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common(params);
   }
 
-  sched_req.nof_beams     = 1;
-  sched_req.nof_layers    = 1;
-  sched_req.nof_ant_ports = 1;
+  sched_req.nof_beams = 1;
 
   // SIB1 parameters.
   sched_req.coreset0          = params.coreset0_index;

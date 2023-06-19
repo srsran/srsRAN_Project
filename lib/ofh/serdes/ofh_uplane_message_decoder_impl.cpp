@@ -77,10 +77,10 @@ static bool is_header_valid(const uplane_message_params& params, srslog::basic_l
   }
 
   if (params.symbol_id >= nof_symbols) {
-    logger.debug(
-        "Dropping incoming Open Fronthaul message as its symbol index is {} and this decoder supports up to {} symbols",
-        params.symbol_id,
-        nof_symbols);
+    logger.debug("Dropping incoming Open Fronthaul message as its symbol index is {} and this decoder supports up to "
+                 "{} symbols",
+                 params.symbol_id,
+                 nof_symbols);
 
     return false;
   }
@@ -93,7 +93,7 @@ bool uplane_message_decoder_impl::decode_header(uplane_message_decoder_results& 
 {
   if (deserializer.remaining_bytes() < NOF_BYTES_UP_HEADER) {
     logger.debug(
-        "Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the message header size.",
+        "Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the message header size",
         deserializer.remaining_bytes());
 
     return false;
@@ -133,7 +133,15 @@ bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_res
     }
   }
 
-  return !results.sections.empty();
+  const bool is_result_valid = !results.sections.empty();
+  if (!is_result_valid) {
+    logger.debug(
+        "Dropping incoming Open Fronthaul message as no section was decoded correctly. Message slot={}, symbol={}",
+        results.params.slot,
+        results.params.symbol_id);
+  }
+
+  return is_result_valid;
 }
 
 bool uplane_message_decoder_impl::decode_section(uplane_message_decoder_results&    results,
@@ -163,9 +171,8 @@ bool uplane_message_decoder_impl::decode_section_header(uplane_section_params&  
                                                         network_order_binary_deserializer& deserializer)
 {
   if (deserializer.remaining_bytes() < SECTION_ID_HEADER_NO_COMPRESSION_SIZE) {
-    logger.debug(
-        "Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the section header size.",
-        deserializer.remaining_bytes());
+    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the section header size",
+                 deserializer.remaining_bytes());
 
     return false;
   }
@@ -205,8 +212,7 @@ bool uplane_message_decoder_static_compression_impl::decode_compression_header(
   }
 
   if (deserializer.remaining_bytes() < sizeof(uint16_t)) {
-    logger.debug("Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the user data "
-                 "compression length",
+    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the user data compression length",
                  deserializer.remaining_bytes());
 
     return false;
@@ -232,8 +238,7 @@ static bool decode_prbs_no_ud_comp_param_field(span<compressed_prb>             
                                                srslog::basic_logger&              logger)
 {
   if (deserializer.remaining_bytes() < prb_iq_data_size.round_up_to_bytes().value() * comp_prb.size()) {
-    logger.debug("Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the expected IQ "
-                 "samples size {}",
+    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the expected IQ samples size {}",
                  deserializer.remaining_bytes(),
                  prb_iq_data_size.round_up_to_bytes().value() * comp_prb.size());
 
@@ -266,8 +271,7 @@ static bool decode_prbs_with_ud_comp_param_field(span<compressed_prb>           
   // Add 1 byte to the PRB size as the udComParam must be decoded.
   units::bytes prb_bytes = prb_iq_data_size.round_up_to_bytes() + units::bytes(1);
   if (deserializer.remaining_bytes() < prb_bytes.value() * comp_prb.size()) {
-    logger.debug("Dropping incoming Open Fronthaul message as its size is {} and it is smaller than the expected IQ "
-                 "samples size {}",
+    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the expected IQ samples size {}",
                  deserializer.remaining_bytes(),
                  prb_bytes.value() * comp_prb.size());
 

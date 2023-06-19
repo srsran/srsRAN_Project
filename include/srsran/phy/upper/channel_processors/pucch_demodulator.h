@@ -22,12 +22,13 @@
 
 #pragma once
 
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
+
+class resource_grid_reader;
 
 /// PUCCH demodulator interface for Formats 2, 3 and 4.
 class pucch_demodulator

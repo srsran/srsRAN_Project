@@ -63,20 +63,16 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
-void scheduler_metrics_handler::handle_csi_report(
-    du_ue_index_t                                                         ue_index,
-    const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi)
+void scheduler_metrics_handler::handle_csi_report(du_ue_index_t ue_index, const csi_report_data& csi)
 {
   if (ues.contains(ue_index)) {
-    auto&               u                = ues[ue_index];
-    static const size_t cqi_payload_size = 4;
-    if (csi.size() != cqi_payload_size) {
-      return;
+    auto& u = ues[ue_index];
+    if (csi.first_tb_wideband_cqi.has_value()) {
+      u.last_cqi = csi.first_tb_wideband_cqi->to_uint();
     }
-    // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
-    // encoding.
-    u.last_cqi = (static_cast<unsigned>(csi.test(0)) << 3) + (static_cast<unsigned>(csi.test(1)) << 2) +
-                 (static_cast<unsigned>(csi.test(2)) << 1) + (static_cast<unsigned>(csi.test(3)));
+    if (csi.ri.has_value()) {
+      u.last_ri = csi.ri->to_uint();
+    }
   }
 }
 
@@ -193,6 +189,7 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.pci           = pci;
   ret.rnti          = rnti;
   ret.cqi           = last_cqi;
+  ret.ri            = last_ri;
   uint8_t mcs       = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs        = sch_mcs_index{mcs};
   mcs               = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;

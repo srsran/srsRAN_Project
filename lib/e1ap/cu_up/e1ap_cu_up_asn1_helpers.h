@@ -52,6 +52,42 @@ check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_s
   return true;
 }
 
+inline void fill_e1ap_drb_to_setup_item(e1ap_drb_to_setup_item_ng_ran&                drb_to_setup_item,
+                                        const asn1::e1ap::drb_to_setup_item_ng_ran_s& asn1_drb_to_setup_item)
+{
+  drb_to_setup_item.drb_id = uint_to_drb_id(asn1_drb_to_setup_item.drb_id);
+
+  // sdap config
+  drb_to_setup_item.sdap_cfg = e1ap_asn1_to_sdap_config(asn1_drb_to_setup_item.sdap_cfg);
+
+  // pdcp config
+  drb_to_setup_item.pdcp_cfg = e1ap_asn1_to_pdcp_config(asn1_drb_to_setup_item.pdcp_cfg);
+
+  // cell group info
+  e1ap_asn1_to_cell_group_info(drb_to_setup_item.cell_group_info, asn1_drb_to_setup_item.cell_group_info);
+
+  // qos flow info to be setup
+  e1ap_asn1_to_flow_map_info(drb_to_setup_item.qos_flow_info_to_be_setup,
+                             asn1_drb_to_setup_item.qos_flow_info_to_be_setup);
+
+  // drb data forwarding info request
+  if (asn1_drb_to_setup_item.drb_data_forwarding_info_request_present) {
+    drb_to_setup_item.drb_data_forwarding_info_request =
+        e1ap_asn1_to_data_forwarding_info_request(asn1_drb_to_setup_item.drb_data_forwarding_info_request);
+  }
+
+  // drb inactivity timer
+  if (asn1_drb_to_setup_item.drb_inactivity_timer_present) {
+    drb_to_setup_item.drb_inactivity_timer = asn1_drb_to_setup_item.drb_inactivity_timer;
+  }
+
+  // pdcp sn status info
+  if (asn1_drb_to_setup_item.pdcp_sn_status_info_present) {
+    drb_to_setup_item.pdcp_sn_status_info =
+        e1ap_asn1_to_pdcp_sn_status_info(asn1_drb_to_setup_item.pdcp_sn_status_info);
+  }
+}
+
 inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
                                                    const asn1::e1ap::bearer_context_setup_request_s& asn1_request)
 {
@@ -115,38 +151,7 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
       // drb to setup list ng ran
       for (const auto& asn1_drb_to_setup_item : asn1_pdu_session_res_item.drb_to_setup_list_ng_ran) {
         e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
-        drb_to_setup_item.drb_id = uint_to_drb_id(asn1_drb_to_setup_item.drb_id);
-
-        // sdap config
-        drb_to_setup_item.sdap_cfg = e1ap_asn1_to_sdap_config(asn1_drb_to_setup_item.sdap_cfg);
-
-        // pdcp config
-        drb_to_setup_item.pdcp_cfg = e1ap_asn1_to_pdcp_config(asn1_drb_to_setup_item.pdcp_cfg);
-
-        // cell group info
-        e1ap_asn1_to_cell_group_info(drb_to_setup_item.cell_group_info, asn1_drb_to_setup_item.cell_group_info);
-
-        // qos flow info to be setup
-        e1ap_asn1_to_flow_map_info(drb_to_setup_item.qos_flow_info_to_be_setup,
-                                   asn1_drb_to_setup_item.qos_flow_info_to_be_setup);
-
-        // drb data forwarding info request
-        if (asn1_drb_to_setup_item.drb_data_forwarding_info_request_present) {
-          drb_to_setup_item.drb_data_forwarding_info_request =
-              e1ap_asn1_to_data_forwarding_info_request(asn1_drb_to_setup_item.drb_data_forwarding_info_request);
-        }
-
-        // drb inactivity timer
-        if (asn1_drb_to_setup_item.drb_inactivity_timer_present) {
-          drb_to_setup_item.drb_inactivity_timer = asn1_drb_to_setup_item.drb_inactivity_timer;
-        }
-
-        // pdcp sn status info
-        if (asn1_drb_to_setup_item.pdcp_sn_status_info_present) {
-          drb_to_setup_item.pdcp_sn_status_info =
-              e1ap_asn1_to_pdcp_sn_status_info(asn1_drb_to_setup_item.pdcp_sn_status_info);
-        }
-
+        fill_e1ap_drb_to_setup_item(drb_to_setup_item, asn1_drb_to_setup_item);
         pdu_session_res_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(asn1_drb_to_setup_item.drb_id),
                                                               drb_to_setup_item);
       }
@@ -462,6 +467,13 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
            asn1_ng_ran_bearer_context_mod_request.pdu_session_res_to_modify_list.value) {
         e1ap_pdu_session_res_to_modify_item pdu_session_res_to_mod_item;
         pdu_session_res_to_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_to_mod_item.pdu_session_id);
+
+        for (const auto& asn1_drb_to_setup_item : asn1_res_to_mod_item.drb_to_setup_list_ng_ran) {
+          e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
+          fill_e1ap_drb_to_setup_item(drb_to_setup_item, asn1_drb_to_setup_item);
+          pdu_session_res_to_mod_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(asn1_drb_to_setup_item.drb_id),
+                                                                       drb_to_setup_item);
+        }
 
         // Add drb to modify list
         for (const auto& asn1_drb_to_mod_item : asn1_res_to_mod_item.drb_to_modify_list_ng_ran) {

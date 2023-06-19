@@ -42,6 +42,8 @@ public:
 
   void operator()(coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx);
 
+  static const char* name() { return "Bearer Context Setup Procedure"; }
+
 private:
   /// Send Bearer Context Setup Request to DU.
   void send_bearer_context_setup_request();

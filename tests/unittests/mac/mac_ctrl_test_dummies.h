@@ -28,6 +28,7 @@
 #include "srsran/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/pcap.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -162,13 +163,6 @@ public:
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
 
-class dummy_rach_handler_configurator : public rach_handler_configurator
-{
-public:
-  void add_cell(du_cell_index_t cell_index) override {}
-  void remove_cell(du_cell_index_t cell_index) override {}
-};
-
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 {
 public:
@@ -211,6 +205,12 @@ public:
                 last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;
   }
+};
+
+class dummy_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
@@ -261,8 +261,6 @@ public:
       CORO_RETURN(true);
     });
   }
-
-  sched_configuration_notifier& get_sched_notifier() override { return notifier; }
 
   class dummy_notifier : public sched_configuration_notifier
   {

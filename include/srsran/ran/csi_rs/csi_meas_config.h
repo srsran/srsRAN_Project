@@ -103,9 +103,9 @@ struct nzp_csi_rs_resource {
   /// OFDM symbol location(s) in a slot and subcarrier occupancy in a PRB of the CSI-RS resource.
   csi_rs_resource_mapping res_mapping;
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB. Values {-8,...,15}. See TS 38.214, clause 5.2.2.3.1.
-  int pwr_ctrl_offset;
+  int8_t pwr_ctrl_offset;
   /// Power offset of NZP CSI-RS RE to SSS RE. Value in dB. Values {-3, 0, 3, 6}. See TS 38.214, clause 5.2.2.3.1.
-  optional<int> pwr_ctrl_offset_ss_db;
+  optional<int8_t> pwr_ctrl_offset_ss_db;
   /// Scrambling ID. See TS 38.214, clause 5.2.2.3.1.
   unsigned scrambling_id;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources.

@@ -183,6 +183,8 @@ public:
     }
   }
 
+  srslog::basic_logger& get_basic_logger() { return logger; }
+
 private:
   srslog::basic_logger& logger;
   Prefix                prefix;

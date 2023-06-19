@@ -151,26 +151,28 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
                                          span<const rar_information>           rars,
                                          span<const dl_msg_alloc>              ue_grants,
                                          span<const dl_paging_allocation>      paging,
-                                         unsigned                              nof_csi_pdus)
+                                         unsigned                              nof_csi_pdus,
+                                         const precoding_matrix_mapper&        pm_mapper,
+                                         unsigned                              cell_nof_prbs)
 {
   for (const auto& pdu : sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
-    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus);
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
   }
 
   for (const auto& pdu : rars) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
-    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus);
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
   }
 
   for (const auto& pdu : ue_grants) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
-    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus);
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
   }
 
   for (const auto& pdu : paging) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
-    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus);
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu, nof_csi_pdus, pm_mapper, cell_nof_prbs);
   }
 }
 
@@ -205,7 +207,9 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
                                dl_res.dl_res->rar_grants,
                                dl_res.dl_res->ue_grants,
                                dl_res.dl_res->paging_grants,
-                               dl_res.dl_res->csi_rs.size());
+                               dl_res.dl_res->csi_rs.size(),
+                               *pm_mapper,
+                               cell_nof_prbs);
 
   // Validate the DL_TTI.request message.
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);

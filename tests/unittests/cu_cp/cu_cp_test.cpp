@@ -45,6 +45,9 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
   cfg.ngap_config.ran_node_name = "srsgnb01";
   cfg.ngap_config.plmn          = "00101";
   cfg.ngap_config.tac           = 7;
+  s_nssai_t slice_cfg;
+  slice_cfg.sst = 1;
+  cfg.ngap_config.slice_configurations.push_back(slice_cfg);
 
   // create and start DUT
   auto dummy_cu_cp = std::make_unique<cu_cp>(std::move(cfg));

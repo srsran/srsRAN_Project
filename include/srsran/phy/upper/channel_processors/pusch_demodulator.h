@@ -26,7 +26,6 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/ulsch_placeholder_list.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
@@ -34,6 +33,8 @@
 #include "srsran/phy/upper/rb_allocation.h"
 
 namespace srsran {
+
+class resource_grid_reader;
 
 /// \brief PUSCH demodulator interface.
 ///
@@ -82,6 +83,8 @@ public:
 
   /// PUSCH demodulator result.
   struct demodulation_status {
+    /// Estimated Signal-to-Interference-plus-Noise Ratio (SINR) at the output of the equalizer.
+    optional<float> sinr_dB;
     /// Measured EVM.
     optional<float> evm;
   };

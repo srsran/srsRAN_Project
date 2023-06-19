@@ -22,6 +22,7 @@
 
 #include "pbch_modulator_impl.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;

@@ -20,6 +20,7 @@
  *
  */
 
+#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "dmrs_pdsch_processor_test_data.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
@@ -46,9 +47,10 @@ int main()
 
     // Create resource grid spy.
     resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
+    resource_grid_mapper_spy mapper(grid);
 
     // Map DMRS-PDSCH using the test case arguments.
-    dmrs_pdsch->map(grid, test_case.config);
+    dmrs_pdsch->map(mapper, test_case.config);
 
     // Load output golden data.
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

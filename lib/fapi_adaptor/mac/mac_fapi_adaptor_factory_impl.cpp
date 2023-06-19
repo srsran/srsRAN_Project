@@ -26,10 +26,14 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config& config)
+std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(mac_fapi_adaptor_factory_config&& config)
 {
-  return std::make_unique<mac_fapi_adaptor_impl>(
-      config.gateway.get(), config.last_msg_notifier.get(), config.sector_id, config.scs);
+  return std::make_unique<mac_fapi_adaptor_impl>(config.gateway.get(),
+                                                 config.last_msg_notifier.get(),
+                                                 config.sector_id,
+                                                 config.scs,
+                                                 std::move(config.pm_mapper),
+                                                 config.cell_nof_prbs);
 }
 
 std::unique_ptr<mac_fapi_adaptor_factory> srsran::fapi_adaptor::create_mac_fapi_adaptor_factory()

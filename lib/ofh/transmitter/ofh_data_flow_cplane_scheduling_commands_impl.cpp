@@ -123,7 +123,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(s
 
   // Register the Control-Plane parameters for uplink messages.
   if (direction == data_direction::uplink) {
-    ul_cplane_context_repo.add(slot, ofh_ctrl_params);
+    ul_cplane_context_repo.add(slot, eaxc, ofh_ctrl_params);
   }
 
   // Add eCPRI header.

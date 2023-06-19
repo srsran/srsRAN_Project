@@ -153,8 +153,3 @@ uint32_t srsran::buff_size_field_to_bytes(size_t buff_size_index, bsr_format for
   }
   return 0;
 }
-
-ul_bsr_lcg_report srsran::make_sched_lcg_report(const lcg_bsr_report& ul_mac_bsr, bsr_format bsr_format)
-{
-  return ul_bsr_lcg_report{ul_mac_bsr.lcg_id, buff_size_field_to_bytes(ul_mac_bsr.buffer_size, bsr_format)};
-}

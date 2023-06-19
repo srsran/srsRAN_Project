@@ -126,7 +126,7 @@ byte_buffer srsran::srs_cu_cp::generate_valid_rrc_reestablishment_request_pdu(pc
   auto&                       rrc_reest_req    = ccch_c1.set_rrc_reest_request();
   rrc_reest_req.rrc_reest_request.ue_id.c_rnti = c_rnti;
   rrc_reest_req.rrc_reest_request.ue_id.pci    = pci;
-  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_number(0); // TODO: Add valid short mac i
+  rrc_reest_req.rrc_reest_request.ue_id.short_mac_i.from_string("0111011100001000");
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 

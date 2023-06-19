@@ -45,7 +45,7 @@ public:
 
   f1ap_message_handler& get_f1ap_message_handler();
 
-  mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index);
+  mac_pdu_handler& get_pdu_handler();
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index);
 

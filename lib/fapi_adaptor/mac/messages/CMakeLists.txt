@@ -27,4 +27,4 @@ set(SOURCES
         ssb.cpp)
 
 add_library(srsran_mac_fapi_adaptors STATIC ${SOURCES})
-target_link_libraries(srsran_mac_fapi_adaptors srslog)
+target_link_libraries(srsran_mac_fapi_adaptors srsran_fapi_precoding_matrix_tools srslog)

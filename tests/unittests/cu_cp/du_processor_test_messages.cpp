@@ -148,16 +148,17 @@ cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_sessi
   return cmd;
 };
 
-cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification()
+cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_session_resource_modification(unsigned psi,
+                                                                                                        unsigned qfi)
 {
   cu_cp_pdu_session_resource_modify_request request;
   request.ue_index = uint_to_ue_index(0);
 
   cu_cp_pdu_session_res_modify_item_mod_req modify_item;
-  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+  modify_item.pdu_session_id = uint_to_pdu_session_id(psi);
 
   qos_flow_add_or_mod_item qos_item;
-  qos_item.qos_flow_id = uint_to_qos_flow_id(2);
+  qos_item.qos_flow_id = uint_to_qos_flow_id(qfi);
   {
     non_dyn_5qi_descriptor_t non_dyn_5qi;
     non_dyn_5qi.five_qi                                                                   = uint_to_five_qi(7);
@@ -169,6 +170,29 @@ cu_cp_pdu_session_resource_modify_request srsran::srs_cu_cp::generate_pdu_sessio
 
   cu_cp_pdu_session_res_modify_request_transfer transfer;
   transfer.qos_flow_add_or_modify_request_list.emplace(qos_item.qos_flow_id, qos_item);
+
+  modify_item.transfer = transfer;
+  request.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id, modify_item);
+
+  return request;
+}
+
+cu_cp_pdu_session_resource_modify_request
+srsran::srs_cu_cp::generate_pdu_session_resource_modification_with_qos_flow_removal(qos_flow_id_t flow_id)
+{
+  cu_cp_pdu_session_resource_modify_request request;
+  request.ue_index = uint_to_ue_index(0);
+
+  cu_cp_pdu_session_res_modify_item_mod_req modify_item;
+  modify_item.pdu_session_id = uint_to_pdu_session_id(1);
+
+  cu_cp_pdu_session_res_modify_request_transfer transfer;
+
+  // Add item to remove inexisting QoS flow.
+  qos_flow_with_cause_item release_item;
+  release_item.qos_flow_id = flow_id;
+  release_item.cause       = cause_t::radio_network;
+  transfer.qos_flow_to_release_list.emplace(release_item.qos_flow_id, release_item);
 
   modify_item.transfer = transfer;
   request.pdu_session_res_modify_items.emplace(modify_item.pdu_session_id, modify_item);

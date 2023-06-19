@@ -40,5 +40,10 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
             COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512cd;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
+if (HAVE_NEON)
+    list(APPEND SOURCES packing_utils_neon.cpp)
+    list(APPEND SOURCES iq_compression_bfp_neon.cpp)
+endif (HAVE_NEON)
+
 add_library(srsran_ofh_compression STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_compression srsvec)

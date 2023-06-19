@@ -36,7 +36,7 @@ namespace config_helpers {
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
 /// \return PRACH frequency start.
-unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size);
+unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
 
 } // namespace config_helpers
 } // namespace srsran
