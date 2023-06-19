@@ -430,7 +430,7 @@ public:
     return release_complete;
   }
 
-  cu_cp_ue_context_release_command           last_command;
+  rrc_ue_context_release_command             last_command;
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;

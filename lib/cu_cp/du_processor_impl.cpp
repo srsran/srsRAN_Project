@@ -370,7 +370,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   }
 }
 
-void du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
+void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
   rrc_ue_interface* rrc_ue = rrc->find_ue(cmd.ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", cmd.ue_index);
@@ -461,7 +461,7 @@ du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ngap_ue_con
   release_complete.user_location_info    = release_context.user_location_info;
 
   // Create release command from NGAP UE context release command
-  cu_cp_ue_context_release_command release_command;
+  rrc_ue_context_release_command release_command;
   release_command.ue_index        = cmd.ue_index;
   release_command.cause           = cmd.cause;
   release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();

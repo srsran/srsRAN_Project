@@ -176,7 +176,7 @@ public:
 
   /// \brief Handle a UE Context Release Command
   /// \param[in] cmd The UE Context Release Command.
-  virtual void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  virtual void handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.

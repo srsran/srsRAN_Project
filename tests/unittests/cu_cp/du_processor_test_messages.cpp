@@ -68,11 +68,11 @@ ue_creation_message srsran::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnt
   return ue_creation_msg;
 }
 
-cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
+rrc_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
 {
-  cu_cp_ue_context_release_command ue_context_release_command = {};
-  ue_context_release_command.ue_index                         = ue_index;
-  ue_context_release_command.cause                            = cause_t::radio_network;
+  rrc_ue_context_release_command ue_context_release_command = {};
+  ue_context_release_command.ue_index                       = ue_index;
+  ue_context_release_command.cause                          = cause_t::radio_network;
   return ue_context_release_command;
 }
 

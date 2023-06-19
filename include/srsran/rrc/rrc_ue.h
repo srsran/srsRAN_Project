@@ -169,6 +169,12 @@ public:
   virtual void on_ue_delete_request(const cause_t& cause) = 0;
 };
 
+struct rrc_ue_context_release_command {
+  ue_index_t  ue_index = ue_index_t::invalid;
+  cause_t     cause    = cause_t::nulltype;
+  byte_buffer rrc_release_pdu;
+};
+
 /// Interface to notify about RRC UE Context messages.
 class rrc_ue_du_processor_notifier
 {
@@ -181,7 +187,7 @@ public:
 
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  virtual void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Notify about a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.

@@ -661,12 +661,6 @@ struct cu_cp_ngap_ue_context_release_command {
   cause_t    cause    = cause_t::nulltype;
 };
 
-struct cu_cp_ue_context_release_command {
-  ue_index_t  ue_index = ue_index_t::invalid;
-  cause_t     cause    = cause_t::nulltype;
-  byte_buffer rrc_release_pdu;
-};
-
 struct cu_cp_ue_context_release_request {
   ue_index_t                    ue_index = ue_index_t::invalid;
   std::vector<pdu_session_id_t> pdu_session_res_list_cxt_rel_req;
