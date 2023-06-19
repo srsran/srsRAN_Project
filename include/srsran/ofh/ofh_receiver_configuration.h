@@ -32,11 +32,10 @@ struct receiver_config {
   unsigned ru_nof_prbs;
   /// PRACH Contol-Plane enabled flag.
   bool is_prach_cp_enabled;
-  /// RU PRACH port.
-  unsigned ru_prach_port;
-  /// RU UL data port.
-  /// Uplink data eAxC.
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ru_ul_port;
+  /// Uplink PRACH eAxC.
+  unsigned ul_prach_eaxc;
+  /// Uplink eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Destination MAC address.

@@ -58,12 +58,12 @@ struct sector_configuration {
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
   bs_channel_bandwidth_fr1 ru_operating_bw;
 
-  /// RU PRACH port.
-  unsigned ru_prach_port;
-  /// RU Downlink ports.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_dl_ports;
-  /// RU Uplink ports.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_ul_ports;
+  /// Uplink PRACH eAxC.
+  unsigned ul_prach_eaxc;
+  /// Downlink eAxC.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  /// Uplink eAxC.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;

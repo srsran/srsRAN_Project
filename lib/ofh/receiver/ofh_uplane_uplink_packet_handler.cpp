@@ -18,7 +18,7 @@ uplane_uplink_packet_handler::uplane_uplink_packet_handler(uplane_uplink_packet_
   is_prach_cp_enabled(config.is_prach_cp_enabled),
   cplane_repo(config.cplane_repo),
   vlan_params(config.vlan_params),
-  ul_prach_eaxc(config.ru_prach_port),
+  ul_prach_eaxc(config.ul_prach_eaxc),
   ul_eaxc(config.ul_eaxc),
   uplane_decoder(std::move(config.uplane_decoder)),
   ecpri_decoder(std::move(config.ecpri_decoder)),

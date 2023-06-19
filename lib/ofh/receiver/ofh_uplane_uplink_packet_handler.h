@@ -36,9 +36,9 @@ struct uplane_uplink_packet_handler_config {
   uplink_cplane_context_repository& cplane_repo;
   /// VLAN ethernet frame parameters.
   ether::vlan_frame_params vlan_params;
-  /// RU PRACH port.
-  unsigned ru_prach_port;
-  /// RU uplink data port.
+  /// Uplink PRACH eAxC.
+  unsigned ul_prach_eaxc;
+  /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// User-Plane message decoder.
   std::unique_ptr<uplane_message_decoder> uplane_decoder;

@@ -781,9 +781,9 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     }
 
     sector_cfg.tci           = cell_cfg.vlan_tag;
-    sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
-    sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
-    sector_cfg.ru_ul_ports.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
+    sector_cfg.ul_prach_eaxc = cell_cfg.ru_prach_port_id;
+    sector_cfg.dl_eaxc.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
+    sector_cfg.ul_eaxc.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {

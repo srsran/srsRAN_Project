@@ -39,9 +39,9 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.scs                     = config.scs;
   ofh_sector_config.bw                      = config.bw;
   ofh_sector_config.ru_operating_bw         = config.ru_operating_bw ? config.ru_operating_bw.value() : config.bw;
-  ofh_sector_config.ru_prach_port           = sector_cfg.ru_prach_port;
-  ofh_sector_config.ru_dl_ports             = sector_cfg.ru_dl_ports;
-  ofh_sector_config.ru_ul_ports             = sector_cfg.ru_ul_ports;
+  ofh_sector_config.ul_prach_eaxc           = sector_cfg.ul_prach_eaxc;
+  ofh_sector_config.dl_eaxc                 = sector_cfg.dl_eaxc;
+  ofh_sector_config.ul_eaxc                 = sector_cfg.ul_eaxc;
   ofh_sector_config.is_prach_control_plane_enabled = config.is_prach_control_plane_enabled;
   ofh_sector_config.is_downlink_broadcast_enabled  = config.is_downlink_broadcast_enabled;
   ofh_sector_config.ul_compression_params          = config.ul_compression_params;
@@ -88,7 +88,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   for (const auto& sector_cfg : config.sector_configs) {
     if (config.is_downlink_broadcast_enabled) {
       report_fatal_error_if_not(
-          sector_cfg.ru_dl_ports.size() > 1,
+          sector_cfg.dl_eaxc.size() > 1,
           "Downlink broadcast option only available when the number of downlink ports is more than one");
     }
 

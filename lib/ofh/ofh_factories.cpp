@@ -148,8 +148,8 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(config.ru_operating_bw), config.scs, frequency_range::FR1);
   rx_config.is_prach_cp_enabled = config.is_prach_control_plane_enabled;
-  rx_config.ru_prach_port       = config.ru_prach_port;
-  rx_config.ru_ul_port          = config.ru_ul_ports;
+  rx_config.ul_prach_eaxc       = config.ul_prach_eaxc;
+  rx_config.ul_eaxc             = config.ul_eaxc;
   rx_config.cp                  = config.cp;
   // In rx, dst and src addresses are swapped.
   rx_config.mac_dst_address = config.mac_src_address;
@@ -206,10 +206,10 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.cp                 = sector_cfg.cp;
   tx_config.downlink_broadcast = sector_cfg.is_downlink_broadcast_enabled;
   if (sector_cfg.is_prach_control_plane_enabled) {
-    tx_config.ul_prach_eaxc.emplace(sector_cfg.ru_prach_port);
+    tx_config.ul_prach_eaxc.emplace(sector_cfg.ul_prach_eaxc);
   }
-  tx_config.ul_data_eaxc       = sector_cfg.ru_ul_ports;
-  tx_config.dl_data_eaxc       = sector_cfg.ru_dl_ports;
+  tx_config.ul_eaxc            = sector_cfg.ul_eaxc;
+  tx_config.dl_eaxc            = sector_cfg.dl_eaxc;
   tx_config.mac_dst_address    = sector_cfg.mac_dst_address;
   tx_config.mac_src_address    = sector_cfg.mac_src_address;
   tx_config.tci                = sector_cfg.tci;
@@ -237,11 +237,11 @@ create_downlink_handler(const transmitter_config&                         tx_con
 
   if (tx_config.downlink_broadcast) {
     return std::make_unique<downlink_handler_broadcast_impl>(
-        tx_config.dl_data_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
+        tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
   }
 
   return std::make_unique<downlink_handler_impl>(
-      tx_config.dl_data_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
+      tx_config.dl_eaxc, std::move(data_flow_cplane), std::move(data_flow_uplane));
 }
 
 static std::unique_ptr<uplink_request_handler>
@@ -254,7 +254,7 @@ create_uplink_request_handler(const transmitter_config&                         
   uplink_request_handler_impl_config config;
 
   config.ul_prach_eaxc = tx_config.ul_prach_eaxc;
-  config.ul_data_eaxc  = tx_config.ul_data_eaxc;
+  config.ul_data_eaxc  = tx_config.ul_eaxc;
   config.ul_slot_repo  = std::move(ul_slot_context_repo);
   config.ul_prach_repo = std::move(prach_context_repo);
   config.data_flow =
