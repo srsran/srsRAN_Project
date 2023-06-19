@@ -47,6 +47,8 @@ if (DOXYGEN_FOUND)
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
                   ${CMAKE_HOME_DIRECTORY}/include/srsran
                   ${CMAKE_HOME_DIRECTORY}/lib
+                  ${CMAKE_HOME_DIRECTORY}/tests
+                  ${CMAKE_HOME_DIRECTORY}/apps
   )
   set(DOXYGEN_EXCLUDE ${CMAKE_HOME_DIRECTORY}/include/srsran/asn1)
 
@@ -69,15 +71,29 @@ if (DOXYGEN_FOUND)
   )
 
   # directories and files to process for MAC+RLC docs
-  set(docs_inputs_mac ${CMAKE_CURRENT_SOURCE_DIR}
-                      ${CMAKE_HOME_DIRECTORY}/include/srsran/mac
-                      ${CMAKE_HOME_DIRECTORY}/include/srsran/rlc
-                      ${CMAKE_HOME_DIRECTORY}/lib/mac
-                      ${CMAKE_HOME_DIRECTORY}/lib/rlc
+  set(docs_inputs_du_high ${CMAKE_CURRENT_SOURCE_DIR}
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/mac
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/scheduler
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/rlc
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/f1ap/common
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/f1ap/du
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/du_manager
+                          ${CMAKE_HOME_DIRECTORY}/lib/mac
+                          ${CMAKE_HOME_DIRECTORY}/lib/scheduler
+                          ${CMAKE_HOME_DIRECTORY}/lib/rlc
+                          ${CMAKE_HOME_DIRECTORY}/lib/f1ap/common
+                          ${CMAKE_HOME_DIRECTORY}/lib/f1ap/du
+                          ${CMAKE_HOME_DIRECTORY}/lib/du_manager
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/mac
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/scheduler
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/rlc
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/f1ap/common
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/f1ap/du
+                          ${CMAKE_HOME_DIRECTORY}/tests/unittests/du_manager
   )
 
   doxygen_add_docs(doxygen-du-high
-    ${docs_inputs_mac}
+    ${docs_inputs_du_high}
     COMMENT "Generating documentation for layers MAC and RLC."
   )
 
