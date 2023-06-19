@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Tests that check the transmission of Paging messages by the DU-high class.
+
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "test_utils/du_high_test_bench.h"
 #include "tests/unittests/gateways/test_helpers.h"
