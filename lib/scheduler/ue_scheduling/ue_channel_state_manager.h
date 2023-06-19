@@ -12,6 +12,7 @@
 
 #include "srsran/ran/csi_report/csi_report_wideband_cqi.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
@@ -21,7 +22,7 @@ namespace srsran {
 class ue_channel_state_manager
 {
 public:
-  ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg_);
+  ue_channel_state_manager(const serving_cell_config& ue_serv_cell, const scheduler_ue_expert_config& expert_cfg_);
 
   const optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
 
@@ -41,13 +42,15 @@ public:
   /// \brief Fetches the precoding codebook to be used in DL based on reported PMI and the chosen nof layers.
   optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, prb_interval pdsch_prbs) const
   {
+    srsran_assert(chosen_nof_layers <= nof_dl_ports, "Invalid number of layers chosen");
     optional<pdsch_precoding_info> precoding_info;
-    if (chosen_nof_layers <= 1) {
+    if (nof_dl_ports <= 1) {
+      // In case of 1 DL port, no precoding is used.
       return precoding_info;
     }
     precoding_info.emplace();
     precoding_info->nof_rbs_per_prg = pdsch_prbs.length();
-    precoding_info->prg_infos.emplace_back(recommended_prg_info[chosen_nof_layers >> 2U]);
+    precoding_info->prg_infos.emplace_back(recommended_prg_info[nof_layers_to_index(chosen_nof_layers)]);
     return precoding_info;
   }
 
@@ -55,7 +58,14 @@ public:
   void handle_csi_report(const csi_report_data& csi_report);
 
 private:
-  static constexpr size_t NOF_LAYER_CHOICES = 2;
+  /// \brief Number of indexes -> nof_layers for precoding (Options: 1 layer, 2 layers, 4 layers).
+  static constexpr size_t NOF_LAYER_CHOICES = 3;
+
+  /// Mapping of number of layers to array index.
+  static size_t nof_layers_to_index(unsigned nof_layers) { return nof_layers >> 1U; }
+
+  /// \brief Number of DL ports.
+  unsigned nof_dl_ports;
 
   /// Estimated PUSCH SNR, in dB.
   float pusch_snr_db;
@@ -68,7 +78,7 @@ private:
 
   /// \brief List of Recommended PMIs for different number of active layers. Position 0 is for 1 layer, position 1 is
   /// for 2 layers and position 3 for 4 layers.
-  std::array<pdsch_precoding_info::prg_info, NOF_LAYER_CHOICES> recommended_prg_info;
+  static_vector<pdsch_precoding_info::prg_info, NOF_LAYER_CHOICES> recommended_prg_info;
 
   /// Latest CSI report received from the UE.
   optional<csi_report_data> latest_csi_report;

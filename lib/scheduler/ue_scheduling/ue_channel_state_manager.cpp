@@ -12,19 +12,36 @@
 
 using namespace srsran;
 
-static constexpr size_t TWO_LAYER_INDEX  = 0;
-static constexpr size_t FOUR_LAYER_INDEX = 1;
+/// Find the number of DL ports for a given UE serving cell configuration.
+static unsigned compute_nof_dl_ports(const serving_cell_config& serv_cell_cfg)
+{
+  if (not serv_cell_cfg.csi_meas_cfg.has_value()) {
+    return 1;
+  }
 
-ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg) :
+  unsigned max_ports = 1;
+  for (const auto& nzp : serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list) {
+    if (max_ports < nzp.res_mapping.nof_ports) {
+      max_ports = nzp.res_mapping.nof_ports;
+    }
+  }
+  return max_ports;
+}
+
+ue_channel_state_manager::ue_channel_state_manager(const serving_cell_config&        ue_serv_cell,
+                                                   const scheduler_ue_expert_config& expert_cfg) :
+  nof_dl_ports(compute_nof_dl_ports(ue_serv_cell)),
+  pusch_snr_db(expert_cfg.initial_ul_sinr),
   wideband_cqi(expert_cfg.initial_cqi)
 {
-  // Set initial UL SINR.
-  update_pusch_snr(expert_cfg.initial_ul_sinr);
-
-  // Set initial precoding when no CSI has yet been received.
-  recommended_prg_info[TWO_LAYER_INDEX].type = pdsch_precoding_info::prg_info::two_antenna_port{0};
-  recommended_prg_info[FOUR_LAYER_INDEX].type =
-      pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, 0, nullopt, 0};
+  // Set initial precoding value when no CSI has yet been received.
+  if (nof_dl_ports == 2) {
+    recommended_prg_info.resize(2, pdsch_precoding_info::prg_info{pdsch_precoding_info::prg_info::two_antenna_port{0}});
+  } else if (nof_dl_ports == 4) {
+    recommended_prg_info.resize(3,
+                                pdsch_precoding_info::prg_info{
+                                    pdsch_precoding_info::prg_info::typeI_single_panel_4ports_mode1{0, 0, nullopt, 0}});
+  }
 }
 
 void ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_report)
@@ -39,10 +56,11 @@ void ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
   // Update recommended number of layers based on RI.
   if (csi_report.ri.has_value()) {
     recommended_dl_layers = csi_report.ri.value().to_uint();
+    srsran_sanity_check(recommended_dl_layers < nof_dl_ports, "Invalid RI reported");
   }
 
   if (csi_report.pmi.has_value()) {
-    const unsigned table_idx        = recommended_dl_layers >> 2U;
+    const unsigned table_idx        = nof_layers_to_index(recommended_dl_layers);
     recommended_prg_info[table_idx] = csi_report.pmi.value();
   }
 }
