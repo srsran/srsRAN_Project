@@ -583,7 +583,8 @@ byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config&
                                                   nof_crbs,
                                                   du_cfg.scs_common,
                                                   du_cfg.scs_common,
-                                                  du_cfg.searchspace0_idx);
+                                                  du_cfg.searchspace0_idx,
+                                                  du_cfg.coreset0_idx);
   freq_time.carrier_freq = ssb_freq_loc->ssb_arfcn;
   // > Derive SSB periodicity, duration and offset.
   // TODO: Derive the correct duration.

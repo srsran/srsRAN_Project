@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -91,7 +92,7 @@ struct pdcch_common_appconfig {
   optional<unsigned> coreset0_index;
   /// Number of PDCCH candidates per aggregation level for SearchSpace#1. The aggregation level for the array element
   /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
-  std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 4, 0, 0};
+  std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 1, 0, 0};
   /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
   unsigned ss0_index = 0;
 };
@@ -106,7 +107,8 @@ struct pdcch_dedicated_appconfig {
   optional<unsigned> coreset1_duration;
   /// Number of PDCCH candidates per aggregation level for SearchSpace#2. The aggregation level for the array element
   /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
-  std::array<uint8_t, 5> ss2_n_candidates = {0, 2, 2, 0, 0};
+  /// NOTE: A value of {0, 0, 0, 0, 0} lets the gNB decide nof. candidates for SearchSpace#2.
+  std::array<uint8_t, 5> ss2_n_candidates = {0, 0, 0, 0, 0};
   /// Flag specifying whether to use non-fallback or fallback DCI format in SearchSpace#2.
   bool dci_format_0_1_and_1_1 = true;
   /// SearchSpace type of SearchSpace#2.

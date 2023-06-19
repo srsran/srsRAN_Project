@@ -191,22 +191,16 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
 {
-  app.add_option("--coreset0_index", common_params.coreset0_index.emplace(), "CORESET#0 index")
+  app.add_option("--coreset0_index", common_params.coreset0_index, "CORESET#0 index")
       ->capture_default_str()
       ->check(CLI::Range(0, 15));
-  auto coreset0_idx_verify_callback = [&]() {
-    CLI::Option* coreset0_idx_cfg = app.get_option("coreset0_index");
-    if (coreset0_idx_cfg->empty()) {
-      common_params.coreset0_index.reset();
-    }
-  };
-  app.callback(coreset0_idx_verify_callback);
 
   app.add_option("--ss1_n_candidates",
                  common_params.ss1_n_candidates,
-                 "Number of PDCCH candidates per aggregation level for SearchSpace#1. (e.g. {0, 0, 4, 0, 0}")
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#1. Default: {0, 0, 1, 0, 0}")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
+
   app.add_option("--ss0_index", common_params.ss0_index, "SearchSpace#0 index")
       ->capture_default_str()
       ->check(CLI::Range(0, 15));
@@ -215,45 +209,27 @@ static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appcon
 static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_appconfig& ded_params)
 {
   app.add_option("--coreset1_rb_start",
-                 ded_params.coreset1_rb_start.emplace(),
-                 "Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0")
+                 ded_params.coreset1_rb_start,
+                 "Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0. Default: CRB0")
       ->capture_default_str()
       ->check(CLI::Range(0, 275));
-  auto coreset1_rb_start_verify_callback = [&]() {
-    CLI::Option* coreset1_rb_start_cfg = app.get_option("coreset1_rb_start");
-    if (coreset1_rb_start_cfg->empty()) {
-      ded_params.coreset1_rb_start.reset();
-    }
-  };
-  app.callback(coreset1_rb_start_verify_callback);
 
-  app.add_option("--coreset1_l_crb", ded_params.coreset1_l_crb.emplace(), "Length of CORESET 1 in number of CRBs")
+  app.add_option("--coreset1_l_crb",
+                 ded_params.coreset1_l_crb,
+                 "Length of CORESET 1 in number of CRBs. Default: Across entire BW of cell")
       ->capture_default_str()
       ->check(CLI::Range(0, 275));
-  auto coreset1_l_crb_verify_callback = [&]() {
-    CLI::Option* coreset1_l_crb_cfg = app.get_option("coreset1_l_crb");
-    if (coreset1_l_crb_cfg->empty()) {
-      ded_params.coreset1_l_crb.reset();
-    }
-  };
-  app.callback(coreset1_l_crb_verify_callback);
 
   app.add_option("--coreset1_duration",
-                 ded_params.coreset1_duration.emplace(),
-                 "Duration of CORESET 1 in number of OFDM symbols")
+                 ded_params.coreset1_duration,
+                 "Duration of CORESET 1 in number of OFDM symbols. Default: Max(2, Nof. CORESET#0 symbols)")
       ->capture_default_str()
       ->check(CLI::Range(1, 3));
-  auto coreset1_duration_verify_callback = [&]() {
-    CLI::Option* coreset1_duration_cfg = app.get_option("coreset1_duration");
-    if (coreset1_duration_cfg->empty()) {
-      ded_params.coreset1_duration.reset();
-    }
-  };
-  app.callback(coreset1_duration_verify_callback);
 
   app.add_option("--ss2_n_candidates",
                  ded_params.ss2_n_candidates,
-                 "Number of PDCCH candidates per aggregation level for SearchSpace#2. (e.g. {0, 2, 2, 0, 0}")
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#2. Default: {0, 0, 0, 0, 0} i.e. "
+                 "auto-compute nof. candidates")
       ->capture_default_str()
       ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
 

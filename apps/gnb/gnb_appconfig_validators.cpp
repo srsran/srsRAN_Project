@@ -487,20 +487,36 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       const uint8_t  ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
       const unsigned cs0_idx = base_cell.pdcch_cfg.common.coreset0_index.value();
-      if (not band_helper::is_ss0_and_coreset0_index_valid(
-              base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx)) {
-        fmt::print("Invalid combination of CORESET#0 index={} and SearchSpace#0 index={}\n");
+      if (not band_helper::get_ssb_coreset0_freq_location(
+                  base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx)
+                  .has_value()) {
+        fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={} and SearchSpace#0 index={}\n",
+                   cs0_idx,
+                   ss0_idx);
         return false;
       }
     }
     if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
         base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() > nof_crbs) {
-      fmt::print("Invalid CORESET#1 RBs start={}\n");
+      fmt::print("Invalid CORESET#1 RBs start={}\n", base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value());
       return false;
     }
     if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value() and
         base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value() > nof_crbs) {
-      fmt::print("Invalid CORESET#1 length in RBs={}\n");
+      fmt::print("Invalid CORESET#1 length in RBs={}\n", base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value());
+      return false;
+    }
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
+        config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+      fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
+      return false;
+    }
+    if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
+      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
+      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
+      fmt::print("Cannot start CORESET#1 from CRB0 in Common SearchSpace\n");
       return false;
     }
   }

@@ -324,6 +324,25 @@ optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned    
                                                                     subcarrier_spacing scs_ssb,
                                                                     uint8_t            ss0_idx);
 
+/// \brief Fetches parameters defining the position of the SSB within the band for a given Coreset0 and SS0 indices.
+///
+/// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.
+/// \param[in] nr_band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
+/// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
+/// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
+/// \param[in] scs_ssb is ssb subcarrier spacing.
+/// \param[in] ss0_idx SearchSpace#0 index.
+/// \param[in] cset0_idx CORESET#0 index.
+/// \return The parameters defining the position of the SSB within the band for Table 13-[1-6] and Table 13-11,
+/// respectively, in TS 38.213 if CORESET#0 RBs does not completely intersect with the SSB. Returns nullopt otherwise.
+optional<ssb_coreset0_freq_location> get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                    nr_band            band,
+                                                                    unsigned           n_rbs,
+                                                                    subcarrier_spacing scs_common,
+                                                                    subcarrier_spacing scs_ssb,
+                                                                    uint8_t            ss0_idx,
+                                                                    unsigned           cset0_idx);
+
 /// \brief Searches the CORESET#0 index that maximizes the number of CORESET#0 RBs that do not intersect with the SSB,
 /// given an SSB configuration and the following restrictions:
 /// - The CORESET#0 CRBs must fall in between pointA and the cell max CRB.
@@ -362,25 +381,6 @@ unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_i
 /// \param[in] band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
 /// \return Value of n_ta_offset.
 n_ta_offset get_ta_offset(nr_band band);
-
-/// \brief Verifies the validity of the combination of given CORESET#0 Index and SearchSpace#0 Index.
-///
-/// \param[in] dl_arfcn is <em>DL-ARFCN<\em> corresponding to \f$F_{REF}\f$, as per TS 38.104, Section 5.4.2.1.
-/// \param[in] nr_band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
-/// \param[in] n_rbs is <em>Transmission bandwidth<\em> or \f$N_{RB}\f$ in number of RBs, as per TS 38.104, Table 5.2-1.
-/// \param[in] scs_common is <em>subCarrierSpacingCommon<\em>, as per TS 38.331.
-/// \param[in] scs_ssb is ssb subcarrier spacing.
-/// \param[in] ss0_idx SearchSpace#0 index.
-/// \param[in] cset0_idx CORESET#0 index.
-/// \return True if given Coreset0 and SS0 indices are valid and CORESET#0 CRBs do not intersect with the SSB. False,
-/// otherwise.
-bool is_ss0_and_coreset0_index_valid(unsigned           dl_arfcn,
-                                     nr_band            band,
-                                     unsigned           n_rbs,
-                                     subcarrier_spacing scs_common,
-                                     subcarrier_spacing scs_ssb,
-                                     uint8_t            ss0_idx,
-                                     unsigned           cset0_idx);
 
 } // namespace band_helper
 

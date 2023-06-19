@@ -166,9 +166,20 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
-    const uint8_t                                     ss0_idx      = base_cell.pdcch_cfg.common.ss0_index;
-    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-        base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+    const uint8_t                                     ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
+    if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
+                                                                 *param.band,
+                                                                 nof_crbs,
+                                                                 base_cell.common_scs,
+                                                                 base_cell.common_scs,
+                                                                 ss0_idx,
+                                                                 base_cell.pdcch_cfg.common.coreset0_index.value());
+    } else {
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+    }
 
     if (!ssb_freq_loc.has_value()) {
       report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", base_cell.pci);
@@ -276,30 +287,51 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
     out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
 
-    // UE-dedicated config.
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
-        config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
-      report_error(
-          "Invalid DCI format set for Common SearchSpace in cell with id={} and pci={}\n", cell_id, base_cell.pci);
-    }
-    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
-      search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
-      coreset_configuration&      cs_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
-      freq_resource_bitmap        freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-      const unsigned              coreset_nof_resources = nof_crbs / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
-      // Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of UE decoding the DCI in CSS
-      // rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
-      freq_resources.fill(1, coreset_nof_resources, true);
-      cs_cfg.set_freq_domain_resources(freq_resources);
+    // Common PDCCH config.
+    search_space_configuration& ss1_cfg = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back();
+    ss1_cfg.nof_candidates              = config.common_cell_cfg.pdcch_cfg.common.ss1_n_candidates;
 
-      ss_cfg.type                 = search_space_configuration::type_t::common;
-      ss_cfg.common.f0_0_and_f1_0 = true;
-      ss_cfg.nof_candidates       = {
-                0,
-                0,
-                std::min(static_cast<uint8_t>(4U), config_helpers::compute_max_nof_candidates(aggregation_level::n4, cs_cfg)),
-                0,
-                0};
+    // UE-dedicated PDCCH config.
+    freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+    unsigned             cset1_start_crb = 0;
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_rb_start.has_value()) {
+      cset1_start_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_rb_start.value();
+    } else if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
+      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
+      cset1_start_crb = 6;
+    }
+    unsigned cset1_l_crb = nof_crbs;
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
+      cset1_l_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.value();
+    }
+    const unsigned coreset1_nof_resources = cset1_l_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+    freq_resources.fill(cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE, coreset1_nof_resources, true);
+
+    search_space_configuration& ss2_cfg   = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+    coreset_configuration&      cset1_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
+    cset1_cfg.set_freq_domain_resources(freq_resources);
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_duration.has_value()) {
+      cset1_cfg.duration = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_duration.value();
+    }
+    const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
+      ss2_cfg.nof_candidates = config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates;
+    }
+
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
+      ss2_cfg.type                 = search_space_configuration::type_t::common;
+      ss2_cfg.common.f0_0_and_f1_0 = true;
+      // TODO: Handle this implementation defined restriction of max. 4 PDCCH candidates in validator.
+      if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates == auto_compute_ss2_n_candidates_cfg) {
+        ss2_cfg.nof_candidates = {
+            0,
+            0,
+            std::min(static_cast<uint8_t>(4U),
+                     config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
+            0,
+            0};
+      }
     } else if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
