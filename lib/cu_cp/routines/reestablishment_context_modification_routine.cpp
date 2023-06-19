@@ -76,6 +76,23 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     }
   }
 
+  // Inform CU-UP about the new TEID for UL F1u traffic
+  {
+    // add remaining fields to BearerContextModificationRequest
+    bearer_context_modification_request.ue_index = ue_index;
+
+    // call E1AP procedure and wait for BearerContextModificationResponse
+    CORO_AWAIT_VALUE(bearer_context_modification_response,
+                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+
+    // Handle BearerContextModificationResponse
+    if (!generate_ue_context_modification_request(
+            ue_context_mod_request, bearer_context_modification_response.pdu_session_resource_modified_list)) {
+      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", ue_index, name());
+      CORO_EARLY_RETURN(false);
+    }
+  }
+
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
@@ -96,23 +113,6 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle RRC Reconfiguration result.
     if (not rrc_reconfig_result) {
       logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", ue_index, name());
-      CORO_EARLY_RETURN(false);
-    }
-  }
-
-  // Inform CU-UP about the new TEID for UL F1u traffic
-  {
-    // add remaining fields to BearerContextModificationRequest
-    bearer_context_modification_request.ue_index = ue_index;
-
-    // call E1AP procedure and wait for BearerContextModificationResponse
-    CORO_AWAIT_VALUE(bearer_context_modification_response,
-                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
-
-    // Handle BearerContextModificationResponse
-    if (!generate_ue_context_modification_request(
-            ue_context_mod_request, bearer_context_modification_response.pdu_session_resource_modified_list)) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
   }
