@@ -55,7 +55,7 @@ public:
   }
 
   /// Update UE with the latest CSI report for a given cell.
-  void handle_csi_report(const csi_report_data& csi_report);
+  bool handle_csi_report(const csi_report_data& csi_report);
 
 private:
   /// \brief Number of indexes -> nof_layers for precoding (Options: 1 layer, 2 layers, 4 layers).

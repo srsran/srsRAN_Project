@@ -44,7 +44,7 @@ ue_channel_state_manager::ue_channel_state_manager(const serving_cell_config&   
   }
 }
 
-void ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_report)
+bool ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_report)
 {
   latest_csi_report = csi_report;
 
@@ -55,12 +55,16 @@ void ue_channel_state_manager::handle_csi_report(const csi_report_data& csi_repo
 
   // Update recommended number of layers based on RI.
   if (csi_report.ri.has_value()) {
+    if (csi_report.ri.value() > nof_dl_ports) {
+      return false;
+    }
     recommended_dl_layers = csi_report.ri.value().to_uint();
-    srsran_sanity_check(recommended_dl_layers <= nof_dl_ports, "Invalid RI reported");
   }
 
   if (csi_report.pmi.has_value()) {
     const unsigned table_idx        = nof_layers_to_index(recommended_dl_layers);
     recommended_prg_info[table_idx] = csi_report.pmi.value();
   }
+
+  return true;
 }
