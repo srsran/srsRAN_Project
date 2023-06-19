@@ -1,3 +1,7 @@
+# This example configuration outlines how to use the 'cells' subcommand. The base cell configuration is 
+# for all cells using the 'cell_cfg' subcommand, with the 'cell' subcommand being used to overwrite this 
+# base configuration for a single cell. 
+
 amf:
   addr: 127.0.1.100                                               # The address or hostname of the AMF.
   bind_addr: 127.0.0.1                                            # A local IP that the gNB binds to for traffic from the AMF.

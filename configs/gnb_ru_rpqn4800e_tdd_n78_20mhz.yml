@@ -1,3 +1,8 @@
+# This example configuration outlines how to configure the srsRAN Project CU/DU to use an O-RU and split 7.2. This is specifically for use 
+# with the Foxconn RPQN O-RU. This config will create a single TDD cell transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. 
+# The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2. 
+
+
 amf:
   addr: 127.0.1.100                                               # The address or hostname of the AMF.
   bind_addr: 127.0.0.1                                            # A local IP that the gNB binds to for traffic from the AMF.

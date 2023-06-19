@@ -1,0 +1,9 @@
+# MIMO configuration section.
+
+# This is a supplementary configuration file to enable the use of MIMO when using a USRP. This config will overwrite the `cell_cfg` options in the base configuration 
+# to enable MIMO. This config can be run with the following command when running the gNB: 
+#   sudo ./gnb -c gnb_rf_b200_tdd_n78_20mhz.yml -c mimo_usrp.yml
+
+cell_cfg:
+  nof_antennas_ul: 2
+  nof_antennas_dl: 2
