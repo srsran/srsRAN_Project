@@ -238,6 +238,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
       // disconnect old F1-U
       f1u_gw.disconnect_cu_bearer(drb_iter->second->f1u_ul_teid.value());
+      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       // create new F1-U and connect it
       auto& drb = drb_iter->second;
@@ -259,6 +260,8 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
     if (!drb_to_mod.dl_up_params.empty()) {
       f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
                             drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
+
+      drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
     }
 
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);

@@ -35,7 +35,11 @@ public:
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
-  virtual ~f1u_bearer_impl() { disconnector.disconnect_cu_bearer(ul_teid); }
+  virtual ~f1u_bearer_impl()
+  {
+    logger.log_info("F1-U bearer disconnected. this={}", fmt::ptr(this));
+    disconnector.disconnect_cu_bearer(ul_teid);
+  }
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
