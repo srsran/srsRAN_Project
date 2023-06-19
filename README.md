@@ -10,19 +10,11 @@ The solution includes a complete L1/2/3 implementation with minimal external dep
 
 See the [srsRAN Project](https://www.srsran.com/) for information, guides and project news.
 
-For build instructions and user guides see the [srsRAN Project documentation](https://docs.srsran.com/projects/project).
+Build instructions and user guides - [srsRAN Project documentation](https://docs.srsran.com/projects/project).
 
-For community announcements and support, join our [discussion board](https://www.github.com/srsran/srsran_project/discussions).
+Community announcements and support - [Discussion board](https://www.github.com/srsran/srsran_project/discussions).
 
-Features and Roadmap
---------------------
-
-For application features and feature roadmap see [here](https://docs.srsran.com/projects/project/en/latest/general/source/2_features_and_roadmap.html).
-
-License
--------
-
-For license details, see [LICENSE](LICENSE) file.
+Features and roadmap - [Features](https://docs.srsran.com/projects/project/en/latest/general/source/2_features_and_roadmap.html).
 
 Build Preparation
 -----------------
@@ -35,8 +27,9 @@ Build Preparation
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
+
+* Optional:
   * googletest:          <https://github.com/google/googletest/>
-    * You can skip test building by using the cmake option `-DBUILD_TESTS=OFF`. GoogleTest is not mandatory when building without tests.
 
 You can install the build tools and mandatory requirements for some example distributions with the commands below:
 
@@ -65,12 +58,10 @@ sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 ```
 </details>
 
-The srsRAN Project uses RF drivers to support different radio types.
-Currently, only UHD is supported however additional drivers are under development:
+The srsRAN Project supports split-8 and split-7.2 fronthaul. Split-8 fronthaul is supported via UHD for USRP devices:
 
-* RF driver:
-  * UHD:                 <https://github.com/EttusResearch/uhd>
-    * See UHD documentation for installation instructions.
+* UHD:                 <https://github.com/EttusResearch/uhd>
+  * See UHD documentation for installation instructions.
     
 Build Instructions
 ------------------
@@ -87,18 +78,3 @@ make
 make test
 ```
 
-Run PHY testvector tests:
-
-A number of PHY tests are based on MATLAB generated testvectors. By default, those tests are disabled.
-The following steps are required to enable them:
-
-1. Download the [PHY testvector set](https://github.com/srsran/srsRAN_Project/releases/download/release_23_5/phy_testvectors.tar.gz).
-2. Copy the PHY testvectors to its location within srsRAN:
-```
-tar -xzf phy_testvectors.tar.gz -C /path_to_your_local_repository/srsgnb/
-```
-3. Enable the use of PHY testvectors by modifying the root [CMakeLists](CMakeLists.txt) as shown below:
-```
-option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              ON)
-```
-4. Do a fresh srsRAN build.
