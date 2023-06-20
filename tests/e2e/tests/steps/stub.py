@@ -300,10 +300,10 @@ def stop(
     Stop ue(s), gnb and epc
     """
     error_msg_array = []
-    error_msg_array.append(stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout))
-    error_msg_array.append(stop_stub(epc, "EPC", retina_data, epc_stop_timeout))
     for index, ue_stub in enumerate(ue_array):
         error_msg_array.append(stop_stub(ue_stub, f"UE_{index+1}", retina_data, ue_stop_timeout))
+    error_msg_array.append(stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout))
+    error_msg_array.append(stop_stub(epc, "EPC", retina_data, epc_stop_timeout))
 
     error_msg_array = list(filter(bool, error_msg_array))
     if error_msg_array:
