@@ -94,7 +94,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
     }
-    if (app.count("--radio_level") == 0) {
+    // Update the radio log level to all levels when radio level was not found and all level is not warning.
+    if (app.count("--radio_level") == 0 && log_params.all_level != "warning") {
       log_params.radio_level = log_params.all_level;
     }
     if (app.count("--fapi_level") == 0) {
