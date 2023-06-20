@@ -471,10 +471,9 @@ valgrind changed tests:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
-      allow_failure: true
     - if: $ON_MR
       when: manual
-      allow_failure: true
+      allow_failure: false
   timeout: 45 min
   variables:
     OS: ubuntu-22.04
