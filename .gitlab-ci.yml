@@ -269,7 +269,6 @@ unit coverage:
     - apk update; apk add python3 py3-pip
     - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
     - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
-
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts:
     paths:

@@ -255,6 +255,7 @@ variables:
     - |
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
+        rm -Rf build_time_metrics.json
       fi
   timeout: 4h
   artifacts:
@@ -286,6 +287,7 @@ variables:
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    SAVE_ARTIFACTS: "True"
 
 .smoke tsan:
   extends: .build_and_unit
@@ -403,8 +405,6 @@ smoke archlinux cached:
 
 smoke release clean:
   extends: .smoke release
-  variables:
-    SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
@@ -487,6 +487,7 @@ valgrind changed tests:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     # MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
+    SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
