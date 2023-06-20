@@ -610,6 +610,10 @@ struct ru_ofh_appconfig {
   std::string compression_method_dl = "bfp";
   /// Downlink compression bitwidth.
   unsigned compresion_bitwidth_dl = 9;
+  /// Downlink static compression header flag.
+  bool is_downlink_static_comp_hdr_enabled = true;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling = 0.35F;
   /// Individual Open Fronthaul cells configurations.

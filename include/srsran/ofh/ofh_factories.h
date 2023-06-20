@@ -41,9 +41,13 @@ class ota_symbol_boundary_notifier;
 /// Creates an Open Fronthaul Control-Plane packet builder.
 std::unique_ptr<cplane_message_builder> create_ofh_control_plane_packet_builder();
 
-/// Creates an Open Fronthaul User-Plane packet builder.
+/// Creates an Open Fronthaul User-Plane packet builder with static compression header.
 std::unique_ptr<uplane_message_builder>
 create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger, iq_compressor& compressor);
+
+/// Creates an Open Fronthaul User-Plane packet builder with dynamic compression header.
+std::unique_ptr<uplane_message_builder>
+create_dynamic_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger, iq_compressor& compressor);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports static compression method.
 std::unique_ptr<uplane_message_decoder>
@@ -53,6 +57,14 @@ create_static_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger&   
                                                         unsigned                     ru_nof_prbs,
                                                         iq_decompressor&             decompressor,
                                                         const ru_compression_params& comp_params);
+
+/// Creates an Open Fronthaul User-Plane packet decoder which supports dynamic compression method.
+std::unique_ptr<uplane_message_decoder>
+create_dynamic_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger& logger,
+                                                         subcarrier_spacing    scs,
+                                                         cyclic_prefix         cp,
+                                                         unsigned              ru_nof_prbs,
+                                                         iq_decompressor&      decompressor);
 
 /// Open Fronthaul controller config.
 struct controller_config {

@@ -42,12 +42,14 @@ static ofh::sector_configuration generate_sector_configuration(const ru_ofh_conf
   ofh_sector_config.ul_prach_eaxc           = sector_cfg.ul_prach_eaxc;
   ofh_sector_config.dl_eaxc                 = sector_cfg.dl_eaxc;
   ofh_sector_config.ul_eaxc                 = sector_cfg.ul_eaxc;
-  ofh_sector_config.is_prach_control_plane_enabled = config.is_prach_control_plane_enabled;
-  ofh_sector_config.is_downlink_broadcast_enabled  = config.is_downlink_broadcast_enabled;
-  ofh_sector_config.ul_compression_params          = config.ul_compression_params;
-  ofh_sector_config.dl_compression_params          = config.dl_compression_params;
-  ofh_sector_config.iq_scaling                     = config.iq_scaling;
-  ofh_sector_config.max_processing_delay_slots     = config.max_processing_delay_slots;
+  ofh_sector_config.is_prach_control_plane_enabled      = config.is_prach_control_plane_enabled;
+  ofh_sector_config.is_downlink_broadcast_enabled       = config.is_downlink_broadcast_enabled;
+  ofh_sector_config.ul_compression_params               = config.ul_compression_params;
+  ofh_sector_config.dl_compression_params               = config.dl_compression_params;
+  ofh_sector_config.iq_scaling                          = config.iq_scaling;
+  ofh_sector_config.max_processing_delay_slots          = config.max_processing_delay_slots;
+  ofh_sector_config.is_uplink_static_comp_hdr_enabled   = config.is_uplink_static_comp_hdr_enabled;
+  ofh_sector_config.is_downlink_static_comp_hdr_enabled = config.is_downlink_static_comp_hdr_enabled;
 
   return ofh_sector_config;
 }

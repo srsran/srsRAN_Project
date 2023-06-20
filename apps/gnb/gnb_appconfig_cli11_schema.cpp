@@ -1084,6 +1084,14 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
   app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
+  app.add_option("--enable_ul_static_compr_hdr",
+                 config.is_uplink_static_comp_hdr_enabled,
+                 "Uplink static compression header enabled flag")
+      ->capture_default_str();
+  app.add_option("--enable_dl_static_compr_hdr",
+                 config.is_downlink_static_comp_hdr_enabled,
+                 "Downlink static compression header enabled flag")
+      ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
       ->check(CLI::Range(0.0, 1.0));

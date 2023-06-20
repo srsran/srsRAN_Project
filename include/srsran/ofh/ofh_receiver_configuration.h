@@ -35,6 +35,8 @@ struct receiver_config {
   unsigned ul_prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Destination MAC address.

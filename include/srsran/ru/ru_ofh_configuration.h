@@ -91,6 +91,10 @@ struct ru_ofh_configuration {
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
   ofh::ru_compression_params dl_compression_params;
+  /// Downlink static compression header flag.
+  bool is_downlink_static_comp_hdr_enabled = true;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling;
 };

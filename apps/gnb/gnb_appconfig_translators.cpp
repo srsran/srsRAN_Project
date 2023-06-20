@@ -817,26 +817,28 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   std::vector<ru_ofh_sector_configuration> sector_configs;
   const base_cell_appconfig&               cell = config.cells_cfg.front().cell;
 
-  out_cfg.max_processing_delay_slots     = ru_cfg.max_processing_delay_slots;
-  out_cfg.gps_Alpha                      = ru_cfg.gps_Alpha;
-  out_cfg.gps_Beta                       = ru_cfg.gps_Beta;
-  out_cfg.cp                             = cyclic_prefix::NORMAL;
-  out_cfg.scs                            = cell.common_scs;
-  out_cfg.bw                             = cell.channel_bw_mhz;
-  out_cfg.ru_operating_bw                = ru_cfg.ru_operating_bw;
-  out_cfg.tx_window_timing_params        = {std::chrono::microseconds(ru_cfg.T1a_max_cp_dl),
-                                            std::chrono::microseconds(ru_cfg.T1a_min_cp_dl),
-                                            std::chrono::microseconds(ru_cfg.T1a_max_cp_ul),
-                                            std::chrono::microseconds(ru_cfg.T1a_min_cp_ul),
-                                            std::chrono::microseconds(ru_cfg.T1a_max_up),
-                                            std::chrono::microseconds(ru_cfg.T1a_min_up)};
-  out_cfg.is_prach_control_plane_enabled = ru_cfg.is_prach_control_plane_enabled;
-  out_cfg.is_downlink_broadcast_enabled  = ru_cfg.is_downlink_broadcast_enabled;
-  out_cfg.ul_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_ul),
-                                            ru_cfg.compresion_bitwidth_ul};
-  out_cfg.dl_compression_params          = {ofh::to_compression_type(ru_cfg.compression_method_dl),
-                                            ru_cfg.compresion_bitwidth_dl};
-  out_cfg.iq_scaling                     = ru_cfg.iq_scaling;
+  out_cfg.max_processing_delay_slots          = ru_cfg.max_processing_delay_slots;
+  out_cfg.gps_Alpha                           = ru_cfg.gps_Alpha;
+  out_cfg.gps_Beta                            = ru_cfg.gps_Beta;
+  out_cfg.cp                                  = cyclic_prefix::NORMAL;
+  out_cfg.scs                                 = cell.common_scs;
+  out_cfg.bw                                  = cell.channel_bw_mhz;
+  out_cfg.ru_operating_bw                     = ru_cfg.ru_operating_bw;
+  out_cfg.is_uplink_static_comp_hdr_enabled   = ru_cfg.is_uplink_static_comp_hdr_enabled;
+  out_cfg.is_downlink_static_comp_hdr_enabled = ru_cfg.is_downlink_static_comp_hdr_enabled;
+  out_cfg.tx_window_timing_params             = {std::chrono::microseconds(ru_cfg.T1a_max_cp_dl),
+                                                 std::chrono::microseconds(ru_cfg.T1a_min_cp_dl),
+                                                 std::chrono::microseconds(ru_cfg.T1a_max_cp_ul),
+                                                 std::chrono::microseconds(ru_cfg.T1a_min_cp_ul),
+                                                 std::chrono::microseconds(ru_cfg.T1a_max_up),
+                                                 std::chrono::microseconds(ru_cfg.T1a_min_up)};
+  out_cfg.is_prach_control_plane_enabled      = ru_cfg.is_prach_control_plane_enabled;
+  out_cfg.is_downlink_broadcast_enabled       = ru_cfg.is_downlink_broadcast_enabled;
+  out_cfg.ul_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_ul),
+                                                 ru_cfg.compresion_bitwidth_ul};
+  out_cfg.dl_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_dl),
+                                                 ru_cfg.compresion_bitwidth_dl};
+  out_cfg.iq_scaling                          = ru_cfg.iq_scaling;
 
   // Add one cell.
   for (const auto& cell_cfg : ru_cfg.cells) {
