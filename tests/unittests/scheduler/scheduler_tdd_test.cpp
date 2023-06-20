@@ -16,7 +16,10 @@
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_bench.h"
 #include "srsran/ran/prach/prach_helper.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
+#include <ostream>
 
 using namespace srsran;
 
@@ -75,6 +78,16 @@ protected:
 };
 
 using test_params = tdd_ul_dl_config_common;
+
+namespace srsran {
+
+/// Formatter for test params.
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("{}", value);
+}
+
+} // namespace srsran
 
 class scheduler_dl_tdd_tester : public base_scheduler_tdd_tester, public ::testing::TestWithParam<test_params>
 {

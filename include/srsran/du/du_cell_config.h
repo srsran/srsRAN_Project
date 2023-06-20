@@ -14,7 +14,7 @@
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_configuration.h"
-#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 

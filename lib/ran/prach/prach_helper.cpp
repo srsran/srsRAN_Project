@@ -11,7 +11,7 @@
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 using namespace srsran;
 
