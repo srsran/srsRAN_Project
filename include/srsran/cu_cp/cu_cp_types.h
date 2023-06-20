@@ -668,7 +668,7 @@ struct cu_cp_ue_capability_transfer_request {
   // Empty for now but should include ratType and capabilityRequestFilter, etc.
 };
 
-struct cu_cp_ue_context_release_command {
+struct cu_cp_ngap_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
   cause_t    cause    = cause_t::nulltype;
 };

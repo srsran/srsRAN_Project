@@ -64,7 +64,7 @@ struct cp_transport_layer_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::endpoint_ip_address_and_port; }
@@ -97,7 +97,7 @@ struct cp_transport_layer_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cp_transport_layer_info_c() = default;
@@ -170,7 +170,7 @@ struct tnl_assoc_usage_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<tnl_assoc_usage_opts, true> tnl_assoc_usage_e;
+using tnl_assoc_usage_e = enumerated<tnl_assoc_usage_opts, true>;
 
 using amf_tnl_assoc_to_add_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -203,7 +203,7 @@ struct amf_tnl_assoc_to_rem_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tnl_assoc_transport_layer_address_ngran; }
@@ -345,7 +345,7 @@ struct guami_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<guami_type_opts, true> guami_type_e;
+using guami_type_e = enumerated<guami_type_opts, true>;
 
 // NPN-Support ::= CHOICE
 struct npn_support_c {
@@ -354,7 +354,7 @@ struct npn_support_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_support_c() = default;
@@ -403,7 +403,7 @@ struct onboarding_support_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<onboarding_support_opts, true> onboarding_support_e;
+using onboarding_support_e = enumerated<onboarding_support_opts, true>;
 
 using guami_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -433,7 +433,7 @@ struct plmn_support_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -477,7 +477,7 @@ struct served_guami_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::guami_type; }
@@ -511,15 +511,14 @@ struct plmn_support_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                         npn_support_present                 = false;
-  bool                                                         extended_slice_support_list_present = false;
-  bool                                                         onboarding_support_present          = false;
-  ie_field_s<npn_support_c>                                    npn_support;
-  ie_field_s<dyn_seq_of<slice_support_item_s, 1, 65535, true>> extended_slice_support_list;
-  ie_field_s<onboarding_support_e>                             onboarding_support;
+  bool                          npn_support_present                 = false;
+  bool                          extended_slice_support_list_present = false;
+  bool                          onboarding_support_present          = false;
+  npn_support_c                 npn_support;
+  extended_slice_support_list_l extended_slice_support_list;
+  onboarding_support_e          onboarding_support;
 
   // sequence methods
-  plmn_support_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -598,7 +597,7 @@ struct cause_misc_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_misc_opts, true> cause_misc_e;
+using cause_misc_e = enumerated<cause_misc_opts, true>;
 
 // CauseNas ::= ENUMERATED
 struct cause_nas_opts {
@@ -613,7 +612,7 @@ struct cause_nas_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_nas_opts, true, 1> cause_nas_e;
+using cause_nas_e = enumerated<cause_nas_opts, true, 1>;
 
 // CauseProtocol ::= ENUMERATED
 struct cause_protocol_opts {
@@ -631,7 +630,7 @@ struct cause_protocol_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_protocol_opts, true> cause_protocol_e;
+using cause_protocol_e = enumerated<cause_protocol_opts, true>;
 
 // CauseRadioNetwork ::= ENUMERATED
 struct cause_radio_network_opts {
@@ -699,7 +698,7 @@ struct cause_radio_network_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_radio_network_opts, true, 12> cause_radio_network_e;
+using cause_radio_network_e = enumerated<cause_radio_network_opts, true, 12>;
 
 // CauseTransport ::= ENUMERATED
 struct cause_transport_opts {
@@ -707,7 +706,7 @@ struct cause_transport_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cause_transport_opts, true> cause_transport_e;
+using cause_transport_e = enumerated<cause_transport_opts, true>;
 
 // CriticalityDiagnostics-IE-Item-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using crit_diagnostics_ie_item_ext_ies_o = protocol_ext_empty_o;
@@ -718,7 +717,7 @@ struct type_of_error_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<type_of_error_opts, true> type_of_error_e;
+using type_of_error_e = enumerated<type_of_error_opts, true>;
 
 // Cause ::= CHOICE
 struct cause_c {
@@ -729,7 +728,7 @@ struct cause_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cause_c() = default;
@@ -866,7 +865,7 @@ struct trigger_msg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<trigger_msg_opts> trigger_msg_e;
+using trigger_msg_e = enumerated<trigger_msg_opts>;
 
 using crit_diagnostics_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -901,7 +900,7 @@ struct time_to_wait_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<time_to_wait_opts, true> time_to_wait_e;
+using time_to_wait_e = enumerated<time_to_wait_opts, true>;
 
 // TNGF-ID-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using tngf_id_ext_ies_o = protocol_ies_empty_o;
@@ -937,7 +936,7 @@ struct tngf_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   tngf_id_c() = default;
@@ -987,7 +986,7 @@ struct twif_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   twif_id_c() = default;
@@ -1037,7 +1036,7 @@ struct w_agf_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   w_agf_id_c() = default;
@@ -1087,7 +1086,7 @@ struct gnb_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   gnb_id_c() = default;
@@ -1199,7 +1198,7 @@ struct n3_iwf_id_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   n3_iwf_id_c() = default;
@@ -1249,7 +1248,7 @@ struct ng_enb_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ng_enb_id_c() = default;
@@ -1374,7 +1373,7 @@ struct global_ran_node_id_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1424,7 +1423,7 @@ struct global_ran_node_id_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   global_ran_node_id_c() = default;
@@ -1517,7 +1516,7 @@ struct amf_paging_target_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   amf_paging_target_c() = default;
@@ -1577,7 +1576,7 @@ struct timer_approach_for_guami_removal_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<timer_approach_for_guami_removal_opts, true> timer_approach_for_guami_removal_e;
+using timer_approach_for_guami_removal_e = enumerated<timer_approach_for_guami_removal_opts, true>;
 
 // UnavailableGUAMIItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using unavailable_guami_item_ext_ies_o = protocol_ext_empty_o;
@@ -1655,7 +1654,7 @@ struct ngran_cgi_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ngran_cgi_c() = default;
@@ -1721,7 +1720,7 @@ struct data_forwarding_accepted_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<data_forwarding_accepted_opts, true> data_forwarding_accepted_e;
+using data_forwarding_accepted_e = enumerated<data_forwarding_accepted_opts, true>;
 
 using gtp_tunnel_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -1751,7 +1750,7 @@ struct qos_flow_item_with_data_forwarding_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::current_qos_para_set_idx; }
@@ -1799,7 +1798,7 @@ struct up_transport_layer_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   up_transport_layer_info_c() = default;
@@ -1851,7 +1850,7 @@ struct add_dl_up_tnl_info_for_ho_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::add_redundant_dl_ngu_up_tnl_info; }
@@ -1905,7 +1904,7 @@ struct pre_emption_cap_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pre_emption_cap_opts, true> pre_emption_cap_e;
+using pre_emption_cap_e = enumerated<pre_emption_cap_opts, true>;
 
 // Pre-emptionVulnerability ::= ENUMERATED
 struct pre_emption_vulnerability_opts {
@@ -1913,7 +1912,7 @@ struct pre_emption_vulnerability_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pre_emption_vulnerability_opts, true> pre_emption_vulnerability_e;
+using pre_emption_vulnerability_e = enumerated<pre_emption_vulnerability_opts, true>;
 
 using alloc_and_retention_prio_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -1948,7 +1947,7 @@ struct allowed_pni_npn_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<pni_npn_restricted_opts, true> pni_npn_restricted_e_;
+  using pni_npn_restricted_e_ = enumerated<pni_npn_restricted_opts, true>;
 
   // member variables
   bool                                   ext             = false;
@@ -2207,7 +2206,7 @@ struct area_scope_of_mdt_eutra_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   area_scope_of_mdt_eutra_c() = default;
@@ -2309,7 +2308,7 @@ struct area_scope_of_mdt_nr_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   area_scope_of_mdt_nr_c() = default;
@@ -2545,7 +2544,7 @@ struct area_scope_of_qmc_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   area_scope_of_qmc_c() = default;
@@ -2669,7 +2668,7 @@ struct npn_paging_assist_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_paging_assist_info_c() = default;
@@ -2718,7 +2717,7 @@ struct next_paging_area_scope_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<next_paging_area_scope_opts, true> next_paging_area_scope_e;
+using next_paging_area_scope_e = enumerated<next_paging_area_scope_opts, true>;
 
 using paging_assis_datafor_c_ecapab_ue_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -2765,7 +2764,7 @@ struct assist_data_for_paging_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -2838,13 +2837,12 @@ struct assist_data_for_paging_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                           npn_paging_assist_info_present           = false;
-  bool                                           paging_assis_datafor_c_ecapab_ue_present = false;
-  ie_field_s<npn_paging_assist_info_c>           npn_paging_assist_info;
-  ie_field_s<paging_assis_datafor_c_ecapab_ue_s> paging_assis_datafor_c_ecapab_ue;
+  bool                               npn_paging_assist_info_present           = false;
+  bool                               paging_assis_datafor_c_ecapab_ue_present = false;
+  npn_paging_assist_info_c           npn_paging_assist_info;
+  paging_assis_datafor_c_ecapab_ue_s paging_assis_datafor_c_ecapab_ue;
 
   // sequence methods
-  assist_data_for_paging_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -2926,7 +2924,7 @@ struct associated_qos_flow_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::current_qos_para_set_idx; }
@@ -2956,7 +2954,7 @@ struct associated_qos_flow_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<qos_flow_map_ind_opts, true> qos_flow_map_ind_e_;
+  using qos_flow_map_ind_e_ = enumerated<qos_flow_map_ind_opts, true>;
 
   // member variables
   bool                                                         ext                      = false;
@@ -2987,13 +2985,13 @@ struct available_ran_visible_qo_e_metrics_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<application_layer_buffer_level_list_opts, true> application_layer_buffer_level_list_e_;
+  using application_layer_buffer_level_list_e_ = enumerated<application_layer_buffer_level_list_opts, true>;
   struct playout_delay_for_media_startup_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<playout_delay_for_media_startup_opts, true> playout_delay_for_media_startup_e_;
+  using playout_delay_for_media_startup_e_ = enumerated<playout_delay_for_media_startup_opts, true>;
 
   // member variables
   bool                                                 ext                                         = false;
@@ -3026,19 +3024,19 @@ struct beam_meass_report_quant_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rsrp_opts, true> rsrp_e_;
+  using rsrp_e_ = enumerated<rsrp_opts, true>;
   struct rsrq_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<rsrq_opts, true> rsrq_e_;
+  using rsrq_e_ = enumerated<rsrq_opts, true>;
   struct sinr_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<sinr_opts, true> sinr_e_;
+  using sinr_e_ = enumerated<sinr_opts, true>;
 
   // member variables
   bool                                      ext             = false;
@@ -3102,7 +3100,7 @@ struct bluetooth_meas_cfg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<bluetooth_meas_cfg_opts, true> bluetooth_meas_cfg_e;
+using bluetooth_meas_cfg_e = enumerated<bluetooth_meas_cfg_opts, true>;
 
 // BluetoothMeasurementConfiguration-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using bluetooth_meas_cfg_ext_ies_o = protocol_ext_empty_o;
@@ -3116,7 +3114,7 @@ struct bluetooth_meas_cfg_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<bt_rssi_opts, true> bt_rssi_e_;
+  using bt_rssi_e_ = enumerated<bt_rssi_opts, true>;
 
   // member variables
   bool                                 ext             = false;
@@ -3383,7 +3381,7 @@ struct broadcast_cancelled_area_list_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   broadcast_cancelled_area_list_c() = default;
@@ -3731,7 +3729,7 @@ struct broadcast_completed_area_list_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   broadcast_completed_area_list_c() = default;
@@ -3868,7 +3866,7 @@ struct broadcast_plmn_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -3908,15 +3906,14 @@ struct broadcast_plmn_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                          npn_support_present                     = false;
-  bool                                                          extended_tai_slice_support_list_present = false;
-  bool                                                          tai_nsag_support_list_present           = false;
-  ie_field_s<npn_support_c>                                     npn_support;
-  ie_field_s<dyn_seq_of<slice_support_item_s, 1, 65535, true>>  extended_tai_slice_support_list;
-  ie_field_s<dyn_seq_of<tai_nsag_support_item_s, 1, 256, true>> tai_nsag_support_list;
+  bool                          npn_support_present                     = false;
+  bool                          extended_tai_slice_support_list_present = false;
+  bool                          tai_nsag_support_list_present           = false;
+  npn_support_c                 npn_support;
+  extended_slice_support_list_l extended_tai_slice_support_list;
+  tai_nsag_support_list_l       tai_nsag_support_list;
 
   // sequence methods
-  broadcast_plmn_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -4020,7 +4017,7 @@ struct mbs_service_area_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mbs_service_area_c() = default;
@@ -4107,7 +4104,7 @@ struct source_of_ue_activity_behaviour_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<source_of_ue_activity_behaviour_info_opts, true> source_of_ue_activity_behaviour_info_e;
+using source_of_ue_activity_behaviour_info_e = enumerated<source_of_ue_activity_behaviour_info_opts, true>;
 
 // ExpectedHOInterval ::= ENUMERATED
 struct expected_ho_interv_opts {
@@ -4117,7 +4114,7 @@ struct expected_ho_interv_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<expected_ho_interv_opts, true> expected_ho_interv_e;
+using expected_ho_interv_e = enumerated<expected_ho_interv_opts, true>;
 
 using expected_ue_activity_behaviour_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4149,7 +4146,7 @@ struct expected_ue_mob_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<expected_ue_mob_opts, true> expected_ue_mob_e;
+using expected_ue_mob_e = enumerated<expected_ue_mob_opts, true>;
 
 // ExpectedUEMovingTrajectory ::= SEQUENCE (SIZE (1..16)) OF ExpectedUEMovingTrajectoryItem
 using expected_ue_moving_trajectory_l = dyn_array<expected_ue_moving_trajectory_item_s>;
@@ -4210,7 +4207,7 @@ struct cn_type_restricts_for_equivalent_item_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<cn_type_opts, true> cn_type_e_;
+  using cn_type_e_ = enumerated<cn_type_opts, true>;
 
   // member variables
   bool                                                    ext             = false;
@@ -4318,7 +4315,7 @@ struct candidate_cell_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   candidate_cell_c() = default;
@@ -4433,7 +4430,7 @@ struct cell_id_list_for_restart_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   cell_id_list_for_restart_c() = default;
@@ -4494,7 +4491,7 @@ struct privacy_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<privacy_ind_opts, true> privacy_ind_e;
+using privacy_ind_e = enumerated<privacy_ind_opts, true>;
 
 // CellSize ::= ENUMERATED
 struct cell_size_opts {
@@ -4502,7 +4499,7 @@ struct cell_size_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cell_size_opts, true> cell_size_e;
+using cell_size_e = enumerated<cell_size_opts, true>;
 
 // CellType-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using cell_type_ext_ies_o = protocol_ext_empty_o;
@@ -4583,7 +4580,7 @@ struct ce_mode_brestricted_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ce_mode_brestricted_opts, true> ce_mode_brestricted_e;
+using ce_mode_brestricted_e = enumerated<ce_mode_brestricted_opts, true>;
 
 using dl_cp_security_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4607,7 +4604,7 @@ struct end_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<end_ind_opts, true> end_ind_e;
+using end_ind_e = enumerated<end_ind_opts, true>;
 
 // Enhanced-CoverageRestriction ::= ENUMERATED
 struct enhanced_coverage_restrict_opts {
@@ -4615,7 +4612,7 @@ struct enhanced_coverage_restrict_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<enhanced_coverage_restrict_opts, true> enhanced_coverage_restrict_e;
+using enhanced_coverage_restrict_e = enumerated<enhanced_coverage_restrict_opts, true>;
 
 using ue_diff_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4626,19 +4623,19 @@ struct ue_diff_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<periodic_communication_ind_opts, true> periodic_communication_ind_e_;
+  using periodic_communication_ind_e_ = enumerated<periodic_communication_ind_opts, true>;
   struct stationary_ind_opts {
     enum options { stationary, mobile, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<stationary_ind_opts, true> stationary_ind_e_;
+  using stationary_ind_e_ = enumerated<stationary_ind_opts, true>;
   struct traffic_profile_opts {
     enum options { single_packet, dual_packets, multiple_packets, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<traffic_profile_opts, true> traffic_profile_e_;
+  using traffic_profile_e_ = enumerated<traffic_profile_opts, true>;
   struct battery_ind_opts {
     enum options {
       battery_pwred,
@@ -4649,7 +4646,7 @@ struct ue_diff_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<battery_ind_opts, true> battery_ind_e_;
+  using battery_ind_e_ = enumerated<battery_ind_opts, true>;
 
   // member variables
   bool                           ext                                = false;
@@ -4683,7 +4680,7 @@ struct eutra_paging_time_win_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<eutra_paging_time_win_opts, true> eutra_paging_time_win_e;
+using eutra_paging_time_win_e = enumerated<eutra_paging_time_win_opts, true>;
 
 // EUTRA-Paging-eDRX-Cycle ::= ENUMERATED
 struct eutra_paging_e_drx_cycle_opts {
@@ -4710,7 +4707,7 @@ struct eutra_paging_e_drx_cycle_opts {
   float       to_number() const;
   const char* to_number_string() const;
 };
-typedef enumerated<eutra_paging_e_drx_cycle_opts, true> eutra_paging_e_drx_cycle_e;
+using eutra_paging_e_drx_cycle_e = enumerated<eutra_paging_e_drx_cycle_opts, true>;
 
 // EUTRA-PagingeDRXInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using eutra_paginge_drx_info_ext_ies_o = protocol_ext_empty_o;
@@ -4758,7 +4755,7 @@ struct nr_paging_time_win_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<nr_paging_time_win_opts, true, 16> nr_paging_time_win_e;
+using nr_paging_time_win_e = enumerated<nr_paging_time_win_opts, true, 16>;
 
 // NR-Paging-eDRX-Cycle ::= ENUMERATED
 struct nr_paging_e_drx_cycle_opts {
@@ -4784,7 +4781,7 @@ struct nr_paging_e_drx_cycle_opts {
   float       to_number() const;
   const char* to_number_string() const;
 };
-typedef enumerated<nr_paging_e_drx_cycle_opts, true> nr_paging_e_drx_cycle_e;
+using nr_paging_e_drx_cycle_e = enumerated<nr_paging_e_drx_cycle_opts, true>;
 
 // NR-PagingeDRXInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using nr_paginge_drx_info_ext_ies_o = protocol_ext_empty_o;
@@ -4804,7 +4801,7 @@ struct ue_radio_cap_for_paging_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_radio_cap_for_paging_of_nb_iot; }
@@ -4851,7 +4848,7 @@ struct mico_all_plmn_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mico_all_plmn_opts, true> mico_all_plmn_e;
+using mico_all_plmn_e = enumerated<mico_all_plmn_opts, true>;
 
 using nr_paginge_drx_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4893,7 +4890,7 @@ struct paging_cause_ind_for_voice_service_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<paging_cause_ind_for_voice_service_opts, true> paging_cause_ind_for_voice_service_e;
+using paging_cause_ind_for_voice_service_e = enumerated<paging_cause_ind_for_voice_service_opts, true>;
 
 using tai_list_for_inactive_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -4946,7 +4943,7 @@ struct core_network_assist_info_for_inactive_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -5000,7 +4997,7 @@ struct mico_mode_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mico_mode_ind_opts, true> mico_mode_ind_e;
+using mico_mode_ind_e = enumerated<mico_mode_ind_opts, true>;
 
 // PagingDRX ::= ENUMERATED
 struct paging_drx_opts {
@@ -5010,7 +5007,7 @@ struct paging_drx_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<paging_drx_opts, true> paging_drx_e;
+using paging_drx_e = enumerated<paging_drx_opts, true>;
 
 // TAIListForInactive ::= SEQUENCE (SIZE (1..16)) OF TAIListForInactiveItem
 using tai_list_for_inactive_l = dyn_array<tai_list_for_inactive_item_s>;
@@ -5024,7 +5021,7 @@ struct ue_id_idx_value_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ue_id_idx_value_c() = default;
@@ -5072,23 +5069,22 @@ struct core_network_assist_info_for_inactive_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                             eutra_paginge_drx_info_present             = false;
-  bool                                             extended_ue_id_idx_value_present           = false;
-  bool                                             ue_radio_cap_for_paging_present            = false;
-  bool                                             mico_all_plmn_present                      = false;
-  bool                                             nr_paginge_drx_info_present                = false;
-  bool                                             paging_cause_ind_for_voice_service_present = false;
-  bool                                             pe_ip_sassist_info_present                 = false;
-  ie_field_s<eutra_paginge_drx_info_s>             eutra_paginge_drx_info;
-  ie_field_s<fixed_bitstring<16, false, true>>     extended_ue_id_idx_value;
-  ie_field_s<ue_radio_cap_for_paging_s>            ue_radio_cap_for_paging;
-  ie_field_s<mico_all_plmn_e>                      mico_all_plmn;
-  ie_field_s<nr_paginge_drx_info_s>                nr_paginge_drx_info;
-  ie_field_s<paging_cause_ind_for_voice_service_e> paging_cause_ind_for_voice_service;
-  ie_field_s<pe_ip_sassist_info_s>                 pe_ip_sassist_info;
+  bool                                 eutra_paginge_drx_info_present             = false;
+  bool                                 extended_ue_id_idx_value_present           = false;
+  bool                                 ue_radio_cap_for_paging_present            = false;
+  bool                                 mico_all_plmn_present                      = false;
+  bool                                 nr_paginge_drx_info_present                = false;
+  bool                                 paging_cause_ind_for_voice_service_present = false;
+  bool                                 pe_ip_sassist_info_present                 = false;
+  eutra_paginge_drx_info_s             eutra_paginge_drx_info;
+  fixed_bitstring<16, false, true>     extended_ue_id_idx_value;
+  ue_radio_cap_for_paging_s            ue_radio_cap_for_paging;
+  mico_all_plmn_e                      mico_all_plmn;
+  nr_paginge_drx_info_s                nr_paginge_drx_info;
+  paging_cause_ind_for_voice_service_e paging_cause_ind_for_voice_service;
+  pe_ip_sassist_info_s                 pe_ip_sassist_info;
 
   // sequence methods
-  core_network_assist_info_for_inactive_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5128,7 +5124,7 @@ struct daps_request_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<da_psi_ndicator_opts, true> da_psi_ndicator_e_;
+  using da_psi_ndicator_e_ = enumerated<da_psi_ndicator_opts, true>;
 
   // member variables
   bool                                ext             = false;
@@ -5155,7 +5151,7 @@ struct daps_resp_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<dapsrespind_opts, true> dapsrespind_e_;
+  using dapsrespind_e_ = enumerated<dapsrespind_opts, true>;
 
   // member variables
   bool                             ext             = false;
@@ -5243,7 +5239,7 @@ struct drb_status_dl_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   drb_status_dl_c() = default;
@@ -5351,7 +5347,7 @@ struct drb_status_ul_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   drb_status_ul_c() = default;
@@ -5437,7 +5433,7 @@ struct drbs_subject_to_status_transfer_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::old_associated_qos_flow_list_ul_endmarkerexpected; }
@@ -5487,7 +5483,7 @@ struct drbs_to_qos_flows_map_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::daps_request_info; }
@@ -5639,7 +5635,7 @@ struct rat_restricts_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::extended_rat_restrict_info; }
@@ -5690,7 +5686,7 @@ struct cn_type_restricts_for_serving_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cn_type_restricts_for_serving_opts, true> cn_type_restricts_for_serving_e;
+using cn_type_restricts_for_serving_e = enumerated<cn_type_restricts_for_serving_opts, true>;
 
 using forbidden_area_info_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -5716,7 +5712,7 @@ struct npn_mob_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_mob_info_c() = default;
@@ -5839,7 +5835,7 @@ struct mob_restrict_list_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -5896,17 +5892,16 @@ struct mob_restrict_list_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                        last_eutran_plmn_id_present              = false;
-  bool                                        cn_type_restricts_for_serving_present    = false;
-  bool                                        cn_type_restricts_for_equivalent_present = false;
-  bool                                        npn_mob_info_present                     = false;
-  ie_field_s<fixed_octstring<3, true>>        last_eutran_plmn_id;
-  ie_field_s<cn_type_restricts_for_serving_e> cn_type_restricts_for_serving;
-  ie_field_s<dyn_seq_of<cn_type_restricts_for_equivalent_item_s, 1, 15, true>> cn_type_restricts_for_equivalent;
-  ie_field_s<npn_mob_info_c>                                                   npn_mob_info;
+  bool                               last_eutran_plmn_id_present              = false;
+  bool                               cn_type_restricts_for_serving_present    = false;
+  bool                               cn_type_restricts_for_equivalent_present = false;
+  bool                               npn_mob_info_present                     = false;
+  fixed_octstring<3, true>           last_eutran_plmn_id;
+  cn_type_restricts_for_serving_e    cn_type_restricts_for_serving;
+  cn_type_restricts_for_equivalent_l cn_type_restricts_for_equivalent;
+  npn_mob_info_c                     npn_mob_info;
 
   // sequence methods
-  mob_restrict_list_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -5936,7 +5931,7 @@ struct srvcc_operation_possible_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<srvcc_operation_possible_opts, true> srvcc_operation_possible_e;
+using srvcc_operation_possible_e = enumerated<srvcc_operation_possible_opts, true>;
 
 using target_nssai_info_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -5978,7 +5973,7 @@ struct ue_cap_info_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_cap_info_request_opts, true> ue_cap_info_request_e;
+using ue_cap_info_request_e = enumerated<ue_cap_info_request_opts, true>;
 
 // EUTRAN-CompositeAvailableCapacityGroup-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using eutran_composite_available_capacity_group_ext_ies_o = protocol_ext_empty_o;
@@ -6180,7 +6175,7 @@ struct nof_meas_report_levels_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<nof_meas_report_levels_opts, true> nof_meas_report_levels_e;
+using nof_meas_report_levels_e = enumerated<nof_meas_report_levels_opts, true>;
 
 // PeriodicReportingIEs-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using periodic_report_ies_ext_ies_o = protocol_ext_empty_o;
@@ -6193,7 +6188,7 @@ struct report_periodicity_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<report_periodicity_opts, true> report_periodicity_e;
+using report_periodicity_e = enumerated<report_periodicity_opts, true>;
 
 // SCTP-TLAs ::= SEQUENCE (SIZE (1..2)) OF BIT STRING (SIZE (1..160,...))
 using sctp_tlas_l = bounded_array<bounded_bitstring<1, 160, true, true>, 2>;
@@ -6301,7 +6296,7 @@ struct notif_cell_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<notify_flag_opts, true> notify_flag_e_;
+  using notify_flag_e_ = enumerated<notify_flag_opts, true>;
 
   // member variables
   bool                              ext             = false;
@@ -6368,7 +6363,7 @@ struct ue_rlf_report_container_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ue_rlf_report_container_c() = default;
@@ -6431,7 +6426,7 @@ struct xn_ext_tla_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::sctp_tlas; }
@@ -6464,7 +6459,7 @@ struct enb_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   enb_id_c() = default;
@@ -6582,7 +6577,7 @@ struct intersys_unnecessary_ho_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<early_iratho_opts, true> early_iratho_e_;
+  using early_iratho_e_ = enumerated<early_iratho_opts, true>;
 
   // member variables
   bool                                      ext             = false;
@@ -6610,7 +6605,7 @@ struct report_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   report_type_c() = default;
@@ -6674,7 +6669,7 @@ struct report_sys_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   report_sys_c() = default;
@@ -6737,7 +6732,7 @@ struct res_status_report_sys_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   res_status_report_sys_c() = default;
@@ -6890,7 +6885,7 @@ struct ho_report_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<ho_report_type_opts, true> ho_report_type_e_;
+  using ho_report_type_e_ = enumerated<ho_report_type_opts, true>;
 
   // member variables
   bool                             ext                             = false;
@@ -6931,7 +6926,7 @@ struct inter_sys_ho_report_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   inter_sys_ho_report_type_c() = default;
@@ -7109,7 +7104,7 @@ struct son_info_report_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::successful_ho_report_list; }
@@ -7187,7 +7182,7 @@ struct intersys_son_info_reply_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   intersys_son_info_reply_c() = default;
@@ -7253,7 +7248,7 @@ struct intersys_son_info_report_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7293,7 +7288,7 @@ struct intersys_son_info_request_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   intersys_son_info_request_c() = default;
@@ -7394,7 +7389,7 @@ struct son_info_report_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   son_info_report_c() = default;
@@ -7504,7 +7499,7 @@ struct intersys_son_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7544,7 +7539,7 @@ struct intersys_son_info_report_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   intersys_son_info_report_c() = default;
@@ -7613,7 +7608,7 @@ struct son_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::son_info_report; }
@@ -7659,7 +7654,7 @@ struct son_info_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<son_info_request_opts, true> son_info_request_e;
+using son_info_request_e = enumerated<son_info_request_opts, true>;
 
 // SourceRANNodeID-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using source_ran_node_id_ext_ies_o = protocol_ext_empty_o;
@@ -7673,7 +7668,7 @@ struct target_ran_node_id_son_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nr_cgi; }
@@ -7706,7 +7701,7 @@ struct intersys_son_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   intersys_son_info_c() = default;
@@ -7756,7 +7751,7 @@ struct intersys_son_transfer_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   intersys_son_transfer_type_c() = default;
@@ -7823,7 +7818,7 @@ struct son_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   son_info_c() = default;
@@ -7977,7 +7972,7 @@ struct proc_stage_choice_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   proc_stage_choice_c() = default;
@@ -8070,7 +8065,7 @@ struct rim_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rim_rs_detection_opts, true> rim_rs_detection_e_;
+  using rim_rs_detection_e_ = enumerated<rim_rs_detection_opts, true>;
 
   // member variables
   bool                             ext             = false;
@@ -8130,7 +8125,7 @@ struct delay_crit_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<delay_crit_opts, true> delay_crit_e;
+using delay_crit_e = enumerated<delay_crit_opts, true>;
 
 // Dynamic5QIDescriptor-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct dyn_5qi_descriptor_ext_ies_o {
@@ -8146,7 +8141,7 @@ struct dyn_5qi_descriptor_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -8186,15 +8181,14 @@ struct dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                extended_packet_delay_budget_present = false;
-  bool                                                cn_packet_delay_budget_dl_present    = false;
-  bool                                                cn_packet_delay_budget_ul_present    = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> extended_packet_delay_budget;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     extended_packet_delay_budget_present = false;
+  bool     cn_packet_delay_budget_dl_present    = false;
+  bool     cn_packet_delay_budget_ul_present    = false;
+  uint32_t extended_packet_delay_budget;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8230,7 +8224,7 @@ struct dl_forwarding_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<dl_forwarding_opts, true> dl_forwarding_e;
+using dl_forwarding_e = enumerated<dl_forwarding_opts, true>;
 
 // E-RABInformationItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct erab_info_item_ext_ies_o {
@@ -8241,7 +8235,7 @@ struct erab_info_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -8279,13 +8273,12 @@ struct erab_info_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              source_tnla_ddr_info_present      = false;
-  bool                                              source_node_tnla_ddr_info_present = false;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_tnla_ddr_info;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_node_tnla_ddr_info;
+  bool                                  source_tnla_ddr_info_present      = false;
+  bool                                  source_node_tnla_ddr_info_present = false;
+  bounded_bitstring<1, 160, true, true> source_tnla_ddr_info;
+  bounded_bitstring<1, 160, true, true> source_node_tnla_ddr_info;
 
   // sequence methods
-  erab_info_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8328,7 +8321,7 @@ struct emergency_fallback_request_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<emergency_fallback_request_ind_opts, true> emergency_fallback_request_ind_e;
+using emergency_fallback_request_ind_e = enumerated<emergency_fallback_request_ind_opts, true>;
 
 // EmergencyServiceTargetCN ::= ENUMERATED
 struct emergency_service_target_cn_opts {
@@ -8338,7 +8331,7 @@ struct emergency_service_target_cn_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<emergency_service_target_cn_opts, true> emergency_service_target_cn_e;
+using emergency_service_target_cn_e = enumerated<emergency_service_target_cn_opts, true>;
 
 using emergency_fallback_ind_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8392,7 +8385,7 @@ struct meas_thres_l1_logged_mdt_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   meas_thres_l1_logged_mdt_c() = default;
@@ -8472,7 +8465,7 @@ struct time_to_trigger_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<time_to_trigger_opts> time_to_trigger_e;
+using time_to_trigger_e = enumerated<time_to_trigger_opts>;
 
 using event_l1_logged_mdt_cfg_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8502,7 +8495,7 @@ struct event_trigger_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<out_of_coverage_opts, true> out_of_coverage_e_;
+  using out_of_coverage_e_ = enumerated<out_of_coverage_opts, true>;
   struct types_opts {
     enum options { out_of_coverage, event_l1_logged_mdt_cfg, choice_exts, nulltype } value;
     typedef uint8_t number_type;
@@ -8510,7 +8503,7 @@ struct event_trigger_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   event_trigger_c() = default;
@@ -8598,7 +8591,7 @@ struct excess_packet_delay_thres_value_opts {
   float       to_number() const;
   const char* to_number_string() const;
 };
-typedef enumerated<excess_packet_delay_thres_value_opts, true> excess_packet_delay_thres_value_e;
+using excess_packet_delay_thres_value_e = enumerated<excess_packet_delay_thres_value_opts, true>;
 
 using excess_packet_delay_thres_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8651,7 +8644,7 @@ struct five_g_pro_se_direct_communication_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<five_g_pro_se_direct_communication_opts, true> five_g_pro_se_direct_communication_e;
+using five_g_pro_se_direct_communication_e = enumerated<five_g_pro_se_direct_communication_opts, true>;
 
 // FiveGProSeDirectDiscovery ::= ENUMERATED
 struct five_g_pro_se_direct_discovery_opts {
@@ -8659,7 +8652,7 @@ struct five_g_pro_se_direct_discovery_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<five_g_pro_se_direct_discovery_opts, true> five_g_pro_se_direct_discovery_e;
+using five_g_pro_se_direct_discovery_e = enumerated<five_g_pro_se_direct_discovery_opts, true>;
 
 // FiveGProSeLayer2RemoteUE ::= ENUMERATED
 struct five_g_pro_se_layer2_remote_ue_opts {
@@ -8667,7 +8660,7 @@ struct five_g_pro_se_layer2_remote_ue_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<five_g_pro_se_layer2_remote_ue_opts, true> five_g_pro_se_layer2_remote_ue_e;
+using five_g_pro_se_layer2_remote_ue_e = enumerated<five_g_pro_se_layer2_remote_ue_opts, true>;
 
 // FiveGProSeLayer2UEtoNetworkRelay ::= ENUMERATED
 struct five_g_pro_se_layer2_ue_to_network_relay_opts {
@@ -8675,7 +8668,7 @@ struct five_g_pro_se_layer2_ue_to_network_relay_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<five_g_pro_se_layer2_ue_to_network_relay_opts, true> five_g_pro_se_layer2_ue_to_network_relay_e;
+using five_g_pro_se_layer2_ue_to_network_relay_e = enumerated<five_g_pro_se_layer2_ue_to_network_relay_opts, true>;
 
 // FiveGProSeLayer3UEtoNetworkRelay ::= ENUMERATED
 struct five_g_pro_se_layer3_ue_to_network_relay_opts {
@@ -8683,7 +8676,7 @@ struct five_g_pro_se_layer3_ue_to_network_relay_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<five_g_pro_se_layer3_ue_to_network_relay_opts, true> five_g_pro_se_layer3_ue_to_network_relay_e;
+using five_g_pro_se_layer3_ue_to_network_relay_e = enumerated<five_g_pro_se_layer3_ue_to_network_relay_opts, true>;
 
 using five_g_pro_se_authorized_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8741,7 +8734,7 @@ struct range_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<range_opts, true> range_e;
+using range_e = enumerated<range_opts, true>;
 
 using five_g_pro_se_pc5_qos_flow_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -8796,7 +8789,7 @@ struct gbr_qos_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::alt_qos_para_set_list; }
@@ -8825,7 +8818,7 @@ struct notif_ctrl_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<notif_ctrl_opts, true> notif_ctrl_e;
+using notif_ctrl_e = enumerated<notif_ctrl_opts, true>;
 
 // GBR-QosInformation ::= SEQUENCE
 struct gbr_qos_info_s {
@@ -8878,7 +8871,7 @@ struct global_line_id_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tai; }
@@ -8907,7 +8900,7 @@ struct line_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<line_type_opts, true> line_type_e;
+using line_type_e = enumerated<line_type_opts, true>;
 
 // GlobalLine-ID ::= SEQUENCE
 struct global_line_id_s {
@@ -8990,7 +8983,7 @@ struct handov_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<handov_type_opts, true, 1> handov_type_e;
+using handov_type_e = enumerated<handov_type_opts, true, 1>;
 
 // PDUSessionResourceHandoverList ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourceHandoverItem
 using pdu_session_res_ho_list_l = dyn_array<pdu_session_res_ho_item_s>;
@@ -9033,7 +9026,7 @@ struct up_transport_layer_info_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::common_network_instance; }
@@ -9146,7 +9139,7 @@ struct ho_cmd_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -9198,19 +9191,18 @@ struct ho_cmd_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                               add_dl_forwarding_up_tnl_info_present  = false;
-  bool                                                               ul_forwarding_up_tnl_info_present      = false;
-  bool                                                               add_ul_forwarding_up_tnl_info_present  = false;
-  bool                                                               data_forwarding_resp_erab_list_present = false;
-  bool                                                               qos_flow_failed_to_setup_list_present  = false;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>   add_dl_forwarding_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                              ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>> add_ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>             qos_flow_failed_to_setup_list;
+  bool                             add_dl_forwarding_up_tnl_info_present  = false;
+  bool                             ul_forwarding_up_tnl_info_present      = false;
+  bool                             add_ul_forwarding_up_tnl_info_present  = false;
+  bool                             data_forwarding_resp_erab_list_present = false;
+  bool                             qos_flow_failed_to_setup_list_present  = false;
+  qos_flow_per_tnl_info_list_l     add_dl_forwarding_up_tnl_info;
+  up_transport_layer_info_c        ul_forwarding_up_tnl_info;
+  up_transport_layer_info_list_l   add_ul_forwarding_up_tnl_info;
+  data_forwarding_resp_erab_list_l data_forwarding_resp_erab_list;
+  qos_flow_list_with_cause_l       qos_flow_failed_to_setup_list;
 
   // sequence methods
-  ho_cmd_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9267,7 +9259,7 @@ struct user_location_info_tngf_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tai; }
@@ -9299,7 +9291,7 @@ struct user_location_info_twif_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tai; }
@@ -9331,7 +9323,7 @@ struct user_location_info_w_agf_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9375,7 +9367,7 @@ struct user_location_info_eutra_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pscell_info; }
@@ -9407,7 +9399,7 @@ struct user_location_info_n3_iwf_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::tai; }
@@ -9439,7 +9431,7 @@ struct user_location_info_nr_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -9513,7 +9505,7 @@ struct user_location_info_w_agf_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   user_location_info_w_agf_c() = default;
@@ -9579,7 +9571,7 @@ struct user_location_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -9649,15 +9641,14 @@ struct user_location_info_nr_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                         pscell_info_present     = false;
-  bool                                         n_id_present            = false;
-  bool                                         nr_ntn_tai_info_present = false;
-  ie_field_s<ngran_cgi_c>                      pscell_info;
-  ie_field_s<fixed_bitstring<44, false, true>> n_id;
-  ie_field_s<nr_ntn_tai_info_s>                nr_ntn_tai_info;
+  bool                             pscell_info_present     = false;
+  bool                             n_id_present            = false;
+  bool                             nr_ntn_tai_info_present = false;
+  ngran_cgi_c                      pscell_info;
+  fixed_bitstring<44, false, true> n_id;
+  nr_ntn_tai_info_s                nr_ntn_tai_info;
 
   // sequence methods
-  user_location_info_nr_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9686,7 +9677,7 @@ struct notify_source_ngran_node_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<notify_source_ngran_node_opts, true> notify_source_ngran_node_e;
+using notify_source_ngran_node_e = enumerated<notify_source_ngran_node_opts, true>;
 
 // UserLocationInformation ::= CHOICE
 struct user_location_info_c {
@@ -9703,7 +9694,7 @@ struct user_location_info_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   user_location_info_c() = default;
@@ -9802,7 +9793,7 @@ struct extended_report_interv_mdt_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<extended_report_interv_mdt_opts, true> extended_report_interv_mdt_e;
+using extended_report_interv_mdt_e = enumerated<extended_report_interv_mdt_opts, true>;
 
 // M1ThresholdType-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using m1_thres_type_ext_ies_o = protocol_ies_empty_o;
@@ -9817,25 +9808,25 @@ struct sensor_name_cfg_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<uncompensated_barometric_cfg_opts, true> uncompensated_barometric_cfg_e_;
+  using uncompensated_barometric_cfg_e_ = enumerated<uncompensated_barometric_cfg_opts, true>;
   struct ue_speed_cfg_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<ue_speed_cfg_opts, true> ue_speed_cfg_e_;
+  using ue_speed_cfg_e_ = enumerated<ue_speed_cfg_opts, true>;
   struct ue_orientation_cfg_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<ue_orientation_cfg_opts, true> ue_orientation_cfg_e_;
+  using ue_orientation_cfg_e_ = enumerated<ue_orientation_cfg_opts, true>;
   struct types_opts {
     enum options { uncompensated_barometric_cfg, ue_speed_cfg, ue_orientation_cfg, choice_exts, nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   sensor_name_cfg_c() = default;
@@ -9909,7 +9900,7 @@ struct include_beam_meass_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<include_beam_meass_ind_opts, true> include_beam_meass_ind_e;
+using include_beam_meass_ind_e = enumerated<include_beam_meass_ind_opts, true>;
 
 // M1PeriodicReporting-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct m1_periodic_report_ext_ies_o {
@@ -9920,7 +9911,7 @@ struct m1_periodic_report_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::extended_report_interv_mdt; }
@@ -9953,7 +9944,7 @@ struct m1_thres_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   m1_thres_type_c() = default;
@@ -10026,7 +10017,7 @@ struct m4_report_amount_mdt_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<m4_report_amount_mdt_opts, true> m4_report_amount_mdt_e;
+using m4_report_amount_mdt_e = enumerated<m4_report_amount_mdt_opts, true>;
 
 // M5ReportAmountMDT ::= ENUMERATED
 struct m5_report_amount_mdt_opts {
@@ -10036,7 +10027,7 @@ struct m5_report_amount_mdt_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<m5_report_amount_mdt_opts, true> m5_report_amount_mdt_e;
+using m5_report_amount_mdt_e = enumerated<m5_report_amount_mdt_opts, true>;
 
 // M6ReportAmountMDT ::= ENUMERATED
 struct m6_report_amount_mdt_opts {
@@ -10046,7 +10037,7 @@ struct m6_report_amount_mdt_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<m6_report_amount_mdt_opts, true> m6_report_amount_mdt_e;
+using m6_report_amount_mdt_e = enumerated<m6_report_amount_mdt_opts, true>;
 
 // M7ReportAmountMDT ::= ENUMERATED
 struct m7_report_amount_mdt_opts {
@@ -10056,7 +10047,7 @@ struct m7_report_amount_mdt_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<m7_report_amount_mdt_opts, true> m7_report_amount_mdt_e;
+using m7_report_amount_mdt_e = enumerated<m7_report_amount_mdt_opts, true>;
 
 // ReportAmountMDT ::= ENUMERATED
 struct report_amount_mdt_opts {
@@ -10066,7 +10057,7 @@ struct report_amount_mdt_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<report_amount_mdt_opts> report_amount_mdt_e;
+using report_amount_mdt_e = enumerated<report_amount_mdt_opts>;
 
 // ReportIntervalMDT ::= ENUMERATED
 struct report_interv_mdt_opts {
@@ -10091,7 +10082,7 @@ struct report_interv_mdt_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<report_interv_mdt_opts> report_interv_mdt_e;
+using report_interv_mdt_e = enumerated<report_interv_mdt_opts>;
 
 using sensor_meas_cfg_name_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -10131,7 +10122,7 @@ struct early_meas_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<early_meas_opts, true> early_meas_e;
+using early_meas_e = enumerated<early_meas_opts, true>;
 
 // Links-to-log ::= ENUMERATED
 struct links_to_log_opts {
@@ -10139,7 +10130,7 @@ struct links_to_log_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<links_to_log_opts, true> links_to_log_e;
+using links_to_log_e = enumerated<links_to_log_opts, true>;
 
 // LoggedMDTTrigger-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using logged_mdt_trigger_ext_ies_o = protocol_ies_empty_o;
@@ -10153,7 +10144,7 @@ struct m1_cfg_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -10206,7 +10197,7 @@ struct m1_report_trigger_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<m1_report_trigger_opts, true> m1_report_trigger_e;
+using m1_report_trigger_e = enumerated<m1_report_trigger_opts, true>;
 
 using m1_thres_event_a2_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -10235,7 +10226,7 @@ struct m4_cfg_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::m4_report_amount; }
@@ -10266,7 +10257,7 @@ struct m4period_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<m4period_opts, true> m4period_e;
+using m4period_e = enumerated<m4period_opts, true>;
 
 // M5Configuration-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct m5_cfg_ext_ies_o {
@@ -10279,7 +10270,7 @@ struct m5_cfg_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::m5_report_amount; }
@@ -10310,7 +10301,7 @@ struct m5period_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<m5period_opts, true> m5period_e;
+using m5period_e = enumerated<m5period_opts, true>;
 
 // M6Configuration-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct m6_cfg_ext_ies_o {
@@ -10323,7 +10314,7 @@ struct m6_cfg_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -10381,7 +10372,7 @@ struct m6report_interv_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<m6report_interv_opts, true> m6report_interv_e;
+using m6report_interv_e = enumerated<m6report_interv_opts, true>;
 
 // M7Configuration-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct m7_cfg_ext_ies_o {
@@ -10394,7 +10385,7 @@ struct m7_cfg_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::m7_report_amount; }
@@ -10426,7 +10417,7 @@ struct sensor_meas_cfg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<sensor_meas_cfg_opts, true> sensor_meas_cfg_e;
+using sensor_meas_cfg_e = enumerated<sensor_meas_cfg_opts, true>;
 
 // SensorMeasConfigNameList ::= SEQUENCE (SIZE (1..3)) OF SensorMeasConfigNameItem
 using sensor_meas_cfg_name_list_l = dyn_array<sensor_meas_cfg_name_item_s>;
@@ -10440,7 +10431,7 @@ struct wlan_meas_cfg_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<wlan_meas_cfg_opts, true> wlan_meas_cfg_e;
+using wlan_meas_cfg_e = enumerated<wlan_meas_cfg_opts, true>;
 
 // WLANMeasConfigNameList ::= SEQUENCE (SIZE (1..4)) OF WLANMeasConfigNameItem
 using wlan_meas_cfg_name_list_l = dyn_array<wlan_meas_cfg_name_item_s>;
@@ -10460,7 +10451,7 @@ struct logged_mdt_nr_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::early_meas; }
@@ -10490,7 +10481,7 @@ struct logged_mdt_trigger_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   logged_mdt_trigger_c() = default;
@@ -10542,7 +10533,7 @@ struct logging_dur_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<logging_dur_opts, true> logging_dur_e;
+using logging_dur_e = enumerated<logging_dur_opts, true>;
 
 // LoggingInterval ::= ENUMERATED
 struct logging_interv_opts {
@@ -10566,20 +10557,19 @@ struct logging_interv_opts {
   const char* to_string() const;
   int32_t     to_number() const;
 };
-typedef enumerated<logging_interv_opts, true> logging_interv_e;
+using logging_interv_e = enumerated<logging_interv_opts, true>;
 
 struct m1_cfg_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                 include_beam_meass_ind_present = false;
-  bool                                 beam_meass_report_cfg_present  = false;
-  ie_field_s<include_beam_meass_ind_e> include_beam_meass_ind;
-  ie_field_s<beam_meass_report_cfg_s>  beam_meass_report_cfg;
+  bool                     include_beam_meass_ind_present = false;
+  bool                     beam_meass_report_cfg_present  = false;
+  include_beam_meass_ind_e include_beam_meass_ind;
+  beam_meass_report_cfg_s  beam_meass_report_cfg;
 
   // sequence methods
-  m1_cfg_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10636,13 +10626,12 @@ struct m6_cfg_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                   m6_report_amount_present              = false;
-  bool                                                                   excess_packet_delay_thres_cfg_present = false;
-  ie_field_s<m6_report_amount_mdt_e>                                     m6_report_amount;
-  ie_field_s<dyn_seq_of<excess_packet_delay_thres_item_s, 1, 255, true>> excess_packet_delay_thres_cfg;
+  bool                            m6_report_amount_present              = false;
+  bool                            excess_packet_delay_thres_cfg_present = false;
+  m6_report_amount_mdt_e          m6_report_amount;
+  excess_packet_delay_thres_cfg_l excess_packet_delay_thres_cfg;
 
   // sequence methods
-  m6_cfg_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -10719,13 +10708,13 @@ struct wlan_meas_cfg_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<wlan_rssi_opts, true> wlan_rssi_e_;
+  using wlan_rssi_e_ = enumerated<wlan_rssi_opts, true>;
   struct wlan_rtt_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<wlan_rtt_opts, true> wlan_rtt_e_;
+  using wlan_rtt_e_ = enumerated<wlan_rtt_opts, true>;
 
   // member variables
   bool                            ext               = false;
@@ -10810,7 +10799,7 @@ struct mdt_activation_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mdt_activation_opts, true> mdt_activation_e;
+using mdt_activation_e = enumerated<mdt_activation_opts, true>;
 
 // MDT-Configuration-EUTRA-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using mdt_cfg_eutra_ext_ies_o = protocol_ext_empty_o;
@@ -10825,7 +10814,7 @@ struct mdt_mode_nr_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mdt_mode_nr_c() = default;
@@ -10952,7 +10941,7 @@ struct location_report_add_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<location_report_add_info_opts, true> location_report_add_info_e;
+using location_report_add_info_e = enumerated<location_report_add_info_opts, true>;
 
 using mdt_cfg_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -11002,7 +10991,7 @@ struct pdu_session_res_setup_item_ho_req_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_expected_ue_activity_behaviour; }
@@ -11043,7 +11032,7 @@ struct event_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<event_type_opts, true> event_type_e;
+using event_type_e = enumerated<event_type_opts, true>;
 
 // LTEUE-Sidelink-Aggregate-MaximumBitrates-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using lte_ue_sidelink_aggr_max_bitrates_ext_ies_o = protocol_ext_empty_o;
@@ -11060,7 +11049,7 @@ struct location_report_request_type_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::location_report_add_info; }
@@ -11116,7 +11105,7 @@ struct pedestrian_ue_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pedestrian_ue_opts, true> pedestrian_ue_e;
+using pedestrian_ue_e = enumerated<pedestrian_ue_opts, true>;
 
 // ReportArea ::= ENUMERATED
 struct report_area_opts {
@@ -11124,7 +11113,7 @@ struct report_area_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<report_area_opts, true> report_area_e;
+using report_area_e = enumerated<report_area_opts, true>;
 
 // SecurityContext-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using security_context_ext_ies_o = protocol_ext_empty_o;
@@ -11141,7 +11130,7 @@ struct trace_activation_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -11189,7 +11178,7 @@ struct trace_depth_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<trace_depth_opts, true> trace_depth_e;
+using trace_depth_e = enumerated<trace_depth_opts, true>;
 
 // UESecurityCapabilities-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using ue_security_cap_ext_ies_o = protocol_ext_empty_o;
@@ -11218,7 +11207,7 @@ struct vehicle_ue_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<vehicle_ue_opts, true> vehicle_ue_e;
+using vehicle_ue_e = enumerated<vehicle_ue_opts, true>;
 
 // IAB-Authorized ::= ENUMERATED
 struct iab_authorized_opts {
@@ -11226,7 +11215,7 @@ struct iab_authorized_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<iab_authorized_opts, true> iab_authorized_e;
+using iab_authorized_e = enumerated<iab_authorized_opts, true>;
 
 using lte_ue_sidelink_aggr_max_bitrates_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -11321,7 +11310,7 @@ struct new_security_context_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<new_security_context_ind_opts, true> new_security_context_ind_e;
+using new_security_context_ind_e = enumerated<new_security_context_ind_opts, true>;
 
 using pc5_qos_params_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -11355,7 +11344,7 @@ struct rrc_inactive_transition_report_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rrc_inactive_transition_report_request_opts, true> rrc_inactive_transition_report_request_e;
+using rrc_inactive_transition_report_request_e = enumerated<rrc_inactive_transition_report_request_opts, true>;
 
 // RedirectionVoiceFallback ::= ENUMERATED
 struct redirection_voice_fallback_opts {
@@ -11363,7 +11352,7 @@ struct redirection_voice_fallback_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<redirection_voice_fallback_opts, true> redirection_voice_fallback_e;
+using redirection_voice_fallback_e = enumerated<redirection_voice_fallback_opts, true>;
 
 using security_context_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -11391,7 +11380,7 @@ struct time_sync_assist_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<time_distribution_ind_opts, true> time_distribution_ind_e_;
+  using time_distribution_ind_e_ = enumerated<time_distribution_ind_opts, true>;
 
   // member variables
   bool                                    ext                               = false;
@@ -11413,13 +11402,12 @@ struct trace_activation_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                              mdt_cfg_present                     = false;
-  bool                                                              trace_collection_entity_uri_present = false;
-  ie_field_s<mdt_cfg_s>                                             mdt_cfg;
-  ie_field_s<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> trace_collection_entity_uri;
+  bool                                                  mdt_cfg_present                     = false;
+  bool                                                  trace_collection_entity_uri_present = false;
+  mdt_cfg_s                                             mdt_cfg;
+  visible_string<0, MAX_ASN_STRING_LENGTH, false, true> trace_collection_entity_uri;
 
   // sequence methods
-  trace_activation_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11448,7 +11436,7 @@ struct ue_up_c_iot_support_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_up_c_iot_support_opts, true> ue_up_c_iot_support_e;
+using ue_up_c_iot_support_e = enumerated<ue_up_c_iot_support_opts, true>;
 
 using ue_security_cap_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -11522,7 +11510,7 @@ struct npn_access_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   npn_access_info_c() = default;
@@ -11577,7 +11565,7 @@ struct red_cap_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<red_cap_ind_opts, true> red_cap_ind_e;
+using red_cap_ind_e = enumerated<red_cap_ind_opts, true>;
 
 // RSN ::= ENUMERATED
 struct r_sn_opts {
@@ -11587,7 +11575,7 @@ struct r_sn_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<r_sn_opts, true> r_sn_e;
+using r_sn_e = enumerated<r_sn_opts, true>;
 
 // RedundantPDUSessionInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct redundant_pdu_session_info_ext_ies_o {
@@ -11600,7 +11588,7 @@ struct redundant_pdu_session_info_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_pair_id; }
@@ -11629,7 +11617,7 @@ struct confidentiality_protection_result_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<confidentiality_protection_result_opts, true> confidentiality_protection_result_e;
+using confidentiality_protection_result_e = enumerated<confidentiality_protection_result_opts, true>;
 
 // IntegrityProtectionResult ::= ENUMERATED
 struct integrity_protection_result_opts {
@@ -11637,7 +11625,7 @@ struct integrity_protection_result_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<integrity_protection_result_opts, true> integrity_protection_result_e;
+using integrity_protection_result_e = enumerated<integrity_protection_result_opts, true>;
 
 // MBS-SupportIndicator ::= ENUMERATED
 struct mbs_support_ind_opts {
@@ -11645,7 +11633,7 @@ struct mbs_support_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mbs_support_ind_opts, true> mbs_support_ind_e;
+using mbs_support_ind_e = enumerated<mbs_support_ind_opts, true>;
 
 // RedundantPDUSessionInformation ::= SEQUENCE
 struct redundant_pdu_session_info_s {
@@ -11682,7 +11670,7 @@ struct ho_request_ack_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -11755,25 +11743,24 @@ struct ho_request_ack_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                 add_dl_up_tnl_info_for_ho_list_present = false;
-  bool                                                                 ul_forwarding_up_tnl_info_present      = false;
-  bool                                                                 add_ul_forwarding_up_tnl_info_present  = false;
-  bool                                                                 data_forwarding_resp_erab_list_present = false;
-  bool                                                                 redundant_dl_ngu_up_tnl_info_present   = false;
-  bool                                                                 used_r_sn_info_present                 = false;
-  bool                                                                 global_ran_node_id_present             = false;
-  bool                                                                 mbs_support_ind_present                = false;
-  ie_field_s<dyn_seq_of<add_dl_up_tnl_info_for_ho_item_s, 1, 3, true>> add_dl_up_tnl_info_for_ho_list;
-  ie_field_s<up_transport_layer_info_c>                                ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>   add_ul_forwarding_up_tnl_info;
-  ie_field_s<dyn_seq_of<data_forwarding_resp_erab_list_item_s, 1, 256, true>> data_forwarding_resp_erab_list;
-  ie_field_s<up_transport_layer_info_c>                                       redundant_dl_ngu_up_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                                    used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                            global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                               mbs_support_ind;
+  bool                             add_dl_up_tnl_info_for_ho_list_present = false;
+  bool                             ul_forwarding_up_tnl_info_present      = false;
+  bool                             add_ul_forwarding_up_tnl_info_present  = false;
+  bool                             data_forwarding_resp_erab_list_present = false;
+  bool                             redundant_dl_ngu_up_tnl_info_present   = false;
+  bool                             used_r_sn_info_present                 = false;
+  bool                             global_ran_node_id_present             = false;
+  bool                             mbs_support_ind_present                = false;
+  add_dl_up_tnl_info_for_ho_list_l add_dl_up_tnl_info_for_ho_list;
+  up_transport_layer_info_c        ul_forwarding_up_tnl_info;
+  up_transport_layer_info_list_l   add_ul_forwarding_up_tnl_info;
+  data_forwarding_resp_erab_list_l data_forwarding_resp_erab_list;
+  up_transport_layer_info_c        redundant_dl_ngu_up_tnl_info;
+  redundant_pdu_session_info_s     used_r_sn_info;
+  global_ran_node_id_c             global_ran_node_id;
+  mbs_support_ind_e                mbs_support_ind;
 
   // sequence methods
-  ho_request_ack_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -11898,7 +11885,7 @@ struct target_id_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -11971,7 +11958,7 @@ struct direct_forwarding_path_availability_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<direct_forwarding_path_availability_opts, true> direct_forwarding_path_availability_e;
+using direct_forwarding_path_availability_e = enumerated<direct_forwarding_path_availability_opts, true>;
 
 // PDUSessionResourceListHORqd ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourceItemHORqd
 using pdu_session_res_list_ho_rqd_l = dyn_array<pdu_session_res_item_ho_rqd_s>;
@@ -11983,7 +11970,7 @@ struct target_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   target_id_c() = default;
@@ -12191,7 +12178,7 @@ struct mdt_align_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mdt_align_info_c() = default;
@@ -12240,7 +12227,7 @@ struct service_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<service_type_opts, true> service_type_e;
+using service_type_e = enumerated<service_type_opts, true>;
 
 // SliceSupportListQMC ::= SEQUENCE (SIZE (1..16)) OF SliceSupportQMC-Item
 using slice_support_list_qmc_l = dyn_array<slice_support_qmc_item_s>;
@@ -12257,7 +12244,7 @@ struct ue_app_layer_meas_cfg_info_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<qo_e_meas_status_opts, true> qo_e_meas_status_e_;
+  using qo_e_meas_status_e_ = enumerated<qo_e_meas_status_opts, true>;
 
   // member variables
   bool                                         ext                                        = false;
@@ -12297,7 +12284,7 @@ struct pdu_session_res_setup_item_cxt_req_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_expected_ue_activity_behaviour; }
@@ -12432,7 +12419,7 @@ struct authenticated_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<authenticated_ind_opts, true> authenticated_ind_e;
+using authenticated_ind_e = enumerated<authenticated_ind_opts, true>;
 
 // CEmodeBSupport-Indicator ::= ENUMERATED
 struct ce_mode_b_support_ind_opts {
@@ -12440,7 +12427,7 @@ struct ce_mode_b_support_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ce_mode_b_support_ind_opts, true> ce_mode_b_support_ind_e;
+using ce_mode_b_support_ind_e = enumerated<ce_mode_b_support_ind_opts, true>;
 
 // EDT-Session ::= ENUMERATED
 struct edt_session_opts {
@@ -12448,7 +12435,7 @@ struct edt_session_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<edt_session_opts, true> edt_session_e;
+using edt_session_e = enumerated<edt_session_opts, true>;
 
 // IABNodeIndication ::= ENUMERATED
 struct iab_node_ind_opts {
@@ -12456,7 +12443,7 @@ struct iab_node_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<iab_node_ind_opts, true> iab_node_ind_e;
+using iab_node_ind_e = enumerated<iab_node_ind_opts, true>;
 
 // LTEM-Indication ::= ENUMERATED
 struct ltem_ind_opts {
@@ -12464,7 +12451,7 @@ struct ltem_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ltem_ind_opts, true> ltem_ind_e;
+using ltem_ind_e = enumerated<ltem_ind_opts, true>;
 
 // RRCEstablishmentCause ::= ENUMERATED
 struct rrc_establishment_cause_opts {
@@ -12487,7 +12474,7 @@ struct rrc_establishment_cause_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rrc_establishment_cause_opts, true, 2> rrc_establishment_cause_e;
+using rrc_establishment_cause_e = enumerated<rrc_establishment_cause_opts, true, 2>;
 
 using source_to_target_amf_info_reroute_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -12516,7 +12503,7 @@ struct ue_context_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_context_request_opts, true> ue_context_request_e;
+using ue_context_request_e = enumerated<ue_context_request_opts, true>;
 
 // SliceOverloadItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using slice_overload_item_ext_ies_o = protocol_ext_empty_o;
@@ -12530,7 +12517,7 @@ struct cfg_tac_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cfg_tac_ind_opts, true> cfg_tac_ind_e;
+using cfg_tac_ind_e = enumerated<cfg_tac_ind_opts, true>;
 
 // MBS-AreaTAIList ::= SEQUENCE (SIZE (1..16)) OF TAI
 using mbs_area_tai_list_l = dyn_array<tai_s>;
@@ -12551,7 +12538,7 @@ struct overload_action_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<overload_action_opts, true> overload_action_e;
+using overload_action_e = enumerated<overload_action_opts, true>;
 
 // OverloadResponse-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using overload_resp_ext_ies_o = protocol_ies_empty_o;
@@ -12562,7 +12549,7 @@ struct rat_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rat_info_opts, true, 4> rat_info_e;
+using rat_info_e = enumerated<rat_info_opts, true, 4>;
 
 using slice_overload_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -12630,7 +12617,7 @@ struct overload_resp_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   overload_resp_c() = default;
@@ -12703,7 +12690,7 @@ struct pdu_session_res_item_cxt_rel_cpl_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_res_release_resp_transfer; }
@@ -12744,7 +12731,7 @@ struct pdu_session_res_modify_item_mod_req_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -12813,7 +12800,7 @@ struct pdu_session_res_setup_item_su_req_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_expected_ue_activity_behaviour; }
@@ -12851,7 +12838,7 @@ struct pdu_session_res_switched_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::pdu_session_expected_ue_activity_behaviour; }
@@ -12892,7 +12879,7 @@ struct supported_ta_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -12959,7 +12946,7 @@ struct ue_presence_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_presence_opts, true> ue_presence_e;
+using ue_presence_e = enumerated<ue_presence_opts, true>;
 
 // UEPresenceInAreaOfInterestItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using ue_presence_in_area_of_interest_item_ext_ies_o = protocol_ext_empty_o;
@@ -12989,7 +12976,7 @@ struct nb_iot_paging_time_win_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<nb_iot_paging_time_win_opts, true> nb_iot_paging_time_win_e;
+using nb_iot_paging_time_win_e = enumerated<nb_iot_paging_time_win_opts, true>;
 
 // NB-IoT-Paging-eDRXCycle ::= ENUMERATED
 struct nb_iot_paging_e_drx_cycle_opts {
@@ -13015,7 +13002,7 @@ struct nb_iot_paging_e_drx_cycle_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<nb_iot_paging_e_drx_cycle_opts, true> nb_iot_paging_e_drx_cycle_e;
+using nb_iot_paging_e_drx_cycle_e = enumerated<nb_iot_paging_e_drx_cycle_opts, true>;
 
 // NB-IoT-Paging-eDRXInfo-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using nb_iot_paging_e_drx_info_ext_ies_o = protocol_ext_empty_o;
@@ -13229,13 +13216,12 @@ struct pdu_session_res_modify_item_mod_req_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                         s_nssai_present                                    = false;
-  bool                                         pdu_session_expected_ue_activity_behaviour_present = false;
-  ie_field_s<s_nssai_s>                        s_nssai;
-  ie_field_s<expected_ue_activity_behaviour_s> pdu_session_expected_ue_activity_behaviour;
+  bool                             s_nssai_present                                    = false;
+  bool                             pdu_session_expected_ue_activity_behaviour_present = false;
+  s_nssai_s                        s_nssai;
+  expected_ue_activity_behaviour_s pdu_session_expected_ue_activity_behaviour;
 
   // sequence methods
-  pdu_session_res_modify_item_mod_req_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -13544,7 +13530,7 @@ struct paging_probability_info_opts {
   float       to_number() const;
   const char* to_number_string() const;
 };
-typedef enumerated<paging_probability_info_opts, true> paging_probability_info_e;
+using paging_probability_info_e = enumerated<paging_probability_info_opts, true>;
 
 // QMCDeactivation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using qmc_deactivation_ext_ies_o = protocol_ext_empty_o;
@@ -13558,7 +13544,7 @@ struct reset_all_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<reset_all_opts, true> reset_all_e;
+using reset_all_e = enumerated<reset_all_opts, true>;
 
 // ResetType-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using reset_type_ext_ies_o = protocol_ies_empty_o;
@@ -13568,13 +13554,12 @@ struct supported_ta_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                      cfg_tac_ind_present = false;
-  bool                      rat_info_present    = false;
-  ie_field_s<cfg_tac_ind_e> cfg_tac_ind;
-  ie_field_s<rat_info_e>    rat_info;
+  bool          cfg_tac_ind_present = false;
+  bool          rat_info_present    = false;
+  cfg_tac_ind_e cfg_tac_ind;
+  rat_info_e    rat_info;
 
   // sequence methods
-  supported_ta_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -13672,7 +13657,7 @@ struct cancel_all_warning_msgs_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<cancel_all_warning_msgs_opts, true> cancel_all_warning_msgs_e;
+using cancel_all_warning_msgs_e = enumerated<cancel_all_warning_msgs_opts, true>;
 
 // ConcurrentWarningMessageInd ::= ENUMERATED
 struct concurrent_warning_msg_ind_opts {
@@ -13680,7 +13665,7 @@ struct concurrent_warning_msg_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<concurrent_warning_msg_ind_opts, true> concurrent_warning_msg_ind_e;
+using concurrent_warning_msg_ind_e = enumerated<concurrent_warning_msg_ind_opts, true>;
 
 // HandoverFlag ::= ENUMERATED
 struct ho_flag_opts {
@@ -13688,7 +13673,7 @@ struct ho_flag_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ho_flag_opts, true> ho_flag_e;
+using ho_flag_e = enumerated<ho_flag_opts, true>;
 
 // IAB-Supported ::= ENUMERATED
 struct iab_supported_opts {
@@ -13696,7 +13681,7 @@ struct iab_supported_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<iab_supported_opts, true> iab_supported_e;
+using iab_supported_e = enumerated<iab_supported_opts, true>;
 
 // IMSVoiceSupportIndicator ::= ENUMERATED
 struct ims_voice_support_ind_opts {
@@ -13704,7 +13689,7 @@ struct ims_voice_support_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ims_voice_support_ind_opts, true> ims_voice_support_ind_e;
+using ims_voice_support_ind_e = enumerated<ims_voice_support_ind_opts, true>;
 
 // MDTPLMNModificationList ::= SEQUENCE (SIZE (0..16)) OF OCTET STRING (SIZE (3))
 using mdt_plmn_mod_list_l = bounded_array<fixed_octstring<3, true>, 16>;
@@ -13720,7 +13705,7 @@ struct nb_iot_default_paging_drx_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<nb_iot_default_paging_drx_opts, true> nb_iot_default_paging_drx_e;
+using nb_iot_default_paging_drx_e = enumerated<nb_iot_default_paging_drx_opts, true>;
 
 using nb_iot_paging_e_drx_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -13748,7 +13733,7 @@ struct nb_iot_paging_drx_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<nb_iot_paging_drx_opts, true> nb_iot_paging_drx_e;
+using nb_iot_paging_drx_e = enumerated<nb_iot_paging_drx_opts, true>;
 
 // NGRAN-TNLAssociationToRemoveList ::= SEQUENCE (SIZE (1..32)) OF NGRAN-TNLAssociationToRemoveItem
 using ngran_tnl_assoc_to_rem_list_l = dyn_array<ngran_tnl_assoc_to_rem_item_s>;
@@ -13841,7 +13826,7 @@ struct pws_failed_cell_id_list_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   pws_failed_cell_id_list_c() = default;
@@ -13901,7 +13886,7 @@ struct paging_cause_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<paging_cause_opts, true> paging_cause_e;
+using paging_cause_e = enumerated<paging_cause_opts, true>;
 
 // PagingOrigin ::= ENUMERATED
 struct paging_origin_opts {
@@ -13911,7 +13896,7 @@ struct paging_origin_opts {
   const char* to_string() const;
   int8_t      to_number() const;
 };
-typedef enumerated<paging_origin_opts, true> paging_origin_e;
+using paging_origin_e = enumerated<paging_origin_opts, true>;
 
 // PagingPriority ::= ENUMERATED
 struct paging_prio_opts {
@@ -13932,7 +13917,7 @@ struct paging_prio_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<paging_prio_opts, true> paging_prio_e;
+using paging_prio_e = enumerated<paging_prio_opts, true>;
 
 using qmc_deactivation_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -13956,7 +13941,7 @@ struct rrc_state_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<rrc_state_opts, true> rrc_state_e;
+using rrc_state_e = enumerated<rrc_state_opts, true>;
 
 // ResetType ::= CHOICE
 struct reset_type_c {
@@ -13965,7 +13950,7 @@ struct reset_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   reset_type_c() = default;
@@ -14028,7 +14013,7 @@ struct suspend_request_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<suspend_request_ind_opts, true> suspend_request_ind_e;
+using suspend_request_ind_e = enumerated<suspend_request_ind_opts, true>;
 
 // Suspend-Response-Indication ::= ENUMERATED
 struct suspend_resp_ind_opts {
@@ -14036,7 +14021,7 @@ struct suspend_resp_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<suspend_resp_ind_opts, true> suspend_resp_ind_e;
+using suspend_resp_ind_e = enumerated<suspend_resp_ind_opts, true>;
 
 // TAIListForPaging ::= SEQUENCE (SIZE (1..16)) OF TAIListForPagingItem
 using tai_list_for_paging_l = dyn_array<tai_list_for_paging_item_s>;
@@ -14051,7 +14036,7 @@ struct ue_ngap_ids_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ue_ngap_ids_c() = default;
@@ -14114,7 +14099,7 @@ struct ue_paging_id_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ue_paging_id_c() = default;
@@ -14166,7 +14151,7 @@ struct ue_retention_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ue_retention_info_opts, true> ue_retention_info_e;
+using ue_retention_info_e = enumerated<ue_retention_info_opts, true>;
 
 using ul_cp_security_info_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -14215,7 +14200,7 @@ struct warning_area_list_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   warning_area_list_c() = default;
@@ -14329,7 +14314,7 @@ struct last_visited_ngran_cell_info_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::last_visited_pscell_list; }
@@ -14381,7 +14366,7 @@ struct last_visited_cell_info_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   last_visited_cell_info_c() = default;
@@ -14488,7 +14473,7 @@ struct non_dyn_5qi_descriptor_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -14526,13 +14511,12 @@ struct non_dyn_5qi_descriptor_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                cn_packet_delay_budget_dl_present = false;
-  bool                                                cn_packet_delay_budget_ul_present = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
+  bool     cn_packet_delay_budget_dl_present = false;
+  bool     cn_packet_delay_budget_ul_present = false;
+  uint32_t cn_packet_delay_budget_dl;
+  uint32_t cn_packet_delay_budget_ul;
 
   // sequence methods
-  non_dyn_5qi_descriptor_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -14567,7 +14551,7 @@ struct qos_monitoring_request_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<qos_monitoring_request_opts, true, 1> qos_monitoring_request_e;
+using qos_monitoring_request_e = enumerated<qos_monitoring_request_opts, true, 1>;
 
 // AdditionalQosFlowInformation ::= ENUMERATED
 struct add_qos_flow_info_opts {
@@ -14575,7 +14559,7 @@ struct add_qos_flow_info_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<add_qos_flow_info_opts, true> add_qos_flow_info_e;
+using add_qos_flow_info_e = enumerated<add_qos_flow_info_opts, true>;
 
 // MRB-ProgressInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 using mrb_progress_info_ext_ies_o = protocol_ies_empty_o;
@@ -14587,7 +14571,7 @@ struct qos_characteristics_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   qos_characteristics_c() = default;
@@ -14655,7 +14639,7 @@ struct qos_flow_level_qos_params_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -14694,7 +14678,7 @@ struct reflective_qos_attribute_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<reflective_qos_attribute_opts, true> reflective_qos_attribute_e;
+using reflective_qos_attribute_e = enumerated<reflective_qos_attribute_opts, true>;
 
 // MBS-MappingandDataForwardingRequestItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using mbs_mapand_data_forwarding_request_item_ext_ies_o = protocol_ext_empty_o;
@@ -14714,7 +14698,7 @@ struct mrb_progress_info_c {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mrb_progress_info_c() = default;
@@ -14773,13 +14757,12 @@ struct qos_flow_level_qos_params_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                               qos_monitoring_request_present     = false;
-  bool                                               qos_monitoring_report_freq_present = false;
-  ie_field_s<qos_monitoring_request_e>               qos_monitoring_request;
-  ie_field_s<integer<uint16_t, 1, 1800, true, true>> qos_monitoring_report_freq;
+  bool                     qos_monitoring_request_present     = false;
+  bool                     qos_monitoring_report_freq_present = false;
+  qos_monitoring_request_e qos_monitoring_request;
+  uint16_t                 qos_monitoring_report_freq;
 
   // sequence methods
-  qos_flow_level_qos_params_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15023,7 +15006,7 @@ struct mbs_session_status_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<mbs_session_status_opts, true> mbs_session_status_e;
+using mbs_session_status_e = enumerated<mbs_session_status_opts, true>;
 
 using mbs_distribution_setup_resp_transfer_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -15089,7 +15072,7 @@ struct mbs_session_tnl_info5_gc_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mbs_session_tnl_info5_gc_c() = default;
@@ -15180,7 +15163,7 @@ struct mbs_session_tnl_info_ngran_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   mbs_session_tnl_info_ngran_c() = default;
@@ -15319,7 +15302,7 @@ struct mbs_session_setup_or_mod_request_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -15359,14 +15342,13 @@ struct mbs_session_setup_or_mod_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                  mbs_session_tnl_info5_gc_present = false;
-  bool                                                                  mbs_session_fsa_id_list_present  = false;
-  ie_field_s<mbs_session_tnl_info5_gc_c>                                mbs_session_tnl_info5_gc;
-  ie_field_s<dyn_seq_of<mbs_qos_flows_to_be_setup_item_s, 1, 64, true>> mbs_qos_flows_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<fixed_octstring<3, true>, 1, 64, true>>         mbs_session_fsa_id_list;
+  bool                             mbs_session_tnl_info5_gc_present = false;
+  bool                             mbs_session_fsa_id_list_present  = false;
+  mbs_session_tnl_info5_gc_c       mbs_session_tnl_info5_gc;
+  mbs_qos_flows_to_be_setup_list_l mbs_qos_flows_to_be_setup_mod_list;
+  mbs_session_fsa_id_list_l        mbs_session_fsa_id_list;
 
   // sequence methods
-  mbs_session_setup_or_mod_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15550,7 +15532,7 @@ struct multicast_session_upd_request_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -15599,18 +15581,17 @@ struct multicast_session_upd_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                           mbs_service_area_present                   = false;
-  bool                           mbs_qos_flows_to_be_setup_mod_list_present = false;
-  bool                           mbs_qos_flow_to_release_list_present       = false;
-  bool                           mbs_session_tnl_info5_gc_present           = false;
-  ie_field_s<mbs_session_id_s>   mbs_session_id;
-  ie_field_s<mbs_service_area_c> mbs_service_area;
-  ie_field_s<dyn_seq_of<mbs_qos_flows_to_be_setup_item_s, 1, 64, true>> mbs_qos_flows_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>       mbs_qos_flow_to_release_list;
-  ie_field_s<mbs_session_tnl_info5_gc_c>                                mbs_session_tnl_info5_gc;
+  bool                             mbs_service_area_present                   = false;
+  bool                             mbs_qos_flows_to_be_setup_mod_list_present = false;
+  bool                             mbs_qos_flow_to_release_list_present       = false;
+  bool                             mbs_session_tnl_info5_gc_present           = false;
+  mbs_session_id_s                 mbs_session_id;
+  mbs_service_area_c               mbs_service_area;
+  mbs_qos_flows_to_be_setup_list_l mbs_qos_flows_to_be_setup_mod_list;
+  qos_flow_list_with_cause_l       mbs_qos_flow_to_release_list;
+  mbs_session_tnl_info5_gc_c       mbs_session_tnl_info5_gc;
 
   // sequence methods
-  multicast_session_upd_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15654,13 +15635,13 @@ struct ngap_ie_support_info_resp_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<ngap_protocol_ie_support_info_opts, true> ngap_protocol_ie_support_info_e_;
+  using ngap_protocol_ie_support_info_e_ = enumerated<ngap_protocol_ie_support_info_opts, true>;
   struct ngap_protocol_ie_presence_info_opts {
     enum options { present, not_present, /*...*/ nulltype } value;
 
     const char* to_string() const;
   };
-  typedef enumerated<ngap_protocol_ie_presence_info_opts, true> ngap_protocol_ie_presence_info_e_;
+  using ngap_protocol_ie_presence_info_e_ = enumerated<ngap_protocol_ie_presence_info_opts, true>;
 
   // member variables
   bool                                             ext                 = false;
@@ -15706,7 +15687,7 @@ struct ul_forwarding_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<ul_forwarding_opts, true> ul_forwarding_e;
+using ul_forwarding_e = enumerated<ul_forwarding_opts, true>;
 
 // QosFlowInformationItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct qos_flow_info_item_ext_ies_o {
@@ -15717,7 +15698,7 @@ struct qos_flow_info_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -15757,15 +15738,14 @@ struct qos_flow_info_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                              ul_forwarding_present             = false;
-  bool                                              source_tnla_ddr_info_present      = false;
-  bool                                              source_node_tnla_ddr_info_present = false;
-  ie_field_s<ul_forwarding_e>                       ul_forwarding;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_tnla_ddr_info;
-  ie_field_s<bounded_bitstring<1, 160, true, true>> source_node_tnla_ddr_info;
+  bool                                  ul_forwarding_present             = false;
+  bool                                  source_tnla_ddr_info_present      = false;
+  bool                                  source_node_tnla_ddr_info_present = false;
+  ul_forwarding_e                       ul_forwarding;
+  bounded_bitstring<1, 160, true, true> source_tnla_ddr_info;
+  bounded_bitstring<1, 160, true, true> source_node_tnla_ddr_info;
 
   // sequence methods
-  qos_flow_info_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15865,7 +15845,7 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -15906,13 +15886,12 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                    redundant_ul_ngu_up_tnl_info_present  = false;
-  bool                                                                    add_redundant_ngu_up_tnl_info_present = false;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
+  bool                                redundant_ul_ngu_up_tnl_info_present  = false;
+  bool                                add_redundant_ngu_up_tnl_info_present = false;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
 
   // sequence methods
-  pdu_session_res_modify_confirm_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -15975,7 +15954,7 @@ struct qos_flows_usage_report_item_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rat_type_opts, true, 2> rat_type_e_;
+  using rat_type_e_ = enumerated<rat_type_opts, true, 2>;
 
   // member variables
   bool                                          ext             = false;
@@ -16001,7 +15980,7 @@ struct pdu_session_usage_report_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<rat_type_opts, true, 2> rat_type_e_;
+  using rat_type_e_ = enumerated<rat_type_opts, true, 2>;
 
   // member variables
   bool                                       ext             = false;
@@ -16057,7 +16036,7 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -16106,19 +16085,18 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                   secondary_rat_usage_info_present               = false;
-  bool                                   security_result_present                        = false;
-  bool                                   redundant_dl_qos_flow_per_tnl_info_present     = false;
-  bool                                   add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool                                   global_ran_node_id_present                     = false;
-  ie_field_s<secondary_rat_usage_info_s> secondary_rat_usage_info;
-  ie_field_s<security_result_s>          security_result;
-  ie_field_s<qos_flow_per_tnl_info_s>    redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<global_ran_node_id_c>                                 global_ran_node_id;
+  bool                         secondary_rat_usage_info_present               = false;
+  bool                         security_result_present                        = false;
+  bool                         redundant_dl_qos_flow_per_tnl_info_present     = false;
+  bool                         add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                         global_ran_node_id_present                     = false;
+  secondary_rat_usage_info_s   secondary_rat_usage_info;
+  security_result_s            security_result;
+  qos_flow_per_tnl_info_s      redundant_dl_qos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_list_l add_redundant_dl_qos_flow_per_tnl_info;
+  global_ran_node_id_c         global_ran_node_id;
 
   // sequence methods
-  pdu_session_res_modify_ind_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16169,7 +16147,7 @@ struct tsc_assist_info_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::survival_time; }
@@ -16215,7 +16193,7 @@ struct redundant_qos_flow_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<redundant_qos_flow_ind_opts> redundant_qos_flow_ind_e;
+using redundant_qos_flow_ind_e = enumerated<redundant_qos_flow_ind_opts>;
 
 using tsc_traffic_characteristics_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -16244,7 +16222,7 @@ struct max_integrity_protected_data_rate_opts {
   const char* to_string() const;
   uint8_t     to_number() const;
 };
-typedef enumerated<max_integrity_protected_data_rate_opts, true> max_integrity_protected_data_rate_e;
+using max_integrity_protected_data_rate_e = enumerated<max_integrity_protected_data_rate_opts, true>;
 
 // QosFlowAddOrModifyRequestItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 struct qos_flow_add_or_modify_request_item_ext_ies_o {
@@ -16255,7 +16233,7 @@ struct qos_flow_add_or_modify_request_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -16297,7 +16275,7 @@ struct ul_ngu_up_tnl_modify_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -16336,7 +16314,7 @@ struct confidentiality_protection_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<confidentiality_protection_ind_opts, true> confidentiality_protection_ind_e;
+using confidentiality_protection_ind_e = enumerated<confidentiality_protection_ind_opts, true>;
 
 // IntegrityProtectionIndication ::= ENUMERATED
 struct integrity_protection_ind_opts {
@@ -16344,20 +16322,19 @@ struct integrity_protection_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<integrity_protection_ind_opts, true> integrity_protection_ind_e;
+using integrity_protection_ind_e = enumerated<integrity_protection_ind_opts, true>;
 
 struct qos_flow_add_or_modify_request_item_ext_ies_container {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                      tsc_traffic_characteristics_present = false;
-  bool                                      redundant_qos_flow_ind_present      = false;
-  ie_field_s<tsc_traffic_characteristics_s> tsc_traffic_characteristics;
-  ie_field_s<redundant_qos_flow_ind_e>      redundant_qos_flow_ind;
+  bool                          tsc_traffic_characteristics_present = false;
+  bool                          redundant_qos_flow_ind_present      = false;
+  tsc_traffic_characteristics_s tsc_traffic_characteristics;
+  redundant_qos_flow_ind_e      redundant_qos_flow_ind;
 
   // sequence methods
-  qos_flow_add_or_modify_request_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16390,7 +16367,7 @@ struct security_ind_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::max_integrity_protected_data_rate_dl; }
@@ -16418,13 +16395,12 @@ struct ul_ngu_up_tnl_modify_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                  redundant_ul_ngu_up_tnl_info_present = false;
-  bool                                  redundant_dl_ngu_up_tnl_info_present = false;
-  ie_field_s<up_transport_layer_info_c> redundant_ul_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c> redundant_dl_ngu_up_tnl_info;
+  bool                      redundant_ul_ngu_up_tnl_info_present = false;
+  bool                      redundant_dl_ngu_up_tnl_info_present = false;
+  up_transport_layer_info_c redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_c redundant_dl_ngu_up_tnl_info;
 
   // sequence methods
-  ul_ngu_up_tnl_modify_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16493,7 +16469,7 @@ struct pdu_session_res_modify_request_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -16563,36 +16539,34 @@ struct pdu_session_res_modify_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                        pdu_session_aggr_max_bit_rate_present           = false;
-  bool                                        ul_ngu_up_tnl_modify_list_present               = false;
-  bool                                        network_instance_present                        = false;
-  bool                                        qos_flow_add_or_modify_request_list_present     = false;
-  bool                                        qos_flow_to_release_list_present                = false;
-  bool                                        add_ul_ngu_up_tnl_info_present                  = false;
-  bool                                        common_network_instance_present                 = false;
-  bool                                        add_redundant_ul_ngu_up_tnl_info_present        = false;
-  bool                                        redundant_common_network_instance_present       = false;
-  bool                                        redundant_ul_ngu_up_tnl_info_present            = false;
-  bool                                        security_ind_present                            = false;
-  bool                                        mbs_session_setupor_modify_request_list_present = false;
-  bool                                        mbs_session_to_release_list_present             = false;
-  ie_field_s<pdu_session_aggr_max_bit_rate_s> pdu_session_aggr_max_bit_rate;
-  ie_field_s<dyn_seq_of<ul_ngu_up_tnl_modify_item_s, 1, 4, true>>            ul_ngu_up_tnl_modify_list;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                          network_instance;
-  ie_field_s<dyn_seq_of<qos_flow_add_or_modify_request_item_s, 1, 64, true>> qos_flow_add_or_modify_request_list;
-  ie_field_s<dyn_seq_of<qos_flow_with_cause_item_s, 1, 64, true>>            qos_flow_to_release_list;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>         add_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                      common_network_instance;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>         add_redundant_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                      redundant_common_network_instance;
-  ie_field_s<up_transport_layer_info_c>                                      redundant_ul_ngu_up_tnl_info;
-  ie_field_s<security_ind_s>                                                 security_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setupor_modify_request_item_s, 1, 32, true>>
-                                                                     mbs_session_setupor_modify_request_list;
-  ie_field_s<dyn_seq_of<mbs_session_to_release_item_s, 1, 32, true>> mbs_session_to_release_list;
+  bool                                      pdu_session_aggr_max_bit_rate_present           = false;
+  bool                                      ul_ngu_up_tnl_modify_list_present               = false;
+  bool                                      network_instance_present                        = false;
+  bool                                      qos_flow_add_or_modify_request_list_present     = false;
+  bool                                      qos_flow_to_release_list_present                = false;
+  bool                                      add_ul_ngu_up_tnl_info_present                  = false;
+  bool                                      common_network_instance_present                 = false;
+  bool                                      add_redundant_ul_ngu_up_tnl_info_present        = false;
+  bool                                      redundant_common_network_instance_present       = false;
+  bool                                      redundant_ul_ngu_up_tnl_info_present            = false;
+  bool                                      security_ind_present                            = false;
+  bool                                      mbs_session_setupor_modify_request_list_present = false;
+  bool                                      mbs_session_to_release_list_present             = false;
+  pdu_session_aggr_max_bit_rate_s           pdu_session_aggr_max_bit_rate;
+  ul_ngu_up_tnl_modify_list_l               ul_ngu_up_tnl_modify_list;
+  uint16_t                                  network_instance;
+  qos_flow_add_or_modify_request_list_l     qos_flow_add_or_modify_request_list;
+  qos_flow_list_with_cause_l                qos_flow_to_release_list;
+  up_transport_layer_info_list_l            add_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>                 common_network_instance;
+  up_transport_layer_info_list_l            add_redundant_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>                 redundant_common_network_instance;
+  up_transport_layer_info_c                 redundant_ul_ngu_up_tnl_info;
+  security_ind_s                            security_ind;
+  mbs_session_setupor_modify_request_list_l mbs_session_setupor_modify_request_list;
+  mbs_session_to_release_list_l             mbs_session_to_release_list;
 
   // sequence methods
-  pdu_session_res_modify_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16613,7 +16587,7 @@ struct qos_flow_add_or_modify_resp_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::current_qos_para_set_idx; }
@@ -16669,7 +16643,7 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -16730,27 +16704,26 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool add_ngu_up_tnl_info_present                      = false;
-  bool redundant_dl_ngu_up_tnl_info_present             = false;
-  bool redundant_ul_ngu_up_tnl_info_present             = false;
-  bool add_redundant_dl_qos_flow_per_tnl_info_present   = false;
-  bool add_redundant_ngu_up_tnl_info_present            = false;
-  bool secondary_rat_usage_info_present                 = false;
-  bool mbs_support_ind_present                          = false;
-  bool mbs_session_setupor_modify_resp_list_present     = false;
-  bool mbs_session_failedto_setupor_modify_list_present = false;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_dl_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>        add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
-  ie_field_s<secondary_rat_usage_info_s>                                  secondary_rat_usage_info;
-  ie_field_s<mbs_support_ind_e>                                           mbs_support_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setup_resp_item_s, 1, 32, true>>      mbs_session_setupor_modify_resp_list;
-  ie_field_s<dyn_seq_of<mbs_session_failedto_setup_item_s, 1, 32, true>>  mbs_session_failedto_setupor_modify_list;
+  bool                                add_ngu_up_tnl_info_present                      = false;
+  bool                                redundant_dl_ngu_up_tnl_info_present             = false;
+  bool                                redundant_ul_ngu_up_tnl_info_present             = false;
+  bool                                add_redundant_dl_qos_flow_per_tnl_info_present   = false;
+  bool                                add_redundant_ngu_up_tnl_info_present            = false;
+  bool                                secondary_rat_usage_info_present                 = false;
+  bool                                mbs_support_ind_present                          = false;
+  bool                                mbs_session_setupor_modify_resp_list_present     = false;
+  bool                                mbs_session_failedto_setupor_modify_list_present = false;
+  up_transport_layer_info_pair_list_l add_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_dl_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  qos_flow_per_tnl_info_list_l        add_redundant_dl_qos_flow_per_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
+  secondary_rat_usage_info_s          secondary_rat_usage_info;
+  mbs_support_ind_e                   mbs_support_ind;
+  mbs_session_setup_resp_list_l       mbs_session_setupor_modify_resp_list;
+  mbs_session_failedto_setup_list_l   mbs_session_failedto_setupor_modify_list;
 
   // sequence methods
-  pdu_session_res_modify_resp_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -16806,7 +16779,7 @@ struct pdu_session_res_notify_released_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::secondary_rat_usage_info; }
@@ -16851,7 +16824,7 @@ struct notif_cause_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<notif_cause_opts, true> notif_cause_e;
+using notif_cause_e = enumerated<notif_cause_opts, true>;
 
 using qos_flow_feedback_item_ext_ies_container = protocol_ext_container_empty_l;
 
@@ -16886,7 +16859,7 @@ struct qos_flow_notify_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::current_qos_para_set_idx; }
@@ -16935,7 +16908,7 @@ struct pdu_session_res_notify_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -16976,13 +16949,12 @@ struct pdu_session_res_notify_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                          secondary_rat_usage_info_present = false;
-  bool                                                          qos_flow_feedback_list_present   = false;
-  ie_field_s<secondary_rat_usage_info_s>                        secondary_rat_usage_info;
-  ie_field_s<dyn_seq_of<qos_flow_feedback_item_s, 1, 64, true>> qos_flow_feedback_list;
+  bool                       secondary_rat_usage_info_present = false;
+  bool                       qos_flow_feedback_list_present   = false;
+  secondary_rat_usage_info_s secondary_rat_usage_info;
+  qos_flow_feedback_list_l   qos_flow_feedback_list;
 
   // sequence methods
-  pdu_session_res_notify_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17031,7 +17003,7 @@ struct pdu_session_res_release_resp_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::secondary_rat_usage_info; }
@@ -17075,7 +17047,7 @@ struct qos_flow_setup_request_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -17113,13 +17085,12 @@ struct qos_flow_setup_request_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                      tsc_traffic_characteristics_present = false;
-  bool                                      redundant_qos_flow_ind_present      = false;
-  ie_field_s<tsc_traffic_characteristics_s> tsc_traffic_characteristics;
-  ie_field_s<redundant_qos_flow_ind_e>      redundant_qos_flow_ind;
+  bool                          tsc_traffic_characteristics_present = false;
+  bool                          redundant_qos_flow_ind_present      = false;
+  tsc_traffic_characteristics_s tsc_traffic_characteristics;
+  redundant_qos_flow_ind_e      redundant_qos_flow_ind;
 
   // sequence methods
-  qos_flow_setup_request_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17148,7 +17119,7 @@ struct data_forwarding_not_possible_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<data_forwarding_not_possible_opts, true> data_forwarding_not_possible_e;
+using data_forwarding_not_possible_e = enumerated<data_forwarding_not_possible_opts, true>;
 
 // PDUSessionType ::= ENUMERATED
 struct pdu_session_type_opts {
@@ -17156,7 +17127,7 @@ struct pdu_session_type_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<pdu_session_type_opts, true> pdu_session_type_e;
+using pdu_session_type_e = enumerated<pdu_session_type_opts, true>;
 
 // QosFlowSetupRequestList ::= SEQUENCE (SIZE (1..64)) OF QosFlowSetupRequestItem
 using qos_flow_setup_request_list_l = dyn_array<qos_flow_setup_request_item_s>;
@@ -17189,7 +17160,7 @@ struct pdu_session_res_setup_request_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -17261,36 +17232,35 @@ struct pdu_session_res_setup_request_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                        pdu_session_aggr_max_bit_rate_present       = false;
-  bool                                        add_ul_ngu_up_tnl_info_present              = false;
-  bool                                        data_forwarding_not_possible_present        = false;
-  bool                                        security_ind_present                        = false;
-  bool                                        network_instance_present                    = false;
-  bool                                        common_network_instance_present             = false;
-  bool                                        direct_forwarding_path_availability_present = false;
-  bool                                        redundant_ul_ngu_up_tnl_info_present        = false;
-  bool                                        add_redundant_ul_ngu_up_tnl_info_present    = false;
-  bool                                        redundant_common_network_instance_present   = false;
-  bool                                        redundant_pdu_session_info_present          = false;
-  bool                                        mbs_session_setup_request_list_present      = false;
-  ie_field_s<pdu_session_aggr_max_bit_rate_s> pdu_session_aggr_max_bit_rate;
-  ie_field_s<up_transport_layer_info_c>       ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>    add_ul_ngu_up_tnl_info;
-  ie_field_s<data_forwarding_not_possible_e>                            data_forwarding_not_possible;
-  ie_field_s<pdu_session_type_e>                                        pdu_session_type;
-  ie_field_s<security_ind_s>                                            security_ind;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>                     network_instance;
-  ie_field_s<dyn_seq_of<qos_flow_setup_request_item_s, 1, 64, true>>    qos_flow_setup_request_list;
-  ie_field_s<unbounded_octstring<true>>                                 common_network_instance;
-  ie_field_s<direct_forwarding_path_availability_e>                     direct_forwarding_path_availability;
-  ie_field_s<up_transport_layer_info_c>                                 redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_item_s, 1, 3, true>>    add_redundant_ul_ngu_up_tnl_info;
-  ie_field_s<unbounded_octstring<true>>                                 redundant_common_network_instance;
-  ie_field_s<redundant_pdu_session_info_s>                              redundant_pdu_session_info;
-  ie_field_s<dyn_seq_of<mbs_session_setup_request_item_s, 1, 32, true>> mbs_session_setup_request_list;
+  bool                                  pdu_session_aggr_max_bit_rate_present       = false;
+  bool                                  add_ul_ngu_up_tnl_info_present              = false;
+  bool                                  data_forwarding_not_possible_present        = false;
+  bool                                  security_ind_present                        = false;
+  bool                                  network_instance_present                    = false;
+  bool                                  common_network_instance_present             = false;
+  bool                                  direct_forwarding_path_availability_present = false;
+  bool                                  redundant_ul_ngu_up_tnl_info_present        = false;
+  bool                                  add_redundant_ul_ngu_up_tnl_info_present    = false;
+  bool                                  redundant_common_network_instance_present   = false;
+  bool                                  redundant_pdu_session_info_present          = false;
+  bool                                  mbs_session_setup_request_list_present      = false;
+  pdu_session_aggr_max_bit_rate_s       pdu_session_aggr_max_bit_rate;
+  up_transport_layer_info_c             ul_ngu_up_tnl_info;
+  up_transport_layer_info_list_l        add_ul_ngu_up_tnl_info;
+  data_forwarding_not_possible_e        data_forwarding_not_possible;
+  pdu_session_type_e                    pdu_session_type;
+  security_ind_s                        security_ind;
+  uint16_t                              network_instance;
+  qos_flow_setup_request_list_l         qos_flow_setup_request_list;
+  unbounded_octstring<true>             common_network_instance;
+  direct_forwarding_path_availability_e direct_forwarding_path_availability;
+  up_transport_layer_info_c             redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_list_l        add_redundant_ul_ngu_up_tnl_info;
+  unbounded_octstring<true>             redundant_common_network_instance;
+  redundant_pdu_session_info_s          redundant_pdu_session_info;
+  mbs_session_setup_request_list_l      mbs_session_setup_request_list;
 
   // sequence methods
-  pdu_session_res_setup_request_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17318,7 +17288,7 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -17372,23 +17342,22 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                redundant_dl_qos_flow_per_tnl_info_present     = false;
-  bool                                add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool                                used_r_sn_info_present                         = false;
-  bool                                global_ran_node_id_present                     = false;
-  bool                                mbs_support_ind_present                        = false;
-  bool                                mbs_session_setup_resp_list_present            = false;
-  bool                                mbs_session_failedto_setup_list_present        = false;
-  ie_field_s<qos_flow_per_tnl_info_s> redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>>       add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                               used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                       global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                          mbs_support_ind;
-  ie_field_s<dyn_seq_of<mbs_session_setup_resp_item_s, 1, 32, true>>     mbs_session_setup_resp_list;
-  ie_field_s<dyn_seq_of<mbs_session_failedto_setup_item_s, 1, 32, true>> mbs_session_failedto_setup_list;
+  bool                              redundant_dl_qos_flow_per_tnl_info_present     = false;
+  bool                              add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                              used_r_sn_info_present                         = false;
+  bool                              global_ran_node_id_present                     = false;
+  bool                              mbs_support_ind_present                        = false;
+  bool                              mbs_session_setup_resp_list_present            = false;
+  bool                              mbs_session_failedto_setup_list_present        = false;
+  qos_flow_per_tnl_info_s           redundant_dl_qos_flow_per_tnl_info;
+  qos_flow_per_tnl_info_list_l      add_redundant_dl_qos_flow_per_tnl_info;
+  redundant_pdu_session_info_s      used_r_sn_info;
+  global_ran_node_id_c              global_ran_node_id;
+  mbs_support_ind_e                 mbs_support_ind;
+  mbs_session_setup_resp_list_l     mbs_session_setup_resp_list;
+  mbs_session_failedto_setup_list_l mbs_session_failedto_setup_list;
 
   // sequence methods
-  pdu_session_res_setup_resp_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17442,7 +17411,7 @@ struct qos_flow_params_item_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -17482,15 +17451,14 @@ struct qos_flow_params_item_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                cn_packet_delay_budget_dl_present = false;
-  bool                                                cn_packet_delay_budget_ul_present = false;
-  bool                                                burst_arrival_time_dl_present     = false;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_dl;
-  ie_field_s<integer<uint32_t, 1, 65535, true, true>> cn_packet_delay_budget_ul;
-  ie_field_s<unbounded_octstring<true>>               burst_arrival_time_dl;
+  bool                      cn_packet_delay_budget_dl_present = false;
+  bool                      cn_packet_delay_budget_ul_present = false;
+  bool                      burst_arrival_time_dl_present     = false;
+  uint32_t                  cn_packet_delay_budget_dl;
+  uint32_t                  cn_packet_delay_budget_ul;
+  unbounded_octstring<true> burst_arrival_time_dl;
 
   // sequence methods
-  qos_flow_params_item_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17529,7 +17497,7 @@ struct path_switch_request_ack_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -17571,17 +17539,16 @@ struct path_switch_request_ack_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool                                                                    add_ngu_up_tnl_info_present           = false;
-  bool                                                                    redundant_ul_ngu_up_tnl_info_present  = false;
-  bool                                                                    add_redundant_ngu_up_tnl_info_present = false;
-  bool                                                                    qos_flow_params_list_present          = false;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_ngu_up_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                                   redundant_ul_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<up_transport_layer_info_pair_item_s, 1, 3, true>> add_redundant_ngu_up_tnl_info;
-  ie_field_s<dyn_seq_of<qos_flow_params_item_s, 1, 64, true>>             qos_flow_params_list;
+  bool                                add_ngu_up_tnl_info_present           = false;
+  bool                                redundant_ul_ngu_up_tnl_info_present  = false;
+  bool                                add_redundant_ngu_up_tnl_info_present = false;
+  bool                                qos_flow_params_list_present          = false;
+  up_transport_layer_info_pair_list_l add_ngu_up_tnl_info;
+  up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
+  up_transport_layer_info_pair_list_l add_redundant_ngu_up_tnl_info;
+  qos_flow_params_list_l              qos_flow_params_list;
 
   // sequence methods
-  path_switch_request_ack_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17634,7 +17601,7 @@ struct qos_flow_accepted_item_ext_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::current_qos_para_set_idx; }
@@ -17663,7 +17630,7 @@ struct dl_ngu_tnl_info_reused_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<dl_ngu_tnl_info_reused_opts, true> dl_ngu_tnl_info_reused_e;
+using dl_ngu_tnl_info_reused_e = enumerated<dl_ngu_tnl_info_reused_opts, true>;
 
 // QosFlowAcceptedItem ::= SEQUENCE
 struct qos_flow_accepted_item_s {
@@ -17699,7 +17666,7 @@ struct path_switch_request_transfer_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -17771,23 +17738,22 @@ struct path_switch_request_transfer_ext_ies_container {
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool add_dl_qos_flow_per_tnl_info_present           = false;
-  bool redundant_dl_ngu_up_tnl_info_present           = false;
-  bool redundant_dl_ngu_tnl_info_reused_present       = false;
-  bool add_redundant_dl_qos_flow_per_tnl_info_present = false;
-  bool used_r_sn_info_present                         = false;
-  bool global_ran_node_id_present                     = false;
-  bool mbs_support_ind_present                        = false;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_dl_qos_flow_per_tnl_info;
-  ie_field_s<up_transport_layer_info_c>                            redundant_dl_ngu_up_tnl_info;
-  ie_field_s<dl_ngu_tnl_info_reused_e>                             redundant_dl_ngu_tnl_info_reused;
-  ie_field_s<dyn_seq_of<qos_flow_per_tnl_info_item_s, 1, 3, true>> add_redundant_dl_qos_flow_per_tnl_info;
-  ie_field_s<redundant_pdu_session_info_s>                         used_r_sn_info;
-  ie_field_s<global_ran_node_id_c>                                 global_ran_node_id;
-  ie_field_s<mbs_support_ind_e>                                    mbs_support_ind;
+  bool                         add_dl_qos_flow_per_tnl_info_present           = false;
+  bool                         redundant_dl_ngu_up_tnl_info_present           = false;
+  bool                         redundant_dl_ngu_tnl_info_reused_present       = false;
+  bool                         add_redundant_dl_qos_flow_per_tnl_info_present = false;
+  bool                         used_r_sn_info_present                         = false;
+  bool                         global_ran_node_id_present                     = false;
+  bool                         mbs_support_ind_present                        = false;
+  qos_flow_per_tnl_info_list_l add_dl_qos_flow_per_tnl_info;
+  up_transport_layer_info_c    redundant_dl_ngu_up_tnl_info;
+  dl_ngu_tnl_info_reused_e     redundant_dl_ngu_tnl_info_reused;
+  qos_flow_per_tnl_info_list_l add_redundant_dl_qos_flow_per_tnl_info;
+  redundant_pdu_session_info_s used_r_sn_info;
+  global_ran_node_id_c         global_ran_node_id;
+  mbs_support_ind_e            mbs_support_ind;
 
   // sequence methods
-  path_switch_request_transfer_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -17867,7 +17833,7 @@ struct source_node_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   source_node_id_c() = default;
@@ -17917,7 +17883,7 @@ struct ue_history_info_from_the_ue_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   ue_history_info_from_the_ue_c() = default;
@@ -17978,7 +17944,7 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -18034,24 +18000,22 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_cont
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool s_gnb_ue_x2ap_id_present                             = false;
-  bool ue_history_info_from_the_ue_present                  = false;
-  bool source_node_id_present                               = false;
-  bool ue_context_ref_at_source_present                     = false;
-  bool mbs_active_session_info_sourceto_target_list_present = false;
-  bool q_mcc_onfig_info_present                             = false;
-  bool ngap_ie_support_info_request_list_present            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> s_gnb_ue_x2ap_id;
-  ie_field_s<ue_history_info_from_the_ue_c>                 ue_history_info_from_the_ue;
-  ie_field_s<source_node_id_c>                              source_node_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> ue_context_ref_at_source;
-  ie_field_s<dyn_seq_of<mbs_active_session_info_sourceto_target_item_s, 1, 256, true>>
-                                                                           mbs_active_session_info_sourceto_target_list;
-  ie_field_s<q_mcc_onfig_info_s>                                           q_mcc_onfig_info;
-  ie_field_s<dyn_seq_of<ngap_ie_support_info_request_item_s, 1, 32, true>> ngap_ie_support_info_request_list;
+  bool                                           s_gnb_ue_x2ap_id_present                             = false;
+  bool                                           ue_history_info_from_the_ue_present                  = false;
+  bool                                           source_node_id_present                               = false;
+  bool                                           ue_context_ref_at_source_present                     = false;
+  bool                                           mbs_active_session_info_sourceto_target_list_present = false;
+  bool                                           q_mcc_onfig_info_present                             = false;
+  bool                                           ngap_ie_support_info_request_list_present            = false;
+  uint64_t                                       s_gnb_ue_x2ap_id;
+  ue_history_info_from_the_ue_c                  ue_history_info_from_the_ue;
+  source_node_id_c                               source_node_id;
+  uint64_t                                       ue_context_ref_at_source;
+  mbs_active_session_info_sourceto_target_list_l mbs_active_session_info_sourceto_target_list;
+  q_mcc_onfig_info_s                             q_mcc_onfig_info;
+  ngap_ie_support_info_request_list_l            ngap_ie_support_info_request_list;
 
   // sequence methods
-  source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -18086,7 +18050,7 @@ struct target_ngran_node_to_source_ngran_node_fail_transparent_container_ext_ies
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ngap_ie_support_info_resp_list; }
@@ -18138,7 +18102,7 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ext_c() = default;
@@ -18183,18 +18147,16 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_cont
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // member variables
-  bool daps_resp_info_list_present                          = false;
-  bool direct_forwarding_path_availability_present          = false;
-  bool mbs_active_session_info_targetto_source_list_present = false;
-  bool ngap_ie_support_info_resp_list_present               = false;
-  ie_field_s<dyn_seq_of<daps_resp_info_item_s, 1, 32, true>> daps_resp_info_list;
-  ie_field_s<direct_forwarding_path_availability_e>          direct_forwarding_path_availability;
-  ie_field_s<dyn_seq_of<mbs_active_session_info_targetto_source_item_s, 1, 256, true>>
-                                                                        mbs_active_session_info_targetto_source_list;
-  ie_field_s<dyn_seq_of<ngap_ie_support_info_resp_item_s, 1, 32, true>> ngap_ie_support_info_resp_list;
+  bool                                           daps_resp_info_list_present                          = false;
+  bool                                           direct_forwarding_path_availability_present          = false;
+  bool                                           mbs_active_session_info_targetto_source_list_present = false;
+  bool                                           ngap_ie_support_info_resp_list_present               = false;
+  daps_resp_info_list_l                          daps_resp_info_list;
+  direct_forwarding_path_availability_e          direct_forwarding_path_availability;
+  mbs_active_session_info_targetto_source_list_l mbs_active_session_info_targetto_source_list;
+  ngap_ie_support_info_resp_list_l               ngap_ie_support_info_resp_list;
 
   // sequence methods
-  target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -18258,7 +18220,7 @@ struct suspend_ind_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<suspend_ind_opts, true> suspend_ind_e;
+using suspend_ind_e = enumerated<suspend_ind_opts, true>;
 
 // UEContextSuspendRequestTransfer-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
 using ue_context_suspend_request_transfer_ext_ies_o = protocol_ext_empty_o;

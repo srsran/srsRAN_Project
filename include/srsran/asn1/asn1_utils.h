@@ -1816,6 +1816,29 @@ template <class ExtensionSetParam>
 struct protocol_ext_field_s : public detail::base_ie_field<detail::ie_field_ext_item<ExtensionSetParam>> {
 };
 
+template <typename IEValue>
+SRSASN_CODE pack_ie_container_item(bit_ref& bref, uint32_t id, crit_e crit, const IEValue& value)
+{
+  HANDLE_CODE(pack_integer(bref, id, (uint32_t)0u, (uint32_t)65535u, false, true));
+  HANDLE_CODE(crit.pack(bref));
+  {
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(value.pack(bref));
+  }
+  return SRSASN_SUCCESS;
+}
+
+template <typename IEValue>
+void ie_container_item_to_json(json_writer& j, uint32_t id, crit_e crit, const char* value_name, const IEValue& value)
+{
+  j.start_obj();
+  j.write_int("id", id);
+  j.write_str("criticality", crit.to_string());
+  j.write_fieldname(value_name);
+  asn1::to_json(j, value);
+  j.end_obj();
+}
+
 namespace detail {
 
 template <typename T>

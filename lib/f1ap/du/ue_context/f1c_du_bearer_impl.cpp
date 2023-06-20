@@ -50,15 +50,15 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   f1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
   asn1::f1ap::init_ul_rrc_msg_transfer_s& init_msg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  init_msg->gnb_du_ue_f1ap_id->value               = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
-  init_msg->nr_cgi.value.plmn_id.from_number(plmn_string_to_bcd(nr_cgi.plmn));
-  init_msg->nr_cgi.value.nr_cell_id.from_number(nr_cgi.nci);
-  init_msg->c_rnti->value = ue_ctxt.rnti;
-  init_msg->rrc_container.value.append(sdu.begin(), sdu.end());
+  init_msg->gnb_du_ue_f1ap_id                      = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
+  init_msg->nr_cgi.plmn_id.from_number(plmn_string_to_bcd(nr_cgi.plmn));
+  init_msg->nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
+  init_msg->c_rnti = ue_ctxt.rnti;
+  init_msg->rrc_container.append(sdu.begin(), sdu.end());
   init_msg->du_to_cu_rrc_container_present           = true;
-  init_msg->du_to_cu_rrc_container.value             = std::move(du_cu_rrc_container);
+  init_msg->du_to_cu_rrc_container                   = std::move(du_cu_rrc_container);
   init_msg->sul_access_ind_present                   = false;
-  init_msg->transaction_id->value                    = transaction.id();
+  init_msg->transaction_id                           = transaction.id();
   init_msg->ran_ue_id_present                        = false;
   init_msg->rrc_container_rrc_setup_complete_present = false;
 
@@ -106,10 +106,10 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   // Fill F1AP UL RRC Message Transfer.
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
   asn1::f1ap::ul_rrc_msg_transfer_s& ul_msg = msg.pdu.init_msg().value.ul_rrc_msg_transfer();
-  ul_msg->gnb_du_ue_f1ap_id->value          = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
-  ul_msg->gnb_cu_ue_f1ap_id->value          = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
-  ul_msg->srb_id->value                     = srb_id_to_uint(srb_id);
-  ul_msg->rrc_container->append(sdu.begin(), sdu.end());
+  ul_msg->gnb_du_ue_f1ap_id                 = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
+  ul_msg->gnb_cu_ue_f1ap_id                 = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.gnb_cu_ue_f1ap_id);
+  ul_msg->srb_id                            = srb_id_to_uint(srb_id);
+  ul_msg->rrc_container.append(sdu.begin(), sdu.end());
   ul_msg->sel_plmn_id_present           = false;
   ul_msg->new_gnb_du_ue_f1ap_id_present = false;
 

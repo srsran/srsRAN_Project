@@ -1109,12 +1109,6 @@ SRSASN_CODE served_guami_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-plmn_support_item_ext_ies_container::plmn_support_item_ext_ies_container() :
-  npn_support(258, crit_e::reject),
-  extended_slice_support_list(270, crit_e::reject),
-  onboarding_support(325, crit_e::ignore)
-{
-}
 SRSASN_CODE plmn_support_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -1124,12 +1118,21 @@ SRSASN_CODE plmn_support_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (npn_support_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)258, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(npn_support.pack(bref));
   }
   if (extended_slice_support_list_present) {
-    HANDLE_CODE(extended_slice_support_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)270, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, extended_slice_support_list, 1, 65535, true));
   }
   if (onboarding_support_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)325, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(onboarding_support.pack(bref));
   }
 
@@ -1143,29 +1146,26 @@ SRSASN_CODE plmn_support_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 258: {
         npn_support_present = true;
-        npn_support.id      = id;
-        HANDLE_CODE(npn_support.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(npn_support.ext.unpack(bref));
+        HANDLE_CODE(npn_support.unpack(bref));
         break;
       }
       case 270: {
         extended_slice_support_list_present = true;
-        extended_slice_support_list.id      = id;
-        HANDLE_CODE(extended_slice_support_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(extended_slice_support_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(extended_slice_support_list, bref, 1, 65535, true));
         break;
       }
       case 325: {
         onboarding_support_present = true;
-        onboarding_support.id      = id;
-        HANDLE_CODE(onboarding_support.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(onboarding_support.ext.unpack(bref));
+        HANDLE_CODE(onboarding_support.unpack(bref));
         break;
       }
       default:
@@ -1180,16 +1180,23 @@ void plmn_support_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (npn_support_present) {
-    j.write_fieldname("");
+    j.write_int("id", 258);
+    j.write_str("criticality", "reject");
     npn_support.to_json(j);
   }
   if (extended_slice_support_list_present) {
-    j.write_fieldname("");
-    extended_slice_support_list.to_json(j);
+    j.write_int("id", 270);
+    j.write_str("criticality", "reject");
+    j.start_array("Extension");
+    for (const auto& e1 : extended_slice_support_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (onboarding_support_present) {
-    j.write_fieldname("");
-    onboarding_support.to_json(j);
+    j.write_int("id", 325);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   j.end_obj();
 }
@@ -6403,10 +6410,6 @@ void paging_attempt_info_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-assist_data_for_paging_ext_ies_container::assist_data_for_paging_ext_ies_container() :
-  npn_paging_assist_info(260, crit_e::ignore), paging_assis_datafor_c_ecapab_ue(207, crit_e::ignore)
-{
-}
 SRSASN_CODE assist_data_for_paging_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -6415,9 +6418,15 @@ SRSASN_CODE assist_data_for_paging_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (npn_paging_assist_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)260, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(npn_paging_assist_info.pack(bref));
   }
   if (paging_assis_datafor_c_ecapab_ue_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)207, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(paging_assis_datafor_c_ecapab_ue.pack(bref));
   }
 
@@ -6431,21 +6440,20 @@ SRSASN_CODE assist_data_for_paging_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 260: {
         npn_paging_assist_info_present = true;
-        npn_paging_assist_info.id      = id;
-        HANDLE_CODE(npn_paging_assist_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(npn_paging_assist_info.ext.unpack(bref));
+        HANDLE_CODE(npn_paging_assist_info.unpack(bref));
         break;
       }
       case 207: {
         paging_assis_datafor_c_ecapab_ue_present = true;
-        paging_assis_datafor_c_ecapab_ue.id      = id;
-        HANDLE_CODE(paging_assis_datafor_c_ecapab_ue.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(paging_assis_datafor_c_ecapab_ue.ext.unpack(bref));
+        HANDLE_CODE(paging_assis_datafor_c_ecapab_ue.unpack(bref));
         break;
       }
       default:
@@ -6460,11 +6468,13 @@ void assist_data_for_paging_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (npn_paging_assist_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 260);
+    j.write_str("criticality", "ignore");
     npn_paging_assist_info.to_json(j);
   }
   if (paging_assis_datafor_c_ecapab_ue_present) {
-    j.write_fieldname("");
+    j.write_int("id", 207);
+    j.write_str("criticality", "ignore");
     paging_assis_datafor_c_ecapab_ue.to_json(j);
   }
   j.end_obj();
@@ -8696,12 +8706,6 @@ SRSASN_CODE broadcast_plmn_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-broadcast_plmn_item_ext_ies_container::broadcast_plmn_item_ext_ies_container() :
-  npn_support(258, crit_e::reject),
-  extended_tai_slice_support_list(271, crit_e::reject),
-  tai_nsag_support_list(353, crit_e::ignore)
-{
-}
 SRSASN_CODE broadcast_plmn_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -8711,13 +8715,22 @@ SRSASN_CODE broadcast_plmn_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (npn_support_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)258, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(npn_support.pack(bref));
   }
   if (extended_tai_slice_support_list_present) {
-    HANDLE_CODE(extended_tai_slice_support_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)271, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, extended_tai_slice_support_list, 1, 65535, true));
   }
   if (tai_nsag_support_list_present) {
-    HANDLE_CODE(tai_nsag_support_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)353, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, tai_nsag_support_list, 1, 256, true));
   }
 
   return SRSASN_SUCCESS;
@@ -8730,29 +8743,26 @@ SRSASN_CODE broadcast_plmn_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 258: {
         npn_support_present = true;
-        npn_support.id      = id;
-        HANDLE_CODE(npn_support.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(npn_support.ext.unpack(bref));
+        HANDLE_CODE(npn_support.unpack(bref));
         break;
       }
       case 271: {
         extended_tai_slice_support_list_present = true;
-        extended_tai_slice_support_list.id      = id;
-        HANDLE_CODE(extended_tai_slice_support_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(extended_tai_slice_support_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(extended_tai_slice_support_list, bref, 1, 65535, true));
         break;
       }
       case 353: {
         tai_nsag_support_list_present = true;
-        tai_nsag_support_list.id      = id;
-        HANDLE_CODE(tai_nsag_support_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(tai_nsag_support_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(tai_nsag_support_list, bref, 1, 256, true));
         break;
       }
       default:
@@ -8767,16 +8777,27 @@ void broadcast_plmn_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (npn_support_present) {
-    j.write_fieldname("");
+    j.write_int("id", 258);
+    j.write_str("criticality", "reject");
     npn_support.to_json(j);
   }
   if (extended_tai_slice_support_list_present) {
-    j.write_fieldname("");
-    extended_tai_slice_support_list.to_json(j);
+    j.write_int("id", 271);
+    j.write_str("criticality", "reject");
+    j.start_array("Extension");
+    for (const auto& e1 : extended_tai_slice_support_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (tai_nsag_support_list_present) {
-    j.write_fieldname("");
-    tai_nsag_support_list.to_json(j);
+    j.write_int("id", 353);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : tai_nsag_support_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -11276,16 +11297,6 @@ uint8_t ue_id_idx_value_c::types_opts::to_number() const
   return map_enum_number(numbers, 1, value, "ue_id_idx_value_c::types");
 }
 
-core_network_assist_info_for_inactive_ext_ies_container::core_network_assist_info_for_inactive_ext_ies_container() :
-  eutra_paginge_drx_info(223, crit_e::ignore),
-  extended_ue_id_idx_value(280, crit_e::ignore),
-  ue_radio_cap_for_paging(118, crit_e::ignore),
-  mico_all_plmn(282, crit_e::ignore),
-  nr_paginge_drx_info(332, crit_e::ignore),
-  paging_cause_ind_for_voice_service(343, crit_e::ignore),
-  pe_ip_sassist_info(344, crit_e::ignore)
-{
-}
 SRSASN_CODE core_network_assist_info_for_inactive_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -11299,24 +11310,45 @@ SRSASN_CODE core_network_assist_info_for_inactive_ext_ies_container::pack(bit_re
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (eutra_paginge_drx_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)223, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(eutra_paginge_drx_info.pack(bref));
   }
   if (extended_ue_id_idx_value_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)280, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(extended_ue_id_idx_value.pack(bref));
   }
   if (ue_radio_cap_for_paging_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)118, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(ue_radio_cap_for_paging.pack(bref));
   }
   if (mico_all_plmn_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)282, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mico_all_plmn.pack(bref));
   }
   if (nr_paginge_drx_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)332, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(nr_paginge_drx_info.pack(bref));
   }
   if (paging_cause_ind_for_voice_service_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)343, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(paging_cause_ind_for_voice_service.pack(bref));
   }
   if (pe_ip_sassist_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)344, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pe_ip_sassist_info.pack(bref));
   }
 
@@ -11330,61 +11362,50 @@ SRSASN_CODE core_network_assist_info_for_inactive_ext_ies_container::unpack(cbit
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 223: {
         eutra_paginge_drx_info_present = true;
-        eutra_paginge_drx_info.id      = id;
-        HANDLE_CODE(eutra_paginge_drx_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(eutra_paginge_drx_info.ext.unpack(bref));
+        HANDLE_CODE(eutra_paginge_drx_info.unpack(bref));
         break;
       }
       case 280: {
         extended_ue_id_idx_value_present = true;
-        extended_ue_id_idx_value.id      = id;
-        HANDLE_CODE(extended_ue_id_idx_value.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(extended_ue_id_idx_value.ext.unpack(bref));
+        HANDLE_CODE(extended_ue_id_idx_value.unpack(bref));
         break;
       }
       case 118: {
         ue_radio_cap_for_paging_present = true;
-        ue_radio_cap_for_paging.id      = id;
-        HANDLE_CODE(ue_radio_cap_for_paging.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ue_radio_cap_for_paging.ext.unpack(bref));
+        HANDLE_CODE(ue_radio_cap_for_paging.unpack(bref));
         break;
       }
       case 282: {
         mico_all_plmn_present = true;
-        mico_all_plmn.id      = id;
-        HANDLE_CODE(mico_all_plmn.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mico_all_plmn.ext.unpack(bref));
+        HANDLE_CODE(mico_all_plmn.unpack(bref));
         break;
       }
       case 332: {
         nr_paginge_drx_info_present = true;
-        nr_paginge_drx_info.id      = id;
-        HANDLE_CODE(nr_paginge_drx_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(nr_paginge_drx_info.ext.unpack(bref));
+        HANDLE_CODE(nr_paginge_drx_info.unpack(bref));
         break;
       }
       case 343: {
         paging_cause_ind_for_voice_service_present = true;
-        paging_cause_ind_for_voice_service.id      = id;
-        HANDLE_CODE(paging_cause_ind_for_voice_service.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(paging_cause_ind_for_voice_service.ext.unpack(bref));
+        HANDLE_CODE(paging_cause_ind_for_voice_service.unpack(bref));
         break;
       }
       case 344: {
         pe_ip_sassist_info_present = true;
-        pe_ip_sassist_info.id      = id;
-        HANDLE_CODE(pe_ip_sassist_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pe_ip_sassist_info.ext.unpack(bref));
+        HANDLE_CODE(pe_ip_sassist_info.unpack(bref));
         break;
       }
       default:
@@ -11399,31 +11420,38 @@ void core_network_assist_info_for_inactive_ext_ies_container::to_json(json_write
 {
   j.start_obj();
   if (eutra_paginge_drx_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 223);
+    j.write_str("criticality", "ignore");
     eutra_paginge_drx_info.to_json(j);
   }
   if (extended_ue_id_idx_value_present) {
-    j.write_fieldname("");
-    extended_ue_id_idx_value.to_json(j);
+    j.write_int("id", 280);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", extended_ue_id_idx_value.to_string());
   }
   if (ue_radio_cap_for_paging_present) {
-    j.write_fieldname("");
+    j.write_int("id", 118);
+    j.write_str("criticality", "ignore");
     ue_radio_cap_for_paging.to_json(j);
   }
   if (mico_all_plmn_present) {
-    j.write_fieldname("");
-    mico_all_plmn.to_json(j);
+    j.write_int("id", 282);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (nr_paginge_drx_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 332);
+    j.write_str("criticality", "ignore");
     nr_paginge_drx_info.to_json(j);
   }
   if (paging_cause_ind_for_voice_service_present) {
-    j.write_fieldname("");
-    paging_cause_ind_for_voice_service.to_json(j);
+    j.write_int("id", 343);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "supported");
   }
   if (pe_ip_sassist_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 344);
+    j.write_str("criticality", "ignore");
     pe_ip_sassist_info.to_json(j);
   }
   j.end_obj();
@@ -13281,13 +13309,6 @@ SRSASN_CODE mob_restrict_list_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-mob_restrict_list_ext_ies_container::mob_restrict_list_ext_ies_container() :
-  last_eutran_plmn_id(150, crit_e::ignore),
-  cn_type_restricts_for_serving(161, crit_e::ignore),
-  cn_type_restricts_for_equivalent(160, crit_e::ignore),
-  npn_mob_info(261, crit_e::reject)
-{
-}
 SRSASN_CODE mob_restrict_list_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -13298,15 +13319,27 @@ SRSASN_CODE mob_restrict_list_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (last_eutran_plmn_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)150, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(last_eutran_plmn_id.pack(bref));
   }
   if (cn_type_restricts_for_serving_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)161, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(cn_type_restricts_for_serving.pack(bref));
   }
   if (cn_type_restricts_for_equivalent_present) {
-    HANDLE_CODE(cn_type_restricts_for_equivalent.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)160, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, cn_type_restricts_for_equivalent, 1, 15, true));
   }
   if (npn_mob_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)261, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(npn_mob_info.pack(bref));
   }
 
@@ -13320,37 +13353,32 @@ SRSASN_CODE mob_restrict_list_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 150: {
         last_eutran_plmn_id_present = true;
-        last_eutran_plmn_id.id      = id;
-        HANDLE_CODE(last_eutran_plmn_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(last_eutran_plmn_id.ext.unpack(bref));
+        HANDLE_CODE(last_eutran_plmn_id.unpack(bref));
         break;
       }
       case 161: {
         cn_type_restricts_for_serving_present = true;
-        cn_type_restricts_for_serving.id      = id;
-        HANDLE_CODE(cn_type_restricts_for_serving.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_type_restricts_for_serving.ext.unpack(bref));
+        HANDLE_CODE(cn_type_restricts_for_serving.unpack(bref));
         break;
       }
       case 160: {
         cn_type_restricts_for_equivalent_present = true;
-        cn_type_restricts_for_equivalent.id      = id;
-        HANDLE_CODE(cn_type_restricts_for_equivalent.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_type_restricts_for_equivalent.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(cn_type_restricts_for_equivalent, bref, 1, 15, true));
         break;
       }
       case 261: {
         npn_mob_info_present = true;
-        npn_mob_info.id      = id;
-        HANDLE_CODE(npn_mob_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(npn_mob_info.ext.unpack(bref));
+        HANDLE_CODE(npn_mob_info.unpack(bref));
         break;
       }
       default:
@@ -13365,19 +13393,27 @@ void mob_restrict_list_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (last_eutran_plmn_id_present) {
-    j.write_fieldname("");
-    last_eutran_plmn_id.to_json(j);
+    j.write_int("id", 150);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", last_eutran_plmn_id.to_string());
   }
   if (cn_type_restricts_for_serving_present) {
-    j.write_fieldname("");
-    cn_type_restricts_for_serving.to_json(j);
+    j.write_int("id", 161);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "epc-forbidden");
   }
   if (cn_type_restricts_for_equivalent_present) {
-    j.write_fieldname("");
-    cn_type_restricts_for_equivalent.to_json(j);
+    j.write_int("id", 160);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : cn_type_restricts_for_equivalent) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (npn_mob_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 261);
+    j.write_str("criticality", "reject");
     npn_mob_info.to_json(j);
   }
   j.end_obj();
@@ -18867,12 +18903,6 @@ SRSASN_CODE dyn_5qi_descriptor_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-dyn_5qi_descriptor_ext_ies_container::dyn_5qi_descriptor_ext_ies_container() :
-  extended_packet_delay_budget(189, crit_e::ignore),
-  cn_packet_delay_budget_dl(187, crit_e::ignore),
-  cn_packet_delay_budget_ul(188, crit_e::ignore)
-{
-}
 SRSASN_CODE dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -18882,13 +18912,22 @@ SRSASN_CODE dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (extended_packet_delay_budget_present) {
-    HANDLE_CODE(extended_packet_delay_budget.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)189, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, extended_packet_delay_budget, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
   if (cn_packet_delay_budget_dl_present) {
-    HANDLE_CODE(cn_packet_delay_budget_dl.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)187, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_dl, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
   if (cn_packet_delay_budget_ul_present) {
-    HANDLE_CODE(cn_packet_delay_budget_ul.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)188, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_ul, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
 
   return SRSASN_SUCCESS;
@@ -18901,29 +18940,26 @@ SRSASN_CODE dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 189: {
         extended_packet_delay_budget_present = true;
-        extended_packet_delay_budget.id      = id;
-        HANDLE_CODE(extended_packet_delay_budget.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(extended_packet_delay_budget.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(extended_packet_delay_budget, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       case 187: {
         cn_packet_delay_budget_dl_present = true;
-        cn_packet_delay_budget_dl.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_dl.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_dl.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_dl, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       case 188: {
         cn_packet_delay_budget_ul_present = true;
-        cn_packet_delay_budget_ul.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_ul.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_ul.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_ul, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       default:
@@ -18938,16 +18974,19 @@ void dyn_5qi_descriptor_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (extended_packet_delay_budget_present) {
-    j.write_fieldname("");
-    extended_packet_delay_budget.to_json(j);
+    j.write_int("id", 189);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", extended_packet_delay_budget);
   }
   if (cn_packet_delay_budget_dl_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_dl.to_json(j);
+    j.write_int("id", 187);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_dl);
   }
   if (cn_packet_delay_budget_ul_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_ul.to_json(j);
+    j.write_int("id", 188);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_ul);
   }
   j.end_obj();
 }
@@ -19239,10 +19278,6 @@ SRSASN_CODE erab_info_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-erab_info_item_ext_ies_container::erab_info_item_ext_ies_container() :
-  source_tnla_ddr_info(284, crit_e::ignore), source_node_tnla_ddr_info(354, crit_e::ignore)
-{
-}
 SRSASN_CODE erab_info_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -19251,9 +19286,15 @@ SRSASN_CODE erab_info_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (source_tnla_ddr_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)284, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(source_tnla_ddr_info.pack(bref));
   }
   if (source_node_tnla_ddr_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)354, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(source_node_tnla_ddr_info.pack(bref));
   }
 
@@ -19267,21 +19308,20 @@ SRSASN_CODE erab_info_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 284: {
         source_tnla_ddr_info_present = true;
-        source_tnla_ddr_info.id      = id;
-        HANDLE_CODE(source_tnla_ddr_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(source_tnla_ddr_info.ext.unpack(bref));
+        HANDLE_CODE(source_tnla_ddr_info.unpack(bref));
         break;
       }
       case 354: {
         source_node_tnla_ddr_info_present = true;
-        source_node_tnla_ddr_info.id      = id;
-        HANDLE_CODE(source_node_tnla_ddr_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(source_node_tnla_ddr_info.ext.unpack(bref));
+        HANDLE_CODE(source_node_tnla_ddr_info.unpack(bref));
         break;
       }
       default:
@@ -19296,12 +19336,14 @@ void erab_info_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (source_tnla_ddr_info_present) {
-    j.write_fieldname("");
-    source_tnla_ddr_info.to_json(j);
+    j.write_int("id", 284);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", source_tnla_ddr_info.to_string());
   }
   if (source_node_tnla_ddr_info_present) {
-    j.write_fieldname("");
-    source_node_tnla_ddr_info.to_json(j);
+    j.write_int("id", 354);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", source_node_tnla_ddr_info.to_string());
   }
   j.end_obj();
 }
@@ -21284,14 +21326,6 @@ SRSASN_CODE ho_cmd_transfer_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-ho_cmd_transfer_ext_ies_container::ho_cmd_transfer_ext_ies_container() :
-  add_dl_forwarding_up_tnl_info(152, crit_e::ignore),
-  ul_forwarding_up_tnl_info(164, crit_e::reject),
-  add_ul_forwarding_up_tnl_info(172, crit_e::reject),
-  data_forwarding_resp_erab_list(249, crit_e::ignore),
-  qos_flow_failed_to_setup_list(283, crit_e::ignore)
-{
-}
 SRSASN_CODE ho_cmd_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -21303,19 +21337,34 @@ SRSASN_CODE ho_cmd_transfer_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (add_dl_forwarding_up_tnl_info_present) {
-    HANDLE_CODE(add_dl_forwarding_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)152, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_dl_forwarding_up_tnl_info, 1, 3, true));
   }
   if (ul_forwarding_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)164, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(ul_forwarding_up_tnl_info.pack(bref));
   }
   if (add_ul_forwarding_up_tnl_info_present) {
-    HANDLE_CODE(add_ul_forwarding_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)172, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ul_forwarding_up_tnl_info, 1, 3, true));
   }
   if (data_forwarding_resp_erab_list_present) {
-    HANDLE_CODE(data_forwarding_resp_erab_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)249, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, data_forwarding_resp_erab_list, 1, 256, true));
   }
   if (qos_flow_failed_to_setup_list_present) {
-    HANDLE_CODE(qos_flow_failed_to_setup_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)283, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_failed_to_setup_list, 1, 64, true));
   }
 
   return SRSASN_SUCCESS;
@@ -21328,45 +21377,38 @@ SRSASN_CODE ho_cmd_transfer_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 152: {
         add_dl_forwarding_up_tnl_info_present = true;
-        add_dl_forwarding_up_tnl_info.id      = id;
-        HANDLE_CODE(add_dl_forwarding_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_dl_forwarding_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_dl_forwarding_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 164: {
         ul_forwarding_up_tnl_info_present = true;
-        ul_forwarding_up_tnl_info.id      = id;
-        HANDLE_CODE(ul_forwarding_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_forwarding_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(ul_forwarding_up_tnl_info.unpack(bref));
         break;
       }
       case 172: {
         add_ul_forwarding_up_tnl_info_present = true;
-        add_ul_forwarding_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ul_forwarding_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ul_forwarding_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ul_forwarding_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 249: {
         data_forwarding_resp_erab_list_present = true;
-        data_forwarding_resp_erab_list.id      = id;
-        HANDLE_CODE(data_forwarding_resp_erab_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(data_forwarding_resp_erab_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(data_forwarding_resp_erab_list, bref, 1, 256, true));
         break;
       }
       case 283: {
         qos_flow_failed_to_setup_list_present = true;
-        qos_flow_failed_to_setup_list.id      = id;
-        HANDLE_CODE(qos_flow_failed_to_setup_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_failed_to_setup_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_failed_to_setup_list, bref, 1, 64, true));
         break;
       }
       default:
@@ -21381,24 +21423,45 @@ void ho_cmd_transfer_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (add_dl_forwarding_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_dl_forwarding_up_tnl_info.to_json(j);
+    j.write_int("id", 152);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_dl_forwarding_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (ul_forwarding_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 164);
+    j.write_str("criticality", "reject");
     ul_forwarding_up_tnl_info.to_json(j);
   }
   if (add_ul_forwarding_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ul_forwarding_up_tnl_info.to_json(j);
+    j.write_int("id", 172);
+    j.write_str("criticality", "reject");
+    j.start_array("Extension");
+    for (const auto& e1 : add_ul_forwarding_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (data_forwarding_resp_erab_list_present) {
-    j.write_fieldname("");
-    data_forwarding_resp_erab_list.to_json(j);
+    j.write_int("id", 249);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : data_forwarding_resp_erab_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (qos_flow_failed_to_setup_list_present) {
-    j.write_fieldname("");
-    qos_flow_failed_to_setup_list.to_json(j);
+    j.write_int("id", 283);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : qos_flow_failed_to_setup_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -22813,10 +22876,6 @@ void user_location_info_n3_iwf_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-user_location_info_nr_ext_ies_container::user_location_info_nr_ext_ies_container() :
-  pscell_info(149, crit_e::ignore), n_id(263, crit_e::reject), nr_ntn_tai_info(287, crit_e::ignore)
-{
-}
 SRSASN_CODE user_location_info_nr_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -22826,12 +22885,21 @@ SRSASN_CODE user_location_info_nr_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (pscell_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)149, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pscell_info.pack(bref));
   }
   if (n_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)263, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(n_id.pack(bref));
   }
   if (nr_ntn_tai_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)287, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(nr_ntn_tai_info.pack(bref));
   }
 
@@ -22845,29 +22913,26 @@ SRSASN_CODE user_location_info_nr_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 149: {
         pscell_info_present = true;
-        pscell_info.id      = id;
-        HANDLE_CODE(pscell_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pscell_info.ext.unpack(bref));
+        HANDLE_CODE(pscell_info.unpack(bref));
         break;
       }
       case 263: {
         n_id_present = true;
-        n_id.id      = id;
-        HANDLE_CODE(n_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(n_id.ext.unpack(bref));
+        HANDLE_CODE(n_id.unpack(bref));
         break;
       }
       case 287: {
         nr_ntn_tai_info_present = true;
-        nr_ntn_tai_info.id      = id;
-        HANDLE_CODE(nr_ntn_tai_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(nr_ntn_tai_info.ext.unpack(bref));
+        HANDLE_CODE(nr_ntn_tai_info.unpack(bref));
         break;
       }
       default:
@@ -22882,15 +22947,18 @@ void user_location_info_nr_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (pscell_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 149);
+    j.write_str("criticality", "ignore");
     pscell_info.to_json(j);
   }
   if (n_id_present) {
-    j.write_fieldname("");
-    n_id.to_json(j);
+    j.write_int("id", 263);
+    j.write_str("criticality", "reject");
+    j.write_str("Extension", n_id.to_string());
   }
   if (nr_ntn_tai_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 287);
+    j.write_str("criticality", "ignore");
     nr_ntn_tai_info.to_json(j);
   }
   j.end_obj();
@@ -24740,10 +24808,6 @@ int32_t logging_interv_opts::to_number() const
   return map_enum_number(numbers, 11, value, "logging_interv_e");
 }
 
-m1_cfg_ext_ies_container::m1_cfg_ext_ies_container() :
-  include_beam_meass_ind(340, crit_e::ignore), beam_meass_report_cfg(361, crit_e::ignore)
-{
-}
 SRSASN_CODE m1_cfg_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -24752,9 +24816,15 @@ SRSASN_CODE m1_cfg_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (include_beam_meass_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)340, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(include_beam_meass_ind.pack(bref));
   }
   if (beam_meass_report_cfg_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)361, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(beam_meass_report_cfg.pack(bref));
   }
 
@@ -24768,21 +24838,20 @@ SRSASN_CODE m1_cfg_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 340: {
         include_beam_meass_ind_present = true;
-        include_beam_meass_ind.id      = id;
-        HANDLE_CODE(include_beam_meass_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(include_beam_meass_ind.ext.unpack(bref));
+        HANDLE_CODE(include_beam_meass_ind.unpack(bref));
         break;
       }
       case 361: {
         beam_meass_report_cfg_present = true;
-        beam_meass_report_cfg.id      = id;
-        HANDLE_CODE(beam_meass_report_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(beam_meass_report_cfg.ext.unpack(bref));
+        HANDLE_CODE(beam_meass_report_cfg.unpack(bref));
         break;
       }
       default:
@@ -24797,11 +24866,13 @@ void m1_cfg_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (include_beam_meass_ind_present) {
-    j.write_fieldname("");
-    include_beam_meass_ind.to_json(j);
+    j.write_int("id", 340);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (beam_meass_report_cfg_present) {
-    j.write_fieldname("");
+    j.write_int("id", 361);
+    j.write_str("criticality", "ignore");
     beam_meass_report_cfg.to_json(j);
   }
   j.end_obj();
@@ -24945,10 +25016,6 @@ void m5_cfg_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-m6_cfg_ext_ies_container::m6_cfg_ext_ies_container() :
-  m6_report_amount(338, crit_e::ignore), excess_packet_delay_thres_cfg(341, crit_e::ignore)
-{
-}
 SRSASN_CODE m6_cfg_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -24957,10 +25024,16 @@ SRSASN_CODE m6_cfg_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (m6_report_amount_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)338, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(m6_report_amount.pack(bref));
   }
   if (excess_packet_delay_thres_cfg_present) {
-    HANDLE_CODE(excess_packet_delay_thres_cfg.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)341, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, excess_packet_delay_thres_cfg, 1, 255, true));
   }
 
   return SRSASN_SUCCESS;
@@ -24973,21 +25046,20 @@ SRSASN_CODE m6_cfg_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 338: {
         m6_report_amount_present = true;
-        m6_report_amount.id      = id;
-        HANDLE_CODE(m6_report_amount.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(m6_report_amount.ext.unpack(bref));
+        HANDLE_CODE(m6_report_amount.unpack(bref));
         break;
       }
       case 341: {
         excess_packet_delay_thres_cfg_present = true;
-        excess_packet_delay_thres_cfg.id      = id;
-        HANDLE_CODE(excess_packet_delay_thres_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(excess_packet_delay_thres_cfg.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(excess_packet_delay_thres_cfg, bref, 1, 255, true));
         break;
       }
       default:
@@ -25002,12 +25074,18 @@ void m6_cfg_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (m6_report_amount_present) {
-    j.write_fieldname("");
-    m6_report_amount.to_json(j);
+    j.write_int("id", 338);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", m6_report_amount.to_string());
   }
   if (excess_packet_delay_thres_cfg_present) {
-    j.write_fieldname("");
-    excess_packet_delay_thres_cfg.to_json(j);
+    j.write_int("id", 341);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : excess_packet_delay_thres_cfg) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -26812,10 +26890,6 @@ const char* time_sync_assist_info_s::time_distribution_ind_opts::to_string() con
   return convert_enum_idx(names, 2, value, "time_sync_assist_info_s::time_distribution_ind_e_");
 }
 
-trace_activation_ext_ies_container::trace_activation_ext_ies_container() :
-  mdt_cfg(255, crit_e::ignore), trace_collection_entity_uri(257, crit_e::ignore)
-{
-}
 SRSASN_CODE trace_activation_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -26824,9 +26898,15 @@ SRSASN_CODE trace_activation_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (mdt_cfg_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)255, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mdt_cfg.pack(bref));
   }
   if (trace_collection_entity_uri_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)257, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(trace_collection_entity_uri.pack(bref));
   }
 
@@ -26840,21 +26920,20 @@ SRSASN_CODE trace_activation_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 255: {
         mdt_cfg_present = true;
-        mdt_cfg.id      = id;
-        HANDLE_CODE(mdt_cfg.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mdt_cfg.ext.unpack(bref));
+        HANDLE_CODE(mdt_cfg.unpack(bref));
         break;
       }
       case 257: {
         trace_collection_entity_uri_present = true;
-        trace_collection_entity_uri.id      = id;
-        HANDLE_CODE(trace_collection_entity_uri.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(trace_collection_entity_uri.ext.unpack(bref));
+        HANDLE_CODE(trace_collection_entity_uri.unpack(bref));
         break;
       }
       default:
@@ -26869,12 +26948,14 @@ void trace_activation_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (mdt_cfg_present) {
-    j.write_fieldname("");
+    j.write_int("id", 255);
+    j.write_str("criticality", "ignore");
     mdt_cfg.to_json(j);
   }
   if (trace_collection_entity_uri_present) {
-    j.write_fieldname("");
-    trace_collection_entity_uri.to_json(j);
+    j.write_int("id", 257);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", trace_collection_entity_uri.to_string());
   }
   j.end_obj();
 }
@@ -27796,17 +27877,6 @@ void security_result_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-ho_request_ack_transfer_ext_ies_container::ho_request_ack_transfer_ext_ies_container() :
-  add_dl_up_tnl_info_for_ho_list(153, crit_e::ignore),
-  ul_forwarding_up_tnl_info(164, crit_e::reject),
-  add_ul_forwarding_up_tnl_info(172, crit_e::reject),
-  data_forwarding_resp_erab_list(249, crit_e::ignore),
-  redundant_dl_ngu_up_tnl_info(192, crit_e::ignore),
-  used_r_sn_info(198, crit_e::ignore),
-  global_ran_node_id(27, crit_e::ignore),
-  mbs_support_ind(309, crit_e::ignore)
-{
-}
 SRSASN_CODE ho_request_ack_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -27821,27 +27891,51 @@ SRSASN_CODE ho_request_ack_transfer_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (add_dl_up_tnl_info_for_ho_list_present) {
-    HANDLE_CODE(add_dl_up_tnl_info_for_ho_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)153, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_dl_up_tnl_info_for_ho_list, 1, 3, true));
   }
   if (ul_forwarding_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)164, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(ul_forwarding_up_tnl_info.pack(bref));
   }
   if (add_ul_forwarding_up_tnl_info_present) {
-    HANDLE_CODE(add_ul_forwarding_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)172, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ul_forwarding_up_tnl_info, 1, 3, true));
   }
   if (data_forwarding_resp_erab_list_present) {
-    HANDLE_CODE(data_forwarding_resp_erab_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)249, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, data_forwarding_resp_erab_list, 1, 256, true));
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)192, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_ngu_up_tnl_info.pack(bref));
   }
   if (used_r_sn_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)198, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(used_r_sn_info.pack(bref));
   }
   if (global_ran_node_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)27, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(global_ran_node_id.pack(bref));
   }
   if (mbs_support_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)309, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_support_ind.pack(bref));
   }
 
@@ -27855,69 +27949,56 @@ SRSASN_CODE ho_request_ack_transfer_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 153: {
         add_dl_up_tnl_info_for_ho_list_present = true;
-        add_dl_up_tnl_info_for_ho_list.id      = id;
-        HANDLE_CODE(add_dl_up_tnl_info_for_ho_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_dl_up_tnl_info_for_ho_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_dl_up_tnl_info_for_ho_list, bref, 1, 3, true));
         break;
       }
       case 164: {
         ul_forwarding_up_tnl_info_present = true;
-        ul_forwarding_up_tnl_info.id      = id;
-        HANDLE_CODE(ul_forwarding_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_forwarding_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(ul_forwarding_up_tnl_info.unpack(bref));
         break;
       }
       case 172: {
         add_ul_forwarding_up_tnl_info_present = true;
-        add_ul_forwarding_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ul_forwarding_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ul_forwarding_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ul_forwarding_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 249: {
         data_forwarding_resp_erab_list_present = true;
-        data_forwarding_resp_erab_list.id      = id;
-        HANDLE_CODE(data_forwarding_resp_erab_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(data_forwarding_resp_erab_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(data_forwarding_resp_erab_list, bref, 1, 256, true));
         break;
       }
       case 192: {
         redundant_dl_ngu_up_tnl_info_present = true;
-        redundant_dl_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 198: {
         used_r_sn_info_present = true;
-        used_r_sn_info.id      = id;
-        HANDLE_CODE(used_r_sn_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(used_r_sn_info.ext.unpack(bref));
+        HANDLE_CODE(used_r_sn_info.unpack(bref));
         break;
       }
       case 27: {
         global_ran_node_id_present = true;
-        global_ran_node_id.id      = id;
-        HANDLE_CODE(global_ran_node_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(global_ran_node_id.ext.unpack(bref));
+        HANDLE_CODE(global_ran_node_id.unpack(bref));
         break;
       }
       case 309: {
         mbs_support_ind_present = true;
-        mbs_support_ind.id      = id;
-        HANDLE_CODE(mbs_support_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_support_ind.ext.unpack(bref));
+        HANDLE_CODE(mbs_support_ind.unpack(bref));
         break;
       }
       default:
@@ -27932,36 +28013,56 @@ void ho_request_ack_transfer_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (add_dl_up_tnl_info_for_ho_list_present) {
-    j.write_fieldname("");
-    add_dl_up_tnl_info_for_ho_list.to_json(j);
+    j.write_int("id", 153);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_dl_up_tnl_info_for_ho_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (ul_forwarding_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 164);
+    j.write_str("criticality", "reject");
     ul_forwarding_up_tnl_info.to_json(j);
   }
   if (add_ul_forwarding_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ul_forwarding_up_tnl_info.to_json(j);
+    j.write_int("id", 172);
+    j.write_str("criticality", "reject");
+    j.start_array("Extension");
+    for (const auto& e1 : add_ul_forwarding_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (data_forwarding_resp_erab_list_present) {
-    j.write_fieldname("");
-    data_forwarding_resp_erab_list.to_json(j);
+    j.write_int("id", 249);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : data_forwarding_resp_erab_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 192);
+    j.write_str("criticality", "ignore");
     redundant_dl_ngu_up_tnl_info.to_json(j);
   }
   if (used_r_sn_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 198);
+    j.write_str("criticality", "ignore");
     used_r_sn_info.to_json(j);
   }
   if (global_ran_node_id_present) {
-    j.write_fieldname("");
+    j.write_int("id", 27);
+    j.write_str("criticality", "ignore");
     global_ran_node_id.to_json(j);
   }
   if (mbs_support_ind_present) {
-    j.write_fieldname("");
-    mbs_support_ind.to_json(j);
+    j.write_int("id", 309);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   j.end_obj();
 }
@@ -31089,10 +31190,6 @@ void pdu_session_res_modify_item_mod_ind_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-pdu_session_res_modify_item_mod_req_ext_ies_container::pdu_session_res_modify_item_mod_req_ext_ies_container() :
-  s_nssai(148, crit_e::reject), pdu_session_expected_ue_activity_behaviour(281, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -31101,9 +31198,15 @@ SRSASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::pack(bit_ref&
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (s_nssai_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)148, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(s_nssai.pack(bref));
   }
   if (pdu_session_expected_ue_activity_behaviour_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)281, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pdu_session_expected_ue_activity_behaviour.pack(bref));
   }
 
@@ -31117,21 +31220,20 @@ SRSASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::unpack(cbit_r
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 148: {
         s_nssai_present = true;
-        s_nssai.id      = id;
-        HANDLE_CODE(s_nssai.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(s_nssai.ext.unpack(bref));
+        HANDLE_CODE(s_nssai.unpack(bref));
         break;
       }
       case 281: {
         pdu_session_expected_ue_activity_behaviour_present = true;
-        pdu_session_expected_ue_activity_behaviour.id      = id;
-        HANDLE_CODE(pdu_session_expected_ue_activity_behaviour.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pdu_session_expected_ue_activity_behaviour.ext.unpack(bref));
+        HANDLE_CODE(pdu_session_expected_ue_activity_behaviour.unpack(bref));
         break;
       }
       default:
@@ -31146,11 +31248,13 @@ void pdu_session_res_modify_item_mod_req_ext_ies_container::to_json(json_writer&
 {
   j.start_obj();
   if (s_nssai_present) {
-    j.write_fieldname("");
+    j.write_int("id", 148);
+    j.write_str("criticality", "reject");
     s_nssai.to_json(j);
   }
   if (pdu_session_expected_ue_activity_behaviour_present) {
-    j.write_fieldname("");
+    j.write_int("id", 281);
+    j.write_str("criticality", "ignore");
     pdu_session_expected_ue_activity_behaviour.to_json(j);
   }
   j.end_obj();
@@ -31835,10 +31939,6 @@ const char* reset_all_opts::to_string() const
   return convert_enum_idx(names, 1, value, "reset_all_e");
 }
 
-supported_ta_item_ext_ies_container::supported_ta_item_ext_ies_container() :
-  cfg_tac_ind(272, crit_e::ignore), rat_info(179, crit_e::reject)
-{
-}
 SRSASN_CODE supported_ta_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -31847,9 +31947,15 @@ SRSASN_CODE supported_ta_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (cfg_tac_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)272, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(cfg_tac_ind.pack(bref));
   }
   if (rat_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)179, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(rat_info.pack(bref));
   }
 
@@ -31863,21 +31969,20 @@ SRSASN_CODE supported_ta_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 272: {
         cfg_tac_ind_present = true;
-        cfg_tac_ind.id      = id;
-        HANDLE_CODE(cfg_tac_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cfg_tac_ind.ext.unpack(bref));
+        HANDLE_CODE(cfg_tac_ind.unpack(bref));
         break;
       }
       case 179: {
         rat_info_present = true;
-        rat_info.id      = id;
-        HANDLE_CODE(rat_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(rat_info.ext.unpack(bref));
+        HANDLE_CODE(rat_info.unpack(bref));
         break;
       }
       default:
@@ -31892,12 +31997,14 @@ void supported_ta_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (cfg_tac_ind_present) {
-    j.write_fieldname("");
-    cfg_tac_ind.to_json(j);
+    j.write_int("id", 272);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (rat_info_present) {
-    j.write_fieldname("");
-    rat_info.to_json(j);
+    j.write_int("id", 179);
+    j.write_str("criticality", "reject");
+    j.write_str("Extension", rat_info.to_string());
   }
   j.end_obj();
 }
@@ -33799,10 +33906,6 @@ SRSASN_CODE non_dyn_5qi_descriptor_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-non_dyn_5qi_descriptor_ext_ies_container::non_dyn_5qi_descriptor_ext_ies_container() :
-  cn_packet_delay_budget_dl(187, crit_e::ignore), cn_packet_delay_budget_ul(188, crit_e::ignore)
-{
-}
 SRSASN_CODE non_dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -33811,10 +33914,16 @@ SRSASN_CODE non_dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (cn_packet_delay_budget_dl_present) {
-    HANDLE_CODE(cn_packet_delay_budget_dl.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)187, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_dl, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
   if (cn_packet_delay_budget_ul_present) {
-    HANDLE_CODE(cn_packet_delay_budget_ul.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)188, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_ul, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
 
   return SRSASN_SUCCESS;
@@ -33827,21 +33936,20 @@ SRSASN_CODE non_dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 187: {
         cn_packet_delay_budget_dl_present = true;
-        cn_packet_delay_budget_dl.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_dl.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_dl.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_dl, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       case 188: {
         cn_packet_delay_budget_ul_present = true;
-        cn_packet_delay_budget_ul.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_ul.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_ul.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_ul, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       default:
@@ -33856,12 +33964,14 @@ void non_dyn_5qi_descriptor_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (cn_packet_delay_budget_dl_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_dl.to_json(j);
+    j.write_int("id", 187);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_dl);
   }
   if (cn_packet_delay_budget_ul_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_ul.to_json(j);
+    j.write_int("id", 188);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_ul);
   }
   j.end_obj();
 }
@@ -34446,10 +34556,6 @@ uint8_t mrb_progress_info_c::types_opts::to_number() const
   return map_enum_number(numbers, 2, value, "mrb_progress_info_c::types");
 }
 
-qos_flow_level_qos_params_ext_ies_container::qos_flow_level_qos_params_ext_ies_container() :
-  qos_monitoring_request(181, crit_e::ignore), qos_monitoring_report_freq(276, crit_e::ignore)
-{
-}
 SRSASN_CODE qos_flow_level_qos_params_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -34458,10 +34564,16 @@ SRSASN_CODE qos_flow_level_qos_params_ext_ies_container::pack(bit_ref& bref) con
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (qos_monitoring_request_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)181, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(qos_monitoring_request.pack(bref));
   }
   if (qos_monitoring_report_freq_present) {
-    HANDLE_CODE(qos_monitoring_report_freq.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)276, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, qos_monitoring_report_freq, (uint16_t)1u, (uint16_t)1800u, true, true));
   }
 
   return SRSASN_SUCCESS;
@@ -34474,21 +34586,20 @@ SRSASN_CODE qos_flow_level_qos_params_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 181: {
         qos_monitoring_request_present = true;
-        qos_monitoring_request.id      = id;
-        HANDLE_CODE(qos_monitoring_request.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_monitoring_request.ext.unpack(bref));
+        HANDLE_CODE(qos_monitoring_request.unpack(bref));
         break;
       }
       case 276: {
         qos_monitoring_report_freq_present = true;
-        qos_monitoring_report_freq.id      = id;
-        HANDLE_CODE(qos_monitoring_report_freq.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_monitoring_report_freq.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(qos_monitoring_report_freq, bref, (uint16_t)1u, (uint16_t)1800u, true, true));
         break;
       }
       default:
@@ -34503,12 +34614,14 @@ void qos_flow_level_qos_params_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (qos_monitoring_request_present) {
-    j.write_fieldname("");
-    qos_monitoring_request.to_json(j);
+    j.write_int("id", 181);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", qos_monitoring_request.to_string());
   }
   if (qos_monitoring_report_freq_present) {
-    j.write_fieldname("");
-    qos_monitoring_report_freq.to_json(j);
+    j.write_int("id", 276);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", qos_monitoring_report_freq);
   }
   j.end_obj();
 }
@@ -36003,12 +36116,6 @@ SRSASN_CODE mbs_session_setup_or_mod_request_transfer_ies_o::value_c::unpack(cbi
   return SRSASN_SUCCESS;
 }
 
-mbs_session_setup_or_mod_request_transfer_ies_container::mbs_session_setup_or_mod_request_transfer_ies_container() :
-  mbs_session_tnl_info5_gc(352, crit_e::reject),
-  mbs_qos_flows_to_be_setup_mod_list(297, crit_e::reject),
-  mbs_session_fsa_id_list(357, crit_e::ignore)
-{
-}
 SRSASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -36017,11 +36124,22 @@ SRSASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::pack(bit_re
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   if (mbs_session_tnl_info5_gc_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)352, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_session_tnl_info5_gc.pack(bref));
   }
-  HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.pack(bref));
+  {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)297, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_qos_flows_to_be_setup_mod_list, 1, 64, true));
+  }
   if (mbs_session_fsa_id_list_present) {
-    HANDLE_CODE(mbs_session_fsa_id_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)357, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_fsa_id_list, 1, 64, true));
   }
 
   return SRSASN_SUCCESS;
@@ -36036,29 +36154,26 @@ SRSASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::unpack(cbit
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 352: {
         mbs_session_tnl_info5_gc_present = true;
-        mbs_session_tnl_info5_gc.id      = id;
-        HANDLE_CODE(mbs_session_tnl_info5_gc.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_tnl_info5_gc.value.unpack(bref));
+        HANDLE_CODE(mbs_session_tnl_info5_gc.unpack(bref));
         break;
       }
       case 297: {
         nof_mandatory_ies--;
-        mbs_qos_flows_to_be_setup_mod_list.id = id;
-        HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_qos_flows_to_be_setup_mod_list, bref, 1, 64, true));
         break;
       }
       case 357: {
         mbs_session_fsa_id_list_present = true;
-        mbs_session_fsa_id_list.id      = id;
-        HANDLE_CODE(mbs_session_fsa_id_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_fsa_id_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_fsa_id_list, bref, 1, 64, true));
         break;
       }
       default:
@@ -36077,14 +36192,25 @@ void mbs_session_setup_or_mod_request_transfer_ies_container::to_json(json_write
 {
   j.start_obj();
   if (mbs_session_tnl_info5_gc_present) {
-    j.write_fieldname("");
+    j.write_int("id", 352);
+    j.write_str("criticality", "reject");
     mbs_session_tnl_info5_gc.to_json(j);
   }
-  j.write_fieldname("");
-  mbs_qos_flows_to_be_setup_mod_list.to_json(j);
+  j.write_int("id", 297);
+  j.write_str("criticality", "reject");
+  j.start_array("Value");
+  for (const auto& e1 : mbs_qos_flows_to_be_setup_mod_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
   if (mbs_session_fsa_id_list_present) {
-    j.write_fieldname("");
-    mbs_session_fsa_id_list.to_json(j);
+    j.write_int("id", 357);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_session_fsa_id_list) {
+      j.write_str(e1.to_string());
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -36765,14 +36891,6 @@ SRSASN_CODE multicast_session_upd_request_transfer_ies_o::value_c::unpack(cbit_r
   return SRSASN_SUCCESS;
 }
 
-multicast_session_upd_request_transfer_ies_container::multicast_session_upd_request_transfer_ies_container() :
-  mbs_session_id(299, crit_e::reject),
-  mbs_service_area(298, crit_e::reject),
-  mbs_qos_flows_to_be_setup_mod_list(297, crit_e::reject),
-  mbs_qos_flow_to_release_list(351, crit_e::reject),
-  mbs_session_tnl_info5_gc(352, crit_e::reject)
-{
-}
 SRSASN_CODE multicast_session_upd_request_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
@@ -36782,17 +36900,34 @@ SRSASN_CODE multicast_session_upd_request_transfer_ies_container::pack(bit_ref& 
   nof_ies += mbs_session_tnl_info5_gc_present ? 1 : 0;
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
-  HANDLE_CODE(mbs_session_id.pack(bref));
+  {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)299, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(mbs_session_id.pack(bref));
+  }
   if (mbs_service_area_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)298, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_service_area.pack(bref));
   }
   if (mbs_qos_flows_to_be_setup_mod_list_present) {
-    HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)297, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_qos_flows_to_be_setup_mod_list, 1, 64, true));
   }
   if (mbs_qos_flow_to_release_list_present) {
-    HANDLE_CODE(mbs_qos_flow_to_release_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)351, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_qos_flow_to_release_list, 1, 64, true));
   }
   if (mbs_session_tnl_info5_gc_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)352, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_session_tnl_info5_gc.pack(bref));
   }
 
@@ -36808,45 +36943,38 @@ SRSASN_CODE multicast_session_upd_request_transfer_ies_container::unpack(cbit_re
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 299: {
         nof_mandatory_ies--;
-        mbs_session_id.id = id;
-        HANDLE_CODE(mbs_session_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_id.value.unpack(bref));
+        HANDLE_CODE(mbs_session_id.unpack(bref));
         break;
       }
       case 298: {
         mbs_service_area_present = true;
-        mbs_service_area.id      = id;
-        HANDLE_CODE(mbs_service_area.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_service_area.value.unpack(bref));
+        HANDLE_CODE(mbs_service_area.unpack(bref));
         break;
       }
       case 297: {
         mbs_qos_flows_to_be_setup_mod_list_present = true;
-        mbs_qos_flows_to_be_setup_mod_list.id      = id;
-        HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_qos_flows_to_be_setup_mod_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_qos_flows_to_be_setup_mod_list, bref, 1, 64, true));
         break;
       }
       case 351: {
         mbs_qos_flow_to_release_list_present = true;
-        mbs_qos_flow_to_release_list.id      = id;
-        HANDLE_CODE(mbs_qos_flow_to_release_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_qos_flow_to_release_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_qos_flow_to_release_list, bref, 1, 64, true));
         break;
       }
       case 352: {
         mbs_session_tnl_info5_gc_present = true;
-        mbs_session_tnl_info5_gc.id      = id;
-        HANDLE_CODE(mbs_session_tnl_info5_gc.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_tnl_info5_gc.value.unpack(bref));
+        HANDLE_CODE(mbs_session_tnl_info5_gc.unpack(bref));
         break;
       }
       default:
@@ -36864,22 +36992,35 @@ SRSASN_CODE multicast_session_upd_request_transfer_ies_container::unpack(cbit_re
 void multicast_session_upd_request_transfer_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
-  j.write_fieldname("");
+  j.write_int("id", 299);
+  j.write_str("criticality", "reject");
   mbs_session_id.to_json(j);
   if (mbs_service_area_present) {
-    j.write_fieldname("");
+    j.write_int("id", 298);
+    j.write_str("criticality", "reject");
     mbs_service_area.to_json(j);
   }
   if (mbs_qos_flows_to_be_setup_mod_list_present) {
-    j.write_fieldname("");
-    mbs_qos_flows_to_be_setup_mod_list.to_json(j);
+    j.write_int("id", 297);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_qos_flows_to_be_setup_mod_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (mbs_qos_flow_to_release_list_present) {
-    j.write_fieldname("");
-    mbs_qos_flow_to_release_list.to_json(j);
+    j.write_int("id", 351);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_qos_flow_to_release_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (mbs_session_tnl_info5_gc_present) {
-    j.write_fieldname("");
+    j.write_int("id", 352);
+    j.write_str("criticality", "reject");
     mbs_session_tnl_info5_gc.to_json(j);
   }
   j.end_obj();
@@ -37250,12 +37391,6 @@ SRSASN_CODE qos_flow_info_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-qos_flow_info_item_ext_ies_container::qos_flow_info_item_ext_ies_container() :
-  ul_forwarding(163, crit_e::ignore),
-  source_tnla_ddr_info(284, crit_e::ignore),
-  source_node_tnla_ddr_info(354, crit_e::ignore)
-{
-}
 SRSASN_CODE qos_flow_info_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -37265,12 +37400,21 @@ SRSASN_CODE qos_flow_info_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (ul_forwarding_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)163, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(ul_forwarding.pack(bref));
   }
   if (source_tnla_ddr_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)284, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(source_tnla_ddr_info.pack(bref));
   }
   if (source_node_tnla_ddr_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)354, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(source_node_tnla_ddr_info.pack(bref));
   }
 
@@ -37284,29 +37428,26 @@ SRSASN_CODE qos_flow_info_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 163: {
         ul_forwarding_present = true;
-        ul_forwarding.id      = id;
-        HANDLE_CODE(ul_forwarding.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_forwarding.ext.unpack(bref));
+        HANDLE_CODE(ul_forwarding.unpack(bref));
         break;
       }
       case 284: {
         source_tnla_ddr_info_present = true;
-        source_tnla_ddr_info.id      = id;
-        HANDLE_CODE(source_tnla_ddr_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(source_tnla_ddr_info.ext.unpack(bref));
+        HANDLE_CODE(source_tnla_ddr_info.unpack(bref));
         break;
       }
       case 354: {
         source_node_tnla_ddr_info_present = true;
-        source_node_tnla_ddr_info.id      = id;
-        HANDLE_CODE(source_node_tnla_ddr_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(source_node_tnla_ddr_info.ext.unpack(bref));
+        HANDLE_CODE(source_node_tnla_ddr_info.unpack(bref));
         break;
       }
       default:
@@ -37321,16 +37462,19 @@ void qos_flow_info_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (ul_forwarding_present) {
-    j.write_fieldname("");
-    ul_forwarding.to_json(j);
+    j.write_int("id", 163);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "ul-forwarding-proposed");
   }
   if (source_tnla_ddr_info_present) {
-    j.write_fieldname("");
-    source_tnla_ddr_info.to_json(j);
+    j.write_int("id", 284);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", source_tnla_ddr_info.to_string());
   }
   if (source_node_tnla_ddr_info_present) {
-    j.write_fieldname("");
-    source_node_tnla_ddr_info.to_json(j);
+    j.write_int("id", 354);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", source_node_tnla_ddr_info.to_string());
   }
   j.end_obj();
 }
@@ -37722,10 +37866,6 @@ SRSASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_o::ext_c::unpack(cbi
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_modify_confirm_transfer_ext_ies_container::pdu_session_res_modify_confirm_transfer_ext_ies_container() :
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore), add_redundant_ngu_up_tnl_info(185, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -37734,10 +37874,16 @@ SRSASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::pack(bit_
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_redundant_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)185, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_ngu_up_tnl_info, 1, 3, true));
   }
 
   return SRSASN_SUCCESS;
@@ -37750,21 +37896,20 @@ SRSASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::unpack(cb
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 185: {
         add_redundant_ngu_up_tnl_info_present = true;
-        add_redundant_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       default:
@@ -37779,12 +37924,18 @@ void pdu_session_res_modify_confirm_transfer_ext_ies_container::to_json(json_wri
 {
   j.start_obj();
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 185);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -38392,14 +38543,6 @@ SRSASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_o::ext_c::unpack(cbit_re
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_modify_ind_transfer_ext_ies_container::pdu_session_res_modify_ind_transfer_ext_ies_container() :
-  secondary_rat_usage_info(144, crit_e::ignore),
-  security_result(156, crit_e::ignore),
-  redundant_dl_qos_flow_per_tnl_info(193, crit_e::ignore),
-  add_redundant_dl_qos_flow_per_tnl_info(184, crit_e::ignore),
-  global_ran_node_id(27, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -38411,18 +38554,33 @@ SRSASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::pack(bit_ref&
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (secondary_rat_usage_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(secondary_rat_usage_info.pack(bref));
   }
   if (security_result_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)156, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(security_result.pack(bref));
   }
   if (redundant_dl_qos_flow_per_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)193, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.pack(bref));
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)184, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_dl_qos_flow_per_tnl_info, 1, 3, true));
   }
   if (global_ran_node_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)27, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(global_ran_node_id.pack(bref));
   }
 
@@ -38436,45 +38594,38 @@ SRSASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::unpack(cbit_r
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 144: {
         secondary_rat_usage_info_present = true;
-        secondary_rat_usage_info.id      = id;
-        HANDLE_CODE(secondary_rat_usage_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(secondary_rat_usage_info.ext.unpack(bref));
+        HANDLE_CODE(secondary_rat_usage_info.unpack(bref));
         break;
       }
       case 156: {
         security_result_present = true;
-        security_result.id      = id;
-        HANDLE_CODE(security_result.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(security_result.ext.unpack(bref));
+        HANDLE_CODE(security_result.unpack(bref));
         break;
       }
       case 193: {
         redundant_dl_qos_flow_per_tnl_info_present = true;
-        redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.unpack(bref));
         break;
       }
       case 184: {
         add_redundant_dl_qos_flow_per_tnl_info_present = true;
-        add_redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_dl_qos_flow_per_tnl_info, bref, 1, 3, true));
         break;
       }
       case 27: {
         global_ran_node_id_present = true;
-        global_ran_node_id.id      = id;
-        HANDLE_CODE(global_ran_node_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(global_ran_node_id.ext.unpack(bref));
+        HANDLE_CODE(global_ran_node_id.unpack(bref));
         break;
       }
       default:
@@ -38489,23 +38640,32 @@ void pdu_session_res_modify_ind_transfer_ext_ies_container::to_json(json_writer&
 {
   j.start_obj();
   if (secondary_rat_usage_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 144);
+    j.write_str("criticality", "ignore");
     secondary_rat_usage_info.to_json(j);
   }
   if (security_result_present) {
-    j.write_fieldname("");
+    j.write_int("id", 156);
+    j.write_str("criticality", "ignore");
     security_result.to_json(j);
   }
   if (redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 193);
+    j.write_str("criticality", "ignore");
     redundant_dl_qos_flow_per_tnl_info.to_json(j);
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_dl_qos_flow_per_tnl_info.to_json(j);
+    j.write_int("id", 184);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_dl_qos_flow_per_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (global_ran_node_id_present) {
-    j.write_fieldname("");
+    j.write_int("id", 27);
+    j.write_str("criticality", "ignore");
     global_ran_node_id.to_json(j);
   }
   j.end_obj();
@@ -39182,10 +39342,6 @@ const char* integrity_protection_ind_opts::to_string() const
   return convert_enum_idx(names, 3, value, "integrity_protection_ind_e");
 }
 
-qos_flow_add_or_modify_request_item_ext_ies_container::qos_flow_add_or_modify_request_item_ext_ies_container() :
-  tsc_traffic_characteristics(196, crit_e::ignore), redundant_qos_flow_ind(194, crit_e::ignore)
-{
-}
 SRSASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -39194,9 +39350,15 @@ SRSASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::pack(bit_ref&
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (tsc_traffic_characteristics_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)196, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(tsc_traffic_characteristics.pack(bref));
   }
   if (redundant_qos_flow_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)194, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_qos_flow_ind.pack(bref));
   }
 
@@ -39210,21 +39372,20 @@ SRSASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::unpack(cbit_r
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 196: {
         tsc_traffic_characteristics_present = true;
-        tsc_traffic_characteristics.id      = id;
-        HANDLE_CODE(tsc_traffic_characteristics.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(tsc_traffic_characteristics.ext.unpack(bref));
+        HANDLE_CODE(tsc_traffic_characteristics.unpack(bref));
         break;
       }
       case 194: {
         redundant_qos_flow_ind_present = true;
-        redundant_qos_flow_ind.id      = id;
-        HANDLE_CODE(redundant_qos_flow_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_qos_flow_ind.ext.unpack(bref));
+        HANDLE_CODE(redundant_qos_flow_ind.unpack(bref));
         break;
       }
       default:
@@ -39239,12 +39400,14 @@ void qos_flow_add_or_modify_request_item_ext_ies_container::to_json(json_writer&
 {
   j.start_obj();
   if (tsc_traffic_characteristics_present) {
-    j.write_fieldname("");
+    j.write_int("id", 196);
+    j.write_str("criticality", "ignore");
     tsc_traffic_characteristics.to_json(j);
   }
   if (redundant_qos_flow_ind_present) {
-    j.write_fieldname("");
-    redundant_qos_flow_ind.to_json(j);
+    j.write_int("id", 194);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", redundant_qos_flow_ind.to_string());
   }
   j.end_obj();
 }
@@ -39363,10 +39526,6 @@ SRSASN_CODE security_ind_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-ul_ngu_up_tnl_modify_item_ext_ies_container::ul_ngu_up_tnl_modify_item_ext_ies_container() :
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore), redundant_dl_ngu_up_tnl_info(192, crit_e::ignore)
-{
-}
 SRSASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -39375,9 +39534,15 @@ SRSASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::pack(bit_ref& bref) con
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)192, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_ngu_up_tnl_info.pack(bref));
   }
 
@@ -39391,21 +39556,20 @@ SRSASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 192: {
         redundant_dl_ngu_up_tnl_info_present = true;
-        redundant_dl_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.unpack(bref));
         break;
       }
       default:
@@ -39420,11 +39584,13 @@ void ul_ngu_up_tnl_modify_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 192);
+    j.write_str("criticality", "ignore");
     redundant_dl_ngu_up_tnl_info.to_json(j);
   }
   j.end_obj();
@@ -40175,22 +40341,6 @@ SRSASN_CODE pdu_session_res_modify_request_transfer_ies_o::value_c::unpack(cbit_
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_modify_request_transfer_ies_container::pdu_session_res_modify_request_transfer_ies_container() :
-  pdu_session_aggr_max_bit_rate(130, crit_e::reject),
-  ul_ngu_up_tnl_modify_list(140, crit_e::reject),
-  network_instance(129, crit_e::reject),
-  qos_flow_add_or_modify_request_list(135, crit_e::reject),
-  qos_flow_to_release_list(137, crit_e::reject),
-  add_ul_ngu_up_tnl_info(126, crit_e::reject),
-  common_network_instance(166, crit_e::ignore),
-  add_redundant_ul_ngu_up_tnl_info(186, crit_e::ignore),
-  redundant_common_network_instance(190, crit_e::ignore),
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore),
-  security_ind(138, crit_e::ignore),
-  mbs_session_setupor_modify_request_list(319, crit_e::ignore),
-  mbs_session_to_release_list(317, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_modify_request_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -40210,43 +40360,82 @@ SRSASN_CODE pdu_session_res_modify_request_transfer_ies_container::pack(bit_ref&
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   if (pdu_session_aggr_max_bit_rate_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)130, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pdu_session_aggr_max_bit_rate.pack(bref));
   }
   if (ul_ngu_up_tnl_modify_list_present) {
-    HANDLE_CODE(ul_ngu_up_tnl_modify_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)140, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, ul_ngu_up_tnl_modify_list, 1, 4, true));
   }
   if (network_instance_present) {
-    HANDLE_CODE(network_instance.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)129, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, network_instance, (uint16_t)1u, (uint16_t)256u, true, true));
   }
   if (qos_flow_add_or_modify_request_list_present) {
-    HANDLE_CODE(qos_flow_add_or_modify_request_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)135, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_add_or_modify_request_list, 1, 64, true));
   }
   if (qos_flow_to_release_list_present) {
-    HANDLE_CODE(qos_flow_to_release_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)137, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_to_release_list, 1, 64, true));
   }
   if (add_ul_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_ul_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)126, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ul_ngu_up_tnl_info, 1, 3, true));
   }
   if (common_network_instance_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)166, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(common_network_instance.pack(bref));
   }
   if (add_redundant_ul_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)186, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_ul_ngu_up_tnl_info, 1, 3, true));
   }
   if (redundant_common_network_instance_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)190, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_common_network_instance.pack(bref));
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (security_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)138, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(security_ind.pack(bref));
   }
   if (mbs_session_setupor_modify_request_list_present) {
-    HANDLE_CODE(mbs_session_setupor_modify_request_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)319, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_setupor_modify_request_list, 1, 32, true));
   }
   if (mbs_session_to_release_list_present) {
-    HANDLE_CODE(mbs_session_to_release_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)317, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_to_release_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -40259,109 +40448,86 @@ SRSASN_CODE pdu_session_res_modify_request_transfer_ies_container::unpack(cbit_r
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 130: {
         pdu_session_aggr_max_bit_rate_present = true;
-        pdu_session_aggr_max_bit_rate.id      = id;
-        HANDLE_CODE(pdu_session_aggr_max_bit_rate.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pdu_session_aggr_max_bit_rate.value.unpack(bref));
+        HANDLE_CODE(pdu_session_aggr_max_bit_rate.unpack(bref));
         break;
       }
       case 140: {
         ul_ngu_up_tnl_modify_list_present = true;
-        ul_ngu_up_tnl_modify_list.id      = id;
-        HANDLE_CODE(ul_ngu_up_tnl_modify_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_ngu_up_tnl_modify_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(ul_ngu_up_tnl_modify_list, bref, 1, 4, true));
         break;
       }
       case 129: {
         network_instance_present = true;
-        network_instance.id      = id;
-        HANDLE_CODE(network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(network_instance.value.unpack(bref));
+        HANDLE_CODE(unpack_integer(network_instance, bref, (uint16_t)1u, (uint16_t)256u, true, true));
         break;
       }
       case 135: {
         qos_flow_add_or_modify_request_list_present = true;
-        qos_flow_add_or_modify_request_list.id      = id;
-        HANDLE_CODE(qos_flow_add_or_modify_request_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_add_or_modify_request_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_add_or_modify_request_list, bref, 1, 64, true));
         break;
       }
       case 137: {
         qos_flow_to_release_list_present = true;
-        qos_flow_to_release_list.id      = id;
-        HANDLE_CODE(qos_flow_to_release_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_to_release_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_to_release_list, bref, 1, 64, true));
         break;
       }
       case 126: {
         add_ul_ngu_up_tnl_info_present = true;
-        add_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ul_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 166: {
         common_network_instance_present = true;
-        common_network_instance.id      = id;
-        HANDLE_CODE(common_network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(common_network_instance.value.unpack(bref));
+        HANDLE_CODE(common_network_instance.unpack(bref));
         break;
       }
       case 186: {
         add_redundant_ul_ngu_up_tnl_info_present = true;
-        add_redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_ul_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 190: {
         redundant_common_network_instance_present = true;
-        redundant_common_network_instance.id      = id;
-        HANDLE_CODE(redundant_common_network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_common_network_instance.value.unpack(bref));
+        HANDLE_CODE(redundant_common_network_instance.unpack(bref));
         break;
       }
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 138: {
         security_ind_present = true;
-        security_ind.id      = id;
-        HANDLE_CODE(security_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(security_ind.value.unpack(bref));
+        HANDLE_CODE(security_ind.unpack(bref));
         break;
       }
       case 319: {
         mbs_session_setupor_modify_request_list_present = true;
-        mbs_session_setupor_modify_request_list.id      = id;
-        HANDLE_CODE(mbs_session_setupor_modify_request_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_setupor_modify_request_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_setupor_modify_request_list, bref, 1, 32, true));
         break;
       }
       case 317: {
         mbs_session_to_release_list_present = true;
-        mbs_session_to_release_list.id      = id;
-        HANDLE_CODE(mbs_session_to_release_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_to_release_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_to_release_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -40376,56 +40542,97 @@ void pdu_session_res_modify_request_transfer_ies_container::to_json(json_writer&
 {
   j.start_obj();
   if (pdu_session_aggr_max_bit_rate_present) {
-    j.write_fieldname("");
+    j.write_int("id", 130);
+    j.write_str("criticality", "reject");
     pdu_session_aggr_max_bit_rate.to_json(j);
   }
   if (ul_ngu_up_tnl_modify_list_present) {
-    j.write_fieldname("");
-    ul_ngu_up_tnl_modify_list.to_json(j);
+    j.write_int("id", 140);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : ul_ngu_up_tnl_modify_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (network_instance_present) {
-    j.write_fieldname("");
-    network_instance.to_json(j);
+    j.write_int("id", 129);
+    j.write_str("criticality", "reject");
+    j.write_int("Value", network_instance);
   }
   if (qos_flow_add_or_modify_request_list_present) {
-    j.write_fieldname("");
-    qos_flow_add_or_modify_request_list.to_json(j);
+    j.write_int("id", 135);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : qos_flow_add_or_modify_request_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (qos_flow_to_release_list_present) {
-    j.write_fieldname("");
-    qos_flow_to_release_list.to_json(j);
+    j.write_int("id", 137);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : qos_flow_to_release_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (add_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ul_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 126);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : add_ul_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (common_network_instance_present) {
-    j.write_fieldname("");
-    common_network_instance.to_json(j);
+    j.write_int("id", 166);
+    j.write_str("criticality", "ignore");
+    j.write_str("Value", common_network_instance.to_string());
   }
   if (add_redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_ul_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 186);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : add_redundant_ul_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_common_network_instance_present) {
-    j.write_fieldname("");
-    redundant_common_network_instance.to_json(j);
+    j.write_int("id", 190);
+    j.write_str("criticality", "ignore");
+    j.write_str("Value", redundant_common_network_instance.to_string());
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (security_ind_present) {
-    j.write_fieldname("");
+    j.write_int("id", 138);
+    j.write_str("criticality", "ignore");
     security_ind.to_json(j);
   }
   if (mbs_session_setupor_modify_request_list_present) {
-    j.write_fieldname("");
-    mbs_session_setupor_modify_request_list.to_json(j);
+    j.write_int("id", 319);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_session_setupor_modify_request_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (mbs_session_to_release_list_present) {
-    j.write_fieldname("");
-    mbs_session_to_release_list.to_json(j);
+    j.write_int("id", 317);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_session_to_release_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -41014,18 +41221,6 @@ SRSASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_o::ext_c::unpack(cbit_r
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_modify_resp_transfer_ext_ies_container::pdu_session_res_modify_resp_transfer_ext_ies_container() :
-  add_ngu_up_tnl_info(154, crit_e::ignore),
-  redundant_dl_ngu_up_tnl_info(192, crit_e::ignore),
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore),
-  add_redundant_dl_qos_flow_per_tnl_info(184, crit_e::ignore),
-  add_redundant_ngu_up_tnl_info(185, crit_e::ignore),
-  secondary_rat_usage_info(144, crit_e::ignore),
-  mbs_support_ind(309, crit_e::ignore),
-  mbs_session_setupor_modify_resp_list(313, crit_e::ignore),
-  mbs_session_failedto_setupor_modify_list(311, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -41041,31 +41236,58 @@ SRSASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::pack(bit_ref
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (add_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)154, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ngu_up_tnl_info, 1, 3, true));
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)192, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_ngu_up_tnl_info.pack(bref));
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)184, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_dl_qos_flow_per_tnl_info, 1, 3, true));
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_redundant_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)185, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_ngu_up_tnl_info, 1, 3, true));
   }
   if (secondary_rat_usage_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(secondary_rat_usage_info.pack(bref));
   }
   if (mbs_support_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)309, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_support_ind.pack(bref));
   }
   if (mbs_session_setupor_modify_resp_list_present) {
-    HANDLE_CODE(mbs_session_setupor_modify_resp_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)313, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_setupor_modify_resp_list, 1, 32, true));
   }
   if (mbs_session_failedto_setupor_modify_list_present) {
-    HANDLE_CODE(mbs_session_failedto_setupor_modify_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)311, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_failedto_setupor_modify_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -41078,77 +41300,62 @@ SRSASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::unpack(cbit_
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 154: {
         add_ngu_up_tnl_info_present = true;
-        add_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 192: {
         redundant_dl_ngu_up_tnl_info_present = true;
-        redundant_dl_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 184: {
         add_redundant_dl_qos_flow_per_tnl_info_present = true;
-        add_redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_dl_qos_flow_per_tnl_info, bref, 1, 3, true));
         break;
       }
       case 185: {
         add_redundant_ngu_up_tnl_info_present = true;
-        add_redundant_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 144: {
         secondary_rat_usage_info_present = true;
-        secondary_rat_usage_info.id      = id;
-        HANDLE_CODE(secondary_rat_usage_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(secondary_rat_usage_info.ext.unpack(bref));
+        HANDLE_CODE(secondary_rat_usage_info.unpack(bref));
         break;
       }
       case 309: {
         mbs_support_ind_present = true;
-        mbs_support_ind.id      = id;
-        HANDLE_CODE(mbs_support_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_support_ind.ext.unpack(bref));
+        HANDLE_CODE(mbs_support_ind.unpack(bref));
         break;
       }
       case 313: {
         mbs_session_setupor_modify_resp_list_present = true;
-        mbs_session_setupor_modify_resp_list.id      = id;
-        HANDLE_CODE(mbs_session_setupor_modify_resp_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_setupor_modify_resp_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_setupor_modify_resp_list, bref, 1, 32, true));
         break;
       }
       case 311: {
         mbs_session_failedto_setupor_modify_list_present = true;
-        mbs_session_failedto_setupor_modify_list.id      = id;
-        HANDLE_CODE(mbs_session_failedto_setupor_modify_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_failedto_setupor_modify_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_failedto_setupor_modify_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -41163,40 +41370,69 @@ void pdu_session_res_modify_resp_transfer_ext_ies_container::to_json(json_writer
 {
   j.start_obj();
   if (add_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 154);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 192);
+    j.write_str("criticality", "ignore");
     redundant_dl_ngu_up_tnl_info.to_json(j);
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_dl_qos_flow_per_tnl_info.to_json(j);
+    j.write_int("id", 184);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_dl_qos_flow_per_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 185);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (secondary_rat_usage_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 144);
+    j.write_str("criticality", "ignore");
     secondary_rat_usage_info.to_json(j);
   }
   if (mbs_support_ind_present) {
-    j.write_fieldname("");
-    mbs_support_ind.to_json(j);
+    j.write_int("id", 309);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (mbs_session_setupor_modify_resp_list_present) {
-    j.write_fieldname("");
-    mbs_session_setupor_modify_resp_list.to_json(j);
+    j.write_int("id", 313);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_session_setupor_modify_resp_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (mbs_session_failedto_setupor_modify_list_present) {
-    j.write_fieldname("");
-    mbs_session_failedto_setupor_modify_list.to_json(j);
+    j.write_int("id", 311);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_session_failedto_setupor_modify_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -41817,10 +42053,6 @@ SRSASN_CODE pdu_session_res_notify_transfer_ext_ies_o::ext_c::unpack(cbit_ref& b
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_notify_transfer_ext_ies_container::pdu_session_res_notify_transfer_ext_ies_container() :
-  secondary_rat_usage_info(144, crit_e::ignore), qos_flow_feedback_list(278, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_notify_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -41829,10 +42061,16 @@ SRSASN_CODE pdu_session_res_notify_transfer_ext_ies_container::pack(bit_ref& bre
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (secondary_rat_usage_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(secondary_rat_usage_info.pack(bref));
   }
   if (qos_flow_feedback_list_present) {
-    HANDLE_CODE(qos_flow_feedback_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)278, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_feedback_list, 1, 64, true));
   }
 
   return SRSASN_SUCCESS;
@@ -41845,21 +42083,20 @@ SRSASN_CODE pdu_session_res_notify_transfer_ext_ies_container::unpack(cbit_ref& 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 144: {
         secondary_rat_usage_info_present = true;
-        secondary_rat_usage_info.id      = id;
-        HANDLE_CODE(secondary_rat_usage_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(secondary_rat_usage_info.ext.unpack(bref));
+        HANDLE_CODE(secondary_rat_usage_info.unpack(bref));
         break;
       }
       case 278: {
         qos_flow_feedback_list_present = true;
-        qos_flow_feedback_list.id      = id;
-        HANDLE_CODE(qos_flow_feedback_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_feedback_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_feedback_list, bref, 1, 64, true));
         break;
       }
       default:
@@ -41874,12 +42111,18 @@ void pdu_session_res_notify_transfer_ext_ies_container::to_json(json_writer& j) 
 {
   j.start_obj();
   if (secondary_rat_usage_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 144);
+    j.write_str("criticality", "ignore");
     secondary_rat_usage_info.to_json(j);
   }
   if (qos_flow_feedback_list_present) {
-    j.write_fieldname("");
-    qos_flow_feedback_list.to_json(j);
+    j.write_int("id", 278);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : qos_flow_feedback_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -42266,10 +42509,6 @@ SRSASN_CODE qos_flow_setup_request_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-qos_flow_setup_request_item_ext_ies_container::qos_flow_setup_request_item_ext_ies_container() :
-  tsc_traffic_characteristics(196, crit_e::ignore), redundant_qos_flow_ind(194, crit_e::ignore)
-{
-}
 SRSASN_CODE qos_flow_setup_request_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -42278,9 +42517,15 @@ SRSASN_CODE qos_flow_setup_request_item_ext_ies_container::pack(bit_ref& bref) c
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (tsc_traffic_characteristics_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)196, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(tsc_traffic_characteristics.pack(bref));
   }
   if (redundant_qos_flow_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)194, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_qos_flow_ind.pack(bref));
   }
 
@@ -42294,21 +42539,20 @@ SRSASN_CODE qos_flow_setup_request_item_ext_ies_container::unpack(cbit_ref& bref
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 196: {
         tsc_traffic_characteristics_present = true;
-        tsc_traffic_characteristics.id      = id;
-        HANDLE_CODE(tsc_traffic_characteristics.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(tsc_traffic_characteristics.ext.unpack(bref));
+        HANDLE_CODE(tsc_traffic_characteristics.unpack(bref));
         break;
       }
       case 194: {
         redundant_qos_flow_ind_present = true;
-        redundant_qos_flow_ind.id      = id;
-        HANDLE_CODE(redundant_qos_flow_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_qos_flow_ind.ext.unpack(bref));
+        HANDLE_CODE(redundant_qos_flow_ind.unpack(bref));
         break;
       }
       default:
@@ -42323,12 +42567,14 @@ void qos_flow_setup_request_item_ext_ies_container::to_json(json_writer& j) cons
 {
   j.start_obj();
   if (tsc_traffic_characteristics_present) {
-    j.write_fieldname("");
+    j.write_int("id", 196);
+    j.write_str("criticality", "ignore");
     tsc_traffic_characteristics.to_json(j);
   }
   if (redundant_qos_flow_ind_present) {
-    j.write_fieldname("");
-    redundant_qos_flow_ind.to_json(j);
+    j.write_int("id", 194);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", redundant_qos_flow_ind.to_string());
   }
   j.end_obj();
 }
@@ -43105,24 +43351,6 @@ SRSASN_CODE pdu_session_res_setup_request_transfer_ies_o::value_c::unpack(cbit_r
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_setup_request_transfer_ies_container::pdu_session_res_setup_request_transfer_ies_container() :
-  pdu_session_aggr_max_bit_rate(130, crit_e::reject),
-  ul_ngu_up_tnl_info(139, crit_e::reject),
-  add_ul_ngu_up_tnl_info(126, crit_e::reject),
-  data_forwarding_not_possible(127, crit_e::reject),
-  pdu_session_type(134, crit_e::reject),
-  security_ind(138, crit_e::reject),
-  network_instance(129, crit_e::reject),
-  qos_flow_setup_request_list(136, crit_e::reject),
-  common_network_instance(166, crit_e::ignore),
-  direct_forwarding_path_availability(22, crit_e::ignore),
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore),
-  add_redundant_ul_ngu_up_tnl_info(186, crit_e::ignore),
-  redundant_common_network_instance(190, crit_e::ignore),
-  redundant_pdu_session_info(197, crit_e::ignore),
-  mbs_session_setup_request_list(318, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_setup_request_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
@@ -43141,43 +43369,94 @@ SRSASN_CODE pdu_session_res_setup_request_transfer_ies_container::pack(bit_ref& 
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
   if (pdu_session_aggr_max_bit_rate_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)130, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pdu_session_aggr_max_bit_rate.pack(bref));
   }
-  HANDLE_CODE(ul_ngu_up_tnl_info.pack(bref));
+  {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)139, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(ul_ngu_up_tnl_info.pack(bref));
+  }
   if (add_ul_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_ul_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)126, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ul_ngu_up_tnl_info, 1, 3, true));
   }
   if (data_forwarding_not_possible_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)127, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(data_forwarding_not_possible.pack(bref));
   }
-  HANDLE_CODE(pdu_session_type.pack(bref));
+  {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)134, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pdu_session_type.pack(bref));
+  }
   if (security_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)138, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(security_ind.pack(bref));
   }
   if (network_instance_present) {
-    HANDLE_CODE(network_instance.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)129, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, network_instance, (uint16_t)1u, (uint16_t)256u, true, true));
   }
-  HANDLE_CODE(qos_flow_setup_request_list.pack(bref));
+  {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)136, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_setup_request_list, 1, 64, true));
+  }
   if (common_network_instance_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)166, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(common_network_instance.pack(bref));
   }
   if (direct_forwarding_path_availability_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)22, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(direct_forwarding_path_availability.pack(bref));
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (add_redundant_ul_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)186, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_ul_ngu_up_tnl_info, 1, 3, true));
   }
   if (redundant_common_network_instance_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)190, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_common_network_instance.pack(bref));
   }
   if (redundant_pdu_session_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)197, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_pdu_session_info.pack(bref));
   }
   if (mbs_session_setup_request_list_present) {
-    HANDLE_CODE(mbs_session_setup_request_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)318, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_setup_request_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -43192,125 +43471,98 @@ SRSASN_CODE pdu_session_res_setup_request_transfer_ies_container::unpack(cbit_re
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 130: {
         pdu_session_aggr_max_bit_rate_present = true;
-        pdu_session_aggr_max_bit_rate.id      = id;
-        HANDLE_CODE(pdu_session_aggr_max_bit_rate.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pdu_session_aggr_max_bit_rate.value.unpack(bref));
+        HANDLE_CODE(pdu_session_aggr_max_bit_rate.unpack(bref));
         break;
       }
       case 139: {
         nof_mandatory_ies--;
-        ul_ngu_up_tnl_info.id = id;
-        HANDLE_CODE(ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 126: {
         add_ul_ngu_up_tnl_info_present = true;
-        add_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ul_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 127: {
         data_forwarding_not_possible_present = true;
-        data_forwarding_not_possible.id      = id;
-        HANDLE_CODE(data_forwarding_not_possible.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(data_forwarding_not_possible.value.unpack(bref));
+        HANDLE_CODE(data_forwarding_not_possible.unpack(bref));
         break;
       }
       case 134: {
         nof_mandatory_ies--;
-        pdu_session_type.id = id;
-        HANDLE_CODE(pdu_session_type.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(pdu_session_type.value.unpack(bref));
+        HANDLE_CODE(pdu_session_type.unpack(bref));
         break;
       }
       case 138: {
         security_ind_present = true;
-        security_ind.id      = id;
-        HANDLE_CODE(security_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(security_ind.value.unpack(bref));
+        HANDLE_CODE(security_ind.unpack(bref));
         break;
       }
       case 129: {
         network_instance_present = true;
-        network_instance.id      = id;
-        HANDLE_CODE(network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(network_instance.value.unpack(bref));
+        HANDLE_CODE(unpack_integer(network_instance, bref, (uint16_t)1u, (uint16_t)256u, true, true));
         break;
       }
       case 136: {
         nof_mandatory_ies--;
-        qos_flow_setup_request_list.id = id;
-        HANDLE_CODE(qos_flow_setup_request_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_setup_request_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_setup_request_list, bref, 1, 64, true));
         break;
       }
       case 166: {
         common_network_instance_present = true;
-        common_network_instance.id      = id;
-        HANDLE_CODE(common_network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(common_network_instance.value.unpack(bref));
+        HANDLE_CODE(common_network_instance.unpack(bref));
         break;
       }
       case 22: {
         direct_forwarding_path_availability_present = true;
-        direct_forwarding_path_availability.id      = id;
-        HANDLE_CODE(direct_forwarding_path_availability.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(direct_forwarding_path_availability.value.unpack(bref));
+        HANDLE_CODE(direct_forwarding_path_availability.unpack(bref));
         break;
       }
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 186: {
         add_redundant_ul_ngu_up_tnl_info_present = true;
-        add_redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_ul_ngu_up_tnl_info.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_ul_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 190: {
         redundant_common_network_instance_present = true;
-        redundant_common_network_instance.id      = id;
-        HANDLE_CODE(redundant_common_network_instance.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_common_network_instance.value.unpack(bref));
+        HANDLE_CODE(redundant_common_network_instance.unpack(bref));
         break;
       }
       case 197: {
         redundant_pdu_session_info_present = true;
-        redundant_pdu_session_info.id      = id;
-        HANDLE_CODE(redundant_pdu_session_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_pdu_session_info.value.unpack(bref));
+        HANDLE_CODE(redundant_pdu_session_info.unpack(bref));
         break;
       }
       case 318: {
         mbs_session_setup_request_list_present = true;
-        mbs_session_setup_request_list.id      = id;
-        HANDLE_CODE(mbs_session_setup_request_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_setup_request_list.value.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_setup_request_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -43329,58 +43581,89 @@ void pdu_session_res_setup_request_transfer_ies_container::to_json(json_writer& 
 {
   j.start_obj();
   if (pdu_session_aggr_max_bit_rate_present) {
-    j.write_fieldname("");
+    j.write_int("id", 130);
+    j.write_str("criticality", "reject");
     pdu_session_aggr_max_bit_rate.to_json(j);
   }
-  j.write_fieldname("");
+  j.write_int("id", 139);
+  j.write_str("criticality", "reject");
   ul_ngu_up_tnl_info.to_json(j);
   if (add_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ul_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 126);
+    j.write_str("criticality", "reject");
+    j.start_array("Value");
+    for (const auto& e1 : add_ul_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (data_forwarding_not_possible_present) {
-    j.write_fieldname("");
-    data_forwarding_not_possible.to_json(j);
+    j.write_int("id", 127);
+    j.write_str("criticality", "reject");
+    j.write_str("Value", "data-forwarding-not-possible");
   }
-  j.write_fieldname("");
-  pdu_session_type.to_json(j);
+  j.write_int("id", 134);
+  j.write_str("criticality", "reject");
+  j.write_str("Value", pdu_session_type.to_string());
   if (security_ind_present) {
-    j.write_fieldname("");
+    j.write_int("id", 138);
+    j.write_str("criticality", "reject");
     security_ind.to_json(j);
   }
   if (network_instance_present) {
-    j.write_fieldname("");
-    network_instance.to_json(j);
+    j.write_int("id", 129);
+    j.write_str("criticality", "reject");
+    j.write_int("Value", network_instance);
   }
-  j.write_fieldname("");
-  qos_flow_setup_request_list.to_json(j);
+  j.write_int("id", 136);
+  j.write_str("criticality", "reject");
+  j.start_array("Value");
+  for (const auto& e1 : qos_flow_setup_request_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
   if (common_network_instance_present) {
-    j.write_fieldname("");
-    common_network_instance.to_json(j);
+    j.write_int("id", 166);
+    j.write_str("criticality", "ignore");
+    j.write_str("Value", common_network_instance.to_string());
   }
   if (direct_forwarding_path_availability_present) {
-    j.write_fieldname("");
-    direct_forwarding_path_availability.to_json(j);
+    j.write_int("id", 22);
+    j.write_str("criticality", "ignore");
+    j.write_str("Value", "direct-path-available");
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (add_redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_ul_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 186);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : add_redundant_ul_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_common_network_instance_present) {
-    j.write_fieldname("");
-    redundant_common_network_instance.to_json(j);
+    j.write_int("id", 190);
+    j.write_str("criticality", "ignore");
+    j.write_str("Value", redundant_common_network_instance.to_string());
   }
   if (redundant_pdu_session_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 197);
+    j.write_str("criticality", "ignore");
     redundant_pdu_session_info.to_json(j);
   }
   if (mbs_session_setup_request_list_present) {
-    j.write_fieldname("");
-    mbs_session_setup_request_list.to_json(j);
+    j.write_int("id", 318);
+    j.write_str("criticality", "ignore");
+    j.start_array("Value");
+    for (const auto& e1 : mbs_session_setup_request_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -43787,16 +44070,6 @@ SRSASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_o::ext_c::unpack(cbit_re
   return SRSASN_SUCCESS;
 }
 
-pdu_session_res_setup_resp_transfer_ext_ies_container::pdu_session_res_setup_resp_transfer_ext_ies_container() :
-  redundant_dl_qos_flow_per_tnl_info(193, crit_e::ignore),
-  add_redundant_dl_qos_flow_per_tnl_info(184, crit_e::ignore),
-  used_r_sn_info(198, crit_e::ignore),
-  global_ran_node_id(27, crit_e::ignore),
-  mbs_support_ind(309, crit_e::ignore),
-  mbs_session_setup_resp_list(312, crit_e::ignore),
-  mbs_session_failedto_setup_list(310, crit_e::ignore)
-{
-}
 SRSASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -43810,25 +44083,46 @@ SRSASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::pack(bit_ref&
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (redundant_dl_qos_flow_per_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)193, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.pack(bref));
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)184, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_dl_qos_flow_per_tnl_info, 1, 3, true));
   }
   if (used_r_sn_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)198, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(used_r_sn_info.pack(bref));
   }
   if (global_ran_node_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)27, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(global_ran_node_id.pack(bref));
   }
   if (mbs_support_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)309, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_support_ind.pack(bref));
   }
   if (mbs_session_setup_resp_list_present) {
-    HANDLE_CODE(mbs_session_setup_resp_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)312, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_setup_resp_list, 1, 32, true));
   }
   if (mbs_session_failedto_setup_list_present) {
-    HANDLE_CODE(mbs_session_failedto_setup_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)310, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_session_failedto_setup_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -43841,61 +44135,50 @@ SRSASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::unpack(cbit_r
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 193: {
         redundant_dl_qos_flow_per_tnl_info_present = true;
-        redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_qos_flow_per_tnl_info.unpack(bref));
         break;
       }
       case 184: {
         add_redundant_dl_qos_flow_per_tnl_info_present = true;
-        add_redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_dl_qos_flow_per_tnl_info, bref, 1, 3, true));
         break;
       }
       case 198: {
         used_r_sn_info_present = true;
-        used_r_sn_info.id      = id;
-        HANDLE_CODE(used_r_sn_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(used_r_sn_info.ext.unpack(bref));
+        HANDLE_CODE(used_r_sn_info.unpack(bref));
         break;
       }
       case 27: {
         global_ran_node_id_present = true;
-        global_ran_node_id.id      = id;
-        HANDLE_CODE(global_ran_node_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(global_ran_node_id.ext.unpack(bref));
+        HANDLE_CODE(global_ran_node_id.unpack(bref));
         break;
       }
       case 309: {
         mbs_support_ind_present = true;
-        mbs_support_ind.id      = id;
-        HANDLE_CODE(mbs_support_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_support_ind.ext.unpack(bref));
+        HANDLE_CODE(mbs_support_ind.unpack(bref));
         break;
       }
       case 312: {
         mbs_session_setup_resp_list_present = true;
-        mbs_session_setup_resp_list.id      = id;
-        HANDLE_CODE(mbs_session_setup_resp_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_setup_resp_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_setup_resp_list, bref, 1, 32, true));
         break;
       }
       case 310: {
         mbs_session_failedto_setup_list_present = true;
-        mbs_session_failedto_setup_list.id      = id;
-        HANDLE_CODE(mbs_session_failedto_setup_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_session_failedto_setup_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_session_failedto_setup_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -43910,32 +44193,51 @@ void pdu_session_res_setup_resp_transfer_ext_ies_container::to_json(json_writer&
 {
   j.start_obj();
   if (redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 193);
+    j.write_str("criticality", "ignore");
     redundant_dl_qos_flow_per_tnl_info.to_json(j);
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_dl_qos_flow_per_tnl_info.to_json(j);
+    j.write_int("id", 184);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_dl_qos_flow_per_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (used_r_sn_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 198);
+    j.write_str("criticality", "ignore");
     used_r_sn_info.to_json(j);
   }
   if (global_ran_node_id_present) {
-    j.write_fieldname("");
+    j.write_int("id", 27);
+    j.write_str("criticality", "ignore");
     global_ran_node_id.to_json(j);
   }
   if (mbs_support_ind_present) {
-    j.write_fieldname("");
-    mbs_support_ind.to_json(j);
+    j.write_int("id", 309);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (mbs_session_setup_resp_list_present) {
-    j.write_fieldname("");
-    mbs_session_setup_resp_list.to_json(j);
+    j.write_int("id", 312);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_session_setup_resp_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (mbs_session_failedto_setup_list_present) {
-    j.write_fieldname("");
-    mbs_session_failedto_setup_list.to_json(j);
+    j.write_int("id", 310);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_session_failedto_setup_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -44293,12 +44595,6 @@ SRSASN_CODE qos_flow_params_item_ext_ies_o::ext_c::unpack(cbit_ref& bref)
   return SRSASN_SUCCESS;
 }
 
-qos_flow_params_item_ext_ies_container::qos_flow_params_item_ext_ies_container() :
-  cn_packet_delay_budget_dl(187, crit_e::ignore),
-  cn_packet_delay_budget_ul(188, crit_e::ignore),
-  burst_arrival_time_dl(279, crit_e::ignore)
-{
-}
 SRSASN_CODE qos_flow_params_item_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -44308,12 +44604,21 @@ SRSASN_CODE qos_flow_params_item_ext_ies_container::pack(bit_ref& bref) const
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (cn_packet_delay_budget_dl_present) {
-    HANDLE_CODE(cn_packet_delay_budget_dl.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)187, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_dl, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
   if (cn_packet_delay_budget_ul_present) {
-    HANDLE_CODE(cn_packet_delay_budget_ul.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)188, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, cn_packet_delay_budget_ul, (uint32_t)1u, (uint32_t)65535u, true, true));
   }
   if (burst_arrival_time_dl_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)279, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(burst_arrival_time_dl.pack(bref));
   }
 
@@ -44327,29 +44632,26 @@ SRSASN_CODE qos_flow_params_item_ext_ies_container::unpack(cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 187: {
         cn_packet_delay_budget_dl_present = true;
-        cn_packet_delay_budget_dl.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_dl.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_dl.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_dl, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       case 188: {
         cn_packet_delay_budget_ul_present = true;
-        cn_packet_delay_budget_ul.id      = id;
-        HANDLE_CODE(cn_packet_delay_budget_ul.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(cn_packet_delay_budget_ul.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(cn_packet_delay_budget_ul, bref, (uint32_t)1u, (uint32_t)65535u, true, true));
         break;
       }
       case 279: {
         burst_arrival_time_dl_present = true;
-        burst_arrival_time_dl.id      = id;
-        HANDLE_CODE(burst_arrival_time_dl.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(burst_arrival_time_dl.ext.unpack(bref));
+        HANDLE_CODE(burst_arrival_time_dl.unpack(bref));
         break;
       }
       default:
@@ -44364,16 +44666,19 @@ void qos_flow_params_item_ext_ies_container::to_json(json_writer& j) const
 {
   j.start_obj();
   if (cn_packet_delay_budget_dl_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_dl.to_json(j);
+    j.write_int("id", 187);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_dl);
   }
   if (cn_packet_delay_budget_ul_present) {
-    j.write_fieldname("");
-    cn_packet_delay_budget_ul.to_json(j);
+    j.write_int("id", 188);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", cn_packet_delay_budget_ul);
   }
   if (burst_arrival_time_dl_present) {
-    j.write_fieldname("");
-    burst_arrival_time_dl.to_json(j);
+    j.write_int("id", 279);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", burst_arrival_time_dl.to_string());
   }
   j.end_obj();
 }
@@ -44715,13 +45020,6 @@ SRSASN_CODE path_switch_request_ack_transfer_ext_ies_o::ext_c::unpack(cbit_ref& 
   return SRSASN_SUCCESS;
 }
 
-path_switch_request_ack_transfer_ext_ies_container::path_switch_request_ack_transfer_ext_ies_container() :
-  add_ngu_up_tnl_info(154, crit_e::ignore),
-  redundant_ul_ngu_up_tnl_info(195, crit_e::ignore),
-  add_redundant_ngu_up_tnl_info(185, crit_e::ignore),
-  qos_flow_params_list(277, crit_e::ignore)
-{
-}
 SRSASN_CODE path_switch_request_ack_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -44732,16 +45030,28 @@ SRSASN_CODE path_switch_request_ack_transfer_ext_ies_container::pack(bit_ref& br
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (add_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)154, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_ngu_up_tnl_info, 1, 3, true));
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_ul_ngu_up_tnl_info.pack(bref));
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    HANDLE_CODE(add_redundant_ngu_up_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)185, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_ngu_up_tnl_info, 1, 3, true));
   }
   if (qos_flow_params_list_present) {
-    HANDLE_CODE(qos_flow_params_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)277, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, qos_flow_params_list, 1, 64, true));
   }
 
   return SRSASN_SUCCESS;
@@ -44754,37 +45064,32 @@ SRSASN_CODE path_switch_request_ack_transfer_ext_ies_container::unpack(cbit_ref&
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 154: {
         add_ngu_up_tnl_info_present = true;
-        add_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 195: {
         redundant_ul_ngu_up_tnl_info_present = true;
-        redundant_ul_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_ul_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 185: {
         add_redundant_ngu_up_tnl_info_present = true;
-        add_redundant_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_ngu_up_tnl_info, bref, 1, 3, true));
         break;
       }
       case 277: {
         qos_flow_params_list_present = true;
-        qos_flow_params_list.id      = id;
-        HANDLE_CODE(qos_flow_params_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(qos_flow_params_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(qos_flow_params_list, bref, 1, 64, true));
         break;
       }
       default:
@@ -44799,20 +45104,36 @@ void path_switch_request_ack_transfer_ext_ies_container::to_json(json_writer& j)
 {
   j.start_obj();
   if (add_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 154);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_ul_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 195);
+    j.write_str("criticality", "ignore");
     redundant_ul_ngu_up_tnl_info.to_json(j);
   }
   if (add_redundant_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_ngu_up_tnl_info.to_json(j);
+    j.write_int("id", 185);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_ngu_up_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (qos_flow_params_list_present) {
-    j.write_fieldname("");
-    qos_flow_params_list.to_json(j);
+    j.write_int("id", 277);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : qos_flow_params_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -45437,16 +45758,6 @@ void user_plane_security_info_s::to_json(json_writer& j) const
   j.end_obj();
 }
 
-path_switch_request_transfer_ext_ies_container::path_switch_request_transfer_ext_ies_container() :
-  add_dl_qos_flow_per_tnl_info(155, crit_e::ignore),
-  redundant_dl_ngu_up_tnl_info(192, crit_e::ignore),
-  redundant_dl_ngu_tnl_info_reused(191, crit_e::ignore),
-  add_redundant_dl_qos_flow_per_tnl_info(184, crit_e::ignore),
-  used_r_sn_info(198, crit_e::ignore),
-  global_ran_node_id(27, crit_e::ignore),
-  mbs_support_ind(309, crit_e::ignore)
-{
-}
 SRSASN_CODE path_switch_request_transfer_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -45460,24 +45771,45 @@ SRSASN_CODE path_switch_request_transfer_ext_ies_container::pack(bit_ref& bref) 
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (add_dl_qos_flow_per_tnl_info_present) {
-    HANDLE_CODE(add_dl_qos_flow_per_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_dl_qos_flow_per_tnl_info, 1, 3, true));
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)192, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_ngu_up_tnl_info.pack(bref));
   }
   if (redundant_dl_ngu_tnl_info_reused_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)191, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(redundant_dl_ngu_tnl_info_reused.pack(bref));
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)184, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_redundant_dl_qos_flow_per_tnl_info, 1, 3, true));
   }
   if (used_r_sn_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)198, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(used_r_sn_info.pack(bref));
   }
   if (global_ran_node_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)27, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(global_ran_node_id.pack(bref));
   }
   if (mbs_support_ind_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)309, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(mbs_support_ind.pack(bref));
   }
 
@@ -45491,61 +45823,50 @@ SRSASN_CODE path_switch_request_transfer_ext_ies_container::unpack(cbit_ref& bre
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 155: {
         add_dl_qos_flow_per_tnl_info_present = true;
-        add_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(add_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_dl_qos_flow_per_tnl_info, bref, 1, 3, true));
         break;
       }
       case 192: {
         redundant_dl_ngu_up_tnl_info_present = true;
-        redundant_dl_ngu_up_tnl_info.id      = id;
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_ngu_up_tnl_info.unpack(bref));
         break;
       }
       case 191: {
         redundant_dl_ngu_tnl_info_reused_present = true;
-        redundant_dl_ngu_tnl_info_reused.id      = id;
-        HANDLE_CODE(redundant_dl_ngu_tnl_info_reused.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(redundant_dl_ngu_tnl_info_reused.ext.unpack(bref));
+        HANDLE_CODE(redundant_dl_ngu_tnl_info_reused.unpack(bref));
         break;
       }
       case 184: {
         add_redundant_dl_qos_flow_per_tnl_info_present = true;
-        add_redundant_dl_qos_flow_per_tnl_info.id      = id;
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(add_redundant_dl_qos_flow_per_tnl_info.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(add_redundant_dl_qos_flow_per_tnl_info, bref, 1, 3, true));
         break;
       }
       case 198: {
         used_r_sn_info_present = true;
-        used_r_sn_info.id      = id;
-        HANDLE_CODE(used_r_sn_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(used_r_sn_info.ext.unpack(bref));
+        HANDLE_CODE(used_r_sn_info.unpack(bref));
         break;
       }
       case 27: {
         global_ran_node_id_present = true;
-        global_ran_node_id.id      = id;
-        HANDLE_CODE(global_ran_node_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(global_ran_node_id.ext.unpack(bref));
+        HANDLE_CODE(global_ran_node_id.unpack(bref));
         break;
       }
       case 309: {
         mbs_support_ind_present = true;
-        mbs_support_ind.id      = id;
-        HANDLE_CODE(mbs_support_ind.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_support_ind.ext.unpack(bref));
+        HANDLE_CODE(mbs_support_ind.unpack(bref));
         break;
       }
       default:
@@ -45560,32 +45881,47 @@ void path_switch_request_transfer_ext_ies_container::to_json(json_writer& j) con
 {
   j.start_obj();
   if (add_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
-    add_dl_qos_flow_per_tnl_info.to_json(j);
+    j.write_int("id", 155);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_dl_qos_flow_per_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (redundant_dl_ngu_up_tnl_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 192);
+    j.write_str("criticality", "ignore");
     redundant_dl_ngu_up_tnl_info.to_json(j);
   }
   if (redundant_dl_ngu_tnl_info_reused_present) {
-    j.write_fieldname("");
-    redundant_dl_ngu_tnl_info_reused.to_json(j);
+    j.write_int("id", 191);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   if (add_redundant_dl_qos_flow_per_tnl_info_present) {
-    j.write_fieldname("");
-    add_redundant_dl_qos_flow_per_tnl_info.to_json(j);
+    j.write_int("id", 184);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : add_redundant_dl_qos_flow_per_tnl_info) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (used_r_sn_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 198);
+    j.write_str("criticality", "ignore");
     used_r_sn_info.to_json(j);
   }
   if (global_ran_node_id_present) {
-    j.write_fieldname("");
+    j.write_int("id", 27);
+    j.write_str("criticality", "ignore");
     global_ran_node_id.to_json(j);
   }
   if (mbs_support_ind_present) {
-    j.write_fieldname("");
-    mbs_support_ind.to_json(j);
+    j.write_int("id", 309);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "true");
   }
   j.end_obj();
 }
@@ -46409,17 +46745,6 @@ SRSASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_ies
   return SRSASN_SUCCESS;
 }
 
-source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::
-    source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container() :
-  s_gnb_ue_x2ap_id(182, crit_e::ignore),
-  ue_history_info_from_the_ue(253, crit_e::ignore),
-  source_node_id(286, crit_e::ignore),
-  ue_context_ref_at_source(288, crit_e::ignore),
-  mbs_active_session_info_sourceto_target_list(323, crit_e::ignore),
-  q_mcc_onfig_info(328, crit_e::ignore),
-  ngap_ie_support_info_request_list(355, crit_e::ignore)
-{
-}
 SRSASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -46433,25 +46758,46 @@ SRSASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_ies
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (s_gnb_ue_x2ap_id_present) {
-    HANDLE_CODE(s_gnb_ue_x2ap_id.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)182, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, s_gnb_ue_x2ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
   }
   if (ue_history_info_from_the_ue_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)253, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(ue_history_info_from_the_ue.pack(bref));
   }
   if (source_node_id_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)286, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(source_node_id.pack(bref));
   }
   if (ue_context_ref_at_source_present) {
-    HANDLE_CODE(ue_context_ref_at_source.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)288, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_integer(bref, ue_context_ref_at_source, (uint64_t)0u, (uint64_t)4294967295u, false, true));
   }
   if (mbs_active_session_info_sourceto_target_list_present) {
-    HANDLE_CODE(mbs_active_session_info_sourceto_target_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)323, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_active_session_info_sourceto_target_list, 1, 256, true));
   }
   if (q_mcc_onfig_info_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)328, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(q_mcc_onfig_info.pack(bref));
   }
   if (ngap_ie_support_info_request_list_present) {
-    HANDLE_CODE(ngap_ie_support_info_request_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)355, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, ngap_ie_support_info_request_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -46464,61 +46810,50 @@ SRSASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_ies
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 182: {
         s_gnb_ue_x2ap_id_present = true;
-        s_gnb_ue_x2ap_id.id      = id;
-        HANDLE_CODE(s_gnb_ue_x2ap_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(s_gnb_ue_x2ap_id.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(s_gnb_ue_x2ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
         break;
       }
       case 253: {
         ue_history_info_from_the_ue_present = true;
-        ue_history_info_from_the_ue.id      = id;
-        HANDLE_CODE(ue_history_info_from_the_ue.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ue_history_info_from_the_ue.ext.unpack(bref));
+        HANDLE_CODE(ue_history_info_from_the_ue.unpack(bref));
         break;
       }
       case 286: {
         source_node_id_present = true;
-        source_node_id.id      = id;
-        HANDLE_CODE(source_node_id.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(source_node_id.ext.unpack(bref));
+        HANDLE_CODE(source_node_id.unpack(bref));
         break;
       }
       case 288: {
         ue_context_ref_at_source_present = true;
-        ue_context_ref_at_source.id      = id;
-        HANDLE_CODE(ue_context_ref_at_source.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ue_context_ref_at_source.ext.unpack(bref));
+        HANDLE_CODE(unpack_integer(ue_context_ref_at_source, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
         break;
       }
       case 323: {
         mbs_active_session_info_sourceto_target_list_present = true;
-        mbs_active_session_info_sourceto_target_list.id      = id;
-        HANDLE_CODE(mbs_active_session_info_sourceto_target_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_active_session_info_sourceto_target_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_active_session_info_sourceto_target_list, bref, 1, 256, true));
         break;
       }
       case 328: {
         q_mcc_onfig_info_present = true;
-        q_mcc_onfig_info.id      = id;
-        HANDLE_CODE(q_mcc_onfig_info.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(q_mcc_onfig_info.ext.unpack(bref));
+        HANDLE_CODE(q_mcc_onfig_info.unpack(bref));
         break;
       }
       case 355: {
         ngap_ie_support_info_request_list_present = true;
-        ngap_ie_support_info_request_list.id      = id;
-        HANDLE_CODE(ngap_ie_support_info_request_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ngap_ie_support_info_request_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(ngap_ie_support_info_request_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -46533,32 +46868,47 @@ void source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_contai
 {
   j.start_obj();
   if (s_gnb_ue_x2ap_id_present) {
-    j.write_fieldname("");
-    s_gnb_ue_x2ap_id.to_json(j);
+    j.write_int("id", 182);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", s_gnb_ue_x2ap_id);
   }
   if (ue_history_info_from_the_ue_present) {
-    j.write_fieldname("");
+    j.write_int("id", 253);
+    j.write_str("criticality", "ignore");
     ue_history_info_from_the_ue.to_json(j);
   }
   if (source_node_id_present) {
-    j.write_fieldname("");
+    j.write_int("id", 286);
+    j.write_str("criticality", "ignore");
     source_node_id.to_json(j);
   }
   if (ue_context_ref_at_source_present) {
-    j.write_fieldname("");
-    ue_context_ref_at_source.to_json(j);
+    j.write_int("id", 288);
+    j.write_str("criticality", "ignore");
+    j.write_int("Extension", ue_context_ref_at_source);
   }
   if (mbs_active_session_info_sourceto_target_list_present) {
-    j.write_fieldname("");
-    mbs_active_session_info_sourceto_target_list.to_json(j);
+    j.write_int("id", 323);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_active_session_info_sourceto_target_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (q_mcc_onfig_info_present) {
-    j.write_fieldname("");
+    j.write_int("id", 328);
+    j.write_str("criticality", "ignore");
     q_mcc_onfig_info.to_json(j);
   }
   if (ngap_ie_support_info_request_list_present) {
-    j.write_fieldname("");
-    ngap_ie_support_info_request_list.to_json(j);
+    j.write_int("id", 355);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : ngap_ie_support_info_request_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }
@@ -47049,14 +47399,6 @@ SRSASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_ies
   return SRSASN_SUCCESS;
 }
 
-target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::
-    target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container() :
-  daps_resp_info_list(267, crit_e::ignore),
-  direct_forwarding_path_availability(22, crit_e::ignore),
-  mbs_active_session_info_targetto_source_list(324, crit_e::ignore),
-  ngap_ie_support_info_resp_list(356, crit_e::ignore)
-{
-}
 SRSASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
@@ -47067,16 +47409,28 @@ SRSASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_ies
   pack_length(bref, nof_ies, 1u, 65535u, true);
 
   if (daps_resp_info_list_present) {
-    HANDLE_CODE(daps_resp_info_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)267, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, daps_resp_info_list, 1, 32, true));
   }
   if (direct_forwarding_path_availability_present) {
+    HANDLE_CODE(pack_integer(bref, (uint32_t)22, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(direct_forwarding_path_availability.pack(bref));
   }
   if (mbs_active_session_info_targetto_source_list_present) {
-    HANDLE_CODE(mbs_active_session_info_targetto_source_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)324, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, mbs_active_session_info_targetto_source_list, 1, 256, true));
   }
   if (ngap_ie_support_info_resp_list_present) {
-    HANDLE_CODE(ngap_ie_support_info_resp_list.pack(bref));
+    HANDLE_CODE(pack_integer(bref, (uint32_t)356, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
+    varlength_field_pack_guard varlen_scope(bref, true);
+    HANDLE_CODE(pack_dyn_seq_of(bref, ngap_ie_support_info_resp_list, 1, 32, true));
   }
 
   return SRSASN_SUCCESS;
@@ -47089,37 +47443,32 @@ SRSASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_ies
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    crit_e crit;
+    HANDLE_CODE(crit.unpack(bref));
+
     switch (id) {
       case 267: {
         daps_resp_info_list_present = true;
-        daps_resp_info_list.id      = id;
-        HANDLE_CODE(daps_resp_info_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(daps_resp_info_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(daps_resp_info_list, bref, 1, 32, true));
         break;
       }
       case 22: {
         direct_forwarding_path_availability_present = true;
-        direct_forwarding_path_availability.id      = id;
-        HANDLE_CODE(direct_forwarding_path_availability.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(direct_forwarding_path_availability.ext.unpack(bref));
+        HANDLE_CODE(direct_forwarding_path_availability.unpack(bref));
         break;
       }
       case 324: {
         mbs_active_session_info_targetto_source_list_present = true;
-        mbs_active_session_info_targetto_source_list.id      = id;
-        HANDLE_CODE(mbs_active_session_info_targetto_source_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(mbs_active_session_info_targetto_source_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(mbs_active_session_info_targetto_source_list, bref, 1, 256, true));
         break;
       }
       case 356: {
         ngap_ie_support_info_resp_list_present = true;
-        ngap_ie_support_info_resp_list.id      = id;
-        HANDLE_CODE(ngap_ie_support_info_resp_list.crit.unpack(bref));
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(ngap_ie_support_info_resp_list.ext.unpack(bref));
+        HANDLE_CODE(unpack_dyn_seq_of(ngap_ie_support_info_resp_list, bref, 1, 32, true));
         break;
       }
       default:
@@ -47134,20 +47483,36 @@ void target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_contai
 {
   j.start_obj();
   if (daps_resp_info_list_present) {
-    j.write_fieldname("");
-    daps_resp_info_list.to_json(j);
+    j.write_int("id", 267);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : daps_resp_info_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (direct_forwarding_path_availability_present) {
-    j.write_fieldname("");
-    direct_forwarding_path_availability.to_json(j);
+    j.write_int("id", 22);
+    j.write_str("criticality", "ignore");
+    j.write_str("Extension", "direct-path-available");
   }
   if (mbs_active_session_info_targetto_source_list_present) {
-    j.write_fieldname("");
-    mbs_active_session_info_targetto_source_list.to_json(j);
+    j.write_int("id", 324);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : mbs_active_session_info_targetto_source_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   if (ngap_ie_support_info_resp_list_present) {
-    j.write_fieldname("");
-    ngap_ie_support_info_resp_list.to_json(j);
+    j.write_int("id", 356);
+    j.write_str("criticality", "ignore");
+    j.start_array("Extension");
+    for (const auto& e1 : ngap_ie_support_info_resp_list) {
+      e1.to_json(j);
+    }
+    j.end_array();
   }
   j.end_obj();
 }

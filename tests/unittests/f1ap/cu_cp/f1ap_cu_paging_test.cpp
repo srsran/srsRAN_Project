@@ -34,17 +34,17 @@ protected:
     auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
 
     // check ue id idx value
-    if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (279089024671 % 1024)) {
+    if (paging_msg->ue_id_idx_value.idx_len10().to_number() != (279089024671 % 1024)) {
       test_logger.error("UE ID idx value mismatch {} != {}",
-                        paging_msg->ue_id_idx_value.value.idx_len10().to_number(),
+                        paging_msg->ue_id_idx_value.idx_len10().to_number(),
                         (279089024671 % 1024));
       return false;
     }
 
     // check paging id
-    if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
+    if (paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
       test_logger.error("Paging ID mismatch {} != {}",
-                        paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number(),
+                        paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number(),
                         279089024671);
       return false;
     }
@@ -53,8 +53,8 @@ protected:
     if (!paging_msg->paging_drx_present) {
       return false;
     }
-    if (paging_msg->paging_drx.value.to_number() != 64) {
-      test_logger.error("Paging DRX mismatch {} != {}", paging_msg->paging_drx.value.to_number(), 64);
+    if (paging_msg->paging_drx.to_number() != 64) {
+      test_logger.error("Paging DRX mismatch {} != {}", paging_msg->paging_drx.to_number(), 64);
       return false;
     }
 
@@ -62,16 +62,16 @@ protected:
     if (!paging_msg->paging_prio_present) {
       return false;
     }
-    if (paging_msg->paging_prio.value.to_number() != 5) {
-      test_logger.error("Paging prio mismatch {} != {}", paging_msg->paging_prio.value.to_number(), 5);
+    if (paging_msg->paging_prio.to_number() != 5) {
+      test_logger.error("Paging prio mismatch {} != {}", paging_msg->paging_prio.to_number(), 5);
       return false;
     }
 
     // check paging cell list
-    if (paging_msg->paging_cell_list.value.size() != 1) {
+    if (paging_msg->paging_cell_list.size() != 1) {
       return false;
     }
-    auto& paging_cell_item = paging_msg->paging_cell_list.value[0].value().paging_cell_item();
+    auto& paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
     if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != 12345678) {
       test_logger.error("NR CGI NCI mismatch {} != {}}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), 12345678);
       return false;
@@ -85,8 +85,8 @@ protected:
     if (!paging_msg->paging_origin_present) {
       return false;
     }
-    if ((std::string)paging_msg->paging_origin.value.to_string() != "non-3gpp") {
-      test_logger.error("Paging origin mismatch {} != non-3gpp", paging_msg->paging_origin.value.to_string());
+    if ((std::string)paging_msg->paging_origin.to_string() != "non-3gpp") {
+      test_logger.error("Paging origin mismatch {} != non-3gpp", paging_msg->paging_origin.to_string());
       return false;
     }
 

@@ -33,6 +33,44 @@ using namespace ofh;
   (dst).val[1] = vshrq_n_s16((src).val[1], (exponent));                                                                \
   (dst).val[2] = vshrq_n_s16((src).val[2], (exponent));
 
+/// Workaround for \c vshrq_n_s16 NEON intrinsic which only accepts an immediate value known at compile time. Note that
+/// we are checking values up to 8 because minimum output bit width used in BFP compression is 8 bits.
+static inline void shift_right_x3vector_s16(int16x8x3_t src, int16x8x3_t& dst, uint8_t exponent)
+{
+  switch (exponent) {
+    case 1:
+      shift_right_x3vector(src, dst, 1);
+      break;
+    case 2:
+      shift_right_x3vector(src, dst, 2);
+      break;
+    case 3:
+      shift_right_x3vector(src, dst, 3);
+      break;
+    case 4:
+      shift_right_x3vector(src, dst, 4);
+      break;
+    case 5:
+      shift_right_x3vector(src, dst, 5);
+      break;
+    case 6:
+      shift_right_x3vector(src, dst, 6);
+      break;
+    case 7:
+      shift_right_x3vector(src, dst, 7);
+      break;
+    case 8:
+      shift_right_x3vector(src, dst, 8);
+      break;
+    default:
+      // Copy source to destination when exponent is 0 or incorrect value is passed.
+      dst.val[0] = src.val[0];
+      dst.val[1] = src.val[1];
+      dst.val[2] = src.val[2];
+      break;
+  }
+}
+
 void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>         output,
                                        span<const srsran::cf_t>                  input,
                                        const srsran::ofh::ru_compression_params& params)
@@ -64,17 +102,17 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3_3 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB * 3]);
 
     // Determine exponents.
-    uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
-    uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
-    uint8_t exponent_2 = neon::determine_bfp_exponent(vec_s16x3_2, params.data_width);
-    uint8_t exponent_3 = neon::determine_bfp_exponent(vec_s16x3_3, params.data_width);
+    const uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
+    const uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
+    const uint8_t exponent_2 = neon::determine_bfp_exponent(vec_s16x3_2, params.data_width);
+    const uint8_t exponent_3 = neon::determine_bfp_exponent(vec_s16x3_3, params.data_width);
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data_0, shifted_data_1, shifted_data_2, shifted_data_3;
-    shift_right_x3vector(vec_s16x3_0, shifted_data_0, exponent_0);
-    shift_right_x3vector(vec_s16x3_1, shifted_data_1, exponent_1);
-    shift_right_x3vector(vec_s16x3_2, shifted_data_2, exponent_2);
-    shift_right_x3vector(vec_s16x3_3, shifted_data_3, exponent_3);
+    shift_right_x3vector_s16(vec_s16x3_0, shifted_data_0, exponent_0);
+    shift_right_x3vector_s16(vec_s16x3_1, shifted_data_1, exponent_1);
+    shift_right_x3vector_s16(vec_s16x3_2, shifted_data_2, exponent_2);
+    shift_right_x3vector_s16(vec_s16x3_3, shifted_data_3, exponent_3);
 
     // Pack compressed samples of the PRB using utility function and save the exponent.
     neon::pack_prb_big_endian(output[rb], shifted_data_0, params.data_width);
@@ -95,13 +133,13 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3_1 = vld1q_s16_x3(&input_quantized[sample_idx + NOF_SAMPLES_PER_PRB]);
 
     // Determine exponents.
-    uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
-    uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
+    const uint8_t exponent_0 = neon::determine_bfp_exponent(vec_s16x3_0, params.data_width);
+    const uint8_t exponent_1 = neon::determine_bfp_exponent(vec_s16x3_1, params.data_width);
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data_0, shifted_data_1;
-    shift_right_x3vector(vec_s16x3_0, shifted_data_0, exponent_0);
-    shift_right_x3vector(vec_s16x3_1, shifted_data_1, exponent_1);
+    shift_right_x3vector_s16(vec_s16x3_0, shifted_data_0, exponent_0);
+    shift_right_x3vector_s16(vec_s16x3_1, shifted_data_1, exponent_1);
 
     // Pack compressed samples of the PRB using utility function.
     neon::pack_prb_big_endian(output[rb], shifted_data_0, params.data_width);
@@ -119,11 +157,11 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
     int16x8x3_t vec_s16x3 = vld1q_s16_x3(&input_quantized[sample_idx]);
 
     // Determine exponent.
-    uint8_t exponent = neon::determine_bfp_exponent(vec_s16x3, params.data_width);
+    const uint8_t exponent = neon::determine_bfp_exponent(vec_s16x3, params.data_width);
 
     // Shift original IQ samples right.
     int16x8x3_t shifted_data;
-    shift_right_x3vector(vec_s16x3, shifted_data, exponent);
+    shift_right_x3vector_s16(vec_s16x3, shifted_data, exponent);
 
     // Pack compressed samples of the PRB using utility function.
     neon::pack_prb_big_endian(output[rb], shifted_data, params.data_width);

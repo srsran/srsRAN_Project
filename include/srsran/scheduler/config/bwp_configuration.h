@@ -31,6 +31,7 @@
 #include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/ran/prach/rach_config_common.h"
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/resource_block.h"
@@ -116,43 +117,6 @@ struct bwp_downlink_common {
   bwp_configuration   generic_params;
   pdcch_config_common pdcch_common;
   pdsch_config_common pdsch_common;
-};
-
-/// \remark See TS 38.331, RACH-ConfigGeneric.
-struct rach_config_generic {
-  /// Values: {0,...,255}.
-  uint8_t prach_config_index;
-  /// Msg2 RAR window length in #slots. Network configures a value < 10msec. Values: (1, 2, 4, 8, 10, 20, 40, 80).
-  unsigned ra_resp_window;
-  /// Number of PRACH occasions FDMed in one time instance as per TS38.211, clause 6.3.3.2.
-  unsigned msg1_fdm;
-  /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0,
-  /// as per TS38.211, clause 6.3.3.2. Possible values: {0,...,MAX_NOF_PRB - 1}.
-  unsigned msg1_frequency_start;
-  /// Zero-correlation zone configuration number as per TS38.331 "zeroCorrelationZoneConfig", used to derive N_{CS}.
-  uint16_t zero_correlation_zone_config;
-  /// \brief \c preambleReceivedTargetPower, part of \c RACH-ConfigGeneric, TS 38.311.
-  /// Target power level at the network receiver side, in dBm. Only values multiple of 2 are valid.
-  bounded_integer<int, -202, -60> preamble_rx_target_pw;
-};
-
-/// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
-struct rach_config_common {
-  rach_config_generic rach_cfg_generic;
-  /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
-  optional<unsigned> total_nof_ra_preambles;
-  /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.
-  /// We use \c true for l839, while \c false for l139.
-  bool is_prach_root_seq_index_l839;
-  /// PRACH root sequence index. Values: (1..839).
-  /// \remark See TS 38.211, clause 6.3.3.1.
-  unsigned prach_root_seq_index;
-  /// \brief Subcarrier spacing of PRACH as per TS38.331, "RACH-ConfigCommon". If invalid, the UE applies the SCS as
-  /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS38.211 Tables 6.3.3.1-[1-3].
-  subcarrier_spacing    msg1_scs;
-  restricted_set_config restricted_set;
-  /// Enables the transform precoder for Msg3 transmission according to clause 6.1.3 of TS 38.214.
-  bool msg3_transform_precoder;
 };
 
 struct pusch_time_domain_resource_allocation {

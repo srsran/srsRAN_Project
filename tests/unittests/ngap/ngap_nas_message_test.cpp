@@ -149,6 +149,6 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   // Check that AMF notifier was called with right type
   ASSERT_TRUE(was_ul_nas_transport_forwarded());
 
-  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id.value.value,
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id,
             amf_ue_id_to_uint(amf_ue_id_t::max));
 }

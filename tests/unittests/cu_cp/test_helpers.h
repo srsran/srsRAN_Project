@@ -395,12 +395,12 @@ public:
     });
   }
 
-  cu_cp_user_location_info_nr on_rrc_ue_release() override
+  rrc_ue_release_context get_rrc_ue_release_context() override
   {
-    logger.info("Received a new RRC UE Release request");
-    cu_cp_user_location_info_nr user_location_info;
+    logger.info("Received a new request to get RRC UE release context");
+    rrc_ue_release_context release_context;
     // TODO: Add values
-    return user_location_info;
+    return release_context;
   }
 
   optional<cu_cp_radio_bearer_config> last_radio_bearer_cfg;

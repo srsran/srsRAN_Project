@@ -253,7 +253,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
                  pdsch_params.nof_ports,
                  "Number of ports for PDSCH. By default it is set to be equal to number of DL antennas")
       ->capture_default_str()
-      ->check(CLI::IsMember({1, 2}));
+      ->check(CLI::IsMember({1, 2, 4}));
 }
 
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
@@ -501,27 +501,45 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
-static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
+static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_pattern_appconfig& pattern_params)
 {
-  app.add_option("--dl_ul_tx_period", tdd_ul_dl_params.dl_ul_tx_period, "TDD pattern periodicity in milliseconds")
+  app.add_option("--dl_ul_tx_period",
+                 pattern_params.dl_ul_period_slots,
+                 "TDD pattern periodicity in slots. The combination of this value and the chosen numerology must lead"
+                 " to a TDD periodicity of 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 10.0));
-  app.add_option("--nof_dl_slots", tdd_ul_dl_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
+      ->check(CLI::Range(2, 80));
+  app.add_option("--nof_dl_slots", pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 80));
   app.add_option("--nof_dl_symbols",
-                 tdd_ul_dl_params.nof_dl_symbols,
+                 pattern_params.nof_dl_symbols,
                  "TDD pattern nof. DL symbols at the beginning of the slot following full DL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 13));
-  app.add_option("--nof_ul_slots", tdd_ul_dl_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
+  app.add_option("--nof_ul_slots", pattern_params.nof_ul_slots, "TDD pattern nof. consecutive full UL slots")
       ->capture_default_str()
       ->check(CLI::Range(0, 80));
   app.add_option("--nof_ul_symbols",
-                 tdd_ul_dl_params.nof_ul_symbols,
+                 pattern_params.nof_ul_symbols,
                  "TDD pattern nof. UL symbols at the end of the slot preceding the first full UL slot")
       ->capture_default_str()
       ->check(CLI::Range(0, 13));
+}
+
+static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_appconfig& tdd_ul_dl_params)
+{
+  configure_cli11_tdd_ul_dl_pattern_args(app, tdd_ul_dl_params.pattern1);
+  CLI::App* pattern2_subcmd =
+      app.add_subcommand("pattern2", "TDD UL DL pattern2 configuration parameters")->configurable();
+  configure_cli11_tdd_ul_dl_pattern_args(*pattern2_subcmd, tdd_ul_dl_params.pattern2.emplace());
+  auto tdd_ul_dl_verify_callback = [&]() {
+    CLI::App* tdd_cfg = app.get_subcommand("pattern2");
+    if (tdd_cfg->count_all() == 0) {
+      tdd_ul_dl_params.pattern2.reset();
+    }
+  };
+  app.callback(tdd_ul_dl_verify_callback);
 }
 
 static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_params)
@@ -808,7 +826,7 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
       ->check(CLI::Range(0, 3));
   app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
       ->capture_default_str()
-      ->check(CLI::Range(1, 2));
+      ->check(CLI::Range(1, 4));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)

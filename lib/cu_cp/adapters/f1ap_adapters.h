@@ -67,9 +67,9 @@ public:
     srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
 
     ue_creation_message ue_creation_msg    = {};
-    ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
-    ue_creation_msg.cgi                    = cgi_from_asn1(msg.msg->nr_cgi.value);
-    ue_creation_msg.du_to_cu_rrc_container = msg.msg->du_to_cu_rrc_container.value;
+    ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti);
+    ue_creation_msg.cgi                    = cgi_from_asn1(msg.msg->nr_cgi);
+    ue_creation_msg.du_to_cu_rrc_container = msg.msg->du_to_cu_rrc_container;
 
     return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
   }

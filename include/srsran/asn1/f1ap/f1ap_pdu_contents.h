@@ -54,7 +54,7 @@ struct access_and_mob_ind_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -96,16 +96,15 @@ struct access_and_mob_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                  rach_report_info_list_present          = false;
-  bool                                                                  rlf_report_info_list_present           = false;
-  bool                                                                  successful_ho_report_info_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                     transaction_id;
-  ie_field_s<dyn_seq_of<rach_report_info_item_s, 1, 64, true>>          rach_report_info_list;
-  ie_field_s<dyn_seq_of<rlf_report_info_item_s, 1, 64, true>>           rlf_report_info_list;
-  ie_field_s<dyn_seq_of<successful_ho_report_info_item_s, 1, 64, true>> successful_ho_report_info_list;
+  bool                             rach_report_info_list_present          = false;
+  bool                             rlf_report_info_list_present           = false;
+  bool                             successful_ho_report_info_list_present = false;
+  uint16_t                         transaction_id;
+  rach_report_info_list_l          rach_report_info_list;
+  rlf_report_info_list_l           rlf_report_info_list;
+  successful_ho_report_info_list_l successful_ho_report_info_list;
 
   // sequence methods
-  access_and_mob_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -123,7 +122,7 @@ struct access_success_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -163,12 +162,11 @@ struct access_success_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<nr_cgi_s>                                      nr_cgi;
+  uint64_t gnb_cu_ue_f1ap_id;
+  uint64_t gnb_du_ue_f1ap_id;
+  nr_cgi_s nr_cgi;
 
   // sequence methods
-  access_success_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -189,7 +187,7 @@ struct aperiodic_srs_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<aperiodic_opts, true> aperiodic_e_;
+  using aperiodic_e_ = enumerated<aperiodic_opts, true>;
 
   // member variables
   bool                            ext                     = false;
@@ -225,7 +223,7 @@ struct bap_map_cfg_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -280,28 +278,23 @@ struct bap_map_cfg_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              bh_routing_info_added_list_present   = false;
-  bool                                              bh_routing_info_remd_list_present    = false;
-  bool                                              traffic_map_info_present             = false;
-  bool                                              buffer_size_thresh_present           = false;
-  bool                                              bap_hdr_rewriting_added_list_present = false;
-  bool                                              re_routing_enable_ind_present        = false;
-  bool                                              bap_hdr_rewriting_remd_list_present  = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<bh_routing_info_added_list_item_ies_o>, 1, 1024, true>>
-      bh_routing_info_added_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<bh_routing_info_remd_list_item_ies_o>, 1, 1024, true>>
-                                                          bh_routing_info_remd_list;
-  ie_field_s<traffic_map_info_c>                          traffic_map_info;
-  ie_field_s<integer<uint32_t, 0, 16777215, false, true>> buffer_size_thresh;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<bap_hdr_rewriting_added_list_item_ies_o>, 1, 1024, true>>
-                                      bap_hdr_rewriting_added_list;
-  ie_field_s<re_routing_enable_ind_e> re_routing_enable_ind;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<bap_hdr_rewriting_remd_list_item_ies_o>, 1, 1024, true>>
-      bap_hdr_rewriting_remd_list;
+  bool                           bh_routing_info_added_list_present   = false;
+  bool                           bh_routing_info_remd_list_present    = false;
+  bool                           traffic_map_info_present             = false;
+  bool                           buffer_size_thresh_present           = false;
+  bool                           bap_hdr_rewriting_added_list_present = false;
+  bool                           re_routing_enable_ind_present        = false;
+  bool                           bap_hdr_rewriting_remd_list_present  = false;
+  uint16_t                       transaction_id;
+  bh_routing_info_added_list_l   bh_routing_info_added_list;
+  bh_routing_info_remd_list_l    bh_routing_info_remd_list;
+  traffic_map_info_c             traffic_map_info;
+  uint32_t                       buffer_size_thresh;
+  bap_hdr_rewriting_added_list_l bap_hdr_rewriting_added_list;
+  re_routing_enable_ind_e        re_routing_enable_ind;
+  bap_hdr_rewriting_remd_list_l  bap_hdr_rewriting_remd_list;
 
   // sequence methods
-  bap_map_cfg_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -321,7 +314,7 @@ struct bap_map_cfg_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -359,12 +352,11 @@ struct bap_map_cfg_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  bap_map_cfg_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -384,7 +376,7 @@ struct bap_map_cfg_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -426,15 +418,14 @@ struct bap_map_cfg_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  bap_map_cfg_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -452,7 +443,7 @@ struct broadcast_context_mod_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -494,14 +485,13 @@ struct broadcast_context_mod_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  broadcast_context_mod_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -528,7 +518,7 @@ struct broadcast_context_mod_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -581,23 +571,19 @@ struct broadcast_context_mod_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      mbs_service_area_present                     = false;
-  bool                                                      broadcast_m_rbs_to_be_setup_mod_list_present = false;
-  bool                                                      broadcast_m_rbs_to_be_modified_list_present  = false;
-  bool                                                      broadcast_m_rbs_to_be_released_list_present  = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_service_area_c>                            mbs_service_area;
-  ie_field_s<mbs_cu_to_du_rrc_info_s>                       mbs_cu_to_du_rrc_info;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_to_be_setup_mod_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_to_be_modified_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_to_be_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_to_be_released_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_to_be_released_list;
+  bool                                   mbs_service_area_present                     = false;
+  bool                                   broadcast_m_rbs_to_be_setup_mod_list_present = false;
+  bool                                   broadcast_m_rbs_to_be_modified_list_present  = false;
+  bool                                   broadcast_m_rbs_to_be_released_list_present  = false;
+  uint64_t                               gnb_cu_mbs_f1ap_id;
+  uint64_t                               gnb_du_mbs_f1ap_id;
+  mbs_service_area_c                     mbs_service_area;
+  mbs_cu_to_du_rrc_info_s                mbs_cu_to_du_rrc_info;
+  broadcast_m_rbs_to_be_setup_mod_list_l broadcast_m_rbs_to_be_setup_mod_list;
+  broadcast_m_rbs_to_be_modified_list_l  broadcast_m_rbs_to_be_modified_list;
+  broadcast_m_rbs_to_be_released_list_l  broadcast_m_rbs_to_be_released_list;
 
   // sequence methods
-  broadcast_context_mod_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -624,7 +610,7 @@ struct broadcast_context_mod_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -677,25 +663,20 @@ struct broadcast_context_mod_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      broadcast_m_rbs_setup_mod_list_present              = false;
-  bool                                                      broadcast_m_rbs_failed_to_be_setup_mod_list_present = false;
-  bool                                                      broadcast_m_rbs_modified_list_present               = false;
-  bool                                                      broadcast_m_rbs_failed_to_be_modified_list_present  = false;
-  bool                                                      crit_diagnostics_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_setup_mod_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_failed_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_modified_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_failed_to_be_modified_item_ies_o>, 1, 32, true>>
-                                 broadcast_m_rbs_failed_to_be_modified_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                                          broadcast_m_rbs_setup_mod_list_present              = false;
+  bool                                          broadcast_m_rbs_failed_to_be_setup_mod_list_present = false;
+  bool                                          broadcast_m_rbs_modified_list_present               = false;
+  bool                                          broadcast_m_rbs_failed_to_be_modified_list_present  = false;
+  bool                                          crit_diagnostics_present                            = false;
+  uint64_t                                      gnb_cu_mbs_f1ap_id;
+  uint64_t                                      gnb_du_mbs_f1ap_id;
+  broadcast_m_rbs_setup_mod_list_l              broadcast_m_rbs_setup_mod_list;
+  broadcast_m_rbs_failed_to_be_setup_mod_list_l broadcast_m_rbs_failed_to_be_setup_mod_list;
+  broadcast_m_rbs_modified_list_l               broadcast_m_rbs_modified_list;
+  broadcast_m_rbs_failed_to_be_modified_list_l  broadcast_m_rbs_failed_to_be_modified_list;
+  crit_diagnostics_s                            crit_diagnostics;
 
   // sequence methods
-  broadcast_context_mod_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -713,7 +694,7 @@ struct broadcast_context_release_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -753,12 +734,11 @@ struct broadcast_context_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_mbs_f1ap_id;
+  uint64_t gnb_du_mbs_f1ap_id;
+  cause_c  cause;
 
   // sequence methods
-  broadcast_context_release_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -776,7 +756,7 @@ struct broadcast_context_release_complete_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -816,13 +796,12 @@ struct broadcast_context_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  broadcast_context_release_complete_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -841,7 +820,7 @@ struct broadcast_context_release_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -881,12 +860,11 @@ struct broadcast_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_mbs_f1ap_id;
+  uint64_t gnb_du_mbs_f1ap_id;
+  cause_c  cause;
 
   // sequence methods
-  broadcast_context_release_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -905,7 +883,7 @@ struct broadcast_context_setup_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -947,15 +925,14 @@ struct broadcast_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_du_mbs_f1ap_id_present = false;
-  bool                                                      crit_diagnostics_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               gnb_du_mbs_f1ap_id_present = false;
+  bool               crit_diagnostics_present   = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  broadcast_context_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -983,7 +960,7 @@ struct broadcast_context_setup_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1034,17 +1011,15 @@ struct broadcast_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      mbs_service_area_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<mbs_session_id_s>                              mbs_session_id;
-  ie_field_s<mbs_service_area_c>                            mbs_service_area;
-  ie_field_s<mbs_cu_to_du_rrc_info_s>                       mbs_cu_to_du_rrc_info;
-  ie_field_s<snssai_s>                                      snssai;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_to_be_setup_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_to_be_setup_list;
+  bool                               mbs_service_area_present = false;
+  uint64_t                           gnb_cu_mbs_f1ap_id;
+  mbs_session_id_s                   mbs_session_id;
+  mbs_service_area_c                 mbs_service_area;
+  mbs_cu_to_du_rrc_info_s            mbs_cu_to_du_rrc_info;
+  snssai_s                           snssai;
+  broadcast_m_rbs_to_be_setup_list_l broadcast_m_rbs_to_be_setup_list;
 
   // sequence methods
-  broadcast_context_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1070,7 +1045,7 @@ struct broadcast_context_setup_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1120,20 +1095,17 @@ struct broadcast_context_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      broadcast_m_rbs_failed_to_be_setup_list_present = false;
-  bool                                                      broadcast_area_scope_present                    = false;
-  bool                                                      crit_diagnostics_present                        = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_setup_item_ies_o>, 1, 32, true>>
-      broadcast_m_rbs_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_m_rbs_failed_to_be_setup_item_ies_o>, 1, 32, true>>
-                                     broadcast_m_rbs_failed_to_be_setup_list;
-  ie_field_s<broadcast_area_scope_c> broadcast_area_scope;
-  ie_field_s<crit_diagnostics_s>     crit_diagnostics;
+  bool                                      broadcast_m_rbs_failed_to_be_setup_list_present = false;
+  bool                                      broadcast_area_scope_present                    = false;
+  bool                                      crit_diagnostics_present                        = false;
+  uint64_t                                  gnb_cu_mbs_f1ap_id;
+  uint64_t                                  gnb_du_mbs_f1ap_id;
+  broadcast_m_rbs_setup_list_l              broadcast_m_rbs_setup_list;
+  broadcast_m_rbs_failed_to_be_setup_list_l broadcast_m_rbs_failed_to_be_setup_list;
+  broadcast_area_scope_c                    broadcast_area_scope;
+  crit_diagnostics_s                        crit_diagnostics;
 
   // sequence methods
-  broadcast_context_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1153,7 +1125,7 @@ struct cu_du_radio_info_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1191,11 +1163,10 @@ struct cu_du_radio_info_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cu_du_radio_info_type_c>               cu_du_radio_info_type;
+  uint16_t                transaction_id;
+  cu_du_radio_info_type_c cu_du_radio_info_type;
 
   // sequence methods
-  cu_du_radio_info_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1221,7 +1192,7 @@ struct cell_traffic_trace_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1270,17 +1241,16 @@ struct cell_traffic_trace_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                              privacy_ind_present                 = false;
-  bool                                                              trace_collection_entity_uri_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>         gnb_du_ue_f1ap_id;
-  ie_field_s<fixed_octstring<8, true>>                              trace_id;
-  ie_field_s<bounded_bitstring<1, 160, true, true>>                 trace_collection_entity_ip_address;
-  ie_field_s<privacy_ind_e>                                         privacy_ind;
-  ie_field_s<visible_string<0, MAX_ASN_STRING_LENGTH, false, true>> trace_collection_entity_uri;
+  bool                                                  privacy_ind_present                 = false;
+  bool                                                  trace_collection_entity_uri_present = false;
+  uint64_t                                              gnb_cu_ue_f1ap_id;
+  uint64_t                                              gnb_du_ue_f1ap_id;
+  fixed_octstring<8, true>                              trace_id;
+  bounded_bitstring<1, 160, true, true>                 trace_collection_entity_ip_address;
+  privacy_ind_e                                         privacy_ind;
+  visible_string<0, MAX_ASN_STRING_LENGTH, false, true> trace_collection_entity_uri;
 
   // sequence methods
-  cell_traffic_trace_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1300,7 +1270,7 @@ struct du_cu_radio_info_transfer_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1338,11 +1308,10 @@ struct du_cu_radio_info_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<du_cu_radio_info_type_c>               du_cu_radio_info_type;
+  uint16_t                transaction_id;
+  du_cu_radio_info_type_c du_cu_radio_info_type;
 
   // sequence methods
-  du_cu_radio_info_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1360,7 +1329,7 @@ struct deactiv_trace_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1400,12 +1369,11 @@ struct deactiv_trace_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<fixed_octstring<8, true>>                      trace_id;
+  uint64_t                 gnb_cu_ue_f1ap_id;
+  uint64_t                 gnb_du_ue_f1ap_id;
+  fixed_octstring<8, true> trace_id;
 
   // sequence methods
-  deactiv_trace_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1423,7 +1391,7 @@ struct e_c_id_meas_fail_ind_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1467,14 +1435,13 @@ struct e_c_id_meas_fail_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_ue_f1ap_id;
+  uint64_t gnb_du_ue_f1ap_id;
+  uint16_t lmf_ue_meas_id;
+  uint16_t ran_ue_meas_id;
+  cause_c  cause;
 
   // sequence methods
-  e_c_id_meas_fail_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1500,7 +1467,7 @@ struct e_c_id_meas_initiation_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1546,16 +1513,15 @@ struct e_c_id_meas_initiation_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  uint16_t           lmf_ue_meas_id;
+  uint16_t           ran_ue_meas_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  e_c_id_meas_initiation_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1583,7 +1549,7 @@ struct e_c_id_meas_initiation_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1633,20 +1599,18 @@ struct e_c_id_meas_initiation_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      e_c_id_meas_periodicity_present      = false;
-  bool                                                      pos_meas_periodicity_nr_ao_a_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
-  ie_field_s<e_c_id_report_characteristics_e>               e_c_id_report_characteristics;
-  ie_field_s<meas_periodicity_e>                            e_c_id_meas_periodicity;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<e_c_id_meas_quantities_item_ies_o>, 1, 64, true>>
-                                             e_c_id_meas_quantities;
-  ie_field_s<pos_meas_periodicity_nr_ao_a_e> pos_meas_periodicity_nr_ao_a;
+  bool                            e_c_id_meas_periodicity_present      = false;
+  bool                            pos_meas_periodicity_nr_ao_a_present = false;
+  uint64_t                        gnb_cu_ue_f1ap_id;
+  uint64_t                        gnb_du_ue_f1ap_id;
+  uint16_t                        lmf_ue_meas_id;
+  uint16_t                        ran_ue_meas_id;
+  e_c_id_report_characteristics_e e_c_id_report_characteristics;
+  meas_periodicity_e              e_c_id_meas_periodicity;
+  e_c_id_meas_quantities_l        e_c_id_meas_quantities;
+  pos_meas_periodicity_nr_ao_a_e  pos_meas_periodicity_nr_ao_a;
 
   // sequence methods
-  e_c_id_meas_initiation_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1673,7 +1637,7 @@ struct e_c_id_meas_initiation_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1721,19 +1685,18 @@ struct e_c_id_meas_initiation_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      e_c_id_meas_result_present = false;
-  bool                                                      cell_portion_id_present    = false;
-  bool                                                      crit_diagnostics_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
-  ie_field_s<e_c_id_meas_result_s>                          e_c_id_meas_result;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>        cell_portion_id;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool                 e_c_id_meas_result_present = false;
+  bool                 cell_portion_id_present    = false;
+  bool                 crit_diagnostics_present   = false;
+  uint64_t             gnb_cu_ue_f1ap_id;
+  uint64_t             gnb_du_ue_f1ap_id;
+  uint16_t             lmf_ue_meas_id;
+  uint16_t             ran_ue_meas_id;
+  e_c_id_meas_result_s e_c_id_meas_result;
+  uint16_t             cell_portion_id;
+  crit_diagnostics_s   crit_diagnostics;
 
   // sequence methods
-  e_c_id_meas_initiation_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1759,7 +1722,7 @@ struct e_c_id_meas_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1805,16 +1768,15 @@ struct e_c_id_meas_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      cell_portion_id_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
-  ie_field_s<e_c_id_meas_result_s>                          e_c_id_meas_result;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>        cell_portion_id;
+  bool                 cell_portion_id_present = false;
+  uint64_t             gnb_cu_ue_f1ap_id;
+  uint64_t             gnb_du_ue_f1ap_id;
+  uint16_t             lmf_ue_meas_id;
+  uint16_t             ran_ue_meas_id;
+  e_c_id_meas_result_s e_c_id_meas_result;
+  uint16_t             cell_portion_id;
 
   // sequence methods
-  e_c_id_meas_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1832,7 +1794,7 @@ struct e_c_id_meas_termination_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1874,13 +1836,12 @@ struct e_c_id_meas_termination_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         lmf_ue_meas_id;
-  ie_field_s<integer<uint16_t, 1, 256, true, true>>         ran_ue_meas_id;
+  uint64_t gnb_cu_ue_f1ap_id;
+  uint64_t gnb_du_ue_f1ap_id;
+  uint16_t lmf_ue_meas_id;
+  uint16_t ran_ue_meas_id;
 
   // sequence methods
-  e_c_id_meas_termination_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1898,7 +1859,7 @@ struct error_ind_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -1942,18 +1903,17 @@ struct error_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_cu_ue_f1ap_id_present = false;
-  bool                                                      gnb_du_ue_f1ap_id_present = false;
-  bool                                                      cause_present             = false;
-  bool                                                      crit_diagnostics_present  = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               gnb_cu_ue_f1ap_id_present = false;
+  bool               gnb_du_ue_f1ap_id_present = false;
+  bool               cause_present             = false;
+  bool               crit_diagnostics_present  = false;
+  uint16_t           transaction_id;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  error_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -1971,7 +1931,7 @@ struct semipersistent_srs_ext_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::srs_spatial_relation_per_srs_res; }
@@ -2005,7 +1965,7 @@ struct ue_associated_lc_f1_conn_item_res_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_associated_lc_f1_conn_item; }
@@ -2034,7 +1994,7 @@ struct reset_all_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<reset_all_opts, true> reset_all_e;
+using reset_all_e = enumerated<reset_all_opts, true>;
 
 // ResetType-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
 using reset_type_ext_ies_o = protocol_ies_empty_o;
@@ -2066,7 +2026,7 @@ struct trp_info_item_trp_resp_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::trp_info_item; }
@@ -2098,7 +2058,7 @@ struct trp_info_type_item_trp_req_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::trp_info_type_item; }
@@ -2132,7 +2092,7 @@ struct ue_associated_lc_f1_conn_item_res_ack_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::ue_associated_lc_f1_conn_item; }
@@ -2173,7 +2133,7 @@ struct reset_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   reset_type_c() = default;
@@ -2234,7 +2194,7 @@ struct srs_type_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   srs_type_c() = default;
@@ -2312,7 +2272,7 @@ struct f1_removal_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2358,7 +2318,7 @@ struct f1_removal_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::transaction_id; }
@@ -2392,7 +2352,7 @@ struct f1_removal_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2436,7 +2396,7 @@ struct f1_setup_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2492,7 +2452,7 @@ struct f1_setup_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2564,7 +2524,7 @@ struct f1_setup_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2636,7 +2596,7 @@ struct gnb_cu_cfg_upd_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2696,7 +2656,7 @@ struct gnb_cu_cfg_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2762,7 +2722,7 @@ struct gnb_cu_cfg_upd_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2859,7 +2819,7 @@ struct gnb_du_cfg_upd_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2922,7 +2882,7 @@ struct gnb_du_cfg_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -2982,7 +2942,7 @@ struct gnb_du_cfg_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3056,7 +3016,7 @@ struct gnb_du_res_cfg_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3100,7 +3060,7 @@ struct gnb_du_res_cfg_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3155,7 +3115,7 @@ struct gnb_du_res_cfg_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3212,7 +3172,7 @@ struct gnb_du_res_coordination_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3260,7 +3220,7 @@ struct gnb_du_res_coordination_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3304,7 +3264,7 @@ struct gnb_du_status_ind_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3350,7 +3310,7 @@ struct iab_tnl_address_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3405,7 +3365,7 @@ struct iab_tnl_address_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3459,7 +3419,7 @@ struct iab_tnl_address_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3503,7 +3463,7 @@ struct iab_up_cfg_upd_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3551,7 +3511,7 @@ struct iab_up_cfg_upd_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3597,7 +3557,7 @@ struct iab_up_cfg_upd_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3647,7 +3607,7 @@ struct meas_activation_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3699,7 +3659,7 @@ struct meas_precfg_confirm_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3745,7 +3705,7 @@ struct meas_precfg_refuse_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3791,7 +3751,7 @@ struct meas_precfg_required_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3835,7 +3795,7 @@ struct multicast_context_mod_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3889,7 +3849,7 @@ struct multicast_context_mod_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -3952,7 +3912,7 @@ struct multicast_context_mod_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4009,7 +3969,7 @@ struct multicast_context_release_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4053,7 +4013,7 @@ struct multicast_context_release_complete_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4097,7 +4057,7 @@ struct multicast_context_release_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4141,7 +4101,7 @@ struct multicast_context_setup_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4196,7 +4156,7 @@ struct multicast_context_setup_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4251,7 +4211,7 @@ struct multicast_context_setup_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4305,7 +4265,7 @@ struct multicast_distribution_release_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4357,7 +4317,7 @@ struct multicast_distribution_release_complete_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4410,7 +4370,7 @@ struct multicast_distribution_setup_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4464,7 +4424,7 @@ struct multicast_distribution_setup_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4519,7 +4479,7 @@ struct multicast_distribution_setup_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4576,7 +4536,7 @@ struct multicast_group_paging_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4622,7 +4582,7 @@ struct network_access_rate_reduction_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4664,7 +4624,7 @@ struct notify_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4708,7 +4668,7 @@ struct pdc_meas_fail_ind_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4761,7 +4721,7 @@ struct pdc_meas_initiation_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4817,7 +4777,7 @@ struct pdc_meas_initiation_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4874,7 +4834,7 @@ struct pdc_meas_initiation_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4922,7 +4882,7 @@ struct pdc_meas_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -4968,7 +4928,7 @@ struct pdc_meas_termination_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5014,7 +4974,7 @@ struct prs_cfg_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5058,7 +5018,7 @@ struct prs_cfg_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5102,7 +5062,7 @@ struct prs_cfg_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5153,7 +5113,7 @@ struct pws_cancel_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5203,7 +5163,7 @@ struct pws_cancel_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5249,7 +5209,7 @@ struct pws_fail_ind_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5293,7 +5253,7 @@ struct pws_restart_ind_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5351,7 +5311,7 @@ struct paging_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5425,7 +5385,7 @@ struct pos_sys_info_delivery_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5471,7 +5431,7 @@ struct positioning_activation_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5517,7 +5477,7 @@ struct positioning_activation_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5563,7 +5523,7 @@ struct positioning_activation_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5620,7 +5580,7 @@ struct positioning_assist_info_ctrl_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5677,7 +5637,7 @@ struct positioning_assist_info_feedback_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5725,7 +5685,7 @@ struct positioning_deactivation_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5769,7 +5729,7 @@ struct positioning_info_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5822,7 +5782,7 @@ struct positioning_info_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5878,7 +5838,7 @@ struct positioning_info_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5928,7 +5888,7 @@ struct positioning_info_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -5974,7 +5934,7 @@ struct positioning_meas_abort_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6018,7 +5978,7 @@ struct positioning_meas_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6066,7 +6026,7 @@ struct positioning_meas_fail_ind_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6112,7 +6072,7 @@ struct positioning_meas_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6177,7 +6137,7 @@ struct positioning_meas_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6254,7 +6214,7 @@ struct positioning_meas_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6311,7 +6271,7 @@ struct positioning_meas_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6363,7 +6323,7 @@ struct qo_e_info_transfer_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6407,7 +6367,7 @@ struct rrc_delivery_report_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6455,7 +6415,7 @@ struct ref_time_info_report_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6499,7 +6459,7 @@ struct ref_time_info_report_ctrl_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6543,7 +6503,7 @@ struct reset_ack_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6589,7 +6549,7 @@ struct reset_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6633,7 +6593,7 @@ struct res_status_fail_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6690,7 +6650,7 @@ struct res_status_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6742,7 +6702,7 @@ struct res_status_resp_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6796,7 +6756,7 @@ struct res_status_upd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6846,7 +6806,7 @@ struct sys_info_delivery_cmd_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6894,7 +6854,7 @@ struct trp_info_fail_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6940,7 +6900,7 @@ struct trp_info_request_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -6986,7 +6946,7 @@ struct trp_info_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7030,7 +6990,7 @@ struct trace_start_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7081,7 +7041,7 @@ struct write_replace_warning_request_ies_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7137,7 +7097,7 @@ struct write_replace_warning_resp_ies_o {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     value_c() = default;
@@ -7179,13 +7139,12 @@ struct f1_removal_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  f1_removal_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7202,12 +7161,11 @@ struct f1_removal_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  f1_removal_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7221,15 +7179,14 @@ struct f1_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  f1_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7243,23 +7200,21 @@ struct f1_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                       gnb_du_name_present                  = false;
-  bool                                                       gnb_du_served_cells_list_present     = false;
-  bool                                                       transport_layer_address_info_present = false;
-  bool                                                       bap_address_present                  = false;
-  bool                                                       extended_gnb_du_name_present         = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>          transaction_id;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>> gnb_du_id;
-  ie_field_s<printable_string<1, 150, true, true>>           gnb_du_name;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_served_cells_item_ies_o>, 1, 512, true>>
-                                               gnb_du_served_cells_list;
-  ie_field_s<rrc_version_s>                    gnb_du_rrc_version;
-  ie_field_s<transport_layer_address_info_s>   transport_layer_address_info;
-  ie_field_s<fixed_bitstring<10, false, true>> bap_address;
-  ie_field_s<extended_gnb_du_name_s>           extended_gnb_du_name;
+  bool                                 gnb_du_name_present                  = false;
+  bool                                 gnb_du_served_cells_list_present     = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 bap_address_present                  = false;
+  bool                                 extended_gnb_du_name_present         = false;
+  uint16_t                             transaction_id;
+  uint64_t                             gnb_du_id;
+  printable_string<1, 150, true, true> gnb_du_name;
+  gnb_du_served_cells_list_l           gnb_du_served_cells_list;
+  rrc_version_s                        gnb_du_rrc_version;
+  transport_layer_address_info_s       transport_layer_address_info;
+  fixed_bitstring<10, false, true>     bap_address;
+  extended_gnb_du_name_s               extended_gnb_du_name;
 
   // sequence methods
-  f1_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7273,24 +7228,22 @@ struct f1_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              gnb_cu_name_present                  = false;
-  bool                                              cells_to_be_activ_list_present       = false;
-  bool                                              transport_layer_address_info_present = false;
-  bool                                              ul_bh_non_up_traffic_map_present     = false;
-  bool                                              bap_address_present                  = false;
-  bool                                              extended_gnb_cu_name_present         = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<printable_string<1, 150, true, true>>  gnb_cu_name;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
-                                               cells_to_be_activ_list;
-  ie_field_s<rrc_version_s>                    gnb_cu_rrc_version;
-  ie_field_s<transport_layer_address_info_s>   transport_layer_address_info;
-  ie_field_s<ul_bh_non_up_traffic_map_s>       ul_bh_non_up_traffic_map;
-  ie_field_s<fixed_bitstring<10, false, true>> bap_address;
-  ie_field_s<extended_gnb_cu_name_s>           extended_gnb_cu_name;
+  bool                                 gnb_cu_name_present                  = false;
+  bool                                 cells_to_be_activ_list_present       = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 ul_bh_non_up_traffic_map_present     = false;
+  bool                                 bap_address_present                  = false;
+  bool                                 extended_gnb_cu_name_present         = false;
+  uint16_t                             transaction_id;
+  printable_string<1, 150, true, true> gnb_cu_name;
+  cells_to_be_activ_list_l             cells_to_be_activ_list;
+  rrc_version_s                        gnb_cu_rrc_version;
+  transport_layer_address_info_s       transport_layer_address_info;
+  ul_bh_non_up_traffic_map_s           ul_bh_non_up_traffic_map;
+  fixed_bitstring<10, false, true>     bap_address;
+  extended_gnb_cu_name_s               extended_gnb_cu_name;
 
   // sequence methods
-  f1_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7304,48 +7257,39 @@ struct gnb_cu_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              cells_to_be_activ_list_present       = false;
-  bool                                              cells_to_be_deactiv_list_present     = false;
-  bool                                              gnb_cu_tnl_assoc_to_add_list_present = false;
-  bool                                              gnb_cu_tnl_assoc_to_rem_list_present = false;
-  bool                                              gnb_cu_tnl_assoc_to_upd_list_present = false;
-  bool                                              cells_to_be_barred_list_present      = false;
-  bool                                              protected_eutra_res_list_present     = false;
-  bool                                              neighbour_cell_info_list_present     = false;
-  bool                                              transport_layer_address_info_present = false;
-  bool                                              ul_bh_non_up_traffic_map_present     = false;
-  bool                                              bap_address_present                  = false;
-  bool                                              cco_assist_info_present              = false;
-  bool                                              cells_for_son_list_present           = false;
-  bool                                              gnb_cu_name_present                  = false;
-  bool                                              extended_gnb_cu_name_present         = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
-      cells_to_be_activ_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true>>
-      cells_to_be_deactiv_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_add_item_ies_o>, 1, 32, true>>
-      gnb_cu_tnl_assoc_to_add_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_rem_item_ies_o>, 1, 32, true>>
-      gnb_cu_tnl_assoc_to_rem_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_to_upd_item_ies_o>, 1, 32, true>>
-      gnb_cu_tnl_assoc_to_upd_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_barred_item_ies_o>, 1, 512, true>>
-      cells_to_be_barred_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<protected_eutra_res_item_ies_o>, 1, 256, true>>
-      protected_eutra_res_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<neighbour_cell_info_item_ies_o>, 1, 512, true>>
-                                                             neighbour_cell_info_list;
-  ie_field_s<transport_layer_address_info_s>                 transport_layer_address_info;
-  ie_field_s<ul_bh_non_up_traffic_map_s>                     ul_bh_non_up_traffic_map;
-  ie_field_s<fixed_bitstring<10, false, true>>               bap_address;
-  ie_field_s<cco_assist_info_s>                              cco_assist_info;
-  ie_field_s<dyn_seq_of<cells_for_son_item_s, 1, 256, true>> cells_for_son_list;
-  ie_field_s<printable_string<1, 150, true, true>>           gnb_cu_name;
-  ie_field_s<extended_gnb_cu_name_s>                         extended_gnb_cu_name;
+  bool                                 cells_to_be_activ_list_present       = false;
+  bool                                 cells_to_be_deactiv_list_present     = false;
+  bool                                 gnb_cu_tnl_assoc_to_add_list_present = false;
+  bool                                 gnb_cu_tnl_assoc_to_rem_list_present = false;
+  bool                                 gnb_cu_tnl_assoc_to_upd_list_present = false;
+  bool                                 cells_to_be_barred_list_present      = false;
+  bool                                 protected_eutra_res_list_present     = false;
+  bool                                 neighbour_cell_info_list_present     = false;
+  bool                                 transport_layer_address_info_present = false;
+  bool                                 ul_bh_non_up_traffic_map_present     = false;
+  bool                                 bap_address_present                  = false;
+  bool                                 cco_assist_info_present              = false;
+  bool                                 cells_for_son_list_present           = false;
+  bool                                 gnb_cu_name_present                  = false;
+  bool                                 extended_gnb_cu_name_present         = false;
+  uint16_t                             transaction_id;
+  cells_to_be_activ_list_l             cells_to_be_activ_list;
+  cells_to_be_deactiv_list_l           cells_to_be_deactiv_list;
+  gnb_cu_tnl_assoc_to_add_list_l       gnb_cu_tnl_assoc_to_add_list;
+  gnb_cu_tnl_assoc_to_rem_list_l       gnb_cu_tnl_assoc_to_rem_list;
+  gnb_cu_tnl_assoc_to_upd_list_l       gnb_cu_tnl_assoc_to_upd_list;
+  cells_to_be_barred_list_l            cells_to_be_barred_list;
+  protected_eutra_res_list_l           protected_eutra_res_list;
+  neighbour_cell_info_list_l           neighbour_cell_info_list;
+  transport_layer_address_info_s       transport_layer_address_info;
+  ul_bh_non_up_traffic_map_s           ul_bh_non_up_traffic_map;
+  fixed_bitstring<10, false, true>     bap_address;
+  cco_assist_info_s                    cco_assist_info;
+  cells_for_son_list_l                 cells_for_son_list;
+  printable_string<1, 150, true, true> gnb_cu_name;
+  extended_gnb_cu_name_s               extended_gnb_cu_name;
 
   // sequence methods
-  gnb_cu_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7359,26 +7303,21 @@ struct gnb_cu_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              cells_failed_to_be_activ_list_present         = false;
-  bool                                              crit_diagnostics_present                      = false;
-  bool                                              gnb_cu_tnl_assoc_setup_list_present           = false;
-  bool                                              gnb_cu_tnl_assoc_failed_to_setup_list_present = false;
-  bool                                              ded_si_delivery_needed_ue_list_present        = false;
-  bool                                              transport_layer_address_info_present          = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_failed_to_be_activ_list_item_ies_o>, 1, 512, true>>
-                                 cells_failed_to_be_activ_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_setup_item_ies_o>, 1, 32, true>>
-      gnb_cu_tnl_assoc_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_cu_tnl_assoc_failed_to_setup_item_ies_o>, 1, 32, true>>
-      gnb_cu_tnl_assoc_failed_to_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
-                                             ded_si_delivery_needed_ue_list;
-  ie_field_s<transport_layer_address_info_s> transport_layer_address_info;
+  bool                                    cells_failed_to_be_activ_list_present         = false;
+  bool                                    crit_diagnostics_present                      = false;
+  bool                                    gnb_cu_tnl_assoc_setup_list_present           = false;
+  bool                                    gnb_cu_tnl_assoc_failed_to_setup_list_present = false;
+  bool                                    ded_si_delivery_needed_ue_list_present        = false;
+  bool                                    transport_layer_address_info_present          = false;
+  uint16_t                                transaction_id;
+  cells_failed_to_be_activ_list_l         cells_failed_to_be_activ_list;
+  crit_diagnostics_s                      crit_diagnostics;
+  gnb_cu_tnl_assoc_setup_list_l           gnb_cu_tnl_assoc_setup_list;
+  gnb_cu_tnl_assoc_failed_to_setup_list_l gnb_cu_tnl_assoc_failed_to_setup_list;
+  ded_si_delivery_needed_ue_list_l        ded_si_delivery_needed_ue_list;
+  transport_layer_address_info_s          transport_layer_address_info;
 
   // sequence methods
-  gnb_cu_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7392,15 +7331,14 @@ struct gnb_cu_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_cu_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7414,37 +7352,31 @@ struct gnb_du_cfg_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              served_cells_to_add_list_present       = false;
-  bool                                              served_cells_to_modify_list_present    = false;
-  bool                                              served_cells_to_delete_list_present    = false;
-  bool                                              cells_status_list_present              = false;
-  bool                                              ded_si_delivery_needed_ue_list_present = false;
-  bool                                              gnb_du_id_present                      = false;
-  bool                                              gnb_du_tnl_assoc_to_rem_list_present   = false;
-  bool                                              transport_layer_address_info_present   = false;
-  bool                                              coverage_mod_notif_present             = false;
-  bool                                              gnb_du_name_present                    = false;
-  bool                                              extended_gnb_du_name_present           = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_add_item_ies_o>, 1, 512, true>>
-      served_cells_to_add_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_modify_item_ies_o>, 1, 512, true>>
-      served_cells_to_modify_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<served_cells_to_delete_item_ies_o>, 1, 512, true>>
-      served_cells_to_delete_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_status_item_ies_o>, 0, 512, true>> cells_status_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
-                                                             ded_si_delivery_needed_ue_list;
-  ie_field_s<integer<uint64_t, 0, 68719476735, false, true>> gnb_du_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<gnb_du_tnl_assoc_to_rem_item_ies_o>, 1, 32, true>>
-                                                   gnb_du_tnl_assoc_to_rem_list;
-  ie_field_s<transport_layer_address_info_s>       transport_layer_address_info;
-  ie_field_s<coverage_mod_notif_s>                 coverage_mod_notif;
-  ie_field_s<printable_string<1, 150, true, true>> gnb_du_name;
-  ie_field_s<extended_gnb_du_name_s>               extended_gnb_du_name;
+  bool                                 served_cells_to_add_list_present       = false;
+  bool                                 served_cells_to_modify_list_present    = false;
+  bool                                 served_cells_to_delete_list_present    = false;
+  bool                                 cells_status_list_present              = false;
+  bool                                 ded_si_delivery_needed_ue_list_present = false;
+  bool                                 gnb_du_id_present                      = false;
+  bool                                 gnb_du_tnl_assoc_to_rem_list_present   = false;
+  bool                                 transport_layer_address_info_present   = false;
+  bool                                 coverage_mod_notif_present             = false;
+  bool                                 gnb_du_name_present                    = false;
+  bool                                 extended_gnb_du_name_present           = false;
+  uint16_t                             transaction_id;
+  served_cells_to_add_list_l           served_cells_to_add_list;
+  served_cells_to_modify_list_l        served_cells_to_modify_list;
+  served_cells_to_delete_list_l        served_cells_to_delete_list;
+  cells_status_list_l                  cells_status_list;
+  ded_si_delivery_needed_ue_list_l     ded_si_delivery_needed_ue_list;
+  uint64_t                             gnb_du_id;
+  gnb_du_tnl_assoc_to_rem_list_l       gnb_du_tnl_assoc_to_rem_list;
+  transport_layer_address_info_s       transport_layer_address_info;
+  coverage_mod_notif_s                 coverage_mod_notif;
+  printable_string<1, 150, true, true> gnb_du_name;
+  extended_gnb_du_name_s               extended_gnb_du_name;
 
   // sequence methods
-  gnb_du_cfg_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7458,26 +7390,23 @@ struct gnb_du_cfg_upd_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              cells_to_be_activ_list_present       = false;
-  bool                                              crit_diagnostics_present             = false;
-  bool                                              cells_to_be_deactiv_list_present     = false;
-  bool                                              transport_layer_address_info_present = false;
-  bool                                              ul_bh_non_up_traffic_map_present     = false;
-  bool                                              bap_address_present                  = false;
-  bool                                              cells_for_son_list_present           = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_activ_list_item_ies_o>, 1, 512, true>>
-                                 cells_to_be_activ_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_deactiv_list_item_ies_o>, 1, 512, true>>
-                                                             cells_to_be_deactiv_list;
-  ie_field_s<transport_layer_address_info_s>                 transport_layer_address_info;
-  ie_field_s<ul_bh_non_up_traffic_map_s>                     ul_bh_non_up_traffic_map;
-  ie_field_s<fixed_bitstring<10, false, true>>               bap_address;
-  ie_field_s<dyn_seq_of<cells_for_son_item_s, 1, 256, true>> cells_for_son_list;
+  bool                             cells_to_be_activ_list_present       = false;
+  bool                             crit_diagnostics_present             = false;
+  bool                             cells_to_be_deactiv_list_present     = false;
+  bool                             transport_layer_address_info_present = false;
+  bool                             ul_bh_non_up_traffic_map_present     = false;
+  bool                             bap_address_present                  = false;
+  bool                             cells_for_son_list_present           = false;
+  uint16_t                         transaction_id;
+  cells_to_be_activ_list_l         cells_to_be_activ_list;
+  crit_diagnostics_s               crit_diagnostics;
+  cells_to_be_deactiv_list_l       cells_to_be_deactiv_list;
+  transport_layer_address_info_s   transport_layer_address_info;
+  ul_bh_non_up_traffic_map_s       ul_bh_non_up_traffic_map;
+  fixed_bitstring<10, false, true> bap_address;
+  cells_for_son_list_l             cells_for_son_list;
 
   // sequence methods
-  gnb_du_cfg_upd_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7491,15 +7420,14 @@ struct gnb_du_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_du_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7513,18 +7441,17 @@ struct gnb_du_res_cfg_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                                    activ_cells_to_be_upd_list_present = false;
-  bool                                                                    child_nodes_list_present           = false;
-  bool                                                                    neighbour_node_cells_list_present  = false;
-  bool                                                                    serving_cells_list_present         = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                       transaction_id;
-  ie_field_s<dyn_seq_of<activ_cells_to_be_upd_list_item_s, 1, 512, true>> activ_cells_to_be_upd_list;
-  ie_field_s<dyn_seq_of<child_nodes_list_item_s, 1, 1024, true>>          child_nodes_list;
-  ie_field_s<dyn_seq_of<neighbour_node_cells_list_item_s, 1, 1024, true>> neighbour_node_cells_list;
-  ie_field_s<dyn_seq_of<serving_cells_list_item_s, 1, 32, true>>          serving_cells_list;
+  bool                         activ_cells_to_be_upd_list_present = false;
+  bool                         child_nodes_list_present           = false;
+  bool                         neighbour_node_cells_list_present  = false;
+  bool                         serving_cells_list_present         = false;
+  uint16_t                     transaction_id;
+  activ_cells_to_be_upd_list_l activ_cells_to_be_upd_list;
+  child_nodes_list_l           child_nodes_list;
+  neighbour_node_cells_list_l  neighbour_node_cells_list;
+  serving_cells_list_l         serving_cells_list;
 
   // sequence methods
-  gnb_du_res_cfg_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7538,12 +7465,11 @@ struct gnb_du_res_cfg_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_du_res_cfg_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7557,15 +7483,14 @@ struct gnb_du_res_cfg_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  gnb_du_res_cfg_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7579,14 +7504,13 @@ struct gnb_du_res_coordination_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              ignore_res_coordination_container_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<request_type_e>                        request_type;
-  ie_field_s<unbounded_octstring<true>>             eutra_nr_cell_res_coordination_req_container;
-  ie_field_s<ignore_res_coordination_container_e>   ignore_res_coordination_container;
+  bool                                ignore_res_coordination_container_present = false;
+  uint16_t                            transaction_id;
+  request_type_e                      request_type;
+  unbounded_octstring<true>           eutra_nr_cell_res_coordination_req_container;
+  ignore_res_coordination_container_e ignore_res_coordination_container;
 
   // sequence methods
-  gnb_du_res_coordination_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7600,11 +7524,10 @@ struct gnb_du_res_coordination_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<unbounded_octstring<true>>             eutra_nr_cell_res_coordination_req_ack_container;
+  uint16_t                  transaction_id;
+  unbounded_octstring<true> eutra_nr_cell_res_coordination_req_ack_container;
 
   // sequence methods
-  gnb_du_res_coordination_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7618,13 +7541,12 @@ struct gnb_du_status_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              iab_congestion_ind_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<gnb_du_overload_info_e>                gnb_du_overload_info;
-  ie_field_s<iab_congestion_ind_s>                  iab_congestion_ind;
+  bool                   iab_congestion_ind_present = false;
+  uint16_t               transaction_id;
+  gnb_du_overload_info_e gnb_du_overload_info;
+  iab_congestion_ind_s   iab_congestion_ind;
 
   // sequence methods
-  gnb_du_status_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7638,15 +7560,14 @@ struct iab_tnl_address_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  iab_tnl_address_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7660,19 +7581,17 @@ struct iab_tnl_address_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              ia_bv4_addresses_requested_present    = false;
-  bool                                              iab_ip_v6_request_type_present        = false;
-  bool                                              iab_tnl_addresses_to_rem_list_present = false;
-  bool                                              iab_tnl_addresses_exception_present   = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<ia_bv4_addresses_requested_s>          ia_bv4_addresses_requested;
-  ie_field_s<iab_ip_v6_request_type_c>              iab_ip_v6_request_type;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<iab_tnl_addresses_to_rem_item_ies_o>, 1, 1024, true>>
-                                            iab_tnl_addresses_to_rem_list;
-  ie_field_s<iab_tnl_addresses_exception_s> iab_tnl_addresses_exception;
+  bool                            ia_bv4_addresses_requested_present    = false;
+  bool                            iab_ip_v6_request_type_present        = false;
+  bool                            iab_tnl_addresses_to_rem_list_present = false;
+  bool                            iab_tnl_addresses_exception_present   = false;
+  uint16_t                        transaction_id;
+  ia_bv4_addresses_requested_s    ia_bv4_addresses_requested;
+  iab_ip_v6_request_type_c        iab_ip_v6_request_type;
+  iab_tnl_addresses_to_rem_list_l iab_tnl_addresses_to_rem_list;
+  iab_tnl_addresses_exception_s   iab_tnl_addresses_exception;
 
   // sequence methods
-  iab_tnl_address_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7686,12 +7605,10 @@ struct iab_tnl_address_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<iab_allocated_tnl_address_list_item_ies_o>, 1, 1024, true>>
-      iab_allocated_tnl_address_list;
+  uint16_t                         transaction_id;
+  iab_allocated_tnl_address_list_l iab_allocated_tnl_address_list;
 
   // sequence methods
-  iab_tnl_address_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7705,15 +7622,14 @@ struct iab_up_cfg_upd_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              time_to_wait_present     = false;
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<time_to_wait_e>                        time_to_wait;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               time_to_wait_present     = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  time_to_wait_e     time_to_wait;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  iab_up_cfg_upd_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7727,16 +7643,13 @@ struct iab_up_cfg_upd_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              ul_up_tnl_info_to_upd_list_present    = false;
-  bool                                              ul_up_tnl_address_to_upd_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ul_up_tnl_info_to_upd_list_item_ies_o>, 1, 32678, true>>
-      ul_up_tnl_info_to_upd_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ul_up_tnl_address_to_upd_list_item_ies_o>, 1, 8, true>>
-      ul_up_tnl_address_to_upd_list;
+  bool                            ul_up_tnl_info_to_upd_list_present    = false;
+  bool                            ul_up_tnl_address_to_upd_list_present = false;
+  uint16_t                        transaction_id;
+  ul_up_tnl_info_to_upd_list_l    ul_up_tnl_info_to_upd_list;
+  ul_up_tnl_address_to_upd_list_l ul_up_tnl_address_to_upd_list;
 
   // sequence methods
-  iab_up_cfg_upd_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7750,15 +7663,13 @@ struct iab_up_cfg_upd_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present              = false;
-  bool                                              dl_up_tnl_address_to_upd_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<dl_up_tnl_address_to_upd_list_item_ies_o>, 1, 8, true>>
-      dl_up_tnl_address_to_upd_list;
+  bool                            crit_diagnostics_present              = false;
+  bool                            dl_up_tnl_address_to_upd_list_present = false;
+  uint16_t                        transaction_id;
+  crit_diagnostics_s              crit_diagnostics;
+  dl_up_tnl_address_to_upd_list_l dl_up_tnl_address_to_upd_list;
 
   // sequence methods
-  iab_up_cfg_upd_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7772,14 +7683,13 @@ struct meas_activation_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                          prs_meas_info_list_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>     gnb_du_ue_f1ap_id;
-  ie_field_s<activation_request_type_e>                         activation_request_type;
-  ie_field_s<dyn_seq_of<prs_meas_info_list_item_s, 1, 4, true>> prs_meas_info_list;
+  bool                      prs_meas_info_list_present = false;
+  uint64_t                  gnb_cu_ue_f1ap_id;
+  uint64_t                  gnb_du_ue_f1ap_id;
+  activation_request_type_e activation_request_type;
+  prs_meas_info_list_l      prs_meas_info_list;
 
   // sequence methods
-  meas_activation_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7793,15 +7703,14 @@ struct meas_precfg_confirm_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      pos_meas_gap_pre_cfg_list_present = false;
-  bool                                                      crit_diagnostics_present          = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<pos_meas_gap_pre_cfg_list_s>                   pos_meas_gap_pre_cfg_list;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool                        pos_meas_gap_pre_cfg_list_present = false;
+  bool                        crit_diagnostics_present          = false;
+  uint64_t                    gnb_cu_ue_f1ap_id;
+  uint64_t                    gnb_du_ue_f1ap_id;
+  pos_meas_gap_pre_cfg_list_s pos_meas_gap_pre_cfg_list;
+  crit_diagnostics_s          crit_diagnostics;
 
   // sequence methods
-  meas_precfg_confirm_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7815,14 +7724,13 @@ struct meas_precfg_refuse_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  meas_precfg_refuse_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7836,12 +7744,11 @@ struct meas_precfg_required_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>      gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>      gnb_du_ue_f1ap_id;
-  ie_field_s<dyn_seq_of<trp_prs_info_list_item_s, 1, 256, true>> trp_prs_info_list;
+  uint64_t            gnb_cu_ue_f1ap_id;
+  uint64_t            gnb_du_ue_f1ap_id;
+  trp_prs_info_list_l trp_prs_info_list;
 
   // sequence methods
-  meas_precfg_required_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7855,14 +7762,13 @@ struct multicast_context_mod_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  multicast_context_mod_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7876,22 +7782,18 @@ struct multicast_context_mod_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      mbs_service_area_present                     = false;
-  bool                                                      multicast_m_rbs_to_be_setup_mod_list_present = false;
-  bool                                                      multicast_m_rbs_to_be_modified_list_present  = false;
-  bool                                                      multicast_m_rbs_to_be_released_list_present  = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_service_area_c>                            mbs_service_area;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_to_be_setup_mod_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_to_be_modified_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_to_be_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_to_be_released_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_to_be_released_list;
+  bool                                   mbs_service_area_present                     = false;
+  bool                                   multicast_m_rbs_to_be_setup_mod_list_present = false;
+  bool                                   multicast_m_rbs_to_be_modified_list_present  = false;
+  bool                                   multicast_m_rbs_to_be_released_list_present  = false;
+  uint64_t                               gnb_cu_mbs_f1ap_id;
+  uint64_t                               gnb_du_mbs_f1ap_id;
+  mbs_service_area_c                     mbs_service_area;
+  multicast_m_rbs_to_be_setup_mod_list_l multicast_m_rbs_to_be_setup_mod_list;
+  multicast_m_rbs_to_be_modified_list_l  multicast_m_rbs_to_be_modified_list;
+  multicast_m_rbs_to_be_released_list_l  multicast_m_rbs_to_be_released_list;
 
   // sequence methods
-  multicast_context_mod_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7905,25 +7807,20 @@ struct multicast_context_mod_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      multicast_m_rbs_setup_mod_list_present              = false;
-  bool                                                      multicast_m_rbs_failed_to_be_setup_mod_list_present = false;
-  bool                                                      multicast_m_rbs_modified_list_present               = false;
-  bool                                                      multicast_m_rbs_failed_to_be_modified_list_present  = false;
-  bool                                                      crit_diagnostics_present                            = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_setup_mod_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_failed_to_be_setup_mod_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_failed_to_be_setup_mod_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_modified_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_modified_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_failed_to_be_modified_item_ies_o>, 1, 32, true>>
-                                 multicast_m_rbs_failed_to_be_modified_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                                          multicast_m_rbs_setup_mod_list_present              = false;
+  bool                                          multicast_m_rbs_failed_to_be_setup_mod_list_present = false;
+  bool                                          multicast_m_rbs_modified_list_present               = false;
+  bool                                          multicast_m_rbs_failed_to_be_modified_list_present  = false;
+  bool                                          crit_diagnostics_present                            = false;
+  uint64_t                                      gnb_cu_mbs_f1ap_id;
+  uint64_t                                      gnb_du_mbs_f1ap_id;
+  multicast_m_rbs_setup_mod_list_l              multicast_m_rbs_setup_mod_list;
+  multicast_m_rbs_failed_to_be_setup_mod_list_l multicast_m_rbs_failed_to_be_setup_mod_list;
+  multicast_m_rbs_modified_list_l               multicast_m_rbs_modified_list;
+  multicast_m_rbs_failed_to_be_modified_list_l  multicast_m_rbs_failed_to_be_modified_list;
+  crit_diagnostics_s                            crit_diagnostics;
 
   // sequence methods
-  multicast_context_mod_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7937,12 +7834,11 @@ struct multicast_context_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_mbs_f1ap_id;
+  uint64_t gnb_du_mbs_f1ap_id;
+  cause_c  cause;
 
   // sequence methods
-  multicast_context_release_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7956,13 +7852,12 @@ struct multicast_context_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  multicast_context_release_complete_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7977,12 +7872,11 @@ struct multicast_context_release_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_mbs_f1ap_id;
+  uint64_t gnb_du_mbs_f1ap_id;
+  cause_c  cause;
 
   // sequence methods
-  multicast_context_release_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -7997,15 +7891,14 @@ struct multicast_context_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_du_mbs_f1ap_id_present = false;
-  bool                                                      crit_diagnostics_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               gnb_du_mbs_f1ap_id_present = false;
+  bool               crit_diagnostics_present   = false;
+  uint64_t           gnb_cu_mbs_f1ap_id;
+  uint64_t           gnb_du_mbs_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  multicast_context_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8019,16 +7912,14 @@ struct multicast_context_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      mbs_service_area_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<mbs_session_id_s>                              mbs_session_id;
-  ie_field_s<mbs_service_area_c>                            mbs_service_area;
-  ie_field_s<snssai_s>                                      snssai;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_to_be_setup_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_to_be_setup_list;
+  bool                               mbs_service_area_present = false;
+  uint64_t                           gnb_cu_mbs_f1ap_id;
+  mbs_session_id_s                   mbs_session_id;
+  mbs_service_area_c                 mbs_service_area;
+  snssai_s                           snssai;
+  multicast_m_rbs_to_be_setup_list_l multicast_m_rbs_to_be_setup_list;
 
   // sequence methods
-  multicast_context_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8042,18 +7933,15 @@ struct multicast_context_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      multicast_m_rbs_failed_to_be_setup_list_present = false;
-  bool                                                      crit_diagnostics_present                        = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_setup_item_ies_o>, 1, 32, true>>
-      multicast_m_rbs_setup_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_m_rbs_failed_to_be_setup_item_ies_o>, 1, 32, true>>
-                                 multicast_m_rbs_failed_to_be_setup_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                                      multicast_m_rbs_failed_to_be_setup_list_present = false;
+  bool                                      crit_diagnostics_present                        = false;
+  uint64_t                                  gnb_cu_mbs_f1ap_id;
+  uint64_t                                  gnb_du_mbs_f1ap_id;
+  multicast_m_rbs_setup_list_l              multicast_m_rbs_setup_list;
+  multicast_m_rbs_failed_to_be_setup_list_l multicast_m_rbs_failed_to_be_setup_list;
+  crit_diagnostics_s                        crit_diagnostics;
 
   // sequence methods
-  multicast_context_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8067,13 +7955,12 @@ struct multicast_distribution_release_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_multicast_f1_u_context_descriptor_s>       mbs_multicast_f1_u_context_descriptor;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t                                gnb_cu_mbs_f1ap_id;
+  uint64_t                                gnb_du_mbs_f1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s mbs_multicast_f1_u_context_descriptor;
+  cause_c                                 cause;
 
   // sequence methods
-  multicast_distribution_release_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8088,14 +7975,13 @@ struct multicast_distribution_release_complete_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_multicast_f1_u_context_descriptor_s>       mbs_multicast_f1_u_context_descriptor;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool                                    crit_diagnostics_present = false;
+  uint64_t                                gnb_cu_mbs_f1ap_id;
+  uint64_t                                gnb_du_mbs_f1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s mbs_multicast_f1_u_context_descriptor;
+  crit_diagnostics_s                      crit_diagnostics;
 
   // sequence methods
-  multicast_distribution_release_complete_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8110,16 +7996,15 @@ struct multicast_distribution_setup_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      gnb_du_mbs_f1ap_id_present = false;
-  bool                                                      crit_diagnostics_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_multicast_f1_u_context_descriptor_s>       mbs_multicast_f1_u_context_descriptor;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool                                    gnb_du_mbs_f1ap_id_present = false;
+  bool                                    crit_diagnostics_present   = false;
+  uint64_t                                gnb_cu_mbs_f1ap_id;
+  uint64_t                                gnb_du_mbs_f1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s mbs_multicast_f1_u_context_descriptor;
+  cause_c                                 cause;
+  crit_diagnostics_s                      crit_diagnostics;
 
   // sequence methods
-  multicast_distribution_setup_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8134,14 +8019,12 @@ struct multicast_distribution_setup_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_multicast_f1_u_context_descriptor_s>       mbs_multicast_f1_u_context_descriptor;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_f1_u_context_to_be_setup_item_ies_o>, 1, 32, true>>
-      multicast_f1_u_context_to_be_setup_list;
+  uint64_t                                  gnb_cu_mbs_f1ap_id;
+  uint64_t                                  gnb_du_mbs_f1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s   mbs_multicast_f1_u_context_descriptor;
+  multicast_f1_u_context_to_be_setup_list_l multicast_f1_u_context_to_be_setup_list;
 
   // sequence methods
-  multicast_distribution_setup_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8156,21 +8039,17 @@ struct multicast_distribution_setup_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool multicast_f1_u_context_failed_to_be_setup_list_present = false;
-  bool crit_diagnostics_present                               = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_mbs_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_mbs_f1ap_id;
-  ie_field_s<mbs_multicast_f1_u_context_descriptor_s>       mbs_multicast_f1_u_context_descriptor;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<multicast_f1_u_context_setup_item_ies_o>, 1, 32, true>>
-      multicast_f1_u_context_setup_list;
-  ie_field_s<
-      dyn_seq_of<protocol_ie_single_container_s<multicast_f1_u_context_failed_to_be_setup_item_ies_o>, 1, 32, true>>
-                                       multicast_f1_u_context_failed_to_be_setup_list;
-  ie_field_s<crit_diagnostics_s>       crit_diagnostics;
-  ie_field_s<fixed_octstring<4, true>> multicast_f1_u_context_ref_cu;
+  bool                                             multicast_f1_u_context_failed_to_be_setup_list_present = false;
+  bool                                             crit_diagnostics_present                               = false;
+  uint64_t                                         gnb_cu_mbs_f1ap_id;
+  uint64_t                                         gnb_du_mbs_f1ap_id;
+  mbs_multicast_f1_u_context_descriptor_s          mbs_multicast_f1_u_context_descriptor;
+  multicast_f1_u_context_setup_list_l              multicast_f1_u_context_setup_list;
+  multicast_f1_u_context_failed_to_be_setup_list_l multicast_f1_u_context_failed_to_be_setup_list;
+  crit_diagnostics_s                               crit_diagnostics;
+  fixed_octstring<4, true>                         multicast_f1_u_context_ref_cu;
 
   // sequence methods
-  multicast_distribution_setup_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8187,13 +8066,11 @@ struct multicast_group_paging_ies_container {
   // member variables
   bool                         ue_id_list_for_paging_list_present = false;
   bool                         mc_paging_cell_list_present        = false;
-  ie_field_s<mbs_session_id_s> mbs_session_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_id_list_for_paging_item_ies_o>, 1, 4096, true>>
-      ue_id_list_for_paging_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<mc_paging_cell_item_ies_o>, 1, 512, true>> mc_paging_cell_list;
+  mbs_session_id_s             mbs_session_id;
+  ue_id_list_for_paging_list_l ue_id_list_for_paging_list;
+  mc_paging_cell_list_l        mc_paging_cell_list;
 
   // sequence methods
-  multicast_group_paging_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8207,11 +8084,10 @@ struct network_access_rate_reduction_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<uac_assist_info_s>                     uac_assist_info;
+  uint16_t          transaction_id;
+  uac_assist_info_s uac_assist_info;
 
   // sequence methods
-  network_access_rate_reduction_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8225,12 +8101,11 @@ struct notify_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>>                                  gnb_du_ue_f1ap_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<drb_notify_item_ies_o>, 1, 64, true>> drb_notify_list;
+  uint64_t          gnb_cu_ue_f1ap_id;
+  uint64_t          gnb_du_ue_f1ap_id;
+  drb_notify_list_l drb_notify_list;
 
   // sequence methods
-  notify_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8244,13 +8119,12 @@ struct pdc_meas_fail_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
-  ie_field_s<cause_c>                                       cause;
+  uint64_t gnb_cu_ue_f1ap_id;
+  uint64_t gnb_du_ue_f1ap_id;
+  uint8_t  ran_ue_pdc_meas_id;
+  cause_c  cause;
 
   // sequence methods
-  pdc_meas_fail_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8264,15 +8138,14 @@ struct pdc_meas_initiation_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  uint8_t            ran_ue_pdc_meas_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  pdc_meas_initiation_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8286,17 +8159,15 @@ struct pdc_meas_initiation_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      pdc_meas_periodicity_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
-  ie_field_s<pdc_report_type_e>                             pdc_report_type;
-  ie_field_s<pdc_meas_periodicity_e>                        pdc_meas_periodicity;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<pdc_meas_quantities_item_ies_o>, 1, 16, true>>
-      pdc_meas_quantities;
+  bool                   pdc_meas_periodicity_present = false;
+  uint64_t               gnb_cu_ue_f1ap_id;
+  uint64_t               gnb_du_ue_f1ap_id;
+  uint8_t                ran_ue_pdc_meas_id;
+  pdc_report_type_e      pdc_report_type;
+  pdc_meas_periodicity_e pdc_meas_periodicity;
+  pdc_meas_quantities_l  pdc_meas_quantities;
 
   // sequence methods
-  pdc_meas_initiation_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8310,16 +8181,15 @@ struct pdc_meas_initiation_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      pdc_meas_result_present  = false;
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
-  ie_field_s<pdc_meas_result_s>                             pdc_meas_result;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               pdc_meas_result_present  = false;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  uint8_t            ran_ue_pdc_meas_id;
+  pdc_meas_result_s  pdc_meas_result;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  pdc_meas_initiation_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8333,13 +8203,12 @@ struct pdc_meas_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
-  ie_field_s<pdc_meas_result_s>                             pdc_meas_result;
+  uint64_t          gnb_cu_ue_f1ap_id;
+  uint64_t          gnb_du_ue_f1ap_id;
+  uint8_t           ran_ue_pdc_meas_id;
+  pdc_meas_result_s pdc_meas_result;
 
   // sequence methods
-  pdc_meas_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8353,12 +8222,11 @@ struct pdc_meas_termination_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint8_t, 1, 16, true, true>>           ran_ue_pdc_meas_id;
+  uint64_t gnb_cu_ue_f1ap_id;
+  uint64_t gnb_du_ue_f1ap_id;
+  uint8_t  ran_ue_pdc_meas_id;
 
   // sequence methods
-  pdc_meas_termination_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8372,13 +8240,12 @@ struct prs_cfg_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  prs_cfg_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8392,11 +8259,10 @@ struct prs_cfg_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<prs_cfg_request_type_e>                    prs_cfg_request_type;
-  ie_field_s<dyn_seq_of<prstrp_item_s, 1, 65535, true>> prstrp_list;
+  prs_cfg_request_type_e prs_cfg_request_type;
+  prstrp_list_l          prstrp_list;
 
   // sequence methods
-  prs_cfg_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8410,14 +8276,13 @@ struct prs_cfg_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      prs_tx_trp_list_present  = false;
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<dyn_seq_of<prs_tx_trp_item_s, 1, 65535, true>> prs_tx_trp_list;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               prs_tx_trp_list_present  = false;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  prs_tx_trp_list_l  prs_tx_trp_list;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  prs_cfg_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8431,18 +8296,16 @@ struct pws_cancel_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                 broadcast_to_be_cancelled_list_present = false;
-  bool                                                 cancel_all_warning_msgs_ind_present    = false;
-  bool                                                 notif_info_present                     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>    transaction_id;
-  ie_field_s<integer<uint32_t, 0, 65535, false, true>> numof_broadcast_request;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<broadcast_to_be_cancelled_list_item_ies_o>, 1, 512, true>>
-                                            broadcast_to_be_cancelled_list;
-  ie_field_s<cancel_all_warning_msgs_ind_e> cancel_all_warning_msgs_ind;
-  ie_field_s<notif_info_s>                  notif_info;
+  bool                             broadcast_to_be_cancelled_list_present = false;
+  bool                             cancel_all_warning_msgs_ind_present    = false;
+  bool                             notif_info_present                     = false;
+  uint16_t                         transaction_id;
+  uint32_t                         numof_broadcast_request;
+  broadcast_to_be_cancelled_list_l broadcast_to_be_cancelled_list;
+  cancel_all_warning_msgs_ind_e    cancel_all_warning_msgs_ind;
+  notif_info_s                     notif_info;
 
   // sequence methods
-  pws_cancel_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8456,15 +8319,13 @@ struct pws_cancel_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              cells_broadcast_cancelled_list_present = false;
-  bool                                              crit_diagnostics_present               = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_cancelled_list_item_ies_o>, 1, 512, true>>
-                                 cells_broadcast_cancelled_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                             cells_broadcast_cancelled_list_present = false;
+  bool                             crit_diagnostics_present               = false;
+  uint16_t                         transaction_id;
+  cells_broadcast_cancelled_list_l cells_broadcast_cancelled_list;
+  crit_diagnostics_s               crit_diagnostics;
 
   // sequence methods
-  pws_cancel_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8478,13 +8339,11 @@ struct pws_fail_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              pws_failed_nr_cgi_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<pws_failed_nr_cgi_list_item_ies_o>, 1, 512, true>>
-      pws_failed_nr_cgi_list;
+  bool                     pws_failed_nr_cgi_list_present = false;
+  uint16_t                 transaction_id;
+  pws_failed_nr_cgi_list_l pws_failed_nr_cgi_list;
 
   // sequence methods
-  pws_fail_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8498,12 +8357,10 @@ struct pws_restart_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<nr_cgi_list_for_restart_list_item_ies_o>, 1, 512, true>>
-      nr_cgi_list_for_restart_list;
+  uint16_t                       transaction_id;
+  nr_cgi_list_for_restart_list_l nr_cgi_list_for_restart_list;
 
   // sequence methods
-  pws_restart_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8517,34 +8374,33 @@ struct paging_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                          paging_drx_present                          = false;
-  bool                          paging_prio_present                         = false;
-  bool                          paging_origin_present                       = false;
-  bool                          ran_ue_paging_drx_present                   = false;
-  bool                          cn_ue_paging_drx_present                    = false;
-  bool                          nr_paginge_drx_info_present                 = false;
-  bool                          nr_paginge_drx_infofor_rrc_inactive_present = false;
-  bool                          paging_cause_present                        = false;
-  bool                          pe_ip_s_assist_info_present                 = false;
-  bool                          ue_paging_cap_present                       = false;
-  bool                          extended_ue_id_idx_value_present            = false;
-  ie_field_s<ue_id_idx_value_c> ue_id_idx_value;
-  ie_field_s<paging_id_c>       paging_id;
-  ie_field_s<paging_drx_e>      paging_drx;
-  ie_field_s<paging_prio_e>     paging_prio;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<paging_cell_item_ies_o>, 1, 512, true>> paging_cell_list;
-  ie_field_s<paging_origin_e>                                                                  paging_origin;
-  ie_field_s<paging_drx_e>                                                                     ran_ue_paging_drx;
-  ie_field_s<paging_drx_e>                                                                     cn_ue_paging_drx;
-  ie_field_s<nr_paginge_drx_info_s>                                                            nr_paginge_drx_info;
-  ie_field_s<nr_paginge_drx_infofor_rrc_inactive_s> nr_paginge_drx_infofor_rrc_inactive;
-  ie_field_s<paging_cause_e>                        paging_cause;
-  ie_field_s<pe_ip_s_assist_info_s>                 pe_ip_s_assist_info;
-  ie_field_s<ue_paging_cap_s>                       ue_paging_cap;
-  ie_field_s<fixed_bitstring<16, false, true>>      extended_ue_id_idx_value;
+  bool                                  paging_drx_present                          = false;
+  bool                                  paging_prio_present                         = false;
+  bool                                  paging_origin_present                       = false;
+  bool                                  ran_ue_paging_drx_present                   = false;
+  bool                                  cn_ue_paging_drx_present                    = false;
+  bool                                  nr_paginge_drx_info_present                 = false;
+  bool                                  nr_paginge_drx_infofor_rrc_inactive_present = false;
+  bool                                  paging_cause_present                        = false;
+  bool                                  pe_ip_s_assist_info_present                 = false;
+  bool                                  ue_paging_cap_present                       = false;
+  bool                                  extended_ue_id_idx_value_present            = false;
+  ue_id_idx_value_c                     ue_id_idx_value;
+  paging_id_c                           paging_id;
+  paging_drx_e                          paging_drx;
+  paging_prio_e                         paging_prio;
+  paging_cell_list_l                    paging_cell_list;
+  paging_origin_e                       paging_origin;
+  paging_drx_e                          ran_ue_paging_drx;
+  paging_drx_e                          cn_ue_paging_drx;
+  nr_paginge_drx_info_s                 nr_paginge_drx_info;
+  nr_paginge_drx_infofor_rrc_inactive_s nr_paginge_drx_infofor_rrc_inactive;
+  paging_cause_e                        paging_cause;
+  pe_ip_s_assist_info_s                 pe_ip_s_assist_info;
+  ue_paging_cap_s                       ue_paging_cap;
+  fixed_bitstring<16, false, true>      extended_ue_id_idx_value;
 
   // sequence methods
-  paging_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8558,13 +8414,12 @@ struct pos_sys_info_delivery_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<nr_cgi_s>                                      nr_cgi;
-  ie_field_s<dyn_seq_of<pos_sitype_item_s, 1, 32, true>>    pos_sitype_list;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ue_id;
+  uint16_t          transaction_id;
+  nr_cgi_s          nr_cgi;
+  pos_sitype_list_l pos_sitype_list;
+  uint64_t          confirmed_ue_id;
 
   // sequence methods
-  pos_sys_info_delivery_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8578,14 +8433,13 @@ struct positioning_activation_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  positioning_activation_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8599,14 +8453,13 @@ struct positioning_activation_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      activation_time_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<srs_type_c>                                    srs_type;
-  ie_field_s<fixed_bitstring<64, false, true>>              activation_time;
+  bool                             activation_time_present = false;
+  uint64_t                         gnb_cu_ue_f1ap_id;
+  uint64_t                         gnb_du_ue_f1ap_id;
+  srs_type_c                       srs_type;
+  fixed_bitstring<64, false, true> activation_time;
 
   // sequence methods
-  positioning_activation_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8620,17 +8473,16 @@ struct positioning_activation_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      sys_frame_num_present    = false;
-  bool                                                      slot_num_present         = false;
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<integer<uint16_t, 0, 1023, false, true>>       sys_frame_num;
-  ie_field_s<integer<uint8_t, 0, 79, false, true>>          slot_num;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               sys_frame_num_present    = false;
+  bool               slot_num_present         = false;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  uint16_t           sys_frame_num;
+  uint8_t            slot_num;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  positioning_activation_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8644,18 +8496,17 @@ struct positioning_assist_info_ctrl_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              pos_assist_info_present             = false;
-  bool                                              pos_broadcast_present               = false;
-  bool                                              positioning_broadcast_cells_present = false;
-  bool                                              routing_id_present                  = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<unbounded_octstring<true>>             pos_assist_info;
-  ie_field_s<pos_broadcast_e>                       pos_broadcast;
-  ie_field_s<dyn_seq_of<nr_cgi_s, 1, 16384, true>>  positioning_broadcast_cells;
-  ie_field_s<unbounded_octstring<true>>             routing_id;
+  bool                          pos_assist_info_present             = false;
+  bool                          pos_broadcast_present               = false;
+  bool                          positioning_broadcast_cells_present = false;
+  bool                          routing_id_present                  = false;
+  uint16_t                      transaction_id;
+  unbounded_octstring<true>     pos_assist_info;
+  pos_broadcast_e               pos_broadcast;
+  positioning_broadcast_cells_l positioning_broadcast_cells;
+  unbounded_octstring<true>     routing_id;
 
   // sequence methods
-  positioning_assist_info_ctrl_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8669,18 +8520,17 @@ struct positioning_assist_info_feedback_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              pos_assist_info_fail_list_present   = false;
-  bool                                              positioning_broadcast_cells_present = false;
-  bool                                              routing_id_present                  = false;
-  bool                                              crit_diagnostics_present            = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<unbounded_octstring<true>>             pos_assist_info_fail_list;
-  ie_field_s<dyn_seq_of<nr_cgi_s, 1, 16384, true>>  positioning_broadcast_cells;
-  ie_field_s<unbounded_octstring<true>>             routing_id;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool                          pos_assist_info_fail_list_present   = false;
+  bool                          positioning_broadcast_cells_present = false;
+  bool                          routing_id_present                  = false;
+  bool                          crit_diagnostics_present            = false;
+  uint16_t                      transaction_id;
+  unbounded_octstring<true>     pos_assist_info_fail_list;
+  positioning_broadcast_cells_l positioning_broadcast_cells;
+  unbounded_octstring<true>     routing_id;
+  crit_diagnostics_s            crit_diagnostics;
 
   // sequence methods
-  positioning_assist_info_feedback_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8694,12 +8544,11 @@ struct positioning_deactivation_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<abort_tx_c>                                    abort_tx;
+  uint64_t   gnb_cu_ue_f1ap_id;
+  uint64_t   gnb_du_ue_f1ap_id;
+  abort_tx_c abort_tx;
 
   // sequence methods
-  positioning_deactivation_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8713,14 +8562,13 @@ struct positioning_info_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      crit_diagnostics_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<cause_c>                                       cause;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  positioning_info_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8734,17 +8582,16 @@ struct positioning_info_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      requested_srs_tx_characteristics_present = false;
-  bool                                                      ue_report_info_present                   = false;
-  bool                                                      srs_pos_rrc_inactive_query_ind_present   = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<requested_srs_tx_characteristics_s>            requested_srs_tx_characteristics;
-  ie_field_s<ue_report_info_s>                              ue_report_info;
-  ie_field_s<srs_pos_rrc_inactive_query_ind_e>              srs_pos_rrc_inactive_query_ind;
+  bool                               requested_srs_tx_characteristics_present = false;
+  bool                               ue_report_info_present                   = false;
+  bool                               srs_pos_rrc_inactive_query_ind_present   = false;
+  uint64_t                           gnb_cu_ue_f1ap_id;
+  uint64_t                           gnb_du_ue_f1ap_id;
+  requested_srs_tx_characteristics_s requested_srs_tx_characteristics;
+  ue_report_info_s                   ue_report_info;
+  srs_pos_rrc_inactive_query_ind_e   srs_pos_rrc_inactive_query_ind;
 
   // sequence methods
-  positioning_info_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8758,19 +8605,18 @@ struct positioning_info_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      srs_cfg_present                  = false;
-  bool                                                      sfn_initisation_time_present     = false;
-  bool                                                      crit_diagnostics_present         = false;
-  bool                                                      srs_pos_rrc_inactive_cfg_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<srs_cfg_s>                                     srs_cfg;
-  ie_field_s<fixed_bitstring<64, false, true>>              sfn_initisation_time;
-  ie_field_s<crit_diagnostics_s>                            crit_diagnostics;
-  ie_field_s<unbounded_octstring<true>>                     srs_pos_rrc_inactive_cfg;
+  bool                             srs_cfg_present                  = false;
+  bool                             sfn_initisation_time_present     = false;
+  bool                             crit_diagnostics_present         = false;
+  bool                             srs_pos_rrc_inactive_cfg_present = false;
+  uint64_t                         gnb_cu_ue_f1ap_id;
+  uint64_t                         gnb_du_ue_f1ap_id;
+  srs_cfg_s                        srs_cfg;
+  fixed_bitstring<64, false, true> sfn_initisation_time;
+  crit_diagnostics_s               crit_diagnostics;
+  unbounded_octstring<true>        srs_pos_rrc_inactive_cfg;
 
   // sequence methods
-  positioning_info_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8784,15 +8630,14 @@ struct positioning_info_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      srs_cfg_present              = false;
-  bool                                                      sfn_initisation_time_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<srs_cfg_s>                                     srs_cfg;
-  ie_field_s<fixed_bitstring<64, false, true>>              sfn_initisation_time;
+  bool                             srs_cfg_present              = false;
+  bool                             sfn_initisation_time_present = false;
+  uint64_t                         gnb_cu_ue_f1ap_id;
+  uint64_t                         gnb_du_ue_f1ap_id;
+  srs_cfg_s                        srs_cfg;
+  fixed_bitstring<64, false, true> sfn_initisation_time;
 
   // sequence methods
-  positioning_info_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8806,12 +8651,11 @@ struct positioning_meas_abort_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>   transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> ran_meas_id;
+  uint16_t transaction_id;
+  uint32_t lmf_meas_id;
+  uint32_t ran_meas_id;
 
   // sequence methods
-  positioning_meas_abort_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8825,15 +8669,14 @@ struct positioning_meas_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>   transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> ran_meas_id;
-  ie_field_s<cause_c>                                 cause;
-  ie_field_s<crit_diagnostics_s>                      crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  uint32_t           lmf_meas_id;
+  uint32_t           ran_meas_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  positioning_meas_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8847,13 +8690,12 @@ struct positioning_meas_fail_ind_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>   transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>> ran_meas_id;
-  ie_field_s<cause_c>                                 cause;
+  uint16_t transaction_id;
+  uint32_t lmf_meas_id;
+  uint32_t ran_meas_id;
+  cause_c  cause;
 
   // sequence methods
-  positioning_meas_fail_ind_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8867,13 +8709,12 @@ struct positioning_meas_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>              lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>              ran_meas_id;
-  ie_field_s<dyn_seq_of<pos_meas_result_list_item_s, 1, 64, true>> pos_meas_result_list;
+  uint16_t               transaction_id;
+  uint32_t               lmf_meas_id;
+  uint32_t               ran_meas_id;
+  pos_meas_result_list_l pos_meas_result_list;
 
   // sequence methods
-  positioning_meas_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8887,37 +8728,36 @@ struct positioning_meas_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                               pos_meas_periodicity_present             = false;
-  bool                                                               sfn_initisation_time_present             = false;
-  bool                                                               srs_cfg_present                          = false;
-  bool                                                               meas_beam_info_request_present           = false;
-  bool                                                               sys_frame_num_present                    = false;
-  bool                                                               slot_num_present                         = false;
-  bool                                                               pos_meas_periodicity_extended_present    = false;
-  bool                                                               resp_time_present                        = false;
-  bool                                                               meas_characteristics_request_ind_present = false;
-  bool                                                               meas_time_occasion_present               = false;
-  bool                                                               pos_meas_amount_present                  = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                  transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>                lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>                ran_meas_id;
-  ie_field_s<dyn_seq_of<trp_meas_request_item_s, 1, 64, true>>       trp_meas_request_list;
-  ie_field_s<pos_report_characteristics_e>                           pos_report_characteristics;
-  ie_field_s<meas_periodicity_e>                                     pos_meas_periodicity;
-  ie_field_s<dyn_seq_of<pos_meas_quantities_item_s, 1, 16384, true>> pos_meas_quantities;
-  ie_field_s<fixed_bitstring<64, false, true>>                       sfn_initisation_time;
-  ie_field_s<srs_cfg_s>                                              srs_cfg;
-  ie_field_s<meas_beam_info_request_e>                               meas_beam_info_request;
-  ie_field_s<integer<uint16_t, 0, 1023, false, true>>                sys_frame_num;
-  ie_field_s<integer<uint8_t, 0, 79, false, true>>                   slot_num;
-  ie_field_s<meas_periodicity_extended_e>                            pos_meas_periodicity_extended;
-  ie_field_s<resp_time_s>                                            resp_time;
-  ie_field_s<fixed_bitstring<16, false, true>>                       meas_characteristics_request_ind;
-  ie_field_s<meas_time_occasion_e>                                   meas_time_occasion;
-  ie_field_s<pos_meas_amount_e>                                      pos_meas_amount;
+  bool                             pos_meas_periodicity_present             = false;
+  bool                             sfn_initisation_time_present             = false;
+  bool                             srs_cfg_present                          = false;
+  bool                             meas_beam_info_request_present           = false;
+  bool                             sys_frame_num_present                    = false;
+  bool                             slot_num_present                         = false;
+  bool                             pos_meas_periodicity_extended_present    = false;
+  bool                             resp_time_present                        = false;
+  bool                             meas_characteristics_request_ind_present = false;
+  bool                             meas_time_occasion_present               = false;
+  bool                             pos_meas_amount_present                  = false;
+  uint16_t                         transaction_id;
+  uint32_t                         lmf_meas_id;
+  uint32_t                         ran_meas_id;
+  trp_meas_request_list_l          trp_meas_request_list;
+  pos_report_characteristics_e     pos_report_characteristics;
+  meas_periodicity_e               pos_meas_periodicity;
+  pos_meas_quantities_l            pos_meas_quantities;
+  fixed_bitstring<64, false, true> sfn_initisation_time;
+  srs_cfg_s                        srs_cfg;
+  meas_beam_info_request_e         meas_beam_info_request;
+  uint16_t                         sys_frame_num;
+  uint8_t                          slot_num;
+  meas_periodicity_extended_e      pos_meas_periodicity_extended;
+  resp_time_s                      resp_time;
+  fixed_bitstring<16, false, true> meas_characteristics_request_ind;
+  meas_time_occasion_e             meas_time_occasion;
+  pos_meas_amount_e                pos_meas_amount;
 
   // sequence methods
-  positioning_meas_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8931,16 +8771,15 @@ struct positioning_meas_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                             pos_meas_result_list_present = false;
-  bool                                                             crit_diagnostics_present     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>                transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>              lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>              ran_meas_id;
-  ie_field_s<dyn_seq_of<pos_meas_result_list_item_s, 1, 64, true>> pos_meas_result_list;
-  ie_field_s<crit_diagnostics_s>                                   crit_diagnostics;
+  bool                   pos_meas_result_list_present = false;
+  bool                   crit_diagnostics_present     = false;
+  uint16_t               transaction_id;
+  uint32_t               lmf_meas_id;
+  uint32_t               ran_meas_id;
+  pos_meas_result_list_l pos_meas_result_list;
+  crit_diagnostics_s     crit_diagnostics;
 
   // sequence methods
-  positioning_meas_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -8954,20 +8793,19 @@ struct positioning_meas_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                     srs_cfg_present                          = false;
-  bool                                                     trp_meas_upd_list_present                = false;
-  bool                                                     meas_characteristics_request_ind_present = false;
-  bool                                                     meas_time_occasion_present               = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>        transaction_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>      lmf_meas_id;
-  ie_field_s<integer<uint32_t, 1, 65536, true, true>>      ran_meas_id;
-  ie_field_s<srs_cfg_s>                                    srs_cfg;
-  ie_field_s<dyn_seq_of<trp_meas_upd_item_s, 1, 64, true>> trp_meas_upd_list;
-  ie_field_s<fixed_bitstring<16, false, true>>             meas_characteristics_request_ind;
-  ie_field_s<meas_time_occasion_e>                         meas_time_occasion;
+  bool                             srs_cfg_present                          = false;
+  bool                             trp_meas_upd_list_present                = false;
+  bool                             meas_characteristics_request_ind_present = false;
+  bool                             meas_time_occasion_present               = false;
+  uint16_t                         transaction_id;
+  uint32_t                         lmf_meas_id;
+  uint32_t                         ran_meas_id;
+  srs_cfg_s                        srs_cfg;
+  trp_meas_upd_list_l              trp_meas_upd_list;
+  fixed_bitstring<16, false, true> meas_characteristics_request_ind;
+  meas_time_occasion_e             meas_time_occasion;
 
   // sequence methods
-  positioning_meas_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9004,13 +8842,12 @@ struct qo_e_info_transfer_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                      qo_e_info_present = false;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<qo_e_info_s>                                   qo_e_info;
+  bool        qo_e_info_present = false;
+  uint64_t    gnb_cu_ue_f1ap_id;
+  uint64_t    gnb_du_ue_f1ap_id;
+  qo_e_info_s qo_e_info;
 
   // sequence methods
-  qo_e_info_transfer_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9024,13 +8861,12 @@ struct rrc_delivery_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<rrc_delivery_status_s>                         rrc_delivery_status;
-  ie_field_s<integer<uint8_t, 0, 3, true, true>>            srb_id;
+  uint64_t              gnb_cu_ue_f1ap_id;
+  uint64_t              gnb_du_ue_f1ap_id;
+  rrc_delivery_status_s rrc_delivery_status;
+  uint8_t               srb_id;
 
   // sequence methods
-  rrc_delivery_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9044,11 +8880,10 @@ struct ref_time_info_report_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<time_ref_info_s>                       time_ref_info;
+  uint16_t        transaction_id;
+  time_ref_info_s time_ref_info;
 
   // sequence methods
-  ref_time_info_report_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9062,11 +8897,10 @@ struct ref_time_info_report_ctrl_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<report_request_type_s>                 report_request_type;
+  uint16_t              transaction_id;
+  report_request_type_s report_request_type;
 
   // sequence methods
-  ref_time_info_report_ctrl_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9080,12 +8914,11 @@ struct reset_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<reset_type_c>                          reset_type;
+  uint16_t     transaction_id;
+  cause_c      cause;
+  reset_type_c reset_type;
 
   // sequence methods
-  reset_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9099,15 +8932,13 @@ struct reset_ack_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              ue_associated_lc_f1_conn_list_res_ack_present = false;
-  bool                                              crit_diagnostics_present                      = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ue_associated_lc_f1_conn_item_res_ack_o>, 1, 65536, true>>
-                                 ue_associated_lc_f1_conn_list_res_ack;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                                    ue_associated_lc_f1_conn_list_res_ack_present = false;
+  bool                                    crit_diagnostics_present                      = false;
+  uint16_t                                transaction_id;
+  ue_associated_lc_f1_conn_list_res_ack_l ue_associated_lc_f1_conn_list_res_ack;
+  crit_diagnostics_s                      crit_diagnostics;
 
   // sequence methods
-  reset_ack_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9121,15 +8952,14 @@ struct res_status_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>> gnb_cu_meas_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>> gnb_du_meas_id;
-  ie_field_s<cause_c>                                cause;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  uint16_t           gnb_cu_meas_id;
+  uint16_t           gnb_du_meas_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  res_status_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9143,20 +8973,19 @@ struct res_status_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                        gnb_du_meas_id_present         = false;
-  bool                                                        report_characteristics_present = false;
-  bool                                                        cell_to_report_list_present    = false;
-  bool                                                        report_periodicity_present     = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>           transaction_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>          gnb_cu_meas_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>          gnb_du_meas_id;
-  ie_field_s<regist_request_e>                                regist_request;
-  ie_field_s<fixed_bitstring<32, false, true>>                report_characteristics;
-  ie_field_s<dyn_seq_of<cell_to_report_item_s, 1, 512, true>> cell_to_report_list;
-  ie_field_s<report_periodicity_e>                            report_periodicity;
+  bool                             gnb_du_meas_id_present         = false;
+  bool                             report_characteristics_present = false;
+  bool                             cell_to_report_list_present    = false;
+  bool                             report_periodicity_present     = false;
+  uint16_t                         transaction_id;
+  uint16_t                         gnb_cu_meas_id;
+  uint16_t                         gnb_du_meas_id;
+  regist_request_e                 regist_request;
+  fixed_bitstring<32, false, true> report_characteristics;
+  cell_to_report_list_l            cell_to_report_list;
+  report_periodicity_e             report_periodicity;
 
   // sequence methods
-  res_status_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9170,14 +8999,13 @@ struct res_status_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                               crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>  transaction_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>> gnb_cu_meas_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>> gnb_du_meas_id;
-  ie_field_s<crit_diagnostics_s>                     crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  uint16_t           gnb_cu_meas_id;
+  uint16_t           gnb_du_meas_id;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  res_status_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9191,18 +9019,17 @@ struct res_status_upd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                          hardware_load_ind_present     = false;
-  bool                                                          tnl_capacity_ind_present      = false;
-  bool                                                          cell_meas_result_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>             transaction_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>            gnb_cu_meas_id;
-  ie_field_s<integer<uint16_t, 0, 4095, true, true>>            gnb_du_meas_id;
-  ie_field_s<hardware_load_ind_s>                               hardware_load_ind;
-  ie_field_s<tnl_capacity_ind_s>                                tnl_capacity_ind;
-  ie_field_s<dyn_seq_of<cell_meas_result_item_s, 1, 512, true>> cell_meas_result_list;
+  bool                    hardware_load_ind_present     = false;
+  bool                    tnl_capacity_ind_present      = false;
+  bool                    cell_meas_result_list_present = false;
+  uint16_t                transaction_id;
+  uint16_t                gnb_cu_meas_id;
+  uint16_t                gnb_du_meas_id;
+  hardware_load_ind_s     hardware_load_ind;
+  tnl_capacity_ind_s      tnl_capacity_ind;
+  cell_meas_result_list_l cell_meas_result_list;
 
   // sequence methods
-  res_status_upd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9216,13 +9043,12 @@ struct sys_info_delivery_cmd_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>         transaction_id;
-  ie_field_s<nr_cgi_s>                                      nr_cgi;
-  ie_field_s<dyn_seq_of<sitype_item_s, 1, 32, true>>        sitype_list;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> confirmed_ue_id;
+  uint16_t      transaction_id;
+  nr_cgi_s      nr_cgi;
+  sitype_list_l sitype_list;
+  uint64_t      confirmed_ue_id;
 
   // sequence methods
-  sys_info_delivery_cmd_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9236,13 +9062,12 @@ struct trp_info_fail_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<cause_c>                               cause;
-  ie_field_s<crit_diagnostics_s>                    crit_diagnostics;
+  bool               crit_diagnostics_present = false;
+  uint16_t           transaction_id;
+  cause_c            cause;
+  crit_diagnostics_s crit_diagnostics;
 
   // sequence methods
-  trp_info_fail_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9256,14 +9081,12 @@ struct trp_info_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                    trp_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>       transaction_id;
-  ie_field_s<dyn_seq_of<trp_list_item_s, 1, 65535, true>> trp_list;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<trp_info_type_item_trp_req_o>, 1, 64, true>>
-      trp_info_type_list_trp_req;
+  bool                         trp_list_present = false;
+  uint16_t                     transaction_id;
+  trp_list_l                   trp_list;
+  trp_info_type_list_trp_req_l trp_info_type_list_trp_req;
 
   // sequence methods
-  trp_info_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9277,14 +9100,12 @@ struct trp_info_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              crit_diagnostics_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<trp_info_item_trp_resp_o>, 1, 65535, true>>
-                                 trp_info_list_trp_resp;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
+  bool                     crit_diagnostics_present = false;
+  uint16_t                 transaction_id;
+  trp_info_list_trp_resp_l trp_info_list_trp_resp;
+  crit_diagnostics_s       crit_diagnostics;
 
   // sequence methods
-  trp_info_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9298,12 +9119,11 @@ struct trace_start_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_cu_ue_f1ap_id;
-  ie_field_s<integer<uint64_t, 0, 4294967295, false, true>> gnb_du_ue_f1ap_id;
-  ie_field_s<trace_activation_s>                            trace_activation;
+  uint64_t           gnb_cu_ue_f1ap_id;
+  uint64_t           gnb_du_ue_f1ap_id;
+  trace_activation_s trace_activation;
 
   // sequence methods
-  trace_start_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9317,16 +9137,14 @@ struct write_replace_warning_request_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                                 cells_to_be_broadcast_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>>    transaction_id;
-  ie_field_s<pws_sys_info_s>                           pws_sys_info;
-  ie_field_s<integer<uint32_t, 0, 131071, true, true>> repeat_period;
-  ie_field_s<integer<uint32_t, 0, 65535, false, true>> numof_broadcast_request;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_to_be_broadcast_list_item_ies_o>, 1, 512, true>>
-      cells_to_be_broadcast_list;
+  bool                         cells_to_be_broadcast_list_present = false;
+  uint16_t                     transaction_id;
+  pws_sys_info_s               pws_sys_info;
+  uint32_t                     repeat_period;
+  uint32_t                     numof_broadcast_request;
+  cells_to_be_broadcast_list_l cells_to_be_broadcast_list;
 
   // sequence methods
-  write_replace_warning_request_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;
@@ -9340,18 +9158,15 @@ struct write_replace_warning_resp_ies_container {
   using ie_field_s = protocol_ie_container_item_s<valueT_>;
 
   // member variables
-  bool                                              cells_broadcast_completed_list_present = false;
-  bool                                              crit_diagnostics_present               = false;
-  bool                                              ded_si_delivery_needed_ue_list_present = false;
-  ie_field_s<integer<uint16_t, 0, 255, true, true>> transaction_id;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<cells_broadcast_completed_list_item_ies_o>, 1, 512, true>>
-                                 cells_broadcast_completed_list;
-  ie_field_s<crit_diagnostics_s> crit_diagnostics;
-  ie_field_s<dyn_seq_of<protocol_ie_single_container_s<ded_si_delivery_needed_ue_item_ies_o>, 1, 65536, true>>
-      ded_si_delivery_needed_ue_list;
+  bool                             cells_broadcast_completed_list_present = false;
+  bool                             crit_diagnostics_present               = false;
+  bool                             ded_si_delivery_needed_ue_list_present = false;
+  uint16_t                         transaction_id;
+  cells_broadcast_completed_list_l cells_broadcast_completed_list;
+  crit_diagnostics_s               crit_diagnostics;
+  ded_si_delivery_needed_ue_list_l ded_si_delivery_needed_ue_list;
 
   // sequence methods
-  write_replace_warning_resp_ies_container();
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
   void        to_json(json_writer& j) const;

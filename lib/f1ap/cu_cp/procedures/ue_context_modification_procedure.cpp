@@ -64,8 +64,8 @@ void ue_context_modification_procedure::send_ue_context_modification_request()
 
   fill_f1ap_ue_context_modification_request(ctx_mod, request);
 
-  ctx_mod->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
-  ctx_mod->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
+  ctx_mod->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
+  ctx_mod->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -92,7 +92,7 @@ cu_cp_ue_context_modification_response ue_context_modification_procedure::create
     fill_f1ap_ue_context_modification_response_message(res, resp);
   } else if (transaction_sink.failed()) {
     const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_sink.failure();
-    logger.debug("Received UeContextModificationFailure cause={}", get_cause_str(fail->cause.value));
+    logger.debug("Received UeContextModificationFailure cause={}", get_cause_str(fail->cause));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       (*transaction_sink.failure()).to_json(js);

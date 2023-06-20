@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
@@ -49,15 +50,12 @@ struct ul_prach_context {
 /// Uplink slot context.
 class ul_slot_context
 {
-  /// Maximum number of ports.
-  static constexpr unsigned MAX_NUM_PORTS = 4U;
-
   /// Resource grid writer statistics.
   struct resource_grid_writer_stats {
     /// Number of REs of the grid.
     unsigned grid_nof_re = 0;
     /// Number of REs written indexed by port.
-    static_vector<unsigned, MAX_NUM_PORTS> re_written;
+    static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> re_written;
 
     /// Returns true when all the RE for all the ports have been written.
     explicit operator bool() const noexcept { return grid_nof_re != 0; }
@@ -80,7 +78,8 @@ public:
   {
     for (unsigned symbol_id = 0, e = grid_.get_writer().get_nof_symbols(); symbol_id != e; ++symbol_id) {
       rg_stats[symbol_id].grid_nof_re = grid_.get_writer().get_nof_subc();
-      rg_stats[symbol_id].re_written  = static_vector<unsigned, MAX_NUM_PORTS>(grid_.get_writer().get_nof_ports(), 0);
+      rg_stats[symbol_id].re_written =
+          static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>(grid_.get_writer().get_nof_ports(), 0);
     }
   }
 

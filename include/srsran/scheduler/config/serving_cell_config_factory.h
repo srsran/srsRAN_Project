@@ -26,7 +26,7 @@
 #include "serving_cell_config.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
-#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {
 namespace config_helpers {

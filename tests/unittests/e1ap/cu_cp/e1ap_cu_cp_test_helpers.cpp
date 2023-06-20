@@ -56,9 +56,8 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
   test_ues.emplace(ue_index);
   test_ue& u         = test_ues[ue_index];
   u.ue_index         = ue_index;
-  u.cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg()
-                                                       .value.bearer_context_setup_request()
-                                                       ->gnb_cu_cp_ue_e1ap_id.value);
+  u.cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(
+      this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id);
   u.cu_up_ue_e1ap_id = cu_up_ue_e1ap_id;
 
   // Handle response from CU-UP.

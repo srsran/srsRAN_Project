@@ -55,7 +55,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(
       success,
-      ue->get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));
+      ue->get_rrc_ue_control_notifier().on_new_security_context(request->ue_security_cap, request->security_key));
 
   if (not success) {
     ngap_initial_context_failure_message fail_msg = {};
@@ -63,7 +63,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
     // Add failed PDU Sessions
     if (request->pdu_session_res_setup_list_cxt_req_present) {
-      for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req.value) {
+      for (const auto& pdu_session_item : request->pdu_session_res_setup_list_cxt_req) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
         failed_item.pdu_session_id = uint_to_pdu_session_id(pdu_session_item.pdu_session_id);
         failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::radio_network;
@@ -76,9 +76,9 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
     // Release UE
-    cu_cp_ue_context_release_command rel_cmd = {};
-    rel_cmd.ue_index                         = ue->get_ue_index();
-    rel_cmd.cause                            = cause_t::protocol;
+    cu_cp_ngap_ue_context_release_command rel_cmd = {};
+    rel_cmd.ue_index                              = ue->get_ue_index();
+    rel_cmd.cause                                 = cause_t::protocol;
 
     ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
 
@@ -90,7 +90,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   }
 
   // Handle GUAMI
-  context.current_guami = asn1_guami_to_guami(request->guami.value);
+  context.current_guami = asn1_guami_to_guami(request->guami);
 
   // Handle optional IEs
 
@@ -98,14 +98,14 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   if (request->pdu_session_res_setup_list_cxt_req_present) {
     // Handle UE Aggregate Maximum Bitrate
     if (request->ue_aggr_max_bit_rate_present) {
-      ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl);
+      ue->set_aggregate_maximum_bit_rate_dl(request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl);
     }
 
     // Convert to common type
     pdu_session_setup_request.ue_index     = ue_index;
-    pdu_session_setup_request.serving_plmn = request->guami.value.plmn_id.to_string();
+    pdu_session_setup_request.serving_plmn = request->guami.plmn_id.to_string();
     fill_cu_cp_pdu_session_resource_setup_request(pdu_session_setup_request,
-                                                  request->pdu_session_res_setup_list_cxt_req.value);
+                                                  request->pdu_session_res_setup_list_cxt_req);
     pdu_session_setup_request.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
     // Handle mandatory IEs
@@ -114,7 +114,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
         ue->get_du_processor_control_notifier().on_new_pdu_session_resource_setup_request(pdu_session_setup_request));
 
     // Handle NAS PDUs
-    for (const auto& session : request->pdu_session_res_setup_list_cxt_req.value) {
+    for (const auto& session : request->pdu_session_res_setup_list_cxt_req) {
       if (!session.nas_pdu.empty()) {
         handle_nas_pdu(logger, session.nas_pdu, *ue);
       }
@@ -122,7 +122,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   }
 
   if (request->nas_pdu_present) {
-    handle_nas_pdu(logger, request->nas_pdu.value, *ue);
+    handle_nas_pdu(logger, request->nas_pdu, *ue);
   }
 
   ngap_initial_context_response_message resp_msg = {};
@@ -144,9 +144,9 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   ngap_msg.pdu.set_successful_outcome();
   ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
-  auto& init_ctxt_setup_resp                 = ngap_msg.pdu.successful_outcome().value.init_context_setup_resp();
-  init_ctxt_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
-  init_ctxt_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+  auto& init_ctxt_setup_resp           = ngap_msg.pdu.successful_outcome().value.init_context_setup_resp();
+  init_ctxt_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  init_ctxt_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
   fill_asn1_initial_context_setup_response(init_ctxt_setup_resp, msg);
 
@@ -163,9 +163,9 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
 
   ngap_msg.pdu.set_unsuccessful_outcome();
   ngap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
-  auto& init_ctxt_setup_fail                 = ngap_msg.pdu.unsuccessful_outcome().value.init_context_setup_fail();
-  init_ctxt_setup_fail->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
-  init_ctxt_setup_fail->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+  auto& init_ctxt_setup_fail           = ngap_msg.pdu.unsuccessful_outcome().value.init_context_setup_fail();
+  init_ctxt_setup_fail->amf_ue_ngap_id = amf_ue_id_to_uint(amf_ue_id);
+  init_ctxt_setup_fail->ran_ue_ngap_id = ran_ue_id_to_uint(ran_ue_id);
 
   // Fill PDU Session Resource Failed to Setup List
   fill_asn1_initial_context_setup_failure(init_ctxt_setup_fail, msg);

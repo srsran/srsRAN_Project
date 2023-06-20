@@ -48,12 +48,12 @@ struct ru_ofh_sector_configuration {
   /// Tag control information field.
   uint16_t tci;
 
-  /// RU PRACH port.
-  unsigned ru_prach_port;
-  /// RU Downlink ports.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_dl_ports;
-  /// RU Uplink ports.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ru_ul_ports;
+  /// Uplink PRACH eAxC.
+  unsigned ul_prach_eaxc;
+  /// Downlink eAxCs.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  /// Uplink eAxCs.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 };
 
 /// Radio Unit configuration for the Open Fronthaul implementation.

@@ -73,7 +73,7 @@ inline expected<ran_ue_id_t> get_ran_ue_id(const asn1::ngap::init_msg_s& init_ms
 {
   switch (init_msg.value.type()) {
     case asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg:
-      return uint_to_ran_ue_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id->value);
+      return uint_to_ran_ue_id(init_msg.value.init_ue_msg()->ran_ue_ngap_id);
     default:
       break;
   }

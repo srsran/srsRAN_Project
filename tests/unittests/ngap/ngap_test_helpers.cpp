@@ -61,7 +61,7 @@ void ngap_test::create_ue(ue_index_t ue_index)
 
   test_ues.emplace(ue_index, ue_index);
   test_ues.at(ue_index).ran_ue_id =
-      uint_to_ran_ue_id(msg_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value);
+      uint_to_ran_ue_id(msg_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
 }
 
 void ngap_test::run_dl_nas_transport(ue_index_t ue_index)

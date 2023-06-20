@@ -182,7 +182,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 void ue_event_manager::handle_csi(ue_cell& ue_cc, const csi_report_data& csi_rep)
 {
   // Forward CSI bits to UE.
-  ue_cc.channel_state.handle_csi_report(csi_rep);
+  ue_cc.handle_csi_report(csi_rep);
 
   // Log event.
   ev_logger.enqueue(scheduler_event_logger::csi_report_event{ue_cc.ue_index, ue_cc.rnti(), csi_rep});

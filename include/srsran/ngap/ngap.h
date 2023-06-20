@@ -209,7 +209,7 @@ public:
   /// \param[in] command the UE Context Release Command.
   /// \returns The UE Context Release Complete.
   virtual cu_cp_ue_context_release_complete
-  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
+  on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) = 0;
 };
 
 /// Interface to control the NGAP.

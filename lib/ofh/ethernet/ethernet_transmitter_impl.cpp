@@ -37,14 +37,14 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW);
   if (socket_fd < 0) {
-    report_fatal_error("Unable to open socket for Ethernet gateway");
+    report_error("Unable to open socket for Ethernet gateway");
   }
 
   // Get the index of the NIC.
   ::ifreq if_idx = {};
   ::strncpy(if_idx.ifr_name, config.interface.c_str(), IFNAMSIZ - 1);
   if (::ioctl(socket_fd, SIOCGIFINDEX, &if_idx) < 0) {
-    report_fatal_error("Unable to get index for NIC interface in the Ethernet transmitter");
+    report_error("Unable to get index for NIC interface in the Ethernet transmitter");
   }
 
   // Prepare the socket address used by sendto.

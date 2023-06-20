@@ -28,7 +28,7 @@
 #include "srsran/ran/five_qi.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"

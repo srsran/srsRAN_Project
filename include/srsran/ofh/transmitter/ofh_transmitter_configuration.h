@@ -47,10 +47,10 @@ struct transmitter_config {
   cyclic_prefix cp;
   /// Uplink PRACH eAxC.
   optional<unsigned> ul_prach_eaxc;
-  /// Downlink data eAxC.
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_data_eaxc;
-  /// Uplink data eAxC.
-  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
+  /// Downlink eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  /// Uplink eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.

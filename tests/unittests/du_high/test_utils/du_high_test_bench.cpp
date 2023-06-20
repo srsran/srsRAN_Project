@@ -33,8 +33,8 @@ static f1ap_message create_f1_setup_response()
   f1ap_message f1ap_msg;
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
-  f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
-  auto& cell = f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value[0];
+  f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.resize(1);
+  auto& cell = f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list[0];
   cell.load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
   cell->cells_to_be_activ_list_item().nr_cgi.plmn_id.from_string("00f101");
   cell->cells_to_be_activ_list_item().nr_cgi.nr_cell_id.from_string("000000000000101111000110000101001110");
@@ -56,7 +56,7 @@ bool srsran::srs_du::is_init_ul_rrc_msg_transfer_valid(const f1ap_message& msg, 
     return false;
   }
   const asn1::f1ap::init_ul_rrc_msg_transfer_s& rrcmsg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-  return rrcmsg->c_rnti->value == rnti;
+  return rrcmsg->c_rnti == rnti;
 }
 
 bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& msg,
@@ -69,8 +69,8 @@ bool srsran::srs_du::is_ue_context_release_complete_valid(const f1ap_message& ms
   }
   const asn1::f1ap::ue_context_release_complete_s& resp =
       msg.pdu.successful_outcome().value.ue_context_release_complete();
-  return (gnb_cu_ue_f1ap_id_t)resp->gnb_cu_ue_f1ap_id->value == cu_ue_id and
-         (gnb_du_ue_f1ap_id_t) resp->gnb_du_ue_f1ap_id->value == du_ue_id;
+  return (gnb_cu_ue_f1ap_id_t)resp->gnb_cu_ue_f1ap_id == cu_ue_id and (gnb_du_ue_f1ap_id_t)
+                                                                              resp->gnb_du_ue_f1ap_id == du_ue_id;
 }
 
 phy_cell_test_dummy::phy_cell_test_dummy(task_executor& exec_) : test_exec(exec_) {}

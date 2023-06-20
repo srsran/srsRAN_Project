@@ -22,7 +22,6 @@
 
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
@@ -75,11 +74,11 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
   asn1::e1ap::supported_plmns_item_s plmn;
   plmn.plmn_id.from_string("214002");
-  setup_request->supported_plmns->push_back(plmn);
+  setup_request->supported_plmns.push_back(plmn);
 
-  setup_request->gnb_cu_up_id.value     = 1;
+  setup_request->gnb_cu_up_id           = 1;
   setup_request->gnb_cu_up_name_present = true;
-  setup_request->gnb_cu_up_name.value.from_string("srs-cu-cp");
+  setup_request->gnb_cu_up_name.from_string("srs-cu-cp");
 
   srsran::byte_buffer buffer;
   asn1::bit_ref       bref(buffer);
@@ -130,13 +129,13 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
   const auto& msg = pdu.init_msg().value.bearer_context_setup_request();
 
   ASSERT_TRUE(msg->gnb_du_id_present);
-  ASSERT_EQ(0, msg->gnb_du_id.value);
+  ASSERT_EQ(0, msg->gnb_du_id);
 
   // Check the SystemBearerContextSetupRequest.
-  ASSERT_EQ(msg->sys_bearer_context_setup_request->type().value,
+  ASSERT_EQ(msg->sys_bearer_context_setup_request.type().value,
             asn1::e1ap::sys_bearer_context_setup_request_c::types_opts::options::ng_ran_bearer_context_setup_request);
 
-  const auto& bearer_cont = msg->sys_bearer_context_setup_request->ng_ran_bearer_context_setup_request();
+  const auto& bearer_cont = msg->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
   ASSERT_EQ(bearer_cont.size(), 1);
   for (const auto& item : bearer_cont) {
     const auto& bearer = item.value();
@@ -193,20 +192,20 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
   const auto& msg = pdu.successful_outcome().value.bearer_context_setup_resp();
 
   // Check IDs.
-  ASSERT_EQ(msg->gnb_cu_cp_ue_e1ap_id.value, 9);
-  ASSERT_EQ(msg->gnb_cu_up_ue_e1ap_id.value, 640);
+  ASSERT_EQ(msg->gnb_cu_cp_ue_e1ap_id, 9);
+  ASSERT_EQ(msg->gnb_cu_up_ue_e1ap_id, 640);
 
   // Check the SystemBearerContextSetupResponse.
-  ASSERT_EQ(msg->sys_bearer_context_setup_resp->type().value,
+  ASSERT_EQ(msg->sys_bearer_context_setup_resp.type().value,
             asn1::e1ap::sys_bearer_context_setup_resp_c::types_opts::options::ng_ran_bearer_context_setup_resp);
 
-  const auto& bearer_cont = msg->sys_bearer_context_setup_resp->ng_ran_bearer_context_setup_resp();
+  const auto& bearer_cont = msg->sys_bearer_context_setup_resp.ng_ran_bearer_context_setup_resp();
 
   ASSERT_FALSE(bearer_cont.pdu_session_res_failed_list_present);
-  ASSERT_EQ(bearer_cont.pdu_session_res_setup_list->size(), 1);
+  ASSERT_EQ(bearer_cont.pdu_session_res_setup_list.size(), 1);
 
   // Get first resource setup list item.
-  for (const auto& item : *bearer_cont.pdu_session_res_setup_list) {
+  for (const auto& item : bearer_cont.pdu_session_res_setup_list) {
     ASSERT_EQ(item.pdu_session_id, 1);
   }
 

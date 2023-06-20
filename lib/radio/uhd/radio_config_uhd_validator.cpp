@@ -198,6 +198,19 @@ bool radio_config_uhd_config_validator::is_configuration_valid(const radio_confi
     }
   }
 
+  if (config.args.find("type=b2") != std::string::npos) {
+    if ((config.tx_streams.size() != config.rx_streams.size())) {
+      fmt::print("B2x0 devices do not support different number of transmit and receive streams.\n");
+      return false;
+    }
+    for (unsigned i_stream = 0, nof_streams = config.tx_streams.size(); i_stream != nof_streams; ++i_stream) {
+      if ((config.tx_streams[i_stream].channels.size() != config.rx_streams[i_stream].channels.size())) {
+        fmt::print("B2x0 devices do not support different number of transmit and receive antennas.\n");
+        return false;
+      }
+    }
+  }
+
   if (!validate_sampling_rate(config.sampling_rate_hz)) {
     return false;
   }

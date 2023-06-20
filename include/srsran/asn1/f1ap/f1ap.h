@@ -127,7 +127,7 @@ struct f1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     init_msg_c() = default;
@@ -423,7 +423,7 @@ struct f1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     successful_outcome_c() = default;
@@ -576,7 +576,7 @@ struct f1ap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     unsuccessful_outcome_c() = default;
@@ -727,7 +727,7 @@ struct f1ap_pdu_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   f1ap_pdu_c() = default;

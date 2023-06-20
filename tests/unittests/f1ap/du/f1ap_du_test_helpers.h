@@ -39,6 +39,9 @@
 namespace srsran {
 namespace srs_du {
 
+/// \brief Generate a random gnb_du_ue_f1ap_id
+gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
+
 class dummy_f1ap_du_configurator : public f1ap_du_configurator
 {
 public:

@@ -417,12 +417,14 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
   }
 
   // Create task worker.
-  context.async_task_worker   = std::make_unique<task_worker>("async_thread", p->rf_port_count + 1);
+  context.async_task_worker   = std::make_unique<task_worker>("async_thread", p->rf_port_count + 10);
   context.async_task_executor = make_task_executor(*context.async_task_worker);
 
   // Create radio session.
   context.session = context.factory->create(configuration, *context.async_task_executor, context.notification_handler);
   report_fatal_error_if_not(context.session, "Invalid session.");
+
+  context.session->start(0);
 
   // Half millisecond packets.
   context.tx_samples_per_packet = p->sample_rate[0].num / 500;

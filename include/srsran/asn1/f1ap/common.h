@@ -199,7 +199,7 @@ namespace f1ap {
 #define ASN1_F1AP_MAXNO_SRS_RES_PER_SET 16
 #define ASN1_F1AP_MAXNO_SRS_CARRIERS 32
 #define ASN1_F1AP_MAXNO_SC_SS 5
-#define ASN1_F1AP_MAXNO_SRS_RES 64
+#define ASN1_F1AP_MAXNO_SRS_RES_FEATURES 64
 #define ASN1_F1AP_MAXNO_SRS_POS_RES 64
 #define ASN1_F1AP_MAXNO_SRS_POS_RES_SETS 16
 #define ASN1_F1AP_MAXNO_SRS_POS_RES_PER_SET 16
@@ -941,7 +941,7 @@ struct private_ie_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   private_ie_id_c() = default;
@@ -993,7 +993,7 @@ struct f1ap_private_ies_empty_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nulltype; }

@@ -59,9 +59,9 @@ void ue_context_setup_procedure::send_ue_context_setup_request()
   f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& req = f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request();
 
-  req                           = request;
-  req->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
-  req->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
+  req                    = request;
+  req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
+  req->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -82,7 +82,7 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
     res.response = transaction_sink.response();
     res.success  = true;
   } else if (transaction_sink.failed()) {
-    logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause.value));
+    logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
     res.failure = transaction_sink.failure();
     res.success = false;
   } else {

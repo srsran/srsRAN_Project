@@ -82,10 +82,7 @@ TEST_F(e1ap_asn1_packer_test, when_packing_unsuccessful_then_message_not_forward
   int valid_pdu_size = gw->last_pdu.length();
 
   // Action 2: Create invalid e1ap message
-  e1ap_message e1ap_msg           = generate_cu_up_e1_setup_request_base();
-  auto&        setup_req          = e1ap_msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
-  setup_req->supported_plmns.id   = ASN1_E1AP_ID_SUPPORTED_PLMNS;
-  setup_req->supported_plmns.crit = asn1::crit_opts::reject;
+  e1ap_message e1ap_msg = generate_cu_up_e1_setup_request_base();
 
   // Action 3: Pack message and forward to gateway
   packer->handle_message(e1ap_msg);

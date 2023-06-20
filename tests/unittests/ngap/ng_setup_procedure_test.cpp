@@ -51,7 +51,7 @@ TEST_F(ngap_test, when_ng_setup_response_received_then_amf_connected)
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().msg->amf_name.value.to_string(), "open5gs-amf0");
+  ASSERT_EQ(t.get().msg->amf_name.to_string(), "open5gs-amf0");
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and successful retry
@@ -94,7 +94,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().msg->amf_name.value.to_string(), "open5gs-amf0");
+  ASSERT_EQ(t.get().msg->amf_name.to_string(), "open5gs-amf0");
 }
 
 /// Test unsuccessful ng setup procedure with time to wait and unsuccessful retry

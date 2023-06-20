@@ -22,14 +22,9 @@
 
 #pragma once
 
-#include "lib/ngap/ngap_asn1_helpers.h"
 #include "ngap_test_messages.h"
-#include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/ue_manager.h"
-#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/gateways/network_gateway.h"
-#include "srsran/ngap/ngap.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/async/async_task_loop.h"
 #include <gtest/gtest.h>
@@ -435,18 +430,19 @@ public:
   }
 
   cu_cp_ue_context_release_complete
-  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
+  on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
 
-    last_command = command;
+    last_command.ue_index = command.ue_index;
+    last_command.cause    = command.cause;
 
     cu_cp_ue_context_release_complete release_complete;
     // TODO: Add values
     return release_complete;
   }
 
-  cu_cp_ue_context_release_command           last_command;
+  rrc_ue_context_release_command             last_command;
   cu_cp_pdu_session_resource_setup_request   last_request;
   cu_cp_pdu_session_resource_modify_request  last_modify_request;
   cu_cp_pdu_session_resource_release_command last_release_command;

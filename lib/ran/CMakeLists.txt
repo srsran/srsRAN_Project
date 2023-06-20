@@ -36,6 +36,7 @@ add_library(srsran_ran
         prach/prach_cyclic_shifts.cpp
         prach/prach_frequency_mapping.cpp
         prach/prach_preamble_information.cpp
+        prach/prach_helper.cpp
         precoding/precoding_codebooks.cpp
         pusch/pusch_mcs.cpp
         pusch/pusch_uci_beta_offset.cpp

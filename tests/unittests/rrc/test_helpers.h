@@ -93,10 +93,12 @@ public:
     last_srb_creation_message = std::move(msg);
   }
 
-  void on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
+  void on_ue_context_release_command(const rrc_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_cu_cp_ue_context_release_command = msg;
+    last_rrc_ue_context_release_command.ue_index        = msg.ue_index;
+    last_rrc_ue_context_release_command.cause           = msg.cause;
+    last_rrc_ue_context_release_command.rrc_release_pdu = msg.rrc_release_pdu.copy();
   }
 
   void on_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override
@@ -104,10 +106,10 @@ public:
     logger.info("Received Reestablishment Context Modification Required for ue={}", ue_index);
   }
 
-  srb_creation_message             last_srb_creation_message;
-  bool                             srb1_created = false;
-  bool                             srb2_created = false;
-  cu_cp_ue_context_release_command last_cu_cp_ue_context_release_command;
+  srb_creation_message           last_srb_creation_message;
+  bool                           srb1_created = false;
+  bool                           srb2_created = false;
+  rrc_ue_context_release_command last_rrc_ue_context_release_command;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

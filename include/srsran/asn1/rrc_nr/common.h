@@ -413,7 +413,7 @@ struct subcarrier_spacing_opts {
   const char* to_string() const;
   uint16_t    to_number() const;
 };
-typedef enumerated<subcarrier_spacing_opts> subcarrier_spacing_e;
+using subcarrier_spacing_e = enumerated<subcarrier_spacing_opts>;
 
 // MCC ::= SEQUENCE (SIZE (3)) OF INTEGER (0..9)
 using mcc_l = std::array<uint8_t, 3>;
@@ -461,7 +461,7 @@ struct srs_periodicity_and_offset_c {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   srs_periodicity_and_offset_c() = default;
@@ -671,7 +671,7 @@ struct srs_spatial_relation_info_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     ref_sig_c_() = default;
@@ -759,7 +759,7 @@ struct spatial_relation_info_pdc_r17_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts, true> types;
+    using types = enumerated<types_opts, true>;
 
     // choice methods
     ref_sig_c_() = default;
@@ -844,7 +844,7 @@ struct srs_res_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<nrof_srs_ports_opts> nrof_srs_ports_e_;
+  using nrof_srs_ports_e_ = enumerated<nrof_srs_ports_opts>;
   struct ptrs_port_idx_opts {
     enum options { n0, n1, nulltype } value;
     typedef uint8_t number_type;
@@ -852,7 +852,7 @@ struct srs_res_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<ptrs_port_idx_opts> ptrs_port_idx_e_;
+  using ptrs_port_idx_e_ = enumerated<ptrs_port_idx_opts>;
   struct tx_comb_c_ {
     struct n2_s_ {
       uint8_t comb_offset_n2  = 0;
@@ -869,7 +869,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     tx_comb_c_() = default;
@@ -919,7 +919,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<nrof_symbols_opts> nrof_symbols_e_;
+    using nrof_symbols_e_ = enumerated<nrof_symbols_opts>;
     struct repeat_factor_opts {
       enum options { n1, n2, n4, nulltype } value;
       typedef uint8_t number_type;
@@ -927,7 +927,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<repeat_factor_opts> repeat_factor_e_;
+    using repeat_factor_e_ = enumerated<repeat_factor_opts>;
 
     // member variables
     uint8_t          start_position = 0;
@@ -944,7 +944,7 @@ struct srs_res_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<group_or_seq_hop_opts> group_or_seq_hop_e_;
+  using group_or_seq_hop_e_ = enumerated<group_or_seq_hop_opts>;
   struct res_type_c_ {
     struct aperiodic_s_ {
       bool ext = false;
@@ -965,7 +965,7 @@ struct srs_res_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     res_type_c_() = default;
@@ -1026,7 +1026,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<nrof_symbols_r16_opts> nrof_symbols_r16_e_;
+    using nrof_symbols_r16_e_ = enumerated<nrof_symbols_r16_opts>;
     struct repeat_factor_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
       typedef uint8_t number_type;
@@ -1034,7 +1034,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<repeat_factor_r16_opts> repeat_factor_r16_e_;
+    using repeat_factor_r16_e_ = enumerated<repeat_factor_r16_opts>;
 
     // member variables
     uint8_t              start_position_r16 = 0;
@@ -1049,7 +1049,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<nrof_symbols_r17_opts> nrof_symbols_r17_e_;
+    using nrof_symbols_r17_e_ = enumerated<nrof_symbols_r17_opts>;
     struct repeat_factor_r17_opts {
       enum options { n1, n2, n4, n5, n6, n7, n8, n10, n12, n14, nulltype } value;
       typedef uint8_t number_type;
@@ -1057,7 +1057,7 @@ struct srs_res_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<repeat_factor_r17_opts> repeat_factor_r17_e_;
+    using repeat_factor_r17_e_ = enumerated<repeat_factor_r17_opts>;
 
     // member variables
     uint8_t              start_position_r17 = 0;
@@ -1077,7 +1077,7 @@ struct srs_res_s {
         const char* to_string() const;
         uint8_t     to_number() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       start_rb_idx_f_scaling_r17_c_() = default;
@@ -1134,7 +1134,7 @@ struct srs_res_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     srs_tci_state_r17_c_() = default;
@@ -1224,7 +1224,7 @@ struct ssb_cfg_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<half_frame_idx_r16_opts> half_frame_idx_r16_e_;
+  using half_frame_idx_r16_e_ = enumerated<half_frame_idx_r16_opts>;
   struct ssb_periodicity_r16_opts {
     enum options { ms5, ms10, ms20, ms40, ms80, ms160, spare2, spare1, nulltype } value;
     typedef uint8_t number_type;
@@ -1232,7 +1232,7 @@ struct ssb_cfg_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<ssb_periodicity_r16_opts> ssb_periodicity_r16_e_;
+  using ssb_periodicity_r16_e_ = enumerated<ssb_periodicity_r16_opts>;
   struct sfn0_offset_r16_s_ {
     bool     integer_sf_offset_r16_present = false;
     uint16_t sfn_offset_r16                = 0;
@@ -1317,7 +1317,7 @@ struct srs_periodicity_and_offset_r16_c {
     const char* to_string() const;
     uint32_t    to_number() const;
   };
-  typedef enumerated<types_opts, true> types;
+  using types = enumerated<types_opts, true>;
 
   // choice methods
   srs_periodicity_and_offset_r16_c() = default;
@@ -1568,7 +1568,7 @@ struct srs_periodicity_and_offset_ext_r16_c {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   srs_periodicity_and_offset_ext_r16_c() = default;
@@ -1644,7 +1644,7 @@ struct srs_spatial_relation_info_pos_r16_c {
 
             const char* to_string() const;
           };
-          typedef enumerated<types_opts> types;
+          using types = enumerated<types_opts>;
 
           // choice methods
           res_sel_r16_c_() = default;
@@ -1696,7 +1696,7 @@ struct srs_spatial_relation_info_pos_r16_c {
 
         const char* to_string() const;
       };
-      typedef enumerated<types_opts> types;
+      using types = enumerated<types_opts>;
 
       // choice methods
       ref_sig_r16_c_() = default;
@@ -1760,7 +1760,7 @@ struct srs_spatial_relation_info_pos_r16_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   srs_spatial_relation_info_pos_r16_c() = default;
@@ -1836,7 +1836,7 @@ struct srs_pos_res_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<types_opts, true> types;
+    using types = enumerated<types_opts, true>;
 
     // choice methods
     tx_comb_r16_c_() = default;
@@ -1897,7 +1897,7 @@ struct srs_pos_res_r16_s {
       const char* to_string() const;
       uint8_t     to_number() const;
     };
-    typedef enumerated<nrof_symbols_r16_opts> nrof_symbols_r16_e_;
+    using nrof_symbols_r16_e_ = enumerated<nrof_symbols_r16_opts>;
 
     // member variables
     uint8_t             start_position_r16 = 0;
@@ -1913,7 +1913,7 @@ struct srs_pos_res_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<group_or_seq_hop_r16_opts> group_or_seq_hop_r16_e_;
+  using group_or_seq_hop_r16_e_ = enumerated<group_or_seq_hop_r16_opts>;
   struct res_type_r16_c_ {
     struct aperiodic_r16_s_ {
       bool    ext                     = false;
@@ -1950,7 +1950,7 @@ struct srs_pos_res_r16_s {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     res_type_r16_c_() = default;
@@ -2033,7 +2033,7 @@ struct srs_pos_res_ap_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<max_num_ap_srs_pos_res_per_bwp_r16_opts> max_num_ap_srs_pos_res_per_bwp_r16_e_;
+  using max_num_ap_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
     typedef uint8_t number_type;
@@ -2041,7 +2041,7 @@ struct srs_pos_res_ap_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts> max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_;
+  using max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts>;
 
   // member variables
   max_num_ap_srs_pos_res_per_bwp_r16_e_          max_num_ap_srs_pos_res_per_bwp_r16;
@@ -2062,7 +2062,7 @@ struct srs_pos_res_sp_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<max_num_sp_srs_pos_res_per_bwp_r16_opts> max_num_sp_srs_pos_res_per_bwp_r16_e_;
+  using max_num_sp_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
     typedef uint8_t number_type;
@@ -2070,7 +2070,7 @@ struct srs_pos_res_sp_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts> max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_;
+  using max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts>;
 
   // member variables
   max_num_sp_srs_pos_res_per_bwp_r16_e_          max_num_sp_srs_pos_res_per_bwp_r16;

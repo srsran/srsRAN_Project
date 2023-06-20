@@ -183,7 +183,7 @@ public:
   }
 
   cu_cp_ue_context_release_complete
-  on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
+  on_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& command) override
   {
     srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
 

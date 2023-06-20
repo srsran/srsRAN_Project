@@ -54,16 +54,16 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
     e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
     auto& setup_resp = e1ap_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
 
-    setup_resp->gnb_cu_up_id.value = msg.gnb_cu_up_id.value();
+    setup_resp->gnb_cu_up_id = msg.gnb_cu_up_id.value();
     if (msg.gnb_cu_up_name.has_value()) {
       setup_resp->gnb_cu_up_name_present = true;
-      setup_resp->gnb_cu_up_name.value.from_string(msg.gnb_cu_up_name.value());
+      setup_resp->gnb_cu_up_name.from_string(msg.gnb_cu_up_name.value());
     }
 
     // TODO: Add missing values
 
     // set values handled by E1
-    setup_resp->transaction_id.value = current_transaction_id;
+    setup_resp->transaction_id = current_transaction_id;
 
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
@@ -71,13 +71,13 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
     logger.debug("Sending CuCpE1SetupFailure message");
     e1ap_msg.pdu.set_unsuccessful_outcome();
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    auto& setup_fail        = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
-    setup_fail->cause.value = cause_to_asn1_cause(msg.cause.value());
+    auto& setup_fail  = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
+    setup_fail->cause = cause_to_asn1_cause(msg.cause.value());
 
     // set values handled by E1
-    setup_fail->transaction_id.value = current_transaction_id;
-    setup_fail->cause.value.set_radio_network();
-    setup_fail->cause.value.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
+    setup_fail->transaction_id = current_transaction_id;
+    setup_fail->cause.set_radio_network();
+    setup_fail->cause.radio_network() = asn1::e1ap::cause_radio_network_opts::options::no_radio_res_available;
 
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
@@ -98,13 +98,13 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
   e1ap_message e1ap_msg;
   e1ap_msg.pdu.set_init_msg();
   e1ap_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_INACTIVITY_NOTIF);
-  auto& inactivity_notification = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
-  inactivity_notification->gnb_cu_cp_ue_e1ap_id.value.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
-  inactivity_notification->gnb_cu_up_ue_e1ap_id.value.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+  auto& inactivity_notification                 = e1ap_msg.pdu.init_msg().value.bearer_context_inactivity_notif();
+  inactivity_notification->gnb_cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  inactivity_notification->gnb_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
 
   if (ue_ctxt.activity_notification_level == activity_notification_level_t::ue) {
-    inactivity_notification->activity_info.value.set_ue_activity();
-    inactivity_notification->activity_info.value.ue_activity() = asn1::e1ap::ue_activity_opts::options::not_active;
+    inactivity_notification->activity_info.set_ue_activity();
+    inactivity_notification->activity_info.ue_activity() = asn1::e1ap::ue_activity_opts::options::not_active;
   } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::pdu_session) {
     logger.warning("ue={} pdu session level activity notifications not supported", msg.ue_index);
   } else if (ue_ctxt.activity_notification_level == activity_notification_level_t::drb) {
@@ -170,7 +170,7 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
-      current_transaction_id = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
+      current_transaction_id = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id;
       handle_cu_cp_e1_setup_request(msg.value.gnb_cu_cp_e1_setup_request());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
@@ -192,7 +192,7 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_
   cu_cp_e1_setup_request req_msg = {};
 
   if (msg->gnb_cu_cp_name_present) {
-    req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.value.to_string();
+    req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.to_string();
   }
 
   cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
@@ -206,7 +206,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_cp_ue_e1ap_id =
       msg->gnb_cu_cp_ue_e1ap_id;
-  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value.set_protocol();
+  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.set_protocol();
 
   // Do basic syntax/semantic checks on the validity of the received message.
   if (not check_e1ap_bearer_context_setup_request_valid(msg, logger)) {
@@ -215,7 +215,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     return;
   }
 
-  logger.debug("Received BearerContextSetupRequest (plmn={})", plmn_bcd_to_string(msg->serving_plmn.value.to_number()));
+  logger.debug("Received BearerContextSetupRequest (plmn={})", plmn_bcd_to_string(msg->serving_plmn.to_number()));
 
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = ue_ctxt_list.next_gnb_cu_up_ue_e1ap_id();
   if (cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
@@ -228,7 +228,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   }
 
   // Add gnb_cu_up_ue_e1ap_id to failure message
-  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1ap_id.value =
+  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->gnb_cu_up_ue_e1ap_id =
       gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
 
   // Forward message to CU-UP
@@ -250,7 +250,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   // Create UE context and store it
   ue_ctxt_list.add_ue(bearer_context_setup_response_msg.ue_index,
                       cu_up_ue_e1ap_id,
-                      int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value),
+                      int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id),
                       asn1_to_activity_notification_level(msg->activity_notif_level.value));
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_up_ue_e1ap_id];
 
@@ -264,18 +264,18 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
     e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
     e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id =
         msg->gnb_cu_cp_ue_e1ap_id;
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1ap_id.value =
+    e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1ap_id =
         gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
 
     fill_asn1_bearer_context_setup_response(
-        e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp.value,
+        e1ap_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp,
         bearer_context_setup_response_msg);
 
     // send response
     logger.debug("ue={} Sending BearerContextSetupResponse", ue_ctxt.ue_index);
     pdu_notifier.on_new_message(e1ap_msg);
   } else {
-    e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value =
+    e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1_cause(bearer_context_setup_response_msg.cause.value());
 
     // send response
@@ -292,13 +292,13 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
   e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
-  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.value.set_protocol();
+  e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.set_protocol();
 
   e1ap_bearer_context_modification_request bearer_context_mod = {};
 
-  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id.value)];
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
   if (ue_ctxt.cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
-    logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available.", msg->gnb_cu_up_ue_e1ap_id.value);
+    logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available.", msg->gnb_cu_up_ue_e1ap_id);
 
     // send response
     logger.debug("Sending BearerContextModificationFailure");
@@ -309,7 +309,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   // sys bearer context mod request
   if (msg->sys_bearer_context_mod_request_present) {
     // We only support NG-RAN Bearer
-    if (msg->sys_bearer_context_mod_request.value.type() !=
+    if (msg->sys_bearer_context_mod_request.type() !=
         asn1::e1ap::sys_bearer_context_mod_request_c::types::ng_ran_bearer_context_mod_request) {
       logger.error("ue={} Not handling E-UTRAN Bearers", ue_ctxt.ue_index);
 
@@ -343,13 +343,13 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
     e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp_present = true;
     fill_asn1_bearer_context_modification_response(
-        e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp.value,
+        e1ap_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp,
         bearer_context_mod_response_msg);
     logger.debug("ue={} Sending BearerContextModificationResponse", ue_ctxt.ue_index);
     // send response
     pdu_notifier.on_new_message(e1ap_msg);
   } else {
-    e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.value =
+    e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
         cause_to_asn1_cause(bearer_context_mod_response_msg.cause.value());
 
     // send response
@@ -362,14 +362,14 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 {
   e1ap_bearer_context_release_command bearer_context_release_cmd = {};
 
-  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id.value)];
+  e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
   if (ue_ctxt.cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
-    logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id.value);
+    logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
     return;
   }
 
   bearer_context_release_cmd.ue_index = ue_ctxt.ue_index;
-  bearer_context_release_cmd.cause    = e1ap_cause_to_cause(msg->cause.value);
+  bearer_context_release_cmd.cause    = e1ap_cause_to_cause(msg->cause);
 
   // Forward message to CU-UP
   cu_up_notifier.on_bearer_context_release_command_received(bearer_context_release_cmd);

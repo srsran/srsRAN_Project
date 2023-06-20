@@ -46,20 +46,17 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request, 
   uint32_t plmn_bcd = plmn_string_to_bcd(ngap_config.plmn);
 
   // fill global ran node id
-  request->global_ran_node_id.value.set_global_gnb_id();
-  request->global_ran_node_id.value.global_gnb_id().gnb_id.set_gnb_id();
-  request->global_ran_node_id.value.global_gnb_id().gnb_id.gnb_id().from_number(ngap_config.gnb_id);
-  request->global_ran_node_id.value.global_gnb_id().plmn_id.from_number(plmn_bcd);
+  request->global_ran_node_id.set_global_gnb_id();
+  request->global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id();
+  request->global_ran_node_id.global_gnb_id().gnb_id.gnb_id().from_number(ngap_config.gnb_id);
+  request->global_ran_node_id.global_gnb_id().plmn_id.from_number(plmn_bcd);
 
   // fill ran node name
   request->ran_node_name_present = true;
-  request->ran_node_name.value.from_string(ngap_config.ran_node_name);
+  request->ran_node_name.from_string(ngap_config.ran_node_name);
 
   // fill supported ta list
   // TODO: add support for more items
-  request->supported_ta_list.id   = ASN1_NGAP_ID_SUPPORTED_TA_LIST;
-  request->supported_ta_list.crit = asn1::crit_opts::reject;
-
   asn1::ngap::supported_ta_item_s supported_ta_item = {};
 
   asn1::ngap::broadcast_plmn_item_s broadcast_plmn_item = {};
@@ -78,10 +75,10 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request, 
   supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
   supported_ta_item.tac.from_number(ngap_config.tac);
 
-  request->supported_ta_list.value.push_back(supported_ta_item);
+  request->supported_ta_list.push_back(supported_ta_item);
 
   // fill paging drx
-  request->default_paging_drx.value.value = asn1::ngap::paging_drx_opts::v256;
+  request->default_paging_drx.value = asn1::ngap::paging_drx_opts::v256;
 }
 
 /// \brief Convert common type Initial Context Setup Response message to NGAP Initial Context Setup Response
@@ -100,7 +97,7 @@ inline void fill_asn1_initial_context_setup_response(asn1::ngap::init_context_se
 
       pdu_session_res_setup_response_item_to_asn1(asn1_resp_item, resp_item);
 
-      asn1_resp->pdu_session_res_setup_list_cxt_res->push_back(asn1_resp_item);
+      asn1_resp->pdu_session_res_setup_list_cxt_res.push_back(asn1_resp_item);
     }
   }
 
@@ -112,14 +109,14 @@ inline void fill_asn1_initial_context_setup_response(asn1::ngap::init_context_se
 
       pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
 
-      asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res->push_back(asn1_setup_failed_item);
+      asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res.push_back(asn1_setup_failed_item);
     }
   }
 
   // Fill Criticality Diagnostics
   if (resp.crit_diagnostics.has_value()) {
     asn1_resp->crit_diagnostics_present = true;
-    asn1_resp->crit_diagnostics.value   = resp.crit_diagnostics.value();
+    asn1_resp->crit_diagnostics         = resp.crit_diagnostics.value();
   }
 }
 
@@ -131,7 +128,7 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
                                                     const ngap_initial_context_failure_message& fail)
 {
   // Fill cause
-  asn1_fail->cause.value = fail.cause;
+  asn1_fail->cause = fail.cause;
 
   // Fill PDU Session Resource Failed to Setup List
   if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
@@ -141,14 +138,14 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
 
       pdu_session_res_setup_failed_item_to_asn1(asn1_setup_failed_item, setup_failed_item);
 
-      asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail->push_back(asn1_setup_failed_item);
+      asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail.push_back(asn1_setup_failed_item);
     }
   }
 
   // Fill Criticality Diagnostics
   if (fail.crit_diagnostics.has_value()) {
     asn1_fail->crit_diagnostics_present = true;
-    asn1_fail->crit_diagnostics.value   = fail.crit_diagnostics.value();
+    asn1_fail->crit_diagnostics         = fail.crit_diagnostics.value();
   }
 }
 
@@ -184,18 +181,18 @@ inline void _fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_r
 
   // id-PDUSessionAggregateMaximumBitRate
   setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
-      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_dl;
+      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_dl;
   setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
-      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_ul;
+      asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul;
 
   // id-UL-NGU-UP-TNLInformation
-  setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info.value);
+  setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
 
   // id-PDUSessionType
-  setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.value.to_string();
+  setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
 
   // id-QosFlowSetupRequestList
-  for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list.value) {
+  for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list) {
     qos_flow_setup_request_item qos_flow_setup_req_item;
 
     // qosFlowIdentifier
@@ -300,7 +297,7 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
   }
 
   if (asn1_modify_req_transfer->qos_flow_add_or_modify_request_list_present) {
-    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list.value) {
+    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list) {
       qos_flow_add_or_mod_item qos_flow_add_item;
 
       // qosFlowIdentifier
@@ -344,7 +341,7 @@ inline void fill_cu_cp_pdu_session_resource_modify_item_base(
   }
 
   if (asn1_modify_req_transfer->qos_flow_to_release_list_present) {
-    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list.value) {
+    for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_to_release_list) {
       qos_flow_with_cause_item qos_flow_release_item;
       qos_flow_release_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
       qos_flow_release_item.cause       = ngap_cause_to_cause(asn1_flow_item.cause);
@@ -416,7 +413,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
 
       pdu_session_res_setup_response_item_to_asn1(resp_item, cu_cp_resp_item);
 
-      resp->pdu_session_res_setup_list_su_res->push_back(resp_item);
+      resp->pdu_session_res_setup_list_su_res.push_back(resp_item);
     }
   }
 
@@ -430,7 +427,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
 
       pdu_session_res_setup_failed_item_to_asn1(setup_failed_item, cu_cp_setup_failed_item);
 
-      resp->pdu_session_res_failed_to_setup_list_su_res->push_back(setup_failed_item);
+      resp->pdu_session_res_failed_to_setup_list_su_res.push_back(setup_failed_item);
     }
   }
 }
@@ -449,7 +446,7 @@ inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
     for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_modify_list) {
       asn1::ngap::pdu_session_res_modify_item_mod_res_s resp_item;
       pdu_session_res_modify_response_item_to_asn1(resp_item, cu_cp_resp_item);
-      resp->pdu_session_res_modify_list_mod_res->push_back(resp_item);
+      resp->pdu_session_res_modify_list_mod_res.push_back(resp_item);
     }
   }
 
@@ -459,7 +456,7 @@ inline void fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
     for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_failed_to_modify_list) {
       asn1::ngap::pdu_session_res_failed_to_modify_item_mod_res_s resp_item;
       pdu_session_res_failed_to_modify_item_to_asn1(resp_item, cu_cp_resp_item);
-      resp->pdu_session_res_failed_to_modify_list_mod_res->push_back(resp_item);
+      resp->pdu_session_res_failed_to_modify_list_mod_res.push_back(resp_item);
     }
   }
 }
@@ -472,15 +469,15 @@ inline void fill_cu_cp_pdu_session_resource_release_command(
     const asn1::ngap::pdu_session_res_release_cmd_s& asn1_pdu_session_resource_release_cmd)
 {
   if (asn1_pdu_session_resource_release_cmd->ran_paging_prio_present) {
-    pdu_session_resource_release_cmd.ran_paging_prio = asn1_pdu_session_resource_release_cmd->ran_paging_prio.value;
+    pdu_session_resource_release_cmd.ran_paging_prio = asn1_pdu_session_resource_release_cmd->ran_paging_prio;
   }
 
   if (asn1_pdu_session_resource_release_cmd->nas_pdu_present) {
-    pdu_session_resource_release_cmd.nas_pdu = asn1_pdu_session_resource_release_cmd->nas_pdu.value.copy();
+    pdu_session_resource_release_cmd.nas_pdu = asn1_pdu_session_resource_release_cmd->nas_pdu.copy();
   }
 
   for (const auto& pdu_session_res_to_release_item :
-       asn1_pdu_session_resource_release_cmd->pdu_session_res_to_release_list_rel_cmd.value) {
+       asn1_pdu_session_resource_release_cmd->pdu_session_res_to_release_list_rel_cmd) {
     cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
     pdu_session_res_to_release_item_rel_cmd.pdu_session_id =
         uint_to_pdu_session_id(pdu_session_res_to_release_item.pdu_session_id);
@@ -581,24 +578,24 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
     asn1_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.resize(pdu.length());
     std::copy(pdu.begin(), pdu.end(), asn1_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.begin());
 
-    resp->pdu_session_res_released_list_rel_res.value.push_back(asn1_pdu_session_res_released_item);
+    resp->pdu_session_res_released_list_rel_res.push_back(asn1_pdu_session_res_released_item);
   }
 
   if (cu_cp_resp.user_location_info.has_value()) {
     resp->user_location_info_present = true;
-    resp->user_location_info.value.set_user_location_info_nr() =
+    resp->user_location_info.set_user_location_info_nr() =
         cu_cp_user_location_info_to_asn1(cu_cp_resp.user_location_info.value());
   }
 }
 
 /// \brief Convert NGAP ASN1 UE Context Release Command ASN1 struct to common type.
-/// \param[out] cu_cp_ue_context_release_cmd The cu_cp_ue_context_release_cmd struct to fill.
+/// \param[out] cu_cp_ngap_ue_context_release_cmd The cu_cp_ngap_ue_context_release_cmd struct to fill.
 /// \param[in] asn1_ue_context_release_cmd The UE Context Release Command ASN1 struct.
 inline void
-fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&           cu_cp_ue_context_release_cmd,
-                                      const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
+fill_cu_cp_ngap_ue_context_release_command(cu_cp_ngap_ue_context_release_command&      cu_cp_ue_context_release_cmd,
+                                           const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
 {
-  cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cause(asn1_ue_context_release_cmd->cause.value);
+  cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cause(asn1_ue_context_release_cmd->cause);
 }
 
 /// \brief Convert common type UE Context Release Complete message to NGAP ASN1 UE Context Release Complete
@@ -611,7 +608,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
   // add user location info
   if (cu_cp_resp.user_location_info.has_value()) {
     asn1_resp->user_location_info_present = true;
-    asn1_resp->user_location_info.value.set_user_location_info_nr() =
+    asn1_resp->user_location_info.set_user_location_info_nr() =
         cu_cp_user_location_info_to_asn1(cu_cp_resp.user_location_info.value());
   }
 
@@ -635,8 +632,8 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
         asn1_recommended_cell_item.time_stayed_in_cell = cu_cp_recommended_cell_item.time_stayed_in_cell.value();
       }
 
-      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.value.recommended_cells_for_paging
-          .recommended_cell_list.push_back(asn1_recommended_cell_item);
+      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.recommended_cells_for_paging.recommended_cell_list
+          .push_back(asn1_recommended_cell_item);
     }
 
     for (auto cu_cp_recommended_ran_node_item : cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.value()
@@ -660,7 +657,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
         asn1_recommended_ran_node_item.amf_paging_target.set(asn1::ngap::amf_paging_target_c::types_opts::nulltype);
       }
 
-      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.value.recommend_ran_nodes_for_paging
+      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.recommend_ran_nodes_for_paging
           .recommended_ran_node_list.push_back(asn1_recommended_ran_node_item);
     }
   }
@@ -672,7 +669,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
     for (auto pdu_session_id : cu_cp_resp.pdu_session_res_list_cxt_rel_cpl) {
       asn1::ngap::pdu_session_res_item_cxt_rel_cpl_s asn1_rel_item;
       asn1_rel_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
-      asn1_resp->pdu_session_res_list_cxt_rel_cpl.value.push_back(asn1_rel_item);
+      asn1_resp->pdu_session_res_list_cxt_rel_cpl.push_back(asn1_rel_item);
     }
   }
 
@@ -688,17 +685,17 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::ngap::paging_s& asn1_paging)
 {
   // add ue paging id
-  paging.ue_paging_id.amf_set_id  = asn1_paging->ue_paging_id.value.five_g_s_tmsi().amf_set_id.to_number();
-  paging.ue_paging_id.amf_pointer = asn1_paging->ue_paging_id.value.five_g_s_tmsi().amf_pointer.to_number();
-  paging.ue_paging_id.five_g_tmsi = asn1_paging->ue_paging_id.value.five_g_s_tmsi().five_g_tmsi.to_number();
+  paging.ue_paging_id.amf_set_id  = asn1_paging->ue_paging_id.five_g_s_tmsi().amf_set_id.to_number();
+  paging.ue_paging_id.amf_pointer = asn1_paging->ue_paging_id.five_g_s_tmsi().amf_pointer.to_number();
+  paging.ue_paging_id.five_g_tmsi = asn1_paging->ue_paging_id.five_g_s_tmsi().five_g_tmsi.to_number();
 
   // add paging drx
   if (asn1_paging->paging_drx_present) {
-    paging.paging_drx = asn1_paging->paging_drx.value.to_number();
+    paging.paging_drx = asn1_paging->paging_drx.to_number();
   }
 
   // add tai list for paging
-  for (const auto& asn1_tai_item : asn1_paging->tai_list_for_paging.value) {
+  for (const auto& asn1_tai_item : asn1_paging->tai_list_for_paging) {
     cu_cp_tai_list_for_paging_item tai_item;
     tai_item.tai.plmn_id = asn1_tai_item.tai.plmn_id.to_string();
     tai_item.tai.tac     = asn1_tai_item.tai.tac.to_number();
@@ -708,21 +705,21 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
 
   // add paging prio
   if (asn1_paging->paging_prio_present) {
-    paging.paging_prio = asn1_paging->paging_prio.value.to_number();
+    paging.paging_prio = asn1_paging->paging_prio.to_number();
   }
 
   // add ue radio cap for paging
   if (asn1_paging->ue_radio_cap_for_paging_present) {
     cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
     ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr =
-        asn1_paging->ue_radio_cap_for_paging.value.ue_radio_cap_for_paging_of_nr.copy();
+        asn1_paging->ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr.copy();
 
     paging.ue_radio_cap_for_paging = ue_radio_cap_for_paging;
   }
 
   // add paging origin
   if (asn1_paging->paging_origin_present) {
-    paging.paging_origin = asn1_paging->paging_origin.value.to_string();
+    paging.paging_origin = asn1_paging->paging_origin.to_string();
   }
 
   // add assist data for paging
@@ -730,12 +727,11 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
     cu_cp_assist_data_for_paging assist_data_for_paging;
 
     // add assist data for recommended cells
-    if (asn1_paging->assist_data_for_paging.value.assist_data_for_recommended_cells_present) {
+    if (asn1_paging->assist_data_for_paging.assist_data_for_recommended_cells_present) {
       cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
 
-      for (const auto& asn1_recommended_cell :
-           asn1_paging->assist_data_for_paging.value.assist_data_for_recommended_cells.recommended_cells_for_paging
-               .recommended_cell_list) {
+      for (const auto& asn1_recommended_cell : asn1_paging->assist_data_for_paging.assist_data_for_recommended_cells
+                                                   .recommended_cells_for_paging.recommended_cell_list) {
         cu_cp_recommended_cell_item recommended_cell_item;
 
         // add ngran cgi
@@ -755,17 +751,17 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
     }
 
     // add paging attempt info
-    if (asn1_paging->assist_data_for_paging.value.paging_attempt_info_present) {
+    if (asn1_paging->assist_data_for_paging.paging_attempt_info_present) {
       cu_cp_paging_attempt_info paging_attempt_info;
 
       paging_attempt_info.paging_attempt_count =
-          asn1_paging->assist_data_for_paging.value.paging_attempt_info.paging_attempt_count;
+          asn1_paging->assist_data_for_paging.paging_attempt_info.paging_attempt_count;
       paging_attempt_info.intended_nof_paging_attempts =
-          asn1_paging->assist_data_for_paging.value.paging_attempt_info.intended_nof_paging_attempts;
+          asn1_paging->assist_data_for_paging.paging_attempt_info.intended_nof_paging_attempts;
 
-      if (asn1_paging->assist_data_for_paging.value.paging_attempt_info.next_paging_area_scope_present) {
+      if (asn1_paging->assist_data_for_paging.paging_attempt_info.next_paging_area_scope_present) {
         paging_attempt_info.next_paging_area_scope =
-            asn1_paging->assist_data_for_paging.value.paging_attempt_info.next_paging_area_scope.to_string();
+            asn1_paging->assist_data_for_paging.paging_attempt_info.next_paging_area_scope.to_string();
       }
 
       assist_data_for_paging.paging_attempt_info = paging_attempt_info;

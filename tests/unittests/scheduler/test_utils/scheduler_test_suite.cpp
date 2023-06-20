@@ -362,6 +362,7 @@ void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cf
                                                slot_point                sl_tx,
                                                const sched_result&       result)
 {
+  ASSERT_TRUE(result.success);
   ASSERT_NO_FATAL_FAILURE(assert_tdd_pattern_consistency(cell_cfg, sl_tx, result));
   ASSERT_NO_FATAL_FAILURE(test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs));
   ASSERT_NO_FATAL_FAILURE(test_prach_opportunity_validity(cell_cfg, result.ul.prachs));

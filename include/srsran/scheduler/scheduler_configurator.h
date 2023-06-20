@@ -36,7 +36,7 @@
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/logical_channel_config.h"

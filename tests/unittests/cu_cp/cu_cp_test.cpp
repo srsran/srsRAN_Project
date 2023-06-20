@@ -22,6 +22,9 @@
 
 #include "../rrc/rrc_ue_test_messages.h"
 #include "cu_cp_test_helpers.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/ran/cu_types.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -205,7 +208,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id, 0);
 }
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
@@ -378,7 +381,7 @@ TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
 
   // Generate Paging with unknown tac
   ngap_message paging_msg = generate_valid_minimal_paging_message();
-  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(8);
 
   cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
 
@@ -398,7 +401,7 @@ TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_
 
   // Generate Paging with unknown tac but assist data for paging
   ngap_message paging_msg = generate_valid_paging_message();
-  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging[0].tai.tac.from_number(8);
 
   cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
 
@@ -432,13 +435,15 @@ TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_
 TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_release_request_is_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  pci_t               pci      = 0;
-  rnti_t              crnti    = to_rnti(0x4601);
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  pci_t               pci       = 0;
+  rnti_t              crnti     = to_rnti(0x4601);
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -450,7 +455,7 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.type(),
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.type(),
             asn1::ngap::cause_c::types::radio_network);
 }
 
@@ -458,12 +463,15 @@ TEST_F(cu_cp_test, when_ue_level_inactivity_message_received_then_ue_context_rel
 TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_release_request_is_not_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   cu_cp_inactivity_notification inactivity_notification;
   inactivity_notification.ue_index    = uint_to_ue_index(0);
@@ -477,6 +485,36 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
+/* AMF initiated UE Context Release                                                 */
+//////////////////////////////////////////////////////////////////////////////////////
+
+TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to_du)
+{
+  // Test preamble
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
+
+  // Inject UE Context Release Command
+  cu_cp_obj->get_ngap_message_handler().handle_message(
+      generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id));
+
+  // check that the UE Context Release Command with RRC Container was sent to the DU
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
+  ASSERT_TRUE(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
+  // check that the SRB ID is set if the RRC Container is included
+  ASSERT_TRUE(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 /* DU Initiated UE Context Release                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -484,13 +522,15 @@ TEST_F(cu_cp_test, when_unsupported_inactivity_message_received_then_ue_context_
 TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context_release_request_is_sent)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   // Inject UE Context Release Request
   cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0))
@@ -500,7 +540,7 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.type(),
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.type(),
             asn1::ngap::cause_c::types_opts::options::radio_network);
 }
 
@@ -511,13 +551,15 @@ TEST_F(cu_cp_test, when_du_initiated_ue_context_release_received_then_ue_context
 TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
 {
   // Test preamble
-  du_index_t          du_index = uint_to_du_index(0);
-  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
-  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(0);
-  rnti_t              crnti    = to_rnti(0x4601);
-  pci_t               pci      = 0;
-  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti);
-  receive_ngap_dl_info_transfer();
+  du_index_t          du_index  = uint_to_du_index(0);
+  gnb_cu_ue_f1ap_id_t cu_ue_id  = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id  = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti     = to_rnti(0x4601);
+  pci_t               pci       = 0;
+  amf_ue_id_t         amf_ue_id = uint_to_amf_ue_id(
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
+  ran_ue_id_t ran_ue_id = uint_to_ran_ue_id(0);
+  test_preamble_ue_creation(du_index, du_ue_id, cu_ue_id, pci, crnti, amf_ue_id, ran_ue_id);
 
   // Attach second UE with RRC Reestablishment Request
   {
@@ -529,7 +571,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id_2, crnti_2);
 
     // Add invalid RRC Reestablishment Request to Initial UL RRC message
-    init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container.value =
+    init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->rrc_container =
         generate_invalid_rrc_reestablishment_request_pdu(pci, crnti);
 
     // Create Initial UL RRC message
@@ -540,7 +582,7 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
     ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
     ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
               asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_request);
-    ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.value.type(),
+    ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.ue_context_release_request()->cause.type(),
               asn1::ngap::cause_c::types_opts::options::radio_network);
 
     // Inject UL RRC message containing RRC Setup Complete
@@ -557,5 +599,5 @@ TEST_F(cu_cp_test, when_reestablishment_fails_then_ue_released)
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
   ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 1);
+  ASSERT_EQ(ngap_amf_notifier.last_ngap_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id, 1);
 }

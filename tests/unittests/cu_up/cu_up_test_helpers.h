@@ -210,19 +210,18 @@ e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_setup_req->security_info.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
-  bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
-      "a6ae39efbe0d424cd85f4a9c3aee0414");
-  bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
-  bearer_context_setup_req->serving_plmn.value.from_string("02f899");
+  bearer_context_setup_req->security_info.up_securitykey.encryption_key.from_string("a6ae39efbe0d424cd85f4a9c3aee0414");
+  bearer_context_setup_req->ue_dl_aggr_max_bit_rate = 1000000000U;
+  bearer_context_setup_req->serving_plmn.from_string("02f899");
   bearer_context_setup_req->activity_notif_level.value  = asn1::e1ap::activity_notif_level_e::ue;
   bearer_context_setup_req->ue_inactivity_timer_present = true;
-  bearer_context_setup_req->ue_inactivity_timer.value   = 60;
+  bearer_context_setup_req->ue_inactivity_timer         = 60;
 
   auto& ng_ran_bearer_context_setup_req =
-      bearer_context_setup_req->sys_bearer_context_setup_request.value.set_ng_ran_bearer_context_setup_request();
+      bearer_context_setup_req->sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
 
   ng_ran_bearer_context_setup_req.resize(1);
   auto& pdu_session_res_list = ng_ran_bearer_context_setup_req[0]->pdu_session_res_to_setup_list();

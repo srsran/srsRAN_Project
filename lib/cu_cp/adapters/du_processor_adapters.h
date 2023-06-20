@@ -217,10 +217,10 @@ public:
     return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
-  virtual cu_cp_user_location_info_nr on_rrc_ue_release() override
+  virtual rrc_ue_release_context get_rrc_ue_release_context() override
   {
     srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->handle_rrc_ue_release();
+    return rrc_ue_handler->get_rrc_ue_release_context();
   }
 
 private:

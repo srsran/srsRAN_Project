@@ -184,8 +184,9 @@ private:
       payload.resize(CQI_BITLEN);
     } else {
       payload.resize(CQI_BITLEN + RI_BITLEN + PMI_BITLEN);
-      packed_bits = packed_bits << (RI_BITLEN + PMI_BITLEN);
-      packed_bits += ((test_ue_cfg.ri - 1) << PMI_BITLEN) + test_ue_cfg.pmi;
+      packed_bits = packed_bits << (RI_BITLEN + PMI_BITLEN); // shift to give space for RI and PMI.
+      packed_bits += (bit_reverse(test_ue_cfg.pmi) >> (64U - PMI_BITLEN)) << RI_BITLEN;
+      packed_bits += (test_ue_cfg.ri - 1);
     }
     payload.from_uint64(packed_bits);
   }

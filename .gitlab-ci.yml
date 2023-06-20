@@ -36,6 +36,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/tools/test_reporter.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
@@ -49,6 +52,7 @@ stages:
   - documentation
   - private
   - public
+  - release
 
 variables:
   SLACK_CHANNEL_OK: "#ci_gnb"
@@ -195,15 +199,6 @@ coverity-dev:
     - export DESCRIPTION="srsRAN Project dev build"
     - export COV_TOKEN="${COVERITY_TOKEN_DEV}"
 
-coverity-agpl:
-  extends: .coverity_base
-  rules:
-    - if: $CI_DESCRIPTION =~ /AGPL-COVERITY/
-  before_script:
-    - export PROJECT_NAME="srsRAN_5G_agpl"
-    - export DESCRIPTION="srsRAN Project AGPL build"
-    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
-
 e2e tests tox:
   stage: static
   rules:
@@ -237,10 +232,12 @@ unit coverage:
       variables:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
+      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
       variables:
         coverage_report: full
       when: always # Even if previous stages/required jobs fail
+      allow_failure: true
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry
@@ -280,6 +277,11 @@ unit coverage:
       if [[ $coverage_report = "full" ]]; then
         publish_to_registry
       fi
+    - export PIP_EXTRA_INDEX_URL=""
+    - apk update; apk add python3 py3-pip
+    - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
+    - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
+
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts:
     paths:
@@ -374,6 +376,32 @@ promote code:
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push
+  dependencies: []
+
+update agpl main dryrun:
+  extends: .update agpl main
+  stage: .post
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: always
+      allow_failure: true
+      variables:
+        MODE: "dryrun"
+  needs: []
+
+tag successful schedule:
+  extends: .create-tag
+  stage: .post
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: manual
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: manual
+  variables:
+    GIT_STRATEGY: none
+  interruptible: false
+  script:
+    - create_tag $(date +"%Y.%m.%d")
   dependencies: []
 
 ################################################################################

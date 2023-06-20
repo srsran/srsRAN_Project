@@ -59,9 +59,9 @@ protected:
     asn1::f1ap::f1ap_pdu_c pdu;
     pdu.set_init_msg();
     pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-    pdu.init_msg().value.ue_context_mod_request()                           = msg;
-    pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id->value = 1;
-    pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id->value = 2;
+    pdu.init_msg().value.ue_context_mod_request()                    = msg;
+    pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id = 1;
+    pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id = 2;
 
     // verify succesful packing
     srsran::byte_buffer tx_buffer;

@@ -20,6 +20,9 @@
  *
  */
 
+/// \file
+/// \brief Tests that check the transmission of Paging messages by the DU-high class.
+
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "test_utils/du_high_test_bench.h"
 #include "tests/unittests/gateways/test_helpers.h"
@@ -41,21 +44,21 @@ f1ap_message generate_paging_message(uint64_t five_g_tmsi, const nr_cell_global_
 
   // Add ue id idx value.
   // UE Identity Index value is defined as: UE_ID 5G-S-TMSI mod 1024  (see TS 38.304 section 7.1).
-  paging->ue_id_idx_value.value.set_idx_len10().from_number(five_g_tmsi % 1024);
+  paging->ue_id_idx_value.set_idx_len10().from_number(five_g_tmsi % 1024);
 
   // Add paging id.
-  paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(five_g_tmsi);
+  paging->paging_id.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(five_g_tmsi);
 
   // Add paging DRX.
   paging->paging_drx_present = true;
-  paging->paging_drx->value  = asn1::f1ap::paging_drx_opts::v32;
+  paging->paging_drx         = asn1::f1ap::paging_drx_opts::v32;
 
   // Add paging cell list.
   asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o> asn1_paging_cell_item_container;
   auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
   asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(nr_cgi.nci);
   asn1_paging_cell_item.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(nr_cgi.plmn));
-  paging->paging_cell_list.value.push_back(asn1_paging_cell_item_container);
+  paging->paging_cell_list.push_back(asn1_paging_cell_item_container);
 
   return msg;
 }

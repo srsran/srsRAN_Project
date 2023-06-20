@@ -128,7 +128,7 @@ void uplane_uplink_symbol_manager::handle_grid_prbs(const message_decoder_result
     return;
   }
 
-  // Find port with eAxC.
+  // Find resource grid port with eAxC.
   unsigned rg_port = std::distance(ul_eaxc.begin(), std::find(ul_eaxc.begin(), ul_eaxc.end(), results.eaxc));
 
   const unsigned du_ul_nof_prbs = ul_data_context.get_grid_nof_prbs();

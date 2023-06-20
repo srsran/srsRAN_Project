@@ -21,6 +21,7 @@
  */
 
 #include "../common/test_helpers.h"
+#include "f1ap_cu_test_helpers.h"
 #include "lib/f1ap/cu_cp/ue_context/f1ap_cu_ue_context.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
@@ -39,13 +40,13 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-  };
+  }
 
   ue_index_t generate_random_ue_index()
   {
     return uint_to_ue_index(
         test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
-  };
+  }
 
   timer_manager        timer_mng;
   manual_task_worker   ctrl_worker{128};

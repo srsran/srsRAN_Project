@@ -382,7 +382,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   }
 }
 
-void du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
+void du_processor_impl::handle_ue_context_release_command(const rrc_ue_context_release_command& cmd)
 {
   rrc_ue_interface* rrc_ue = rrc->find_ue(cmd.ue_index);
   srsran_assert(rrc_ue != nullptr, "ue={} Could not find RRC UE", cmd.ue_index);
@@ -458,7 +458,7 @@ du_processor_impl::handle_new_pdu_session_resource_release_command(
 }
 
 cu_cp_ue_context_release_complete
-du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
+du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
   srsran_assert(ue != nullptr, "Could not find DU UE");
@@ -467,10 +467,19 @@ du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_
   release_complete.pdu_session_res_list_cxt_rel_cpl =
       rrc->find_ue(cmd.ue_index)->get_rrc_ue_up_resource_manager().get_pdu_sessions();
 
-  // Call RRC UE notifier to release the UE and add the location info to the UE context release complete message
-  release_complete.user_location_info = ue->get_rrc_ue_notifier().on_rrc_ue_release();
+  // Call RRC UE notifier to get the release context of the UE and add the location info to the UE context release
+  // complete message
+  rrc_ue_release_context release_context = ue->get_rrc_ue_notifier().get_rrc_ue_release_context();
+  release_complete.user_location_info    = release_context.user_location_info;
 
-  handle_ue_context_release_command(cmd);
+  // Create release command from NGAP UE context release command
+  rrc_ue_context_release_command release_command;
+  release_command.ue_index        = cmd.ue_index;
+  release_command.cause           = cmd.cause;
+  release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();
+  release_command.srb_id          = release_context.srb_id;
+
+  handle_ue_context_release_command(release_command);
 
   return release_complete;
 }

@@ -30,7 +30,7 @@ f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues) :
   msg(msg_),
-  ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value))),
+  ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id))),
   cu_msg_notifier(ue.f1ap_msg_notifier),
   release_wait_timer(ue.du_handler.get_timer_factory().create_timer())
 {
@@ -54,12 +54,12 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
     // container to the UE via the SRB indicated by the SRB ID IE.
     f1c_bearer* srb = nullptr;
     if (msg->srb_id_present) {
-      srb_id_t srb_id = int_to_srb_id(msg->srb_id->value);
+      srb_id_t srb_id = int_to_srb_id(msg->srb_id);
       srb             = ue.bearers.find_srb(srb_id);
     }
 
     if (srb != nullptr) {
-      byte_buffer pdu{msg->rrc_container.value};
+      byte_buffer pdu{msg->rrc_container};
 
       // Forward F1AP PDU to lower layers to be transmitted over-the-air.
       srb->handle_pdu(std::move(pdu));
@@ -97,8 +97,8 @@ void f1ap_du_ue_context_release_procedure::send_ue_context_release_complete()
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   ue_context_release_complete_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_release_complete();
 
-  resp->gnb_du_ue_f1ap_id->value = msg->gnb_du_ue_f1ap_id->value;
-  resp->gnb_cu_ue_f1ap_id->value = msg->gnb_cu_ue_f1ap_id->value;
+  resp->gnb_du_ue_f1ap_id = msg->gnb_du_ue_f1ap_id;
+  resp->gnb_cu_ue_f1ap_id = msg->gnb_cu_ue_f1ap_id;
 
   logger.debug("ue={}, proc=\"UE Context Release\": Finished successfully.", ue.context.ue_index);
   cu_msg_notifier.on_new_message(f1ap_msg);

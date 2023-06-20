@@ -97,7 +97,9 @@ public:
   void handle_csi_report(const csi_report_data& csi_report)
   {
     set_fallback_state(false);
-    channel_state.handle_csi_report(csi_report);
+    if (not channel_state.handle_csi_report(csi_report)) {
+      logger.warning("ue={} rnti={:#x}: Invalid CSI report received", ue_index, rnti());
+    }
   }
 
   /// \brief Get the current UE cell metrics.

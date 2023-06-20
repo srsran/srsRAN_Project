@@ -563,12 +563,6 @@ namespace ngap {
  *                              Struct Definitions
  ******************************************************************************/
 
-// INTEGER (0..4294967295) ::= INTEGER (0..4294967295)
-using ran_ue_ngap_id_t = integer<uint64_t, 0, 4294967295, false, true>;
-
-// INTEGER (0..1099511627775) ::= INTEGER (0..1099511627775)
-using amf_ue_ngap_id_t = integer<uint64_t, 0, 1099511627775, false, true>;
-
 // PrivateIE-ID ::= CHOICE
 struct private_ie_id_c {
   struct types_opts {
@@ -576,7 +570,7 @@ struct private_ie_id_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   private_ie_id_c() = default;
@@ -628,7 +622,7 @@ struct ngap_private_ies_empty_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     types       type() const { return types::nulltype; }

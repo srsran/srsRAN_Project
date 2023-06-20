@@ -101,7 +101,7 @@ struct sl_freq_cfg_common_r16_s {
 
     const char* to_string() const;
   };
-  typedef enumerated<sl_sync_prio_r16_opts> sl_sync_prio_r16_e_;
+  using sl_sync_prio_r16_e_ = enumerated<sl_sync_prio_r16_opts>;
 
   // member variables
   bool                                ext                              = false;
@@ -165,7 +165,7 @@ struct sl_tx_profile_r17_opts {
 
   const char* to_string() const;
 };
-typedef enumerated<sl_tx_profile_r17_opts> sl_tx_profile_r17_e;
+using sl_tx_profile_r17_e = enumerated<sl_tx_profile_r17_opts>;
 
 // SL-RoHC-Profiles-r16 ::= SEQUENCE
 struct sl_ro_hc_profiles_r16_s {
@@ -200,7 +200,7 @@ struct sidelink_precfg_nr_r16_s {
     const char* to_string() const;
     uint16_t    to_number() const;
   };
-  typedef enumerated<t400_r16_opts> t400_r16_e_;
+  using t400_r16_e_ = enumerated<t400_r16_opts>;
   struct sl_max_num_consecutive_dtx_r16_opts {
     enum options { n1, n2, n3, n4, n6, n8, n16, n32, nulltype } value;
     typedef uint8_t number_type;
@@ -208,7 +208,7 @@ struct sidelink_precfg_nr_r16_s {
     const char* to_string() const;
     uint8_t     to_number() const;
   };
-  typedef enumerated<sl_max_num_consecutive_dtx_r16_opts> sl_max_num_consecutive_dtx_r16_e_;
+  using sl_max_num_consecutive_dtx_r16_e_ = enumerated<sl_max_num_consecutive_dtx_r16_opts>;
 
   // member variables
   bool                                    ext                                    = false;

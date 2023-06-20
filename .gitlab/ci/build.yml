@@ -122,6 +122,8 @@ variables:
     - !reference [.fetch_src_cache, before_script]
     - |
       build_srsgnb() {
+        start_time=$(date +%s)
+
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
         fi
@@ -186,6 +188,13 @@ variables:
           /usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -o "../$OUTPUT_FINGERPRINT"
           cd ..
         fi
+
+        end_time=$(date +%s)
+        execution_time=$((end_time - start_time))
+        echo "Build time is: $execution_time seconds"
+        export metric_prefix=""
+        if [[ $ON_MR == "true" ]]; then metric_prefix="_cached"; fi
+        echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
       }
     - |
       launch_tests() {
@@ -269,6 +278,7 @@ variables:
       - ${CI_JOB_ID}_coverage.xml
       - build/apps/gnb/gnb
       - build/Testing/Temporary/MemoryChecker.*.log
+      - build_time_metrics.json
     expire_in: 10 minutes
   cache:
     - !reference [.fetch_src_cache,  cache]

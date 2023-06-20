@@ -71,15 +71,15 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request:
-      return out.value.f1_setup_request()->transaction_id->value;
+      return out.value.f1_setup_request()->transaction_id;
     case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
-      return out.value.gnb_cu_cfg_upd()->transaction_id->value;
+      return out.value.gnb_cu_cfg_upd()->transaction_id;
     case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_du_cfg_upd:
-      return out.value.gnb_du_cfg_upd()->transaction_id->value;
+      return out.value.gnb_du_cfg_upd()->transaction_id;
     case f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request:
       return (*out.value.f1_removal_request())[0]->transaction_id();
     case f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer:
-      return (*out.value.init_ul_rrc_msg_transfer()).transaction_id->value;
+      return (*out.value.init_ul_rrc_msg_transfer()).transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -93,13 +93,13 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp:
-      return out.value.f1_setup_resp()->transaction_id->value;
+      return out.value.f1_setup_resp()->transaction_id;
     case f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cfg_upd_ack:
-      return out.value.gnb_cu_cfg_upd_ack()->transaction_id->value;
+      return out.value.gnb_cu_cfg_upd_ack()->transaction_id;
     case f1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_du_cfg_upd_ack:
-      return out.value.gnb_du_cfg_upd_ack()->transaction_id->value;
+      return out.value.gnb_du_cfg_upd_ack()->transaction_id;
     case f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_removal_resp:
-      return out.value.f1_removal_resp()->transaction_id->value;
+      return out.value.f1_removal_resp()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -113,13 +113,13 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outco
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail:
-      return out.value.f1_setup_fail()->transaction_id->value;
+      return out.value.f1_setup_fail()->transaction_id;
     case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cfg_upd_fail:
-      return out.value.gnb_cu_cfg_upd_fail()->transaction_id->value;
+      return out.value.gnb_cu_cfg_upd_fail()->transaction_id;
     case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_du_cfg_upd_fail:
-      return out.value.gnb_du_cfg_upd_fail()->transaction_id->value;
+      return out.value.gnb_du_cfg_upd_fail()->transaction_id;
     case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_removal_fail:
-      return out.value.f1_removal_fail()->transaction_id->value;
+      return out.value.f1_removal_fail()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -149,21 +149,21 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::ini
   using init_msg_type = asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
     case init_msg_type::ue_context_setup_request:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_setup_request()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_release_cmd:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_cmd()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_cmd()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_mod_request:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_request()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_request()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_mod_required:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_required()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_mod_required()->gnb_du_ue_f1ap_id;
     case init_msg_type::ue_context_release_request:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_request()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ue_context_release_request()->gnb_du_ue_f1ap_id;
     case init_msg_type::dl_rrc_msg_transfer:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.dl_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.dl_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
     case init_msg_type::ul_rrc_msg_transfer:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
     case init_msg_type::init_ul_rrc_msg_transfer:
-      return (gnb_du_ue_f1ap_id_t)init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id->value;
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.init_ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id;
     default:
       break;
   }
@@ -200,9 +200,9 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1a
 inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::paging_s& pdu)
 {
   using namespace asn1::f1ap;
-  switch (pdu->ue_id_idx_value->type()) {
+  switch (pdu->ue_id_idx_value.type()) {
     case ue_id_idx_value_c::types_opts::idx_len10:
-      return pdu->ue_id_idx_value->idx_len10().to_number();
+      return pdu->ue_id_idx_value.idx_len10().to_number();
     default:
       break;
   }
@@ -212,12 +212,12 @@ inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::p
 inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
 {
   using namespace asn1::f1ap;
-  switch (pdu->paging_id->type()) {
+  switch (pdu->paging_id.type()) {
     case paging_id_c::types_opts::ran_ue_paging_id: {
-      return pdu->paging_id->ran_ue_paging_id().irnti.to_number();
+      return pdu->paging_id.ran_ue_paging_id().irnti.to_number();
     }
     case paging_id_c::types_opts::cn_ue_paging_id: {
-      return pdu->paging_id->cn_ue_paging_id().five_g_s_tmsi().to_number();
+      return pdu->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number();
     }
     default:
       break;
@@ -228,7 +228,7 @@ inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
 inline expected<paging_identity_type> get_paging_identity_type(const asn1::f1ap::paging_s& pdu)
 {
   using namespace asn1::f1ap;
-  switch (pdu->paging_id->type()) {
+  switch (pdu->paging_id.type()) {
     case paging_id_c::types_opts::ran_ue_paging_id: {
       return paging_identity_type::ran_ue_paging_identity;
     }

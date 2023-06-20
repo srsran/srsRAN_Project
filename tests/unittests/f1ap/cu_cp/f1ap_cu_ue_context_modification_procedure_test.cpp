@@ -55,7 +55,7 @@ protected:
     }
     auto& req = this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_mod_request();
 
-    return req->gnb_du_ue_f1ap_id.value == (unsigned)du_ue_id;
+    return req->gnb_du_ue_f1ap_id == (unsigned)du_ue_id;
   }
 
   test_ue& testue;
@@ -98,11 +98,11 @@ TEST_F(f1ap_cu_ue_context_modification_test,
       generate_ue_context_modification_response(*testue.cu_ue_id, *testue.du_ue_id, to_rnti(0x4601));
   auto& resp = *ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
   resp.drbs_failed_to_be_setup_mod_list_present = true;
-  resp.drbs_failed_to_be_setup_mod_list.value.resize(1);
-  resp.drbs_failed_to_be_setup_mod_list.value[0].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
-  resp.drbs_failed_to_be_setup_mod_list.value[0]->drbs_failed_to_be_setup_mod_item().drb_id = 1;
-  resp.drbs_setup_mod_list_present                                                          = false;
-  resp.drbs_setup_mod_list.value.clear();
+  resp.drbs_failed_to_be_setup_mod_list.resize(1);
+  resp.drbs_failed_to_be_setup_mod_list[0].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
+  resp.drbs_failed_to_be_setup_mod_list[0]->drbs_failed_to_be_setup_mod_item().drb_id = 1;
+  resp.drbs_setup_mod_list_present                                                    = false;
+  resp.drbs_setup_mod_list.clear();
   f1ap->handle_message(ue_context_modification_response);
 
   // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.

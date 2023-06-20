@@ -57,17 +57,17 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   du_request.ue_index = ue.context.ue_index;
 
   // >> Pass SRBs to setup/modify.
-  for (const auto& srb : msg->srbs_to_be_setup_mod_list.value) {
+  for (const auto& srb : msg->srbs_to_be_setup_mod_list) {
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to setup/modify.
-  for (const auto& drb : msg->drbs_to_be_setup_mod_list.value) {
+  for (const auto& drb : msg->drbs_to_be_setup_mod_list) {
     du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to remove
-  for (const auto& drb : msg->drbs_to_be_released_list.value) {
+  for (const auto& drb : msg->drbs_to_be_released_list) {
     du_request.drbs_to_rem.push_back(make_drb_id(drb.value().drbs_to_be_released_item()));
   }
 }
@@ -79,18 +79,18 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
 
-  resp->gnb_du_ue_f1ap_id->value                    = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id->value                    = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id                           = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id                           = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->res_coordination_transfer_container_present = false;
   resp->du_to_cu_rrc_info_present                   = false;
 
   // > DRBs-SetupMod-List.
   resp->drbs_setup_mod_list_present = not du_response.drbs_setup.empty();
-  resp->drbs_setup_mod_list.value.resize(du_response.drbs_setup.size());
+  resp->drbs_setup_mod_list.resize(du_response.drbs_setup.size());
   for (unsigned i = 0; i != du_response.drbs_setup.size(); ++i) {
-    resp->drbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    resp->drbs_setup_mod_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
     const f1ap_drb_setup&  drb_setup = du_response.drbs_setup[i];
-    drbs_setup_mod_item_s& asn1_drb  = resp->drbs_setup_mod_list.value[i]->drbs_setup_mod_item();
+    drbs_setup_mod_item_s& asn1_drb  = resp->drbs_setup_mod_list[i]->drbs_setup_mod_item();
     asn1_drb.drb_id                  = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
     asn1_drb.lcid_present            = drb_setup.lcid.has_value();
     if (asn1_drb.lcid_present) {
@@ -106,11 +106,11 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->srbs_failed_to_be_setup_mod_list_present = false;
   // > DRBs-FailedToBeSetupMod-List.
   resp->drbs_failed_to_be_setup_mod_list_present = not du_response.drbs_failed_to_setup.empty();
-  resp->drbs_failed_to_be_setup_mod_list->resize(du_response.drbs_failed_to_setup.size());
+  resp->drbs_failed_to_be_setup_mod_list.resize(du_response.drbs_failed_to_setup.size());
   for (unsigned i = 0; i != du_response.drbs_failed_to_setup.size(); ++i) {
-    resp->drbs_failed_to_be_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
+    resp->drbs_failed_to_be_setup_mod_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
     drbs_failed_to_be_setup_mod_item_s& asn1_drb =
-        resp->drbs_failed_to_be_setup_mod_list.value[i]->drbs_failed_to_be_setup_mod_item();
+        resp->drbs_failed_to_be_setup_mod_list[i]->drbs_failed_to_be_setup_mod_item();
     asn1_drb.drb_id                      = drb_id_to_uint(du_response.drbs_failed_to_setup[i]);
     asn1_drb.cause.set_transport().value = cause_transport_opts::transport_res_unavailable;
   }
@@ -123,10 +123,10 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
 
   // > SRBs-SetupMod-List.
   resp->srbs_setup_mod_list_present = not du_request.srbs_to_setup.empty();
-  resp->srbs_setup_mod_list.value.resize(du_request.srbs_to_setup.size());
+  resp->srbs_setup_mod_list.resize(du_request.srbs_to_setup.size());
   for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
-    resp->srbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
-    srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list.value[i].value().srbs_setup_mod_item();
+    resp->srbs_setup_mod_list[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_MOD_ITEM);
+    srbs_setup_mod_item_s& srb = resp->srbs_setup_mod_list[i].value().srbs_setup_mod_item();
     srb.srb_id                 = srb_id_to_uint(du_request.srbs_to_setup[i]);
     srb.lcid                   = srb_id_to_lcid(du_request.srbs_to_setup[i]);
   }
@@ -136,7 +136,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   // > DU-to-CU RRC Container.
   if (not du_response.du_to_cu_rrc_container.empty()) {
     resp->du_to_cu_rrc_info_present = true;
-    resp->du_to_cu_rrc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+    resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
   }
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
@@ -148,9 +148,9 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_fai
   f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
 
-  resp->gnb_du_ue_f1ap_id->value         = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id->value         = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
-  resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
+  resp->gnb_du_ue_f1ap_id               = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }

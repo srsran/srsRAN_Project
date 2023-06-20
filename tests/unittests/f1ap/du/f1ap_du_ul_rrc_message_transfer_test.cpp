@@ -44,6 +44,6 @@ TEST_F(f1ap_du_test, when_sdu_is_received_then_sdu_is_forwarded_to_tx_pdu_notifi
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.init_msg().proc_code, ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
   const ul_rrc_msg_transfer_s& ul_rrc_msg = this->msg_notifier.last_f1ap_msg.pdu.init_msg().value.ul_rrc_msg_transfer();
-  ASSERT_EQ(ul_rrc_msg->srb_id->value, 1);
-  ASSERT_EQ(ul_rrc_msg->rrc_container.value, sdu);
+  ASSERT_EQ(ul_rrc_msg->srb_id, 1);
+  ASSERT_EQ(ul_rrc_msg->rrc_container, sdu);
 }

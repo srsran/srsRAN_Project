@@ -90,8 +90,8 @@ TEST_F(f1ap_du_ue_context_release_test,
             f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete);
   ue_context_release_complete_s& resp =
       this->msg_notifier.last_f1ap_msg.pdu.successful_outcome().value.ue_context_release_complete();
-  ASSERT_EQ(resp->gnb_du_ue_f1ap_id->value, (uint64_t)*test_ue->gnb_du_ue_f1ap_id);
-  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id->value, (uint64_t)*test_ue->gnb_cu_ue_f1ap_id);
+  ASSERT_EQ(resp->gnb_du_ue_f1ap_id, (uint64_t)*test_ue->gnb_du_ue_f1ap_id);
+  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, (uint64_t)*test_ue->gnb_cu_ue_f1ap_id);
 }
 
 TEST_F(f1ap_du_ue_context_release_test, when_f1ap_receives_request_then_the_rrc_container_is_sent_dl_via_srb)
@@ -101,5 +101,5 @@ TEST_F(f1ap_du_ue_context_release_test, when_f1ap_receives_request_then_the_rrc_
 
   // F1AP sends RRC Container present in UE CONTEXT RELEASE COMMAND via SRB1.
   ASSERT_EQ(test_ue->f1c_bearers[1].rx_sdu_notifier.last_pdu,
-            msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container.value);
+            msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container);
 }

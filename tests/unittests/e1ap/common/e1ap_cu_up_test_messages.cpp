@@ -35,7 +35,7 @@ e1ap_message srsran::srs_cu_up::generate_cu_cp_e1_setup_request()
   auto& setup_req = e1_setup_request.pdu.init_msg().value.gnb_cu_cp_e1_setup_request();
 
   setup_req->gnb_cu_cp_name_present = true;
-  setup_req->gnb_cu_cp_name.value.from_string("srsCU-CP");
+  setup_req->gnb_cu_cp_name.from_string("srsCU-CP");
 
   return e1_setup_request;
 }
@@ -48,23 +48,20 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned i
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_setup_req->security_info.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
-  bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
-      "a6ae39efbe0d424cd85f4a9c3aee0414");
-  bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
-  bearer_context_setup_req->serving_plmn.value.from_string("02f899");
-  bearer_context_setup_req->activity_notif_level.value  = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->security_info.up_securitykey.encryption_key.from_string("a6ae39efbe0d424cd85f4a9c3aee0414");
+  bearer_context_setup_req->ue_dl_aggr_max_bit_rate = 1000000000U;
+  bearer_context_setup_req->serving_plmn.from_string("02f899");
+  bearer_context_setup_req->activity_notif_level        = asn1::e1ap::activity_notif_level_e::ue;
   bearer_context_setup_req->ue_inactivity_timer_present = true;
-  bearer_context_setup_req->ue_inactivity_timer.value   = 60;
+  bearer_context_setup_req->ue_inactivity_timer         = 60;
 
-  bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
-  bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
-  bearer_context_setup_req->sys_bearer_context_setup_request.value.set_ng_ran_bearer_context_setup_request();
+  bearer_context_setup_req->sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
 
   auto& ng_ran_bearer_context_setup_req =
-      bearer_context_setup_req->sys_bearer_context_setup_request.value.ng_ran_bearer_context_setup_request();
+      bearer_context_setup_req->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request();
 
   ng_ran_bearer_context_setup_req.resize(1);
 
@@ -133,18 +130,15 @@ e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(un
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_setup_req->security_info.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
-  bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
-      "a6ae39efbe0d424cd85f4a9c3aee0414");
-  bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
-  bearer_context_setup_req->serving_plmn.value.from_string("02f899");
-  bearer_context_setup_req->activity_notif_level.value = asn1::e1ap::activity_notif_level_e::ue;
+  bearer_context_setup_req->security_info.up_securitykey.encryption_key.from_string("a6ae39efbe0d424cd85f4a9c3aee0414");
+  bearer_context_setup_req->ue_dl_aggr_max_bit_rate = 1000000000U;
+  bearer_context_setup_req->serving_plmn.from_string("02f899");
+  bearer_context_setup_req->activity_notif_level = asn1::e1ap::activity_notif_level_e::ue;
 
-  bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
-  bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
-  bearer_context_setup_req->sys_bearer_context_setup_request.value.set_e_utran_bearer_context_setup_request();
+  bearer_context_setup_req->sys_bearer_context_setup_request.set_e_utran_bearer_context_setup_request();
 
   return bearer_context_setup_request;
 }
@@ -168,12 +162,11 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(uns
   bearer_context_modification_request.pdu.set_init_msg();
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value          = cu_cp_ue_e1ap_id;
-  bearer_context_mod_req->sys_bearer_context_mod_request.crit = asn1::crit_opts::reject;
-  bearer_context_mod_req->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->sys_bearer_context_mod_request.set_ng_ran_bearer_context_mod_request();
 
   auto& ng_ran_bearer_context_mod_req =
-      bearer_context_mod_req->sys_bearer_context_mod_request.value.ng_ran_bearer_context_mod_request();
+      bearer_context_mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
 
   ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list_present = true;
 
@@ -194,7 +187,7 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(uns
 
   pdu_session_res_to_setup_modify_item.drb_to_modify_list_ng_ran.push_back(drb_to_mod_item_ng_ran);
 
-  ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list.value.push_back(pdu_session_res_to_setup_modify_item);
+  ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list.push_back(pdu_session_res_to_setup_modify_item);
 
   return bearer_context_modification_request;
 }
@@ -208,13 +201,11 @@ e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_modification_req
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id = cu_up_ue_e1ap_id;
 
   bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
-  bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
-  bearer_context_mod_req->sys_bearer_context_mod_request.crit    = asn1::crit_opts::reject;
-  bearer_context_mod_req->sys_bearer_context_mod_request.value.set_e_utran_bearer_context_mod_request();
+  bearer_context_mod_req->sys_bearer_context_mod_request.set_e_utran_bearer_context_mod_request();
 
   return bearer_context_modification_request;
 }
@@ -228,9 +219,9 @@ e1ap_message srsran::srs_cu_up::generate_bearer_context_release_command(unsigned
   bearer_context_release_command.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
 
   auto& bearer_context_release_cmd = bearer_context_release_command.pdu.init_msg().value.bearer_context_release_cmd();
-  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
-  bearer_context_release_cmd->cause.value.set_radio_network();
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id = cu_up_ue_e1ap_id;
+  bearer_context_release_cmd->cause.set_radio_network();
 
   return bearer_context_release_command;
 }

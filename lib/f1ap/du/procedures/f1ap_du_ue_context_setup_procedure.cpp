@@ -34,12 +34,12 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
 {
   if (ue.context.gnb_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
     // If this is the first message with a GNB-CU-UE-F1AP-ID, update the UE context.
-    ue.context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id.value);
+    ue.context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id);
   }
 
   create_du_request(msg);
   if (msg->rrc_container_present) {
-    rrc_container = msg->rrc_container.value.copy();
+    rrc_container = msg->rrc_container.copy();
   }
 }
 
@@ -67,12 +67,12 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
   du_request.ue_index = ue.context.ue_index;
 
   // >> Pass SRBs to setup.
-  for (const auto& srb : msg->srbs_to_be_setup_list.value) {
+  for (const auto& srb : msg->srbs_to_be_setup_list) {
     du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
   }
 
   // >> Pass DRBs to setup.
-  for (const auto& drb : msg->drbs_to_be_setup_list.value) {
+  for (const auto& drb : msg->drbs_to_be_setup_list) {
     du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
   }
 }
@@ -93,24 +93,24 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_setup_resp();
 
-  resp->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
 
   // > DU-to-CU RRC Container.
-  resp->du_to_cu_rrc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
+  resp->du_to_cu_rrc_info.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
 
   // > If the C-RNTI IE is included in the UE CONTEXT SETUP RESPONSE, the gNB-CU shall consider that the C-RNTI has
   // been allocated by the gNB-DU for this UE context.
   resp->c_rnti_present = true;
-  resp->c_rnti->value  = ue.context.rnti;
+  resp->c_rnti         = ue.context.rnti;
 
   // > SRBs setup list.
   resp->srbs_setup_list_present = not du_request.srbs_to_setup.empty();
   if (resp->srbs_setup_list_present) {
-    resp->srbs_setup_list->resize(du_request.srbs_to_setup.size());
+    resp->srbs_setup_list.resize(du_request.srbs_to_setup.size());
     for (unsigned i = 0; i != du_request.srbs_to_setup.size(); ++i) {
-      resp->srbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
-      srbs_setup_item_s& srb_item = resp->srbs_setup_list.value[i].value().srbs_setup_item();
+      resp->srbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
+      srbs_setup_item_s& srb_item = resp->srbs_setup_list[i].value().srbs_setup_item();
       srb_item.srb_id             = srb_id_to_uint(du_request.srbs_to_setup[i]);
       srb_item.lcid               = srb_id_to_lcid(du_request.srbs_to_setup[i]);
     }
@@ -120,10 +120,10 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   resp->drbs_setup_list_present = not du_request.drbs_to_setup.empty();
   if (resp->drbs_setup_list_present) {
     // TODO: Consider that not all DRBs may have been setup.
-    resp->drbs_setup_list->resize(du_request.drbs_to_setup.size());
+    resp->drbs_setup_list.resize(du_request.drbs_to_setup.size());
     for (unsigned i = 0; i != du_request.drbs_to_setup.size(); ++i) {
-      resp->drbs_setup_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
-      drbs_setup_item_s& drb_item = resp->drbs_setup_list.value[i].value().drbs_setup_item();
+      resp->drbs_setup_list[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_ITEM);
+      drbs_setup_item_s& drb_item = resp->drbs_setup_list[i].value().drbs_setup_item();
       drb_item.drb_id             = drb_id_to_uint(du_request.drbs_to_setup[i].drb_id);
       drb_item.dl_up_tnl_info_to_be_setup_list.resize(1);
       drb_item.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.set_gtp_tunnel();
@@ -141,9 +141,9 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
 
-  resp->gnb_du_ue_f1ap_id->value         = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
-  resp->gnb_cu_ue_f1ap_id->value         = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
-  resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
+  resp->gnb_du_ue_f1ap_id               = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
+  resp->gnb_cu_ue_f1ap_id               = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
+  resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
   ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }

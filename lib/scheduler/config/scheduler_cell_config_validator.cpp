@@ -26,6 +26,7 @@
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/scheduler/sched_consts.h"
 
@@ -73,25 +74,26 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format < prach_format_type::invalid, "Invalid PRACH format");
 
-  subcarrier_spacing           pusch_scs           = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  prach_symbols_slots_duration prach_duration_info = get_prach_duration_info(prach_cfg, pusch_scs);
-  prach_subcarrier_spacing     prach_scs           = is_long_preamble(prach_cfg.format)
-                                                         ? get_prach_preamble_long_info(prach_cfg.format).scs
-                                                         : to_ra_subcarrier_spacing(pusch_scs);
+  subcarrier_spacing       pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  prach_subcarrier_spacing prach_scs = is_long_preamble(prach_cfg.format)
+                                           ? get_prach_preamble_long_info(prach_cfg.format).scs
+                                           : to_ra_subcarrier_spacing(pusch_scs);
 
   // Check if the PRACH preambles fall into UL slots
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
     const cell_configuration cell_cfg{msg};
-    // For each subframe with PRACH, check if all slots are UL.
-    for (unsigned subframe_idx : prach_cfg.subframe) {
-      // There are configuration for which the PRACH starts in an odd slot within the subframe
-      // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
-      const unsigned start_slot_idx =
-          subframe_idx * (1U << to_numerology_value(pusch_scs)) + prach_duration_info.start_slot_pusch_scs;
-      for (unsigned sl = 0; sl < prach_duration_info.prach_length_slots; ++sl) {
-        VERIFY(cell_cfg.is_fully_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
-               "PRACH configuration index {} not supported with current TDD pattern. PRACH fall outside UL slots",
-               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+
+    auto ret = prach_helper::prach_fits_in_tdd_pattern(pusch_scs,
+                                                       msg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended,
+                                                       rach_cfg_cmn.rach_cfg_generic.prach_config_index,
+                                                       *msg.tdd_ul_dl_cfg_common);
+    if (ret.is_error()) {
+      std::string s = fmt::format("PRACH configuration index {} not supported with current TDD pattern.",
+                                  rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+      if (ret.error().empty()) {
+        return s + fmt::format(" Cause: PRACH configuration is not valid");
+      } else {
+        return s + fmt::format(" Cause: Slot indexes used for PRACH {} fall outside TDD UL slots", ret.error());
       }
     }
   }

@@ -42,55 +42,55 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
   return true;
 }
 
-static bool check_dl_ports_if_broadcast_is_enabled(const ru_ofh_configuration& config)
+static bool check_dl_eaxc_if_broadcast_is_enabled(const ru_ofh_configuration& config)
 {
   for (const auto& sector : config.sector_configs) {
     if (!config.is_downlink_broadcast_enabled) {
       continue;
     }
 
-    // When broadcast flag is enabled, two downlink ports are supported.
-    if (config.is_downlink_broadcast_enabled && sector.ru_dl_ports.size() == 2) {
+    // When broadcast flag is enabled, two downlink eAxCs are supported.
+    if (config.is_downlink_broadcast_enabled && sector.dl_eaxc.size() == 2) {
       continue;
     }
 
-    fmt::print("Invalid downlink port identifier configuration, broadcast flag is {} and there are {} downlink ports\n",
+    fmt::print("Invalid downlink eAxC identifier configuration, broadcast flag is {} and there are {} downlink eAxC\n",
                (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
-               sector.ru_dl_ports.size());
+               sector.dl_eaxc.size());
     return false;
   }
 
   return true;
 }
 
-static bool check_port_id(unsigned port_id)
+static bool check_eaxc_id(unsigned eaxc)
 {
-  bool result = port_id < ofh::MAX_SUPPORTED_EAXC_ID_VALUE;
+  bool result = eaxc < ofh::MAX_SUPPORTED_EAXC_ID_VALUE;
   if (!result) {
-    fmt::print("Port id={} not supported. Valid values [0-{}]\n", port_id, ofh::MAX_SUPPORTED_EAXC_ID_VALUE - 1U);
+    fmt::print("eAxC id={} not supported. Valid values [0-{}]\n", eaxc, ofh::MAX_SUPPORTED_EAXC_ID_VALUE - 1U);
   }
 
   return result;
 }
 
-static bool check_ports_id(const ru_ofh_configuration& config)
+static bool check_eaxcs_id(const ru_ofh_configuration& config)
 {
   for (const auto& sector : config.sector_configs) {
-    // Check PRACH port.
-    if (!check_port_id(sector.ru_prach_port)) {
+    // Check PRACH eAxC.
+    if (!check_eaxc_id(sector.ul_prach_eaxc)) {
       return false;
     }
 
-    // Check uplink ports.
-    for (auto port : sector.ru_ul_ports) {
-      if (!check_port_id(port)) {
+    // Check uplink eAxCs.
+    for (auto eaxc : sector.ul_eaxc) {
+      if (!check_eaxc_id(eaxc)) {
         return false;
       }
     }
 
-    // Check downlink ports
-    for (auto port : sector.ru_dl_ports) {
-      if (!check_port_id(port)) {
+    // Check downlink eAxCs.
+    for (auto eaxc : sector.dl_eaxc) {
+      if (!check_eaxc_id(eaxc)) {
         return false;
       }
     }
@@ -109,11 +109,11 @@ bool srsran::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
     return false;
   }
 
-  if (!check_dl_ports_if_broadcast_is_enabled(config)) {
+  if (!check_dl_eaxc_if_broadcast_is_enabled(config)) {
     return false;
   }
 
-  if (!check_ports_id(config)) {
+  if (!check_eaxcs_id(config)) {
     return false;
   }
 

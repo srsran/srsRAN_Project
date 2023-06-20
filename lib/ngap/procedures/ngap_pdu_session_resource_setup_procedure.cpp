@@ -68,9 +68,9 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   fill_asn1_pdu_session_res_setup_response(ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp(),
                                            response);
 
-  auto& pdu_session_res_setup_resp = ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
-  pdu_session_res_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
-  pdu_session_res_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
+  auto& pdu_session_res_setup_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
+  pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue.get_amf_ue_id());
+  pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
   logger.info("ue={} Sending PduSessionResourceSetupResponse", ue.get_ue_index());
   amf_notifier.on_new_message(ngap_msg);

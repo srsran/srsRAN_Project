@@ -85,7 +85,7 @@ TEST_F(f1ap_asn1_packer_test, when_packing_unsuccessful_then_message_not_forward
   f1ap_message f1ap_msg                       = generate_f1_setup_request(0);
   auto&        setup_req                      = f1ap_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.value.clear();
+  setup_req->gnb_du_served_cells_list.clear();
 
   // Action 3: Pack message and forward to gateway
   packer->handle_message(f1ap_msg);

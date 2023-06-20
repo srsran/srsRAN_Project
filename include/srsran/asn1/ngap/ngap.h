@@ -125,7 +125,7 @@ struct ngap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     init_msg_c() = default;
@@ -411,7 +411,7 @@ struct ngap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     successful_outcome_c() = default;
@@ -542,7 +542,7 @@ struct ngap_elem_procs_o {
 
       const char* to_string() const;
     };
-    typedef enumerated<types_opts> types;
+    using types = enumerated<types_opts>;
 
     // choice methods
     unsuccessful_outcome_c() = default;
@@ -660,7 +660,7 @@ struct ngap_pdu_c {
 
     const char* to_string() const;
   };
-  typedef enumerated<types_opts, true> types;
+  using types = enumerated<types_opts, true>;
 
   // choice methods
   ngap_pdu_c() = default;

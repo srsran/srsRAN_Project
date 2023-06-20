@@ -246,8 +246,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command =
-      generate_ue_context_release_command(uint_to_ue_index(0));
+  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(uint_to_ue_index(0));
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
@@ -289,8 +288,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command =
-      generate_ue_context_release_command(uint_to_ue_index(0));
+  rrc_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(uint_to_ue_index(0));
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);

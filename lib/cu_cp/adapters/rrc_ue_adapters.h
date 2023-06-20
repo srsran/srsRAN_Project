@@ -69,7 +69,7 @@ public:
 
   void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
 
-  void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
+  void on_ue_context_release_command(const rrc_ue_context_release_command& cmd) override
   {
     srsran_assert(du_processor_rrc_ue_handler != nullptr, "DU processor handler must not be nullptr");
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);

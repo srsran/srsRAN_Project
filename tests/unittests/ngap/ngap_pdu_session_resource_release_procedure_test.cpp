@@ -54,7 +54,7 @@ protected:
   {
     bool test_1 = pdu_session_resource_release_command.pdu.init_msg()
                       .value.pdu_session_res_release_cmd()
-                      ->pdu_session_res_to_release_list_rel_cmd.value.size() ==
+                      ->pdu_session_res_to_release_list_rel_cmd.size() ==
                   du_processor_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd.size();
 
     bool test_2 = du_processor_notifier.last_release_command.pdu_session_res_to_release_list_rel_cmd[pdu_session_id]

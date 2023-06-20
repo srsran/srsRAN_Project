@@ -21,7 +21,10 @@
  */
 
 #include "cu_cp_test_helpers.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/ran/cu_types.h"
 #include "srsran/support/async/async_test_utils.h"
+#include <utility>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -79,7 +82,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
                                            gnb_du_ue_f1ap_id_t du_ue_id,
                                            gnb_cu_ue_f1ap_id_t cu_ue_id,
                                            pci_t               pci,
-                                           rnti_t              crnti)
+                                           rnti_t              crnti,
+                                           amf_ue_id_t         amf_ue_id,
+                                           ran_ue_id_t         ran_ue_id)
 {
   // Connect AMF by injecting a ng_setup_response
   ngap_message ngap_msg = generate_ng_setup_response();
@@ -89,8 +94,11 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
+  ASSERT_EQ(cu_cp_obj->get_nof_dus(), 1U);
+
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
+  ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
 
   // Generate F1SetupRequest
   f1ap_message f1setup_msg = generate_f1_setup_request(pci);
@@ -100,17 +108,9 @@ void cu_cp_test::test_preamble_ue_creation(du_index_t          du_index,
 
   // Attach UE
   attach_ue(du_ue_id, cu_ue_id, crnti, du_index);
-
-  // check that UE has been added
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
-}
 
-void cu_cp_test::receive_ngap_dl_info_transfer()
-{
-  // Inject NGAP DL message using random AMF UE ID
-  amf_ue_id_t amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
-  ran_ue_id_t  ran_ue_id        = uint_to_ran_ue_id(0);
+  // Inject NGAP DL message
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
   cu_cp_obj->get_ngap_message_handler().handle_message(dl_nas_transport);
 }
@@ -126,27 +126,27 @@ bool cu_cp_test::check_minimal_paging_result()
   auto& paging_msg = f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.paging();
 
   // check ue id idx value
-  if (paging_msg->ue_id_idx_value.value.idx_len10().to_number() != (279089024671 % 1024)) {
+  if (paging_msg->ue_id_idx_value.idx_len10().to_number() != (279089024671 % 1024)) {
     test_logger.error("UE ID idx value mismatch {} != {}",
-                      paging_msg->ue_id_idx_value.value.idx_len10().to_number(),
+                      paging_msg->ue_id_idx_value.idx_len10().to_number(),
                       (279089024671 % 1024));
     return false;
   }
 
   // check paging id
-  if (paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
+  if (paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number() != 279089024671) {
     test_logger.error("Paging ID mismatch {} != {}",
-                      paging_msg->paging_id.value.cn_ue_paging_id().five_g_s_tmsi().to_number(),
+                      paging_msg->paging_id.cn_ue_paging_id().five_g_s_tmsi().to_number(),
                       279089024671);
     return false;
   }
 
   // check paging cell list
-  if (paging_msg->paging_cell_list.value.size() != 1) {
-    test_logger.error("Paging cell list size mismatch {} != {}", paging_msg->paging_cell_list.value.size(), 1);
+  if (paging_msg->paging_cell_list.size() != 1) {
+    test_logger.error("Paging cell list size mismatch {} != {}", paging_msg->paging_cell_list.size(), 1);
     return false;
   }
-  auto& paging_cell_item = paging_msg->paging_cell_list.value[0].value().paging_cell_item();
+  auto& paging_cell_item = paging_msg->paging_cell_list[0].value().paging_cell_item();
   if (paging_cell_item.nr_cgi.nr_cell_id.to_number() != 12345678) {
     test_logger.error("NR CGI NCI mismatch {} != {}", paging_cell_item.nr_cgi.nr_cell_id.to_number(), 12345678);
     return false;
@@ -171,8 +171,8 @@ bool cu_cp_test::check_paging_result()
   if (!paging_msg->paging_drx_present) {
     return false;
   }
-  if (paging_msg->paging_drx.value.to_number() != 64) {
-    test_logger.error("Paging DRX mismatch {} != {}", paging_msg->paging_drx.value.to_number(), 64);
+  if (paging_msg->paging_drx.to_number() != 64) {
+    test_logger.error("Paging DRX mismatch {} != {}", paging_msg->paging_drx.to_number(), 64);
     return false;
   }
 
@@ -180,8 +180,8 @@ bool cu_cp_test::check_paging_result()
   if (!paging_msg->paging_prio_present) {
     return false;
   }
-  if (paging_msg->paging_prio.value.to_number() != 5) {
-    test_logger.error("Paging prio mismatch {} != {}", paging_msg->paging_prio.value.to_number(), 5);
+  if (paging_msg->paging_prio.to_number() != 5) {
+    test_logger.error("Paging prio mismatch {} != {}", paging_msg->paging_prio.to_number(), 5);
     return false;
   }
 
@@ -189,8 +189,8 @@ bool cu_cp_test::check_paging_result()
   if (!paging_msg->paging_origin_present) {
     return false;
   }
-  if ((std::string)paging_msg->paging_origin.value.to_string() != "non-3gpp") {
-    test_logger.error("Paging origin mismatch {} != non-3gpp", paging_msg->paging_origin.value.to_string());
+  if ((std::string)paging_msg->paging_origin.to_string() != "non-3gpp") {
+    test_logger.error("Paging origin mismatch {} != non-3gpp", paging_msg->paging_origin.to_string());
     return false;
   }
 

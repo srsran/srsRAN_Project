@@ -236,12 +236,19 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       }
       const auto& tdd_cfg = config.common_cell_cfg.tdd_ul_dl_cfg.value();
 
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots = (unsigned)std::round(
-          tdd_cfg.dl_ul_tx_period * get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots   = tdd_cfg.nof_dl_slots;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.nof_dl_symbols;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.nof_ul_slots;
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.nof_ul_symbols;
+      out_cell.tdd_ul_dl_cfg_common->pattern1.dl_ul_tx_period_nof_slots = tdd_cfg.pattern1.dl_ul_period_slots;
+      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_dl_slots              = tdd_cfg.pattern1.nof_dl_slots;
+      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_dl_symbols            = tdd_cfg.pattern1.nof_dl_symbols;
+      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_ul_slots              = tdd_cfg.pattern1.nof_ul_slots;
+      out_cell.tdd_ul_dl_cfg_common->pattern1.nof_ul_symbols            = tdd_cfg.pattern1.nof_ul_symbols;
+
+      if (tdd_cfg.pattern2.has_value()) {
+        out_cell.tdd_ul_dl_cfg_common->pattern2->dl_ul_tx_period_nof_slots = tdd_cfg.pattern2->dl_ul_period_slots;
+        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_slots              = tdd_cfg.pattern2->nof_dl_slots;
+        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_symbols            = tdd_cfg.pattern2->nof_dl_symbols;
+        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_slots              = tdd_cfg.pattern2->nof_ul_slots;
+        out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_symbols            = tdd_cfg.pattern2->nof_ul_symbols;
+      }
     }
 
     // PCCH-Config.
@@ -793,9 +800,9 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
     }
 
     sector_cfg.tci           = cell_cfg.vlan_tag;
-    sector_cfg.ru_prach_port = cell_cfg.ru_prach_port_id;
-    sector_cfg.ru_dl_ports.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
-    sector_cfg.ru_ul_ports.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
+    sector_cfg.ul_prach_eaxc = cell_cfg.ru_prach_port_id;
+    sector_cfg.dl_eaxc.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
+    sector_cfg.ul_eaxc.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
   }
 
   if (!is_valid_ru_ofh_config(out_cfg)) {

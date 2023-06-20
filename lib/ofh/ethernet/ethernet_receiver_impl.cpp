@@ -42,23 +42,23 @@ receiver_impl::receiver_impl(const std::string&    interface,
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ECPRI_ETH_TYPE));
   if (socket_fd < 0) {
-    report_fatal_error("Unable to open socket for Ethernet receiver");
+    report_error("Unable to open socket for Ethernet receiver");
   }
 
   // Set interface to promiscuous mode.
   ::ifreq if_opts;
   ::strncpy(if_opts.ifr_name, interface.c_str(), IFNAMSIZ - 1);
   if (::ioctl(socket_fd, SIOCGIFFLAGS, &if_opts) < 0) {
-    report_fatal_error("Unable to get flags for NIC interface in the Ethernet receiver");
+    report_error("Unable to get flags for NIC interface in the Ethernet receiver");
   }
   if_opts.ifr_flags |= IFF_PROMISC;
   if (::ioctl(socket_fd, SIOCSIFFLAGS, &if_opts) < 0) {
-    report_fatal_error("Unable to set flags for NIC interface in the Ethernet receiver");
+    report_error("Unable to set flags for NIC interface in the Ethernet receiver");
   }
 
   // Bind to device.
   if (::setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.c_str(), IFNAMSIZ - 1) == -1) {
-    report_fatal_error("Unable to bind socket in Ethernet receiver");
+    report_error("Unable to bind socket in Ethernet receiver");
   }
 
   logger.info("Opened successfully the NIC interface '{}' used by the Ethernet receiver", interface);

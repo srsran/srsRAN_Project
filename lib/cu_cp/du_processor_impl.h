@@ -26,8 +26,6 @@
 #include "adapters/f1ap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "routine_managers/du_processor_routine_manager.h"
-#include "ue_manager_impl.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
@@ -79,7 +77,7 @@ public:
   // du_processor_rrc_ue_interface
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
-  void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  void handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) override;
   void handle_rrc_reestablishment_context_modification_required(ue_index_t ue_index) override;
 
   // du_processor_ngap_interface
@@ -90,7 +88,7 @@ public:
   async_task<cu_cp_pdu_session_resource_release_response>
   handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
   cu_cp_ue_context_release_complete
-  handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
+  handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) override;
 
   // du_processor paging handler
   void handle_paging_message(cu_cp_paging_message& msg) override;

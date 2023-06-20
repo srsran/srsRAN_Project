@@ -85,7 +85,7 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
     logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
-    logger.debug("Received BearerContextModificationFailure cause={}", get_cause_str(fail->cause.value));
+    logger.debug("Received BearerContextModificationFailure cause={}", get_cause_str(fail->cause));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       fail.to_json(js);

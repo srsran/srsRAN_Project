@@ -29,8 +29,8 @@ using namespace srs_cu_cp;
 void rrc_ue_impl::on_ue_delete_request(const cause_t& cause)
 {
   // FIXME: this enqueues a new CORO on top of an existing one.
-  cu_cp_ue_context_release_command msg = {};
-  msg.ue_index                         = context.ue_index;
-  msg.cause                            = cause;
+  rrc_ue_context_release_command msg = {};
+  msg.ue_index                       = context.ue_index;
+  msg.cause                          = cause;
   du_processor_notifier.on_ue_context_release_command(msg);
 }

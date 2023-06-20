@@ -32,15 +32,15 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
                                               const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& asn1_res)
 {
   res.success      = true;
-  res.gnb_cu_up_id = asn1_res->gnb_cu_up_id.value;
+  res.gnb_cu_up_id = asn1_res->gnb_cu_up_id;
 
   if (asn1_res->gnb_cu_up_name_present) {
-    res.gnb_cu_up_name = asn1_res->gnb_cu_up_name.value.to_string();
+    res.gnb_cu_up_name = asn1_res->gnb_cu_up_name.to_string();
   }
 
-  res.cn_support = asn1_res->cn_support.value.to_string();
+  res.cn_support = asn1_res->cn_support.to_string();
 
-  for (const auto& asn1_plmn_item : asn1_res->supported_plmns.value) {
+  for (const auto& asn1_plmn_item : asn1_res->supported_plmns) {
     supported_plmns_item_t plmn;
     plmn.plmn_id = asn1_plmn_item.plmn_id.to_string();
 
@@ -91,7 +91,7 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
   }
 
   if (asn1_res->gnb_cu_up_capacity_present) {
-    res.gnb_cu_up_capacity = asn1_res->gnb_cu_up_capacity.value;
+    res.gnb_cu_up_capacity = asn1_res->gnb_cu_up_capacity;
   }
 }
 
@@ -99,7 +99,7 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
                                               const asn1::e1ap::gnb_cu_cp_e1_setup_fail_s& asn1_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cause(asn1_fail->cause.value);
+  res.cause   = e1ap_cause_to_cause(asn1_fail->cause);
 
   if (asn1_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
@@ -109,15 +109,15 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
 inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&                         req,
                                              const asn1::e1ap::gnb_cu_up_e1_setup_request_s& asn1_req)
 {
-  req.gnb_cu_up_id = asn1_req->gnb_cu_up_id.value;
+  req.gnb_cu_up_id = asn1_req->gnb_cu_up_id;
 
   if (asn1_req->gnb_cu_up_name_present) {
-    req.gnb_cu_up_name = asn1_req->gnb_cu_up_name.value.to_string();
+    req.gnb_cu_up_name = asn1_req->gnb_cu_up_name.to_string();
   }
 
-  req.cn_support = asn1_req->cn_support.value.to_string();
+  req.cn_support = asn1_req->cn_support.to_string();
 
-  for (const auto& asn1_plmn_item : asn1_req->supported_plmns.value) {
+  for (const auto& asn1_plmn_item : asn1_req->supported_plmns) {
     supported_plmns_item_t plmn;
     plmn.plmn_id = asn1_plmn_item.plmn_id.to_string();
 
@@ -168,7 +168,7 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
   }
 
   if (asn1_req->gnb_cu_up_capacity_present) {
-    req.gnb_cu_up_capacity = asn1_req->gnb_cu_up_capacity.value;
+    req.gnb_cu_up_capacity = asn1_req->gnb_cu_up_capacity;
   }
 }
 

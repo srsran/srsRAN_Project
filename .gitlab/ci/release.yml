@@ -10,20 +10,22 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/setup/all.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/features/all.yml
 
 stages:
   - private
   - public
+  - release
 
-update agpl main:
+.update agpl main:
   stage: private
-  rules:
-    - if: $ON_TAG
-      allow_failure: true
   interruptible: false
   variables:
     GIT_STRATEGY: none
     BRANCH: agpl_main
+    MODE: ""
   image: ubuntu:22.04
   before_script:
     - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates
@@ -33,7 +35,14 @@ update agpl main:
     - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git /${CI_PROJECT_NAME}
     - cd /${CI_PROJECT_NAME}
     - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
-    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH}
+    - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${BRANCH} ${MODE}
+
+update agpl main:
+  extends: .update agpl main
+  rules:
+    - if: $ON_TAG
+      variables:
+        MODE: "push"
 
 generate testvector tar gz:
   stage: private
@@ -46,21 +55,31 @@ generate testvector tar gz:
   artifacts:
     paths:
       - phy_testvectors.tar.gz
-    expire_in: "7 days"
+    expire_in: "30 days"
 
-push:
-  stage: public
+coverity-agpl:
+  extends: .coverity_base
+  stage: private
   rules:
     - if: $ON_TAG
-      when: manual
-      allow_failure: false
+  before_script:
+    - export PROJECT_NAME="srsRAN_5G_agpl"
+    - export DESCRIPTION="srsRAN Project AGPL build"
+    - export COV_TOKEN="${COVERITY_TOKEN_AGPL}"
+  needs:
+    - job: update agpl main
+      optional: false
+      artifacts: false
+
+.publish:
+  stage: public
   interruptible: false
   image: alpine:3.16.0 # sh entrypoint
   variables:
     GIT_STRATEGY: none
     PRIVATE_BRANCH: agpl_main
     PUBLIC_REPO: srsran/srsRAN_Project
-    PUBLIC_BRANCH: main
+    PUBLIC_BRANCH: ""
   before_script:
     - apk add git
   script:
@@ -71,8 +90,49 @@ push:
     # Push code to github main
     - git push github_public ${PRIVATE_BRANCH}:${PUBLIC_BRANCH}
 
-release:
+publish branch test:
+  extends: .publish
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  variables:
+    PUBLIC_BRANCH: test
+  needs:
+    - job: update agpl main
+      optional: false
+      artifacts: false
+
+publish main:
+  extends: .publish
+  rules:
+    - if: $ON_TAG
+      when: manual
+      allow_failure: false
+  variables:
+    PUBLIC_BRANCH: main
+  needs:
+    - job: publish branch test
+      optional: false
+      artifacts: false
+
+notify main published:
+  extends: .notifier
   stage: public
+  rules:
+    - if: $ON_TAG
+  needs:
+    - job: publish main
+      optional: false
+      artifacts: false
+  variables:
+    CI_DESCRIPTION: "Public GitHub Updated"
+    MSG: "main branch has been updated."
+    SLACK_CHANNEL: $SLACK_CHANNEL_OK
+    LEVEL: "ok"
+
+release public:
+  stage: release
   rules:
     - if: $ON_TAG
       when: manual
@@ -80,7 +140,7 @@ release:
   interruptible: false
   image: alpine:3.16.0 # sh entrypoint
   needs:
-    - job: push
+    - job: publish main
       optional: false
       artifacts: false
     - job: generate testvector tar gz
@@ -131,3 +191,19 @@ release:
         -H "Content-Type: application/octet-stream" \
         https://uploads.github.com/repos/${PUBLIC_REPO}/releases/${RELEASE_ID}/assets?name=${ARTIFACT} \
         --data-binary "@${CI_PROJECT_DIR}/${ARTIFACT}"
+
+notify release published:
+  extends: .notifier
+  stage: release
+  rules:
+    - if: $ON_TAG
+  needs:
+    - job: release public
+      optional: false
+      artifacts: false
+  variables:
+    CI_DESCRIPTION: "Public Release created on GitHub"
+    SLACK_CHANNEL: $SLACK_CHANNEL_OK
+    LEVEL: "ok"
+  before_script:
+    - MSG="release_${CI_COMMIT_TAG//./_} created"

@@ -78,7 +78,7 @@ public:
   // rrc_ue_control_message_handler
   async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override;
-  cu_cp_user_location_info_nr handle_rrc_ue_release() override;
+  rrc_ue_release_context get_rrc_ue_release_context() override;
 
   // rrc_ue_context_handler
   rrc_reestablishment_ue_context_t get_context() override;

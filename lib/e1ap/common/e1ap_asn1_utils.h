@@ -70,13 +70,13 @@ inline expected<uint8_t> get_transaction_id(const asn1::e1ap::init_msg_s& out)
   using namespace asn1::e1ap;
   switch (out.value.type().value) {
     case e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request:
-      return out.value.gnb_cu_cp_e1_setup_request()->transaction_id->value;
+      return out.value.gnb_cu_cp_e1_setup_request()->transaction_id;
     case e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_up_e1_setup_request:
-      return out.value.gnb_cu_up_e1_setup_request()->transaction_id->value;
+      return out.value.gnb_cu_up_e1_setup_request()->transaction_id;
     case e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_cfg_upd:
-      return out.value.gnb_cu_cp_cfg_upd()->transaction_id->value;
+      return out.value.gnb_cu_cp_cfg_upd()->transaction_id;
     case e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_up_cfg_upd:
-      return out.value.gnb_cu_up_cfg_upd()->transaction_id->value;
+      return out.value.gnb_cu_up_cfg_upd()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -90,13 +90,13 @@ inline expected<uint8_t> get_transaction_id(const asn1::e1ap::successful_outcome
   using namespace asn1::e1ap;
   switch (out.value.type().value) {
     case e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cp_e1_setup_resp:
-      return out.value.gnb_cu_cp_e1_setup_resp()->transaction_id->value;
+      return out.value.gnb_cu_cp_e1_setup_resp()->transaction_id;
     case e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_e1_setup_resp:
-      return out.value.gnb_cu_up_e1_setup_resp()->transaction_id->value;
+      return out.value.gnb_cu_up_e1_setup_resp()->transaction_id;
     case e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_cp_cfg_upd_ack:
-      return out.value.gnb_cu_cp_cfg_upd_ack()->transaction_id->value;
+      return out.value.gnb_cu_cp_cfg_upd_ack()->transaction_id;
     case e1ap_elem_procs_o::successful_outcome_c::types_opts::gnb_cu_up_cfg_upd_ack:
-      return out.value.gnb_cu_up_cfg_upd_ack()->transaction_id->value;
+      return out.value.gnb_cu_up_cfg_upd_ack()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -110,13 +110,13 @@ inline expected<uint8_t> get_transaction_id(const asn1::e1ap::unsuccessful_outco
   using namespace asn1::e1ap;
   switch (out.value.type().value) {
     case e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail:
-      return out.value.gnb_cu_cp_e1_setup_fail()->transaction_id->value;
+      return out.value.gnb_cu_cp_e1_setup_fail()->transaction_id;
     case e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail:
-      return out.value.gnb_cu_up_e1_setup_fail()->transaction_id->value;
+      return out.value.gnb_cu_up_e1_setup_fail()->transaction_id;
     case e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_cfg_upd_fail:
-      return out.value.gnb_cu_cp_cfg_upd_fail()->transaction_id->value;
+      return out.value.gnb_cu_cp_cfg_upd_fail()->transaction_id;
     case e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_cfg_upd_fail:
-      return out.value.gnb_cu_up_cfg_upd_fail()->transaction_id->value;
+      return out.value.gnb_cu_up_cfg_upd_fail()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -146,15 +146,15 @@ inline expected<gnb_cu_cp_ue_e1ap_id_t> get_gnb_cu_cp_ue_e1ap_id(const asn1::e1a
   using init_msg_type = asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
     case init_msg_type::bearer_context_setup_request:
-      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id;
     case init_msg_type::bearer_context_release_cmd:
-      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id;
     case init_msg_type::bearer_context_mod_request:
-      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id;
     case init_msg_type::bearer_context_mod_required:
-      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_cp_ue_e1ap_id;
     case init_msg_type::bearer_context_release_request:
-      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_cp_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_cp_ue_e1ap_id;
     default:
       break;
   }
@@ -196,13 +196,13 @@ inline expected<gnb_cu_up_ue_e1ap_id_t> get_gnb_cu_up_ue_e1ap_id(const asn1::e1a
   using init_msg_type = asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
     case init_msg_type::bearer_context_release_cmd:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_up_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_up_ue_e1ap_id;
     case init_msg_type::bearer_context_mod_request:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_up_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_up_ue_e1ap_id;
     case init_msg_type::bearer_context_mod_required:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_up_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_up_ue_e1ap_id;
     case init_msg_type::bearer_context_release_request:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_up_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_up_ue_e1ap_id;
     default:
       break;
   }

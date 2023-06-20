@@ -132,7 +132,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   f1ap_message f1setup_msg                    = generate_f1_setup_request(0);
   auto&        setup_req                      = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = false;
-  setup_req->gnb_du_served_cells_list.value.clear();
+  setup_req->gnb_du_served_cells_list.clear();
 
   f1ap->handle_message(f1setup_msg);
 
@@ -172,7 +172,7 @@ TEST_F(f1ap_cu_test, when_du_to_cu_rrc_container_missing_then_ue_not_added)
   // Generate F1 Initial UL RRC Message without DU to CU RRC Container
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
   init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container_present = false;
-  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container->clear();
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->du_to_cu_rrc_container.clear();
 
   // Pass message to F1AP
   f1ap->handle_message(init_ul_rrc_msg);
@@ -238,7 +238,7 @@ TEST_F(f1ap_cu_test, when_rrc_setup_complete_present_then_forward_over_srb1)
   f1ap->handle_message(init_ul_rrc_msg);
 
   EXPECT_EQ(du_processor_notifier.rx_notifier->last_rrc_container.to_string(),
-            init_ul_rrc->rrc_container_rrc_setup_complete.value.to_string());
+            init_ul_rrc->rrc_container_rrc_setup_complete.to_string());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

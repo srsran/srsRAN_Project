@@ -161,8 +161,8 @@ TEST_F(e1ap_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_con
 
   ASSERT_EQ(msg_notifier.last_e1ap_msg.pdu.successful_outcome()
                 .value.bearer_context_setup_resp()
-                ->sys_bearer_context_setup_resp.value.ng_ran_bearer_context_setup_resp()
-                .pdu_session_res_setup_list.value[0]
+                ->sys_bearer_context_setup_resp.ng_ran_bearer_context_setup_resp()
+                .pdu_session_res_setup_list[0]
                 .drb_setup_list_ng_ran.size(),
             1);
 }

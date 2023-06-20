@@ -92,14 +92,14 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
         logger.warning(id,
                        "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached without a HARQ-ACK report "
                        "being received and the maximum number of reTxs {} was exceeded",
-                       max_nof_harq_retxs(0),
-                       ack_wait_in_slots);
+                       ack_wait_in_slots,
+                       max_nof_harq_retxs(0));
       } else {
         logger.debug(id,
                      "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
                      "were received and the maximum number of reTxs {} was exceeded",
-                     max_nof_harq_retxs(0),
-                     ack_wait_in_slots);
+                     ack_wait_in_slots,
+                     max_nof_harq_retxs(0));
       }
     }
     // Reset the ACK wait time.
@@ -277,6 +277,7 @@ void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
   harq_process::tx_common(pusch_slot, pusch_slot);
   // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
+  prev_tx_params = {};
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)

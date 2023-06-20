@@ -27,6 +27,12 @@
 using namespace srsran;
 using namespace srs_du;
 
+gnb_du_ue_f1ap_id_t srsran::srs_du::generate_random_gnb_du_ue_f1ap_id()
+{
+  return int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min), gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+}
+
 f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message      request_msg = {};
@@ -72,25 +78,25 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& dl_msg    = msg.pdu.init_msg().value.ue_context_setup_request();
-  dl_msg->gnb_cu_ue_f1ap_id->value      = 0;
-  dl_msg->gnb_du_ue_f1ap_id->value      = 0;
+  dl_msg->gnb_cu_ue_f1ap_id             = 0;
+  dl_msg->gnb_du_ue_f1ap_id             = 0;
   dl_msg->srbs_to_be_setup_list_present = true;
-  dl_msg->srbs_to_be_setup_list.value.resize(1);
-  dl_msg->srbs_to_be_setup_list.value[0].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
-  srbs_to_be_setup_item_s& srb2 = dl_msg->srbs_to_be_setup_list.value[0]->srbs_to_be_setup_item();
+  dl_msg->srbs_to_be_setup_list.resize(1);
+  dl_msg->srbs_to_be_setup_list[0].load_info_obj(ASN1_F1AP_ID_SRBS_SETUP_ITEM);
+  srbs_to_be_setup_item_s& srb2 = dl_msg->srbs_to_be_setup_list[0]->srbs_to_be_setup_item();
   srb2.srb_id                   = 2;
 
   dl_msg->drbs_to_be_setup_list_present = drbs_to_add.size() > 0;
-  dl_msg->drbs_to_be_setup_list.value.resize(drbs_to_add.size());
+  dl_msg->drbs_to_be_setup_list.resize(drbs_to_add.size());
   unsigned count = 0;
   for (drb_id_t drbid : drbs_to_add) {
-    dl_msg->drbs_to_be_setup_list.value[count].load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-    dl_msg->drbs_to_be_setup_list.value[count]->drbs_to_be_setup_item() = generate_drb_am_setup_item(drbid);
+    dl_msg->drbs_to_be_setup_list[count].load_info_obj(ASN1_F1AP_ID_DRB_INFO);
+    dl_msg->drbs_to_be_setup_list[count]->drbs_to_be_setup_item() = generate_drb_am_setup_item(drbid);
     ++count;
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100)));
+  dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100)));
 
   return msg;
 }
@@ -130,20 +136,20 @@ srsran::srs_du::generate_ue_context_modification_request(const std::initializer_
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_request_s& dl_msg = msg.pdu.init_msg().value.ue_context_mod_request();
-  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
-  dl_msg->gnb_du_ue_f1ap_id->value = 0;
+  dl_msg->gnb_cu_ue_f1ap_id        = 0;
+  dl_msg->gnb_du_ue_f1ap_id        = 0;
 
   dl_msg->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
-  dl_msg->drbs_to_be_setup_mod_list.value.resize(drbs_to_add.size());
+  dl_msg->drbs_to_be_setup_mod_list.resize(drbs_to_add.size());
   unsigned count = 0;
   for (drb_id_t drbid : drbs_to_add) {
-    dl_msg->drbs_to_be_setup_mod_list.value[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
-    dl_msg->drbs_to_be_setup_mod_list.value[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
+    dl_msg->drbs_to_be_setup_mod_list[count].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
+    dl_msg->drbs_to_be_setup_mod_list[count]->drbs_to_be_setup_mod_item() = generate_drb_am_mod_item(drbid);
     ++count;
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
+  dl_msg->rrc_container.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
   return msg;
 }
 
@@ -154,14 +160,14 @@ f1ap_message srsran::srs_du::generate_ue_context_release_command()
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   ue_context_release_cmd_s& dl_msg = msg.pdu.init_msg().value.ue_context_release_cmd();
-  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
-  dl_msg->gnb_du_ue_f1ap_id->value = 0;
-  dl_msg->cause.value.set(cause_c::types_opts::misc);
-  dl_msg->cause.value.misc().value = asn1::f1ap::cause_misc_opts::unspecified;
-  dl_msg->srb_id_present           = true;
-  dl_msg->srb_id->value            = 1;
-  dl_msg->rrc_container_present    = true;
-  dl_msg->rrc_container.value      = byte_buffer{0x1, 0x2, 0x3, 0x4};
+  dl_msg->gnb_cu_ue_f1ap_id        = 0;
+  dl_msg->gnb_du_ue_f1ap_id        = 0;
+  dl_msg->cause.set(cause_c::types_opts::misc);
+  dl_msg->cause.misc().value    = asn1::f1ap::cause_misc_opts::unspecified;
+  dl_msg->srb_id_present        = true;
+  dl_msg->srb_id                = 1;
+  dl_msg->rrc_container_present = true;
+  dl_msg->rrc_container         = byte_buffer{0x1, 0x2, 0x3, 0x4};
 
   return msg;
 }
@@ -238,15 +244,15 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   // Update F1AP UE IDs if not set yet.
   const auto& f1ap_req = msg.pdu.init_msg().value.ue_context_setup_request();
   if (not ue.gnb_du_ue_f1ap_id.has_value()) {
-    ue.gnb_du_ue_f1ap_id = (gnb_du_ue_f1ap_id_t)f1ap_req->gnb_du_ue_f1ap_id->value;
+    ue.gnb_du_ue_f1ap_id = (gnb_du_ue_f1ap_id_t)f1ap_req->gnb_du_ue_f1ap_id;
   }
   if (not ue.gnb_cu_ue_f1ap_id.has_value()) {
-    ue.gnb_cu_ue_f1ap_id = (gnb_cu_ue_f1ap_id_t)f1ap_req->gnb_cu_ue_f1ap_id->value;
+    ue.gnb_cu_ue_f1ap_id = (gnb_cu_ue_f1ap_id_t)f1ap_req->gnb_cu_ue_f1ap_id;
   }
 
   // Generate dummy DU manager UE Config Update command to F1AP.
   f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
-  for (const auto& srb : f1ap_req->srbs_to_be_setup_list.value) {
+  for (const auto& srb : f1ap_req->srbs_to_be_setup_list) {
     srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srb_id;
 
     // Create F1-C bearer in test ue.
@@ -258,7 +264,7 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
     bearer.rx_sdu_notifier = &ue.f1c_bearers[srb_id_to_uint(srb_id)].rx_sdu_notifier;
     f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.push_back(bearer);
   }
-  for (const auto& drb : f1ap_req->drbs_to_be_setup_list.value) {
+  for (const auto& drb : f1ap_req->drbs_to_be_setup_list) {
     drb_id_t drb_id = (drb_id_t)drb.value().drbs_to_be_setup_item().drb_id;
     ue.f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
     auto& f1u_bearer  = ue.f1u_bearers[drb_id_to_uint(drb_id) - 1];

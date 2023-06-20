@@ -82,7 +82,7 @@ du_processor_routine_manager::start_pdu_session_resource_release_routine(
 }
 
 async_task<void>
-du_processor_routine_manager::start_ue_context_release_routine(const cu_cp_ue_context_release_command& command,
+du_processor_routine_manager::start_ue_context_release_routine(const rrc_ue_context_release_command& command,
                                                                up_resource_manager& ue_up_resource_manager)
 {
   return launch_async<ue_context_release_routine>(

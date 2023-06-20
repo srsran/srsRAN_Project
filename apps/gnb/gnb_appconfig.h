@@ -63,10 +63,10 @@ struct prach_appconfig {
   optional<unsigned> prach_frequency_start;
 };
 
-/// TDD configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
-struct tdd_ul_dl_appconfig {
-  /// Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
-  float dl_ul_tx_period = 5.0F;
+/// TDD pattern configuration. See TS 38.331, \c TDD-UL-DL-Pattern.
+struct tdd_ul_dl_pattern_appconfig {
+  /// Periodicity of the DL-UL pattern in slots. Values {2,...,80}.
+  unsigned dl_ul_period_slots = 10;
   /// Values: {0,...,maxNrofSlots=80}.
   unsigned nof_dl_slots = 6;
   /// Values: {0,...,maxNrofSymbols-1=13}.
@@ -75,6 +75,12 @@ struct tdd_ul_dl_appconfig {
   unsigned nof_ul_slots = 3;
   /// Values: {0,...,maxNrofSymbols-1=13}.
   unsigned nof_ul_symbols = 0;
+};
+
+/// TDD configuration. See TS 38.331, \c TDD-UL-DL-ConfigCommon.
+struct tdd_ul_dl_appconfig {
+  tdd_ul_dl_pattern_appconfig           pattern1;
+  optional<tdd_ul_dl_pattern_appconfig> pattern2;
 };
 
 /// Paging related configuration. See TS 38.331, PCCH-Config.

@@ -107,7 +107,7 @@ bool ng_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = std::chrono::seconds{ng_fail->time_to_wait->to_number()};
+  time_to_wait = std::chrono::seconds{ng_fail->time_to_wait.to_number()};
   return true;
 }
 
@@ -120,13 +120,13 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
     res.msg     = transaction_sink.response();
     res.success = true;
 
-    for (const auto& guami_item : res.msg->served_guami_list.value) {
+    for (const auto& guami_item : res.msg->served_guami_list) {
       context.served_guami_list.push_back(asn1_guami_to_guami(guami_item.guami));
     }
 
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
-    logger.error("Received PDU with unsuccessful outcome cause={}", get_cause_str(ng_fail->cause.value));
+    logger.error("Received PDU with unsuccessful outcome cause={}", get_cause_str(ng_fail->cause));
     res.success = false;
   }
   return res;

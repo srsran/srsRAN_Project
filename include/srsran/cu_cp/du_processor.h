@@ -188,7 +188,7 @@ public:
 
   /// \brief Handle a UE Context Release Command
   /// \param[in] cmd The UE Context Release Command.
-  virtual void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  virtual void handle_ue_context_release_command(const rrc_ue_context_release_command& cmd) = 0;
 
   /// \brief Handle a required reestablishment context modification.
   /// \param[in] ue_index The index of the UE that needs the context modification.
@@ -210,9 +210,9 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 
-  /// \brief Notify the RRC UE to Release an UE.
-  /// \returns The location info of the UE.
-  virtual cu_cp_user_location_info_nr on_rrc_ue_release() = 0;
+  /// \brief Get the RRC UE release context.
+  /// \returns The release context of the UE.
+  virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -236,7 +236,7 @@ public:
   /// \brief Handle a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
   virtual cu_cp_ue_context_release_complete
-  handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
+  handle_new_ue_context_release_command(const cu_cp_ngap_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the NGAP about control messages.

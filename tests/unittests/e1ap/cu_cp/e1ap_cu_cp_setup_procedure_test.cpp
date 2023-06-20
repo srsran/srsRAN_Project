@@ -245,10 +245,7 @@ TEST_F(e1ap_cu_cp_test, when_received_cu_up_e1_setup_request_valid_then_connect_
 TEST_F(e1ap_cu_cp_test, when_received_cu_up_e1_setup_request_invalid_then_reject_cu_up)
 {
   // Generate CuUpE1SetupRequest
-  e1ap_message e1_setup_msg       = generate_cu_up_e1_setup_request_base();
-  auto&        setup_req          = e1_setup_msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
-  setup_req->supported_plmns.id   = ASN1_E1AP_ID_SUPPORTED_PLMNS;
-  setup_req->supported_plmns.crit = asn1::crit_opts::reject;
+  e1ap_message e1_setup_msg = generate_cu_up_e1_setup_request_base();
   e1ap->handle_message(e1_setup_msg);
 
   // Action 2 : Check if E1SetupRequest was forwarded to NGAP

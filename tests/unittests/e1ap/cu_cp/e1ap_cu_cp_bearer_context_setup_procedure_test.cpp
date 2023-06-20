@@ -46,7 +46,7 @@ protected:
     u.ue_index         = req.ue_index;
     u.cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg()
                                                          .value.bearer_context_setup_request()
-                                                         ->gnb_cu_cp_ue_e1ap_id.value);
+                                                         ->gnb_cu_cp_ue_e1ap_id);
   }
 
   bool was_bearer_context_setup_request_sent(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
@@ -60,7 +60,7 @@ protected:
     }
     auto& req = this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_setup_request();
 
-    return req->gnb_cu_cp_ue_e1ap_id.value == gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
+    return req->gnb_cu_cp_ue_e1ap_id == gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
   }
 
   bool was_bearer_context_setup_successful() const
