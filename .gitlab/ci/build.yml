@@ -270,7 +270,7 @@ variables:
       - build_time_metrics.json
     expire_in: 10 minutes
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
 
 # Basic builds (MR and update cache on Nightly)
 
@@ -349,7 +349,7 @@ smoke release cached:
       when: never
     - if: $ON_MR
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke tsan cached:
@@ -364,7 +364,7 @@ smoke tsan cached:
       when: never
     - if: $ON_MR
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke rhel cached:
@@ -381,7 +381,7 @@ smoke rhel cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke archlinux cached:
@@ -398,7 +398,7 @@ smoke archlinux cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke release clean:
@@ -408,7 +408,7 @@ smoke release clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
 
 smoke tsan clean:
   extends: .smoke tsan
@@ -462,7 +462,7 @@ intermediate commits:
         sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 valgrind changed tests:
@@ -507,7 +507,7 @@ valgrind changed tests:
       build_srsgnb
     - launch_tests
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 ###########
@@ -526,7 +526,7 @@ smoke release update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke tsan update cache:
@@ -539,7 +539,7 @@ smoke tsan update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke rhel update cache:
@@ -550,7 +550,7 @@ smoke rhel update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke archlinux update cache:
@@ -561,7 +561,7 @@ smoke archlinux update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 # High priority smoke checks. Some of them save the binary for e2e tests
@@ -1226,5 +1226,5 @@ custom-build:
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
