@@ -212,13 +212,6 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     return entry(slot);
   }
-
-  /// Clears the repository entry at slot.
-  void clear(slot_point slot)
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    entry(slot) = T();
-  }
 };
 
 } // namespace ofh

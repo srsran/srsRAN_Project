@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
+#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include <string>

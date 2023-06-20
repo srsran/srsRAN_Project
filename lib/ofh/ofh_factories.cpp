@@ -126,15 +126,14 @@ std::unique_ptr<controller> srsran::ofh::create_ofh_timing_controller(const cont
 }
 
 std::unique_ptr<ota_symbol_boundary_notifier>
-srsran::ofh::create_ofh_ota_symbol_notifier(unsigned                            nof_slot_offset_du_ru,
-                                            unsigned                            nof_symbols_per_slot,
-                                            srslog::basic_logger&               logger,
-                                            std::unique_ptr<timing_notifier>    timing_notifier,
-                                            span<symbol_handler*>               symbol_handlers,
-                                            span<ota_symbol_boundary_notifier*> ota_notifiers)
+srsran::ofh::create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
+                                            unsigned                         nof_symbols_per_slot,
+                                            srslog::basic_logger&            logger,
+                                            std::unique_ptr<timing_notifier> timing_notifier,
+                                            span<ota_symbol_handler*>        symbol_handlers)
 {
   return std::make_unique<ota_symbol_dispatcher>(
-      nof_slot_offset_du_ru, nof_symbols_per_slot, logger, std::move(timing_notifier), symbol_handlers, ota_notifiers);
+      nof_slot_offset_du_ru, nof_symbols_per_slot, logger, std::move(timing_notifier), symbol_handlers);
 }
 
 static receiver_config generate_receiver_config(const sector_configuration& config)

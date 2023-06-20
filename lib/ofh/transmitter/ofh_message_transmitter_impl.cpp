@@ -55,7 +55,7 @@ void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symb
   pool.eth_frames_sent(slot, symbol_index, type);
 }
 
-void message_transmitter_impl::handle_new_symbol(slot_symbol_point symbol_point)
+void message_transmitter_impl::handle_new_ota_symbol(slot_symbol_point symbol_point)
 {
   // Transmit pending DL Control-Plane messages.
   transmit_enqueued_messages(symbol_point + timing_params.sym_cp_dl_start, message_type::control_plane);

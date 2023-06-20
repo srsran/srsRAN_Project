@@ -25,6 +25,32 @@
 namespace srsran {
 namespace ofh {
 
+/// \brief Structure storing the transmission window timing parameters.
+struct du_tx_window_timing_parameters {
+  /// Offset from the current OTA symbol to the start of DL Control-Plane transmission window.
+  std::chrono::microseconds T1a_max_cp_dl;
+  /// Offset from the current OTA symbol to the end of DL Control-Plane transmission window.
+  std::chrono::microseconds T1a_min_cp_dl;
+  /// Offset from the current OTA symbol to the start of UL Control-Plane transmission window.
+  std::chrono::microseconds T1a_max_cp_ul;
+  /// Offset from the current OTA symbol to the end of UL Control-Plane transmission window.
+  std::chrono::microseconds T1a_min_cp_ul;
+  /// Offset from the current OTA symbol to the start of DL User-Plane transmission window.
+  std::chrono::microseconds T1a_max_up;
+  /// Offset from the current OTA symbol to the end of DL User-Plane transmission window.
+  std::chrono::microseconds T1a_min_up;
+};
+
+/// Configuration used by ofh_symbol_handler implementations.
+struct symbol_handler_config {
+  /// Transmission window timing parameters for delay management.
+  du_tx_window_timing_parameters tx_timing_params;
+  /// Number of symbols per slot.
+  unsigned symbols_per_slot;
+  /// Highest subcarrier spacing.
+  subcarrier_spacing scs;
+};
+
 /// Open Fronthaul transmitter configuration.
 struct transmitter_config {
   /// Channel bandwidth.

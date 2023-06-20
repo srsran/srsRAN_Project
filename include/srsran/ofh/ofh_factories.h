@@ -13,10 +13,10 @@
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_cplane_message_builder.h"
 #include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/ofh_ota_symbol_handler.h"
 #include "srsran/ofh/ofh_receiver_configuration.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
 #include "srsran/ofh/ofh_timing_notifier.h"
 #include "srsran/ofh/ofh_uplane_message_builder.h"
 #include "srsran/ofh/ofh_uplane_message_decoder.h"
@@ -77,12 +77,11 @@ std::unique_ptr<controller> create_ofh_timing_controller(const controller_config
 
 /// Creates an Open Fronthaul OTA symbol notifier.
 std::unique_ptr<ota_symbol_boundary_notifier>
-create_ofh_ota_symbol_notifier(unsigned                            nof_slot_offset_du_ru,
-                               unsigned                            nof_symbols_per_slot,
-                               srslog::basic_logger&               logger,
-                               std::unique_ptr<timing_notifier>    timing_notifier,
-                               span<symbol_handler*>               symbol_handlers,
-                               span<ota_symbol_boundary_notifier*> ota_notifiers);
+create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
+                               unsigned                         nof_symbols_per_slot,
+                               srslog::basic_logger&            logger,
+                               std::unique_ptr<timing_notifier> timing_notifier,
+                               span<ota_symbol_handler*>        symbol_handlers);
 
 struct symbol_handler_factory_config {
   /// Cyclic prefix.
@@ -100,7 +99,7 @@ struct symbol_handler_factory_config {
 };
 
 /// Creates an Open Fronthaul symbol handler.
-std::unique_ptr<symbol_handler> create_ofh_symbol_handler(symbol_handler_factory_config& config);
+std::unique_ptr<ota_symbol_handler> create_ofh_symbol_handler(symbol_handler_factory_config& config);
 
 /// Creates an Open Fronthaul sector.
 std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg);

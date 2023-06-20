@@ -56,14 +56,8 @@ get_uplink_symbol_manager_config(const receiver_config&                         
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen) :
   decompressor_sel(std::move(depen.decompressor_sel)),
   ul_packet_handler(get_packet_handler_config(config, depen)),
-  ul_symbol_manager(get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ul_eaxc)),
-  ota_rx_handler(*depen.ul_cp_context_repo, *depen.prach_context_repo, *depen.ul_slot_context_repo)
+  ul_symbol_manager(get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ul_eaxc))
 {
-}
-
-ota_symbol_boundary_notifier& receiver_impl::get_ota_symbol_notifier()
-{
-  return ota_rx_handler;
 }
 
 ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()

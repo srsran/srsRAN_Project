@@ -83,8 +83,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   ofh_deps.ul_data_notifier = std::make_unique<ru_ofh_rx_symbol_handler_impl>(*config.rx_symbol_notifier);
 
   // Create sectors.
-  std::vector<ofh::symbol_handler*>               symbol_handlers;
-  std::vector<ofh::ota_symbol_boundary_notifier*> ota_symbol_notifiers;
+  std::vector<ofh::ota_symbol_handler*> symbol_handlers;
   for (const auto& sector_cfg : config.sector_configs) {
     if (config.is_downlink_broadcast_enabled) {
       report_fatal_error_if_not(
@@ -99,8 +98,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     ofh_deps.sectors.emplace_back(std::move(sector), sector_cfg.transmitter_executor);
 
     // Add the symbol handlers to the list of handlers.
-    symbol_handlers.push_back(&ofh_deps.sectors.back().first->get_transmitter().get_symbol_handler());
-    ota_symbol_notifiers.push_back(&ofh_deps.sectors.back().first->get_receiver().get_ota_symbol_notifier());
+    symbol_handlers.push_back(&ofh_deps.sectors.back().first->get_transmitter().get_ota_symbol_handler());
   }
 
   // Create OFH OTA symbol notifier.
@@ -109,8 +107,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                                           get_nsymb_per_slot(config.cp),
                                           *config.logger,
                                           std::make_unique<ru_ofh_timing_handler>(*config.timing_notifier),
-                                          symbol_handlers,
-                                          ota_symbol_notifiers);
+                                          symbol_handlers);
   report_fatal_error_if_not(ofh_deps.symbol_notifier, "Unable to create OFH OTA symbol notifier");
 
   // Prepare OFH controller configuration.

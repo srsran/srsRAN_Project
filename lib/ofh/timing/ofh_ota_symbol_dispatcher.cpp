@@ -17,19 +17,13 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
 {
   // Handle the new symbol.
   for (auto* handler : symbol_handlers) {
-    handler->handle_new_symbol(symbol_point);
+    handler->handle_new_ota_symbol(symbol_point);
   }
 
-  // Call OTA notifiers.
-  for (auto* notifier : ota_notifiers) {
-    notifier->on_new_symbol(symbol_point);
-  }
-
-  // First incoming slot, notify always.
+  // First incoming slot, update the current slot and exit. Exiting in this point will make to notify to the upper
+  // layers when a new slot starts, instead of notifying in a random time point of the slot.
   if (!current_slot.valid()) {
     current_slot = symbol_point.get_slot();
-    logger.debug("First slot is {}, notifying slot={}", current_slot, current_slot + nof_slot_offset_du_ru);
-    time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 
     return;
   }
@@ -57,18 +51,16 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
   time_notifier->on_tti_boundary(current_slot + nof_slot_offset_du_ru);
 }
 
-ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                            nof_slot_offset_du_ru_,
-                                             unsigned                            nof_symbols_per_slot,
-                                             srslog::basic_logger&               logger_,
-                                             std::unique_ptr<timing_notifier>    timing_notifier_,
-                                             span<symbol_handler*>               symbol_handlers_,
-                                             span<ota_symbol_boundary_notifier*> ota_notifiers_) :
+ota_symbol_dispatcher::ota_symbol_dispatcher(unsigned                         nof_slot_offset_du_ru_,
+                                             unsigned                         nof_symbols_per_slot,
+                                             srslog::basic_logger&            logger_,
+                                             std::unique_ptr<timing_notifier> timing_notifier_,
+                                             span<ota_symbol_handler*>        symbol_handlers_) :
   nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
   half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
   full_slot_symbol(nof_symbols_per_slot - 1U),
   logger(logger_),
   time_notifier(std::move(timing_notifier_)),
-  symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end()),
-  ota_notifiers(ota_notifiers_.begin(), ota_notifiers_.end())
+  symbol_handlers(symbol_handlers_.begin(), symbol_handlers_.end())
 {
 }
