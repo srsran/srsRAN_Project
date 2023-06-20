@@ -167,17 +167,15 @@ error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sche
                                    [&csi_im](const zp_csi_rs_resource& zp) {
                                      return zp.period == csi_im.csi_res_period and
                                             zp.offset == csi_im.csi_res_offset and
-                                            zp.res_mapping.freq_band_start_rb == csi_im.freq_band_start_rb and
-                                            zp.res_mapping.freq_band_nof_rb == csi_im.freq_band_nof_rb and
+                                            zp.res_mapping.freq_band_rbs == csi_im.freq_band_rbs and
                                             zp.res_mapping.first_ofdm_symbol_in_td ==
                                                 csi_im.csi_im_res_element_pattern->symbol_location;
                                    });
           VERIFY(found,
-                 "CSI-IM does not overlap with ZP-CSI-RS. CSI-IM: {{period={} offset={} band=[{}, {}) symbol={}}}",
+                 "CSI-IM does not overlap with ZP-CSI-RS. CSI-IM: {{period={} offset={} band={} symbol={}}}",
                  csi_im.csi_res_period,
                  csi_im.csi_res_offset,
-                 csi_im.freq_band_start_rb,
-                 csi_im.freq_band_nof_rb,
+                 csi_im.freq_band_rbs,
                  csi_im.csi_im_res_element_pattern->symbol_location);
         }
       }
@@ -263,8 +261,8 @@ srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request
             const auto&   res_mapping = res.res_mapping;
             const uint8_t row_idx     = csi_rs::get_csi_rs_resource_mapping_row_number(
                 res_mapping.nof_ports, res_mapping.freq_density, res_mapping.cdm, res_mapping.fd_alloc);
-            csi_rs_pattern_configuration csi_rs_cfg{.start_rb                 = res_mapping.freq_band_start_rb,
-                                                    .nof_rb                   = res_mapping.freq_band_nof_rb,
+            csi_rs_pattern_configuration csi_rs_cfg{.start_rb                 = res_mapping.freq_band_rbs.start(),
+                                                    .nof_rb                   = res_mapping.freq_band_rbs.length(),
                                                     .csi_rs_mapping_table_row = static_cast<unsigned>(row_idx),
                                                     .symbol_l0                = res_mapping.first_ofdm_symbol_in_td,
                                                     .cdm                      = res_mapping.cdm,

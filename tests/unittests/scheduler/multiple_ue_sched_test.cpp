@@ -193,6 +193,7 @@ protected:
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
+    cell_cfg.csi_rs_enabled = true;
     return cell_cfg;
   }
 
@@ -200,15 +201,6 @@ protected:
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
     auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
-
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
-        test_helpers::make_test_ue_uplink_config(cell_cfg_params));
-
-    if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
-      ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-          config_helpers::make_default_csi_meas_config(cell_cfg_params));
-    }
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());

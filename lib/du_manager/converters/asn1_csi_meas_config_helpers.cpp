@@ -108,8 +108,8 @@ static asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(cons
       srsran_assertion_failure("Invalid freq. density={}", cfg.freq_density);
   }
 
-  out.freq_band.start_rb = cfg.freq_band_start_rb;
-  out.freq_band.nrof_rbs = cfg.freq_band_nof_rb;
+  out.freq_band.start_rb = cfg.freq_band_rbs.start();
+  out.freq_band.nrof_rbs = cfg.freq_band_rbs.length();
 
   return out;
 }
@@ -347,10 +347,10 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
     }
   }
 
-  if (cfg.freq_band_nof_rb.has_value() and cfg.freq_band_start_rb.has_value()) {
+  if (not cfg.freq_band_rbs.empty()) {
     out.freq_band_present  = true;
-    out.freq_band.start_rb = cfg.freq_band_start_rb.value();
-    out.freq_band.nrof_rbs = cfg.freq_band_nof_rb.value();
+    out.freq_band.start_rb = cfg.freq_band_rbs.start();
+    out.freq_band.nrof_rbs = cfg.freq_band_rbs.length();
   }
 
   if (cfg.csi_res_period.has_value() and cfg.csi_res_offset.has_value()) {

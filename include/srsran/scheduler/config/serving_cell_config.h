@@ -127,8 +127,8 @@ struct pdsch_config {
   /// vrb-ToPRB-Interleaver and rbg-Size settings are described in TS 38.214, clause 5.1.2.3. If a bundleSize(Set)
   /// value is absent, the UE applies the value n2. The field prb-BundlingType applies to DCI format 1_1.
   prb_bundling prb_bndlg;
-  /// \brief List of zp-CSI-RS-Resources.
-  static_vector<zp_csi_rs_resource, MAX_NOF_ZP_CSI_RS_RESOURCES> zp_csi_rs_res_list;
+  /// \brief List of zp-CSI-RS-Resources. Maximum size: 32.
+  std::vector<zp_csi_rs_resource> zp_csi_rs_res_list;
   /// A set of periodically occurring ZP-CSI-RS-Resources. The network uses the ZP-CSI-RSResourceSetId=0 for this set.
   optional<zp_csi_rs_resource_set> p_zp_csi_rs_res;
 

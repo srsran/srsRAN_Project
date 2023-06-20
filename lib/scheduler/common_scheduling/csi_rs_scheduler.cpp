@@ -15,7 +15,7 @@ using namespace srsran;
 
 static void fill_csi_rs_info_res_map(csi_rs_info& csi_rs, const csi_rs_resource_mapping& res_map)
 {
-  csi_rs.crbs        = {res_map.freq_band_start_rb, res_map.freq_band_start_rb + res_map.freq_band_nof_rb};
+  csi_rs.crbs        = res_map.freq_band_rbs;
   csi_rs.freq_domain = res_map.fd_alloc;
   csi_rs.row         = csi_rs::get_csi_rs_resource_mapping_row_number(
       res_map.nof_ports, res_map.freq_density, res_map.cdm, res_map.fd_alloc);
