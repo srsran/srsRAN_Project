@@ -850,7 +850,7 @@ ubuntu-22.04 arm neon release:
 archlinux amd64 no isa:
   extends: .build_and_unit_arch
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   parallel:
     matrix:
@@ -863,7 +863,7 @@ archlinux amd64 no isa:
 archlinux amd64 avx2:
   extends: .build_and_unit_arch
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
       when: delayed
       start_in: 30 minutes
   interruptible: false
@@ -879,7 +879,7 @@ archlinux amd64 avx2:
 archlinux amd64 avx512:
   extends: .build_and_unit_arch
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   parallel:
     matrix:
