@@ -1250,6 +1250,10 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
         scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
 
     auto coreset0_cfg = pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
+    // CORESET#0 must be within cell bandwidth limits.
+    if (coreset0_cfg.nof_rb_coreset > n_rbs) {
+      break;
+    }
 
     const pdcch_type0_css_occasion_pattern1_description ss0_config =
         pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
@@ -1375,4 +1379,27 @@ n_ta_offset srsran::band_helper::get_ta_offset(nr_band band)
   } else {
     return n_ta_offset::n13792;
   }
+}
+
+optional<unsigned> srsran::band_helper::get_ssb_arfcn(unsigned              dl_arfcn,
+                                                      nr_band               band,
+                                                      unsigned              n_rbs,
+                                                      subcarrier_spacing    scs_common,
+                                                      subcarrier_spacing    scs_ssb,
+                                                      ssb_offset_to_pointA  offset_to_point_A,
+                                                      ssb_subcarrier_offset k_ssb)
+{
+  srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
+                "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
+
+  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
+  ssb_freq_location           ssb = du_cfg.get_next_ssb_location();
+  while (ssb.is_valid) {
+    if (ssb.offset_to_point_A == offset_to_point_A and ssb.k_ssb == k_ssb) {
+      return freq_to_nr_arfcn(ssb.ss_ref);
+    }
+    ssb = du_cfg.get_next_ssb_location();
+  }
+  return {};
 }

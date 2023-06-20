@@ -490,9 +490,11 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
       if (not band_helper::get_ssb_coreset0_freq_location(
                   base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx)
                   .has_value()) {
-        fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={} and SearchSpace#0 index={}\n",
+        fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={}, SearchSpace#0 index={} and "
+                   "cell bandwidth={}Mhz\n",
                    cs0_idx,
-                   ss0_idx);
+                   ss0_idx,
+                   base_cell.channel_bw_mhz);
         return false;
       }
     }
