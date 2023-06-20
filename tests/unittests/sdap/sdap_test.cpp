@@ -181,6 +181,32 @@ TEST_F(sdap_test, test_tx_removed_mapping)
   EXPECT_TRUE(dl_sink2->pdu_queue.empty());
 }
 
+#ifdef ASSERTS_ENABLED
+/// \brief Test RX without any mapping
+TEST_F(sdap_test, test_rx_no_mapping)
+{
+  (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
+  // no prior mapping, should trigger an assertion
+  ASSERT_DEATH({ sdap->get_sdap_rx_pdu_handler(drb_id_t::drb1); }, "");
+}
+#endif
+
+#ifdef ASSERTS_ENABLED
+/// \brief Test RX with unknown mapping
+TEST_F(sdap_test, test_rx_unknown_mapping)
+{
+  (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
+
+  sdap_config sdap_cfg = {};
+
+  // add different mapping
+  sdap->add_mapping(qos_flow_id_t::min, drb_id_t::drb1, sdap_cfg, *dl_sink1);
+
+  // no matching mapping, should trigger an assertion
+  ASSERT_DEATH({ sdap->get_sdap_rx_pdu_handler(drb_id_t::drb2); }, "");
+}
+#endif
+
 /// \brief Test RX with known mapping
 TEST_F(sdap_test, test_rx_known_mapping)
 {
