@@ -57,7 +57,7 @@ variables:
     value: ""
   MAKE_ARGS:
     description: It will be passed to make/ninja
-    value: "-j4"
+    value: ""
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
@@ -341,9 +341,9 @@ variables:
 smoke release cached:
   extends: .smoke release
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -357,7 +357,7 @@ smoke tsan cached:
   timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
@@ -370,9 +370,9 @@ smoke tsan cached:
 smoke rhel cached:
   extends: .smoke rhel
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -387,9 +387,9 @@ smoke rhel cached:
 smoke archlinux cached:
   extends: .smoke archlinux
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -446,7 +446,7 @@ intermediate commits:
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -486,7 +486,7 @@ valgrind changed tests:
     CLEAN_BUILD: "False"
     TEST_MODE: valgrind
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
   script:
     - git config advice.detachedHead false
