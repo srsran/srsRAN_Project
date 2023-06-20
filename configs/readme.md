@@ -10,7 +10,7 @@ list all available configuration sections, subsection and fields.
 
 The srsRAN Project gNB can be configured via one or multiple configuration files and/or via 
 the command line. When multiple configuration files are specified, their content gets combined 
-by the gNB application. In case, there are repeated parameters across configuration files, the 
+by the gNB application. In case there are repeated parameters across configuration files, the 
 parameter values of the last file are selected. Similarly, the parameters passed via command 
 line overwrite the parameters specified via configuration files. If the value of a parameter is 
 not specified by neither the configuration files nor through the command line, a default value 

@@ -1,5 +1,5 @@
 # This example configuration outlines how to configure the srsRAN Project gNB to create a single FDD cell
-# transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP B200 is configured 
+# transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP N3XX is configured 
 # as the RF frontend using split 8. Note in this example an external clock source is used.
 
 amf:
