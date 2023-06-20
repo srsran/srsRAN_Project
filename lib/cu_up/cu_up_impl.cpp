@@ -145,7 +145,7 @@ void process_successful_pdu_resource_modification_outcome(
     modified_item.pdu_session_id = result.pdu_session_id;
 
     for (const auto& drb_setup_item : result.drb_setup_results) {
-      logger.debug("Adding DRB setup result item for ID {}", drb_setup_item.drb_id);
+      logger.debug("Adding DRB setup result item. {}, success={}", drb_setup_item.drb_id, drb_setup_item.success);
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;
         res_drb_setup_item.drb_id = drb_setup_item.drb_id;
@@ -153,7 +153,6 @@ void process_successful_pdu_resource_modification_outcome(
         e1ap_up_params_item up_param_item;
         up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
         res_drb_setup_item.ul_up_transport_params.push_back(up_param_item);
-        logger.debug("Adding DRB up mod. TEID=0x={}", up_param_item.up_tnl_info.gtp_teid);
 
         for (const auto& flow_item : drb_setup_item.qos_flow_results) {
           if (flow_item.success) {
@@ -177,6 +176,8 @@ void process_successful_pdu_resource_modification_outcome(
       }
     }
     for (const auto& drb_modified_item : result.drb_modification_results) {
+      logger.debug(
+          "Adding DRB modified result item. {}, success={}", drb_modified_item.drb_id, drb_modified_item.success);
       e1ap_drb_modified_item_ng_ran e1ap_mod_item;
       e1ap_mod_item.drb_id = drb_modified_item.drb_id;
 
@@ -252,7 +253,6 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   response.success                                   = true;
 
   bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
-  logger.error("new ul tnl info {} {}", new_ul_tnl_info_required, msg.new_ul_tnl_info_required);
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified

@@ -284,16 +284,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   e1ap_bearer_context_modification_request bearer_context_mod = {};
 
-  logger.error("Handling bearer context modification for the received gnb_cu_up_ue_e1ap_id={}",
-               msg->gnb_cu_up_ue_e1ap_id);
-  if (ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
-    logger.error("UE context list contains cu_up_e1ap_id");
-  }
-  if (msg->new_ul_tnl_info_required_present) {
-    logger.debug("New UL TNL info required");
-  }
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
-  logger.error("Didn't crash when getting ue context. ue={}", ue_ctxt.ue_index);
   if (ue_ctxt.cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
     logger.error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available.", msg->gnb_cu_up_ue_e1ap_id);
 
@@ -302,6 +293,8 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     pdu_notifier.on_new_message(e1ap_msg);
     return;
   }
+
+  bearer_context_mod.ue_index = ue_ctxt.ue_index;
 
   // sys bearer context mod request
   if (msg->sys_bearer_context_mod_request_present) {
@@ -320,7 +313,6 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
   }
 
   // Forward message to CU-UP
-  logger.error("Sending on bearer context modifiation, msg_ue");
   e1ap_bearer_context_modification_response bearer_context_mod_response_msg =
       cu_up_notifier.on_bearer_context_modification_request_received(bearer_context_mod);
 

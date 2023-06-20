@@ -125,8 +125,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
   bearer_context_modification_request.new_ul_tnl_info_required = "true";
 
   // Request new UL TNL info for all DRBs
-  std::vector<pdu_session_id_t> pdu_session_ids = rrc_ue_up_resource_manager.get_pdu_sessions();
-  logger.error("PDU sessions size {}", pdu_session_ids.size());
+  std::vector<pdu_session_id_t>          pdu_session_ids              = rrc_ue_up_resource_manager.get_pdu_sessions();
   e1ap_ng_ran_bearer_context_mod_request ngran_bearer_context_mod_req = {};
   for (const pdu_session_id_t& psi : pdu_session_ids) {
     e1ap_pdu_session_res_to_modify_item pdu_sess_mod_item;
@@ -134,6 +133,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
 
     const std::map<drb_id_t, up_drb_context>& drbs = rrc_ue_up_resource_manager.get_pdu_session_context(psi).drbs;
     for (const std::pair<const drb_id_t, up_drb_context>& drb : drbs) {
+      logger.debug("Requesting new UL TNL for DRB. psi={}, drb={}", psi, drb.first);
       e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
       drb_to_mod.drb_id                         = drb.first;
       pdu_sess_mod_item.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
