@@ -769,6 +769,75 @@ rhel-8 amd64 avx2:
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
+# Basic AMD NO_ISA / AVX512
+
+ubuntu-22.04 amd64 no isa release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "False"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+ubuntu-22.04 amd64 avx512 release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+# Basic ARM NO_ISA / NEON
+
+ubuntu-22.04 arm no isa release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 150 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-arm64
+    AUTO_DETECT_ISA: "False"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+ubuntu-22.04 arm neon release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 180 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-arm64
+    AUTO_DETECT_ISA: "True"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
 #############
 # Archlinux #
 #############
