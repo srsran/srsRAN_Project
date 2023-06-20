@@ -23,6 +23,7 @@ variables:
     description: Computer architecture and supported instruction sets
     options:
       - "aws-spot-amd64"
+      - "aws-demand-amd64-avx2"
       - "aws-demand-amd64-avx2-avx512"
       - "aws-spot-arm64"
     value: "aws-spot-amd64"
