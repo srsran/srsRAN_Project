@@ -13,12 +13,12 @@
 
 using namespace srsran;
 
-precoding_configuration srsran::make_single_port()
+precoding_weight_matrix srsran::make_single_port()
 {
-  return make_wideband_one_layer_one_port(1, 0);
+  return make_one_layer_one_port(1, 0);
 }
 
-precoding_configuration srsran::make_wideband_one_layer_one_port(unsigned nof_ports, unsigned selected_i_port)
+precoding_weight_matrix srsran::make_one_layer_one_port(unsigned nof_ports, unsigned selected_i_port)
 {
   interval<unsigned, false> selected_i_port_range(0, nof_ports);
   srsran_assert(selected_i_port_range.contains(selected_i_port),
@@ -26,19 +26,18 @@ precoding_configuration srsran::make_wideband_one_layer_one_port(unsigned nof_po
                 selected_i_port,
                 selected_i_port_range);
 
-  precoding_configuration result;
-  result.resize(1, nof_ports, 1, MAX_NOF_PRBS);
+  precoding_weight_matrix result(1, nof_ports);
 
   // Set weights per port.
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
     cf_t port_weight = (i_port == selected_i_port) ? 1.0F : 0.0F;
-    result.set_coefficient(port_weight, 0, i_port, 0);
+    result.set_coefficient(port_weight, 0, i_port);
   }
 
   return result;
 }
 
-precoding_configuration srsran::make_wideband_one_layer_all_ports(unsigned nof_ports)
+precoding_weight_matrix srsran::make_one_layer_all_ports(unsigned nof_ports)
 {
   interval<unsigned, true> nof_ports_range(1, precoding_constants::MAX_NOF_PORTS);
   srsran_assert(nof_ports_range.contains(nof_ports),
@@ -46,19 +45,18 @@ precoding_configuration srsran::make_wideband_one_layer_all_ports(unsigned nof_p
                 nof_ports,
                 nof_ports_range);
 
-  precoding_configuration result;
-  result.resize(1, nof_ports, 1, MAX_NOF_PRBS);
+  precoding_weight_matrix result(1, nof_ports);
 
   // Set normalized weights per port.
   cf_t weight = {1.0F / std::sqrt(static_cast<float>(nof_ports)), 0.0F};
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-    result.set_coefficient(weight, 0, i_port, 0);
+    result.set_coefficient(weight, 0, i_port);
   }
 
   return result;
 }
 
-precoding_configuration srsran::make_wideband_identity(unsigned nof_streams)
+precoding_weight_matrix srsran::make_identity(unsigned nof_streams)
 {
   static constexpr interval<unsigned, true> nof_streams_range(1, precoding_constants::MAX_NOF_LAYERS);
 
@@ -67,8 +65,7 @@ precoding_configuration srsran::make_wideband_identity(unsigned nof_streams)
                 nof_streams,
                 nof_streams_range);
 
-  precoding_configuration result;
-  result.resize(nof_streams, nof_streams, 1, MAX_NOF_PRBS);
+  precoding_weight_matrix result(nof_streams, nof_streams);
 
   cf_t normalised_weight = 1.0F / std::sqrt(static_cast<float>(nof_streams));
 
@@ -76,13 +73,13 @@ precoding_configuration srsran::make_wideband_identity(unsigned nof_streams)
   for (unsigned i_layer = 0; i_layer != nof_streams; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_streams; ++i_port) {
       cf_t weight = (i_layer == i_port) ? normalised_weight : 0.0F;
-      result.set_coefficient(weight, i_layer, i_port, 0);
+      result.set_coefficient(weight, i_layer, i_port);
     }
   }
   return result;
 }
 
-precoding_configuration srsran::make_wideband_one_layer_two_ports(unsigned i_codebook)
+precoding_weight_matrix srsran::make_one_layer_two_ports(unsigned i_codebook)
 {
   static constexpr interval<unsigned, true>           i_codebook_range(0, 3);
   static constexpr cf_t                               sqrt_1_2         = {M_SQRT1_2, 0};
@@ -97,21 +94,20 @@ precoding_configuration srsran::make_wideband_one_layer_two_ports(unsigned i_cod
                 i_codebook,
                 i_codebook_range);
 
-  precoding_configuration result;
-  result.resize(1, 2, 1, MAX_NOF_PRBS);
+  precoding_weight_matrix result(1, 2);
 
   // Select codebook.
   span<const cf_t> codebook = codebooks[i_codebook];
 
   // Set weights per port.
   for (unsigned i_port = 0; i_port != 2; ++i_port) {
-    result.set_coefficient(codebook[i_port], 0, i_port, 0);
+    result.set_coefficient(codebook[i_port], 0, i_port);
   }
 
   return result;
 }
 
-precoding_configuration srsran::make_wideband_two_layer_two_ports(unsigned i_codebook)
+precoding_weight_matrix srsran::make_two_layer_two_ports(unsigned i_codebook)
 {
   static constexpr interval<unsigned, true>           i_codebook_range(0, 1);
   static constexpr cf_t                               dot_five         = {0.5F, 0.0F};
@@ -127,8 +123,7 @@ precoding_configuration srsran::make_wideband_two_layer_two_ports(unsigned i_cod
                 i_codebook,
                 i_codebook_range);
 
-  precoding_configuration result;
-  result.resize(2, 2, 1, MAX_NOF_PRBS);
+  precoding_weight_matrix result(2, 2);
 
   // Select codebook.
   const std::array<std::array<cf_t, 2>, 2>& codebook = (i_codebook == 0) ? codebook0 : codebook1;
@@ -137,7 +132,7 @@ precoding_configuration srsran::make_wideband_two_layer_two_ports(unsigned i_cod
   for (unsigned i_layer = 0; i_layer != 2; ++i_layer) {
     span<const cf_t> codebook_layer = codebook[i_layer];
     for (unsigned i_port = 0; i_port != 2; ++i_port) {
-      result.set_coefficient(codebook_layer[i_port], i_layer, i_port, 0);
+      result.set_coefficient(codebook_layer[i_port], i_layer, i_port);
     }
   }
 

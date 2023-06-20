@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
@@ -18,7 +19,6 @@
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
-#include "srsran/ran/precoding/precoding_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/srsvec/copy.h"

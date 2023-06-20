@@ -319,10 +319,10 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
   precoding_configuration precoding_config;
   switch (profile.mimo) {
     case test_profile::mimo_topology::one_port_one_layer:
-      precoding_config = make_single_port();
+      precoding_config = precoding_configuration::make_wideband(make_single_port());
       break;
     case test_profile::mimo_topology::two_port_two_layer:
-      precoding_config = make_wideband_two_layer_two_ports(0);
+      precoding_config = precoding_configuration::make_wideband(make_two_layer_two_ports(0));
       break;
   }
 

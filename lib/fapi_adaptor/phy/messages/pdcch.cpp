@@ -47,7 +47,7 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu&
   }
 
   // :TODO: Fill this in the future.
-  dci.precoding = make_single_port();
+  dci.precoding = precoding_configuration::make_wideband(make_single_port());
 
   // Fill PDCCH context for logging.
   proc_pdu.context = fapi_pdu.dl_dci[i_dci].context;

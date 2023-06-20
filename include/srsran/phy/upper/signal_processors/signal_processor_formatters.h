@@ -13,8 +13,8 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
-#include "srsran/ran/precoding/precoding_formatters.h"
 #include "srsran/support/format_utils.h"
 
 namespace fmt {

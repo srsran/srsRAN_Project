@@ -45,7 +45,7 @@ const pdsch_processor::pdu_t base_pdu = {nullopt,
                                          {},
                                          0,
                                          0,
-                                         make_single_port()};
+                                         precoding_configuration::make_wideband(make_single_port())};
 
 struct test_case_t {
   std::function<pdsch_processor::pdu_t()> get_pdu;
@@ -122,7 +122,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
      R"(Only contiguous allocation is currently supported\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
-       pdu.precoding              = make_wideband_identity(4);
+       pdu.precoding              = precoding_configuration::make_wideband(make_identity(4));
        return pdu;
      },
      R"(Only 1 or 2 layers are currently supported\. 4 layers requested\.)"},

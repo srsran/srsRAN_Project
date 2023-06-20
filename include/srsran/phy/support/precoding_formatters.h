@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include "srsran/ran/precoding/precoding_configuration.h"
+#include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/support/format_utils.h"
 
 namespace fmt {

@@ -23,7 +23,7 @@ static constexpr std::array<unsigned, 2> max_num_codebooks = {{4, 9}};
 /// Generates one-port SSB codebooks and precoding configurations.
 static unsigned generate_ssb_one_port(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_single_port();
+  precoding_weight_matrix precoding = make_single_port();
   unsigned                pm_index  = offset + get_ssb_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -33,7 +33,7 @@ static unsigned generate_ssb_one_port(unsigned offset, precoding_matrix_reposito
 /// Generates one-port PDSCH codebooks and precoding configurations.
 static unsigned generate_pdsch_one_port(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_single_port();
+  precoding_weight_matrix precoding = make_single_port();
   unsigned                pm_index  = offset + get_pdsch_one_port_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -43,7 +43,7 @@ static unsigned generate_pdsch_one_port(unsigned offset, precoding_matrix_reposi
 /// Generates one-port PDCCH codebooks and precoding configurations.
 static unsigned generate_pdcch_one_port(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_single_port();
+  precoding_weight_matrix precoding = make_single_port();
   unsigned                pm_index  = offset + get_pdcch_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -53,7 +53,7 @@ static unsigned generate_pdcch_one_port(unsigned offset, precoding_matrix_reposi
 /// Generates one-port CSI-RS codebooks and precoding configurations.
 static unsigned generate_csi_rs_one_port(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_single_port();
+  precoding_weight_matrix precoding = make_single_port();
   unsigned                pm_index  = offset + get_csi_rs_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -64,7 +64,7 @@ static unsigned generate_csi_rs_one_port(unsigned offset, precoding_matrix_repos
 static unsigned
 generate_identity_matrix(unsigned offset, precoding_matrix_repository_builder& repo_builder, unsigned nof_layers)
 {
-  precoding_configuration precoding = make_wideband_identity(nof_layers);
+  precoding_weight_matrix precoding = make_identity(nof_layers);
   repo_builder.add(0, precoding);
 
   return ++offset;
@@ -90,7 +90,7 @@ static void generate_single_port_table(precoding_matrix_mapper_codebook_offset_c
 /// Generates two-port SSB codebooks and precoding configurations.
 static unsigned generate_ssb_2_ports(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_wideband_one_layer_one_port(2, 0);
+  precoding_weight_matrix precoding = make_one_layer_one_port(2, 0);
   unsigned                pm_index  = offset + get_ssb_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -102,7 +102,7 @@ static unsigned generate_pdsch_2_ports_1_layer(unsigned offset, precoding_matrix
 {
   unsigned base_offset = offset;
   for (unsigned i = 0, e = 4; i != e; ++i) {
-    precoding_configuration precoding = make_wideband_one_layer_two_ports(i);
+    precoding_weight_matrix precoding = make_one_layer_two_ports(i);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
     ++offset;
@@ -115,7 +115,7 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
 {
   unsigned base_offset = offset;
   for (unsigned i = 0, e = 2; i != e; ++i) {
-    precoding_configuration precoding = make_wideband_two_layer_two_ports(i);
+    precoding_weight_matrix precoding = make_two_layer_two_ports(i);
     unsigned                pm_index  = base_offset + get_pdsch_two_port_precoding_matrix_index(i);
     repo_builder.add(pm_index, precoding);
     ++offset;
@@ -127,7 +127,7 @@ static unsigned generate_pdsch_2_ports_2_layers(unsigned offset, precoding_matri
 /// Generates two-port PDCCH codebooks and precoding configurations.
 static unsigned generate_pdcch_2_ports(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_wideband_one_layer_one_port(2, 0);
+  precoding_weight_matrix precoding = make_one_layer_one_port(2, 0);
   unsigned                pm_index  = offset + get_pdcch_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
@@ -137,7 +137,7 @@ static unsigned generate_pdcch_2_ports(unsigned offset, precoding_matrix_reposit
 /// Generates two-port CSI-RS codebooks and precoding configurations.
 static unsigned generate_csi_rs_2_ports(unsigned offset, precoding_matrix_repository_builder& repo_builder)
 {
-  precoding_configuration precoding = make_wideband_identity(2);
+  precoding_weight_matrix precoding = make_identity(2);
   unsigned                pm_index  = offset + get_csi_rs_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
