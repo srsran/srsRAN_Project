@@ -170,9 +170,10 @@ public:
 };
 
 struct rrc_ue_context_release_command {
-  ue_index_t  ue_index = ue_index_t::invalid;
-  cause_t     cause    = cause_t::nulltype;
-  byte_buffer rrc_release_pdu;
+  ue_index_t         ue_index = ue_index_t::invalid;
+  cause_t            cause    = cause_t::nulltype;
+  byte_buffer        rrc_release_pdu;
+  optional<srb_id_t> srb_id;
 };
 
 /// Interface to notify about RRC UE Context messages.
@@ -265,6 +266,7 @@ public:
 struct rrc_ue_release_context {
   cu_cp_user_location_info_nr user_location_info;
   byte_buffer                 rrc_release_pdu;
+  srb_id_t                    srb_id = srb_id_t::nulltype;
 };
 
 /// Handle control messages.

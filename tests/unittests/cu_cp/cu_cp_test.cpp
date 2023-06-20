@@ -498,6 +498,8 @@ TEST_F(cu_cp_test, when_release_command_received_then_release_command_is_sent_to
   ASSERT_EQ(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
   ASSERT_TRUE(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
+  // check that the SRB ID is set if the RRC Container is included
+  ASSERT_TRUE(f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->srb_id_present);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

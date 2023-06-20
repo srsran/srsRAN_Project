@@ -465,6 +465,7 @@ du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ngap_ue_con
   release_command.ue_index        = cmd.ue_index;
   release_command.cause           = cmd.cause;
   release_command.rrc_release_pdu = release_context.rrc_release_pdu.copy();
+  release_command.srb_id          = release_context.srb_id;
 
   handle_ue_context_release_command(release_command);
 

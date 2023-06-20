@@ -10,6 +10,8 @@
 
 #include "ue_context_release_procedure.h"
 #include "../f1ap_asn1_converters.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -27,6 +29,11 @@ ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&
   if (!cmd_.rrc_release_pdu.empty()) {
     command->rrc_container_present = true;
     command->rrc_container         = cmd_.rrc_release_pdu.copy();
+
+    srsran_assert(cmd_.srb_id.has_value(), "SRB-ID for UE Context Release Command with RRC Container must be set.");
+
+    command->srb_id_present = true;
+    command->srb_id         = srb_id_to_uint(cmd_.srb_id.value());
   }
 }
 
