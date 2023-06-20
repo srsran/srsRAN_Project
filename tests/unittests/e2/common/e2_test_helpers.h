@@ -16,6 +16,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
+#include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"

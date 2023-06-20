@@ -157,7 +157,7 @@ void e2_impl::set_allowed_ran_functions(const uint16_t ran_function_id)
   if (candidate_ran_functions.count(ran_function_id)) {
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
     logger.info("Added RAN function with id {}", ran_function_id);
-    auto ran_oid = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
+    std::string                   ran_oid      = allowed_ran_functions[ran_function_id].ran_function_oid.to_string();
     std::unique_ptr<e2sm_handler> e2sm_handler = create_e2sm(ran_oid);
     if (e2sm_handler == nullptr) {
       logger.error("Failed to create E2SM handler for OID {} - not supported", ran_oid);

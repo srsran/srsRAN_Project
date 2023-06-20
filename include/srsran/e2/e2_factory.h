@@ -11,6 +11,7 @@
 #pragma once
 
 #include "e2.h"
+#include "subscription/e2_subscription.h"
 #include "srsran/support/timers.h"
 #include <memory>
 

@@ -15,7 +15,7 @@ using namespace srsran;
 
 std::unique_ptr<e2sm_handler> srsran::create_e2sm(std::string e2sm_version)
 {
-  if (e2sm_version == "e2sm-kpm-v1") {
+  if (e2sm_version == "E2SM-KPM") {
     return std::make_unique<e2sm_kpm_asn1_packer>();
   }
   return nullptr;

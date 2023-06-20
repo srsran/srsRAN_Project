@@ -13,6 +13,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_event_manager.h"
+#include "srsran/e2/subscription/e2_subscription.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 

@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include "srsran/e2/e2.h"
+#include "srsran/e2/e2sm/e2sm.h"
 
 namespace srsran {
 

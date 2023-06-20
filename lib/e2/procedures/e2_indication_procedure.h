@@ -14,6 +14,8 @@
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_event_manager.h"
+#include "srsran/e2/e2sm/e2sm.h"
+#include "srsran/e2/subscription/e2_subscription.h"
 
 using namespace asn1::e2sm_kpm;
 class e2_event_manager;
