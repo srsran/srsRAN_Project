@@ -25,12 +25,12 @@ class sdap_entity_impl : public sdap_entity, public sdap_tx_sdu_handler
 {
 public:
   sdap_entity_impl(uint32_t              ue_index_,
-                   pdu_session_id_t      pdu_session_id_,
+                   pdu_session_id_t      psi_,
                    unique_timer&         ue_inactivity_timer_,
                    sdap_rx_sdu_notifier& rx_sdu_notifier_) :
-    logger("SDAP", {ue_index_, pdu_session_id_}),
+    logger("SDAP", {ue_index_, psi_}),
     ue_index(ue_index_),
-    pdu_session_id(pdu_session_id_),
+    psi(psi_),
     ue_inactivity_timer(ue_inactivity_timer_),
     rx_sdu_notifier(rx_sdu_notifier_)
   {
@@ -40,7 +40,7 @@ public:
   sdap_rx_pdu_handler& get_sdap_rx_pdu_handler(drb_id_t drb_id) final
   {
     auto rx_it = rx_map.find(drb_id);
-    srsran_assert(rx_it != rx_map.end(), "Cannot find QFI mapping for {} in PDU session {}", drb_id, pdu_session_id);
+    srsran_assert(rx_it != rx_map.end(), "Cannot find QFI mapping for {}", drb_id);
     return *rx_it->second;
   };
   sdap_tx_sdu_handler& get_sdap_tx_sdu_handler() final { return *this; };
@@ -50,7 +50,7 @@ public:
   {
     auto tx_it = tx_map.find(qos_flow_id);
     if (tx_it == tx_map.end()) {
-      logger.log_warning("No mapping for SDU with {} in PDU session {}", qos_flow_id, pdu_session_id);
+      logger.log_warning("No mapping for SDU with {}", qos_flow_id);
       return;
     }
     tx_it->second->handle_sdu(std::move(sdu));
@@ -62,22 +62,22 @@ public:
     logger.log_info("Mapping {} {} {}", qfi, drb_id, sdap_cfg);
     // check preconditions
     if (tx_map.find(qfi) != tx_map.end()) {
-      logger.log_error("Cannot overwrite existing DL mapping for {} in PDU session {}", qfi, pdu_session_id);
+      logger.log_error("Cannot overwrite existing DL mapping for {}", qfi);
       return;
     }
     if (rx_map.find(drb_id) != rx_map.end()) {
-      logger.log_error("Cannot overwrite existing UL mapping for {} in PDU session {}", drb_id, pdu_session_id);
+      logger.log_error("Cannot overwrite existing UL mapping for {}", drb_id);
       return;
     }
 
     // create TX mapping
-    std::unique_ptr<sdap_entity_tx_impl> tx = std::make_unique<sdap_entity_tx_impl>(
-        ue_index, pdu_session_id, qfi, drb_id, ue_inactivity_timer, tx_pdu_notifier);
+    std::unique_ptr<sdap_entity_tx_impl> tx =
+        std::make_unique<sdap_entity_tx_impl>(ue_index, psi, qfi, drb_id, ue_inactivity_timer, tx_pdu_notifier);
     tx_map.insert({qfi, std::move(tx)});
 
     // create RX mapping
-    std::unique_ptr<sdap_entity_rx_impl> rx = std::make_unique<sdap_entity_rx_impl>(
-        ue_index, pdu_session_id, qfi, drb_id, ue_inactivity_timer, rx_sdu_notifier);
+    std::unique_ptr<sdap_entity_rx_impl> rx =
+        std::make_unique<sdap_entity_rx_impl>(ue_index, psi, qfi, drb_id, ue_inactivity_timer, rx_sdu_notifier);
     rx_map.insert({drb_id, std::move(rx)});
   }
 
@@ -101,7 +101,7 @@ public:
 private:
   sdap_session_logger   logger;
   uint32_t              ue_index;
-  pdu_session_id_t      pdu_session_id;
+  pdu_session_id_t      psi;
   unique_timer&         ue_inactivity_timer;
   sdap_rx_sdu_notifier& rx_sdu_notifier;
 

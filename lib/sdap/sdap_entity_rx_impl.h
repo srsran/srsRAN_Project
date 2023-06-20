@@ -22,12 +22,12 @@ class sdap_entity_rx_impl : public sdap_rx_pdu_handler
 {
 public:
   sdap_entity_rx_impl(uint32_t                ue_index,
-                      pdu_session_id_t        sid,
+                      pdu_session_id_t        psi,
                       optional<qos_flow_id_t> qfi_,
                       drb_id_t                drb_id_,
                       unique_timer&           ue_inactivity_timer_,
                       sdap_rx_sdu_notifier&   sdu_notifier_) :
-    logger("SDAP", {ue_index, sid, qfi_, drb_id_, "UL"}),
+    logger("SDAP", {ue_index, psi, qfi_, drb_id_, "UL"}),
     qfi(qfi_),
     drb_id(drb_id_),
     ue_inactivity_timer(ue_inactivity_timer_),

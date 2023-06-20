@@ -21,16 +21,16 @@ class sdap_session_trx_log_prefix
 {
 public:
   sdap_session_trx_log_prefix(uint32_t                ue_index,
-                              pdu_session_id_t        sid,
+                              pdu_session_id_t        psi,
                               optional<qos_flow_id_t> qfi,
                               drb_id_t                drb_id,
                               const char*             dir)
   {
     fmt::memory_buffer buffer;
     if (qfi.has_value()) {
-      fmt::format_to(buffer, "ue={} sid={} {} {} {}: ", ue_index, sid, qfi.value(), drb_id, dir);
+      fmt::format_to(buffer, "ue={} psi={} {} {} {}: ", ue_index, psi, qfi.value(), drb_id, dir);
     } else {
-      fmt::format_to(buffer, "ue={} sid={} {} {}: ", ue_index, sid, drb_id, dir);
+      fmt::format_to(buffer, "ue={} psi={} {} {}: ", ue_index, psi, drb_id, dir);
     }
     prefix = srsran::to_c_str(buffer);
   }
@@ -45,10 +45,10 @@ using sdap_session_trx_logger = prefixed_logger<sdap_session_trx_log_prefix>;
 class sdap_session_log_prefix
 {
 public:
-  sdap_session_log_prefix(uint32_t ue_index, pdu_session_id_t sid)
+  sdap_session_log_prefix(uint32_t ue_index, pdu_session_id_t psi)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={} sid={}: ", ue_index, sid);
+    fmt::format_to(buffer, "ue={} psi={}: ", ue_index, psi);
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
