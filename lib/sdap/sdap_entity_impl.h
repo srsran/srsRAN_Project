@@ -12,8 +12,8 @@
 
 #include "sdap_entity_rx_impl.h"
 #include "sdap_entity_tx_impl.h"
+#include "sdap_session_logger.h"
 #include "srsran/sdap/sdap.h"
-#include "srsran/srslog/logger.h"
 #include "srsran/support/timers.h"
 #include <unordered_map>
 
@@ -28,7 +28,7 @@ public:
                    pdu_session_id_t      pdu_session_id_,
                    unique_timer&         ue_inactivity_timer_,
                    sdap_rx_sdu_notifier& rx_sdu_notifier_) :
-    logger(srslog::fetch_basic_logger("SDAP")),
+    logger("SDAP", {ue_index_, pdu_session_id_}),
     ue_index(ue_index_),
     pdu_session_id(pdu_session_id_),
     ue_inactivity_timer(ue_inactivity_timer_),
@@ -50,7 +50,7 @@ public:
   {
     auto tx_it = tx_map.find(qos_flow_id);
     if (tx_it == tx_map.end()) {
-      logger.warning("No mapping for SDU with qfi={} in PDU session {}", qos_flow_id, pdu_session_id);
+      logger.log_warning("No mapping for SDU with {} in PDU session {}", qos_flow_id, pdu_session_id);
       return;
     }
     tx_it->second->handle_sdu(std::move(sdu));
@@ -59,13 +59,14 @@ public:
   void
   add_mapping(qos_flow_id_t qfi, drb_id_t drb_id, sdap_config sdap_cfg, sdap_tx_pdu_notifier& tx_pdu_notifier) final
   {
+    logger.log_info("Mapping {} {} {}", qfi, drb_id, sdap_cfg);
     // check preconditions
     if (tx_map.find(qfi) != tx_map.end()) {
-      logger.error("Cannot overwrite existing DL mapping for qfi={} in PDU session {}", qfi, pdu_session_id);
+      logger.log_error("Cannot overwrite existing DL mapping for {} in PDU session {}", qfi, pdu_session_id);
       return;
     }
     if (rx_map.find(drb_id) != rx_map.end()) {
-      logger.error("Cannot overwrite existing UL mapping for {} in PDU session {}", drb_id, pdu_session_id);
+      logger.log_error("Cannot overwrite existing UL mapping for {} in PDU session {}", drb_id, pdu_session_id);
       return;
     }
 
@@ -85,6 +86,7 @@ public:
     // remove TX mapping
     for (auto tx_it = tx_map.begin(); tx_it != tx_map.end();) {
       if (tx_it->second->get_drb_id() == drb_id) {
+        logger.log_info("Unmapping DL {} {}", tx_it->first, drb_id);
         tx_it = tx_map.erase(tx_it);
       } else {
         ++tx_it;
@@ -92,11 +94,12 @@ public:
     }
 
     // remove RX mapping
+    logger.log_info("Unmapping UL {}", drb_id);
     rx_map.erase(drb_id);
   }
 
 private:
-  srslog::basic_logger& logger;
+  sdap_session_logger   logger;
   uint32_t              ue_index;
   pdu_session_id_t      pdu_session_id;
   unique_timer&         ue_inactivity_timer;
