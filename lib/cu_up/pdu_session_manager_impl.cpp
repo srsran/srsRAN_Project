@@ -264,6 +264,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
     }
 
+    // Apply re-establishment at PDCP
+    if (drb_to_mod.pdcp_cfg.has_value() && drb_to_mod.pdcp_cfg->pdcp_reest.has_value()) {
+      // TODO get correct AS security config from E1AP
+      drb_iter->second->pdcp->get_rx_upper_control_interface().reestablish({});
+      drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish({});
+    }
+
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
 
     // Apply QoS flows

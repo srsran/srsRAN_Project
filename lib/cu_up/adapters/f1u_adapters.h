@@ -32,7 +32,7 @@ public:
   void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
     if (pdcp_rx_handler == nullptr) {
-      srslog::fetch_basic_logger("PDCP").warning("Unconnected PDCP handler. Dropping SDU");
+      srslog::fetch_basic_logger("F1-U").warning("Unconnected PDCP handler. Dropping F1-U SDU");
     } else {
       pdcp_rx_handler->handle_pdu(std::move(sdu));
     }
