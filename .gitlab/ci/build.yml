@@ -99,7 +99,7 @@ variables:
     ENABLE_WERROR: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.8.3"
+    DOCKER_BUILDER_VERSION: "1.8.4"
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_MEMORY_REQUEST: 12Gi
     GIT_STRATEGY: none
@@ -589,7 +589,7 @@ basic asan:
   interruptible: false
   variables:
     OS: ubuntu-22.04
-    COMPILER: gcc
+    COMPILER: clang
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
@@ -889,9 +889,14 @@ archlinux amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
-        COMPILER: gcc
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-23.04]
+        SANITIZER: asan
+        COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       - OS: [ubuntu-23.04, ubuntu-22.04]
@@ -918,9 +923,14 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
-        COMPILER: gcc
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-23.04]
+        SANITIZER: asan
+        COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set

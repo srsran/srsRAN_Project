@@ -126,11 +126,12 @@ if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 endif (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 
 if (ENABLE_ASAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
     # Note: When using ASAN, we need to ensure the use of RPATH instead of RUNPATH via "-Wl,--disable-new-dtags"
     # While RPATH is default, some systems (e.g. Ubuntu 18.04 and 20.04) use RUNPATH by default, which is non-transitive.
     # Since ASAN intercepts dlopen(), by which it replaces the dynamic string token "$ORIGIN" to its own location,
     # the RF plugins won't be found when using ASAN + RUNPATH in the top-level executable.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -Wl,--disable-new-dtags")
+    ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-Wl,--disable-new-dtags" HAVE_RPATH_FORCE)
 endif (ENABLE_ASAN)
 
 if (ENABLE_TSAN)
