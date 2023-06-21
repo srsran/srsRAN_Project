@@ -46,8 +46,8 @@ TEST(slot_symbol_point_test, symbol_add_and_subtract_should_pass)
   ASSERT_EQ(symbol_point.get_slot(), slot_point(1, 20, 0, 1));
 
   symbol_point -= 7;
-  ASSERT_EQ(symbol_point.get_symbol_index(), 7);
-  ASSERT_EQ(symbol_point.get_slot(), slot_point(1, 20, 0, 0));
+  ASSERT_EQ(symbol_point.get_symbol_index(), initial_symbol);
+  ASSERT_EQ(symbol_point.get_slot(), slot);
 
   // Test wrap around.
   slot         = slot_point(1, 0);
