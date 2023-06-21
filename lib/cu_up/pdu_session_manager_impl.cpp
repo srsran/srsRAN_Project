@@ -232,7 +232,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   drb_iter->second->drb_id);
 
     if (new_tnl_info_required) {
-      uint32_t bitmask         = 0xFFFFFF00;
+      uint32_t bitmask         = 0xffffff00;
       uint32_t new_f1u_ul_teid = drb_iter->second->f1u_ul_teid.value();
       new_f1u_ul_teid          = (new_f1u_ul_teid & bitmask) | ((new_f1u_ul_teid & 0x000000ffU) + 1);
 
