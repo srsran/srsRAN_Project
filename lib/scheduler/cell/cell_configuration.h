@@ -48,8 +48,8 @@ public:
   /// List of zp-CSI-RS resources.
   std::vector<zp_csi_rs_resource> zp_csi_rs_list;
 
-  /// CSI-RS scheduling parameters.
-  optional<csi_meas_config> csi_meas_cfg;
+  /// List of nzp-CSI-RS resources.
+  std::vector<nzp_csi_rs_resource> nzp_csi_rs_list;
 
   // Derived Parameters.
   ssb_pattern_case ssb_case;

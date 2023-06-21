@@ -33,7 +33,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   ul_carrier(msg.ul_carrier),
   pucch_guardbands(msg.pucch_guardbands),
   zp_csi_rs_list(msg.zp_csi_rs_list),
-  csi_meas_cfg(msg.csi_meas_cfg),
+  nzp_csi_rs_list(msg.nzp_csi_rs_res_list),
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),

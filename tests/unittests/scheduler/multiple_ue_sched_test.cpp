@@ -688,7 +688,7 @@ TEST_P(multiple_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch)
   // Add UE.
   add_ue(to_du_ue_index(0), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
-  if (bench->cell_cfg.csi_meas_cfg.has_value()) {
+  if (not bench->cell_cfg.nzp_csi_rs_list.empty()) {
     // Flag to keep track of multiplexing status of PDSCH and CSI-RS.
     bool is_csi_muplxed_with_pdsch = false;
 

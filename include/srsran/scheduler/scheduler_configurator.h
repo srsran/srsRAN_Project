@@ -73,14 +73,14 @@ struct sched_cell_configuration_request_message {
   /// Payload size is in bytes.
   unsigned sib1_payload_size;
 
-  /// List of PUCCH guardbands;
+  /// List of PUCCH guardbands.
   std::vector<sched_grid_resource> pucch_guardbands;
 
-  /// List of zp-CSI-RS resources;
+  /// List of zp-CSI-RS resources common to all UEs.
   std::vector<zp_csi_rs_resource> zp_csi_rs_list;
 
-  /// CSI-RS scheduling parameters.
-  optional<csi_meas_config> csi_meas_cfg;
+  /// List of nzp-CSI-RS resources common to all UEs.
+  std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.

@@ -45,7 +45,7 @@ zp_csi_rs_resource_set make_periodic_zp_csi_rs_resource_set(const csi_builder_pa
 
 /// \brief Generate wideband NZP-CSI-RS Resource List, composed by nzp-CSI-RS resources for tracking and channel
 /// measurements.
-std::vector<nzp_csi_rs_resource> make_wideband_nzp_csi_rs_resource_list(const csi_builder_params& params);
+std::vector<nzp_csi_rs_resource> make_nzp_csi_rs_resource_list(const csi_builder_params& params);
 
 /// \brief Generate CSI-MeasConfig.
 csi_meas_config make_csi_meas_config(const csi_builder_params& params);

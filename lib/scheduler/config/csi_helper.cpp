@@ -226,8 +226,7 @@ fill_tracking_nzp_csi_rs_resource(span<nzp_csi_rs_resource> tracking_csi_rs,
   }
 }
 
-std::vector<nzp_csi_rs_resource>
-srsran::csi_helper::make_wideband_nzp_csi_rs_resource_list(const csi_builder_params& params)
+std::vector<nzp_csi_rs_resource> srsran::csi_helper::make_nzp_csi_rs_resource_list(const csi_builder_params& params)
 {
   std::vector<nzp_csi_rs_resource> list(5);
 
@@ -369,7 +368,7 @@ csi_meas_config srsran::csi_helper::make_csi_meas_config(const csi_builder_param
   csi_meas_config csi_meas{};
 
   // NZP-CSI-RS-Resources.
-  csi_meas.nzp_csi_rs_res_list = make_wideband_nzp_csi_rs_resource_list(params);
+  csi_meas.nzp_csi_rs_res_list = make_nzp_csi_rs_resource_list(params);
 
   // NZP-CSI-RS-ResourceSets.
   csi_meas.nzp_csi_rs_res_set_list = make_nzp_csi_rs_resource_sets();

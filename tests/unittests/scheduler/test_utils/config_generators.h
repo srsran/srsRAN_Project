@@ -63,8 +63,8 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
     csi_params.nof_ports     = params.nof_dl_ports;
     csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
 
-    sched_req.zp_csi_rs_list = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
-    sched_req.csi_meas_cfg   = csi_helper::make_csi_meas_config(csi_params);
+    sched_req.zp_csi_rs_list      = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
+    sched_req.nzp_csi_rs_res_list = csi_helper::make_nzp_csi_rs_resource_list(csi_params);
   }
 
   return sched_req;
