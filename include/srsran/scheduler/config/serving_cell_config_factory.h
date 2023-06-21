@@ -19,6 +19,8 @@
 namespace srsran {
 namespace config_helpers {
 
+static_vector<uint8_t, 8> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg);
+
 carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params& params = {});
 
 carrier_configuration make_default_ul_carrier_configuration(const cell_config_builder_params& params = {});

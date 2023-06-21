@@ -10,9 +10,12 @@
 
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/slot_point.h"
+#include <cstdint>
 
 using namespace srsran;
 using namespace srsran::config_helpers;
@@ -68,6 +71,35 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
                 cfg.carrier_bw_mhz,
                 min_channel_bandwidth_to_MHz(min_channel_bw));
   return cfg;
+}
+
+static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg)
+{
+  // TODO: Fetch cyclic prefix from other configuration.
+  static const bool cp_extended   = false;
+  const unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  // Note: Tested UEs do not support k1 < 4.
+  static const std::vector<uint8_t> valid_k1_values = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  static_vector<uint8_t, 8>         result;
+  for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
+    // For every slot containing DL symbols check for corresponding k1 value.
+    // TODO: Consider partial DL slots when scheduler supports it.
+    if (srsran::get_active_tdd_dl_symbols(tdd_cfg, idx, cp_extended).length() == symbols_per_slot) {
+      for (const auto k1 : valid_k1_values) {
+        // TODO: Consider partial UL slots when scheduler supports it.
+        if (not result.full() and
+            srsran::get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp_extended).length() == symbols_per_slot) {
+          if (std::find(result.begin(), result.end(), k1) == result.end()) {
+            result.emplace_back(k1);
+            break;
+          }
+        }
+      }
+    }
+  }
+  // Sorting in ascending order is performed to reduce the latency with which UCI is scheduled.
+  std::sort(result.begin(), result.end());
+  return result;
 }
 
 carrier_configuration
@@ -549,7 +581,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
     pucch_cfg.dl_data_to_ul_ack = {4};
   } else {
     // TDD
-    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7, 8};
+    pucch_cfg.dl_data_to_ul_ack = generate_k1_candidates(make_default_tdd_ul_dl_config_common(params));
   }
 
   // > PUSCH config.

@@ -17,6 +17,7 @@
 #include "test_utils/scheduler_test_bench.h"
 #include "srsran/ran/prach/prach_helper.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config_formatters.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <ostream>
@@ -64,7 +65,9 @@ protected:
     }());
 
     // Add UE
-    auto ue_cfg     = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
+    auto ue_cfg = test_helpers::create_default_sched_ue_creation_request(params, {ue_drb_lcid});
+    ue_cfg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack =
+        config_helpers::generate_k1_candidates(tdd_cfg);
     ue_cfg.ue_index = ue_idx;
     ue_cfg.crnti    = ue_rnti;
     this->add_ue(ue_cfg);
@@ -175,7 +178,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
   // test_params{ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  test_params{subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}));
+  test_params{subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt},
+  test_params{subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt},
+  test_params{subcarrier_spacing::kHz30, {5, 5, 0, 0, 0}, tdd_ul_dl_pattern{5, 2, 0, 2, 0}}));
   // TODO: Support more TDD patterns.
 // clang-format on
 
