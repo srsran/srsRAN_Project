@@ -232,6 +232,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       out_cell.tdd_ul_dl_cfg_common->pattern1.nof_ul_symbols            = tdd_cfg.pattern1.nof_ul_symbols;
 
       if (tdd_cfg.pattern2.has_value()) {
+        out_cell.tdd_ul_dl_cfg_common->pattern2.emplace();
         out_cell.tdd_ul_dl_cfg_common->pattern2->dl_ul_tx_period_nof_slots = tdd_cfg.pattern2->dl_ul_period_slots;
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_slots              = tdd_cfg.pattern2->nof_dl_slots;
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_dl_symbols            = tdd_cfg.pattern2->nof_dl_symbols;
