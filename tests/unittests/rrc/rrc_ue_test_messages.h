@@ -22,7 +22,10 @@ security::sec_key make_sec_key(std::string hex_str);
 /// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
 security::sec_128_key make_sec_128_key(std::string hex_str);
 
-/// \brief Constructs full RRC Reconfig request with radioBearerConfig, masterCellGroup and NAS PDU
+/// \brief Generates a dummy meas config
+cu_cp_meas_cfg generate_dummy_meas_config();
+
+/// \brief Constructs full RRC Reconfig request with radioBearerConfig, measConfig, masterCellGroup and NAS PDU
 cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_request();
 
 /// \brief Generate RRC Container with invalid RRC Reestablishment Request.
