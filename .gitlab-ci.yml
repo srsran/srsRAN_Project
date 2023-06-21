@@ -27,6 +27,7 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/tools/tagger.yml
+  - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
@@ -55,6 +56,19 @@ autorebaser full:
   rules:
     - if: $ON_DEFAULT_BRANCH
       when: never
+
+trigger builder:
+  stage: ci
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/src_cache.yml
+          - .gitlab/ci/builders.yml
+          - .gitlab/ci/builders/**/*
+  trigger:
+    include: .gitlab/ci/builders.yml
+    strategy: depend
 
 ################################################################################
 ## Static

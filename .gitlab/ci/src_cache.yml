@@ -61,17 +61,15 @@ pull_src_cache:
     GIT_STRATEGY: none
   before_script:
     - |
-      install_dependencies() {
-        . /etc/os-release
-        case "$ID" in
-          debian | ubuntu) apt-get update && apt-get install -y --no-install-recommends git ;;
-                    arch) pacman -Syu --noconfirm git ;;
-                    rhel) yum install -y git ;;
-                  alpine) apk add git ;;
-                        *) echo 'Unsupported OS' && exit 1 ;; 
-        esac
-      }
-    # - install_dependencies
+      . /etc/os-release
+      case "$ID" in
+        debian | ubuntu) apt-get update && apt-get install -y --no-install-recommends git ;;
+                  arch) pacman -Syu --noconfirm git ;;
+                  rhel) yum install -y git ;;
+                alpine) apk add git ;;
+                      *) echo 'Unsupported OS' && exit 1 ;; 
+      esac
+  script:
     - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git
     - git fetch --depth=1 origin $CI_COMMIT_SHA
     - git reset --hard $CI_COMMIT_SHA
