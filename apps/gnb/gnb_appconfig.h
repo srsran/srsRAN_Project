@@ -222,6 +222,8 @@ struct ssb_appconfig {
 };
 
 struct csi_appconfig {
+  /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
+  unsigned csi_rs_period_msec;
   /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
   int pwr_ctrl_offset = 0;

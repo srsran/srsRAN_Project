@@ -20,7 +20,8 @@ namespace csi_helper {
 struct csi_builder_params {
   /// PCI of the cell that will determine the scrambling.
   pci_t pci;
-  /// Number of RBs used for the CSI-RS.
+  /// \brief Number of RBs used for the CSI-RS. The csi config generators will find the closest number of RBs to
+  /// the one provided that is a multiple of 4 as required by the TS 38.331, "CSI-FrequencyOccupation".
   unsigned nof_rbs;
   /// Number of ports set for the CSI-RS.
   unsigned nof_ports = 1;
