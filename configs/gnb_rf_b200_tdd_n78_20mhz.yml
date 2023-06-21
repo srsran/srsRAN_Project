@@ -1,6 +1,7 @@
 # This example configuration outlines how to configure the srsRAN Project gNB to create a single TDD cell
 # transmitting in band 78, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP B200 is configured 
-# as the RF frontend using split 8. Note in this example an external clock source is not used. 
+# as the RF frontend using split 8. Note in this example an external clock source is not used, so the sync 
+# is not defined and the default is used. 
 
 amf:
   addr: 127.0.1.100                                               # The address or hostname of the AMF.

@@ -1,6 +1,6 @@
 # This example configuration outlines how to configure the srsRAN Project gNB to create a single FDD cell
 # transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. A USRP N3XX is configured 
-# as the RF frontend using split 8. Note in this example an external clock source is used.
+# as the RF frontend using split 8. Note in this example the internal GPDSO of the N310 is used.
 
 amf:
   addr: 127.0.1.100                   # The address or hostname of the AMF.

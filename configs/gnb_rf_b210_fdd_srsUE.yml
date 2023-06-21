@@ -12,8 +12,7 @@ amf:
 ru_sdr:
   device_driver: uhd                                              # The RF driver name.
   device_args: type=b200                                          # Optionally pass arguments to the selected RF driver.
-  clock: external                                                 # Set clock source to external. This set-up uses a LEO BODNAR GPDSO providing a 10 MHz ref.
-  sync: internal                                                  # Set sync to internal as no PPS output is available from the GPSDO.
+  sync: external                                                  # Set sync to external. This set-up uses a LEO BODNAR GPDSO providing a 10 MHz ref.
   srate: 11.52                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
   tx_gain: 70                                                     # Transmit gain of the RF might need to adjusted to the given situation.
   rx_gain: 60                                                     # Receive gain of the RF might need to adjusted to the given situation. 
