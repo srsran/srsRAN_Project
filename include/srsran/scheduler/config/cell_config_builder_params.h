@@ -39,7 +39,7 @@ struct cell_config_builder_params {
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb = 0;
   /// Whether to enable CSI-RS in the cell.
-  bool csi_rs_enabled = false;
+  bool csi_rs_enabled = true;
   /// Number of DL ports for the cell.
   unsigned nof_dl_ports = 1;
 };

@@ -92,7 +92,7 @@ protected:
 
     // We always put the CSI PUCCH resource is always at the end of the list.
     if (csi_pucch_res.has_value()) {
-      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size();
+      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size() - 1;
     }
 
     return pucch_checker;
