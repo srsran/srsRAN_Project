@@ -17,6 +17,7 @@
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <map>
 
 using namespace srsran;
@@ -237,6 +238,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_slots              = tdd_cfg.pattern2->nof_ul_slots;
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_symbols            = tdd_cfg.pattern2->nof_ul_symbols;
       }
+      // Update k1 values based on the TDD configuration.
+      out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
+          config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
     }
 
     // PCCH-Config.
