@@ -1,5 +1,4 @@
 # Configuration Examples
-========================
 
 This folder contains a number of selected example configuration files that represent some
 of the most common use-cases and configuration options. Their main goal is to simplify
