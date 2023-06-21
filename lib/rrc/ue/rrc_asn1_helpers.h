@@ -171,7 +171,11 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
   // secondary cell group
   asn1_reconfig_ies.secondary_cell_group = cu_cp_rrc_reconf.secondary_cell_group.copy();
 
-  // TODO: Add meas config
+  // meas config
+  if (cu_cp_rrc_reconf.meas_cfg.has_value()) {
+    asn1_reconfig_ies.meas_cfg_present = true;
+    asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(cu_cp_rrc_reconf.meas_cfg.value());
+  }
 
   // non crit ext
   if (cu_cp_rrc_reconf.non_crit_ext.has_value()) {
