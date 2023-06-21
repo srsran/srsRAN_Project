@@ -454,6 +454,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
         e1ap_pdu_session_res_to_modify_item pdu_session_res_to_mod_item;
         pdu_session_res_to_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_to_mod_item.pdu_session_id);
 
+        // Add drb to setup list
         for (const auto& asn1_drb_to_setup_item : asn1_res_to_mod_item.drb_to_setup_list_ng_ran) {
           e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
           fill_e1ap_drb_to_setup_item(drb_to_setup_item, asn1_drb_to_setup_item);
@@ -549,6 +550,11 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
           pdu_session_res_to_mod_item.drb_to_modify_list_ng_ran.emplace(uint_to_drb_id(asn1_drb_to_mod_item.drb_id),
                                                                         drb_to_mod_item);
+        }
+
+        // Add drb to rem list
+        for (const auto& asn1_drb_to_rem_item : asn1_res_to_mod_item.drb_to_rem_list_ng_ran) {
+          pdu_session_res_to_mod_item.drb_to_rem_list_ng_ran.push_back(uint_to_drb_id(asn1_drb_to_rem_item.drb_id));
         }
 
         ng_ran_bearer_context_mod_request.pdu_session_res_to_modify_list.emplace(
