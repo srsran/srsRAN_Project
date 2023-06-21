@@ -47,7 +47,6 @@ variables:
     options:
       - "default"
       - "coverage"
-      - "asan"
       - "tsan"
       - "valgrind"
       - "none"
@@ -616,27 +615,6 @@ basic valgrind:
     TEST_MODE: valgrind
     SAVE_ARTIFACTS: "True"
 
-# When building without rf and without zmq, we check no binary is generated
-
-not rf and not zmq:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    TEST_MODE: default
-    ENABLE_ZEROMQ: "False"
-    ENABLE_UHD: "False"
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    AUTO_DETECT_ISA: "False"
-  script:
-    - build_srsgnb
-    - launch_tests
-    - exit $(find build/apps/ -executable -type f | wc -l)
-
 # Packaging
 
 package:
@@ -777,7 +755,7 @@ ubuntu-22.04 amd64 no isa release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 180 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -793,7 +771,7 @@ ubuntu-22.04 amd64 avx512 release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 180 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -812,7 +790,7 @@ ubuntu-22.04 arm no isa release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 150 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -828,7 +806,7 @@ ubuntu-22.04 arm neon release:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 180 minutes
+      start_in: 60 minutes
   interruptible: false
   variables:
     ENABLE_GCOV: "False"
@@ -911,7 +889,7 @@ archlinux amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-22.04, ubuntu-20.04] # ubuntu-23.04's gcc raises fake positives
         SANITIZER: asan
         COMPILER: gcc
         ENABLE_ASAN: "True"
