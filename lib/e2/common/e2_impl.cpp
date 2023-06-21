@@ -152,7 +152,7 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
   }
 }
 
-void e2_impl::set_allowed_ran_functions(const uint16_t ran_function_id)
+void e2_impl::set_allowed_ran_functions(uint16_t ran_function_id)
 {
   if (candidate_ran_functions.count(ran_function_id)) {
     allowed_ran_functions[ran_function_id] = candidate_ran_functions[ran_function_id];
