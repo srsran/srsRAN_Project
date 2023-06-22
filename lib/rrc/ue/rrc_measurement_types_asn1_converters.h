@@ -15,6 +15,7 @@
 #include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/cu_cp/meas_types.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/srslog/srslog.h"
@@ -1216,6 +1217,290 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const cu_cp_meas_cfg& me
   }
 
   return asn1_meas_cfg;
+}
+
+template <class asn1_meas_quant_results_nr_eutra>
+inline cu_cp_meas_quant_results
+asn1_to_meas_quant_results(const asn1_meas_quant_results_nr_eutra& asn1_meas_quant_results)
+{
+  cu_cp_meas_quant_results meas_quant_results;
+
+  // rsrp
+  if (asn1_meas_quant_results.rsrp_present) {
+    meas_quant_results.rsrp = asn1_meas_quant_results.rsrp;
+  }
+
+  // rsrq
+  if (asn1_meas_quant_results.rsrq_present) {
+    meas_quant_results.rsrq = asn1_meas_quant_results.rsrq;
+  }
+
+  // sinr
+  if (asn1_meas_quant_results.sinr_present) {
+    meas_quant_results.sinr = asn1_meas_quant_results.sinr;
+  }
+
+  return meas_quant_results;
+};
+
+inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_result_nr_s& asn1_meas_result_nr)
+{
+  cu_cp_meas_result_nr meas_result_nr;
+
+  // pci
+  if (asn1_meas_result_nr.pci_present) {
+    meas_result_nr.pci = asn1_meas_result_nr.pci;
+  }
+
+  // cell results
+  // results ssb cell
+  if (asn1_meas_result_nr.meas_result.cell_results.results_ssb_cell_present) {
+    meas_result_nr.cell_results.results_ssb_cell =
+        asn1_to_meas_quant_results(asn1_meas_result_nr.meas_result.cell_results.results_ssb_cell);
+  }
+  // results csi rs cell
+  if (asn1_meas_result_nr.meas_result.cell_results.results_csi_rs_cell_present) {
+    meas_result_nr.cell_results.results_csi_rs_cell =
+        asn1_to_meas_quant_results(asn1_meas_result_nr.meas_result.cell_results.results_csi_rs_cell);
+  }
+
+  // rs idx results
+  if (asn1_meas_result_nr.meas_result.rs_idx_results_present) {
+    cu_cp_meas_result_nr::rs_idx_results_ rs_idx_result;
+
+    // results ssb idxes
+    for (const auto& asn1_ssb_result : asn1_meas_result_nr.meas_result.rs_idx_results.results_ssb_idxes) {
+      cu_cp_results_per_ssb_idx ssb_result;
+
+      ssb_result.ssb_idx = asn1_ssb_result.ssb_idx;
+
+      if (asn1_ssb_result.ssb_results_present) {
+        ssb_result.ssb_results = asn1_to_meas_quant_results(asn1_ssb_result.ssb_results);
+      }
+      rs_idx_result.results_ssb_idxes.emplace(asn1_ssb_result.ssb_idx, ssb_result);
+    }
+
+    // results csi_rs idxes
+    for (const auto& asn1_csi_rs_result : asn1_meas_result_nr.meas_result.rs_idx_results.results_csi_rs_idxes) {
+      cu_cp_results_per_csi_rs_idx csi_rs_result;
+      if (asn1_csi_rs_result.csi_rs_results_present) {
+        csi_rs_result.csi_rs_results = asn1_to_meas_quant_results(asn1_csi_rs_result.csi_rs_results);
+      }
+      rs_idx_result.results_csi_rs_idxes.emplace(asn1_csi_rs_result.csi_rs_idx, csi_rs_result);
+    }
+
+    meas_result_nr.rs_idx_results = rs_idx_result;
+  }
+
+  return meas_result_nr;
+};
+
+inline uint16_t asn1_to_mcc(const asn1::rrc_nr::mcc_l& asn1_mcc)
+{
+  uint16_t mcc = 0xf000;
+  mcc |= (((uint16_t)asn1_mcc.at(0)) << 8u);
+  mcc |= (((uint16_t)asn1_mcc.at(1)) << 4u);
+  mcc |= (uint16_t)asn1_mcc.at(2);
+
+  return mcc;
+};
+
+inline uint16_t asn1_to_mnc(const asn1::rrc_nr::mnc_l& asn1_mnc)
+{
+  uint16_t mnc = 0;
+
+  if (asn1_mnc.size() == 3) {
+    mnc = 0xf000;
+    mnc |= ((uint16_t)asn1_mnc[0]) << 8u;
+    mnc |= ((uint16_t)asn1_mnc[1]) << 4u;
+    mnc |= ((uint16_t)asn1_mnc[2]) << 0u;
+  } else if (asn1_mnc.size() == 2) {
+    mnc = 0xff00;
+    mnc |= ((uint16_t)asn1_mnc[0]) << 4u;
+    mnc |= ((uint16_t)asn1_mnc[1]) << 0u;
+  }
+
+  return mnc;
+};
+
+inline cu_cp_plmn_id asn1_to_plmn(const asn1::rrc_nr::plmn_id_s& asn1_plmn_id)
+{
+  cu_cp_plmn_id plmn_id;
+
+  if (asn1_plmn_id.mcc_present) {
+    plmn_id.mcc = asn1_to_mcc(asn1_plmn_id.mcc);
+  }
+
+  plmn_id.mnc = asn1_to_mnc(asn1_plmn_id.mnc);
+
+  return plmn_id;
+};
+
+inline cu_cp_cell_access_related_info_eutra_epc asn1_to_cell_access_related_info_eutra_epc(
+    const asn1::rrc_nr::cell_access_related_info_eutra_epc_s& asn1_cell_access_related_info_eutra_epc)
+{
+  cu_cp_cell_access_related_info_eutra_epc cell_access_related_info_eutra_epc;
+
+  // plmn id list eutra epc
+  for (const auto& asn1_plmn_id : asn1_cell_access_related_info_eutra_epc.plmn_id_list_eutra_epc) {
+    cell_access_related_info_eutra_epc.plmn_id_list_eutra_epc.push_back(asn1_to_plmn(asn1_plmn_id));
+  }
+
+  // tac eutra epc
+  cell_access_related_info_eutra_epc.tac_eutra_epc = asn1_cell_access_related_info_eutra_epc.tac_eutra_epc.to_number();
+
+  // cell id eutra epc
+  cell_access_related_info_eutra_epc.cell_id_eutra_epc =
+      asn1_cell_access_related_info_eutra_epc.cell_id_eutra_epc.to_number();
+
+  return cell_access_related_info_eutra_epc;
+};
+
+inline cu_cp_cgi_info_eutra asn1_to_cgi_info_eutra(const asn1::rrc_nr::cgi_info_eutra_s& asn1_cgi_info_eutra)
+{
+  cu_cp_cgi_info_eutra cgi_info_eutra;
+
+  // freq band ind prio present
+  cgi_info_eutra.freq_band_ind_prio_present = asn1_cgi_info_eutra.freq_band_ind_prio_present;
+
+  // cgi info epc
+  if (asn1_cgi_info_eutra.cgi_info_epc_present) {
+    cu_cp_cgi_info_eutra::cgi_info_epc_ cgi_info_epc;
+
+    // cgi info epc legacy
+    cgi_info_epc.cgi_info_epc_legacy =
+        asn1_to_cell_access_related_info_eutra_epc(asn1_cgi_info_eutra.cgi_info_epc.cgi_info_epc_legacy);
+
+    // cgi info epc list
+    for (const auto& asn1_cgi_info_epc : asn1_cgi_info_eutra.cgi_info_epc.cgi_info_epc_list) {
+      cgi_info_epc.cgi_info_epc_list.push_back(asn1_to_cell_access_related_info_eutra_epc(asn1_cgi_info_epc));
+    }
+
+    cgi_info_eutra.cgi_info_epc = cgi_info_epc;
+  }
+
+  // cgi info 5 gc
+  for (const auto& asn1_cgi_info_5_gc : asn1_cgi_info_eutra.cgi_info_5_gc) {
+    cu_cp_cell_access_related_info_eutra_5_gc cgi_info_5_gc;
+
+    // plmn id list eutra 5gc
+    for (const auto& asn1_plmn_id_eutra_5gc : asn1_cgi_info_5_gc.plmn_id_list_eutra_5gc) {
+      cu_cp_plmn_id_eutra_5_gc plmn_id_eutra_5gc;
+
+      if (asn1_plmn_id_eutra_5gc.type() ==
+          asn1::rrc_nr::plmn_id_eutra_5_gc_c::types_opts::options::plmn_id_eutra_5_gc) {
+        plmn_id_eutra_5gc.plmn_id_eutra_5_gc = asn1_to_plmn(asn1_plmn_id_eutra_5gc.plmn_id_eutra_5_gc());
+      } else if (asn1_plmn_id_eutra_5gc.type() == asn1::rrc_nr::plmn_id_eutra_5_gc_c::types_opts::options::plmn_idx) {
+        plmn_id_eutra_5gc.plmn_idx = asn1_plmn_id_eutra_5gc.plmn_idx();
+      } else {
+        // error
+        srslog::fetch_basic_logger("RRC").error("Invalid plmn id eutra 5gc type.");
+      }
+
+      cgi_info_5_gc.plmn_id_list_eutra_5gc.push_back(plmn_id_eutra_5gc);
+    }
+
+    // tac eutra 5gc
+    cgi_info_5_gc.tac_eutra_5gc = asn1_cgi_info_5_gc.tac_eutra_5gc.to_number();
+
+    // ranac 5gc
+    if (asn1_cgi_info_5_gc.ranac_5gc_present) {
+      cgi_info_5_gc.ranac_5gc = asn1_cgi_info_5_gc.ranac_5gc;
+    }
+
+    // cell id eutra 5gc
+    if (asn1_cgi_info_5_gc.cell_id_eutra_5gc.type() ==
+        asn1::rrc_nr::cell_id_eutra_5_gc_c::types_opts::options::cell_id_eutra) {
+      cgi_info_5_gc.cell_id_eutra_5gc.cell_id_eutra = asn1_cgi_info_5_gc.cell_id_eutra_5gc.cell_id_eutra().to_number();
+    } else if (asn1_cgi_info_5_gc.cell_id_eutra_5gc.type() ==
+               asn1::rrc_nr::cell_id_eutra_5_gc_c::types_opts::options::cell_id_idx) {
+      cgi_info_5_gc.cell_id_eutra_5gc.cell_id_idx = asn1_cgi_info_5_gc.cell_id_eutra_5gc.cell_id_idx();
+    } else {
+      // error
+      srslog::fetch_basic_logger("RRC").error("Invalid cell id eutra 5gc type.");
+    }
+
+    cgi_info_eutra.cgi_info_5_gc.push_back(cgi_info_5_gc);
+  }
+
+  // freq band ind
+  cgi_info_eutra.freq_band_ind = asn1_cgi_info_eutra.freq_band_ind;
+
+  // multi band info list
+  for (const auto& asn1_multi_band_info : asn1_cgi_info_eutra.multi_band_info_list) {
+    cgi_info_eutra.multi_band_info_list.push_back(asn1_multi_band_info);
+  }
+
+  return cgi_info_eutra;
+};
+
+inline cu_cp_meas_result_eutra
+asn1_to_meas_result_eutra(const asn1::rrc_nr::meas_result_eutra_s& asn1_meas_result_eutra)
+{
+  cu_cp_meas_result_eutra meas_result_eutra;
+
+  // pci
+  meas_result_eutra.eutra_pci = asn1_meas_result_eutra.eutra_pci;
+  // meas result
+  meas_result_eutra.meas_result = asn1_to_meas_quant_results(asn1_meas_result_eutra.meas_result);
+  // cgi info
+  if (asn1_meas_result_eutra.cgi_info_present) {
+    meas_result_eutra.cgi_info = asn1_to_cgi_info_eutra(asn1_meas_result_eutra.cgi_info);
+  }
+
+  return meas_result_eutra;
+};
+
+inline cu_cp_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results)
+{
+  cu_cp_meas_results meas_results;
+
+  // meas id
+  meas_results.meas_id = asn1_meas_results.meas_id;
+
+  // meas result serving mo list
+  for (const auto& asn1_meas_result_serv_mo : asn1_meas_results.meas_result_serving_mo_list) {
+    cu_cp_meas_result_serv_mo meas_result_serv_mo;
+
+    // serv cell id
+    meas_result_serv_mo.serv_cell_id = asn1_meas_result_serv_mo.serv_cell_id;
+    // meas result serving cell
+    meas_result_serv_mo.meas_result_serving_cell =
+        asn1_to_meas_result_nr(asn1_meas_result_serv_mo.meas_result_serving_cell);
+    // meas result best neigh cell
+    if (asn1_meas_result_serv_mo.meas_result_best_neigh_cell_present) {
+      meas_result_serv_mo.meas_result_best_neigh_cell =
+          asn1_to_meas_result_nr(asn1_meas_result_serv_mo.meas_result_best_neigh_cell);
+    }
+
+    meas_results.meas_result_serving_mo_list.emplace(asn1_meas_result_serv_mo.serv_cell_id, meas_result_serv_mo);
+  }
+
+  // meas result neigh cells
+  if (asn1_meas_results.meas_result_neigh_cells_present) {
+    cu_cp_meas_result_neigh_cells meas_result_neigh_cell;
+
+    if (asn1_meas_results.meas_result_neigh_cells.type() ==
+        asn1::rrc_nr::meas_results_s::meas_result_neigh_cells_c_::types_opts::options::meas_result_list_nr) {
+      // meas result list nr
+      for (const auto& asn1_meas_result_nr : asn1_meas_results.meas_result_neigh_cells.meas_result_list_nr()) {
+        meas_result_neigh_cell.meas_result_list_nr.push_back(asn1_to_meas_result_nr(asn1_meas_result_nr));
+      }
+    } else if (asn1_meas_results.meas_result_neigh_cells.type() ==
+               asn1::rrc_nr::meas_results_s::meas_result_neigh_cells_c_::types_opts::options::meas_result_list_eutra) {
+      // meas result list eutra
+      for (const auto& asn1_meas_result_eutra : asn1_meas_results.meas_result_neigh_cells.meas_result_list_eutra()) {
+        meas_result_neigh_cell.meas_result_list_eutra.push_back(asn1_to_meas_result_eutra(asn1_meas_result_eutra));
+      }
+    } else {
+      // error
+      srslog::fetch_basic_logger("RRC").error("Invalid meas result neigh cells.");
+    }
+
+    meas_results.meas_result_neigh_cells = meas_result_neigh_cell;
+  }
+
+  return meas_results;
 }
 
 } // namespace srs_cu_cp
