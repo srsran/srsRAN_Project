@@ -306,7 +306,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       cset1_l_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.value();
     }
     const unsigned coreset1_nof_resources = cset1_l_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
-    freq_resources.fill(cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE, coreset1_nof_resources, true);
+    freq_resources.fill(cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE,
+                        cset1_start_crb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE + coreset1_nof_resources,
+                        true);
 
     search_space_configuration& ss2_cfg   = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
     coreset_configuration&      cset1_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0];
@@ -317,6 +319,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
     if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
       ss2_cfg.nof_candidates = config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates;
+    } else if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type != search_space_configuration::type_t::common) {
+      ss2_cfg.nof_candidates = {
+          0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0};
     }
 
     if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
