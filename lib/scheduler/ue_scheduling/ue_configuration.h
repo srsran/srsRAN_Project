@@ -137,7 +137,7 @@ private:
   std::array<bwp_id_t, MAX_NOF_BWPS> coreset_id_to_bwp_id;
 
   /// Number of DL ports for this UE.
-  unsigned nof_dl_ports = 0;
+  unsigned nof_dl_ports = 1;
 };
 
 } // namespace srsran
