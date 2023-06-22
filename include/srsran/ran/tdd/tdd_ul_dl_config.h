@@ -58,4 +58,7 @@ ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, 
 /// \brief Calculates the number of active UL symbols in the current slot_index.
 ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended);
 
+/// \brief Finds the next TDD slot index with UL symbols, starting from the given slot index.
+optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+
 } // namespace srsran

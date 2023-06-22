@@ -73,3 +73,17 @@ srsran::get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned s
   const unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
   return nof_symbols > 0 ? ofdm_symbol_range{symbols_per_slot - nof_symbols, symbols_per_slot} : ofdm_symbol_range{};
 }
+
+optional<unsigned> srsran::find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index)
+{
+  const unsigned period = nof_slots_per_tdd_period(cfg);
+
+  optional<unsigned> ret;
+  for (unsigned i = start_slot_index; i < period; ++i) {
+    if (has_active_tdd_ul_symbols(cfg, i)) {
+      ret = i;
+      break;
+    }
+  }
+  return ret;
+}

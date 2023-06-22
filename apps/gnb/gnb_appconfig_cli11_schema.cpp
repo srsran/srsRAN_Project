@@ -495,7 +495,7 @@ static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_patt
   app.add_option("--dl_ul_tx_period",
                  pattern_params.dl_ul_period_slots,
                  "TDD pattern periodicity in slots. The combination of this value and the chosen numerology must lead"
-                 " to a TDD periodicity of 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.")
+                 " to a TDD periodicity of 0.5, 0.625, 1, 1.25, 2, 2.5, 3, 4, 5 or 10 milliseconds.")
       ->capture_default_str()
       ->check(CLI::Range(2, 80));
   app.add_option("--nof_dl_slots", pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")

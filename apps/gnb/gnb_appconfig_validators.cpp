@@ -179,11 +179,11 @@ static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconf
 
   const unsigned period_msec = config.dl_ul_period_slots / get_nof_slots_per_subframe(common_scs);
 
-  if (period_msec != 0.5F and period_msec != 0.625F and period_msec != 1.0F and period_msec != 1.25F and
-      period_msec != 2.0F and period_msec != 2.5F and period_msec != 5.0F and period_msec != 10.0F) {
-    fmt::print(
-        "Invalid TDD pattern 1 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
-        period_msec);
+  static constexpr std::array<float, 10> valid_periods = {0.5F, 0.625, 1.0, 1.25, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0};
+  if (std::none_of(valid_periods.begin(), valid_periods.end(), [period_msec](float v) {
+        return std::abs(period_msec - v) < 1e-3;
+      })) {
+    fmt::print("Invalid TDD pattern periodicity={}ms. Must in {{{}}}.\n", period_msec, fmt::join(valid_periods, ", "));
     return false;
   }
 
