@@ -63,8 +63,9 @@ class pdcp_du_processor_adapter : public pdcp_tx_lower_notifier
 public:
   explicit pdcp_du_processor_adapter(f1ap_rrc_message_handler& f1ap_handler_,
                                      const ue_index_t&         ue_index_,
-                                     const srb_id_t&           srb_id_) :
-    f1ap_handler(f1ap_handler_), ue_index(ue_index_), srb_id(srb_id_)
+                                     const srb_id_t&           srb_id_,
+                                     const ue_index_t&         old_ue_index_ = ue_index_t::invalid) :
+    f1ap_handler(f1ap_handler_), ue_index(ue_index_), srb_id(srb_id_), old_ue_index(old_ue_index_)
   {
   }
 
@@ -72,11 +73,15 @@ public:
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
+    f1ap_msg.old_ue_index        = old_ue_index;
     f1ap_msg.srb_id              = srb_id;
 
     f1ap_msg.rrc_container.resize(pdu.buf.length());
     std::copy(pdu.buf.begin(), pdu.buf.end(), f1ap_msg.rrc_container.begin());
     f1ap_handler.handle_dl_rrc_message_transfer(f1ap_msg);
+
+    // reset old ue index after transmission
+    old_ue_index = ue_index_t::invalid;
   }
 
   void on_discard_pdu(uint32_t pdcp_sn) override
@@ -88,6 +93,7 @@ private:
   f1ap_rrc_message_handler& f1ap_handler;
   const ue_index_t          ue_index;
   const srb_id_t            srb_id;
+  ue_index_t                old_ue_index;
 };
 
 /// Adapter between PDCP Tx control and RRC

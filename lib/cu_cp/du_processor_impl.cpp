@@ -318,7 +318,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context.emplace();
 
     // add adapter for PDCP to talk to F1AP (Tx), RRC data (Rx) and RRC control (Tx/Rx)
-    srb.pdcp_context->pdcp_tx_notifier = std::make_unique<pdcp_du_processor_adapter>(*f1ap, msg.ue_index, msg.srb_id);
+    srb.pdcp_context->pdcp_tx_notifier =
+        std::make_unique<pdcp_du_processor_adapter>(*f1ap, msg.ue_index, msg.srb_id, msg.old_ue_index);
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
