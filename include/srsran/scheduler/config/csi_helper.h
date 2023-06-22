@@ -26,7 +26,7 @@ struct csi_builder_params {
   /// Number of ports set for the CSI-RS.
   unsigned nof_ports = 1;
   /// Period of the CSI-RS resources.
-  csi_resource_periodicity csi_rs_period;
+  csi_resource_periodicity csi_rs_period = csi_resource_periodicity::slots80;
   /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
   unsigned meas_csi_slot_offset = 2;
   /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.

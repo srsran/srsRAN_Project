@@ -172,7 +172,9 @@ static nzp_csi_rs_resource make_common_nzp_csi_rs_resource(const csi_builder_par
 static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const csi_builder_params& params)
 {
   srsran_assert(params.meas_csi_slot_offset < csi_resource_periodicity_to_uint(params.csi_rs_period),
-                "Invalid CSI slot offset");
+                "Invalid CSI slot offset {} >= {}",
+                params.meas_csi_slot_offset,
+                csi_resource_periodicity_to_uint(params.csi_rs_period));
   nzp_csi_rs_resource res = make_common_nzp_csi_rs_resource(params);
 
   res.res_id                              = static_cast<nzp_csi_rs_res_id_t>(0);
