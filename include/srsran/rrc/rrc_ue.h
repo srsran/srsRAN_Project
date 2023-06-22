@@ -102,8 +102,9 @@ public:
 };
 
 struct srb_creation_message {
-  ue_index_t               ue_index = ue_index_t::invalid;
-  srb_id_t                 srb_id   = srb_id_t::nulltype;
+  ue_index_t               ue_index     = ue_index_t::invalid;
+  ue_index_t               old_ue_index = ue_index_t::invalid;
+  srb_id_t                 srb_id       = srb_id_t::nulltype;
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
