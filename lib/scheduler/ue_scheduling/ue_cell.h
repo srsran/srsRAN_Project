@@ -49,8 +49,6 @@ public:
 
   harq_entity harqs;
 
-  ue_channel_state_manager channel_state;
-
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
@@ -118,6 +116,9 @@ public:
     is_fallback_mode = fallback_state_;
   }
 
+  /// \brief Get UE channel state handler.
+  ue_channel_state_manager& channel_state_manager() { return channel_state; }
+
 private:
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;
@@ -130,6 +131,8 @@ private:
   bool is_fallback_mode = false;
 
   metrics ue_metrics;
+
+  ue_channel_state_manager channel_state;
 };
 
 } // namespace srsran

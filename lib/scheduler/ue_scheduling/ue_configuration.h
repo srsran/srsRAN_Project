@@ -110,6 +110,9 @@ public:
   }
   const search_space_info& search_space(search_space_id ss_id) const { return search_spaces[ss_id]; }
 
+  /// Get the number of active DL ports for this UE.
+  unsigned get_nof_dl_ports() const { return nof_dl_ports; }
+
 private:
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl_common);
   void configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_uplink_common& bwp_ul_common);
@@ -132,6 +135,9 @@ private:
 
   /// This array maps Coreset-Ids (the array indexes) to BWP-Ids (the array values).
   std::array<bwp_id_t, MAX_NOF_BWPS> coreset_id_to_bwp_id;
+
+  /// Number of DL ports for this UE.
+  unsigned nof_dl_ports = 0;
 };
 
 } // namespace srsran
