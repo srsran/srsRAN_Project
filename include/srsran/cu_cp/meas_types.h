@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
@@ -538,6 +539,105 @@ struct cu_cp_meas_cfg {
   optional<cu_cp_quant_cfg>                quant_cfg;
   optional<cu_cp_measg_gap_cfg>            meas_gap_cfg;
   optional<cu_cp_meas_gap_sharing_cfg>     meas_gap_sharing_cfg;
+};
+
+struct cu_cp_meas_quant_results {
+  optional<uint8_t> rsrp;
+  optional<uint8_t> rsrq;
+  optional<uint8_t> sinr;
+};
+
+struct cu_cp_results_per_ssb_idx {
+  uint8_t                            ssb_idx;
+  optional<cu_cp_meas_quant_results> ssb_results;
+};
+
+struct cu_cp_results_per_csi_rs_idx {
+  uint8_t                            csi_rs_idx;
+  optional<cu_cp_meas_quant_results> csi_rs_results;
+};
+
+struct cu_cp_meas_result_nr {
+  struct cell_results_ {
+    optional<cu_cp_meas_quant_results> results_ssb_cell;
+    optional<cu_cp_meas_quant_results> results_csi_rs_cell;
+  };
+
+  struct rs_idx_results_ {
+    slotted_id_vector<uint8_t, cu_cp_results_per_ssb_idx>    results_ssb_idxes;    // indexed by ssb_idx
+    slotted_id_vector<uint8_t, cu_cp_results_per_csi_rs_idx> results_csi_rs_idxes; // indexed by csi_rs_idx
+  };
+
+  optional<pci_t>           pci;
+  cell_results_             cell_results;
+  optional<rs_idx_results_> rs_idx_results;
+};
+
+struct cu_cp_meas_result_serv_mo {
+  uint8_t                        serv_cell_id;
+  cu_cp_meas_result_nr           meas_result_serving_cell;
+  optional<cu_cp_meas_result_nr> meas_result_best_neigh_cell;
+};
+
+struct cu_cp_plmn_id {
+  optional<uint16_t> mcc;
+  uint16_t           mnc;
+};
+
+struct cu_cp_cell_access_related_info_eutra_epc {
+  std::vector<cu_cp_plmn_id> plmn_id_list_eutra_epc;
+  uint32_t                   tac_eutra_epc;
+  uint32_t                   cell_id_eutra_epc;
+};
+
+struct cu_cp_plmn_id_eutra_5_gc {
+  // choice
+  optional<cu_cp_plmn_id> plmn_id_eutra_5_gc;
+  optional<uint8_t>       plmn_idx;
+};
+
+struct cu_cp_cell_id_eutra_5_gc {
+  // choice
+  optional<uint32_t> cell_id_eutra;
+  optional<uint8_t>  cell_id_idx;
+};
+
+struct cu_cp_cell_access_related_info_eutra_5_gc {
+  std::vector<cu_cp_plmn_id_eutra_5_gc> plmn_id_list_eutra_5gc;
+  uint32_t                              tac_eutra_5gc;
+  optional<uint16_t>                    ranac_5gc;
+  cu_cp_cell_id_eutra_5_gc              cell_id_eutra_5gc;
+};
+
+struct cu_cp_cgi_info_eutra {
+  struct cgi_info_epc_ {
+    cu_cp_cell_access_related_info_eutra_epc              cgi_info_epc_legacy;
+    std::vector<cu_cp_cell_access_related_info_eutra_epc> cgi_info_epc_list;
+  };
+
+  bool                                                   freq_band_ind_prio_present;
+  optional<cgi_info_epc_>                                cgi_info_epc;
+  std::vector<cu_cp_cell_access_related_info_eutra_5_gc> cgi_info_5_gc;
+  uint16_t                                               freq_band_ind;
+  std::vector<uint16_t>                                  multi_band_info_list; // max size = 8;
+};
+
+struct cu_cp_meas_result_eutra {
+  pci_t                          eutra_pci;
+  cu_cp_meas_quant_results       meas_result;
+  optional<cu_cp_cgi_info_eutra> cgi_info;
+};
+
+struct cu_cp_meas_result_neigh_cells {
+  // choice
+  std::vector<cu_cp_meas_result_nr>    meas_result_list_nr;
+  std::vector<cu_cp_meas_result_eutra> meas_result_list_eutra;
+};
+
+struct cu_cp_meas_results {
+  uint8_t                                               meas_id;
+  slotted_id_vector<uint8_t, cu_cp_meas_result_serv_mo> meas_result_serving_mo_list; // indexed by serv_cell_id
+  optional<cu_cp_meas_result_neigh_cells>               meas_result_neigh_cells;
 };
 
 } // namespace srs_cu_cp
