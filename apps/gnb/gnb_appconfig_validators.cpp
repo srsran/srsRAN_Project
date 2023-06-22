@@ -508,6 +508,17 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
       fmt::print("Invalid CORESET#1 length in RBs={}\n", base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value());
       return false;
     }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() + base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value() >
+            nof_crbs) {
+      fmt::print("CORESET#1 range={{},{}} outside of cell bandwidth={}CRBs\n",
+                 base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value(),
+                 base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() +
+                     base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value(),
+                 nof_crbs);
+      return false;
+    }
     if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
         config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");

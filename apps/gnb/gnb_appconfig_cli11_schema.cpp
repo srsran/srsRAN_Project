@@ -220,11 +220,13 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
       ->capture_default_str()
       ->check(CLI::Range(0, 275));
 
+  // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has been
+  // set to 3. And, we use only pos2 or pos1.
   app.add_option("--coreset1_duration",
                  ded_params.coreset1_duration,
                  "Duration of CORESET 1 in number of OFDM symbols. Default: Max(2, Nof. CORESET#0 symbols)")
       ->capture_default_str()
-      ->check(CLI::Range(1, 3));
+      ->check(CLI::Range(1, 2));
 
   app.add_option("--ss2_n_candidates",
                  ded_params.ss2_n_candidates,
