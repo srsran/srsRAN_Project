@@ -177,7 +177,8 @@ INSTANTIATE_TEST_SUITE_P(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt}},
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 4, 1, 4}, nullopt}},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {5, 5, 0, 0, 0}, tdd_ul_dl_pattern{5, 2, 0, 2, 0}}}));
   // TODO: Support more TDD patterns.
 // clang-format on
@@ -190,5 +191,6 @@ INSTANTIATE_TEST_SUITE_P(
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
    tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}},
    tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt}},
+   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 4, 1, 4}, nullopt}},
    tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 4, 2, 4}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}}));
 // clang-format on

@@ -572,7 +572,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 pdsch_serving_cell_config srsran::config_helpers::make_default_pdsch_serving_cell_config()
 {
   pdsch_serving_cell_config serv_cell;
-  serv_cell.nof_harq_proc   = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8;
+  serv_cell.nof_harq_proc   = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16;
   serv_cell.max_mimo_layers = 1;
 
   return serv_cell;

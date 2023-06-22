@@ -822,6 +822,9 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
 {
   auto dest_cell_grp_cfg = make_initial_cell_group_config();
 
+  dest_cell_grp_cfg.cells[0].serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
+      pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8;
+
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
 
@@ -838,7 +841,8 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.is_setup());
 
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
-  ASSERT_FALSE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present);
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present)
+      << "For 8 HARQs, this flag can be avoided";
 }
 
 TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conversion)

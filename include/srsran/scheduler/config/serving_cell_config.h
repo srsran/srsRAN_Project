@@ -215,8 +215,8 @@ struct pdsch_serving_cell_config {
 
   optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                    x_ov_head{x_overhead::not_set};
-  /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH. If the field is absent, the UE uses 8 HARQ processes.
-  nof_harq_proc_for_pdsch     nof_harq_proc{nof_harq_proc_for_pdsch::n8};
+  /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
+  nof_harq_proc_for_pdsch     nof_harq_proc{nof_harq_proc_for_pdsch::n16};
   optional<serv_cell_index_t> pucch_cell;
   /// Values {1,...,8};
   unsigned       max_mimo_layers;
