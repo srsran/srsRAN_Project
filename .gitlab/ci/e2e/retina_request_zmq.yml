@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.7
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_0.6.7
   count: 4
   requirements:
     cpu: 8
@@ -18,6 +18,10 @@
     - type: zmq
     - type: license
       model: amarisoft-5g
+  shared_files:
+    - local_path: ../../build_trx_srsran/libtrx_srsran.so
+      remote_path: /opt/lteue/trx_srsran.so
+      is_executable: true
 
 - name: srs-gnb
   type: gnb

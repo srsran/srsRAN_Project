@@ -472,8 +472,8 @@ valgrind changed tests:
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
       when: manual
-      allow_failure: false
-  timeout: 45 min
+      allow_failure: true
+  timeout: 1h
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc

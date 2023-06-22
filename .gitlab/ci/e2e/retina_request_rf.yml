@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.7
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_0.6.7
   count: 4
   requirements:
     cpu: 9
