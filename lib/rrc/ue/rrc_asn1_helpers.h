@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rrc_asn1_converters.h"
+#include "rrc_measurement_types_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
