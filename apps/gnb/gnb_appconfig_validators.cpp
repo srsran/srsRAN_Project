@@ -12,6 +12,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/srslog/logger.h"
 
@@ -485,16 +486,25 @@ static bool validate_pdcch_appconfig(const gnb_appconfig& config)
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, base_cell.common_scs, band_helper::get_freq_range(band));
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
-      const uint8_t  ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
-      const unsigned cs0_idx = base_cell.pdcch_cfg.common.coreset0_index.value();
-      if (not band_helper::get_ssb_coreset0_freq_location(
-                  base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx)
-                  .has_value()) {
+      const uint8_t  ss0_idx               = base_cell.pdcch_cfg.common.ss0_index;
+      const unsigned cs0_idx               = base_cell.pdcch_cfg.common.coreset0_index.value();
+      const auto     ssb_coreset0_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx);
+      if (not ssb_coreset0_freq_loc.has_value()) {
         fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={}, SearchSpace#0 index={} and "
                    "cell bandwidth={}Mhz\n",
                    cs0_idx,
                    ss0_idx,
                    base_cell.channel_bw_mhz);
+        return false;
+      }
+      // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
+      // been set to 3. And, we use only pos2 or pos1
+      const pdcch_type0_css_coreset_description desc = srsran::pdcch_type0_css_coreset_get(
+          band, base_cell.common_scs, base_cell.common_scs, cs0_idx, ssb_coreset0_freq_loc->k_ssb.to_uint());
+      if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and desc.nof_symb_coreset == 3) {
+        fmt::print("CORESET duration of 3 OFDM symbols corresponding to CORESET#0 index={} is not supported\n",
+                   cs0_idx);
         return false;
       }
     }
