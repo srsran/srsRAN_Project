@@ -39,7 +39,7 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 
   const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_alloc.slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     return;
   }
   // Note: Unable at the moment to multiplex CSI and PDSCH.
@@ -88,7 +88,12 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
     // Fetch PDSCH resource grid allocators.
     const cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
 
-    if (not cell_cfg.is_fully_dl_enabled(pdsch_alloc.slot)) {
+    if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+      continue;
+    }
+
+    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+    if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
       continue;
     }
 

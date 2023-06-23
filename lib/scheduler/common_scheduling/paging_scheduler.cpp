@@ -134,7 +134,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   const cell_slot_resource_allocator& pdcch_alloc = res_grid[0];
   const auto                          pdcch_slot  = pdcch_alloc.slot;
   // Verify PDCCH slot is DL enabled.
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
     return;
   }
 
@@ -176,7 +176,11 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
       const cell_slot_resource_allocator& paging_alloc = res_grid[pdsch_td_alloc_list[time_res_idx].k0];
       // Verify Paging slot is DL enabled.
-      if (not cell_cfg.is_fully_dl_enabled(paging_alloc.slot)) {
+      if (not cell_cfg.is_dl_enabled(paging_alloc.slot)) {
+        continue;
+      }
+      // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+      if (pdsch_td_alloc_list[time_res_idx].symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(paging_alloc.slot)) {
         continue;
       }
       // Note: Unable at the moment to multiplex CSI and PDSCH.
@@ -483,7 +487,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   for (unsigned slot_num = 0; slot_num < periodicity_in_slots; slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
-    if (not cell_cfg.is_fully_dl_enabled(ref_sl)) {
+    if (not cell_cfg.is_dl_enabled(ref_sl)) {
       continue;
     }
     if ((slot_num - ss_slot_offset) % ss_periodicity == 0) {
@@ -493,7 +497,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
         const slot_point add_pmo_slot = ref_sl + duration;
 
         // Ensure slot for Paging has DL enabled.
-        if (not cell_cfg.is_fully_dl_enabled(add_pmo_slot)) {
+        if (not cell_cfg.is_dl_enabled(add_pmo_slot)) {
           continue;
         }
         pdcch_monitoring_occasions.push_back(add_pmo_slot);

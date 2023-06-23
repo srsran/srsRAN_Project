@@ -123,6 +123,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
     return false;
   }
+  // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+  if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
+    logger.info(
+        "Failed to allocate PDSCH in slot={}. Cause: Nof. DL symbols in slot shorter than PDSCH time domain resource",
+        pdsch_alloc.slot);
+    return false;
+  }
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {

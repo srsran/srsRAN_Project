@@ -285,9 +285,50 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_slots              = tdd_cfg.pattern2->nof_ul_slots;
         out_cell.tdd_ul_dl_cfg_common->pattern2->nof_ul_symbols            = tdd_cfg.pattern2->nof_ul_symbols;
       }
-      // Update k1 values based on the TDD configuration.
+
+      // PUCCH-Config - Update k1 values based on the TDD configuration.
       out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
           config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
+
+      // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot
+      auto coreset0_cfg = pdcch_type0_css_coreset_get(
+          param.band.value(), param.scs_common, param.scs_common, param.coreset0_index, param.k_ssb.to_uint());
+      auto coreset1_duration = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration;
+      // NOTE: Number of DL symbols must be atleast greater than CORESET duration for PDSCH allocation in partial slot.
+      // Otherwise, it can be used only for UL PDCCH allocations.
+      if (coreset0_cfg.nof_symb_coreset != 0 and tdd_cfg.pattern1.nof_dl_symbols > coreset0_cfg.nof_symb_coreset) {
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+            ofdm_symbol_range{coreset0_cfg.nof_symb_coreset, tdd_cfg.pattern1.nof_dl_symbols};
+      }
+      if (coreset0_cfg.nof_symb_coreset != 0 and tdd_cfg.pattern2.has_value() and
+          tdd_cfg.pattern2->nof_dl_symbols > coreset0_cfg.nof_symb_coreset) {
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+            ofdm_symbol_range{coreset0_cfg.nof_symb_coreset, tdd_cfg.pattern2->nof_dl_symbols};
+      }
+      if (tdd_cfg.pattern1.nof_dl_symbols > coreset1_duration) {
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+            ofdm_symbol_range{coreset1_duration, tdd_cfg.pattern1.nof_dl_symbols};
+      }
+      if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2->nof_dl_symbols > coreset1_duration) {
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
+        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+            ofdm_symbol_range{coreset1_duration, tdd_cfg.pattern2->nof_dl_symbols};
+      }
+      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol length to always choose the
+      // resource which occupies most of the DL symbols in a slot.
+      std::sort(out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
+                out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
+                [](const pdsch_time_domain_resource_allocation& res_alloc_a,
+                   const pdsch_time_domain_resource_allocation& res_alloc_b) {
+                  return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
+                });
     }
 
     // PCCH-Config.
