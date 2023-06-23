@@ -386,56 +386,8 @@ struct cu_cp_report_cfg_nr {
   optional<cu_cp_report_sftd_nr>        report_sftd;
 };
 
-struct cu_cp_periodical_report_cfg_inter_rat {
-  uint16_t                report_interv;
-  int8_t                  report_amount;
-  cu_cp_meas_report_quant report_quant;
-  uint8_t                 max_report_cells;
-};
-
-struct cu_cp_event_b1 {
-  cu_cp_meas_trigger_quant b1_thres_eutra;
-  bool                     report_on_leave;
-  uint8_t                  hysteresis;
-  uint16_t                 time_to_trigger;
-};
-
-struct cu_cp_event_b2 {
-  cu_cp_meas_trigger_quant b2_thres1;
-  cu_cp_meas_trigger_quant b2_thres2_eutra;
-  bool                     report_on_leave;
-  uint8_t                  hysteresis;
-  uint16_t                 time_to_trigger;
-};
-
-struct cu_cp_event_trigger_cfg_inter_rat {
-  struct cu_cp_event_id_ {
-    optional<cu_cp_event_b1> event_b1;
-    optional<cu_cp_event_b2> event_b2;
-  };
-
-  cu_cp_event_id_         event_id;
-  std::string             rs_type;
-  uint16_t                report_interv;
-  int8_t                  report_amount;
-  cu_cp_meas_report_quant report_quant;
-  uint8_t                 max_report_cells;
-};
-
-using cu_cp_report_cgi_eutra = cu_cp_report_cgi;
-
-using cu_cp_report_sftd_eutra = cu_cp_report_sftd_nr;
-
-struct cu_cp_report_cfg_inter_rat {
-  optional<cu_cp_periodical_report_cfg_inter_rat> periodical;
-  optional<cu_cp_event_trigger_cfg_inter_rat>     event_triggered;
-  optional<cu_cp_report_cgi_eutra>                report_cgi;
-  optional<cu_cp_report_sftd_eutra>               report_sftd;
-};
-
 struct cu_cp_report_cfg {
-  optional<cu_cp_report_cfg_nr>        report_cfg_nr;
-  optional<cu_cp_report_cfg_inter_rat> report_cfg_inter_rat;
+  optional<cu_cp_report_cfg_nr> report_cfg_nr;
 };
 
 struct cu_cp_report_cfg_to_add_mod {
@@ -550,59 +502,9 @@ struct cu_cp_meas_result_serv_mo {
   optional<cu_cp_meas_result_nr> meas_result_best_neigh_cell;
 };
 
-struct cu_cp_plmn_id {
-  optional<uint16_t> mcc;
-  uint16_t           mnc;
-};
-
-struct cu_cp_cell_access_related_info_eutra_epc {
-  std::vector<cu_cp_plmn_id> plmn_id_list_eutra_epc;
-  uint32_t                   tac_eutra_epc;
-  uint32_t                   cell_id_eutra_epc;
-};
-
-struct cu_cp_plmn_id_eutra_5_gc {
-  // choice
-  optional<cu_cp_plmn_id> plmn_id_eutra_5_gc;
-  optional<uint8_t>       plmn_idx;
-};
-
-struct cu_cp_cell_id_eutra_5_gc {
-  // choice
-  optional<uint32_t> cell_id_eutra;
-  optional<uint8_t>  cell_id_idx;
-};
-
-struct cu_cp_cell_access_related_info_eutra_5_gc {
-  std::vector<cu_cp_plmn_id_eutra_5_gc> plmn_id_list_eutra_5gc;
-  uint32_t                              tac_eutra_5gc;
-  optional<uint16_t>                    ranac_5gc;
-  cu_cp_cell_id_eutra_5_gc              cell_id_eutra_5gc;
-};
-
-struct cu_cp_cgi_info_eutra {
-  struct cgi_info_epc_ {
-    cu_cp_cell_access_related_info_eutra_epc              cgi_info_epc_legacy;
-    std::vector<cu_cp_cell_access_related_info_eutra_epc> cgi_info_epc_list;
-  };
-
-  bool                                                   freq_band_ind_prio_present;
-  optional<cgi_info_epc_>                                cgi_info_epc;
-  std::vector<cu_cp_cell_access_related_info_eutra_5_gc> cgi_info_5_gc;
-  uint16_t                                               freq_band_ind;
-  std::vector<uint16_t>                                  multi_band_info_list; // max size = 8;
-};
-
-struct cu_cp_meas_result_eutra {
-  pci_t                          eutra_pci;
-  cu_cp_meas_quant_results       meas_result;
-  optional<cu_cp_cgi_info_eutra> cgi_info;
-};
-
 struct cu_cp_meas_result_neigh_cells {
   // choice
-  std::vector<cu_cp_meas_result_nr>    meas_result_list_nr;
-  std::vector<cu_cp_meas_result_eutra> meas_result_list_eutra;
+  std::vector<cu_cp_meas_result_nr> meas_result_list_nr;
 };
 
 struct cu_cp_meas_results {

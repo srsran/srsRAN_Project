@@ -847,105 +847,6 @@ inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const cu_cp_repor
   return asn1_report_cfg_nr;
 }
 
-inline asn1::rrc_nr::event_trigger_cfg_inter_rat_s
-event_triggered_cfg_inter_rat_to_rrc_asn1(const cu_cp_event_trigger_cfg_inter_rat& event_trigger_cfg_inter_rat)
-{
-  asn1::rrc_nr::event_trigger_cfg_inter_rat_s asn1_event_trigger_cfg_inter_rat;
-
-  // event id
-  if (event_trigger_cfg_inter_rat.event_id.event_b1.has_value()) {
-    auto& asn1_event_b1 = asn1_event_trigger_cfg_inter_rat.event_id.set_event_b1();
-    // b1 thres eutra
-    meas_trigger_quant_to_rrc_asn1(asn1_event_b1.b1_thres_eutra,
-                                   event_trigger_cfg_inter_rat.event_id.event_b1.value().b1_thres_eutra);
-    // report on leave
-    asn1_event_b1.report_on_leave = event_trigger_cfg_inter_rat.event_id.event_b1.value().report_on_leave;
-    // hyteresis
-    asn1_event_b1.hysteresis = event_trigger_cfg_inter_rat.event_id.event_b1.value().hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_b1.time_to_trigger,
-                         event_trigger_cfg_inter_rat.event_id.event_b1.value().time_to_trigger);
-  } else if (event_trigger_cfg_inter_rat.event_id.event_b2.has_value()) {
-    auto& asn1_event_b2 = asn1_event_trigger_cfg_inter_rat.event_id.set_event_b2();
-    // b2 thres 1
-    meas_trigger_quant_to_rrc_asn1(asn1_event_b2.b2_thres1,
-                                   event_trigger_cfg_inter_rat.event_id.event_b2.value().b2_thres1);
-    // b2 thres 2 eutra
-    meas_trigger_quant_to_rrc_asn1(asn1_event_b2.b2_thres2_eutra,
-                                   event_trigger_cfg_inter_rat.event_id.event_b2.value().b2_thres2_eutra);
-    // report on leave
-    asn1_event_b2.report_on_leave = event_trigger_cfg_inter_rat.event_id.event_b2.value().report_on_leave;
-    // hyteresis
-    asn1_event_b2.hysteresis = event_trigger_cfg_inter_rat.event_id.event_b2.value().hysteresis;
-    // time to trigger
-    asn1::number_to_enum(asn1_event_b2.time_to_trigger,
-                         event_trigger_cfg_inter_rat.event_id.event_b2.value().time_to_trigger);
-  } else {
-    // error
-    srslog::fetch_basic_logger("RRC").error("Invalid event id.");
-  }
-
-  // rs type
-  asn1::string_to_enum(asn1_event_trigger_cfg_inter_rat.rs_type, event_trigger_cfg_inter_rat.rs_type);
-
-  // report interv
-  asn1::number_to_enum(asn1_event_trigger_cfg_inter_rat.report_interv, event_trigger_cfg_inter_rat.report_interv);
-
-  // report amount
-  asn1::number_to_enum(asn1_event_trigger_cfg_inter_rat.report_amount, event_trigger_cfg_inter_rat.report_amount);
-
-  // report quant
-  asn1_event_trigger_cfg_inter_rat.report_quant =
-      meas_report_quant_to_rrc_asn1(event_trigger_cfg_inter_rat.report_quant);
-
-  // max report cells
-  asn1_event_trigger_cfg_inter_rat.max_report_cells = event_trigger_cfg_inter_rat.max_report_cells;
-
-  return asn1_event_trigger_cfg_inter_rat;
-}
-
-inline asn1::rrc_nr::report_cfg_inter_rat_s
-report_cfg_inter_rat_to_rrc_asn1(const cu_cp_report_cfg_inter_rat& report_cfg_inter_rat)
-{
-  asn1::rrc_nr::report_cfg_inter_rat_s asn1_report_cfg_inter_rat;
-
-  if (report_cfg_inter_rat.periodical.has_value()) {
-    // periodical
-    auto& asn1_periodical = asn1_report_cfg_inter_rat.report_type.set_periodical();
-
-    // report interv
-    asn1::number_to_enum(asn1_periodical.report_interv, report_cfg_inter_rat.periodical.value().report_interv);
-    // report amount
-    asn1::number_to_enum(asn1_periodical.report_amount, report_cfg_inter_rat.periodical.value().report_amount);
-    // report quant
-    asn1_periodical.report_quant = meas_report_quant_to_rrc_asn1(report_cfg_inter_rat.periodical.value().report_quant);
-    // max report cells
-    asn1_periodical.max_report_cells = report_cfg_inter_rat.periodical.value().max_report_cells;
-
-  } else if (report_cfg_inter_rat.event_triggered.has_value()) {
-    // event triggered
-    asn1_report_cfg_inter_rat.report_type.set_event_triggered() =
-        event_triggered_cfg_inter_rat_to_rrc_asn1(report_cfg_inter_rat.event_triggered.value());
-  } else if (report_cfg_inter_rat.report_cgi.has_value()) {
-    // report cgi
-    asn1_report_cfg_inter_rat.report_type.set_report_cgi();
-    asn1_report_cfg_inter_rat.report_type.report_cgi().cell_for_which_to_report_cgi =
-        report_cfg_inter_rat.report_cgi.value().cell_for_which_to_report_cgi;
-  } else if (report_cfg_inter_rat.report_sftd.has_value()) {
-    // report sftd
-    asn1_report_cfg_inter_rat.report_type.set_report_sftd();
-    asn1_report_cfg_inter_rat.report_type.report_sftd().report_sftd_meas =
-        report_cfg_inter_rat.report_sftd.value().report_sftd_meas;
-    asn1_report_cfg_inter_rat.report_type.report_sftd().report_rsrp =
-        report_cfg_inter_rat.report_sftd.value().report_rsrp;
-  } else {
-    // error
-    srslog::fetch_basic_logger("RRC").error("Invalid report cfg nr.");
-  }
-
-  return asn1_report_cfg_inter_rat;
-}
-
 inline asn1::rrc_nr::report_cfg_to_add_mod_s
 report_cfg_to_add_mod_to_rrc_asn1(const cu_cp_report_cfg_to_add_mod& report_cfg_to_add_mod)
 {
@@ -958,9 +859,6 @@ report_cfg_to_add_mod_to_rrc_asn1(const cu_cp_report_cfg_to_add_mod& report_cfg_
   if (report_cfg_to_add_mod.report_cfg.report_cfg_nr.has_value()) {
     asn1_report_cfg_to_add_mod.report_cfg.set_report_cfg_nr() =
         report_cfg_nr_to_rrc_asn1(report_cfg_to_add_mod.report_cfg.report_cfg_nr.value());
-  } else if (report_cfg_to_add_mod.report_cfg.report_cfg_inter_rat.has_value()) {
-    asn1_report_cfg_to_add_mod.report_cfg.set_report_cfg_inter_rat() =
-        report_cfg_inter_rat_to_rrc_asn1(report_cfg_to_add_mod.report_cfg.report_cfg_inter_rat.value());
   } else {
     // error
     srslog::fetch_basic_logger("RRC").error("Invalid report cfg.");
