@@ -134,6 +134,7 @@ struct guami_t {
 struct cu_cp_qos_config {
   pdcp_config pdcp;
 };
+
 // ASN1 types converted to common types
 
 struct cu_cp_tai {

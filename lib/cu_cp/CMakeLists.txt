@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(cell_meas_manager)
 add_subdirectory(up_resource_manager)
 
 set(SOURCES
