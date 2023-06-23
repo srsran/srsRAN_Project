@@ -168,7 +168,7 @@ struct e1ap_pdu_session_res_to_setup_item {
   std::string                                                pdu_session_type;
   s_nssai_t                                                  snssai;
   up_transport_layer_info                                    ng_ul_up_tnl_info;
-  e1ap_security_ind                                          security_ind;
+  security_indication                                        security_ind;
   slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;

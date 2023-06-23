@@ -398,8 +398,8 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
     e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
 
-    e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
-    e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
+    e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind;
+
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
     fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
                            pdu_session_cfg.qos_flow_setup_request_items,

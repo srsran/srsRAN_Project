@@ -225,14 +225,6 @@ struct qos_flow_setup_request_item {
   optional<uint8_t>               erab_id;
 };
 
-enum class integrity_protection_indication_t { required, prefered, not_needed };
-enum class confidentiality_protection_indication_t { required, prefered, not_needed };
-
-struct security_indication {
-  integrity_protection_indication_t       integrity_protection_ind;
-  confidentiality_protection_indication_t confidentiality_protection_ind;
-};
-
 struct cu_cp_pdu_session_res_setup_item {
   pdu_session_id_t                                              pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                                                   pdu_session_nas_pdu;

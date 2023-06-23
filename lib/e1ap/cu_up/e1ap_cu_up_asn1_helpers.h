@@ -126,15 +126,18 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
           asn1_to_up_transport_layer_info(asn1_pdu_session_res_item.ng_ul_up_tnl_info);
 
       // security indication
+      pdu_session_res_item.security_ind.integrity_protection_ind = static_cast<integrity_protection_indication_t>(
+          asn1_pdu_session_res_item.security_ind.integrity_protection_ind.value);
       pdu_session_res_item.security_ind.confidentiality_protection_ind =
-          asn1_pdu_session_res_item.security_ind.confidentiality_protection_ind.to_string();
-      pdu_session_res_item.security_ind.integrity_protection_ind =
-          asn1_pdu_session_res_item.security_ind.integrity_protection_ind.to_string();
+          static_cast<confidentiality_protection_indication_t>(
+              asn1_pdu_session_res_item.security_ind.confidentiality_protection_ind.value);
 
+      /*
       if (asn1_pdu_session_res_item.security_ind.max_ip_datarate_present) {
         pdu_session_res_item.security_ind.maximum_ipdatarate =
             asn1_pdu_session_res_item.security_ind.max_ip_datarate.max_ip_rate.to_string();
       }
+      */
 
       // drb to setup list ng ran
       for (const auto& asn1_drb_to_setup_item : asn1_pdu_session_res_item.drb_to_setup_list_ng_ran) {
@@ -359,13 +362,17 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
         // security ind
         pdu_session_res_to_setup_mod_item.security_ind.integrity_protection_ind =
-            asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.to_string();
+            static_cast<integrity_protection_indication_t>(
+                asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.value);
+
         pdu_session_res_to_setup_mod_item.security_ind.confidentiality_protection_ind =
-            asn1_res_to_setup_mod_item.security_ind.confidentiality_protection_ind.to_string();
-        if (asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present) {
-          pdu_session_res_to_setup_mod_item.security_ind.maximum_ipdatarate =
-              asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate.to_string();
-        }
+            static_cast<confidentiality_protection_indication_t>(
+                asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.value);
+        /*
+if (asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present) {
+  pdu_session_res_to_setup_mod_item.security_ind.maximum_ipdatarate =
+      asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate.to_string();
+}*/
 
         // pdu session res ambr
         if (asn1_res_to_setup_mod_item.pdu_session_res_ambr_present) {
