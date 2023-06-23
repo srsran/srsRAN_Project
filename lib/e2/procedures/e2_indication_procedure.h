@@ -18,7 +18,6 @@
 #include "srsran/e2/subscription/e2_subscription.h"
 
 using namespace asn1::e2sm_kpm;
-class e2_event_manager;
 
 namespace srsran {
 

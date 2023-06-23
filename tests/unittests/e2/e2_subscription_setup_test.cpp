@@ -11,7 +11,10 @@
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "srsran/asn1/asn1_utils.h"
+#include "srsran/e2/e2_event_manager.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/async/coroutine.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -63,4 +66,42 @@ TEST_F(e2_test_subscriber, when_e2_subscription_request_received_start_indicatio
   }
 
   ASSERT_EQ(msg1.pdu.init_msg().value.type(), e2_ap_elem_procs_o::init_msg_c::types_opts::ri_cind);
+}
+
+TEST_F(e2_test_subscriber, start_infication_procedure_check_contents)
+{
+  using namespace asn1::e2ap;
+  // subscription info
+  e2_subscription_info_t sub_info        = {};
+  sub_info.report_period                 = 1000;
+  sub_info.request_id.ric_instance_id    = 1;
+  sub_info.request_id.ric_requestor_id   = 2;
+  ric_action_t                    action = {};
+  asn1::unbounded_octstring<true> action_def;
+  action_def.from_number(01020304);
+  sub_info.action_list.push_back({action_def.deep_copy(), 1, asn1::e2ap::ri_caction_type_e::report});
+  std::unique_ptr<e2_event_manager> ev_mng = std::make_unique<e2_event_manager>(factory);
+  auto task = launch_async<e2_indication_procedure>(*msg_notifier, *e2sm_iface, *ev_mng, sub_info, test_logger);
+
+  ASSERT_FALSE(task.ready());
+  for (int i = 0; i < 1500; i++) {
+    this->tick();
+  }
+
+  asn1::cbit_ref bref1(msg_notifier->last_e2_msg.pdu.init_msg().value.ri_cind()->ri_cind_msg.value);
+  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ind_msg1 = {};
+  if (ind_msg1.unpack(bref1) != asn1::SRSASN_SUCCESS) {
+    printf("Couldn't unpack E2 PDU");
+  }
+  ASSERT_EQ(ind_msg1.ind_msg_formats.type(),
+            asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s::ind_msg_formats_c_::types_opts::ind_msg_format2);
+  printf("granul period %d\n", (int)ind_msg1.ind_msg_formats.ind_msg_format2().granul_period);
+  ASSERT_EQ(ind_msg1.ind_msg_formats.ind_msg_format2().granul_period, 10);
+  for (auto& meas_item : ind_msg1.ind_msg_formats.ind_msg_format2().meas_cond_ueid_list) {
+    for (auto match_cond_it : meas_item.matching_cond) {
+      ASSERT_EQ(srsran::e2sm_kpm_impl::supported_test_cond_type(
+                    match_cond_it.matching_cond_choice.test_cond_info().test_type),
+                true);
+    }
+  }
 }

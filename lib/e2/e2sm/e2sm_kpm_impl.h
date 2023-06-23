@@ -28,6 +28,19 @@ public:
 
   srsran::byte_buffer get_indication_header(uint32_t action_id) override;
 
+  static bool supported_test_cond_type(asn1::e2sm_kpm::test_cond_type_c test_cond_type)
+  {
+    if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::cqi) {
+      return true;
+    } else if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::rsrp) {
+      return true;
+    } else if (test_cond_type.type() == asn1::e2sm_kpm::test_cond_type_c::types_opts::rsrq) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 private:
   void process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def);
 
