@@ -1336,4 +1336,40 @@ asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& as
   return activity_notification_level;
 }
 
+/// \brief Converts type \c security_indication to an ASN.1 type.
+/// \param asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param security_indication Security Indication IE contents.
+inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, const security_indication& security_ind)
+{
+  switch (security_ind.integrity_protection_ind) {
+    case integrity_protection_indication_t::not_needed:
+    case integrity_protection_indication_t::prefered:
+    case integrity_protection_indication_t::required:
+      asn1obj.integrity_protection_ind.value =
+          static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(security_ind.integrity_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to E1AP type");
+  }
+
+  switch (security_ind.confidentiality_protection_ind) {
+    case confidentiality_protection_indication_t::not_needed:
+    case confidentiality_protection_indication_t::prefered:
+    case confidentiality_protection_indication_t::required:
+      asn1obj.confidentiality_protection_ind.value =
+          static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(security_ind.integrity_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to E1AP type");
+  }
+
+  /*
+  if (res_to_setup_mod_item.security_ind.maximum_ipdatarate.has_value()) {
+    asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present = true;
+    asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate,
+          res_to_setup_mod_item.security_ind.maximum_ipdatarate.value());
+  }
+  */
+}
+
 } // namespace srsran

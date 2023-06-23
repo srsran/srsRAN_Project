@@ -589,20 +589,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
                                         res_to_setup_mod_item.ng_ul_up_tnl_info);
 
         // security indication
-
-        asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.value =
-            static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(
-                res_to_setup_mod_item.security_ind.integrity_protection_ind);
-        asn1_res_to_setup_mod_item.security_ind.confidentiality_protection_ind.value =
-            static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(
-                res_to_setup_mod_item.security_ind.confidentiality_protection_ind);
-        /*
-if (res_to_setup_mod_item.security_ind.maximum_ipdatarate.has_value()) {
-asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present = true;
-asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate,
-          res_to_setup_mod_item.security_ind.maximum_ipdatarate.value());
-}
-*/
+        security_indication_to_asn1(asn1_res_to_setup_mod_item.security_ind, res_to_setup_mod_item.security_ind);
 
         for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_list_ng_ran) {
           asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;
