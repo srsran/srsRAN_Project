@@ -440,7 +440,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
-      report_error("Invalid configuration DU cell detected: {}\n", error.error());
+      report_error("Invalid configuration DU cell detected.\n> {}\n", error.error());
     }
     ++cell_id;
   }

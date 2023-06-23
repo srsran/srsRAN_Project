@@ -56,19 +56,17 @@ static carrier_configuration make_default_carrier_configuration(const cell_confi
 static_vector<uint8_t, 8> srsran::config_helpers::generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg)
 {
   // TODO: Fetch cyclic prefix from other configuration.
-  static const bool cp_extended   = false;
-  const unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  static const cyclic_prefix cp = cyclic_prefix::NORMAL;
   // Note: Tested UEs do not support k1 < 4.
   static const std::vector<uint8_t> valid_k1_values = {4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   static_vector<uint8_t, 8>         result;
   for (unsigned idx = 0; idx < nof_slots_per_tdd_period(tdd_cfg); ++idx) {
     // For every slot containing DL symbols check for corresponding k1 value.
     // TODO: Consider partial DL slots when scheduler supports it.
-    if (srsran::get_active_tdd_dl_symbols(tdd_cfg, idx, cp_extended).length() == symbols_per_slot) {
+    if (all_tdd_dl_symbols_are_active(tdd_cfg, idx, cp)) {
       for (const auto k1 : valid_k1_values) {
         // TODO: Consider partial UL slots when scheduler supports it.
-        if (not result.full() and
-            srsran::get_active_tdd_ul_symbols(tdd_cfg, idx + k1, cp_extended).length() == symbols_per_slot) {
+        if (not result.full() and all_tdd_ul_symbols_are_active(tdd_cfg, idx + k1, cp)) {
           if (std::find(result.begin(), result.end(), k1) == result.end()) {
             result.emplace_back(k1);
             break;
@@ -193,9 +191,9 @@ search_space_configuration srsran::config_helpers::make_default_ue_search_space_
 bwp_configuration srsran::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
 {
   bwp_configuration cfg{};
-  cfg.scs         = params.scs_common;
-  cfg.crbs        = {0, cell_nof_crbs(params)};
-  cfg.cp_extended = false;
+  cfg.scs  = params.scs_common;
+  cfg.crbs = {0, cell_nof_crbs(params)};
+  cfg.cp   = cyclic_prefix::NORMAL;
   return cfg;
 }
 

@@ -121,8 +121,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                                                      pdu.freq_density,
                                                                      (is_nzp_csi) ? pdu.scrambling_id : 0);
 
-    csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs,
-                                   pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+    csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs, pdu.bwp_cfg->cp);
     if (is_nzp_csi) {
       csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset_profile_nr,
                                                to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss_profile_nr));

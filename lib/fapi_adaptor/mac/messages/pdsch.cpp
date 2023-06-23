@@ -237,10 +237,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -296,10 +294,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -355,10 +351,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -406,10 +400,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 

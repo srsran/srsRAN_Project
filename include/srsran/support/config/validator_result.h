@@ -1,0 +1,21 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/adt/expected.h"
+
+namespace srsran {
+
+/// This type represents the result of a validator function. In case of failure, it contains a string describing the
+/// error.
+using validator_result = error_type<std::string>;
+
+} // namespace srsran

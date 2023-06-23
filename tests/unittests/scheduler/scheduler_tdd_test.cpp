@@ -61,7 +61,7 @@ protected:
       // RACH config
       optional<uint8_t> chosen_prach_cfg_idx =
           prach_helper::find_valid_prach_config_index(sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
-                                                      sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended,
+                                                      sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp,
                                                       *sched_cfg.tdd_ul_dl_cfg_common);
       sched_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index = *chosen_prach_cfg_idx;
 

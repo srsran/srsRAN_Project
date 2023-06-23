@@ -78,7 +78,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
     out.freq_info_dl.scs_specific_carrier_list[i].carrier_bw = cfg.freq_info_dl.scs_carrier_list[i].carrier_bandwidth;
   }
   // generic params
-  out.init_dl_bwp.generic_params.cp_present               = cfg.init_dl_bwp.generic_params.cp_extended;
+  out.init_dl_bwp.generic_params.cp_present = cfg.init_dl_bwp.generic_params.cp == cyclic_prefix::EXTENDED;
   out.init_dl_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_dl_bwp.generic_params.scs);
   // See TS 38.331, BWP.locationAndBandwidth and TS 38.213 clause 12.
   out.init_dl_bwp.generic_params.location_and_bw =
