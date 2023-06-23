@@ -169,34 +169,6 @@ struct cu_cp_meas_obj_nr {
   optional<uint16_t> meas_cycle_scell;
 };
 
-struct cu_cp_eutra_cell {
-  uint8_t cell_idx_eutra;
-  pci_t   pci;
-  int8_t  cell_individual_offset;
-};
-
-struct cu_cp_eutra_pci_range {
-  uint16_t           start;
-  optional<uint16_t> range;
-};
-
-struct cu_cp_eutra_excluded_cell {
-  uint8_t               cell_idx_eutra;
-  cu_cp_eutra_pci_range pci_range;
-};
-
-struct cu_cp_meas_obj_eutra {
-  uint32_t                               carrier_freq;
-  uint8_t                                allowed_meas_bw;
-  std::vector<uint8_t>                   cells_to_rem_list_eutran; // max size = 32
-  std::vector<cu_cp_eutra_cell>          cells_to_add_mod_list_eutran;
-  std::vector<uint8_t>                   excluded_cells_to_rem_list_eutran; // max size = 32
-  std::vector<cu_cp_eutra_excluded_cell> excluded_cells_to_add_mod_list_eutran;
-  bool                                   eutra_presence_ant_port1;
-  optional<int8_t>                       eutra_q_offset_range;
-  bool                                   wideband_rsrq_meas;
-};
-
 struct cu_cp_n2 {
   uint8_t comb_offset_n2;
   uint8_t cyclic_shift_n2;
@@ -286,9 +258,8 @@ struct cu_cp_srs_res {
 };
 
 struct cu_cp_meas_obj_to_add_mod {
-  uint8_t                        meas_obj_id;
-  optional<cu_cp_meas_obj_nr>    meas_obj_nr;
-  optional<cu_cp_meas_obj_eutra> meas_obj_eutra;
+  uint8_t                     meas_obj_id;
+  optional<cu_cp_meas_obj_nr> meas_obj_nr;
 };
 
 struct cu_cp_meas_report_quant {

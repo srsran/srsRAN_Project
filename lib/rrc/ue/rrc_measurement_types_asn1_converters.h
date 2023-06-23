@@ -456,74 +456,6 @@ inline asn1::rrc_nr::meas_obj_nr_s meas_obj_nr_to_rrc_asn1(const cu_cp_meas_obj_
   return asn1_meas_obj_nr;
 }
 
-inline asn1::rrc_nr::meas_obj_eutra_s meas_obj_eutra_to_rrc_asn1(const cu_cp_meas_obj_eutra& meas_obj_eutra)
-{
-  asn1::rrc_nr::meas_obj_eutra_s asn1_meas_obj_eutra;
-
-  // carrier freq
-  asn1_meas_obj_eutra.carrier_freq = meas_obj_eutra.carrier_freq;
-
-  // allowed meas bw
-  asn1::number_to_enum(asn1_meas_obj_eutra.allowed_meas_bw, meas_obj_eutra.allowed_meas_bw);
-
-  // cells to rem list eutran
-  srsran_assert(meas_obj_eutra.cells_to_rem_list_eutran.size() <= 32,
-                "Too many eutran cells to remove ({}>{}).",
-                meas_obj_eutra.cells_to_rem_list_eutran.size(),
-                32);
-  for (const auto& cell : meas_obj_eutra.cells_to_rem_list_eutran) {
-    asn1_meas_obj_eutra.cells_to_rem_list_eutran.push_back(cell);
-  }
-
-  // cells to add mod list eutran
-  for (const auto& cell : meas_obj_eutra.cells_to_add_mod_list_eutran) {
-    asn1::rrc_nr::eutra_cell_s asn1_cell;
-
-    asn1_cell.cell_idx_eutra = cell.cell_idx_eutra;
-    asn1_cell.pci            = cell.pci;
-    asn1::number_to_enum(asn1_cell.cell_individual_offset, cell.cell_individual_offset);
-
-    asn1_meas_obj_eutra.cells_to_add_mod_list_eutran.push_back(asn1_cell);
-  }
-
-  // excluded cells to rem list eutran
-  srsran_assert(meas_obj_eutra.excluded_cells_to_rem_list_eutran.size() <= 32,
-                "Too many excluded eutran cells to remove ({}>{}).",
-                meas_obj_eutra.excluded_cells_to_rem_list_eutran.size(),
-                32);
-  for (const auto& excluded_cell : meas_obj_eutra.excluded_cells_to_rem_list_eutran) {
-    asn1_meas_obj_eutra.excluded_cells_to_rem_list_eutran.push_back(excluded_cell);
-  }
-
-  // excluded cells to add mod list eutran
-  for (const auto& excluded_cell : meas_obj_eutra.excluded_cells_to_add_mod_list_eutran) {
-    asn1::rrc_nr::eutra_excluded_cell_s asn1_excluded_cell;
-
-    asn1_excluded_cell.cell_idx_eutra  = excluded_cell.cell_idx_eutra;
-    asn1_excluded_cell.pci_range.start = excluded_cell.pci_range.start;
-    if (excluded_cell.pci_range.range.has_value()) {
-      asn1_excluded_cell.pci_range.range_present = true;
-      asn1::number_to_enum(asn1_excluded_cell.pci_range.range, excluded_cell.pci_range.range.value());
-    }
-
-    asn1_meas_obj_eutra.excluded_cells_to_add_mod_list_eutran.push_back(asn1_excluded_cell);
-  }
-
-  // eutra presence ant port1
-  asn1_meas_obj_eutra.eutra_presence_ant_port1 = meas_obj_eutra.eutra_presence_ant_port1;
-
-  // eutra q offset range
-  if (meas_obj_eutra.eutra_q_offset_range.has_value()) {
-    asn1_meas_obj_eutra.eutra_q_offset_range_present = true;
-    asn1::number_to_enum(asn1_meas_obj_eutra.eutra_q_offset_range, meas_obj_eutra.eutra_q_offset_range.value());
-  }
-
-  // wideband rsrq meas
-  asn1_meas_obj_eutra.wideband_rsrq_meas = meas_obj_eutra.wideband_rsrq_meas;
-
-  return asn1_meas_obj_eutra;
-}
-
 template <class asn1_srs_periodicity_and_offset>
 void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&        asn1_srs_period_and_offset,
                                             const cu_cp_srs_periodicity_and_offset& srs_period_and_offset)
@@ -695,14 +627,6 @@ meas_obj_to_add_mod_to_rrc_asn1(const cu_cp_meas_obj_to_add_mod& meas_obj_to_add
     // meas obj nr
     asn1_meas_obj_to_add_mod.meas_obj.set_meas_obj_nr();
     asn1_meas_obj_to_add_mod.meas_obj.meas_obj_nr() = meas_obj_nr_to_rrc_asn1(meas_obj_to_add_mod.meas_obj_nr.value());
-  } else if (meas_obj_to_add_mod.meas_obj_eutra.has_value()) {
-    // meas obj eutra
-    asn1_meas_obj_to_add_mod.meas_obj.set_meas_obj_eutra();
-    asn1_meas_obj_to_add_mod.meas_obj.meas_obj_eutra() =
-        meas_obj_eutra_to_rrc_asn1(meas_obj_to_add_mod.meas_obj_eutra.value());
-  } else {
-    // error
-    srslog::fetch_basic_logger("RRC").error("Invalid meas obj.");
   }
 
   return asn1_meas_obj_to_add_mod;
@@ -1219,9 +1143,8 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const cu_cp_meas_cfg& me
   return asn1_meas_cfg;
 }
 
-template <class asn1_meas_quant_results_nr_eutra>
 inline cu_cp_meas_quant_results
-asn1_to_meas_quant_results(const asn1_meas_quant_results_nr_eutra& asn1_meas_quant_results)
+asn1_to_meas_quant_results(const asn1::rrc_nr::meas_quant_results_s& asn1_meas_quant_results)
 {
   cu_cp_meas_quant_results meas_quant_results;
 
@@ -1295,162 +1218,6 @@ inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_resu
   return meas_result_nr;
 };
 
-inline uint16_t asn1_to_mcc(const asn1::rrc_nr::mcc_l& asn1_mcc)
-{
-  uint16_t mcc = 0xf000;
-  mcc |= (((uint16_t)asn1_mcc.at(0)) << 8u);
-  mcc |= (((uint16_t)asn1_mcc.at(1)) << 4u);
-  mcc |= (uint16_t)asn1_mcc.at(2);
-
-  return mcc;
-};
-
-inline uint16_t asn1_to_mnc(const asn1::rrc_nr::mnc_l& asn1_mnc)
-{
-  uint16_t mnc = 0;
-
-  if (asn1_mnc.size() == 3) {
-    mnc = 0xf000;
-    mnc |= ((uint16_t)asn1_mnc[0]) << 8u;
-    mnc |= ((uint16_t)asn1_mnc[1]) << 4u;
-    mnc |= ((uint16_t)asn1_mnc[2]) << 0u;
-  } else if (asn1_mnc.size() == 2) {
-    mnc = 0xff00;
-    mnc |= ((uint16_t)asn1_mnc[0]) << 4u;
-    mnc |= ((uint16_t)asn1_mnc[1]) << 0u;
-  }
-
-  return mnc;
-};
-
-inline cu_cp_plmn_id asn1_to_plmn(const asn1::rrc_nr::plmn_id_s& asn1_plmn_id)
-{
-  cu_cp_plmn_id plmn_id;
-
-  if (asn1_plmn_id.mcc_present) {
-    plmn_id.mcc = asn1_to_mcc(asn1_plmn_id.mcc);
-  }
-
-  plmn_id.mnc = asn1_to_mnc(asn1_plmn_id.mnc);
-
-  return plmn_id;
-};
-
-inline cu_cp_cell_access_related_info_eutra_epc asn1_to_cell_access_related_info_eutra_epc(
-    const asn1::rrc_nr::cell_access_related_info_eutra_epc_s& asn1_cell_access_related_info_eutra_epc)
-{
-  cu_cp_cell_access_related_info_eutra_epc cell_access_related_info_eutra_epc;
-
-  // plmn id list eutra epc
-  for (const auto& asn1_plmn_id : asn1_cell_access_related_info_eutra_epc.plmn_id_list_eutra_epc) {
-    cell_access_related_info_eutra_epc.plmn_id_list_eutra_epc.push_back(asn1_to_plmn(asn1_plmn_id));
-  }
-
-  // tac eutra epc
-  cell_access_related_info_eutra_epc.tac_eutra_epc = asn1_cell_access_related_info_eutra_epc.tac_eutra_epc.to_number();
-
-  // cell id eutra epc
-  cell_access_related_info_eutra_epc.cell_id_eutra_epc =
-      asn1_cell_access_related_info_eutra_epc.cell_id_eutra_epc.to_number();
-
-  return cell_access_related_info_eutra_epc;
-};
-
-inline cu_cp_cgi_info_eutra asn1_to_cgi_info_eutra(const asn1::rrc_nr::cgi_info_eutra_s& asn1_cgi_info_eutra)
-{
-  cu_cp_cgi_info_eutra cgi_info_eutra;
-
-  // freq band ind prio present
-  cgi_info_eutra.freq_band_ind_prio_present = asn1_cgi_info_eutra.freq_band_ind_prio_present;
-
-  // cgi info epc
-  if (asn1_cgi_info_eutra.cgi_info_epc_present) {
-    cu_cp_cgi_info_eutra::cgi_info_epc_ cgi_info_epc;
-
-    // cgi info epc legacy
-    cgi_info_epc.cgi_info_epc_legacy =
-        asn1_to_cell_access_related_info_eutra_epc(asn1_cgi_info_eutra.cgi_info_epc.cgi_info_epc_legacy);
-
-    // cgi info epc list
-    for (const auto& asn1_cgi_info_epc : asn1_cgi_info_eutra.cgi_info_epc.cgi_info_epc_list) {
-      cgi_info_epc.cgi_info_epc_list.push_back(asn1_to_cell_access_related_info_eutra_epc(asn1_cgi_info_epc));
-    }
-
-    cgi_info_eutra.cgi_info_epc = cgi_info_epc;
-  }
-
-  // cgi info 5 gc
-  for (const auto& asn1_cgi_info_5_gc : asn1_cgi_info_eutra.cgi_info_5_gc) {
-    cu_cp_cell_access_related_info_eutra_5_gc cgi_info_5_gc;
-
-    // plmn id list eutra 5gc
-    for (const auto& asn1_plmn_id_eutra_5gc : asn1_cgi_info_5_gc.plmn_id_list_eutra_5gc) {
-      cu_cp_plmn_id_eutra_5_gc plmn_id_eutra_5gc;
-
-      if (asn1_plmn_id_eutra_5gc.type() ==
-          asn1::rrc_nr::plmn_id_eutra_5_gc_c::types_opts::options::plmn_id_eutra_5_gc) {
-        plmn_id_eutra_5gc.plmn_id_eutra_5_gc = asn1_to_plmn(asn1_plmn_id_eutra_5gc.plmn_id_eutra_5_gc());
-      } else if (asn1_plmn_id_eutra_5gc.type() == asn1::rrc_nr::plmn_id_eutra_5_gc_c::types_opts::options::plmn_idx) {
-        plmn_id_eutra_5gc.plmn_idx = asn1_plmn_id_eutra_5gc.plmn_idx();
-      } else {
-        // error
-        srslog::fetch_basic_logger("RRC").error("Invalid plmn id eutra 5gc type.");
-      }
-
-      cgi_info_5_gc.plmn_id_list_eutra_5gc.push_back(plmn_id_eutra_5gc);
-    }
-
-    // tac eutra 5gc
-    cgi_info_5_gc.tac_eutra_5gc = asn1_cgi_info_5_gc.tac_eutra_5gc.to_number();
-
-    // ranac 5gc
-    if (asn1_cgi_info_5_gc.ranac_5gc_present) {
-      cgi_info_5_gc.ranac_5gc = asn1_cgi_info_5_gc.ranac_5gc;
-    }
-
-    // cell id eutra 5gc
-    if (asn1_cgi_info_5_gc.cell_id_eutra_5gc.type() ==
-        asn1::rrc_nr::cell_id_eutra_5_gc_c::types_opts::options::cell_id_eutra) {
-      cgi_info_5_gc.cell_id_eutra_5gc.cell_id_eutra = asn1_cgi_info_5_gc.cell_id_eutra_5gc.cell_id_eutra().to_number();
-    } else if (asn1_cgi_info_5_gc.cell_id_eutra_5gc.type() ==
-               asn1::rrc_nr::cell_id_eutra_5_gc_c::types_opts::options::cell_id_idx) {
-      cgi_info_5_gc.cell_id_eutra_5gc.cell_id_idx = asn1_cgi_info_5_gc.cell_id_eutra_5gc.cell_id_idx();
-    } else {
-      // error
-      srslog::fetch_basic_logger("RRC").error("Invalid cell id eutra 5gc type.");
-    }
-
-    cgi_info_eutra.cgi_info_5_gc.push_back(cgi_info_5_gc);
-  }
-
-  // freq band ind
-  cgi_info_eutra.freq_band_ind = asn1_cgi_info_eutra.freq_band_ind;
-
-  // multi band info list
-  for (const auto& asn1_multi_band_info : asn1_cgi_info_eutra.multi_band_info_list) {
-    cgi_info_eutra.multi_band_info_list.push_back(asn1_multi_band_info);
-  }
-
-  return cgi_info_eutra;
-};
-
-inline cu_cp_meas_result_eutra
-asn1_to_meas_result_eutra(const asn1::rrc_nr::meas_result_eutra_s& asn1_meas_result_eutra)
-{
-  cu_cp_meas_result_eutra meas_result_eutra;
-
-  // pci
-  meas_result_eutra.eutra_pci = asn1_meas_result_eutra.eutra_pci;
-  // meas result
-  meas_result_eutra.meas_result = asn1_to_meas_quant_results(asn1_meas_result_eutra.meas_result);
-  // cgi info
-  if (asn1_meas_result_eutra.cgi_info_present) {
-    meas_result_eutra.cgi_info = asn1_to_cgi_info_eutra(asn1_meas_result_eutra.cgi_info);
-  }
-
-  return meas_result_eutra;
-};
-
 inline cu_cp_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results)
 {
   cu_cp_meas_results meas_results;
@@ -1486,15 +1253,10 @@ inline cu_cp_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_r
       for (const auto& asn1_meas_result_nr : asn1_meas_results.meas_result_neigh_cells.meas_result_list_nr()) {
         meas_result_neigh_cell.meas_result_list_nr.push_back(asn1_to_meas_result_nr(asn1_meas_result_nr));
       }
-    } else if (asn1_meas_results.meas_result_neigh_cells.type() ==
-               asn1::rrc_nr::meas_results_s::meas_result_neigh_cells_c_::types_opts::options::meas_result_list_eutra) {
-      // meas result list eutra
-      for (const auto& asn1_meas_result_eutra : asn1_meas_results.meas_result_neigh_cells.meas_result_list_eutra()) {
-        meas_result_neigh_cell.meas_result_list_eutra.push_back(asn1_to_meas_result_eutra(asn1_meas_result_eutra));
-      }
     } else {
       // error
-      srslog::fetch_basic_logger("RRC").error("Invalid meas result neigh cells.");
+      srslog::fetch_basic_logger("RRC").error("Invalid meas result neigh cells type = {}.",
+                                              asn1_meas_results.meas_result_neigh_cells.type());
     }
 
     meas_results.meas_result_neigh_cells = meas_result_neigh_cell;
