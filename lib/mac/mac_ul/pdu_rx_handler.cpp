@@ -276,7 +276,8 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
           return;
         }
 
-        // >> In case no positive BSR was provided, we force a SR in the scheduler to complete the RA procedure.
+        // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
+        // procedure.
         if (not contains_positive_bsr(ctx.decoded_subpdus)) {
           sched.handle_ul_sched_command(
               mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
