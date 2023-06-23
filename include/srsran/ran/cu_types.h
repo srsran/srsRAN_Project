@@ -149,8 +149,8 @@ struct security_result_t {
   std::string integrity_protection_result;
 };
 
-enum class integrity_protection_indication_t { required, prefered, not_needed };
-enum class confidentiality_protection_indication_t { required, prefered, not_needed };
+enum class integrity_protection_indication_t { required, preferred, not_needed };
+enum class confidentiality_protection_indication_t { required, preferred, not_needed };
 
 struct security_indication {
   integrity_protection_indication_t       integrity_protection_ind;
@@ -195,6 +195,73 @@ struct formatter<srsran::qos_flow_id_t> {
       default:
         return format_to(ctx.out(), "QFI={:#}", qos_flow_id_to_uint(qfi));
     }
+  }
+};
+
+template <>
+struct formatter<srsran::integrity_protection_indication_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::integrity_protection_indication_t& ind, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    switch (ind) {
+      case srsran::integrity_protection_indication_t::not_needed:
+        return format_to(ctx.out(), "not_needed");
+      case srsran::integrity_protection_indication_t::preferred:
+        return format_to(ctx.out(), "preferred");
+      case srsran::integrity_protection_indication_t::required:
+        return format_to(ctx.out(), "required");
+    }
+    return format_to(ctx.out(), "invalid");
+  }
+};
+
+template <>
+struct formatter<srsran::confidentiality_protection_indication_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::confidentiality_protection_indication_t& ind, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    switch (ind) {
+      case srsran::confidentiality_protection_indication_t::not_needed:
+        return format_to(ctx.out(), "not_needed");
+      case srsran::confidentiality_protection_indication_t::preferred:
+        return format_to(ctx.out(), "preferred");
+      case srsran::confidentiality_protection_indication_t::required:
+        return format_to(ctx.out(), "required");
+    }
+    return format_to(ctx.out(), "invalid");
+  }
+};
+
+template <>
+struct formatter<srsran::security_indication> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::security_indication& security_ind, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "integrity_ind={} confidentiality_ind={}",
+                     security_ind.integrity_protection_ind,
+                     security_ind.confidentiality_protection_ind);
   }
 };
 
