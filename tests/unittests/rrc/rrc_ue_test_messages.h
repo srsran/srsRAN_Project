@@ -37,5 +37,8 @@ byte_buffer generate_valid_rrc_reestablishment_request_pdu(pci_t pci, rnti_t c_r
 /// \brief Generate RRC Container with RRC Reestablishment Complete.
 byte_buffer generate_rrc_reestablishment_complete_pdu();
 
+/// \brief Generate RRC Container with Measurement Report
+byte_buffer generate_measurement_report_pdu();
+
 } // namespace srs_cu_cp
 } // namespace srsran

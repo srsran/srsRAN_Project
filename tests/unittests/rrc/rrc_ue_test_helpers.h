@@ -332,6 +332,78 @@ protected:
     rrc_ue_cu_cp_notifier.add_ue_context(reest_context);
   }
 
+  void check_meas_results(const cu_cp_meas_results& meas_results)
+  {
+    ASSERT_EQ(meas_results.meas_id, 1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->serv_cell_id, 0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.value(), 0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrp.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrp.value(),
+              113);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrq.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrq.value(),
+              65);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->sinr.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->sinr.value(),
+              92);
+
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.rs_idx_results.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.size(),
+              1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes[0]
+                  .ssb_idx,
+              0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes[0]
+                    .ssb_results.has_value());
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes[0]
+                    .ssb_results.value()
+                    .rsrp.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes[0]
+                  .ssb_results.value()
+                  .rsrp.value(),
+              113);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes.begin()
+                    ->ssb_results.value()
+                    .rsrq.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.begin()
+                  ->ssb_results.value()
+                  .rsrq.value(),
+              66);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes.begin()
+                    ->ssb_results.value()
+                    .sinr.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.begin()
+                  ->ssb_results.value()
+                  .sinr.value(),
+              92);
+  }
+
 private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
