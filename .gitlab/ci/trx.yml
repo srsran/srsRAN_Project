@@ -24,9 +24,7 @@ build trx driver:
   timeout: 30 min
   rules:
     - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      variables:
-        PUBLISH: "true"
+    - if: $CI_DESCRIPTION =~ /Nightly/
   script:
     - |
       download_amarisoft() {
