@@ -143,8 +143,8 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
 /// \param[in] asn1_session_item The pdu_session_res_setup_item_su_req_s or pdu_session_res_setup_item_cxt_req_s ASN1
 /// struct.
 template <typename template_asn1_item>
-inline void _fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
-                                                             const template_asn1_item&         asn1_session_item)
+inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
+                                                            const template_asn1_item&         asn1_session_item)
 {
   // pDUSessionID
   setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
@@ -252,7 +252,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    _fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
 
     // pDUSessionNAS-PDU
     if (!asn1_session_item.pdu_session_nas_pdu.empty()) {
@@ -371,7 +371,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    _fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
 
     // NAS-PDU
     if (!asn1_session_item.nas_pdu.empty()) {
