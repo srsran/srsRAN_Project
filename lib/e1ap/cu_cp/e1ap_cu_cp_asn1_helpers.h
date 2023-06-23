@@ -279,19 +279,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
                                     pdu_session_res_item.ng_ul_up_tnl_info);
 
     // security indication
-    asn1_pdu_session_res_item.security_ind.integrity_protection_ind.value =
-        static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(
-            pdu_session_res_item.security_ind.integrity_protection_ind);
-    asn1_pdu_session_res_item.security_ind.confidentiality_protection_ind.value =
-        static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(
-            pdu_session_res_item.security_ind.confidentiality_protection_ind);
-    /*
-     if (pdu_session_res_item.security_ind.maximum_ipdatarate.has_value()) {
-       asn1_pdu_session_res_item.security_ind.max_ip_datarate_present = true;
-       asn1::string_to_enum(asn1_pdu_session_res_item.security_ind.max_ip_datarate.max_ip_rate,
-       pdu_session_res_item.security_ind.maximum_ipdatarate.value());
-    }
-    */
+    security_indication_to_asn1(asn1_pdu_session_res_item.security_ind, pdu_session_res_item.security_ind);
 
     // drb to setup list ng ran
     for (const auto& drb_to_setup_item : pdu_session_res_item.drb_to_setup_list_ng_ran) {
