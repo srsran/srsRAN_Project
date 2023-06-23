@@ -2,6 +2,8 @@
 #include "srsran/asn1/asn1_utils.h"
 
 using namespace asn1::e2ap;
+using namespace asn1::e2sm_kpm;
+using namespace srsran;
 
 e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
                              e2sm_handler&            e2sm_packer_,

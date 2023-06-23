@@ -13,10 +13,8 @@
 #include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2sm/e2sm.h"
-using namespace asn1::e2ap;
 
-using namespace asn1::e2sm_kpm;
-using namespace srsran;
+namespace srsran {
 
 class e2sm_kpm_impl : public e2sm_interface
 {
@@ -33,18 +31,20 @@ public:
 private:
   void process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def);
 
-  bool check_measurement_name(meas_type_c meas_type, const char* meas);
+  bool check_measurement_name(asn1::e2sm_kpm::meas_type_c meas_type, const char* meas);
 
-  void add_matching_condition_item(const char*            name,
-                                   meas_cond_ueid_item_s& cond_ueid_item,
-                                   matching_cond_item_s&  match_cond_item);
+  void add_matching_condition_item(const char*                            name,
+                                   asn1::e2sm_kpm::meas_cond_ueid_item_s& cond_ueid_item,
+                                   asn1::e2sm_kpm::matching_cond_item_s&  match_cond_item);
 
   // process action definition format 3 & uses fields to populate RIC indication message
   void handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def);
 
-  srslog::basic_logger&    logger;
-  e2_sm_kpm_ind_hdr_s      ric_ind_header;
-  e2_sm_kpm_ind_msg_s      ric_ind_message;
-  e2sm_handler&            e2sm_packer;
-  e2_du_metrics_interface& du_metrics_interface;
+  srslog::basic_logger&               logger;
+  asn1::e2sm_kpm::e2_sm_kpm_ind_hdr_s ric_ind_header;
+  asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s ric_ind_message;
+  e2sm_handler&                       e2sm_packer;
+  e2_du_metrics_interface&            du_metrics_interface;
 };
+
+} // namespace srsran
