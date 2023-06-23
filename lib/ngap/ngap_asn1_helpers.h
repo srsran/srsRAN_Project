@@ -179,6 +179,17 @@ inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   // id-PDUSessionType
   setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
 
+  // id-SecurityIndication
+  if (asn1_setup_req_transfer->security_ind_present) {
+    setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
+    setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
+  } else {
+    setup_item.security_ind.integrity_protection_ind = static_cast<integrity_protection_indication_t>(
+        asn1_setup_req_transfer->security_ind.integrity_protection_ind.value);
+    setup_item.security_ind.confidentiality_protection_ind = static_cast<confidentiality_protection_indication_t>(
+        asn1_setup_req_transfer->security_ind.confidentiality_protection_ind.value);
+  }
+
   // id-QosFlowSetupRequestList
   for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list) {
     qos_flow_setup_request_item qos_flow_setup_req_item;
