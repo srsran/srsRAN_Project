@@ -625,6 +625,14 @@ static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
   app.add_option("--csi_rs_period", csi_params.csi_rs_period_msec, "CSI-RS period in milliseconds")
       ->capture_default_str()
       ->check(CLI::IsMember({10, 20, 40, 80}));
+  app.add_option("--meas_csi_rs_slot_offset",
+                 csi_params.meas_csi_slot_offset,
+                 "Slot offset of first CSI-RS resource used for measurement")
+      ->capture_default_str();
+  app.add_option("--tracking_csi_rs_slot_offset",
+                 csi_params.tracking_csi_slot_offset,
+                 "Slot offset of first CSI-RS resource used for tracking")
+      ->capture_default_str();
   app.add_option("--pwr_ctrl_offset",
                  csi_params.pwr_ctrl_offset,
                  "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")

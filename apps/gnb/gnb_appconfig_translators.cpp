@@ -111,11 +111,13 @@ static unsigned get_nof_dl_ports(const base_cell_appconfig& cell_cfg)
 static csi_meas_config generate_csi_meas_config(const base_cell_appconfig& cell_cfg)
 {
   csi_helper::csi_builder_params csi_params{};
-  csi_params.pci           = cell_cfg.pci;
-  csi_params.nof_rbs       = get_nof_rbs(cell_cfg);
-  csi_params.nof_ports     = get_nof_dl_ports(cell_cfg);
-  csi_params.csi_rs_period = static_cast<csi_resource_periodicity>(cell_cfg.csi_cfg.csi_rs_period_msec *
+  csi_params.pci                      = cell_cfg.pci;
+  csi_params.nof_rbs                  = get_nof_rbs(cell_cfg);
+  csi_params.nof_ports                = get_nof_dl_ports(cell_cfg);
+  csi_params.csi_rs_period            = static_cast<csi_resource_periodicity>(cell_cfg.csi_cfg.csi_rs_period_msec *
                                                                    get_nof_slots_per_subframe(cell_cfg.common_scs));
+  csi_params.meas_csi_slot_offset     = cell_cfg.csi_cfg.meas_csi_slot_offset;
+  csi_params.tracking_csi_slot_offset = cell_cfg.csi_cfg.tracking_csi_slot_offset;
 
   // Generate basic csiMeasConfig.
   csi_meas_config csi_meas_cfg = csi_helper::make_csi_meas_config(csi_params);
