@@ -183,7 +183,8 @@ static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconf
   if (std::none_of(valid_periods.begin(), valid_periods.end(), [period_msec](float v) {
         return std::abs(period_msec - v) < 1e-3;
       })) {
-    fmt::print("Invalid TDD pattern periodicity={}ms. Must in {{{}}}.\n", period_msec, fmt::join(valid_periods, ", "));
+    fmt::print(
+        "Invalid TDD pattern periodicity={}ms. It must be in {{{}}}.\n", period_msec, fmt::join(valid_periods, ", "));
     return false;
   }
 
