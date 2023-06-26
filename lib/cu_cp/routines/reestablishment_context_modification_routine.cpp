@@ -105,7 +105,8 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
         pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
       }
 
-      fill_rrc_reconfig_args(rrc_reconfig_args, {}, pdu_sessions_to_setup_list, ue_context_modification_response, {});
+      fill_rrc_reconfig_args(
+          rrc_reconfig_args, {}, pdu_sessions_to_setup_list, ue_context_modification_response, {}, true);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
