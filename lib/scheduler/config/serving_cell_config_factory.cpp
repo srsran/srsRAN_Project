@@ -717,16 +717,19 @@ srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0
   static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
 
   // For SS#0 (CORESET#0).
-  if ((nof_dl_symbols_per_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
+  if ((nof_dl_symbols_per_slot > (ss0_start_symbol_idx + cs0_duration)) and
+      (nof_dl_symbols_per_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
     result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_per_slot);
   }
   // For SS#1 (CORESET#0).
-  if ((nof_dl_symbols_per_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
-      pdsch_mapping_typeA_normal_cp_min_L_value) {
+  if ((nof_dl_symbols_per_slot > (ss1_first_monitoring_symb_idx + cs0_duration)) and
+      (nof_dl_symbols_per_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
+          pdsch_mapping_typeA_normal_cp_min_L_value) {
     result.emplace_back(ss1_first_monitoring_symb_idx + cs0_duration, nof_dl_symbols_per_slot);
   }
   // For SS#2 (CORESET#1).
   if (cs1_duration.has_value() and ss2_first_monitoring_symb_idx.has_value() and
+      (nof_dl_symbols_per_slot > (*ss2_first_monitoring_symb_idx + *cs1_duration)) and
       (nof_dl_symbols_per_slot - *ss2_first_monitoring_symb_idx - *cs1_duration) >=
           pdsch_mapping_typeA_normal_cp_min_L_value) {
     result.emplace_back(*ss2_first_monitoring_symb_idx + *cs1_duration, nof_dl_symbols_per_slot);
