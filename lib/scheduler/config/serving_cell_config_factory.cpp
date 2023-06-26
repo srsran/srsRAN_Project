@@ -10,12 +10,13 @@
 
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include <vector>
 
 using namespace srsran;
 using namespace srsran::config_helpers;
@@ -221,11 +222,15 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
+  const auto& pdsch_ofdm_symbol_ranges =
+      generate_pdsch_ofdm_symbol_ranges(cfg.init_dl_bwp.pdcch_common.coreset0->duration,
+                                        params.search_space0_index,
+                                        cfg.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
+                                        14);
+  for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
+    cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.push_back(
+        make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
+  }
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -678,4 +683,58 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
     max_nof_candidates = 6;
   }
   return max_nof_candidates > PDCCH_MAX_NOF_CANDIDATES_SS ? PDCCH_MAX_NOF_CANDIDATES_SS : max_nof_candidates;
+}
+
+pdsch_time_domain_resource_allocation
+srsran::config_helpers::make_pdsch_time_domain_resource(unsigned ofdm_start_symbol_idx, unsigned ofdm_stop_symbol_idx)
+{
+  return pdsch_time_domain_resource_allocation{
+      .k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {ofdm_start_symbol_idx, ofdm_stop_symbol_idx}};
+}
+
+std::vector<ofdm_symbol_range>
+srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0_duration,
+                                                          uint8_t            ss0_idx,
+                                                          unsigned           ss1_first_monitoring_symb_idx,
+                                                          unsigned           nof_dl_symbols_per_slot,
+                                                          optional<unsigned> cs1_duration,
+                                                          optional<unsigned> ss2_first_monitoring_symb_idx)
+{
+  std::vector<ofdm_symbol_range> result;
+  // Fetch SearchSpace#0 configuration.
+  const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
+      pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+          .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs0_duration});
+  const auto ss0_start_symbol_idx =
+      *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+  // NOTE1: Number of DL symbols must be atleast greater than SearchSpace monitoring symbol index + CORESET duration
+  // for PDSCH allocation in partial slot. Otherwise, it can be used only for UL PDCCH allocations.
+  // NOTE2: The following PDSCH OFDM symbol ranges are created based on the assumption/fact that SS#0 uses CORESET#0,
+  // SS#1 uses CORESET#0, SS#2 uses CORESET#1.
+  // NOTE3: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
+
+  // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
+  static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
+
+  // For SS#0 (CORESET#0).
+  if ((nof_dl_symbols_per_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
+    result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_per_slot);
+  }
+  // For SS#1 (CORESET#0).
+  if ((nof_dl_symbols_per_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
+      pdsch_mapping_typeA_normal_cp_min_L_value) {
+    result.emplace_back(ss1_first_monitoring_symb_idx + cs0_duration, nof_dl_symbols_per_slot);
+  }
+  // For SS#2 (CORESET#1).
+  if (cs1_duration.has_value() and ss2_first_monitoring_symb_idx.has_value() and
+      (nof_dl_symbols_per_slot - *ss2_first_monitoring_symb_idx - *cs1_duration) >=
+          pdsch_mapping_typeA_normal_cp_min_L_value) {
+    result.emplace_back(*ss2_first_monitoring_symb_idx + *cs1_duration, nof_dl_symbols_per_slot);
+  }
+
+  // Remove duplicates.
+  auto it_ptr = std::unique(result.begin(), result.end());
+  result.resize(std::distance(result.begin(), it_ptr));
+
+  return result;
 }

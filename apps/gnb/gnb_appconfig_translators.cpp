@@ -19,6 +19,7 @@
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include <algorithm>
 #include <map>
 
 using namespace srsran;
@@ -184,13 +185,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
     // Enable CSI-RS if the PDSCH mcs is dynamic (min_ue_mcs != max_ue_mcs).
-    param.csi_rs_enabled = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
-    param.nof_dl_ports   = get_nof_dl_ports(base_cell);
+    param.csi_rs_enabled      = cell.cell.pdsch_cfg.min_ue_mcs != cell.cell.pdsch_cfg.max_ue_mcs;
+    param.nof_dl_ports        = get_nof_dl_ports(base_cell);
+    param.search_space0_index = base_cell.pdcch_cfg.common.ss0_index;
 
     const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
-    const uint8_t                                     ss0_idx = base_cell.pdcch_cfg.common.ss0_index;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc;
     if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
       ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
@@ -198,11 +199,15 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
                                                                  nof_crbs,
                                                                  base_cell.common_scs,
                                                                  base_cell.common_scs,
-                                                                 ss0_idx,
+                                                                 param.search_space0_index,
                                                                  base_cell.pdcch_cfg.common.coreset0_index.value());
     } else {
-      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+      ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(base_cell.dl_arfcn,
+                                                                 *param.band,
+                                                                 nof_crbs,
+                                                                 base_cell.common_scs,
+                                                                 base_cell.common_scs,
+                                                                 param.search_space0_index);
     }
 
     if (!ssb_freq_loc.has_value()) {
@@ -221,7 +226,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.nr_cgi.plmn      = base_cell.plmn;
     out_cell.nr_cgi.nci       = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
     out_cell.tac              = base_cell.tac;
-    out_cell.searchspace0_idx = ss0_idx;
+    out_cell.searchspace0_idx = param.search_space0_index;
 
     // Cell selection parameters.
     out_cell.cell_sel_info.q_rx_lev_min = base_cell.q_rx_lev_min;
@@ -289,46 +294,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       // PUCCH-Config - Update k1 values based on the TDD configuration.
       out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack =
           config_helpers::generate_k1_candidates(out_cell.tdd_ul_dl_cfg_common.value());
-
-      // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot
-      auto coreset0_cfg = pdcch_type0_css_coreset_get(
-          param.band.value(), param.scs_common, param.scs_common, param.coreset0_index, param.k_ssb.to_uint());
-      auto coreset1_duration = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration;
-      // NOTE: Number of DL symbols must be atleast greater than CORESET duration for PDSCH allocation in partial slot.
-      // Otherwise, it can be used only for UL PDCCH allocations.
-      if (coreset0_cfg.nof_symb_coreset != 0 and tdd_cfg.pattern1.nof_dl_symbols > coreset0_cfg.nof_symb_coreset) {
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-            ofdm_symbol_range{coreset0_cfg.nof_symb_coreset, tdd_cfg.pattern1.nof_dl_symbols};
-      }
-      if (coreset0_cfg.nof_symb_coreset != 0 and tdd_cfg.pattern2.has_value() and
-          tdd_cfg.pattern2->nof_dl_symbols > coreset0_cfg.nof_symb_coreset) {
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-            ofdm_symbol_range{coreset0_cfg.nof_symb_coreset, tdd_cfg.pattern2->nof_dl_symbols};
-      }
-      if (tdd_cfg.pattern1.nof_dl_symbols > coreset1_duration) {
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-            ofdm_symbol_range{coreset1_duration, tdd_cfg.pattern1.nof_dl_symbols};
-      }
-      if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2->nof_dl_symbols > coreset1_duration) {
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-        out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
-            ofdm_symbol_range{coreset1_duration, tdd_cfg.pattern2->nof_dl_symbols};
-      }
-      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol length to always choose the
-      // resource which occupies most of the DL symbols in a slot.
-      std::sort(out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
-                out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
-                [](const pdsch_time_domain_resource_allocation& res_alloc_a,
-                   const pdsch_time_domain_resource_allocation& res_alloc_b) {
-                  return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
-                });
     }
 
     // PCCH-Config.
@@ -406,6 +371,47 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
     }
+
+    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot
+    if (not band_helper::is_paired_spectrum(param.band.value())) {
+      const auto& tdd_cfg                  = out_cell.tdd_ul_dl_cfg_common.value();
+      auto        pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
+          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
+          param.search_space0_index,
+          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
+          tdd_cfg.pattern1.nof_dl_symbols,
+          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration,
+          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index());
+      if (tdd_cfg.pattern2.has_value()) {
+        const auto& pattern2_pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
+            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
+            param.search_space0_index,
+            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
+            tdd_cfg.pattern2->nof_dl_symbols,
+            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration,
+            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index());
+        pdsch_ofdm_symbol_ranges.insert(pdsch_ofdm_symbol_ranges.end(),
+                                        pattern2_pdsch_ofdm_symbol_ranges.begin(),
+                                        pattern2_pdsch_ofdm_symbol_ranges.end());
+      }
+      auto& pdsch_td_alloc_list = out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+      for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
+        pdsch_td_alloc_list.push_back(
+            config_helpers::make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
+      }
+      // Remove duplicates in  PDSCH time domain resources.
+      auto pdsch_td_alloc_it_ptr = std::unique(pdsch_td_alloc_list.begin(), pdsch_td_alloc_list.end());
+      pdsch_td_alloc_list.resize(std::distance(pdsch_td_alloc_list.begin(), pdsch_td_alloc_it_ptr));
+      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol length to always choose the
+      // resource which occupies most of the DL symbols in a slot.
+      std::sort(out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
+                out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
+                [](const pdsch_time_domain_resource_allocation& res_alloc_a,
+                   const pdsch_time_domain_resource_allocation& res_alloc_b) {
+                  return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
+                });
+    }
+
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)config.common_cell_cfg.pdsch_cfg.nof_harqs;
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = config.common_cell_cfg.pdsch_cfg.mcs_table;
