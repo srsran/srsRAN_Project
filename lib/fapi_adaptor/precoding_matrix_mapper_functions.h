@@ -37,6 +37,12 @@ inline unsigned get_pdsch_one_port_precoding_matrix_index()
   return 0U;
 }
 
+/// Returns the precoding matrix index for the PDSCH omnidirectional codebook.
+inline unsigned get_pdsch_omnidirectional_precoding_matrix_index()
+{
+  return 0U;
+}
+
 /// Returns the precoding matrix index for the two-port PDSCH codebook using the given PMI.
 inline unsigned get_pdsch_two_port_precoding_matrix_index(unsigned pmi)
 {

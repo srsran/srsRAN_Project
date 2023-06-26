@@ -18,7 +18,7 @@ using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Maximum number of codebooks for 1-port, 2-port and 4-port configurations.
-static constexpr std::array<unsigned, 4> max_num_codebooks = {{5, 10, 0, 260}};
+static constexpr std::array<unsigned, 4> max_num_codebooks = {{6, 11, 0, 261}};
 
 /// Generates SSB codebooks and precoding matrices for the given number of ports.
 static unsigned generate_ssb(unsigned offset, unsigned nof_ports, precoding_matrix_repository_builder& repo_builder)
@@ -45,6 +45,17 @@ static unsigned generate_csi_rs(unsigned offset, unsigned nof_ports, precoding_m
 {
   precoding_weight_matrix precoding = make_identity(nof_ports);
   unsigned                pm_index  = offset + get_csi_rs_precoding_matrix_index();
+  repo_builder.add(pm_index, precoding);
+
+  return ++offset;
+}
+
+/// Generates PDSCH omnidirectional codebook and precoding matrices for the given number of ports.
+static unsigned
+generate_pdsch_omnidirectional(unsigned offset, unsigned nof_ports, precoding_matrix_repository_builder& repo_builder)
+{
+  precoding_weight_matrix precoding = make_one_layer_one_port(nof_ports, 0);
+  unsigned                pm_index  = offset + get_pdsch_omnidirectional_precoding_matrix_index();
   repo_builder.add(pm_index, precoding);
 
   return ++offset;
@@ -79,7 +90,9 @@ static void generate_single_port_table(precoding_matrix_mapper_codebook_offset_c
 
   offset = generate_identity_matrix(offset, repo_builder, nof_ports);
   mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset = generate_ssb(offset, nof_ports, repo_builder);
+  offset                           = generate_ssb(offset, nof_ports, repo_builder);
+  mapper_offsets.pdsch_omni_offset = offset;
+  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_one_port(offset, repo_builder);
   mapper_offsets.pdcch_codebook_offsets.push_back(offset);
@@ -124,7 +137,9 @@ static void generate_2_ports_table(precoding_matrix_mapper_codebook_offset_confi
 
   offset = generate_identity_matrix(offset, repo_builder, nof_ports);
   mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset = generate_ssb(offset, nof_ports, repo_builder);
+  offset                           = generate_ssb(offset, nof_ports, repo_builder);
+  mapper_offsets.pdsch_omni_offset = offset;
+  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_2_ports_1_layer(offset, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
@@ -214,7 +229,9 @@ static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_confi
 
   offset = generate_identity_matrix(offset, repo_builder, nof_ports);
   mapper_offsets.ssb_codebook_offsets.push_back(offset);
-  offset = generate_ssb(offset, nof_ports, repo_builder);
+  offset                           = generate_ssb(offset, nof_ports, repo_builder);
+  mapper_offsets.pdsch_omni_offset = offset;
+  offset                           = generate_pdsch_omnidirectional(offset, nof_ports, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
   offset = generate_pdsch_4_ports_1_layer(offset, repo_builder);
   mapper_offsets.pdsch_codebook_offsets.push_back(offset);
@@ -242,19 +259,19 @@ srsran::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_port
   if (nof_antenna_ports == 1U) {
     generate_single_port_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
   }
 
   if (nof_antenna_ports == 2U) {
     generate_2_ports_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
   }
 
   if (nof_antenna_ports == 4U) {
     generate_4_ports_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
   }
 
   srsran_assert(false, "Unsupported number of ports", nof_antenna_ports);
