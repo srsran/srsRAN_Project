@@ -20,7 +20,9 @@
 using namespace asn1::e2sm_kpm;
 
 namespace srsran {
-
+/// @brief  E2 INDICATION procedure will be used to send the measurement data to the RIC
+///         in response to the E2 SUBSCRIPTION REQUEST, It will execute periodically until
+///         the E2 SUBSCRIPTION DELETE REQUEST is received.
 class e2_indication_procedure
 {
 public:
@@ -33,16 +35,9 @@ public:
   void operator()(coro_context<eager_async_task<void>>& ctx);
 
 private:
-  /// Send E2 INDICATION.
+  /// Send E2 INDICATION message to the RIC.
   void send_e2_indication(e2_indication_message& e2_ind);
 
-  /// Checks whether the indication procedure should be ended.
-  bool send_incidation_procedure();
-
-  /// Creates procedure result to send back to procedure caller.
-  e2_indication_message create_e2_indication_result();
-
-  bool                               check_measurement_name(meas_type_c meas_type, const char* meas);
   e2_message_notifier&               notifier;
   e2_event_manager&                  ev_mng;
   e2sm_interface&                    e2sm;
@@ -54,10 +49,8 @@ private:
 
   protocol_transaction_outcome_observer<asn1::e2ap::ricsubscription_delete_request_s> transaction_sink;
 
-  unsigned             e2_indication_retry_no = 0;
   std::chrono::seconds time_to_wait{1};
-  scheduler_ue_metrics _metrics = {};
-  bool                 running  = true;
+  bool                 running = true;
 };
 
 } // namespace srsran

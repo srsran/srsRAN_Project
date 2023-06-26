@@ -45,8 +45,8 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       e2_ind.indication->ri_cind_sn_present               = false;
       e2_ind.indication->ri_crequest_id->ric_instance_id  = subscription.request_id.ric_instance_id;
       e2_ind.indication->ri_crequest_id->ric_requestor_id = subscription.request_id.ric_requestor_id;
-      byte_buffer ind_msg_bytes;
       auto&       action_def                              = action.action_definition;
+      byte_buffer ind_msg_bytes;
       switch (action.ric_action_type) {
         case ri_caction_type_e::ri_caction_type_opts::report:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::report;

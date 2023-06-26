@@ -57,10 +57,10 @@ private:
   void handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_ind_msg_s&                  ric_ind_message,
                                         asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def);
 
-  srslog::basic_logger&               logger;
-  e2sm_handler&                       e2sm_packer;
-  e2_du_metrics_interface&            du_metrics_interface;
-  std::map<uint32_t, byte_buffer>     ind_hdr_map;
+  srslog::basic_logger&           logger;
+  e2sm_handler&                   e2sm_packer;
+  e2_du_metrics_interface&        du_metrics_interface;
+  std::map<uint32_t, byte_buffer> ind_hdr_map;
 };
 
 } // namespace srsran
