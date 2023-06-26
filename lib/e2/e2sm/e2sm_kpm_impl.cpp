@@ -14,8 +14,9 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
 
 srsran::byte_buffer e2sm_kpm_impl::handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition)
 {
+  e2_sm_kpm_ind_msg_s           ric_ind_message;
   e2_sm_kpm_action_definition_s action_def = e2sm_packer.handle_packed_e2sm_kpm_action_definition(action_definition);
-  process_action_definition(action_def);
+  process_action_definition(ric_ind_message, action_def);
   byte_buffer   ind_msg_bytes;
   asn1::bit_ref bref_ind_msg(ind_msg_bytes);
   if (ric_ind_message.pack(bref_ind_msg) != asn1::SRSASN_SUCCESS) {
@@ -52,7 +53,8 @@ void e2sm_kpm_impl::add_matching_condition_item(const char*            name,
   cond_ueid_item.matching_cond.push_back(match_cond_item);
 }
 
-void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def)
+void e2sm_kpm_impl::process_action_definition(e2_sm_kpm_ind_msg_s&                          ric_ind_message,
+                                              asn1::e2sm_kpm::e2_sm_kpm_action_definition_s action_def)
 {
   auto action_type = action_def.action_definition_formats.type().value;
   switch (action_type) {
@@ -66,7 +68,8 @@ void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_d
       break;
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format3:
-      handle_action_definition_format3(action_def.action_definition_formats.action_definition_format3());
+      handle_action_definition_format3(ric_ind_message,
+                                       action_def.action_definition_formats.action_definition_format3());
       break;
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format4:
@@ -83,7 +86,8 @@ void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_d
   }
 }
 
-void e2sm_kpm_impl::handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def)
+void e2sm_kpm_impl::handle_action_definition_format3(e2_sm_kpm_ind_msg_s& ric_ind_message,
+                                                     asn1::e2sm_kpm::e2_sm_kpm_action_definition_format3_s action_def)
 {
   // Create an RIC indication message with format 2
   ric_ind_message.ind_msg_formats.set_ind_msg_format2();
@@ -139,7 +143,8 @@ void e2sm_kpm_impl::handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_a
 
 void e2sm_kpm_impl::generate_indication_header(uint32_t action_id)
 {
-  byte_buffer ind_hdr_bytes;
+  byte_buffer         ind_hdr_bytes;
+  e2_sm_kpm_ind_hdr_s ric_ind_header;
   ric_ind_header.ind_hdr_formats.ind_hdr_format1().vendor_name_present        = false;
   ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_name_present        = false;
   ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_type_present        = false;
