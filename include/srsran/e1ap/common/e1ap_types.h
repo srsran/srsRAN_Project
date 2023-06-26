@@ -57,12 +57,6 @@ constexpr inline gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx
   return static_cast<gnb_cu_up_ue_e1ap_id_t>(idx);
 }
 
-struct e1ap_security_ind {
-  std::string           integrity_protection_ind;
-  std::string           confidentiality_protection_ind;
-  optional<std::string> maximum_ipdatarate;
-};
-
 struct e1ap_cell_group_info_item {
   uint8_t               cell_group_id = 0;
   optional<std::string> ul_cfg;
@@ -168,7 +162,7 @@ struct e1ap_pdu_session_res_to_setup_item {
   std::string                                                pdu_session_type;
   s_nssai_t                                                  snssai;
   up_transport_layer_info                                    ng_ul_up_tnl_info;
-  security_indication                                        security_ind;
+  security_indication_t                                      security_ind;
   slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;
@@ -287,7 +281,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
 
 struct e1ap_pdu_session_res_to_modify_item {
   pdu_session_id_t                                            pdu_session_id = pdu_session_id_t::invalid;
-  optional<e1ap_security_ind>                                 security_ind;
+  optional<security_indication_t>                             security_ind;
   optional<uint64_t>                                          pdu_session_res_dl_ambr;
   optional<up_transport_layer_info>                           ng_ul_up_tnl_info;
   optional<e1ap_data_forwarding_info_request>                 pdu_session_data_forwarding_info_request;

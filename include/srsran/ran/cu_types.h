@@ -152,7 +152,7 @@ struct security_result_t {
 enum class integrity_protection_indication_t { required, preferred, not_needed };
 enum class confidentiality_protection_indication_t { required, preferred, not_needed };
 
-struct security_indication {
+struct security_indication_t {
   integrity_protection_indication_t       integrity_protection_ind;
   confidentiality_protection_indication_t confidentiality_protection_ind;
 };
@@ -247,7 +247,7 @@ struct formatter<srsran::confidentiality_protection_indication_t> {
 };
 
 template <>
-struct formatter<srsran::security_indication> {
+struct formatter<srsran::security_indication_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -255,7 +255,7 @@ struct formatter<srsran::security_indication> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::security_indication& security_ind, FormatContext& ctx)
+  auto format(const srsran::security_indication_t& security_ind, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),

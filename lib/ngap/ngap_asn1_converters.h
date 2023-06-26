@@ -369,7 +369,7 @@ inline guami_t asn1_guami_to_guami(const asn1::ngap::guami_s& asn1_guami)
 /// \brief Converts type \c security_indication to an ASN.1 type.
 /// \param asn1obj ASN.1 object where the result of the conversion is stored.
 /// \param security_indication Security Indication IE contents.
-inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, const security_indication& security_ind)
+inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, const security_indication_t& security_ind)
 {
   switch (security_ind.integrity_protection_ind) {
     case integrity_protection_indication_t::not_needed:
@@ -397,7 +397,7 @@ inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, con
 /// \brief Converts type \c security_indication to an ASN.1 type.
 /// \param asn1obj ASN.1 object where the result of the conversion is stored.
 /// \param security_indication Security Indication IE contents.
-inline void asn1_to_security_indication(security_indication& security_ind, const asn1::ngap::security_ind_s& asn1obj)
+inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::ngap::security_ind_s& asn1obj)
 {
   switch (asn1obj.integrity_protection_ind) {
     case asn1::ngap::integrity_protection_ind_opts::not_needed:

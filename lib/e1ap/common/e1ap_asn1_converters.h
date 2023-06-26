@@ -1339,7 +1339,7 @@ asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& as
 /// \brief Converts type \c security_indication to an ASN.1 type.
 /// \param asn1obj ASN.1 object where the result of the conversion is stored.
 /// \param security_indication Security Indication IE contents.
-inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, const security_indication& security_ind)
+inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, const security_indication_t& security_ind)
 {
   switch (security_ind.integrity_protection_ind) {
     case integrity_protection_indication_t::not_needed:
@@ -1368,7 +1368,7 @@ inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, con
 /// \brief Converts type \c security_indication to an ASN.1 type.
 /// \param asn1obj ASN.1 object where the result of the conversion is stored.
 /// \param security_indication Security Indication IE contents.
-inline void asn1_to_security_indication(security_indication& security_ind, const asn1::e1ap::security_ind_s& asn1obj)
+inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::e1ap::security_ind_s& asn1obj)
 {
   switch (asn1obj.integrity_protection_ind) {
     case asn1::e1ap::integrity_protection_ind_opts::not_needed:
