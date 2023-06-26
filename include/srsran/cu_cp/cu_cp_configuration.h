@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/ngap/ngap.h"
@@ -35,6 +36,7 @@ struct cu_cp_configuration {
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;
+  cell_meas_manager_cfg  meas_config;
 };
 
 } // namespace srs_cu_cp

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cell_meas_manager_config.h"
 #include "cu_cp_configuration.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 
@@ -88,6 +89,11 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
   // Notifiers aren't checked here.
   if (!is_valid_configuration(config.ngap_config)) {
     fmt::print("Invalid NGAP configuration.\n");
+    return false;
+  }
+
+  if (!is_valid_configuration(config.meas_config)) {
+    fmt::print("Invalid cell measurement configuration.\n");
     return false;
   }
 
