@@ -56,6 +56,14 @@ static unsigned get_pdsch_precoding_matrix_index(unsigned offset, const mac_pdsc
                         variant_get<csi_report_pmi::two_antenna_port>(precoding_info.report->type).pmi);
   }
 
+  // 4 Ports.
+  if (variant_holds_alternative<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.report->type)) {
+    const csi_report_pmi::typeI_single_panel_4ports_mode1& report =
+        variant_get<csi_report_pmi::typeI_single_panel_4ports_mode1>(precoding_info.report->type);
+    return offset + get_pdsch_four_port_precoding_matrix_index(
+                        report.i_1_1, (report.i_1_3) ? report.i_1_3.value() : 0U, report.i_2);
+  }
+
   return 0;
 }
 
