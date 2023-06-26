@@ -25,8 +25,9 @@ cell_cfg:
   plmn: "00101"                                                   # PLMN broadcasted by the gNB.
   tac: 7                                                          # Tracking area code (needs to match the core configuration). 
   pdcch:
-    ss_type: common                                               # Set search space to common to match capabilities
-    dci_format_0_1_and_1_1: 0                                     # Use fallback DCI to match srsUE capabilities
+    dedicated:
+      ss2_type: common                                            # Set search space to common to match capabilities
+      dci_format_0_1_and_1_1: false                               # Use fallback DCI to match srsUE capabilities
 
 log:
   filename: /tmp/gnb.log                                          # Path of the log file.
