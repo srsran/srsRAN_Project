@@ -372,7 +372,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
     }
 
-    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot
+    // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
+    // Generating PDSCH time domain resources requires CORESET#0,  CORESET#01, SearchSpace#(0, 1, 2) configuration.
     if (not band_helper::is_paired_spectrum(param.band.value())) {
       const auto& tdd_cfg                  = out_cell.tdd_ul_dl_cfg_common.value();
       auto        pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
@@ -399,11 +400,11 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         pdsch_td_alloc_list.push_back(
             config_helpers::make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
       }
-      // Remove duplicates in  PDSCH time domain resources.
+      // Remove duplicates in PDSCH time domain resources.
       auto pdsch_td_alloc_it_ptr = std::unique(pdsch_td_alloc_list.begin(), pdsch_td_alloc_list.end());
       pdsch_td_alloc_list.resize(std::distance(pdsch_td_alloc_list.begin(), pdsch_td_alloc_it_ptr));
-      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol length to always choose the
-      // resource which occupies most of the DL symbols in a slot.
+      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol range length to always choose
+      // the resource which occupies most of the DL symbols in a slot.
       std::sort(out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
                 out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
                 [](const pdsch_time_domain_resource_allocation& res_alloc_a,
