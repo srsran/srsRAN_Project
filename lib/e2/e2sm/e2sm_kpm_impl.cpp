@@ -12,7 +12,7 @@ e2sm_kpm_impl::e2sm_kpm_impl(srslog::basic_logger&    logger_,
 {
 }
 
-srsran::byte_buffer e2sm_kpm_impl::handle_action(const srsran::byte_buffer& action_definition)
+srsran::byte_buffer e2sm_kpm_impl::handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition)
 {
   e2_sm_kpm_action_definition_s action_def = e2sm_packer.handle_packed_e2sm_kpm_action_definition(action_definition);
   process_action_definition(action_def);
@@ -21,23 +21,19 @@ srsran::byte_buffer e2sm_kpm_impl::handle_action(const srsran::byte_buffer& acti
   if (ric_ind_message.pack(bref_ind_msg) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to pack RIC Indication Message");
   };
+  generate_indication_header(action_id);
   return ind_msg_bytes;
 }
 
 srsran::byte_buffer e2sm_kpm_impl::get_indication_header(uint32_t action_id)
 {
-  // TODO populate and store for each action id.
-  byte_buffer ind_hdr_bytes;
-  ric_ind_header.ind_hdr_formats.ind_hdr_format1().vendor_name_present        = false;
-  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_name_present        = false;
-  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_type_present        = false;
-  ric_ind_header.ind_hdr_formats.ind_hdr_format1().file_formatversion_present = false;
-  ric_ind_header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(0);
-  asn1::bit_ref bref_ind_hdr(ind_hdr_bytes);
-  if (ric_ind_header.pack(bref_ind_hdr) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to pack RIC Indication header");
-  };
-  return ind_hdr_bytes;
+  if (ind_hdr_map.count(action_id) == 0) {
+    logger.error("Failed to find indication header for action id: %d", action_id);
+    return {};
+  }
+  auto ind_hdr = std::move(ind_hdr_map[action_id]);
+  ind_hdr_map.erase(action_id);
+  return ind_hdr;
 }
 
 bool e2sm_kpm_impl::check_measurement_name(meas_type_c meas_type, const char* meas)
@@ -79,6 +75,7 @@ void e2sm_kpm_impl::process_action_definition(asn1::e2sm_kpm::e2_sm_kpm_action_d
     case asn1::e2sm_kpm::e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::
         action_definition_format5: {
       logger.warning("Action type 5 not supported yet");
+      break;
     }
     default:
       logger.error("Action type not supported");
@@ -138,4 +135,19 @@ void e2sm_kpm_impl::handle_action_definition_format3(asn1::e2sm_kpm::e2_sm_kpm_a
       }
     }
   }
+}
+
+void e2sm_kpm_impl::generate_indication_header(uint32_t action_id)
+{
+  byte_buffer ind_hdr_bytes;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().vendor_name_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_name_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().sender_type_present        = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().file_formatversion_present = false;
+  ric_ind_header.ind_hdr_formats.ind_hdr_format1().collet_start_time.from_number(0);
+  asn1::bit_ref bref_ind_hdr(ind_hdr_bytes);
+  if (ric_ind_header.pack(bref_ind_hdr) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to pack RIC Indication header");
+  };
+  ind_hdr_map[action_id] = std::move(ind_hdr_bytes);
 }

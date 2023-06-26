@@ -33,9 +33,10 @@ class e2sm_interface
 public:
   virtual ~e2sm_interface() = default;
   /// \brief Handle the E2SM-KPM Action Definition.
+  /// \param[in] action_id
   /// \param[in] action_definition
   /// \return Returns the packed resultant Indication Message.
-  virtual srsran::byte_buffer handle_action(const srsran::byte_buffer& action_definition) = 0;
+  virtual srsran::byte_buffer handle_action(uint32_t action_id, const srsran::byte_buffer& action_definition) = 0;
   /// \brief get the indication header associated with the action id.
   /// \param[in] action_id
   /// \return Returns the indication header.

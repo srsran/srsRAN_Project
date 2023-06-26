@@ -50,7 +50,7 @@ void e2_indication_procedure::operator()(coro_context<eager_async_task<void>>& c
       switch (action.ric_action_type) {
         case ri_caction_type_e::ri_caction_type_opts::report:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::report;
-          ind_msg_bytes                         = e2sm.handle_action(action_def);
+          ind_msg_bytes                         = e2sm.handle_action(action.ric_action_id, action_def);
           break;
         case ri_caction_type_e::ri_caction_type_opts::insert:
           e2_ind.indication->ri_cind_type.value = ri_cind_type_e::ri_cind_type_opts::insert;
