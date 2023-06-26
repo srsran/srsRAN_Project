@@ -105,6 +105,10 @@ if (DOXYGEN_FOUND)
                       ${CMAKE_HOME_DIRECTORY}/lib/phy
                       ${CMAKE_HOME_DIRECTORY}/lib/ran
                       ${CMAKE_HOME_DIRECTORY}/lib/radio
+                      ${CMAKE_HOME_DIRECTORY}/tests/benchmarks/phy
+                      ${CMAKE_HOME_DIRECTORY}/tests/unittests/phy
+                      ${CMAKE_HOME_DIRECTORY}/tests/unittests/ran
+                      ${CMAKE_HOME_DIRECTORY}/tests/unittests/radio
   )
 
   doxygen_add_docs(doxygen-phy
