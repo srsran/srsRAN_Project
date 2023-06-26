@@ -580,10 +580,10 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
           default:
             srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction.n1_n2_restriction_type);
         }
-        if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.has_value()) {
+        if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.size() > 0) {
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2_present = true;
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2.from_number(
-              ant_restriction.typei_single_panel_codebook_subset_restriction_i2.value().to_uint64());
+              ant_restriction.typei_single_panel_codebook_subset_restriction_i2.to_uint64());
         }
       }
       out_sp_cfg.type_i_single_panel_ri_restrict.from_number(sp_cfg_val.typei_single_panel_ri_restriction.to_uint64());

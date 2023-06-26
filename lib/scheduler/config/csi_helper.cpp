@@ -342,20 +342,35 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
   reps[0].report_freq_cfg->cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
   reps[0].report_freq_cfg->pmi_format_ind = csi_report_config::pmi_format_indicator::wideband_pmi;
 
-  if (params.nof_ports == 2) {
+  if (params.nof_ports > 1) {
     reps[0].codebook_cfg.emplace();
-    codebook_config::type1                                                                     type1{};
-    codebook_config::type1::single_panel                                                       single_panel{};
-    codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction bitmap(6);
-    bitmap.fill(0, 6, true);
-    single_panel.nof_antenna_ports = bitmap;
+    codebook_config::type1               type1{};
+    codebook_config::type1::single_panel single_panel{};
+    if (params.nof_ports == 2) {
+      codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction bitmap(6);
+      bitmap.fill(0, 6, true);
+      single_panel.nof_antenna_ports = bitmap;
+    } else if (params.nof_ports == 4) {
+      codebook_config::type1::single_panel::more_than_two_antenna_ports port_cfg{};
+      port_cfg.n1_n2_restriction_type =
+          codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::two_one;
+      port_cfg.n1_n2_restriction_value.resize(8);
+      port_cfg.n1_n2_restriction_value.fill(0, 8, true); // TODO: Check if this value is reasonable.
+      port_cfg.typei_single_panel_codebook_subset_restriction_i2.resize(16);
+      port_cfg.typei_single_panel_codebook_subset_restriction_i2.fill(
+          0, 16, true); // TODO: Check if this value is reasonable.
+      single_panel.nof_antenna_ports = port_cfg;
+    } else {
+      report_fatal_error("Unsupported number of antenna ports {}", params.nof_ports);
+    }
+    // Enable all layer options for the given number of ports. As per TS 38.214, section 5.2.2.2.1, this can be done
+    // by setting the RI restriction bitmap to 0b11...11, where the number of 1s is set to be equal to the number of
+    // ports.
     single_panel.typei_single_panel_ri_restriction.resize(8);
-    single_panel.typei_single_panel_ri_restriction.from_uint64(0b11);
+    single_panel.typei_single_panel_ri_restriction.from_uint64((1 << params.nof_ports) - 1);
     type1.sub_type                      = single_panel;
     type1.codebook_mode                 = 1;
     reps[0].codebook_cfg->codebook_type = type1;
-  } else if (params.nof_ports > 2) {
-    report_fatal_error("Unsupported number of antenna ports");
   }
 
   reps[0].is_group_based_beam_reporting_enabled = false;
