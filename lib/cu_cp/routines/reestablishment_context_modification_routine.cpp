@@ -96,6 +96,14 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
   {
     // prepare RRC Reconfiguration and call RRC UE notifier
     {
+      // add SRB2 again
+      slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item> srbs_to_setup_list;
+      cu_cp_srbs_to_be_setup_mod_item                              srb_to_setup = {};
+
+      srb_to_setup.srb_id                   = srb_id_t::srb2;
+      srb_to_setup.reestablish_pdcp_present = true;
+      srbs_to_setup_list.insert(srb_id_t::srb2, srb_to_setup);
+
       // convert pdu session context
       std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
       for (const auto& pdu_session_id : rrc_ue_up_resource_manager.get_pdu_sessions()) {
@@ -105,8 +113,12 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
         pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
       }
 
-      fill_rrc_reconfig_args(
-          rrc_reconfig_args, {}, pdu_sessions_to_setup_list, ue_context_modification_response, {}, true);
+      fill_rrc_reconfig_args(rrc_reconfig_args,
+                             srbs_to_setup_list,
+                             pdu_sessions_to_setup_list,
+                             ue_context_modification_response,
+                             {},
+                             true);
     }
 
     CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
@@ -154,7 +166,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
-  // Set up SRB2
+  // Set up SRB2 in DU
   cu_cp_srbs_to_be_setup_mod_item srb2;
   srb2.srb_id = srb_id_t::srb2;
   ue_context_mod_req.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);

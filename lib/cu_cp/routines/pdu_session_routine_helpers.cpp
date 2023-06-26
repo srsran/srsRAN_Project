@@ -83,12 +83,12 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
         drb_to_add_mod.reestablish_pdcp_present = true;
       } else {
         drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
-      }
 
-      // Add CN association and SDAP config
-      cu_cp_cn_assoc cn_assoc;
-      cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
-      drb_to_add_mod.cn_assoc = cn_assoc;
+        // Add CN association and SDAP config
+        cu_cp_cn_assoc cn_assoc;
+        cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
+        drb_to_add_mod.cn_assoc = cn_assoc;
+      }
 
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
     }

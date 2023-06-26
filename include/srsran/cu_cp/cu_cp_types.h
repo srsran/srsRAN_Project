@@ -423,7 +423,8 @@ struct cu_cp_scell_to_be_remd_item {
 };
 
 struct cu_cp_srbs_to_be_setup_mod_item {
-  srb_id_t              srb_id = srb_id_t::nulltype;
+  srb_id_t              srb_id                   = srb_id_t::nulltype;
+  bool                  reestablish_pdcp_present = false;
   optional<std::string> dupl_ind;
 };
 

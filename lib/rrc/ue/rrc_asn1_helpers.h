@@ -110,6 +110,8 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
       asn1::rrc_nr::drb_to_add_mod_s asn1_drb_to_add;
       asn1_drb_to_add.drb_id = drb_id_to_uint(drb_to_add.drb_id);
 
+      asn1_drb_to_add.reestablish_pdcp_present = drb_to_add.reestablish_pdcp_present;
+
       // PDCP config
       if (drb_to_add.pdcp_cfg.has_value()) {
         asn1_drb_to_add.pdcp_cfg_present = true;
