@@ -474,10 +474,6 @@ struct bearer_context_inactivity_notif_ies_o {
 };
 
 struct bearer_context_inactivity_notif_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t        gnb_cu_cp_ue_e1ap_id;
   uint64_t        gnb_cu_up_ue_e1ap_id;
   activity_info_c activity_info;
@@ -816,10 +812,6 @@ struct bearer_context_mod_confirm_ies_o {
 };
 
 struct bearer_context_mod_confirm_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             sys_bearer_context_mod_confirm_present = false;
   uint64_t                         gnb_cu_cp_ue_e1ap_id;
   uint64_t                         gnb_cu_up_ue_e1ap_id;
@@ -1122,10 +1114,6 @@ struct bearer_context_mod_fail_ies_o {
 };
 
 struct bearer_context_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_cp_ue_e1ap_id;
   uint64_t           gnb_cu_up_ue_e1ap_id;
@@ -1271,10 +1259,6 @@ using tsc_traffic_info_ext_ies_o = protocol_ext_empty_o;
 using data_forwardingto_ng_ran_qos_flow_info_list_item_ext_ies_o = protocol_ext_empty_o;
 
 struct dyn_5qi_descriptor_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool     extended_packet_delay_budget_present = false;
   bool     cn_packet_delay_budget_dl_present    = false;
   bool     cn_packet_delay_budget_ul_present    = false;
@@ -1385,10 +1369,6 @@ using gtp_tunnel_ext_ies_o = protocol_ext_empty_o;
 using ngran_alloc_and_retention_prio_ext_ies_o = protocol_ext_empty_o;
 
 struct non_dyn_5qi_descriptor_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool     cn_packet_delay_budget_dl_present = false;
   bool     cn_packet_delay_budget_ul_present = false;
   uint32_t cn_packet_delay_budget_dl;
@@ -1929,10 +1909,6 @@ struct pdcp_status_report_ind_opts {
 using pdcp_status_report_ind_e = enumerated<pdcp_status_report_ind_opts, true>;
 
 struct qos_flow_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                  qos_flow_map_ind_present                  = false;
   bool                                  data_forwarding_source_ip_address_present = false;
   qos_flow_map_ind_e                    qos_flow_map_ind;
@@ -2035,10 +2011,6 @@ struct qos_flows_to_be_forwarded_item_s {
 };
 
 struct qos_flow_level_qos_params_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                  qos_monitoring_request_present            = false;
   bool                                  mcg_offered_gbr_qos_flow_info_present     = false;
   bool                                  qos_monitoring_report_freq_present        = false;
@@ -2620,10 +2592,6 @@ using qos_flow_list_l = dyn_array<qos_flow_item_s>;
 using qos_flow_map_list_l = dyn_array<qos_flow_map_item_s>;
 
 struct qos_flow_qos_param_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          redundant_qos_flow_ind_present      = false;
   bool                          tsc_traffic_characteristics_present = false;
   redundant_qos_flow_ind_e      redundant_qos_flow_ind;
@@ -3065,10 +3033,6 @@ struct max_ip_datarate_s {
 };
 
 struct pdcp_cfg_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                     pdcp_status_report_ind_present = false;
   bool                     add_pdcp_dupl_info_present     = false;
   bool                     ehc_params_present             = false;
@@ -3174,10 +3138,6 @@ using security_ind_ext_ies_o = protocol_ext_empty_o;
 using up_params_l = dyn_array<up_params_item_s>;
 
 struct drb_to_modify_item_ng_ran_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          old_qos_flow_map_ul_endmarkerexpected_present = false;
   bool                          drb_qos_present                               = false;
   bool                          early_forwarding_count_req_present            = false;
@@ -3245,10 +3205,6 @@ struct drb_to_rem_item_ng_ran_s {
 };
 
 struct drb_to_setup_item_ng_ran_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                        drb_qos_present             = false;
   bool                        daps_request_info_present   = false;
   bool                        ignore_map_rule_ind_present = false;
@@ -3289,10 +3245,6 @@ struct drb_to_setup_item_ng_ran_s {
 };
 
 struct drb_to_setup_mod_item_ng_ran_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                        drb_qos_present             = false;
   bool                        ignore_map_rule_ind_present = false;
   bool                        daps_request_info_present   = false;
@@ -3709,10 +3661,6 @@ struct drb_to_setup_mod_item_eutran_s {
 };
 
 struct pdu_session_res_to_modify_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                  snssai_present                              = false;
   bool                                  common_network_instance_present             = false;
   bool                                  redundant_n_g_ul_up_tnl_info_present        = false;
@@ -3777,10 +3725,6 @@ struct pdu_session_res_to_rem_item_s {
 };
 
 struct pdu_session_res_to_setup_mod_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                      network_instance_present                  = false;
   bool                      common_network_instance_present           = false;
   bool                      redundant_n_g_ul_up_tnl_info_present      = false;
@@ -4065,10 +4009,6 @@ struct security_info_s {
 };
 
 struct eutran_bearer_context_mod_request_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             drb_to_setup_mod_list_eutran_present = false;
   bool                             drb_to_modify_list_eutran_present    = false;
   bool                             drb_to_rem_list_eutran_present       = false;
@@ -4087,10 +4027,6 @@ struct eutran_bearer_context_mod_request_container {
 };
 
 struct ng_ran_bearer_context_mod_request_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                pdu_session_res_to_setup_mod_list_present = false;
   bool                                pdu_session_res_to_modify_list_present    = false;
   bool                                pdu_session_res_to_rem_list_present       = false;
@@ -4248,10 +4184,6 @@ struct bearer_context_mod_request_ies_o {
 };
 
 struct bearer_context_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             security_info_present                           = false;
   bool                             ue_dl_aggr_max_bit_rate_present                 = false;
   bool                             ue_dl_max_integrity_protected_data_rate_present = false;
@@ -4549,10 +4481,6 @@ struct ng_ran_bearer_context_mod_required_o {
 using sys_bearer_context_mod_required_ext_ies_o = protocol_ies_empty_o;
 
 struct eutran_bearer_context_mod_required_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 drb_required_to_modify_list_eutran_present = false;
   bool                                 drb_required_to_rem_list_eutran_present    = false;
   drb_required_to_modify_list_eutran_l drb_required_to_modify_list_eutran;
@@ -4565,10 +4493,6 @@ struct eutran_bearer_context_mod_required_container {
 };
 
 struct ng_ran_bearer_context_mod_required_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                      pdu_session_res_required_to_modify_list_present = false;
   bool                                      pdu_session_res_to_rem_list_present             = false;
   pdu_session_res_required_to_modify_list_l pdu_session_res_required_to_modify_list;
@@ -4694,10 +4618,6 @@ struct bearer_context_mod_required_ies_o {
 };
 
 struct bearer_context_mod_required_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                          gnb_cu_cp_ue_e1ap_id;
   uint64_t                          gnb_cu_up_ue_e1ap_id;
   sys_bearer_context_mod_required_c sys_bearer_context_mod_required;
@@ -4851,10 +4771,6 @@ struct drb_failed_to_modify_item_ng_ran_s {
 };
 
 struct drb_modified_item_ng_ran_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          early_forwarding_count_info_present           = false;
   bool                          old_qos_flow_map_ul_endmarkerexpected_present = false;
   early_forwarding_count_info_c early_forwarding_count_info;
@@ -5448,10 +5364,6 @@ struct ng_ran_bearer_context_mod_resp_o {
 using sys_bearer_context_mod_resp_ext_ies_o = protocol_ies_empty_o;
 
 struct eutran_bearer_context_mod_resp_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               drb_setup_mod_list_eutran_present        = false;
   bool                               drb_failed_mod_list_eutran_present       = false;
   bool                               drb_modified_list_eutran_present         = false;
@@ -5470,10 +5382,6 @@ struct eutran_bearer_context_mod_resp_container {
 };
 
 struct ng_ran_bearer_context_mod_resp_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    pdu_session_res_setup_mod_list_present        = false;
   bool                                    pdu_session_res_failed_mod_list_present       = false;
   bool                                    pdu_session_res_modified_list_present         = false;
@@ -5600,10 +5508,6 @@ struct bearer_context_mod_resp_ies_o {
 };
 
 struct bearer_context_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                          sys_bearer_context_mod_resp_present = false;
   uint64_t                      gnb_cu_cp_ue_e1ap_id;
   uint64_t                      gnb_cu_up_ue_e1ap_id;
@@ -5663,10 +5567,6 @@ struct bearer_context_release_cmd_ies_o {
 };
 
 struct bearer_context_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_cp_ue_e1ap_id;
   uint64_t gnb_cu_up_ue_e1ap_id;
   cause_c  cause;
@@ -5733,10 +5633,6 @@ struct bearer_context_release_complete_ies_o {
 };
 
 struct bearer_context_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                       crit_diagnostics_present         = false;
   bool                       retainability_meass_info_present = false;
   uint64_t                   gnb_cu_cp_ue_e1ap_id;
@@ -5826,10 +5722,6 @@ struct bearer_context_release_request_ies_o {
 };
 
 struct bearer_context_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool              drb_status_list_present = false;
   uint64_t          gnb_cu_cp_ue_e1ap_id;
   uint64_t          gnb_cu_up_ue_e1ap_id;
@@ -5892,10 +5784,6 @@ struct bearer_context_setup_fail_ies_o {
 };
 
 struct bearer_context_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_cu_up_ue_e1ap_id_present = false;
   bool               crit_diagnostics_present     = false;
   uint64_t           gnb_cu_cp_ue_e1ap_id;
@@ -6244,10 +6132,6 @@ private:
 };
 
 struct pdu_session_res_to_setup_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                         common_network_instance_present           = false;
   bool                         redundant_n_g_ul_up_tnl_info_present      = false;
   bool                         redundant_common_network_instance_present = false;
@@ -6553,10 +6437,6 @@ private:
 };
 
 struct eutran_bearer_context_setup_request_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             sub_profile_id_for_rfp_present = false;
   bool                             add_rrm_prio_idx_present       = false;
   drb_to_setup_list_eutran_l       drb_to_setup_list_eutran;
@@ -6639,10 +6519,6 @@ private:
 };
 
 struct trace_activation_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                                  mdt_cfg_present                     = false;
   bool                                                  trace_collection_entity_uri_present = false;
   mdt_cfg_s                                             mdt_cfg;
@@ -6773,10 +6649,6 @@ struct bearer_context_setup_request_ies_o {
 };
 
 struct bearer_context_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  ue_dl_max_integrity_protected_data_rate_present = false;
   bool                                  ue_inactivity_timer_present                     = false;
   bool                                  bearer_context_status_change_present            = false;
@@ -6959,10 +6831,6 @@ struct pdu_session_res_failed_item_s {
 };
 
 struct pdu_session_res_setup_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                         redundant_n_g_dl_up_tnl_info_present    = false;
   bool                         redundant_pdu_session_info_used_present = false;
   up_tnl_info_c                redundant_n_g_dl_up_tnl_info;
@@ -7105,10 +6973,6 @@ struct ng_ran_bearer_context_setup_resp_o {
 using sys_bearer_context_setup_resp_ext_ies_o = protocol_ies_empty_o;
 
 struct eutran_bearer_context_setup_resp_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                     drb_failed_list_eutran_present = false;
   drb_setup_list_eutran_l  drb_setup_list_eutran;
   drb_failed_list_eutran_l drb_failed_list_eutran;
@@ -7120,10 +6984,6 @@ struct eutran_bearer_context_setup_resp_container {
 };
 
 struct ng_ran_bearer_context_setup_resp_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                          pdu_session_res_failed_list_present = false;
   pdu_session_res_setup_list_l  pdu_session_res_setup_list;
   pdu_session_res_failed_list_l pdu_session_res_failed_list;
@@ -7243,10 +7103,6 @@ struct bearer_context_setup_resp_ies_o {
 };
 
 struct bearer_context_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                        gnb_cu_cp_ue_e1ap_id;
   uint64_t                        gnb_cu_up_ue_e1ap_id;
   sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
@@ -7430,10 +7286,6 @@ struct cell_traffic_trace_ies_o {
 };
 
 struct cell_traffic_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                                  privacy_ind_present = false;
   bool                                                  ur_iaddress_present = false;
   uint64_t                                              gnb_cu_cp_ue_e1ap_id;
@@ -7522,10 +7374,6 @@ struct dl_data_notif_ies_o {
 };
 
 struct dl_data_notif_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         ppi_present                        = false;
   bool                         pdu_session_to_notify_list_present = false;
   uint64_t                     gnb_cu_cp_ue_e1ap_id;
@@ -7839,10 +7687,6 @@ struct data_usage_report_ies_o {
 };
 
 struct data_usage_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                 gnb_cu_cp_ue_e1ap_id;
   uint64_t                 gnb_cu_up_ue_e1ap_id;
   data_usage_report_list_l data_usage_report_list;
@@ -7901,10 +7745,6 @@ struct deactiv_trace_ies_o {
 };
 
 struct deactiv_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                 gnb_cu_cp_ue_e1ap_id;
   uint64_t                 gnb_cu_up_ue_e1ap_id;
   fixed_octstring<8, true> trace_id;
@@ -8620,10 +8460,6 @@ using reset_all_e = enumerated<reset_all_opts, true>;
 using reset_type_ext_ies_o = protocol_ies_empty_o;
 
 struct supported_plmns_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                           npn_support_info_present             = false;
   bool                           extended_slice_support_list_present  = false;
   bool                           extended_nr_cgi_support_list_present = false;
@@ -10694,10 +10530,6 @@ struct ul_data_notif_ies_o {
 };
 
 struct e1_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t transaction_id;
   cause_c  cause;
 
@@ -10714,10 +10546,6 @@ using e1_release_request_s = elementary_procedure_option<e1_release_request_ies_
 using e1_release_resp_s = elementary_procedure_option<protocol_ie_container_l<e1_release_resp_ies_o>>;
 
 struct early_forwarding_sn_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                gnb_cu_cp_ue_e1ap_id;
   uint64_t                                gnb_cu_up_ue_e1ap_id;
   drbs_subject_to_early_forwarding_list_l drbs_subject_to_early_forwarding_list;
@@ -10732,10 +10560,6 @@ struct early_forwarding_sn_transfer_ies_container {
 using early_forwarding_sn_transfer_s = elementary_procedure_option<early_forwarding_sn_transfer_ies_container>;
 
 struct error_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_cu_cp_ue_e1ap_id_present = false;
   bool               gnb_cu_up_ue_e1ap_id_present = false;
   bool               cause_present                = false;
@@ -10756,10 +10580,6 @@ struct error_ind_ies_container {
 using error_ind_s = elementary_procedure_option<error_ind_ies_container>;
 
 struct gnb_cu_cp_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_cp_name_present               = false;
   bool                                 gnb_cu_cp_tnl_a_to_add_list_present  = false;
   bool                                 gnb_cu_cp_tnl_a_to_rem_list_present  = false;
@@ -10784,10 +10604,6 @@ struct gnb_cu_cp_cfg_upd_ies_container {
 using gnb_cu_cp_cfg_upd_s = elementary_procedure_option<gnb_cu_cp_cfg_upd_ies_container>;
 
 struct gnb_cu_cp_cfg_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                   crit_diagnostics_present                     = false;
   bool                                   gnb_cu_cp_tnl_a_setup_list_present           = false;
   bool                                   gnb_cu_cp_tnl_a_failed_to_setup_list_present = false;
@@ -10808,10 +10624,6 @@ struct gnb_cu_cp_cfg_upd_ack_ies_container {
 using gnb_cu_cp_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_cp_cfg_upd_ack_ies_container>;
 
 struct gnb_cu_cp_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -10829,10 +10641,6 @@ struct gnb_cu_cp_cfg_upd_fail_ies_container {
 using gnb_cu_cp_cfg_upd_fail_s = elementary_procedure_option<gnb_cu_cp_cfg_upd_fail_ies_container>;
 
 struct gnb_cu_cp_e1_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -10850,10 +10658,6 @@ struct gnb_cu_cp_e1_setup_fail_ies_container {
 using gnb_cu_cp_e1_setup_fail_s = elementary_procedure_option<gnb_cu_cp_e1_setup_fail_ies_container>;
 
 struct gnb_cu_cp_e1_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_cp_name_present               = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_cp_name_present      = false;
@@ -10872,10 +10676,6 @@ struct gnb_cu_cp_e1_setup_request_ies_container {
 using gnb_cu_cp_e1_setup_request_s = elementary_procedure_option<gnb_cu_cp_e1_setup_request_ies_container>;
 
 struct gnb_cu_cp_e1_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_up_name_present               = false;
   bool                                 gnb_cu_up_capacity_present           = false;
   bool                                 transport_layer_address_info_present = false;
@@ -10899,10 +10699,6 @@ struct gnb_cu_cp_e1_setup_resp_ies_container {
 using gnb_cu_cp_e1_setup_resp_s = elementary_procedure_option<gnb_cu_cp_e1_setup_resp_ies_container>;
 
 struct gnb_cu_cp_meas_results_info_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                     gnb_cu_cp_ue_e1ap_id;
   uint64_t                     gnb_cu_up_ue_e1ap_id;
   drb_meas_results_info_list_l drb_meas_results_info_list;
@@ -10917,10 +10713,6 @@ struct gnb_cu_cp_meas_results_info_ies_container {
 using gnb_cu_cp_meas_results_info_s = elementary_procedure_option<gnb_cu_cp_meas_results_info_ies_container>;
 
 struct gnb_cu_up_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_up_name_present               = false;
   bool                                 supported_plmns_present              = false;
   bool                                 gnb_cu_up_capacity_present           = false;
@@ -10946,10 +10738,6 @@ struct gnb_cu_up_cfg_upd_ies_container {
 using gnb_cu_up_cfg_upd_s = elementary_procedure_option<gnb_cu_up_cfg_upd_ies_container>;
 
 struct gnb_cu_up_cfg_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                           crit_diagnostics_present             = false;
   bool                           transport_layer_address_info_present = false;
   uint16_t                       transaction_id;
@@ -10966,10 +10754,6 @@ struct gnb_cu_up_cfg_upd_ack_ies_container {
 using gnb_cu_up_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_up_cfg_upd_ack_ies_container>;
 
 struct gnb_cu_up_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -10987,10 +10771,6 @@ struct gnb_cu_up_cfg_upd_fail_ies_container {
 using gnb_cu_up_cfg_upd_fail_s = elementary_procedure_option<gnb_cu_up_cfg_upd_fail_ies_container>;
 
 struct gnb_cu_up_counter_check_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                              gnb_cu_cp_ue_e1ap_id;
   uint64_t                              gnb_cu_up_ue_e1ap_id;
   sys_gnb_cu_up_counter_check_request_c sys_gnb_cu_up_counter_check_request;
@@ -11005,10 +10785,6 @@ struct gnb_cu_up_counter_check_request_ies_container {
 using gnb_cu_up_counter_check_request_s = elementary_procedure_option<gnb_cu_up_counter_check_request_ies_container>;
 
 struct gnb_cu_up_e1_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -11026,10 +10802,6 @@ struct gnb_cu_up_e1_setup_fail_ies_container {
 using gnb_cu_up_e1_setup_fail_s = elementary_procedure_option<gnb_cu_up_e1_setup_fail_ies_container>;
 
 struct gnb_cu_up_e1_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_up_name_present               = false;
   bool                                 gnb_cu_up_capacity_present           = false;
   bool                                 transport_layer_address_info_present = false;
@@ -11053,10 +10825,6 @@ struct gnb_cu_up_e1_setup_request_ies_container {
 using gnb_cu_up_e1_setup_request_s = elementary_procedure_option<gnb_cu_up_e1_setup_request_ies_container>;
 
 struct gnb_cu_up_e1_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_cp_name_present               = false;
   bool                                 transport_layer_address_info_present = false;
   bool                                 extended_gnb_cu_cp_name_present      = false;
@@ -11075,10 +10843,6 @@ struct gnb_cu_up_e1_setup_resp_ies_container {
 using gnb_cu_up_e1_setup_resp_s = elementary_procedure_option<gnb_cu_up_e1_setup_resp_ies_container>;
 
 struct gnb_cu_up_status_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                  transaction_id;
   gnb_cu_up_overload_info_e gnb_cu_up_overload_info;
 
@@ -11092,10 +10856,6 @@ struct gnb_cu_up_status_ind_ies_container {
 using gnb_cu_up_status_ind_s = elementary_procedure_option<gnb_cu_up_status_ind_ies_container>;
 
 struct iab_up_tnl_address_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            dl_up_tnl_address_to_upd_list_present = false;
   uint16_t                        transaction_id;
   dl_up_tnl_address_to_upd_list_l dl_up_tnl_address_to_upd_list;
@@ -11110,10 +10870,6 @@ struct iab_up_tnl_address_upd_ies_container {
 using iab_up_tnl_address_upd_s = elementary_procedure_option<iab_up_tnl_address_upd_ies_container>;
 
 struct iab_up_tnl_address_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            crit_diagnostics_present              = false;
   bool                            ul_up_tnl_address_to_upd_list_present = false;
   uint16_t                        transaction_id;
@@ -11130,10 +10886,6 @@ struct iab_up_tnl_address_upd_ack_ies_container {
 using iab_up_tnl_address_upd_ack_s = elementary_procedure_option<iab_up_tnl_address_upd_ack_ies_container>;
 
 struct iab_up_tnl_address_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -11151,10 +10903,6 @@ struct iab_up_tnl_address_upd_fail_ies_container {
 using iab_up_tnl_address_upd_fail_s = elementary_procedure_option<iab_up_tnl_address_upd_fail_ies_container>;
 
 struct iabpsk_notif_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                   transaction_id;
   iab_donor_cu_up_psk_info_l iab_donor_cu_up_psk_info;
 
@@ -11168,10 +10916,6 @@ struct iabpsk_notif_ies_container {
 using iabpsk_notif_s = elementary_procedure_option<iabpsk_notif_ies_container>;
 
 struct mrdc_data_usage_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                          gnb_cu_cp_ue_e1ap_id;
   uint64_t                          gnb_cu_up_ue_e1ap_id;
   pdu_session_res_data_usage_list_l pdu_session_res_data_usage_list;
@@ -11199,9 +10943,6 @@ struct private_ie_container_item_s {
 };
 
 struct private_ie_container_empty_l {
-  template <class valueT_>
-  using ie_field_s = private_ie_container_item_s<valueT_>;
-
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -11222,10 +10963,6 @@ struct private_msg_s {
 };
 
 struct reset_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t     transaction_id;
   cause_c      cause;
   reset_type_c reset_type;
@@ -11240,10 +10977,6 @@ struct reset_ies_container {
 using reset_s = elementary_procedure_option<reset_ies_container>;
 
 struct reset_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    ue_associated_lc_e1_conn_list_res_ack_present = false;
   bool                                    crit_diagnostics_present                      = false;
   uint16_t                                transaction_id;
@@ -11260,10 +10993,6 @@ struct reset_ack_ies_container {
 using reset_ack_s = elementary_procedure_option<reset_ack_ies_container>;
 
 struct res_status_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_cu_up_meas_id_present = false;
   bool               crit_diagnostics_present  = false;
   uint16_t           transaction_id;
@@ -11282,10 +11011,6 @@ struct res_status_fail_ies_container {
 using res_status_fail_s = elementary_procedure_option<res_status_fail_ies_container>;
 
 struct res_status_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             gnb_cu_up_meas_id_present      = false;
   bool                             report_characteristics_present = false;
   bool                             report_periodicity_present     = false;
@@ -11306,10 +11031,6 @@ struct res_status_request_ies_container {
 using res_status_request_s = elementary_procedure_option<res_status_request_ies_container>;
 
 struct res_status_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   uint16_t           gnb_cu_cp_meas_id;
@@ -11326,10 +11047,6 @@ struct res_status_resp_ies_container {
 using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
 
 struct res_status_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         gnb_cu_up_meas_id_present          = false;
   bool                         tnl_available_capacity_ind_present = false;
   uint16_t                     transaction_id;
@@ -11348,10 +11065,6 @@ struct res_status_upd_ies_container {
 using res_status_upd_s = elementary_procedure_option<res_status_upd_ies_container>;
 
 struct trace_start_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t           gnb_cu_cp_ue_e1ap_id;
   uint64_t           gnb_cu_up_ue_e1ap_id;
   trace_activation_s trace_activation;
@@ -11366,10 +11079,6 @@ struct trace_start_ies_container {
 using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
 
 struct ul_data_notif_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                     gnb_cu_cp_ue_e1ap_id;
   uint64_t                     gnb_cu_up_ue_e1ap_id;
   pdu_session_to_notify_list_l pdu_session_to_notify_list;
