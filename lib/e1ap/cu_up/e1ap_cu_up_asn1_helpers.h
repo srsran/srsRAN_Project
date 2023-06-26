@@ -350,18 +350,8 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
         pdu_session_res_to_setup_mod_item.snssai = e1ap_asn1_to_snssai(asn1_res_to_setup_mod_item.snssai);
 
         // security ind
-        pdu_session_res_to_setup_mod_item.security_ind.integrity_protection_ind =
-            static_cast<integrity_protection_indication_t>(
-                asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.value);
-
-        pdu_session_res_to_setup_mod_item.security_ind.confidentiality_protection_ind =
-            static_cast<confidentiality_protection_indication_t>(
-                asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind.value);
-        /*
-if (asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present) {
-  pdu_session_res_to_setup_mod_item.security_ind.maximum_ipdatarate =
-      asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate.to_string();
-}*/
+        asn1_to_security_indication(pdu_session_res_to_setup_mod_item.security_ind,
+                                    asn1_res_to_setup_mod_item.security_ind);
 
         // pdu session res ambr
         if (asn1_res_to_setup_mod_item.pdu_session_res_ambr_present) {

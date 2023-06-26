@@ -233,7 +233,7 @@ struct cu_cp_pdu_session_res_setup_item {
   uint64_t                                                      pdu_session_aggregate_maximum_bit_rate_ul;
   up_transport_layer_info                                       ul_ngu_up_tnl_info;
   std::string                                                   pdu_session_type;
-  security_indication_t                                         security_ind;
+  optional<security_indication_t>                               security_ind;
   slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
 

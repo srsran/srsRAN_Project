@@ -180,11 +180,10 @@ inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
 
   // id-SecurityIndication
-  if (!asn1_setup_req_transfer->security_ind_present) {
-    setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
-    setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
-  } else {
-    asn1_to_security_indication(setup_item.security_ind, asn1_setup_req_transfer->security_ind);
+  if (asn1_setup_req_transfer->security_ind_present) {
+    security_indication_t ind = {};
+    asn1_to_security_indication(ind, asn1_setup_req_transfer->security_ind);
+    setup_item.security_ind = ind;
   }
 
   // id-QosFlowSetupRequestList

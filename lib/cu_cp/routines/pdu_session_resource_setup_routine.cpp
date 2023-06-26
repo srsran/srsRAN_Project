@@ -398,7 +398,11 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
     e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
 
-    e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind;
+    if (pdu_session_cfg.security_ind.has_value()) {
+      e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind.value();
+    } else {
+      e1ap_pdu_session_item.security_ind = {};
+    }
 
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
     fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
