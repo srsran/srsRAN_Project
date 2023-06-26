@@ -187,7 +187,7 @@ TEST_F(asn1_ngap_test, ng_setup_request_pack_and_unpack)
   // Field 0
   ASSERT_EQ(ngsetup->global_ran_node_id.type().value, global_ran_node_id_c::types_opts::global_gnb_id);
   global_gnb_id_s& global_gnb = ngsetup->global_ran_node_id.global_gnb_id();
-  ASSERT_EQ(global_gnb.plmn_id.to_number(), 0xF110);
+  ASSERT_EQ(global_gnb.plmn_id.to_number(), 0xf110);
   ASSERT_EQ(global_gnb.gnb_id.type().value, gnb_id_c::types_opts::gnb_id);
   ASSERT_EQ(global_gnb.gnb_id.gnb_id().to_number(), 1);
   // Field 1
@@ -197,7 +197,7 @@ TEST_F(asn1_ngap_test, ng_setup_request_pack_and_unpack)
   ASSERT_EQ(ngsetup->supported_ta_list[0].tac.to_number(), 0x75);
   ASSERT_EQ(ngsetup->supported_ta_list[0].broadcast_plmn_list.size(), 1);
   auto& bcast_item = ngsetup->supported_ta_list[0].broadcast_plmn_list[0];
-  ASSERT_EQ(bcast_item.plmn_id.to_number(), 0xF110);
+  ASSERT_EQ(bcast_item.plmn_id.to_number(), 0xf110);
   ASSERT_GT(bcast_item.tai_slice_support_list.size(), 0);
   ASSERT_EQ(bcast_item.tai_slice_support_list[0].s_nssai.sst.to_number(), 1);
   // Field 3
@@ -239,7 +239,7 @@ TEST_F(asn1_ngap_test, ng_setup_response_pack_and_unpack)
   ASSERT_EQ(resp->amf_name.to_string(), "amf1.cluster1.net2.amf.5gc.mnc001.mcc001.3gppnetwork.org");
   // field 1
   ASSERT_EQ(resp->served_guami_list.size(), 1);
-  ASSERT_EQ(resp->served_guami_list[0].guami.plmn_id.to_number(), 0xF110);
+  ASSERT_EQ(resp->served_guami_list[0].guami.plmn_id.to_number(), 0xf110);
   ASSERT_EQ(resp->served_guami_list[0].guami.amf_region_id.to_number(), 0b111000);
   ASSERT_EQ(resp->served_guami_list[0].guami.amf_set_id.to_number(), 0b100010);
   ASSERT_EQ(resp->served_guami_list[0].guami.amf_pointer.to_number(), 0b10111);
@@ -253,7 +253,7 @@ TEST_F(asn1_ngap_test, ng_setup_response_pack_and_unpack)
 TEST_F(asn1_ngap_test, amf_config_update)
 {
   uint8_t ngap_msg[] = {
-      0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x08, 0x02, 0x80, 0x73, 0x72, 0x73, 0x72, 0x61, 0x6e};
+      0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x08, 0x02, 0x80, 0x73, 0x72, 0x73, 0x72, 0x61, 0x6e};
   // 0000000F00000100010008028073727372616E
   srsran::byte_buffer byte_pdu{ngap_msg};
   cbit_ref            bref(byte_pdu);
@@ -311,7 +311,7 @@ TEST_F(asn1_ngap_test, init_ue_msg_pack_and_unpack)
   ASSERT_EQ(container.nas_pdu.size(), 124);
   // Field 2
   ASSERT_EQ(container.user_location_info.type().value, user_location_info_c::types_opts::user_location_info_nr);
-  ASSERT_EQ(container.user_location_info.user_location_info_nr().nr_cgi.plmn_id.to_number(), 0xF110);
+  ASSERT_EQ(container.user_location_info.user_location_info_nr().nr_cgi.plmn_id.to_number(), 0xf110);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
   ASSERT_EQ(test_pack_unpack_consistency(pdu), SRSASN_SUCCESS);
