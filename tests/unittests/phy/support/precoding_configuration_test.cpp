@@ -273,6 +273,9 @@ TEST_F(PrecodingConfigFixture, DifferentMatrixDimensionsNotAllowed)
   precoding_configuration config(nof_layers, nof_ports, nof_prg, prg_size);
 
   precoding_weight_matrix bad_precoding_matrix(nof_layers + 1, nof_ports);
+
+  // Check that the precoding configuration throws an assertion when setting a precoding matrix with invalid dimensions.
+#ifdef ASSERTS_ENABLED
   ASSERT_DEATH(
       config.set_prg_coefficients(bad_precoding_matrix, 0),
       R"(The precoding matrix number of layers \(i\.e\.\, 4\) does not match the precoding configuration number of layers \(i\.e\.\, 3\)\.)");
@@ -280,6 +283,7 @@ TEST_F(PrecodingConfigFixture, DifferentMatrixDimensionsNotAllowed)
   ASSERT_DEATH(
       config.set_prg_coefficients(bad_precoding_matrix2, 0),
       R"(The precoding matrix number of ports \(i\.e\.\, 4\) does not match the precoding configuration number of ports \(i\.e\.\, 3\)\.)");
+#endif
 }
 
 TEST_F(PrecodingConfigFixture, EqualityOperator)
