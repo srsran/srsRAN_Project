@@ -91,9 +91,15 @@ full-code-format:
     - if: $CI_DESCRIPTION =~ /Nightly/
 
 .codechecker:
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
+  image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
   stage: static
-  needs: []
+  needs:
+    - job: builder version
+      optional: false
+      artifacts: true
+    - job: trigger builder
+      optional: true
+      artifacts: false
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""

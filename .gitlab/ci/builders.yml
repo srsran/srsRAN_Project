@@ -154,6 +154,33 @@ ubuntu-20-uhd:
 # Publish
 ################################################################################
 
+# Codechecker
+docker-builder-publish [codechecker]:
+  extends: .docker-builder
+  stage: publish
+  variables:
+    MULTI_ARCH_BUILD: none
+    RHEL_CT_VERSION: none
+    PLATFORM: amd64
+    MODE: publish
+  tags:
+    - aws-spot-$PLATFORM
+  rules:
+    - if: $ON_MR
+  before_script:
+    - !reference [.fetch_src_cache, before_script]
+    - !reference [.fetch_src_cache, script]
+    - |
+      export NAME=codechecker
+      export VERSION=$DOCKER_BUILDER_VERSION
+      export CONTEXT=.gitlab/ci/builders
+      export DOCKERFILE=$CONTEXT/codechecker
+      export BUILD_ARGS="CR_REGISTRY_URI=${CR_REGISTRY_URI};CI_TOOLS_REPO=${CI_TOOLS_REPO}"
+  needs:
+    - builder version
+  cache:
+    - !reference [.fetch_src_cache, cache]
+
 # Ubuntu 20.04
 docker-builder-publish [ubuntu, 20.04]:
   extends:
