@@ -304,16 +304,20 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.5.0
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
   script:
-    - ls
-    - ls zmq
-    - cat ./zmq/job.env
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv docs/index.html public/index.html
-    - doxygen_generator.sh
+    - .gitlab/ci/builders/install_dependencies.sh
+    - |
+      rm -Rf build
+      mkdir build
+      cd build || exit
+      cmake -G Ninja ..
+      ninja doxygen
+      mv ./docs/html ./public
     - mv build/public/index.html build/public/index_doxygen.html
     - find build/public/ -name '*.*' -exec mv {} public/ \;
 
