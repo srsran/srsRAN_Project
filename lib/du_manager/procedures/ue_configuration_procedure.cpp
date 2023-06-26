@@ -233,6 +233,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     }
     for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
       b.rlc_cfg_present         = false;
+      b.mac_lc_ch_cfg_present   = false;
       b.reestablish_rlc_present = true;
     }
   } else {
