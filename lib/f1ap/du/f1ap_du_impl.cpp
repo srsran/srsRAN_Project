@@ -159,9 +159,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     const gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
     f1ap_du_ue*               old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
     if (old_ue != nullptr) {
-      f1ap_ue_delete_request request{};
-      request.ue_index = old_ue->context.ue_index;
-      du_mng.get_ue_handler(old_ue->context.ue_index).schedule_async_task(du_mng.request_ue_removal(request));
+      du_mng.notify_reestablishment_of_old_ue(ue->context.ue_index, old_ue->context.ue_index);
     } else {
       logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
     }
