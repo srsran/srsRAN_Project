@@ -58,6 +58,40 @@ protected:
       // TDD params.
       sched_cfg.tdd_ul_dl_cfg_common = testparams.tdd_cfg;
 
+      // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
+      const auto& tdd_cfg                  = testparams.tdd_cfg;
+      auto        pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
+          sched_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
+          ss0_idx,
+          sched_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
+          tdd_cfg.pattern1.nof_dl_symbols);
+      if (tdd_cfg.pattern2.has_value()) {
+        const auto& pattern2_pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
+            sched_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
+            ss0_idx,
+            sched_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
+            tdd_cfg.pattern2->nof_dl_symbols);
+        pdsch_ofdm_symbol_ranges.insert(pdsch_ofdm_symbol_ranges.end(),
+                                        pattern2_pdsch_ofdm_symbol_ranges.begin(),
+                                        pattern2_pdsch_ofdm_symbol_ranges.end());
+      }
+      auto& pdsch_td_alloc_list = sched_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+      for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
+        pdsch_td_alloc_list.push_back(
+            config_helpers::make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
+      }
+      // Remove duplicates in PDSCH time domain resources.
+      auto pdsch_td_alloc_it_ptr = std::unique(pdsch_td_alloc_list.begin(), pdsch_td_alloc_list.end());
+      pdsch_td_alloc_list.resize(std::distance(pdsch_td_alloc_list.begin(), pdsch_td_alloc_it_ptr));
+      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol range length to always choose
+      // the resource which occupies most of the DL symbols in a slot.
+      std::sort(sched_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
+                sched_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
+                [](const pdsch_time_domain_resource_allocation& res_alloc_a,
+                   const pdsch_time_domain_resource_allocation& res_alloc_b) {
+                  return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
+                });
+
       // RACH config
       optional<uint8_t> chosen_prach_cfg_idx =
           prach_helper::find_valid_prach_config_index(sched_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
@@ -117,7 +151,7 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
 
     // For every DL slot.
     // Note: Skip special slots in test for now.
-    if (cell_cfg_list[0].is_fully_dl_enabled(this->last_result_slot())) {
+    if (cell_cfg_list[0].is_dl_enabled(this->last_result_slot())) {
       // Ensure UE PDSCH allocations are made.
       ASSERT_FALSE(this->last_sched_res->dl.ue_grants.empty())
           << "The UE configuration is leading to some DL slots staying empty";
@@ -186,10 +220,10 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 4, 1, 4}, nullopt}},
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 4, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}}));
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}, nullopt}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}},
+  // tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}, nullopt}}, // Not enough space in PUCCH.
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}}));
   // TODO: Support more TDD patterns.
 // clang-format on
 
@@ -199,8 +233,8 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 4, 3, 4}, nullopt}}, // DDDDDDSUUU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 4, 2, 4}, nullopt}}, // DDDDDDDSUU
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 4, 1, 4}, nullopt}}, // DDDDDDDDSU
-  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 4, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}})); // DDDSUUDDDD
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}, nullopt}}, // DDDDDDSUUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}, nullopt}}, // DDDDDDDSUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}, nullopt}}, // DDDDDDDDSU
+  tdd_test_params{false, {subcarrier_spacing::kHz30, {6, 3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}})); // DDDSUUDDDD
 // clang-format on
