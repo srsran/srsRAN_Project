@@ -9,6 +9,7 @@
  */
 
 #include "cell_meas_manager_impl.h"
+#include "cell_meas_manager_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
