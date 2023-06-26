@@ -194,7 +194,7 @@ public:
   /// Returns a transmission precoding and beamforming PDU builder of this SSB PDU.
   tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
-    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
     return builder;
   }
@@ -334,7 +334,7 @@ public:
   /// Returns a transmission precoding and beamforming PDU builder of this DL DCI PDU.
   tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
-    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
     return builder;
   }
@@ -920,7 +920,7 @@ public:
   /// Returns a transmission precoding and beamforming PDU builder of this CSI-RS PDU.
   tx_precoding_and_beamforming_pdu_builder get_tx_precoding_and_beamforming_pdu_builder()
   {
-    tx_precoding_and_beamforming_pdu_builder builder(pdu.preconding_and_beamforming);
+    tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
     return builder;
   }
