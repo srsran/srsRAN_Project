@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ue_manager.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/f1ap/common/f1ap_common.h"
@@ -21,11 +22,6 @@
 
 namespace srsran {
 namespace srs_cu_cp {
-
-/// UE configuration passed to CU-CP
-struct ue_configuration {
-  std::chrono::seconds inactivity_timer;
-};
 
 struct mobility_configuration {
   cell_meas_manager_cfg meas_manager_config;
