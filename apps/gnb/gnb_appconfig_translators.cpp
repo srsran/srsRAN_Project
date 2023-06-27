@@ -40,6 +40,28 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
 
+  // Convert cell list into map.
+  for (const auto& cell : config.cu_cp_cfg.mobility_config.cells) {
+    std::vector<nr_cell_id_t> ncell_ids;
+    for (const auto& ncell : cell.ncells) {
+      ncell_ids.push_back(ncell.n_id_cell);
+    }
+    out_cfg.mobility_config.meas_manager_config.neighbor_cell_list[cell.n_id_cell] = ncell_ids;
+  }
+
+  // Convert measurement config.
+  out_cfg.mobility_config.meas_manager_config.a3_event_config.emplace();
+  auto& event_config = out_cfg.mobility_config.meas_manager_config.a3_event_config.value();
+  if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrp") {
+    event_config.a3_offset.rsrp = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
+  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "rsrq") {
+    event_config.a3_offset.rsrq = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
+  } else if (config.cu_cp_cfg.mobility_config.meas_config.a3_report_type == "sinr") {
+    event_config.a3_offset.sinr = config.cu_cp_cfg.mobility_config.meas_config.a3_offset_db;
+  }
+  event_config.hysteresis      = config.cu_cp_cfg.mobility_config.meas_config.a3_hysteresis_db;
+  event_config.time_to_trigger = config.cu_cp_cfg.mobility_config.meas_config.a3_time_to_trigger_ms;
+
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
   }
