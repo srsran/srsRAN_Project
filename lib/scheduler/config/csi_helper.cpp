@@ -46,10 +46,16 @@ static zp_csi_rs_resource make_default_zp_csi_rs_resource(const csi_builder_para
     res.res_mapping.fd_alloc.resize(12);
     res.res_mapping.fd_alloc.set(8, true);
     res.res_mapping.cdm = csi_rs_cdm_type::no_CDM;
-  } else {
+  } else if (params.nof_ports == 2) {
     res.res_mapping.fd_alloc.resize(6);
     res.res_mapping.fd_alloc.set(4, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
+  } else if (params.nof_ports == 4) {
+    res.res_mapping.fd_alloc.resize(3);
+    res.res_mapping.fd_alloc.set(2, true);
+    res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
+  } else {
+    report_fatal_error("Unsupported number of antenna ports={}", params.nof_ports);
   }
   res.res_mapping.first_ofdm_symbol_in_td = 8;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::one;
@@ -84,6 +90,12 @@ srsran::csi_helper::make_periodic_zp_csi_rs_resource_list(const csi_builder_para
       list[res_id].res_mapping.fd_alloc.reset();
       list[res_id].res_mapping.fd_alloc.set(4 + res_id, true);
     }
+
+  } else if (params.nof_ports == 4) {
+    // 1 zp-CSI-RS resource.
+
+    list.resize(1, make_default_zp_csi_rs_resource(params));
+    list[0].id = static_cast<zp_csi_rs_res_id_t>(0);
 
   } else {
     report_fatal_error("Unsupported number of antenna ports");
@@ -194,6 +206,11 @@ static nzp_csi_rs_resource make_channel_measurement_nzp_csi_rs_resource(const cs
     res.res_mapping.fd_alloc.set(5, true);
     res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
   } else if (params.nof_ports == 4) {
+    // Freq Alloc -> Row 4 (size 3) = 001
+    res.res_mapping.fd_alloc.resize(3);
+    res.res_mapping.fd_alloc.set(2, true);
+    res.res_mapping.cdm = csi_rs_cdm_type::fd_CDM2;
+  } else {
     report_fatal_error("Number of ports {} not supported", params.nof_ports);
   }
 
@@ -354,11 +371,12 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
       codebook_config::type1::single_panel::more_than_two_antenna_ports port_cfg{};
       port_cfg.n1_n2_restriction_type =
           codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_restriction_type_t::two_one;
+      // Enable all beam combinations.
       port_cfg.n1_n2_restriction_value.resize(8);
-      port_cfg.n1_n2_restriction_value.fill(0, 8, true); // TODO: Check if this value is reasonable.
+      port_cfg.n1_n2_restriction_value.fill(0, 8, true);
+      // Enable all i2 options.
       port_cfg.typei_single_panel_codebook_subset_restriction_i2.resize(16);
-      port_cfg.typei_single_panel_codebook_subset_restriction_i2.fill(
-          0, 16, true); // TODO: Check if this value is reasonable.
+      port_cfg.typei_single_panel_codebook_subset_restriction_i2.fill(0, 16, true);
       single_panel.nof_antenna_ports = port_cfg;
     } else {
       report_fatal_error("Unsupported number of antenna ports {}", params.nof_ports);
@@ -367,7 +385,7 @@ static std::vector<csi_report_config> make_csi_report_configs(const csi_builder_
     // by setting the RI restriction bitmap to 0b11...11, where the number of 1s is set to be equal to the number of
     // ports.
     single_panel.typei_single_panel_ri_restriction.resize(8);
-    single_panel.typei_single_panel_ri_restriction.from_uint64((1 << params.nof_ports) - 1);
+    single_panel.typei_single_panel_ri_restriction.from_uint64((1U << params.nof_ports) - 1U);
     type1.sub_type                      = single_panel;
     type1.codebook_mode                 = 1;
     reps[0].codebook_cfg->codebook_type = type1;
