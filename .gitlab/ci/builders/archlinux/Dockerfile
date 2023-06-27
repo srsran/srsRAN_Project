@@ -11,8 +11,7 @@ RUN pacman-key --init \
   && pacman -Syu --noconfirm
 RUN install_dependencies.sh && pacman -Syu --noconfirm \
   git git-lfs \
-  ninja clang \
-  zeromq libuhd boost \
+  clang \
   ccache valgrind libelf libdwarf \
   python-pip
 RUN git lfs install && pip install --break-system-packages gcovr==5.0

@@ -57,7 +57,7 @@ variables:
     description: It will be passed to cmake
     value: ""
   MAKE_ARGS:
-    description: It will be passed to make/ninja
+    description: It will be passed to make
     value: ""
   UHD_VERSION:
     description: must be one version supported in the specified OS
@@ -179,7 +179,6 @@ variables:
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
-        cd build && ninja install && cd ..
 
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"

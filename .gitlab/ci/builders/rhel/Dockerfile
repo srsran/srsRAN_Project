@@ -13,12 +13,14 @@ RUN install_dependencies.sh && \
     ln -s /opt/rh/gcc-toolset-12/root/usr/bin/gcc /usr/bin/gcc && \
     ln -s /opt/rh/gcc-toolset-12/root/usr/bin/g++ /usr/bin/g++
 
-# Install ninja
-RUN git clone https://github.com/ninja-build/ninja && \
-    cd ninja && \
-    cmake -Bbuild-cmake && cd ./build-cmake && \
-    make -j `nproc` && make -j `nproc` install && \
-    cd ../.. && rm -rf ninja
+# Install gtest
+RUN cd /tmp && git clone https://github.com/google/googletest.git && \
+    cd googletest && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j $(nproc) && make -j $(nproc) install && \
+    cd ../../ && rm -rf googletest
 
 # TODO: install python (including venv) to support changed_tests and ram_reporter scripts
 

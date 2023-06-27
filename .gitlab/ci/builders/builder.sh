@@ -26,7 +26,7 @@ FOLDER=""
 BUILD_FOLDER="build"
 CACHE_FOLDER="ccache"
 CLEAN_BUILD="True"
-MAKE_EXTRA=""
+MAKE_EXTRA="-j $(nproc)"
 COMPILER="gcc"
 UHD_VERSION=""
 
@@ -147,14 +147,18 @@ export CCACHE_BASEDIR=${PWD}
 export CCACHE_DIR=${PWD}/${CACHE_FOLDER}
 export CCACHE_COMPILERCHECK=content
 
-# Build process
+# Clean build dir
 if [[ "$CLEAN_BUILD" == "True" ]]; then
     echo "Cleaning build directory: $BUILD_FOLDER"
     rm -Rf "$BUILD_FOLDER"
 else
     echo "Skip cleaning of build directory: $BUILD_FOLDER"
 fi
+# Use ccache if available
+(which ccache >/dev/null) && CCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" || CCACHE_CMAKE_ARGS=""
+
+# Build process
 mkdir -p "$BUILD_FOLDER"
 cd "$BUILD_FOLDER" || exit
-cmake -G Ninja -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache "$@" ..
-ninja $MAKE_EXTRA
+cmake $CCACHE_CMAKE_ARGS "$@" ..
+make $MAKE_EXTRA

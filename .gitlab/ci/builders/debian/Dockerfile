@@ -8,8 +8,7 @@ RUN chmod +x /usr/local/bin/install_dependencies.sh
 RUN TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN install_dependencies.sh && apt-get install -y --no-install-recommends \
   git git-lfs \
-  ninja-build clang llvm \
-  libzmq3-dev libuhd-dev uhd-host libboost-program-options-dev \
+  clang llvm \
   ccache gcovr valgrind libelf-dev libdwarf-dev \
   python3-dev python3-venv \
   && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/* && git lfs install
