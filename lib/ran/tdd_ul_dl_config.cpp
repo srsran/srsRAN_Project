@@ -86,3 +86,17 @@ optional<unsigned> srsran::find_next_tdd_ul_slot(const tdd_ul_dl_config_common& 
   }
   return ret;
 }
+
+optional<unsigned> srsran::find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index)
+{
+  const unsigned period = nof_slots_per_tdd_period(cfg);
+
+  optional<unsigned> ret;
+  for (unsigned i = start_slot_index; i < period; ++i) {
+    if (get_active_tdd_ul_symbols(cfg, i, cyclic_prefix::NORMAL).length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
+      ret = i;
+      break;
+    }
+  }
+  return ret;
+}
