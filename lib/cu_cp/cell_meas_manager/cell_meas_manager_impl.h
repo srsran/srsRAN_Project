@@ -13,7 +13,6 @@
 #include "srsran/cu_cp/cell_meas_manager.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 /// Basic cell manager implementation
@@ -33,5 +32,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsran

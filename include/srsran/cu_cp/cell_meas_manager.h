@@ -14,7 +14,6 @@
 #include "cu_cp_types.h"
 
 namespace srsran {
-
 namespace srs_cu_cp {
 
 /// Object to manage cell measurement related tasks including neighbor cell relationships between cells managed by DUs
@@ -36,5 +35,4 @@ public:
 std::unique_ptr<cell_meas_manager> create_cell_meas_manager(const cell_meas_manager_cfg& cfg);
 
 } // namespace srs_cu_cp
-
 } // namespace srsran
