@@ -17,6 +17,6 @@ using namespace srsran;
 std::unique_ptr<srs_cu_cp::cell_meas_manager>
 srsran::srs_cu_cp::create_cell_meas_manager(const srs_cu_cp::cell_meas_manager_cfg& cfg_)
 {
-  srsran_assert(is_valid_configuration(cfg_) == true, "Cell measurement manager configuration is invalid");
+  srsran_assert(is_valid_configuration(cfg_), "Cell measurement manager configuration is invalid");
   return std::make_unique<srs_cu_cp::cell_meas_manager_impl>(cfg_);
 }

@@ -424,7 +424,7 @@ struct cu_cp_cell_appconfig_item {
   std::vector<cu_cp_ncell_appconfig_item> ncells;    ///< Map of cell ids with their neigbors as value.
 };
 
-/// \brief Measurement conifguration, for now only supporting the A3 event.
+/// \brief Measurement configuration, for now only supporting the A3 event.
 struct cu_cp_measurement_appconfig {
   std::string a3_report_type;
   unsigned    a3_offset_db;
