@@ -118,6 +118,10 @@ variables:
     - |
       build_srsgnb() {
         start_time=$(date +%s)
+        if [ -e "/usr/local/bin/ram_reporter.py" ]; then
+          /usr/local/builder_tools/bin/python3 /usr/local/bin/ram_reporter.py ${CI_PROJECT_DIR}/ram_usage.txt &
+          ram_reporter_pid=$!
+        fi
 
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
@@ -187,9 +191,18 @@ variables:
         end_time=$(date +%s)
         execution_time=$((end_time - start_time))
         echo "Build time is: $execution_time seconds"
+
         export metric_prefix=""
         if [[ $ON_MR == "true" ]]; then metric_prefix="_cached"; fi
-        echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+
+        if [ -e "${CI_PROJECT_DIR}/ram_usage.txt" ]; then
+          ram_usage=$(cat ${CI_PROJECT_DIR}/ram_usage.txt)
+          echo "RAM usage is: $ram_usage GB"
+          kill $ram_reporter_pid
+          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}, {"name":"ram_usage'$metric_prefix'","description":"RAM usage","value":['$ram_usage'],"unit":"GB","type":"ram"}],"duts":[]}]}]' >> build_time_metrics.json
+        else
+          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+        fi
       }
     - |
       launch_tests() {
