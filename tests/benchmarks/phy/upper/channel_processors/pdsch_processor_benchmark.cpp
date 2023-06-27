@@ -90,7 +90,7 @@ static unsigned                finish_count  = 0;
 
 // Test profile structure, initialized with default profile values.
 struct test_profile {
-  enum class mimo_topology { one_port_one_layer = 0, two_port_two_layer };
+  enum class mimo_topology { one_port_one_layer = 0, two_port_two_layer, four_port_four_layer };
 
   std::string                      name         = "default";
   std::string                      description  = "Runs all combinations.";
@@ -205,7 +205,7 @@ static const std::vector<test_profile> profile_set = {
      {{modulation_scheme::QAM256, 948.0F}}},
 
     {"scs30_100MHz_256qam_max",
-     "Encodes PDSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
+     "Encodes PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,
      {0},
      cyclic_prefix::NORMAL,
@@ -216,12 +216,23 @@ static const std::vector<test_profile> profile_set = {
      {{modulation_scheme::QAM256, 948.0F}}},
 
     {"2port_2layer_scs30_100MHz_256qam",
-     "Encodes PDSCH with 50 MHz of bandwidth and a 15 kHz SCS, 256-QAM modulation at maximum code rate.",
+     "Encodes 2 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
      subcarrier_spacing::kHz30,
      {0},
      cyclic_prefix::NORMAL,
      0,
      test_profile::mimo_topology::two_port_two_layer,
+     12,
+     {270},
+     {{modulation_scheme::QAM256, 948.0F}}},
+
+    {"4port_4layer_scs30_100MHz_256qam",
+     "Encodes 4 layers of PDSCH with 100 MHz of bandwidth and a 30 kHz SCS, 256-QAM modulation at maximum code rate.",
+     subcarrier_spacing::kHz30,
+     {0},
+     cyclic_prefix::NORMAL,
+     0,
+     test_profile::mimo_topology::four_port_four_layer,
      12,
      {270},
      {{modulation_scheme::QAM256, 948.0F}}},
@@ -244,7 +255,7 @@ static void usage(const char* prog)
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
   fmt::print("\t-D LDPC encoder type. [Default {}]\n", ldpc_encoder_type);
-  fmt::print("\t-t PDSCH processor type. [Default {}]\n", pdsch_processor_type);
+  fmt::print("\t-t PDSCH processor type (generic, concurrent:nof_threads). [Default {}]\n", pdsch_processor_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
@@ -323,6 +334,9 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
       break;
     case test_profile::mimo_topology::two_port_two_layer:
       precoding_config = precoding_configuration::make_wideband(make_two_layer_two_ports(0));
+      break;
+    case test_profile::mimo_topology::four_port_four_layer:
+      precoding_config = precoding_configuration::make_wideband(make_four_layer_four_ports_type1_sp(0, 0));
       break;
   }
 
@@ -429,7 +443,7 @@ static pdsch_processor_factory& get_processor_factory()
   // Create concurrent PDSCH processor.
   if (pdsch_processor_type.find("concurrent") != std::string::npos) {
     std::size_t pos = pdsch_processor_type.find(":");
-    if (pos + 1 < pdsch_processor_type.size()) {
+    if (pos < pdsch_processor_type.size() - 1) {
       std::string str                        = pdsch_processor_type.substr(pos + 1);
       nof_pdsch_processor_concurrent_threads = std::strtol(str.c_str(), nullptr, 10);
     }
