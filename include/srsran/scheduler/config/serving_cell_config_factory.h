@@ -66,24 +66,28 @@ cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_co
 uint8_t compute_max_nof_candidates(aggregation_level aggr_lvl, const coreset_configuration& cs_cfg);
 
 /// \brief Creates PDSCH Time Domain Resource configuration given the PDSCH OFDM symbol start and stop index.
-/// \param[in] ofdm_start_symbol_idx PDSCH OFDM symbol start index.
-/// \param[in] ofdm_stop_symbol_idx PDSCH OFDM symbol stop index.
+/// \param[in] ofdm_symbols PDSCH OFDM symbols.
 /// \return PDSCH Time Domain Resource configuration.
-pdsch_time_domain_resource_allocation make_pdsch_time_domain_resource(unsigned ofdm_start_symbol_idx,
-                                                                      unsigned ofdm_stop_symbol_idx);
+pdsch_time_domain_resource_allocation make_pdsch_time_domain_resource(ofdm_symbol_range ofdm_symbols);
 
 /// \brief Generates PDSCH OFDM symbol ranges based on CORESET and SearchSpace configuration.
+///
+/// Function generates a list of OFDM symbol ranges over which PDSCH can be scheduled. The list is generated considering
+/// the nof. DL symbols configured in a particular slot, CORESET duration and first PDCCH monitoring symbol index in
+/// SearchSpace configuration. This is mainly needed in TDD usecase where TDD pattern configured contains special slots
+/// where not all OFDM symbols are reserved for Downlink transmission.
+///
 /// \param[in] cs0_duration CORESET#0 duration in nof. OFDM symbols.
 /// \param[in] cs1_duration CORESET#1 duration in nof. OFDM symbols.
 /// \param[in] ss0_idx SearchSpace#0 index.
 /// \param[in] ss1_first_monitoring_symb_idx First monitoring occasion OFDM symbol index in SearchSpace#1.
 /// \param[in] ss2_first_monitoring_symb_idx First monitoring occasion OFDM symbol index in SearchSpace#2.
-/// \param[in] nof_dl_symbols_per_slot Number of OFDM symbols configured for Downlink in a slot.
+/// \param[in] nof_dl_symbols_in_slot Number of DL OFDM symbols configured for in a particular slot.
 /// \return List of PDSCH OFDM symbol range.
 std::vector<ofdm_symbol_range> generate_pdsch_ofdm_symbol_ranges(unsigned           cs0_duration,
                                                                  uint8_t            ss0_idx,
                                                                  unsigned           ss1_first_monitoring_symb_idx,
-                                                                 unsigned           nof_dl_symbols_per_slot,
+                                                                 unsigned           nof_dl_symbols_in_slot,
                                                                  optional<unsigned> cs1_duration                  = {},
                                                                  optional<unsigned> ss2_first_monitoring_symb_idx = {});
 

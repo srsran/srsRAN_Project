@@ -400,8 +400,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       }
       auto& pdsch_td_alloc_list = out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
       for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
-        pdsch_td_alloc_list.push_back(
-            config_helpers::make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
+        pdsch_td_alloc_list.push_back(config_helpers::make_pdsch_time_domain_resource(symb_range));
       }
       // Remove duplicates in PDSCH time domain resources.
       auto pdsch_td_alloc_it_ptr = std::unique(pdsch_td_alloc_list.begin(), pdsch_td_alloc_list.end());

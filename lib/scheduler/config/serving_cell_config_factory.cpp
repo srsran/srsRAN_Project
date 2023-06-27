@@ -228,8 +228,7 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
                                         cfg.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
                                         14);
   for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
-    cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.push_back(
-        make_pdsch_time_domain_resource(symb_range.start(), symb_range.stop()));
+    cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.push_back(make_pdsch_time_domain_resource(symb_range));
   }
 
   // Configure PCCH.
@@ -686,17 +685,16 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
 }
 
 pdsch_time_domain_resource_allocation
-srsran::config_helpers::make_pdsch_time_domain_resource(unsigned ofdm_start_symbol_idx, unsigned ofdm_stop_symbol_idx)
+srsran::config_helpers::make_pdsch_time_domain_resource(ofdm_symbol_range ofdm_symbols)
 {
-  return pdsch_time_domain_resource_allocation{
-      .k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = {ofdm_start_symbol_idx, ofdm_stop_symbol_idx}};
+  return pdsch_time_domain_resource_allocation{.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbols};
 }
 
 std::vector<ofdm_symbol_range>
 srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0_duration,
                                                           uint8_t            ss0_idx,
                                                           unsigned           ss1_first_monitoring_symb_idx,
-                                                          unsigned           nof_dl_symbols_per_slot,
+                                                          unsigned           nof_dl_symbols_in_slot,
                                                           optional<unsigned> cs1_duration,
                                                           optional<unsigned> ss2_first_monitoring_symb_idx)
 {
@@ -717,22 +715,22 @@ srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0
   static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
 
   // For SS#0 (CORESET#0).
-  if ((nof_dl_symbols_per_slot > (ss0_start_symbol_idx + cs0_duration)) and
-      (nof_dl_symbols_per_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_per_slot);
+  if ((nof_dl_symbols_in_slot > (ss0_start_symbol_idx + cs0_duration)) and
+      (nof_dl_symbols_in_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
+    result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_in_slot);
   }
   // For SS#1 (CORESET#0).
-  if ((nof_dl_symbols_per_slot > (ss1_first_monitoring_symb_idx + cs0_duration)) and
-      (nof_dl_symbols_per_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
+  if ((nof_dl_symbols_in_slot > (ss1_first_monitoring_symb_idx + cs0_duration)) and
+      (nof_dl_symbols_in_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
           pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(ss1_first_monitoring_symb_idx + cs0_duration, nof_dl_symbols_per_slot);
+    result.emplace_back(ss1_first_monitoring_symb_idx + cs0_duration, nof_dl_symbols_in_slot);
   }
   // For SS#2 (CORESET#1).
   if (cs1_duration.has_value() and ss2_first_monitoring_symb_idx.has_value() and
-      (nof_dl_symbols_per_slot > (*ss2_first_monitoring_symb_idx + *cs1_duration)) and
-      (nof_dl_symbols_per_slot - *ss2_first_monitoring_symb_idx - *cs1_duration) >=
+      (nof_dl_symbols_in_slot > (*ss2_first_monitoring_symb_idx + *cs1_duration)) and
+      (nof_dl_symbols_in_slot - *ss2_first_monitoring_symb_idx - *cs1_duration) >=
           pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(*ss2_first_monitoring_symb_idx + *cs1_duration, nof_dl_symbols_per_slot);
+    result.emplace_back(*ss2_first_monitoring_symb_idx + *cs1_duration, nof_dl_symbols_in_slot);
   }
 
   // Remove duplicates.
