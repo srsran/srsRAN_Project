@@ -159,11 +159,77 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
+static void configure_cli11_ncell_args(CLI::App& app, cu_cp_ncell_appconfig_item& config)
+{
+  app.add_option("--rat", config.rat, "RAT of this neighbor cell");
+  app.add_option("--nr_cell_id", config.n_id_cell, "NR cell id");
+  // TODO: Add SSB related params here.
+}
+
+static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
+{
+  app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+
+  // Neighbor cell parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--ncells",
+      [&config](const std::vector<std::string>& values) {
+        config.ncells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("Neighbor cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ncell_args(subapp, config.ncells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the high level cell map");
+}
+
+static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
+{
+  app.add_option("--a3_report_type", meas_params.a3_report_type, "A3 report type");
+  app.add_option("--a3_offset_db", meas_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option(
+      "--a3_hysteresis_db", meas_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+  app.add_option("--a3_time_to_trigger_ms",
+                 meas_params.a3_time_to_trigger_ms,
+                 "Time in ms during which A3 condition must be met before measurement report trigger");
+}
+
+static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)
+{
+  // Cell map parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&config](const std::vector<std::string>& values) {
+        config.cells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_cells_args(subapp, config.cells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the high level cell list");
+
+  CLI::App* meas_config_subcmd = app.add_subcommand("meas_config", "Measurement configuration");
+  configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
+
+  CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
+  configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)

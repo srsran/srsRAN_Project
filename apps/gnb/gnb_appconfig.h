@@ -410,8 +410,37 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
+/// \brief Each item describes the parameters of a single neighbor cell.
+struct cu_cp_ncell_appconfig_item {
+  uint64_t    n_id_cell; ///< Cell id of the neighbor cell
+  std::string rat;       ///< RAT of this neighbor cell.
+  // TODO: Add optional SSB
+  optional<unsigned> ssb_arfcn;
+};
+
+/// \brief Each item describes the relationship between one cell to all other cells.
+struct cu_cp_cell_appconfig_item {
+  uint64_t                                n_id_cell; ///< Cell id.
+  std::vector<cu_cp_ncell_appconfig_item> ncells;    ///< Map of cell ids with their neigbors as value.
+};
+
+/// \brief Measurement conifguration, for now only supporting the A3 event.
+struct cu_cp_measurement_appconfig {
+  std::string a3_report_type;
+  unsigned    a3_offset_db;
+  unsigned    a3_hysteresis_db;
+  unsigned    a3_time_to_trigger_ms;
+};
+
+/// \brief All mobility related configuration parameters.
+struct mobility_appconfig {
+  std::vector<cu_cp_cell_appconfig_item> cells;       ///< List of all cells known to the CU-CP.
+  cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
+};
+
 struct cu_cp_appconfig {
-  int inactivity_timer = 7200; // in seconds
+  int                inactivity_timer = 7200; // in seconds
+  mobility_appconfig mobility_config;
 };
 
 struct log_appconfig {
