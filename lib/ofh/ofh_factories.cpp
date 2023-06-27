@@ -77,9 +77,13 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   config.ecpri_builder = ecpri::create_ecpri_packet_builder();
   config.frame_pool    = std::move(frame_pool);
 
+  const unsigned nof_prbs =
+      get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.bw), tx_config.scs, srsran::frequency_range::FR1);
+  const double bw_scaling = 1.0 / (std::sqrt(nof_prbs * NOF_SUBCARRIERS_PER_RB));
+
   std::array<std::unique_ptr<ofh::iq_compressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> compr;
   for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    compr[i] = create_iq_compressor(static_cast<ofh::compression_type>(i), tx_config.iq_scaling);
+    compr[i] = create_iq_compressor(static_cast<ofh::compression_type>(i), logger, tx_config.iq_scaling * bw_scaling);
   }
   config.compressor_sel = ofh::create_iq_compressor_selector(std::move(compr));
   config.up_builder =
@@ -199,7 +203,7 @@ resolve_receiver_dependencies(const sector_configuration&                       
   // Comrpessors.
   std::array<std::unique_ptr<ofh::iq_decompressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> decompr;
   for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    decompr[i] = create_iq_decompressor(static_cast<ofh::compression_type>(i));
+    decompr[i] = create_iq_decompressor(static_cast<ofh::compression_type>(i), *depen.logger);
   }
   depen.decompressor_sel = create_iq_decompressor_selector(std::move(decompr));
 

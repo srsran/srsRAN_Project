@@ -42,15 +42,16 @@ protected:
     params.type           = test_case.type;
     params.data_width     = test_case.cIQ_width;
 
-    compressor = create_iq_compressor(params.type, test_case.iq_scaling, std::get<0>(GetParam()));
+    compressor = create_iq_compressor(params.type, logger, test_case.iq_scaling, std::get<0>(GetParam()));
     ASSERT_NE(compressor, nullptr);
-    decompressor = create_iq_decompressor(params.type, std::get<0>(GetParam()));
+    decompressor = create_iq_decompressor(params.type, logger, std::get<0>(GetParam()));
     ASSERT_NE(decompressor, nullptr);
   }
 
   ru_compression_params            params       = {};
   std::unique_ptr<iq_compressor>   compressor   = nullptr;
   std::unique_ptr<iq_decompressor> decompressor = nullptr;
+  srslog::basic_logger&            logger       = srslog::fetch_basic_logger("TEST", false);
 };
 
 // Verify data after compression and following decompression.
@@ -128,6 +129,8 @@ TEST_P(OFHCompressionFixture, zero_input_compression_is_correct)
 // Verify BPSK modulated data are correctly processed.
 TEST(ru_compression_test, bpsk_input_compression_is_correct)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
+
   // Instantiate quantizer object.
   quantizer q(9);
 
@@ -141,7 +144,7 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
       {255, 255, 255, -255, 255, 255, -255, 255, 255, -255, -255, 255},
       {-255, 255, 255, -255, -255, -255, -255, 255, -255, -255, -255, 255}};
 
-  std::unique_ptr<iq_compressor> compressor = create_iq_compressor(compression_type::BFP, 1.0, "generic");
+  std::unique_ptr<iq_compressor> compressor = create_iq_compressor(compression_type::BFP, logger, 1.0, "generic");
   ru_compression_params          params     = {compression_type::BFP, 9};
   std::vector<compressed_prb>    compressed_data(4);
 

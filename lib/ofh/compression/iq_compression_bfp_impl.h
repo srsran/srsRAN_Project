@@ -22,7 +22,10 @@ class iq_compression_bfp_impl : public iq_compressor, public iq_decompressor
 {
 public:
   // Constructor.
-  explicit iq_compression_bfp_impl(float iq_scaling_ = 1.0) : iq_scaling(iq_scaling_) {}
+  explicit iq_compression_bfp_impl(srslog::basic_logger& logger_, float iq_scaling_ = 1.0) :
+    logger(logger_), iq_scaling(iq_scaling_)
+  {
+  }
 
   // See interface for the documentation.
   virtual void
@@ -86,6 +89,7 @@ protected:
   void quantize_input(span<int16_t> out, span<const float> in);
 
 private:
+  srslog::basic_logger& logger;
   /// Scaling factor applied to IQ data prior to quantization.
   const float iq_scaling;
 };

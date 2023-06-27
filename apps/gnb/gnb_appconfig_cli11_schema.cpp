@@ -1176,7 +1176,7 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 1.0));
+      ->check(CLI::Range(0.0, 5.0));
 
   // Cell parameters.
   app.add_option_function<std::vector<std::string>>(

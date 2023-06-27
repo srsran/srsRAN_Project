@@ -104,9 +104,11 @@ static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
 
 TEST(ofh_uplane_packet_builder_dynamic_impl_test, non_compressed_packet_should_pass)
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
+
   for (const test_case_t& test_case : ofh_uplane_builder_test_data) {
     // Create a compressor.
-    iq_compression_none_impl compressor;
+    iq_compression_none_impl compressor(logger);
 
     ofh_uplane_message_builder_dynamic_compression_impl builder(srslog::fetch_basic_logger("TEST"), compressor);
 
