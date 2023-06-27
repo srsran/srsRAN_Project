@@ -1,5 +1,6 @@
 ARG VERSION=22.04
-FROM ubuntu:$VERSION
+ARG OS_NAME=ubuntu
+FROM $OS_NAME:$VERSION
 
 ADD install_dependencies.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/install_dependencies.sh

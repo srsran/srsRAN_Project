@@ -33,6 +33,8 @@ variables:
       - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
+      - "debian-12"
+      - "debian-11"
       - "archlinux-latest"
       - "rhel-8"
     value: "ubuntu-22.04"
@@ -251,7 +253,7 @@ variables:
         fi
         exit $ret
       }
-  script: &build_unit_script
+  script:
     - build_srsgnb
     - launch_tests
   after_script:
@@ -449,6 +451,7 @@ intermediate commits:
     INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    ENABLE_WERROR: "False"
     # KUBERNETES_MEMORY_REQUEST: 6Gi
     # MAKE_ARGS: ""
   script:
@@ -461,9 +464,7 @@ intermediate commits:
         echo "#### $rev ####"
         echo "##################################################"
         git checkout $rev
-        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
         build_srsgnb
-        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   cache:
     - !reference [.fetch_src_cache, cache]
@@ -822,17 +823,11 @@ ubuntu-22.04 arm neon release:
     matrix:
       - COMPILER: [gcc, clang]
 
-#############
-# Archlinux #
-#############
-.build_and_unit_arch:
-  extends: .build_and_unit
-  script:
-    - sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
-    - *build_unit_script
-
+###################
+# Alternative OSs #
+###################
 archlinux amd64 no isa:
-  extends: .build_and_unit_arch
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
@@ -845,7 +840,7 @@ archlinux amd64 no isa:
         AUTO_DETECT_ISA: "False"
 
 archlinux amd64 avx2:
-  extends: .build_and_unit_arch
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
       when: delayed
@@ -861,13 +856,97 @@ archlinux amd64 avx2:
         ENABLE_AVX512: "False"
 
 archlinux amd64 avx512:
-  extends: .build_and_unit_arch
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+
+debian 12 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+debian 12 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+debian 12 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+
+debian 11 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+debian 11 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+debian 11 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
         INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512

@@ -126,7 +126,8 @@ ubuntu-20-uhd:
   extends: .docker-builder
   stage: publish
   variables:
-    OS_TYPE: none
+    OS_FAMILY: none
+    OS_NAME: none
     OS_VERSION: none
     MULTI_ARCH_BUILD: none
     RHEL_CT_VERSION: none
@@ -139,11 +140,11 @@ ubuntu-20-uhd:
     - !reference [.fetch_src_cache, before_script]
     - !reference [.fetch_src_cache, script]
     - |
-      export NAME=builder-$OS_TYPE-$OS_VERSION
+      export NAME=builder-$OS_NAME-$OS_VERSION
       export VERSION=$DOCKER_BUILDER_VERSION
       export CONTEXT=.gitlab/ci/builders
-      export DOCKERFILE=$CONTEXT/$OS_TYPE
-      export BUILD_ARGS="VERSION=${OS_VERSION};OS=${OS_TYPE};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
+      export DOCKERFILE=$CONTEXT/$OS_FAMILY
+      export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
       mkdir -p $CONTEXT/uhd  # make sure those jobs that don't need UHD can copy something
   needs:
     - builder version
@@ -186,7 +187,8 @@ docker-builder-publish [ubuntu, 20.04]:
   extends:
     - .docker-builder-gnb
   variables:
-    OS_TYPE: ubuntu
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
     OS_VERSION: "20.04"
     MULTI_ARCH_BUILD: "true"
   parallel:
@@ -218,7 +220,8 @@ docker-builder-publish [ubuntu, 22.04]:
   extends:
     - .docker-builder-gnb
   variables:
-    OS_TYPE: ubuntu
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
     OS_VERSION: "22.04"
     MULTI_ARCH_BUILD: "true"
   parallel:
@@ -250,7 +253,8 @@ docker-builder-publish [ubuntu, 23.04]:
   extends:
     - .docker-builder-gnb
   variables:
-    OS_TYPE: ubuntu
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
     OS_VERSION: "23.04"
     MULTI_ARCH_BUILD: "true"
   parallel:
@@ -277,12 +281,27 @@ docker manifest ubuntu 23.04:
         --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-arm64
       docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}
 
+# debian
+docker-builder-publish [debian]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: debian
+    PLATFORM: amd64
+  parallel:
+    matrix:
+      - OS_VERSION: ["11", "12"]
+  needs:
+    - builder version
+
 # archlinux
 docker-builder-publish [archlinux, latest]:
   extends:
     - .docker-builder-gnb
   variables:
-    OS_TYPE: archlinux
+    OS_FAMILY: archlinux
+    OS_NAME: archlinux
     OS_VERSION: latest
     PLATFORM: amd64
   needs:
@@ -293,7 +312,8 @@ docker-builder-publish [rhel, 8]:
   extends:
     - .docker-builder-gnb
   variables:
-    OS_TYPE: rhel
+    OS_FAMILY: rhel
+    OS_NAME: rhel
     OS_VERSION: "8"
     VERSION: $DOCKER_BUILDER_VERSION
     RHEL_CT_VERSION: "1.0.6"
