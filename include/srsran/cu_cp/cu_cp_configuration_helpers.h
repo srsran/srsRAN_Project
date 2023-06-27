@@ -83,6 +83,23 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
   return qos_list;
 }
 
+inline srs_cu_cp::mobility_configuration make_default_mobility_config()
+{
+  srs_cu_cp::mobility_configuration cfg{};
+
+  return cfg;
+}
+
+inline bool is_valid_configuration(const srs_cu_cp::mobility_configuration& config)
+{
+  if (!is_valid_configuration(config.meas_manager_config)) {
+    fmt::print("Invalid meas manager configuration.\n");
+    return false;
+  }
+
+  return true;
+}
+
 /// Returns true if the given CU-CP configuration is valid, otherwise false.
 inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 {
@@ -92,8 +109,8 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
     return false;
   }
 
-  if (!is_valid_configuration(config.meas_config)) {
-    fmt::print("Invalid cell measurement configuration.\n");
+  if (!is_valid_configuration(config.mobility_config)) {
+    fmt::print("Invalid mobility configuration.\n");
     return false;
   }
 

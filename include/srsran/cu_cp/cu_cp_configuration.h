@@ -27,6 +27,10 @@ struct ue_configuration {
   std::chrono::seconds inactivity_timer;
 };
 
+struct mobility_configuration {
+  cell_meas_manager_cfg meas_manager_config;
+};
+
 /// Configuration passed to CU-CP.
 struct cu_cp_configuration {
   task_executor*         cu_cp_executor = nullptr;
@@ -36,7 +40,7 @@ struct cu_cp_configuration {
   ngap_configuration     ngap_config;
   rrc_cfg_t              rrc_config;
   ue_configuration       ue_config;
-  cell_meas_manager_cfg  meas_config;
+  mobility_configuration mobility_config;
 };
 
 } // namespace srs_cu_cp
