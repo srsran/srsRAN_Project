@@ -28,7 +28,7 @@ public:
   virtual cu_cp_meas_cfg get_measurement_config(const nr_cell_id_t& cid) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
-  virtual void report_measurement(/* add report here*/) = 0;
+  virtual void report_measurement(const cu_cp_meas_results& meas_results) = 0;
 };
 
 /// Creates an instance of an cell manager.

@@ -43,4 +43,9 @@ cu_cp_meas_cfg cell_meas_manager_impl::get_measurement_config(const nr_cell_id_t
   return meas_cfg;
 }
 
-void cell_meas_manager_impl::report_measurement() {}
+void cell_meas_manager_impl::report_measurement(const cu_cp_meas_results& meas_results)
+{
+  logger.debug("Received measurement result with meas_id={}", meas_results.meas_id);
+
+  // TODO: handle measurement result
+}
