@@ -272,6 +272,7 @@ du_index_t cu_cp::add_du()
                                                                    rrc_ue_cu_cp_notifier,
                                                                    du_processor_task_sched,
                                                                    ue_mng,
+                                                                   *cell_meas_mng,
                                                                    *cfg.cu_cp_executor);
 
   du_processor_ev_notifier.connect_cu_cp(this->get_cu_cp_du_handler());

@@ -16,6 +16,7 @@
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/rrc/rrc_ue.h"
 
@@ -31,6 +32,7 @@ public:
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngap_ctrl_notif_,
               rrc_ue_reestablishment_notifier&       cu_cp_notif_,
+              cell_meas_manager&                     cell_meas_mng_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
@@ -133,6 +135,7 @@ private:
   rrc_ue_nas_notifier&             nas_notifier;          // PDU notifier to the NGAP
   rrc_ue_control_notifier&         ngap_ctrl_notifier;    // Control message notifier to the NGAP
   rrc_ue_reestablishment_notifier& cu_cp_notifier;        // notifier to the CU-CP
+  cell_meas_manager&               cell_meas_mng;         // cell measurement manager
   srb_notifiers_array              srbs;                  // set notifiers for all SRBs
   byte_buffer                      du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&           task_sched;

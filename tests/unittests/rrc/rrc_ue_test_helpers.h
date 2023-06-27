@@ -14,6 +14,7 @@
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -38,6 +39,10 @@ protected:
     tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>();
     rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>();
 
+    // create measurement config
+    cell_meas_manager_cfg meas_cfg = {};
+    cell_meas_mng                  = create_cell_meas_manager(meas_cfg);
+
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
@@ -53,6 +58,7 @@ protected:
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_cu_cp_notifier,
+                                           *cell_meas_mng,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -411,6 +417,7 @@ private:
   dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;
+  std::unique_ptr<cell_meas_manager>                     cell_meas_mng;
   timer_manager                                          timers;
   std::array<std::unique_ptr<dummy_rrc_pdu_notifier>, 3> rrc_srb_pdu_notifiers;
   std::unique_ptr<dummy_rrc_tx_security_notifier>        tx_security_notifier;
