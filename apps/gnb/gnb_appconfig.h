@@ -414,7 +414,7 @@ struct amf_appconfig {
 struct cu_cp_ncell_appconfig_item {
   uint64_t    n_id_cell; ///< Cell id of the neighbor cell
   std::string rat;       ///< RAT of this neighbor cell.
-  // TODO: Add optional SSB
+  // TODO: Add optional SSB parameters.
   optional<unsigned> ssb_arfcn;
 };
 

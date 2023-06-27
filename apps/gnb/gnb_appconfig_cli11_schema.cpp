@@ -185,7 +185,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
           subapp.parse_from_stream(ss);
         }
       },
-      "Sets the high level cell map");
+      "Sets the list of neightbor cells");
 }
 
 static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
@@ -216,7 +216,7 @@ static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& con
           subapp.parse_from_stream(ss);
         }
       },
-      "Sets the high level cell list");
+      "Sets the list of cells known to the CU-CP");
 
   CLI::App* meas_config_subcmd = app.add_subcommand("meas_config", "Measurement configuration");
   configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
