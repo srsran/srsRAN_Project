@@ -324,9 +324,9 @@ pages:
       cmake -G Ninja ..
       ninja doxygen
       mv ./docs/html ./public
+      cd ..
     - mv build/public/index.html build/public/index_doxygen.html
     - find build/public/ -name '*.*' -exec mv {} public/ \;
-
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
