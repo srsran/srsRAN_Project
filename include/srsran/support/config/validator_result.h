@@ -15,7 +15,7 @@
 namespace srsran {
 
 /// This type represents the result of a validator function. In case of failure, it contains a string describing the
-/// error.
+/// error. In case of success, the .has_value() method returns true.
 using validator_result = error_type<std::string>;
 
 } // namespace srsran

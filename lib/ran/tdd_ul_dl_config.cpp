@@ -58,16 +58,6 @@ bool srsran::has_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsig
   return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, false) > 0;
 }
 
-bool srsran::all_tdd_dl_symbols_are_active(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
-{
-  return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, true) == get_nsymb_per_slot(cp);
-}
-
-bool srsran::all_tdd_ul_symbols_are_active(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
-{
-  return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, false) == get_nsymb_per_slot(cp);
-}
-
 ofdm_symbol_range
 srsran::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
 {
