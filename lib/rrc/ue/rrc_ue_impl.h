@@ -16,6 +16,7 @@
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
+#include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/rrc/rrc_ue.h"
@@ -79,6 +80,7 @@ private:
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
   void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
   void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
+  void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
 
   // message senders
   /// \remark Send RRC Reject, see section 5.3.15 in TS 38.331
