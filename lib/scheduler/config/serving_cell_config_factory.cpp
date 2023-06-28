@@ -222,7 +222,7 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
-  const auto& pdsch_ofdm_symbol_ranges =
+  const auto pdsch_ofdm_symbol_ranges =
       generate_pdsch_ofdm_symbol_ranges(cfg.init_dl_bwp.pdcch_common.coreset0->duration,
                                         params.search_space0_index,
                                         cfg.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
