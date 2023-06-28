@@ -362,7 +362,7 @@ public:
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
-  async_task<bool> on_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) override
+  async_task<bool> on_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override
   {
     logger.info("Received a new UE capability transfer request");
 
@@ -372,7 +372,7 @@ public:
     });
   }
 
-  async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
+  async_task<bool> on_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override
   {
     logger.info("Received a new RRC reconfiguration request");
     last_radio_bearer_cfg = msg.radio_bearer_cfg;
@@ -391,7 +391,7 @@ public:
     return release_context;
   }
 
-  optional<cu_cp_radio_bearer_config> last_radio_bearer_cfg;
+  optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
 
   void reset() { last_radio_bearer_cfg.reset(); }
 

@@ -19,7 +19,7 @@ cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg& cfg_
 {
 }
 
-cu_cp_meas_cfg cell_meas_manager_impl::get_measurement_config(nr_cell_id_t nci)
+rrc_meas_cfg cell_meas_manager_impl::get_measurement_config(nr_cell_id_t nci)
 {
   // Find cell.
   if (cfg.cells.find(nci) == cfg.cells.end()) {
@@ -29,11 +29,11 @@ cu_cp_meas_cfg cell_meas_manager_impl::get_measurement_config(nr_cell_id_t nci)
 
   const auto& cell_config = cfg.cells.at(nci);
 
-  cu_cp_meas_cfg meas_cfg;
+  rrc_meas_cfg meas_cfg;
 
   // Create meas object for each neighbor cell
   for (unsigned i = 0; i < cell_config.ncells.size(); ++i) {
-    cu_cp_meas_obj_to_add_mod meas_obj;
+    rrc_meas_obj_to_add_mod meas_obj;
     meas_obj.meas_obj_id = i;
     meas_obj.meas_obj_nr.emplace();
     // TODO: add config
@@ -48,7 +48,7 @@ bool cell_meas_manager_impl::update_cell_config(nr_cell_id_t nci, const cell_mea
   return true;
 }
 
-void cell_meas_manager_impl::report_measurement(const cu_cp_meas_results& meas_results)
+void cell_meas_manager_impl::report_measurement(const rrc_meas_results& meas_results)
 {
   logger.debug("Received measurement result with meas_id={}", meas_results.meas_id);
 

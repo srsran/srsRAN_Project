@@ -65,10 +65,10 @@ inline expected<uint8_t> get_transaction_id(const asn1::rrc_nr::ul_dcch_msg_s& m
 /// \brief Fills ASN.1 RRC Setup struct.
 /// \param[out] asn1_rrc_reconf The RRC Reconfiguration ASN.1 struct to fill.
 /// \param[in] rrc_transaction_id The RRC transaction id.
-/// \param[in] cu_cp_rrc_reconf The common type struct.
-inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&                  asn1_rrc_reconf,
-                                              uint8_t                                     rrc_transaction_id,
-                                              cu_cp_rrc_reconfiguration_procedure_request cu_cp_rrc_reconf)
+/// \param[in] rrc_reconf The common type struct.
+inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&            asn1_rrc_reconf,
+                                              uint8_t                               rrc_transaction_id,
+                                              rrc_reconfiguration_procedure_request rrc_reconf)
 {
   using namespace asn1::rrc_nr;
 
@@ -77,11 +77,11 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
   rrc_recfg_ies_s& asn1_reconfig_ies = asn1_rrc_reconf.crit_exts.set_rrc_recfg();
 
   // radio bearer cfg
-  if (cu_cp_rrc_reconf.radio_bearer_cfg.has_value()) {
+  if (rrc_reconf.radio_bearer_cfg.has_value()) {
     asn1_reconfig_ies.radio_bearer_cfg_present = true;
     auto& asn1_radio_bearer_cfg                = asn1_reconfig_ies.radio_bearer_cfg;
 
-    auto& cu_cp_radio_bearer_cfg = cu_cp_rrc_reconf.radio_bearer_cfg.value();
+    auto& cu_cp_radio_bearer_cfg = rrc_reconf.radio_bearer_cfg.value();
 
     // srb to add mod list
     for (const auto& srb_to_add : cu_cp_radio_bearer_cfg.srb_to_add_mod_list) {
@@ -172,18 +172,18 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
   }
 
   // secondary cell group
-  asn1_reconfig_ies.secondary_cell_group = cu_cp_rrc_reconf.secondary_cell_group.copy();
+  asn1_reconfig_ies.secondary_cell_group = rrc_reconf.secondary_cell_group.copy();
 
   // meas config
-  if (cu_cp_rrc_reconf.meas_cfg.has_value()) {
+  if (rrc_reconf.meas_cfg.has_value()) {
     asn1_reconfig_ies.meas_cfg_present = true;
-    asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(cu_cp_rrc_reconf.meas_cfg.value());
+    asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(rrc_reconf.meas_cfg.value());
   }
 
   // non crit ext
-  if (cu_cp_rrc_reconf.non_crit_ext.has_value()) {
+  if (rrc_reconf.non_crit_ext.has_value()) {
     asn1_reconfig_ies.non_crit_ext_present = true;
-    const auto& non_crit_ext               = cu_cp_rrc_reconf.non_crit_ext.value();
+    const auto& non_crit_ext               = rrc_reconf.non_crit_ext.value();
 
     // full cfg
     asn1_reconfig_ies.non_crit_ext.full_cfg_present = non_crit_ext.full_cfg_present;

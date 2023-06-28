@@ -16,8 +16,8 @@
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
-#include "srsran/cu_cp/meas_types.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/rrc/meas_types.h"
 #include "srsran/srslog/srslog.h"
 #include <string>
 #include <vector>
@@ -58,7 +58,7 @@ inline asn1::rrc_nr::subcarrier_spacing_e subcarrier_spacing_to_rrc_asn1(subcarr
 /// \brief Converts type \c ssb_mtc to an RRC NR ASN.1 type.
 /// \param ssb_mtc ssb mtc object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
-inline asn1::rrc_nr::ssb_mtc_s ssb_mtc_to_rrc_asn1(cu_cp_ssb_mtc ssb_mtc)
+inline asn1::rrc_nr::ssb_mtc_s ssb_mtc_to_rrc_asn1(rrc_ssb_mtc ssb_mtc)
 {
   asn1::rrc_nr::ssb_mtc_s asn1_ssb_mtc;
 
@@ -89,7 +89,7 @@ inline asn1::rrc_nr::ssb_mtc_s ssb_mtc_to_rrc_asn1(cu_cp_ssb_mtc ssb_mtc)
   return asn1_ssb_mtc;
 }
 
-inline asn1::rrc_nr::ssb_cfg_mob_s ssb_cfg_mob_to_rrc_asn1(const cu_cp_ssb_cfg_mob& ssb_cfg_mob)
+inline asn1::rrc_nr::ssb_cfg_mob_s ssb_cfg_mob_to_rrc_asn1(const rrc_ssb_cfg_mob& ssb_cfg_mob)
 {
   asn1::rrc_nr::ssb_cfg_mob_s asn1_ssb_cfg_mob;
 
@@ -139,7 +139,7 @@ inline asn1::rrc_nr::ssb_cfg_mob_s ssb_cfg_mob_to_rrc_asn1(const cu_cp_ssb_cfg_m
 }
 
 inline asn1::setup_release_c<asn1::rrc_nr::csi_rs_res_cfg_mob_s>
-csi_res_cfg_mob_to_rrc_asn1(const cu_cp_csi_rs_res_cfg_mob_setup_release& csi_rs_res_cfg_mob)
+csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_res_cfg_mob)
 {
   asn1::setup_release_c<asn1::rrc_nr::csi_rs_res_cfg_mob_s> asn1_csi_rs_res_cfg_mob;
 
@@ -226,7 +226,7 @@ csi_res_cfg_mob_to_rrc_asn1(const cu_cp_csi_rs_res_cfg_mob_setup_release& csi_rs
   return asn1_csi_rs_res_cfg_mob;
 }
 
-inline asn1::rrc_nr::thres_nr_s thres_nr_to_rrc_asn1(const cu_cp_thres_nr& thres_nr)
+inline asn1::rrc_nr::thres_nr_s thres_nr_to_rrc_asn1(const rrc_thres_nr& thres_nr)
 {
   asn1::rrc_nr::thres_nr_s asn1_thres_nr;
 
@@ -252,7 +252,7 @@ inline asn1::rrc_nr::thres_nr_s thres_nr_to_rrc_asn1(const cu_cp_thres_nr& thres
 }
 
 inline asn1::rrc_nr::q_offset_range_list_s
-q_offset_range_list_to_rrc_asn1(const cu_cp_q_offset_range_list& q_offset_range_list)
+q_offset_range_list_to_rrc_asn1(const rrc_q_offset_range_list& q_offset_range_list)
 {
   asn1::rrc_nr::q_offset_range_list_s asn1_q_offset_range_list;
 
@@ -290,7 +290,7 @@ q_offset_range_list_to_rrc_asn1(const cu_cp_q_offset_range_list& q_offset_range_
   return asn1_q_offset_range_list;
 }
 
-inline asn1::rrc_nr::meas_obj_nr_s meas_obj_nr_to_rrc_asn1(const cu_cp_meas_obj_nr& meas_obj_nr)
+inline asn1::rrc_nr::meas_obj_nr_s meas_obj_nr_to_rrc_asn1(const rrc_meas_obj_nr& meas_obj_nr)
 {
   asn1::rrc_nr::meas_obj_nr_s asn1_meas_obj_nr;
 
@@ -457,8 +457,8 @@ inline asn1::rrc_nr::meas_obj_nr_s meas_obj_nr_to_rrc_asn1(const cu_cp_meas_obj_
 }
 
 template <class asn1_srs_periodicity_and_offset>
-void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&        asn1_srs_period_and_offset,
-                                            const cu_cp_srs_periodicity_and_offset& srs_period_and_offset)
+void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&      asn1_srs_period_and_offset,
+                                            const rrc_srs_periodicity_and_offset& srs_period_and_offset)
 {
   if (srs_period_and_offset.is_sl1) {
     asn1_srs_period_and_offset.set_sl1();
@@ -516,7 +516,7 @@ void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&    
   }
 };
 
-inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const cu_cp_srs_res& srs_res)
+inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
 {
   asn1::rrc_nr::srs_res_s asn1_srs_res;
 
@@ -615,7 +615,7 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const cu_cp_srs_res& srs_res)
 }
 
 inline asn1::rrc_nr::meas_obj_to_add_mod_s
-meas_obj_to_add_mod_to_rrc_asn1(const cu_cp_meas_obj_to_add_mod& meas_obj_to_add_mod)
+meas_obj_to_add_mod_to_rrc_asn1(const rrc_meas_obj_to_add_mod& meas_obj_to_add_mod)
 {
   asn1::rrc_nr::meas_obj_to_add_mod_s asn1_meas_obj_to_add_mod;
 
@@ -632,7 +632,7 @@ meas_obj_to_add_mod_to_rrc_asn1(const cu_cp_meas_obj_to_add_mod& meas_obj_to_add
   return asn1_meas_obj_to_add_mod;
 }
 
-inline asn1::rrc_nr::meas_report_quant_s meas_report_quant_to_rrc_asn1(const cu_cp_meas_report_quant& meas_report_quant)
+inline asn1::rrc_nr::meas_report_quant_s meas_report_quant_to_rrc_asn1(const rrc_meas_report_quant& meas_report_quant)
 {
   asn1::rrc_nr::meas_report_quant_s asn1_meas_report_quant;
 
@@ -644,7 +644,7 @@ inline asn1::rrc_nr::meas_report_quant_s meas_report_quant_to_rrc_asn1(const cu_
 }
 
 inline asn1::rrc_nr::periodical_report_cfg_s
-periodical_report_cfg_to_rrc_asn1(const cu_cp_periodical_report_cfg& periodical_report_cfg)
+periodical_report_cfg_to_rrc_asn1(const rrc_periodical_report_cfg& periodical_report_cfg)
 {
   asn1::rrc_nr::periodical_report_cfg_s asn1_periodical_report_cfg;
 
@@ -679,7 +679,7 @@ periodical_report_cfg_to_rrc_asn1(const cu_cp_periodical_report_cfg& periodical_
 
 template <class asn1_meas_trigger_quant_quant_offset>
 void meas_trigger_quant_to_rrc_asn1(asn1_meas_trigger_quant_quant_offset& asn1_meas_trigger_quant_offset,
-                                    const cu_cp_meas_trigger_quant&       meas_trigger_quant)
+                                    const rrc_meas_trigger_quant&         meas_trigger_quant)
 {
   if (meas_trigger_quant.rsrp.has_value()) {
     asn1_meas_trigger_quant_offset.set_rsrp() = meas_trigger_quant.rsrp.value();
@@ -694,7 +694,7 @@ void meas_trigger_quant_to_rrc_asn1(asn1_meas_trigger_quant_quant_offset& asn1_m
 }
 
 inline asn1::rrc_nr::event_trigger_cfg_s
-event_triggered_report_cfg_to_rrc_asn1(const cu_cp_event_trigger_cfg& event_triggered_cfg)
+event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_triggered_cfg)
 {
   asn1::rrc_nr::event_trigger_cfg_s asn1_event_triggered_cfg;
 
@@ -817,7 +817,7 @@ event_triggered_report_cfg_to_rrc_asn1(const cu_cp_event_trigger_cfg& event_trig
   return asn1_event_triggered_cfg;
 }
 
-inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const cu_cp_report_cfg_nr& report_cfg_nr)
+inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const rrc_report_cfg_nr& report_cfg_nr)
 {
   asn1::rrc_nr::report_cfg_nr_s asn1_report_cfg_nr;
 
@@ -848,7 +848,7 @@ inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const cu_cp_repor
 }
 
 inline asn1::rrc_nr::report_cfg_to_add_mod_s
-report_cfg_to_add_mod_to_rrc_asn1(const cu_cp_report_cfg_to_add_mod& report_cfg_to_add_mod)
+report_cfg_to_add_mod_to_rrc_asn1(const rrc_report_cfg_to_add_mod& report_cfg_to_add_mod)
 {
   asn1::rrc_nr::report_cfg_to_add_mod_s asn1_report_cfg_to_add_mod;
 
@@ -868,7 +868,7 @@ report_cfg_to_add_mod_to_rrc_asn1(const cu_cp_report_cfg_to_add_mod& report_cfg_
 }
 
 inline asn1::rrc_nr::meas_id_to_add_mod_s
-meas_id_to_add_mod_to_rrc_asn1(const cu_cp_meas_id_to_add_mod& meas_id_to_add_mod)
+meas_id_to_add_mod_to_rrc_asn1(const rrc_meas_id_to_add_mod& meas_id_to_add_mod)
 {
   asn1::rrc_nr::meas_id_to_add_mod_s asn1_meas_id_to_add_mod;
 
@@ -882,7 +882,7 @@ meas_id_to_add_mod_to_rrc_asn1(const cu_cp_meas_id_to_add_mod& meas_id_to_add_mo
   return asn1_meas_id_to_add_mod;
 }
 
-inline asn1::rrc_nr::filt_cfg_s filt_cfg_to_rrc_asn1(const cu_cp_filt_cfg& filt_cfg)
+inline asn1::rrc_nr::filt_cfg_s filt_cfg_to_rrc_asn1(const rrc_filt_cfg& filt_cfg)
 {
   asn1::rrc_nr::filt_cfg_s asn1_filt_cfg;
 
@@ -907,7 +907,7 @@ inline asn1::rrc_nr::filt_cfg_s filt_cfg_to_rrc_asn1(const cu_cp_filt_cfg& filt_
   return asn1_filt_cfg;
 }
 
-inline asn1::rrc_nr::quant_cfg_rs_s quant_cfg_rs_to_rrc_asn1(const cu_cp_quant_cfg_rs& quant_cfg_rs)
+inline asn1::rrc_nr::quant_cfg_rs_s quant_cfg_rs_to_rrc_asn1(const rrc_quant_cfg_rs& quant_cfg_rs)
 {
   asn1::rrc_nr::quant_cfg_rs_s asn1_quant_cfg_rs;
 
@@ -922,7 +922,7 @@ inline asn1::rrc_nr::quant_cfg_rs_s quant_cfg_rs_to_rrc_asn1(const cu_cp_quant_c
 /// \brief Converts type \c cu_cp_meas_cfg to an RRC NR ASN.1 type.
 /// \param meas_cfg Meas config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
-inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const cu_cp_meas_cfg& meas_cfg)
+inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas_cfg)
 {
   asn1::rrc_nr::meas_cfg_s asn1_meas_cfg;
 
@@ -1041,10 +1041,10 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const cu_cp_meas_cfg& me
   return asn1_meas_cfg;
 }
 
-inline cu_cp_meas_quant_results
+inline rrc_meas_quant_results
 asn1_to_meas_quant_results(const asn1::rrc_nr::meas_quant_results_s& asn1_meas_quant_results)
 {
-  cu_cp_meas_quant_results meas_quant_results;
+  rrc_meas_quant_results meas_quant_results;
 
   // rsrp
   if (asn1_meas_quant_results.rsrp_present) {
@@ -1064,9 +1064,9 @@ asn1_to_meas_quant_results(const asn1::rrc_nr::meas_quant_results_s& asn1_meas_q
   return meas_quant_results;
 };
 
-inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_result_nr_s& asn1_meas_result_nr)
+inline rrc_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_result_nr_s& asn1_meas_result_nr)
 {
-  cu_cp_meas_result_nr meas_result_nr;
+  rrc_meas_result_nr meas_result_nr;
 
   // pci
   if (asn1_meas_result_nr.pci_present) {
@@ -1087,11 +1087,11 @@ inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_resu
 
   // rs idx results
   if (asn1_meas_result_nr.meas_result.rs_idx_results_present) {
-    cu_cp_meas_result_nr::rs_idx_results_ rs_idx_result;
+    rrc_meas_result_nr::rs_idx_results_ rs_idx_result;
 
     // results ssb idxes
     for (const auto& asn1_ssb_result : asn1_meas_result_nr.meas_result.rs_idx_results.results_ssb_idxes) {
-      cu_cp_results_per_ssb_idx ssb_result;
+      rrc_results_per_ssb_idx ssb_result;
 
       ssb_result.ssb_idx = asn1_ssb_result.ssb_idx;
 
@@ -1103,7 +1103,7 @@ inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_resu
 
     // results csi_rs idxes
     for (const auto& asn1_csi_rs_result : asn1_meas_result_nr.meas_result.rs_idx_results.results_csi_rs_idxes) {
-      cu_cp_results_per_csi_rs_idx csi_rs_result;
+      rrc_results_per_csi_rs_idx csi_rs_result;
       if (asn1_csi_rs_result.csi_rs_results_present) {
         csi_rs_result.csi_rs_results = asn1_to_meas_quant_results(asn1_csi_rs_result.csi_rs_results);
       }
@@ -1116,16 +1116,16 @@ inline cu_cp_meas_result_nr asn1_to_meas_result_nr(const asn1::rrc_nr::meas_resu
   return meas_result_nr;
 };
 
-inline cu_cp_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results)
+inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results)
 {
-  cu_cp_meas_results meas_results;
+  rrc_meas_results meas_results;
 
   // meas id
   meas_results.meas_id = asn1_meas_results.meas_id;
 
   // meas result serving mo list
   for (const auto& asn1_meas_result_serv_mo : asn1_meas_results.meas_result_serving_mo_list) {
-    cu_cp_meas_result_serv_mo meas_result_serv_mo;
+    rrc_meas_result_serv_mo meas_result_serv_mo;
 
     // serv cell id
     meas_result_serv_mo.serv_cell_id = asn1_meas_result_serv_mo.serv_cell_id;
@@ -1143,7 +1143,7 @@ inline cu_cp_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_r
 
   // meas result neigh cells
   if (asn1_meas_results.meas_result_neigh_cells_present) {
-    cu_cp_meas_result_neigh_cells meas_result_neigh_cell;
+    rrc_meas_result_neigh_cells meas_result_neigh_cell;
 
     if (asn1_meas_results.meas_result_neigh_cells.type() ==
         asn1::rrc_nr::meas_results_s::meas_result_neigh_cells_c_::types_opts::options::meas_result_list_nr) {

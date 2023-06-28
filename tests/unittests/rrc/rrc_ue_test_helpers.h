@@ -338,7 +338,7 @@ protected:
     rrc_ue_cu_cp_notifier.add_ue_context(reest_context);
   }
 
-  void check_meas_results(const cu_cp_meas_results& meas_results)
+  void check_meas_results(const rrc_meas_results& meas_results)
   {
     ASSERT_EQ(meas_results.meas_id, 1);
     ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);

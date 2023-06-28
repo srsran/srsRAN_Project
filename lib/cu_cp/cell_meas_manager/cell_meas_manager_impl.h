@@ -22,9 +22,9 @@ public:
   cell_meas_manager_impl(const cell_meas_manager_cfg& cfg);
   ~cell_meas_manager_impl() = default;
 
-  cu_cp_meas_cfg get_measurement_config(nr_cell_id_t nci) override;
-  bool           update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cfg) override;
-  void           report_measurement(const cu_cp_meas_results& meas_results) override;
+  rrc_meas_cfg get_measurement_config(nr_cell_id_t nci) override;
+  bool         update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cfg) override;
+  void         report_measurement(const rrc_meas_results& meas_results) override;
 
 private:
   cell_meas_manager_cfg cfg;

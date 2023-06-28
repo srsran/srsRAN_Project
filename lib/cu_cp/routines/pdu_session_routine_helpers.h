@@ -15,8 +15,7 @@
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/pdcp/pdcp_config.h"
-
-using namespace srsran;
+#include "srsran/rrc/rrc_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -39,7 +38,7 @@ void fill_drb_to_remove_list(std::vector<drb_id_t>&       e1ap_drb_to_remove_lis
 /// \param[in] ue_context_modification_response The UE Context Modification Response as received by the DU.
 /// \param[in] nas_pdus NAS PDUs to forward to the UE as received by the AMF.
 void fill_rrc_reconfig_args(
-    cu_cp_rrc_reconfiguration_procedure_request&                        rrc_reconfig_args,
+    rrc_reconfiguration_procedure_request&                              rrc_reconfig_args,
     const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
     const cu_cp_ue_context_modification_response&                       ue_context_modification_response,

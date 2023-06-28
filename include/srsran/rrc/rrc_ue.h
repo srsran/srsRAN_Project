@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rrc_cell_context.h"
+#include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
@@ -279,12 +280,10 @@ public:
   /// \brief Handle an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
-  virtual async_task<bool>
-  handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
+  virtual async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) = 0;
 
   /// \brief Initiate the UE capability transfer procedure.
-  virtual async_task<bool>
-  handle_rrc_ue_capability_transfer_request(const cu_cp_ue_capability_transfer_request& msg) = 0;
+  virtual async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) = 0;
 
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.

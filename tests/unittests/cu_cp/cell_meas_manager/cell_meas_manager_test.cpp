@@ -26,7 +26,7 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
   cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg.ssb_arfcn.emplace() = 12;
   cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
-  cu_cp_ssb_mtc ssb_mtc;
+  rrc_ssb_mtc ssb_mtc;
   ssb_mtc.dur                                  = 1;
   ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
   cell_cfg.ssb_mtc.emplace()                   = ssb_mtc;
@@ -53,8 +53,8 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
-  nr_cell_id_t   cid      = 0;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t cid      = 0;
+  rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
   ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 0);
@@ -70,8 +70,8 @@ TEST_F(cell_meas_manager_test, when_basic_config_is_used_then_meas_config_is_cre
 {
   create_manager_with_one_cell_and_one_neighbor_cell();
 
-  nr_cell_id_t   cid      = 0;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t cid      = 0;
+  rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is created.
   ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 1);
@@ -84,8 +84,8 @@ TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are
 {
   create_default_manager();
 
-  nr_cell_id_t   cid      = 5;
-  cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t cid      = 5;
+  rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
   ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 0);
@@ -103,7 +103,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
   create_default_manager();
 
   for (unsigned cid = 0; cid < 3; ++cid) {
-    cu_cp_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+    rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
     check_default_meas_cfg(meas_cfg);
   }
 }

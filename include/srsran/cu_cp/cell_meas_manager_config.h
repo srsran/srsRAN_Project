@@ -10,9 +10,12 @@
 
 #pragma once
 
-#include "cu_cp_types.h"
 #include "srsran/ran/band_helper.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/rrc/meas_types.h"
+#include <map>
+#include <vector>
 
 namespace srsran {
 
@@ -26,7 +29,7 @@ struct cell_meas_cfg {
 
   /// If not set in config must be provided by config update after DU attach.
   optional<nr_band>            band;      ///< NR band.
-  optional<cu_cp_ssb_mtc>      ssb_mtc;   ///< SSB measurement and timing config.
+  optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
   optional<unsigned>           ssb_arfcn; ///< SSB ARFCN.
   optional<subcarrier_spacing> ssb_scs;   ///< SSB subcarrier spacing.
 };
@@ -37,7 +40,7 @@ bool is_complete(const cell_meas_cfg& cfg);
 /// \brief Cell manager configuration.
 struct cell_meas_manager_cfg {
   std::map<nr_cell_id_t, cell_meas_cfg> cells;           // Measurement related configs for all known cells.
-  optional<cu_cp_cond_event_a3>         a3_event_config; // A3 event config is currently the only supported event.
+  optional<rrc_cond_event_a3>           a3_event_config; // A3 event config is currently the only supported event.
 };
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns

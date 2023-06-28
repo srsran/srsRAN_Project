@@ -16,8 +16,8 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Validates the provided config(s).
-bool validate_config(const cu_cp_meas_trigger_quant_offset& config);
-bool validate_config(const cu_cp_cond_event_a3& config);
+bool validate_config(const rrc_meas_trigger_quant_offset& config);
+bool validate_config(const rrc_cond_event_a3& config);
 
 } // namespace srs_cu_cp
 } // namespace srsran

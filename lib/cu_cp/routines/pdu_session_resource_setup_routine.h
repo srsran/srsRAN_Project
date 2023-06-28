@@ -70,11 +70,11 @@ private:
   srslog::basic_logger&                         logger;
 
   // (sub-)routine requests
-  cu_cp_ue_capability_transfer_request        ue_capability_transfer_request;
-  e1ap_bearer_context_setup_request           bearer_context_setup_request;
-  cu_cp_ue_context_modification_request       ue_context_mod_request;
-  e1ap_bearer_context_modification_request    bearer_context_modification_request;
-  cu_cp_rrc_reconfiguration_procedure_request rrc_reconfig_args;
+  rrc_ue_capability_transfer_request       ue_capability_transfer_request;
+  e1ap_bearer_context_setup_request        bearer_context_setup_request;
+  cu_cp_ue_context_modification_request    ue_context_mod_request;
+  e1ap_bearer_context_modification_request bearer_context_modification_request;
+  rrc_reconfiguration_procedure_request    rrc_reconfig_args;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_setup_response response_msg;

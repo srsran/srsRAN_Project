@@ -8,14 +8,14 @@
  *
  */
 
-#include "srsran/cu_cp/meas_types_validators.h"
+#include "srsran/rrc/meas_types_validators.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-#define LOG_CHAN ("CU-CP")
+#define LOG_CHAN ("RRC")
 
-bool srsran::srs_cu_cp::validate_config(const cu_cp_meas_trigger_quant_offset& config)
+bool srsran::srs_cu_cp::validate_config(const rrc_meas_trigger_quant_offset& config)
 {
   if (not config.rsrp.has_value() and not config.rsrq.has_value() and not config.sinr.has_value()) {
     srslog::fetch_basic_logger(LOG_CHAN).error("Either RSRP/RSRQ or SINR need to be configured.");
@@ -24,7 +24,7 @@ bool srsran::srs_cu_cp::validate_config(const cu_cp_meas_trigger_quant_offset& c
   return true;
 }
 
-bool srsran::srs_cu_cp::validate_config(const cu_cp_cond_event_a3& event)
+bool srsran::srs_cu_cp::validate_config(const rrc_cond_event_a3& event)
 {
   if (not validate_config(event.a3_offset)) {
     srslog::fetch_basic_logger(LOG_CHAN).error("A3 offset config not valid.");

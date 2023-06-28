@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "meas_types.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
@@ -569,91 +568,6 @@ struct cu_cp_ue_context_modification_response {
 
   // Common
   optional<crit_diagnostics_t> crit_diagnostics;
-};
-
-/// Arguments for the RRC Reconfiguration procedure.
-
-struct cu_cp_srb_to_add_mod {
-  bool                  reestablish_pdcp_present = false;
-  bool                  discard_on_pdcp_present  = false;
-  srb_id_t              srb_id                   = srb_id_t::nulltype;
-  optional<pdcp_config> pdcp_cfg;
-};
-
-struct cu_cp_cn_assoc {
-  optional<uint8_t>       eps_bearer_id;
-  optional<sdap_config_t> sdap_cfg;
-};
-
-struct cu_cp_drb_to_add_mod {
-  bool                     reestablish_pdcp_present = false;
-  bool                     recover_pdcp_present     = false;
-  optional<cu_cp_cn_assoc> cn_assoc;
-  drb_id_t                 drb_id = drb_id_t::invalid;
-  optional<pdcp_config>    pdcp_cfg;
-};
-
-struct cu_cp_security_algorithm_config {
-  std::string           ciphering_algorithm;
-  optional<std::string> integrity_prot_algorithm;
-};
-
-struct cu_cp_security_config {
-  optional<cu_cp_security_algorithm_config> security_algorithm_cfg;
-  optional<std::string>                     key_to_use;
-};
-
-struct cu_cp_radio_bearer_config {
-  /// \brief Returns true if at least one of the optional vectors/fields contains an element.
-  bool contains_values()
-  {
-    return (srb_to_add_mod_list.empty() || drb_to_add_mod_list.empty() || drb_to_release_list.empty() ||
-            !security_cfg.has_value());
-  }
-  slotted_id_vector<srb_id_t, cu_cp_srb_to_add_mod> srb_to_add_mod_list;
-  slotted_id_vector<drb_id_t, cu_cp_drb_to_add_mod> drb_to_add_mod_list;
-  std::vector<drb_id_t>                             drb_to_release_list;
-  optional<cu_cp_security_config>                   security_cfg;
-  bool                                              srb3_to_release_present = false;
-};
-
-struct cu_cp_master_key_upd {
-  bool        key_set_change_ind = false;
-  uint8_t     next_hop_chaining_count;
-  byte_buffer nas_container;
-};
-
-struct cu_cp_delay_budget_report_cfg {
-  std::string type;
-  std::string delay_budget_report_prohibit_timer;
-};
-
-struct cu_cp_other_cfg {
-  optional<cu_cp_delay_budget_report_cfg> delay_budget_report_cfg;
-};
-
-struct cu_cp_rrc_recfg_v1530_ies {
-  bool                           full_cfg_present = false;
-  byte_buffer                    master_cell_group;
-  std::vector<byte_buffer>       ded_nas_msg_list;
-  optional<cu_cp_master_key_upd> master_key_upd;
-  byte_buffer                    ded_sib1_delivery;
-  byte_buffer                    ded_sys_info_delivery;
-  optional<cu_cp_other_cfg>      other_cfg;
-
-  // TODO: Add rrc_recfg_v1540_ies_s
-  // optional<cu_cp_rrc_recfg_v1540_ies> non_crit_ext;
-};
-
-struct cu_cp_rrc_reconfiguration_procedure_request {
-  optional<cu_cp_radio_bearer_config> radio_bearer_cfg;
-  byte_buffer                         secondary_cell_group;
-  optional<cu_cp_meas_cfg>            meas_cfg;
-  optional<cu_cp_rrc_recfg_v1530_ies> non_crit_ext;
-};
-
-struct cu_cp_ue_capability_transfer_request {
-  // Empty for now but should include ratType and capabilityRequestFilter, etc.
 };
 
 struct cu_cp_ngap_ue_context_release_command {

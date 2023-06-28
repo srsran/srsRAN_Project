@@ -89,7 +89,7 @@ void cell_meas_manager_test::create_manager_with_one_cell_and_one_neighbor_cell(
   ASSERT_NE(manager, nullptr);
 }
 
-void cell_meas_manager_test::check_default_meas_cfg(const cu_cp_meas_cfg& meas_cfg)
+void cell_meas_manager_test::check_default_meas_cfg(const rrc_meas_cfg& meas_cfg)
 {
   ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 2);
   ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.at(0).meas_obj_id, 0);
