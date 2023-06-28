@@ -25,7 +25,10 @@ public:
   virtual ~cell_meas_manager() = default;
 
   /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
-  virtual cu_cp_meas_cfg get_measurement_config(const nr_cell_id_t& cid) = 0;
+  virtual cu_cp_meas_cfg get_measurement_config(nr_cell_id_t nci) = 0;
+
+  /// \brief Update the measurement related parameters for the given cell id.
+  virtual bool update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cfg) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void report_measurement(const cu_cp_meas_results& meas_results) = 0;

@@ -40,14 +40,24 @@ void cell_meas_manager_test::create_default_manager()
 
   // Add 3 cells with 2 neighbor cells each
 
-  std::vector<nr_cell_id_t> neighbor_cells_0 = {1, 2};
-  cfg.neighbor_cell_list.emplace(0, neighbor_cells_0);
+  cell_meas_cfg cell_cfg;
+  cell_cfg.nci = 0;
+  cell_cfg.ncells.push_back(1);
+  cell_cfg.ncells.push_back(2);
+  cfg.cells.emplace(cell_cfg.nci, cell_cfg);
 
-  std::vector<nr_cell_id_t> neighbor_cells_1 = {0, 2};
-  cfg.neighbor_cell_list.emplace(1, neighbor_cells_1);
+  // Reuse config to setup config for next cell.
+  cell_cfg.nci = 1;
+  cell_cfg.ncells.clear();
+  cell_cfg.ncells.push_back(0);
+  cell_cfg.ncells.push_back(2);
+  cfg.cells.emplace(cell_cfg.nci, cell_cfg);
 
-  std::vector<nr_cell_id_t> neighbor_cells_2 = {0, 1};
-  cfg.neighbor_cell_list.emplace(2, neighbor_cells_2);
+  cell_cfg.nci = 2;
+  cell_cfg.ncells.clear();
+  cell_cfg.ncells.push_back(0);
+  cell_cfg.ncells.push_back(1);
+  cfg.cells.emplace(cell_cfg.nci, cell_cfg);
 
   // Add A3 event.
   cfg.a3_event_config.emplace();
@@ -63,9 +73,10 @@ void cell_meas_manager_test::create_manager_with_one_cell_and_one_neighbor_cell(
   cell_meas_manager_cfg cfg;
 
   // Cell id 0 with single neighbor with cell id 1
-  std::vector<nr_cell_id_t> neighbor_list;
-  neighbor_list.push_back(1);
-  cfg.neighbor_cell_list.insert({0, neighbor_list});
+  cell_meas_cfg cell_cfg;
+  cell_cfg.nci = 0;
+  cell_cfg.ncells.push_back(1);
+  cfg.cells.insert({cell_cfg.nci, cell_cfg});
 
   // Add A3 event.
   cfg.a3_event_config.emplace();

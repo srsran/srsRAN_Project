@@ -13,6 +13,26 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
+TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_validation_fails)
+{
+  cell_meas_cfg cell_cfg;
+  ASSERT_FALSE(is_complete(cell_cfg));
+}
+
+TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_validation_succeeds)
+{
+  cell_meas_cfg cell_cfg;
+  cell_cfg.nci                 = 0;
+  cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.ssb_arfcn.emplace() = 12;
+  cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  cu_cp_ssb_mtc ssb_mtc;
+  ssb_mtc.dur                                  = 1;
+  ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
+  cell_cfg.ssb_mtc.emplace()                   = ssb_mtc;
+  ASSERT_TRUE(is_complete(cell_cfg));
+}
+
 TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 {
   cell_meas_manager_cfg cfg = {};
@@ -21,10 +41,10 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_validation_succeeds)
 
 TEST_F(cell_meas_manager_test, when_empty_neighbor_is_defined_but_no_event_configured_validation_fails)
 {
-  cell_meas_manager_cfg     cfg = {};
-  std::vector<nr_cell_id_t> neighbor_list;
-  neighbor_list.push_back(1);
-  cfg.neighbor_cell_list.insert({0, neighbor_list});
+  cell_meas_manager_cfg cfg = {};
+  cell_meas_cfg         cell_cfg;
+  cell_cfg.nci = 0;
+  cfg.cells.insert({cell_cfg.nci, cell_cfg});
 
   ASSERT_FALSE(is_valid_configuration(cfg));
 }

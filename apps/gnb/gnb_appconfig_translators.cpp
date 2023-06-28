@@ -47,7 +47,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
     for (const auto& ncell : cell.ncells) {
       ncell_ids.push_back(ncell.n_id_cell);
     }
-    out_cfg.mobility_config.meas_manager_config.neighbor_cell_list[cell.n_id_cell] = ncell_ids;
+    out_cfg.mobility_config.meas_manager_config.cells[cell.n_id_cell].ncells = ncell_ids;
   }
 
   // Convert measurement config.
