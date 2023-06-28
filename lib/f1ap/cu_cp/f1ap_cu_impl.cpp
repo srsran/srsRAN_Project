@@ -13,6 +13,7 @@
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;

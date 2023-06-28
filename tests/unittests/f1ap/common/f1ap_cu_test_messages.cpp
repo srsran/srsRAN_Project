@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_cu_test_messages.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

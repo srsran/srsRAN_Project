@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/gateways/network_gateway.h"
 
 namespace srsran {

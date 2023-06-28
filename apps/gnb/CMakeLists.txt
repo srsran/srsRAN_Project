@@ -6,8 +6,6 @@
 # the distribution.
 #
 
-add_subdirectory(adapters)
-
 add_executable(gnb
         gnb.cpp
         gnb_appconfig_cli11_schema.cpp
@@ -18,6 +16,7 @@ add_executable(gnb
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
         helpers/metrics_hub.cpp
+        adapters/f1ap_adapter.cpp
         )
 
 install(TARGETS gnb

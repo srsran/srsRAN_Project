@@ -9,13 +9,13 @@
  */
 
 #include "f1ap_du_impl.h"
-#include "../../ran/gnb_format.h"
 #include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 
