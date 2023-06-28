@@ -15,6 +15,7 @@
 #include "srsran/asn1/rrc_nr/common.h"
 #include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
@@ -23,6 +24,76 @@
 
 namespace srsran {
 namespace srs_cu_cp {
+
+inline rrc_ssb_mtc asn1_to_ssb_mtc(const asn1::rrc_nr::ssb_mtc_s& asn1_ssb_mtc)
+{
+  rrc_ssb_mtc ssb_mtc;
+
+  // periodicity and offset
+  switch (asn1_ssb_mtc.periodicity_and_offset.type()) {
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf5:
+      ssb_mtc.periodicity_and_offset.sf5 = asn1_ssb_mtc.periodicity_and_offset.sf5();
+      break;
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf10:
+      ssb_mtc.periodicity_and_offset.sf10 = asn1_ssb_mtc.periodicity_and_offset.sf10();
+      break;
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf20:
+      ssb_mtc.periodicity_and_offset.sf20 = asn1_ssb_mtc.periodicity_and_offset.sf20();
+      break;
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf40:
+      ssb_mtc.periodicity_and_offset.sf40 = asn1_ssb_mtc.periodicity_and_offset.sf40();
+      break;
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf80:
+      ssb_mtc.periodicity_and_offset.sf80 = asn1_ssb_mtc.periodicity_and_offset.sf80();
+      break;
+    case asn1::rrc_nr::ssb_mtc_s::periodicity_and_offset_c_::types_opts::options::sf160:
+      ssb_mtc.periodicity_and_offset.sf160 = asn1_ssb_mtc.periodicity_and_offset.sf160();
+      break;
+    default:
+      srslog::fetch_basic_logger("RRC").error("Invalid SSB MTC configuration.");
+  }
+
+  // dur
+  ssb_mtc.dur = asn1_ssb_mtc.dur.to_number();
+
+  return ssb_mtc;
+}
+
+inline rrc_meas_timing asn1_to_meas_timing(const asn1::rrc_nr::meas_timing_s& asn1_meas_timing)
+{
+  rrc_meas_timing meas_timing;
+
+  // freq and timing
+  if (asn1_meas_timing.freq_and_timing_present) {
+    rrc_meas_timing::rrc_freq_and_timing_ freq_and_timing;
+
+    // carrier freq
+    freq_and_timing.carrier_freq = asn1_meas_timing.freq_and_timing.carrier_freq;
+
+    // subcarrier spacing
+    freq_and_timing.ssb_subcarrier_spacing =
+        to_subcarrier_spacing(asn1_meas_timing.freq_and_timing.ssb_subcarrier_spacing.to_string());
+
+    // ssb mtc
+    freq_and_timing.ssb_meas_timing_cfg = asn1_to_ssb_mtc(asn1_meas_timing.freq_and_timing.ssb_meas_timing_cfg);
+
+    // ss rssi meas
+    if (asn1_meas_timing.freq_and_timing.ss_rssi_meas_present) {
+      rrc_ss_rssi_meas ss_rssi_meas;
+
+      // meas slots
+      ss_rssi_meas.meas_slots = asn1_meas_timing.freq_and_timing.ss_rssi_meas.meas_slots.to_number();
+      // end symbol
+      ss_rssi_meas.end_symbol = asn1_meas_timing.freq_and_timing.ss_rssi_meas.end_symbol;
+
+      freq_and_timing.ss_rssi_meas = ss_rssi_meas;
+    }
+
+    meas_timing.freq_and_timing = freq_and_timing;
+  }
+
+  return meas_timing;
+}
 
 /// \brief Converts type \c subcarrier_spacing to an RRC NR ASN.1 type.
 /// \param sc_spacing subcarrier spacing object.
