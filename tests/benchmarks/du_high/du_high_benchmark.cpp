@@ -146,15 +146,15 @@ public:
   f1u_bearer* create_du_bearer(uint32_t                     ue_index,
                                drb_id_t                     drb_id,
                                srs_du::f1u_config           config,
-                               uint32_t                     dl_teid,
-                               uint32_t                     ul_teid,
+                               gtpu_teid_t                  dl_teid,
+                               gtpu_teid_t                  ul_teid,
                                srs_du::f1u_rx_sdu_notifier& du_rx,
                                timer_factory                timers) override
   {
     du_notif = &du_rx;
     return &bearer;
   }
-  void remove_du_bearer(uint32_t dl_teid) override { du_notif = nullptr; }
+  void remove_du_bearer(gtpu_teid_t dl_teid) override { du_notif = nullptr; }
 };
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.

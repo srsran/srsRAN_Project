@@ -61,7 +61,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
   encoder.pack(header.length, 16);
 
   // TEID
-  encoder.pack(header.teid, 32);
+  encoder.pack(header.teid.value(), 32);
 
   // Optional header fields
   if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
@@ -135,7 +135,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunn
   decoder.unpack(header.length, 16);
 
   // TEID
-  decoder.unpack(header.teid, 32);
+  decoder.unpack(header.teid.value(), 32);
 
   // Optional header fields
   if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {

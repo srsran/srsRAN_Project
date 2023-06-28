@@ -184,20 +184,20 @@ public:
   srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
                                        drb_id_t                     drb_id,
                                        srs_du::f1u_config           config,
-                                       uint32_t                     dl_teid,
-                                       uint32_t                     ul_teid,
+                                       gtpu_teid_t                  dl_teid,
+                                       gtpu_teid_t                  ul_teid,
                                        srs_du::f1u_rx_sdu_notifier& du_rx,
                                        timer_factory                timers) override
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
-      f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
+      f1u_bearers.insert(std::make_pair(dl_teid, std::map<gtpu_teid_t, f1u_bearer_dummy, gtpu_teid_compare_t>{}));
       f1u_bearers[dl_teid].emplace(ul_teid, du_rx);
       return &f1u_bearers.at(dl_teid).at(ul_teid);
     }
     return nullptr;
   }
 
-  void remove_du_bearer(uint32_t dl_teid) override
+  void remove_du_bearer(gtpu_teid_t dl_teid) override
   {
     auto bearer_it = f1u_bearers.find(dl_teid);
     if (bearer_it == f1u_bearers.end()) {
@@ -207,7 +207,7 @@ public:
     f1u_bearers.erase(bearer_it);
   }
 
-  std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
+  std::map<gtpu_teid_t, std::map<gtpu_teid_t, f1u_bearer_dummy, gtpu_teid_compare_t>, gtpu_teid_compare_t> f1u_bearers;
 };
 
 class mac_test_dummy : public mac_cell_manager,

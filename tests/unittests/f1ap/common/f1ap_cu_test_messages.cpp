@@ -318,7 +318,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
 
   // ul up tnl info to be setup list
-  up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
+  up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid(1)};
   drbs_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
 
   // rlc mode

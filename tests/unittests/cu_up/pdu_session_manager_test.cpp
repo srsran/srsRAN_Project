@@ -79,8 +79,8 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
       confidentiality_protection_indication_t::not_needed;
   pdu_session_setup_item.pdu_session_res_dl_ambr = 330000000;
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
-  pdu_session_setup_item.ng_ul_up_tnl_info          = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtpu_teid(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info          = {transport_layer_address{"0.0.0.0"}, int_to_gtpu_teid(0)};
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
   drb_to_setup_item.drb_id                      = uint_to_drb_id(1);
@@ -140,7 +140,7 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(1);
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtpu_teid(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -183,7 +183,7 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(0x0d);
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtpu_teid(0x12345678);
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
@@ -217,7 +217,7 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
 
   ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
-  uint32_t ul_teid = f1u_gw->created_ul_teid_list.front();
+  gtpu_teid_t ul_teid = f1u_gw->created_ul_teid_list.front();
   f1u_gw->created_ul_teid_list.pop_front();
   ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
 
@@ -258,7 +258,7 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(0x0d);
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtpu_teid(0x12345678);
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
@@ -288,12 +288,12 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
-  uint32_t teid = gtpu_rx_demux->created_teid_list.front();
+  gtpu_teid_t teid = gtpu_rx_demux->created_teid_list.front();
   gtpu_rx_demux->created_teid_list.pop_front();
   ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
 
   ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
-  uint32_t ul_teid = f1u_gw->created_ul_teid_list.front();
+  gtpu_teid_t ul_teid = f1u_gw->created_ul_teid_list.front();
   f1u_gw->created_ul_teid_list.pop_front();
   ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
 

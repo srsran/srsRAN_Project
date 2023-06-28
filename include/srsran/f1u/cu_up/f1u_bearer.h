@@ -13,6 +13,7 @@
 
 #include "f1u_rx_pdu_handler.h"
 #include "f1u_tx_sdu_handler.h"
+#include "srsran/gtpu/gtpu_teid.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -40,8 +41,8 @@ public:
 class f1u_bearer_disconnector
 {
 public:
-  virtual ~f1u_bearer_disconnector()                  = default;
-  virtual void disconnect_cu_bearer(uint32_t ul_teid) = 0;
+  virtual ~f1u_bearer_disconnector()                     = default;
+  virtual void disconnect_cu_bearer(gtpu_teid_t ul_teid) = 0;
 };
 
 } // namespace srs_cu_up

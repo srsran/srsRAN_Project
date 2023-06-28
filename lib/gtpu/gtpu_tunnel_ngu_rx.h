@@ -55,7 +55,7 @@ protected:
     }
     if (!have_pdu_session_info) {
       logger.log_warning(
-          "Incomplete PDU at NG-U interface: missing or invalid PDU session container. sdu_len={} teid={:#x}",
+          "Incomplete PDU at NG-U interface: missing or invalid PDU session container. sdu_len={} teid={}",
           buf.length(),
           hdr.teid);
       // As per TS 29.281 Sec. 5.2.2.7 the (...) PDU Session Container (...) shall be transmitted in a G-PDU over the N3
@@ -65,7 +65,7 @@ protected:
 
     logger.log_info(buf.begin(),
                     buf.end(),
-                    "RX SDU. sdu_len={} teid={:#x} qos_flow={}",
+                    "RX SDU. sdu_len={} teid={} qos_flow={}",
                     buf.length(),
                     hdr.teid,
                     pdu_session_info.qos_flow_id);

@@ -78,8 +78,8 @@ protected:
 
   // GTP-U logger
   srslog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, 1, "DL"}};
-  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, 1, "UL"}};
+  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, gtpu_teid_t{1}, "DL"}};
+  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, gtpu_teid_t{1}, "UL"}};
 
   // GTP-U tunnel entity
   std::unique_ptr<gtpu_tunnel_ngu> gtpu;
@@ -94,8 +94,8 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = 0x1;
-  msg.cfg.tx.peer_teid                 = 0x2;
+  msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
@@ -109,8 +109,8 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = 0x2;
-  msg.cfg.tx.peer_teid                 = 0xbc1e3be9;
+  msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
+  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0xbc1e3be9};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
@@ -133,8 +133,8 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
-  msg.cfg.rx.local_teid                = 0x1;
-  msg.cfg.tx.peer_teid                 = 0x2;
+  msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;

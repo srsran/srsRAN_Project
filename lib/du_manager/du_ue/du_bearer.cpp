@@ -115,7 +115,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
   // TODO: Handle more than one tnl. Set IP.
   // Note: We are computing the DL GTP-TEID as a concatenation of the UE index and DRB-id.
   std::array<up_transport_layer_info, 1> dluptnl_info_list = {up_transport_layer_info{
-      transport_layer_address{"127.0.0.1"}, int_to_gtp_teid((ue_index << 5U) + (unsigned)drb_id)}};
+      transport_layer_address{"127.0.0.1"}, int_to_gtpu_teid((ue_index << 5U) + (unsigned)drb_id)}};
 
   // > Create DRB instance.
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
@@ -134,8 +134,8 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       ue_index,
       drb->drb_id,
       drb->f1u_cfg,
-      drb->dluptnl_info_list[0].gtp_teid.value(),
-      drb->uluptnl_info_list[0].gtp_teid.value(),
+      drb->dluptnl_info_list[0].gtp_teid,
+      drb->uluptnl_info_list[0].gtp_teid,
       drb->connector.f1u_rx_sdu_notif,
       timer_factory{du_params.services.timers, du_params.services.ue_execs.executor(ue_index)});
   if (f1u_drb == nullptr) {
@@ -143,7 +143,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
     return nullptr;
   }
   auto f1u_bearer_deleter = [f1u_gw  = &du_params.f1u.f1u_gw,
-                             dl_teid = drb->dluptnl_info_list[0].gtp_teid.value()](f1u_bearer* p) {
+                             dl_teid = drb->dluptnl_info_list[0].gtp_teid](f1u_bearer* p) {
     if (p != nullptr) {
       f1u_gw->remove_du_bearer(dl_teid);
     }
@@ -155,7 +155,7 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(du_ue_index_t             
       create_rlc_entity(make_rlc_entity_creation_message(ue_index, pcell_index, *drb, du_params.services));
   if (drb->rlc_bearer == nullptr) {
     // Failed to create RLC DRB entity.
-    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0].gtp_teid.value());
+    du_params.f1u.f1u_gw.remove_du_bearer(drb->dluptnl_info_list[0].gtp_teid);
     return nullptr;
   }
 

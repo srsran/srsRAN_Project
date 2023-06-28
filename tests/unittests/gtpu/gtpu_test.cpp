@@ -48,8 +48,8 @@ protected:
 
   // GTP-U logger
   srslog::basic_logger& gtpu_logger;
-  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, 1, "DL"}};
-  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, 1, "UL"}};
+  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, gtpu_teid_t{1}, "DL"}};
+  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, gtpu_teid_t{1}, "UL"}};
 };
 
 /// \brief Test correct read TEID helper function

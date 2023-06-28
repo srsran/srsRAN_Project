@@ -44,8 +44,8 @@ public:
   size_t                          get_nof_pdu_sessions() override;
 
 private:
-  uint32_t allocate_local_teid(pdu_session_id_t pdu_session_id);
-  uint32_t allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id);
+  gtpu_teid_t allocate_local_teid(pdu_session_id_t pdu_session_id);
+  gtpu_teid_t allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id);
 
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);

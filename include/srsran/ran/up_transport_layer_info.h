@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/strong_type.h"
+#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/support/srsran_assert.h"
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -18,16 +18,6 @@
 #include <string>
 
 namespace srsran {
-
-/// \brief GTP Tunnel Identifier.
-struct gtp_teid_tag {};
-using gtp_teid_t = strong_type<uint32_t, struct gtp_teid_tag, strong_equality, strong_equality_with<uint32_t>>;
-
-/// \brief Convert integer to GTP TEID value.
-inline gtp_teid_t int_to_gtp_teid(uint32_t teid_val)
-{
-  return gtp_teid_t{teid_val};
-}
 
 /// \brief Representation of an Transport Layer Address.
 class transport_layer_address
@@ -145,7 +135,7 @@ private:
 /// \brief Identifier for F1 transport layer associated to a DRB.
 struct up_transport_layer_info {
   transport_layer_address tp_address{"0.0.0.0"};
-  gtp_teid_t              gtp_teid;
+  gtpu_teid_t             gtp_teid;
 };
 
 /// \brief Converts type \c up_transport_layer_info to an ASN.1 type.
@@ -166,7 +156,7 @@ template <typename Asn1Type>
 up_transport_layer_info asn1_to_up_transport_layer_info(Asn1Type& asn1obj)
 {
   up_transport_layer_info ret;
-  ret.gtp_teid = int_to_gtp_teid(asn1obj.gtp_tunnel().gtp_teid.to_number());
+  ret.gtp_teid = int_to_gtpu_teid(asn1obj.gtp_tunnel().gtp_teid.to_number());
   ret.tp_address.from_bitstring(asn1obj.gtp_tunnel().transport_layer_address.to_string());
   return ret;
 }
@@ -185,15 +175,6 @@ struct formatter<srsran::transport_layer_address> : public formatter<std::string
     getnameinfo((sockaddr*)&s, sizeof(s), ip_addr, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
 
     return format_to(ctx.out(), "{}", ip_addr);
-  }
-};
-
-template <>
-struct formatter<srsran::gtp_teid_t> : public formatter<std::string> {
-  template <typename FormatContext>
-  auto format(const srsran::gtp_teid_t& t, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "{:#08x}", t.value());
   }
 };
 

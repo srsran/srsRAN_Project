@@ -36,7 +36,7 @@ protected:
       auto& drb  = this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup.back();
       drb.drb_id = drb_id;
       drb.dluptnl_info_list.resize(1);
-      drb.dluptnl_info_list[0].gtp_teid   = int_to_gtp_teid(test_rgen::uniform_int<uint32_t>());
+      drb.dluptnl_info_list[0].gtp_teid   = int_to_gtpu_teid(test_rgen::uniform_int<uint32_t>());
       drb.dluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"};
     }
     this->f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
@@ -90,7 +90,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_EQ(drb_setup.drb_id, 1);
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list.size(), 1);
   ASSERT_EQ(
-      int_to_gtp_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
+      int_to_gtpu_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
       this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(
       drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_string(),

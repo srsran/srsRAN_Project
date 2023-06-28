@@ -31,19 +31,19 @@ public:
   dummy_gtpu_demux_ctrl()  = default;
   ~dummy_gtpu_demux_ctrl() = default;
 
-  bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
+  bool add_tunnel(gtpu_teid_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
     return true;
   }
-  bool remove_tunnel(uint32_t teid) override
+  bool remove_tunnel(gtpu_teid_t teid) override
   {
     removed_teid_list.push_back(teid);
     return true;
   }
 
-  std::list<uint32_t> created_teid_list = {};
-  std::list<uint32_t> removed_teid_list = {};
+  std::list<gtpu_teid_t> created_teid_list = {};
+  std::list<gtpu_teid_t> removed_teid_list = {};
 };
 
 /// Dummy adapter between GTP-U and Network Gateway
@@ -126,7 +126,7 @@ class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
 public:
   dummy_f1u_bearer(dummy_inner_f1u_bearer&             inner_,
                    srs_cu_up::f1u_bearer_disconnector& disconnector_,
-                   uint32_t                            ul_teid_) :
+                   gtpu_teid_t                         ul_teid_) :
     inner(inner_), disconnector(disconnector_), ul_teid(ul_teid_)
   {
   }
@@ -149,7 +149,7 @@ public:
 private:
   dummy_inner_f1u_bearer&             inner;
   srs_cu_up::f1u_bearer_disconnector& disconnector;
-  uint32_t                            ul_teid;
+  gtpu_teid_t                         ul_teid;
 };
 
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
@@ -162,7 +162,7 @@ public:
   ~dummy_f1u_gateway() override = default;
 
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
-                                                          uint32_t                             ul_teid,
+                                                          gtpu_teid_t                          ul_teid,
                                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx,
                                                           timer_factory                        timers) override
@@ -171,12 +171,12 @@ public:
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
     return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_teid);
   };
-  void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
-  void disconnect_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
+  void attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
+  void disconnect_cu_bearer(gtpu_teid_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
 
-  std::list<uint32_t> created_ul_teid_list  = {};
-  std::list<uint32_t> attached_ul_teid_list = {};
-  std::list<uint32_t> removed_ul_teid_list  = {};
+  std::list<gtpu_teid_t> created_ul_teid_list  = {};
+  std::list<gtpu_teid_t> attached_ul_teid_list = {};
+  std::list<gtpu_teid_t> removed_ul_teid_list  = {};
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler

@@ -134,7 +134,7 @@ struct gtpu_header {
   } flags;
   uint8_t                            message_type      = 0;
   uint16_t                           length            = 0;
-  uint32_t                           teid              = 0;
+  gtpu_teid_t                        teid              = {};
   uint16_t                           seq_number        = 0;
   uint8_t                            n_pdu             = 0;
   gtpu_extension_header_type         next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;

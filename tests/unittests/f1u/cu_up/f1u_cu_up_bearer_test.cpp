@@ -28,7 +28,7 @@ public:
   std::list<uint32_t>                highest_transmitted_pdcp_sn_list;
   std::list<uint32_t>                highest_delivered_pdcp_sn_list;
   std::list<byte_buffer_slice_chain> rx_sdu_list;
-  std::list<uint32_t>                removed_ul_teid_list;
+  std::list<gtpu_teid_t>             removed_ul_teid_list;
 
   // f1u_tx_pdu_notifier interface
   void on_new_pdu(nru_dl_message msg) override { tx_msg_list.push_back(std::move(msg)); }
@@ -47,7 +47,7 @@ public:
   void on_new_sdu(byte_buffer_slice_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
 
   // f1u_bearer_disconnector interface
-  void disconnect_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); }
+  void disconnect_cu_bearer(gtpu_teid_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); }
 };
 
 class f1u_trx_test
@@ -81,8 +81,14 @@ protected:
     logger.info("Creating F1-U bearer");
     tester          = std::make_unique<f1u_cu_up_test_frame>();
     drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(
-        0, drb_id, *tester, *tester, *tester, timer_factory{timers, ue_worker}, *tester, ul_teid_next++);
+    f1u             = std::make_unique<f1u_bearer_impl>(0,
+                                            drb_id,
+                                            *tester,
+                                            *tester,
+                                            *tester,
+                                            timer_factory{timers, ue_worker},
+                                            *tester,
+                                            gtpu_teid_t{ul_teid_next.value()++});
   }
 
   void TearDown() override
@@ -102,7 +108,7 @@ protected:
   manual_task_worker                    ue_worker{128};
   std::unique_ptr<f1u_cu_up_test_frame> tester;
   std::unique_ptr<f1u_bearer_impl>      f1u;
-  uint32_t                              ul_teid_next = 1234;
+  gtpu_teid_t                           ul_teid_next{1234};
 };
 
 TEST_F(f1u_cu_up_test, create_and_delete)
@@ -112,7 +118,7 @@ TEST_F(f1u_cu_up_test, create_and_delete)
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
   EXPECT_TRUE(tester->removed_ul_teid_list.empty());
-  uint32_t ul_teid = f1u->get_ul_teid();
+  gtpu_teid_t ul_teid = f1u->get_ul_teid();
   f1u.reset();
   ASSERT_FALSE(tester->removed_ul_teid_list.empty());
   EXPECT_EQ(tester->removed_ul_teid_list.front(), ul_teid);

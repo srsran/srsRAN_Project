@@ -23,7 +23,7 @@ namespace srsran {
 struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter> cu_tx      = nullptr;
   srs_cu_up::f1u_bearer*                f1u_bearer = nullptr;
-  optional<uint32_t>                    dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
+  optional<gtpu_teid_t>                 dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
   f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, srs_cu_up::f1u_bearer* f1u_bearer_) :
     cu_tx(std::move(cu_tx_)), f1u_bearer(f1u_bearer_)
   {
@@ -56,27 +56,29 @@ public:
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
   std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
-                                                          uint32_t                             ul_teid,
+                                                          gtpu_teid_t                          ul_teid,
                                                           srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                                           srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                                                           timer_factory                        timers) override;
-  void                                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
-  void                                   disconnect_cu_bearer(uint32_t ul_teid) override;
+  void                                   attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_teid) override;
+  void                                   disconnect_cu_bearer(gtpu_teid_t ul_teid) override;
 
   srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
                                        drb_id_t                     drb_id,
                                        srs_du::f1u_config           config,
-                                       uint32_t                     dl_teid,
-                                       uint32_t                     ul_teid,
+                                       gtpu_teid_t                  dl_teid,
+                                       gtpu_teid_t                  ul_teid,
                                        srs_du::f1u_rx_sdu_notifier& du_rx,
                                        timer_factory                timers) override;
-  void                remove_du_bearer(uint32_t dl_teid) override;
+  void                remove_du_bearer(gtpu_teid_t dl_teid) override;
 
 private:
-  srslog::basic_logger&                       logger_cu;
-  srslog::basic_logger&                       logger_du;
-  std::unordered_map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
-  std::unordered_map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
-  std::mutex                                  map_mutex; // shared mutex for access to cu_map and du_map
+  srslog::basic_logger& logger_cu;
+  srslog::basic_logger& logger_du;
+  std::unordered_map<gtpu_teid_t, f1u_cu_bearer, gtpu_teid_hasher_t>
+      cu_map; // Key is UL-TEID (i.e., the CU's local TEID)
+  std::unordered_map<gtpu_teid_t, f1u_du_bearer, gtpu_teid_hasher_t>
+             du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
+  std::mutex map_mutex; // shared mutex for access to cu_map and du_map
 };
 }; // namespace srsran

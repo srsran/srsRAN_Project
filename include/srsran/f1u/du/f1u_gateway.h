@@ -13,6 +13,7 @@
 #include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
+#include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/timers.h"
 
@@ -34,12 +35,12 @@ public:
   virtual srs_du::f1u_bearer* create_du_bearer(uint32_t                     ue_index,
                                                drb_id_t                     drb_id,
                                                srs_du::f1u_config           config,
-                                               uint32_t                     dl_teid,
-                                               uint32_t                     ul_teid,
+                                               gtpu_teid_t                  dl_teid,
+                                               gtpu_teid_t                  ul_teid,
                                                srs_du::f1u_rx_sdu_notifier& du_rx,
                                                timer_factory                timers) = 0;
 
-  virtual void remove_du_bearer(uint32_t dl_teid) = 0;
+  virtual void remove_du_bearer(gtpu_teid_t dl_teid) = 0;
 };
 
 } // namespace srs_du

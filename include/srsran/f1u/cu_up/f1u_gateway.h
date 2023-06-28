@@ -31,12 +31,12 @@ public:
 
   virtual std::unique_ptr<srs_cu_up::f1u_bearer>
   create_cu_bearer(uint32_t                             ue_index,
-                   uint32_t                             ul_teid,
+                   gtpu_teid_t                          ul_teid,
                    srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                    srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                    timer_factory                        timers) = 0;
 
-  virtual void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) = 0;
+  virtual void attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_teid) = 0;
 };
 
 } // namespace srsran

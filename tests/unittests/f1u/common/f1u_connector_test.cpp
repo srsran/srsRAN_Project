@@ -111,8 +111,8 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
-  uint32_t ul_teid = 1;
-  uint32_t dl_teid = 2;
+  gtpu_teid_t ul_teid{1};
+  gtpu_teid_t dl_teid{2};
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;

@@ -18,7 +18,7 @@ using namespace srsran;
 
 std::unique_ptr<srs_cu_up::f1u_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                             ue_index,
-                                      uint32_t                             ul_teid,
+                                      gtpu_teid_t                          ul_teid,
                                       srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                       srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier,
                                       timer_factory                        timers)
@@ -35,7 +35,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
   return f1u_bearer;
 }
 
-void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
+void f1u_local_connector::attach_dl_teid(gtpu_teid_t ul_teid, gtpu_teid_t dl_teid)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
   if (cu_map.find(ul_teid) == cu_map.end()) {
@@ -56,7 +56,7 @@ void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
   cu_tun.dl_teid = dl_teid;
 }
 
-void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
+void f1u_local_connector::disconnect_cu_bearer(gtpu_teid_t ul_teid)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
   // Find bearer from ul_teid
@@ -92,8 +92,8 @@ void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
 srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t                     ue_index,
                                                           drb_id_t                     drb_id,
                                                           srs_du::f1u_config           config,
-                                                          uint32_t                     dl_teid,
-                                                          uint32_t                     ul_teid,
+                                                          gtpu_teid_t                  dl_teid,
+                                                          gtpu_teid_t                  ul_teid,
                                                           srs_du::f1u_rx_sdu_notifier& du_rx,
                                                           timer_factory                timers)
 {
@@ -127,7 +127,7 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
   return ptr;
 }
 
-void f1u_local_connector::remove_du_bearer(uint32_t dl_teid)
+void f1u_local_connector::remove_du_bearer(gtpu_teid_t dl_teid)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
   auto                         bearer_it = du_map.find(dl_teid);
