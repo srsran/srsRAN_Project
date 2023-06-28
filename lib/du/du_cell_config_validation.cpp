@@ -234,12 +234,12 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
                offset_p_A_upper_bound);
   }
 
-  ssb_pattern_case ssb_case   = ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
+  ssb_pattern_case ssb_case   = band_helper::get_ssb_pattern(cell_cfg.dl_carrier.band, ssb_cfg.scs);
   uint8_t          ssb_bitmap = static_cast<uint64_t>(ssb_cfg.ssb_bitmap) << static_cast<uint64_t>(56U);
-  bool    is_paired = band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn));
-  uint8_t L_max     = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
-  double  cutoff_freq_mhz_case_a_b_c      = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
-  double  cutoff_freq_mhz_case_c_unpaired = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  bool             is_paired  = band_helper::is_paired_spectrum(cell_cfg.dl_carrier.band);
+  uint8_t          L_max      = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn, cell_cfg.dl_carrier.band);
+  double           cutoff_freq_mhz_case_a_b_c      = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  double           cutoff_freq_mhz_case_c_unpaired = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
 
   // Check whether the SSB beam bitmap and L_max are compatible with SSB case and DL band.
   if (ssb_case == ssb_pattern_case::C and not is_paired) {
