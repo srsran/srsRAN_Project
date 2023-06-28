@@ -42,6 +42,10 @@ using namespace srsran;
 #define CHECK_BELOW(val, max_val, ...)                                                                                 \
   CHECK_TRUE((val < max_val), "Invalid {} ({} >= {})", fmt::format(__VA_ARGS__), val, max_val)
 
+/// Checks if "val" is above or equal to "max_val".
+#define CHECK_EQ_OR_ABOVE(val, max_val, ...)                                                                           \
+  CHECK_TRUE((val >= max_val), "Invalid {} ({} > {})", fmt::format(__VA_ARGS__), val, max_val)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Helper typedef.
@@ -281,6 +285,21 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   if (not cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
     return {};
   }
+  const auto cs0_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
+  const pdcch_type0_css_occasion_pattern1_description ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
+      pdcch_type0_css_occasion_pattern1_configuration{.is_fr2        = false,
+                                                      .ss_zero_index = static_cast<uint8_t>(cell_cfg.searchspace0_idx),
+                                                      .nof_symb_coreset = cs0_duration});
+  // Consider the starting index of the last PDCCH monitoring occasion in SearchSpace#0.
+  // TODO: Revise this logic once we have introduced the check for PDCCH symbols present in special slot in scheduler.
+  // TODO: Consider SearchSpace periodicity while validating DL symbols in special slots.
+  const auto ss0_start_symbol_idx =
+      *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+  const auto ss1_first_monitoring_symb_idx =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index();
+  const auto cs1_duration = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration;
+  const auto ss2_first_monitoring_symb_idx =
+      cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index();
 
   const auto& tdd_cfg                  = cell_cfg.tdd_ul_dl_cfg_common.value();
   const auto  pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
@@ -290,6 +309,20 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                     pattern1_period_slots,
                     "TDD UL DL pattern 1 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
                     "exceeds TDD pattern period.");
+  if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
+    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                      ss0_start_symbol_idx + cs0_duration,
+                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
+                      "CORESET#0 duration for SearchSpace#0.");
+    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                      ss1_first_monitoring_symb_idx + cs0_duration,
+                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
+                      "CORESET#0 duration for SearchSpace#1.");
+    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                      ss2_first_monitoring_symb_idx + cs1_duration,
+                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#1 + "
+                      "CORESET#1 duration for SearchSpace#2.");
+  }
 
   if (tdd_cfg.pattern2.has_value()) {
     const auto pattern2_period_slots = tdd_cfg.pattern2.value().dl_ul_tx_period_nof_slots;
@@ -302,6 +335,23 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                       pattern2_period_slots,
                       "TDD UL DL pattern 2 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
                       "exceeds TDD pattern period.");
+    if (tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
+      CHECK_EQ_OR_ABOVE(
+          tdd_cfg.pattern2.value().nof_dl_symbols,
+          ss0_start_symbol_idx + cs0_duration,
+          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
+          "CORESET#0 duration for SearchSpace#0.");
+      CHECK_EQ_OR_ABOVE(
+          tdd_cfg.pattern2.value().nof_dl_symbols,
+          ss1_first_monitoring_symb_idx + cs0_duration,
+          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
+          "CORESET#0 duration for SearchSpace#1.");
+      CHECK_EQ_OR_ABOVE(
+          tdd_cfg.pattern2.value().nof_dl_symbols,
+          ss2_first_monitoring_symb_idx + cs1_duration,
+          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#1 + "
+          "CORESET#1 duration for SearchSpace#2.");
+    }
   }
 
   return {};

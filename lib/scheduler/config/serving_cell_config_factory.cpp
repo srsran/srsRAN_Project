@@ -714,7 +714,8 @@ srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
   static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
 
-  // For SS#0 (CORESET#0).
+  // TODO: Consider SearchSpace periodicity while generating PDSCH OFDM symbol range. If there is no PDCCH, there is no
+  //  PDSCH since we dont support k0 != 0 yet. For SS#0 (CORESET#0).
   if ((nof_dl_symbols_in_slot > (ss0_start_symbol_idx + cs0_duration)) and
       (nof_dl_symbols_in_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
     result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_in_slot);
