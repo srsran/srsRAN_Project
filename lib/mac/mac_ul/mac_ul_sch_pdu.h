@@ -27,7 +27,7 @@ public:
   /// \brief Unpacks a subPDU from a byte buffer reader.
   error_type<std::string> unpack(byte_buffer_reader& subpdu_reader);
 
-  /// \brief Unpacks a subPDU from a byte buffer containing an subPDU.
+  /// \brief Unpacks a subPDU from a byte buffer containing a subPDU.
   error_type<std::string> unpack(const byte_buffer& subpdu);
 
   /// Get LCID of the unpacked subPDU.
