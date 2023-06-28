@@ -220,7 +220,7 @@ struct pucch_appconfig {
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
-  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
+  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.

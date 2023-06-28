@@ -531,7 +531,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
              pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
            }
          },
-         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot25")
+         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   app.add_option("--f2_intraslot_freq_hop",
                  pucch_params.f2_intraslot_freq_hopping,
