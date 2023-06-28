@@ -237,27 +237,27 @@ variables:
         $CTEST_CMD && ret=0 || ret=1
 
         if [[ $TEST_MODE = "coverage" ]]; then 
-          gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
+          common_options="-j $(nproc --all) \
+            --exclude-unreachable-branches \
             --gcov-ignore-parse-errors \
-            --exclude "${CI_PROJECT_DIR}/tests/*" \
-            --exclude "${CI_PROJECT_DIR}/benchmarks/*" \
-            --exclude "${CI_PROJECT_DIR}/apps/examples/*" \
-            --exclude "${CI_PROJECT_DIR}/external/*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e2ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/ngap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/e2ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.*" \
-            --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
-            --root ${CI_PROJECT_DIR} \
-            -o coverage.xml
+            --exclude=${CI_PROJECT_DIR}/tests/* \
+            --exclude=${CI_PROJECT_DIR}/apps/examples/* \
+            --exclude=${CI_PROJECT_DIR}/external/* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/e1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/e2ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/f1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/rrc_nr/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/e1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/e2ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/f1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.* \
+            --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
+            --root=${CI_PROJECT_DIR}"
+
+          gcovr $common_options --keep >/dev/null
+          gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml
 
           filesize=$(stat -c%s coverage.xml)
           maxsize=$((10*1204*1024))

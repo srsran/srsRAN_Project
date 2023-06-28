@@ -233,8 +233,6 @@ unit coverage:
   image:
     name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
-  variables:
-    GIT_STRATEGY: none
   rules:
     - if: $ON_MR
       variables:
@@ -406,8 +404,10 @@ tag successful schedule:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: manual
+      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: manual
+      allow_failure: true
   variables:
     GIT_STRATEGY: none
   interruptible: false
