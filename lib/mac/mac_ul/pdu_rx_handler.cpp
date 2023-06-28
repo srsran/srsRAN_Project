@@ -76,9 +76,10 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   du_ue_index_t ue_index = rnti_table[pdu.rnti];
 
   // > Decode MAC UL PDU.
-  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
-  if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
-    logger.warning("{}: Failed to decode PDU", create_prefix(ctx));
+  decoded_mac_rx_pdu      ctx{sl_rx, cell_index, std::move(pdu), ue_index};
+  error_type<std::string> ret = ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu);
+  if (ret.is_error()) {
+    logger.info("{}: Failed to decode MAC UL PDU. Cause: {}", create_prefix(ctx), ret.error());
     return false;
   }
 
