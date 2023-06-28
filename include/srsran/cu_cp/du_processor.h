@@ -155,6 +155,11 @@ class du_processor_rrc_du_ue_notifier
 public:
   virtual ~du_processor_rrc_du_ue_notifier() = default;
 
+  /// \brief Notify RRC DU about served cells.
+  /// \param[in] served_cell_list The list of served cells.
+  /// \return Returns true on success, false otherwise.
+  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) = 0;
+
   /// \brief Notify RRC DU to create a UE.
   /// \param[in] msg The UE creation message.
   /// \return Returns a handle to the created UE.

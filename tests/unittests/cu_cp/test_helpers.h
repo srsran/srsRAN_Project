@@ -405,6 +405,12 @@ struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_not
 public:
   dummy_du_processor_rrc_du_ue_notifier() = default;
 
+  bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
+  {
+    logger.info("Received a served cell list");
+    return true;
+  }
+
   rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     logger.info("Received a UE creation request");

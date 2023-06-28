@@ -62,7 +62,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
                                            rrc_ue_cu_cp_notifier,
                                            cell_meas_mng_);
   rrc = create_rrc_du(rrc_creation_msg);
-  rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_ue_repository());
+  rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_cell_manager(), rrc->get_rrc_du_ue_repository());
 
   rrc_ue_ev_notifier.connect_du_processor(get_du_processor_rrc_ue_interface());
 
@@ -85,6 +85,13 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
   context.id = request.gnb_du_id;
   if (request.gnb_du_name.has_value()) {
     context.name = request.gnb_du_name.value();
+  }
+
+  // Forward serving cell list to RRC DU
+  // TODO: How to handle missing optional freq and timing in meas timing config?
+  if (!rrc_du_adapter.on_new_served_cell_list(request.gnb_du_served_cells_list)) {
+    send_f1_setup_failure(cause_t::protocol);
+    return;
   }
 
   for (const auto& served_cell : request.gnb_du_served_cells_list) {
@@ -131,9 +138,6 @@ void du_processor_impl::handle_f1_setup_request(const cu_cp_f1_setup_request& re
     }
 
     // TODO: add unpacking of sys_info
-
-    // add MeasurementTimingConfiguration
-    du_cell.meas_time_cfg = served_cell.served_cell_info.meas_timing_cfg.copy();
 
     // add cell to DU context
     du_cell_index_t cell_index = du_cell.cell_index;
@@ -242,12 +246,11 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
-  rrc_ue_create_msg.ue_index             = ue->get_ue_index();
-  rrc_ue_create_msg.c_rnti               = msg.c_rnti;
-  rrc_ue_create_msg.cell.cgi             = msg.cgi;
-  rrc_ue_create_msg.cell.tac             = cell_db.at(pcell_index).tac;
-  rrc_ue_create_msg.cell.pci             = cell_db.at(pcell_index).pci;
-  rrc_ue_create_msg.meas_time_cfg_packed = cell_db.at(pcell_index).meas_time_cfg.copy();
+  rrc_ue_create_msg.ue_index = ue->get_ue_index();
+  rrc_ue_create_msg.c_rnti   = msg.c_rnti;
+  rrc_ue_create_msg.cell.cgi = msg.cgi;
+  rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
+  rrc_ue_create_msg.cell.pci = cell_db.at(pcell_index).pci;
 
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)] = {};

@@ -151,10 +151,9 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
       valid = security::verify_short_mac(short_mac, var_short_mac_input_packed, source_as_config);
       logger.debug("Received RRC re-establishment. short_mac_valid={}", valid);
 
-      uint32_t ssb_arfcn = context.cfg.meas_timing_cfg.crit_exts.c1()
-                               .meas_timing_conf()
-                               .meas_timing.begin()
-                               ->freq_and_timing.carrier_freq;
+      // freq and timing must be present, otherwise the RRC UE would've never been created
+      // TODO: Which meas timing from list to use?
+      uint32_t ssb_arfcn = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
       // Update keys
       context.sec_context = reest_context.sec_context;
       context.sec_context.horizontal_key_derivation(context.cell.pci, ssb_arfcn);

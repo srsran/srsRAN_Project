@@ -16,6 +16,8 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/srsran_assert.h"
+#include <cstddef>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -160,28 +162,39 @@ class du_processor_rrc_du_adapter : public du_processor_rrc_du_ue_notifier
 public:
   du_processor_rrc_du_adapter() = default;
 
-  void connect_rrc_du(rrc_du_ue_repository& rrc_du_handler_) { rrc_du_handler = &rrc_du_handler_; }
+  void connect_rrc_du(rrc_du_cell_manager& rrc_du_cell_handler_, rrc_du_ue_repository& rrc_du_handler_)
+  {
+    rrc_du_cell_handler = &rrc_du_cell_handler_;
+    rrc_du_handler      = &rrc_du_handler_;
+  }
+
+  virtual bool on_new_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override
+  {
+    srsran_assert(rrc_du_cell_handler != nullptr, "RRC DU cell handler must not be nullptr");
+    return rrc_du_cell_handler->handle_served_cell_list(served_cell_list);
+  }
 
   virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->add_ue(msg);
   }
 
   virtual void on_ue_context_release_command(ue_index_t ue_index) override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->remove_ue(ue_index);
   }
 
   virtual void on_release_ues() override
   {
-    srsran_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    srsran_assert(rrc_du_handler != nullptr, "RRC DU UE handler must not be nullptr");
     return rrc_du_handler->release_ues();
   }
 
 private:
-  rrc_du_ue_repository* rrc_du_handler = nullptr;
+  rrc_du_cell_manager*  rrc_du_cell_handler = nullptr;
+  rrc_du_ue_repository* rrc_du_handler      = nullptr;
 };
 
 // Adapter between DU processor and RRC UE

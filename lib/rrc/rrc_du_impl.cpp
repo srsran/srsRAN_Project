@@ -10,6 +10,9 @@
 
 #include "rrc_du_impl.h"
 #include "../ran/gnb_format.h"
+#include "ue/rrc_measurement_types_asn1_converters.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
@@ -35,6 +38,37 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&                 cfg_,
   }
 }
 
+bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list)
+{
+  for (const auto& served_cell : served_cell_list) {
+    rrc_cell_info cell_info;
+
+    asn1::cbit_ref                  bref_meas{served_cell.served_cell_info.meas_timing_cfg};
+    asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;
+    if (asn1_meas_timing_cfg.unpack(bref_meas) != asn1::SRSASN_SUCCESS) {
+      logger.error("Failed to unpack Measurement Timing Config container.");
+      return false;
+    }
+    if (asn1_meas_timing_cfg.crit_exts.type() != meas_timing_cfg_s::crit_exts_c_::types_opts::c1 ||
+        asn1_meas_timing_cfg.crit_exts.c1().type() !=
+            meas_timing_cfg_s::crit_exts_c_::c1_c_::types_opts::meas_timing_conf ||
+        asn1_meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing.size() == 0) {
+      logger.error("Invalid Measurement Timing Config container.");
+      return false;
+    }
+
+    for (const auto& asn1_meas_timing : asn1_meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing) {
+      cell_info.meas_timings.push_back(asn1_to_meas_timing(asn1_meas_timing));
+    }
+
+    cell_info_db.emplace(served_cell.served_cell_info.nr_cgi.nci, cell_info);
+  }
+
+  // TODO: Update cell config in cell meas manager
+
+  return true;
+}
+
 rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
   // Unpack DU to CU container
@@ -55,19 +89,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   ue_index_t   ue_index        = msg.ue_index;
   rrc_ue_cfg_t ue_cfg          = {};
   ue_cfg.up_cfg.five_qi_config = cfg.drb_config;
-
-  asn1::cbit_ref bref_meas({msg.meas_time_cfg_packed.begin(), msg.meas_time_cfg_packed.end()});
-  if (ue_cfg.meas_timing_cfg.unpack(bref_meas) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to unpack Measurement Timing Config container - aborting user creation");
-    return nullptr;
-  }
-  if (ue_cfg.meas_timing_cfg.crit_exts.type() != meas_timing_cfg_s::crit_exts_c_::types_opts::c1 ||
-      ue_cfg.meas_timing_cfg.crit_exts.c1().type() !=
-          meas_timing_cfg_s::crit_exts_c_::c1_c_::types_opts::meas_timing_conf ||
-      ue_cfg.meas_timing_cfg.crit_exts.c1().meas_timing_conf().meas_timing.size() == 0) {
-    logger.error("Invalid Measurement Timing Config container - aborting user creation");
-    return nullptr;
-  }
+  ue_cfg.meas_timings          = cell_info_db.at(msg.cell.cgi.nci).meas_timings;
 
   auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
