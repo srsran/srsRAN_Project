@@ -135,7 +135,7 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 
   // Set state variables depending on the codeblock length.
   codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
-  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
+  length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
 
   span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * AVX2_SIZE_BYTE);
   span<const uint8_t> in_tmp = in;
@@ -154,16 +154,15 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 // "out". The representation is unpacked (1 byte represents 1 bit).
 static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
 {
+  unsigned               nof_vectors = in0.size() / AVX2_SIZE_BYTE;
+  mm256::avx2_const_span in0_local(in0, nof_vectors);
+  mm256::avx2_const_span in1_local(in1, nof_vectors);
+  mm256::avx2_span       out_local(out, nof_vectors);
+
   unsigned i = 0;
-
-  const __m256i* in0_ptr = reinterpret_cast<const __m256i*>(in0.data());
-  const __m256i* in1_ptr = reinterpret_cast<const __m256i*>(in1.data());
-  __m256i*       out_ptr = reinterpret_cast<__m256i*>(out.data());
-  for (unsigned i_end = (out.size() / 32) * 32; i != i_end; i += 32) {
-    __m256i in0_ = _mm256_loadu_si256(in0_ptr++);
-    __m256i in1_ = _mm256_loadu_si256(in1_ptr++);
-
-    _mm256_storeu_si256(out_ptr++, _mm256_xor_si256(in0_, in1_));
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += AVX2_SIZE_BYTE) {
+    _mm256_storeu_si256(out_local.data_at(i_vector),
+                        _mm256_xor_si256(in0_local.get_at(i_vector), in1_local.get_at(i_vector)));
   }
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
@@ -176,14 +175,15 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
 // encoder.
 static void fast_and_one(span<int8_t> out, span<const int8_t> in)
 {
+  unsigned               nof_vectors = in.size() / AVX2_SIZE_BYTE;
+  mm256::avx2_const_span in_local(in, nof_vectors);
+  mm256::avx2_span       out_local(out, nof_vectors);
+
+  __m256i all_ones = _mm256_set1_epi8(1);
+
   unsigned i = 0;
-
-  const __m256i* in0_ptr = reinterpret_cast<const __m256i*>(in.data());
-  __m256i*       out_ptr = reinterpret_cast<__m256i*>(out.data());
-  for (unsigned i_end = (out.size() / 32) * 32; i != i_end; i += 32) {
-    __m256i in0_ = _mm256_loadu_si256(in0_ptr++);
-
-    _mm256_storeu_si256(out_ptr++, _mm256_and_si256(in0_, _mm256_set1_epi8(1)));
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += AVX2_SIZE_BYTE) {
+    _mm256_storeu_si256(out_local.data_at(i_vector), _mm256_and_si256(in_local.get_at(i_vector), all_ones));
   }
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
@@ -196,7 +196,7 @@ void ldpc_encoder_avx2::systematic_bits_inner()
 {
   mm256::avx2_const_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
@@ -214,7 +214,7 @@ void ldpc_encoder_avx2::systematic_bits_inner()
     unsigned i_aux = m * NODE_SIZE_AVX2_PH;
     unsigned i_blk = k * NODE_SIZE_AVX2_PH;
 
-    if (i_aux >= auxiliary_used_size) {
+    if (i_aux >= length_extended) {
       continue;
     }
 
@@ -224,13 +224,14 @@ void ldpc_encoder_avx2::systematic_bits_inner()
       fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
     }
 
-    span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, lifting_size);
-
-    // If m >= 4, we can write directly to the codeblock buffer.
-    if (m >= 4) {
+    auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
+      if (m < bg_hr_parity_nodes) {
+        return auxiliary.plain_span(i_aux, lifting_size);
+      }
       unsigned offset = (bg_K + m) * NODE_SIZE_AVX2_PH * AVX2_SIZE_BYTE;
-      plain_auxiliary = span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
-    }
+      return span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
+    };
+    span<int8_t> plain_auxiliary = set_plain_auxiliary();
 
     if (m_mask[m]) {
       fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
@@ -253,7 +254,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -292,7 +293,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -330,7 +331,7 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -368,7 +369,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -403,15 +404,15 @@ void ldpc_encoder_avx2::ext_region_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_AVX2_PH);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
   // Encode the extended region.
-  for (unsigned m = 4; m != nof_layers; ++m) {
+  for (unsigned m = bg_hr_parity_nodes; m != nof_layers; ++m) {
     unsigned skip = (bg_K + m) * NODE_SIZE_AVX2_PH;
 
-    for (unsigned k = 0; k != 4; ++k) {
+    for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
       unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
       if (node_shift == NO_EDGE) {

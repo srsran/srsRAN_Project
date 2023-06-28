@@ -68,12 +68,14 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
     //   auxiliary[m][l] ^= message_chunk[shifted_index];
     //   auxiliary[m][l] &= 1U;
     // }
-    span<uint8_t> auxiliary_chunk = span<uint8_t>(auxiliary[m].data(), lifting_size);
-    // If m >= 4, we can write directly to the codeblock buffer.
-    if (m >= 4) {
+    auto set_auxiliary_chunk = [this, m]() {
+      if (m < bg_hr_parity_nodes) {
+        return span<uint8_t>(auxiliary[m].data(), lifting_size);
+      }
       unsigned offset = (bg_K + m) * lifting_size;
-      auxiliary_chunk = span<uint8_t>(codeblock.data() + offset, lifting_size);
-    }
+      return span<uint8_t>(codeblock.data() + offset, lifting_size);
+    };
+    span<uint8_t> auxiliary_chunk = set_auxiliary_chunk();
 
     srsvec::binary_xor(auxiliary_chunk.first(lifting_size - node_shift),
                        message_chunk.last(lifting_size - node_shift),
@@ -89,10 +91,10 @@ void ldpc_encoder_generic::encode_ext_region()
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
   unsigned nof_layers = codeblock_length / lifting_size - bg_K;
-  for (unsigned m = 4; m < nof_layers; ++m) {
+  for (unsigned m = bg_hr_parity_nodes; m < nof_layers; ++m) {
     unsigned skip = (bg_K + m) * lifting_size;
     for (unsigned i = 0; i != lifting_size; ++i) {
-      for (unsigned k = 0; k != 4; ++k) {
+      for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
         uint16_t node_shift = current_graph->get_lifted_node(m, bg_K + k);
         if (node_shift == NO_EDGE) {
           continue;
@@ -114,8 +116,8 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out)
 
 void ldpc_encoder_generic::high_rate_bg1_i6()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -140,8 +142,8 @@ void ldpc_encoder_generic::high_rate_bg1_i6()
 
 void ldpc_encoder_generic::high_rate_bg1_other()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -165,8 +167,8 @@ void ldpc_encoder_generic::high_rate_bg1_other()
 
 void ldpc_encoder_generic::high_rate_bg2_i3_7()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;
@@ -190,8 +192,8 @@ void ldpc_encoder_generic::high_rate_bg2_i3_7()
 
 void ldpc_encoder_generic::high_rate_bg2_other()
 {
-  uint16_t                                                     ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, MAX_BG_M>& aux = auxiliary;
+  uint16_t                                                               ls  = lifting_size;
+  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
 
   unsigned skip0 = bg_K * ls;
   unsigned skip1 = (bg_K + 1) * ls;

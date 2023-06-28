@@ -135,7 +135,7 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
 
   // Set state variables depending on the codeblock length.
   codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
-  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_neon;
+  length_extended     = (codeblock_length / lifting_size - bg_K) * node_size_neon;
 
   span<uint8_t>       codeblock(codeblock_buffer.data(), codeblock_used_size * NEON_SIZE_BYTE);
   span<const uint8_t> in_tmp = in;
@@ -154,17 +154,14 @@ void ldpc_encoder_neon::load_input(span<const uint8_t> in)
 // "out". The representation is unpacked (1 byte represents 1 bit).
 static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t> in1)
 {
+  unsigned              nof_vectors = in0.size() / NEON_SIZE_BYTE;
+  neon::neon_const_span in0_local(in0, nof_vectors);
+  neon::neon_const_span in1_local(in1, nof_vectors);
+  neon::neon_span       out_local(out, nof_vectors);
+
   unsigned i = 0;
-
-  const int8_t* in0_ptr = reinterpret_cast<const int8_t*>(in0.data());
-  const int8_t* in1_ptr = reinterpret_cast<const int8_t*>(in1.data());
-  int8_t*       out_ptr = reinterpret_cast<int8_t*>(out.data());
-
-  for (unsigned i_end = (out.size() / 16) * 16; i != i_end; i += 16) {
-    int8x16_t in0_ = vld1q_s8(in0_ptr + i);
-    int8x16_t in1_ = vld1q_s8(in1_ptr + i);
-
-    vst1q_s8(out_ptr + i, veorq_s8(in0_, in1_));
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
+    vst1q_s8(out_local.data_at(i_vector, 0), veorq_s8(in0_local.get_at(i_vector), in1_local.get_at(i_vector)));
   }
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
@@ -177,14 +174,14 @@ static void fast_xor(span<int8_t> out, span<const int8_t> in0, span<const int8_t
 // encoder.
 static void fast_and_one(span<int8_t> out, span<const int8_t> in)
 {
+  unsigned              nof_vectors = in.size() / NEON_SIZE_BYTE;
+  neon::neon_const_span in_local(in, nof_vectors);
+  neon::neon_span       out_local(out, nof_vectors);
+  const int8x16_t       all_ones = vdupq_n_s8(1);
+
   unsigned i = 0;
-
-  const int8_t* in0_ptr = reinterpret_cast<const int8_t*>(in.data());
-  int8_t*       out_ptr = reinterpret_cast<int8_t*>(out.data());
-  for (unsigned i_end = (out.size() / 16) * 16; i != i_end; i += 16) {
-    int8x16_t in0_ = vld1q_s8(in0_ptr + i);
-
-    vst1q_s8(out_ptr + i, vandq_s8(in0_, vdupq_n_s8(1)));
+  for (unsigned i_vector = 0; i_vector != nof_vectors; ++i_vector, i += NEON_SIZE_BYTE) {
+    vst1q_s8(out_local.data_at(i_vector, 0), vandq_s8(in_local.get_at(i_vector), all_ones));
   }
 
   for (unsigned i_end = out.size(); i != i_end; ++i) {
@@ -197,7 +194,7 @@ void ldpc_encoder_neon::systematic_bits_inner()
 {
   neon::neon_const_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   const auto& parity_check_sparse = current_graph->get_parity_check_sparse();
 
@@ -215,7 +212,7 @@ void ldpc_encoder_neon::systematic_bits_inner()
     unsigned i_aux = m * NODE_SIZE_NEON_PH;
     unsigned i_blk = k * NODE_SIZE_NEON_PH;
 
-    if (i_aux >= auxiliary_used_size) {
+    if (i_aux >= length_extended) {
       continue;
     }
 
@@ -225,13 +222,14 @@ void ldpc_encoder_neon::systematic_bits_inner()
       fast_and_one(blk.last(lifting_size), codeblock.plain_span(current_i_blk, lifting_size));
     }
 
-    span<int8_t> plain_auxiliary = auxiliary.plain_span(i_aux, lifting_size);
-
-    // If m >= 4, we can write directly to the codeblock buffer.
-    if (m >= 4) {
+    auto set_plain_auxiliary = [this, auxiliary, m, i_aux]() {
+      if (m < bg_hr_parity_nodes) {
+        return auxiliary.plain_span(i_aux, lifting_size);
+      }
       unsigned offset = (bg_K + m) * NODE_SIZE_NEON_PH * NEON_SIZE_BYTE;
-      plain_auxiliary = span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
-    }
+      return span<int8_t>(reinterpret_cast<int8_t*>(codeblock_buffer.data()) + offset, lifting_size);
+    };
+    span<int8_t> plain_auxiliary = set_plain_auxiliary();
 
     if (m_mask[m]) {
       fast_xor(plain_auxiliary, blk.subspan(node_shift, lifting_size), plain_auxiliary);
@@ -254,7 +252,7 @@ void ldpc_encoder_neon::high_rate_bg1_i6_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -293,7 +291,7 @@ void ldpc_encoder_neon::high_rate_bg1_other_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -331,7 +329,7 @@ void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -369,7 +367,7 @@ void ldpc_encoder_neon::high_rate_bg2_other_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
@@ -404,15 +402,15 @@ void ldpc_encoder_neon::ext_region_inner()
 
   neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  neon::neon_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  neon::neon_const_span auxiliary(auxiliary_buffer, bg_hr_parity_nodes * NODE_SIZE_NEON_PH);
 
   neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // Encode the extended region.
-  for (unsigned m = 4; m != nof_layers; ++m) {
+  for (unsigned m = bg_hr_parity_nodes; m != nof_layers; ++m) {
     unsigned skip = (bg_K + m) * NODE_SIZE_NEON_PH;
 
-    for (unsigned k = 0; k != 4; ++k) {
+    for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
       unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
 
       if (node_shift == NO_EDGE) {
