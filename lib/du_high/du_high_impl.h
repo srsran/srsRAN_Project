@@ -33,18 +33,20 @@ public:
 
   f1ap_message_handler& get_f1ap_message_handler() override;
 
-  mac_pdu_handler& get_pdu_handler();
+  mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override;
 
-  mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index);
+  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override;
 
-  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index);
+  mac_pdu_handler& get_pdu_handler() override;
 
-  mac_cell_control_information_handler& get_control_information_handler(du_cell_index_t cell_index);
+  mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override;
 
 private:
   class layer_connector;
 
   du_high_configuration cfg;
+
+  srslog::basic_logger& logger;
 
   timer_manager& timers;
 

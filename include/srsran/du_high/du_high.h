@@ -11,6 +11,11 @@
 #pragma once
 
 #include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/mac/mac_cell_control_information_handler.h"
+#include "srsran/mac/mac_cell_rach_handler.h"
+#include "srsran/mac/mac_cell_slot_handler.h"
+#include "srsran/mac/mac_pdu_handler.h"
+#include "srsran/ran/du_types.h"
 
 namespace srsran {
 
@@ -24,7 +29,21 @@ public:
 
   virtual void stop() = 0;
 
+  /// \brief Get the handler for F1AP Rx PDUs coming from the CU-CP.
   virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
+
+  /// \brief Returns handler of slot indications for a cell with provided cell_index.
+  /// \param cell_index Index of cell currently activated in the DU.
+  virtual mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) = 0;
+
+  /// Returns handler of PRACHs for a given cell.
+  virtual mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) = 0;
+
+  /// Returns MAC Rx PDU handler.
+  virtual mac_pdu_handler& get_pdu_handler() = 0;
+
+  /// Returns handler for UL and DL control information for a given cell.
+  virtual mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) = 0;
 };
 
 } // namespace srsran

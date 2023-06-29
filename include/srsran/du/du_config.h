@@ -10,13 +10,21 @@
 
 #pragma once
 
+#include "srsran/du/du_low_config.h"
 #include "srsran/du_high/du_high_configuration.h"
 
 namespace srsran {
 
+struct fapi_configuration {
+  std::string log_level;
+};
+
 struct du_config {
-  /// Configuration related to the L2 of the DU.
+  /// Configuration of the DU-high that comprises the MAC, RLC and F1 layers.
   srs_du::du_high_configuration du_hi;
+  /// Configuration of the DU-low that comprises the upper PHY.
+  du_low_configuration du_lo;
+  fapi_configuration   fapi;
 };
 
 } // namespace srsran

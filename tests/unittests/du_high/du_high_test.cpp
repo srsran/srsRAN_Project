@@ -84,7 +84,7 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
              .rnti = to_rnti(0x4601),
              .pdu  = mac_uci_pdu::pucch_f0_or_f1_type{.harq_info = mac_uci_pdu::pucch_f0_or_f1_type::harq_information{
                                                           .harqs = {uci_pucch_f0_or_f1_harq_values::ack}}}}};
-        this->du_obj.get_control_information_handler(to_du_cell_index(0)).handle_uci(uci_msg);
+        this->du_obj.get_control_info_handler(to_du_cell_index(0)).handle_uci(uci_msg);
       }
     }
 

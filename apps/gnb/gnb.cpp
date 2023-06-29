@@ -40,17 +40,14 @@
 
 #include "helpers/gnb_console_helper.h"
 
-#include "fapi_factory.h"
+#include "lib/du/adapters/fapi_factory.h"
 #include "lib/du_high/du_high_executor_strategies.h"
-#include "lib/du_high/du_high_impl.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
 #include "srsran/du/du_factory.h"
-#include "srsran/fapi/logging_decorator_factories.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
-#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
+
 #include "srsran/ru/ru_adapters.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_generic_factory.h"
@@ -58,6 +55,7 @@
 
 #include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
+
 #include <atomic>
 #include <unordered_map>
 
@@ -114,23 +112,6 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
 }
 
 namespace {
-
-/// Dummy implementation of the mac_result_notifier.
-class phy_dummy : public mac_result_notifier
-{
-  mac_cell_result_notifier& cell;
-
-public:
-  explicit phy_dummy(mac_cell_result_notifier& cell_) : cell(cell_) {}
-
-  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
-};
-
-class fapi_slot_last_message_dummy : public fapi::slot_last_message_notifier
-{
-public:
-  void on_last_message(slot_point slot) override {}
-};
 
 /// Manages the workers of the app.
 struct worker_manager {
@@ -375,61 +356,6 @@ private:
 static void local_signal_handler()
 {
   is_running = false;
-}
-
-static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
-{
-  srsran_assert(cell_cfg.size() == 1, "Currently supporting one cell");
-
-  const du_cell_config& cell = cell_cfg.front();
-
-  fapi::prach_config config     = {};
-  config.prach_res_config_index = 0;
-  config.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
-  config.prach_scs              = prach_subcarrier_spacing::kHz1_25;
-  config.prach_ul_bwp_pusch_scs = cell.scs_common;
-  config.restricted_set         = restricted_set_config::UNRESTRICTED;
-  config.num_prach_fd_occasions = cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_fdm;
-  config.prach_config_index =
-      cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index;
-  config.prach_format           = prach_format_type::zero;
-  config.num_prach_td_occasions = 1;
-  config.num_preambles          = 1;
-  config.start_preamble_index   = 0;
-
-  // Add FD occasion info.
-  fapi::prach_fd_occasion_config& fd_occasion = config.fd_occasions.emplace_back();
-  fd_occasion.prach_root_sequence_index = cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().prach_root_seq_index;
-  fd_occasion.prach_freq_offset =
-      cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start;
-  fd_occasion.prach_zero_corr_conf =
-      cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.zero_correlation_zone_config;
-
-  return config;
-}
-
-static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& config)
-{
-  // Deduce common numerology and grid size for DL and UL.
-  unsigned numerology       = to_numerology_value(config.common_cell_cfg.common_scs);
-  unsigned grid_size_bw_prb = band_helper::get_n_rbs_from_bw(
-      config.common_cell_cfg.channel_bw_mhz,
-      config.common_cell_cfg.common_scs,
-      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn)));
-
-  fapi::carrier_config fapi_config = {};
-
-  // NOTE; for now we only need to fill the nof_prb_ul_grid and nof_prb_dl_grid for the common SCS.
-  fapi_config.dl_grid_size             = {};
-  fapi_config.dl_grid_size[numerology] = grid_size_bw_prb;
-  fapi_config.ul_grid_size             = {};
-  fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
-
-  // Number of transmit and receive antenna ports.
-  fapi_config.num_tx_ant = config.common_cell_cfg.nof_antennas_dl;
-  fapi_config.num_rx_ant = config.common_cell_cfg.nof_antennas_ul;
-
-  return fapi_config;
 }
 
 /// Resolves the generic Radio Unit dependencies and adds them to the configuration.
@@ -749,108 +675,38 @@ int main(int argc, char** argv)
   ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
-  // Upper PHY instantiation block.
-  auto upper = create_upper_phy(gnb_cfg,
-                                &ru_dl_rg_adapt,
-                                workers.upper_dl_exec.get(),
-                                workers.upper_pucch_exec.get(),
-                                workers.upper_pusch_exec.get(),
-                                workers.upper_prach_exec.get(),
-                                workers.upper_pdsch_exec.get(),
-                                &ru_ul_request_adapt);
-  report_error_if_not(upper, "Unable to create upper PHY.");
-  gnb_logger.info("Upper PHY created successfully");
-
-  // Make connections between upper and RU.
-  ru_ul_adapt.connect(upper->get_rx_symbol_handler());
-  ru_timing_adapt.connect(upper->get_timing_handler());
-
-  // Create FAPI adaptors.
-  std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
-  unsigned                    sector = du_cfg.size() - 1;
-  subcarrier_spacing          scs    = du_cfg.front().scs_common;
-  auto pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cfg.front().dl_carrier.nof_ant);
-
-  auto phy_adaptor =
-      build_phy_fapi_adaptor(sector,
-                             scs,
-                             scs,
-                             upper->get_downlink_processor_pool(),
-                             upper->get_downlink_resource_grid_pool(),
-                             upper->get_uplink_request_processor(),
-                             upper->get_uplink_resource_grid_pool(),
-                             upper->get_uplink_slot_pdu_repository(),
-                             upper->get_downlink_pdu_validator(),
-                             upper->get_uplink_pdu_validator(),
-                             generate_prach_config_tlv(du_cfg),
-                             generate_carrier_config_tlv(gnb_cfg),
-                             std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_repository>>(pm_tools)));
-  report_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
-  upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
-  upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
-
-  fapi_slot_last_message_dummy                      last_msg_dummy;
-  std::unique_ptr<fapi::slot_message_gateway>       logging_slot_gateway;
-  std::unique_ptr<fapi::slot_data_message_notifier> logging_slot_data_notifier;
-  std::unique_ptr<fapi::slot_time_message_notifier> logging_slot_time_notifier;
-  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>   mac_adaptor;
-  if (gnb_cfg.log_cfg.fapi_level == "debug") {
-    // Create gateway loggers and intercept MAC adaptor calls.
-    logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
-    report_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    mac_adaptor = build_mac_fapi_adaptor(
-        0,
-        scs,
-        *logging_slot_gateway,
-        last_msg_dummy,
-        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
-
-    // Create notification loggers.
-    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
-    report_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
-    logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(mac_adaptor->get_slot_time_notifier());
-    report_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
-
-    // Connect the PHY adaptor with the loggers to intercept PHY notifications.
-    phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
-    phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
-  } else {
-    mac_adaptor = build_mac_fapi_adaptor(
-        0,
-        scs,
-        phy_adaptor->get_slot_message_gateway(),
-        last_msg_dummy,
-        std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(pm_tools)),
-        get_max_Nprb(du_cfg.front().dl_carrier.carrier_bw_mhz, scs, srsran::frequency_range::FR1));
-    report_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
-    phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
-    phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
-  }
-  gnb_logger.info("FAPI adaptors created successfully");
+  // DU cell config
+  std::vector<du_cell_config> du_cells_cfg = generate_du_cell_config(gnb_cfg);
 
   // DU QoS config
-  const std::map<five_qi_t, du_qos_config>& du_qos_cfg = generate_du_qos_config(gnb_cfg);
+  std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
   for (const auto& it : du_qos_cfg) {
     gnb_logger.debug("QoS RLC configuration: 5QI={} RLC={}", it.first, it.second.rlc);
   }
 
-  // Cell configuration.
-  phy_dummy phy(mac_adaptor->get_cell_result_notifier());
-
-  du_config                      du_obj_cfg = {};
-  srs_du::du_high_configuration& du_hi_cfg  = du_obj_cfg.du_hi;
-  du_hi_cfg.exec_mapper                     = workers.du_high_exec_mapper.get();
-  du_hi_cfg.f1ap_notifier                   = &f1ap_du_to_cu_adapter;
-  du_hi_cfg.f1u_gw                          = f1u_conn->get_f1u_du_gateway();
-  du_hi_cfg.phy_adapter                     = &phy;
-  du_hi_cfg.timers                          = &app_timers;
-  du_hi_cfg.cells                           = du_cfg;
-  du_hi_cfg.qos                             = du_qos_cfg;
-  du_hi_cfg.pcap                            = mac_p.get();
-  du_hi_cfg.mac_cfg                         = generate_mac_expert_config(gnb_cfg);
-  du_hi_cfg.metrics_notifier                = &console.get_metrics_notifier();
-  du_hi_cfg.sched_cfg                       = generate_scheduler_expert_config(gnb_cfg);
+  du_config du_cfg = {};
+  // DU-low configuration.
+  du_cfg.du_lo = create_du_low_config(gnb_cfg,
+                                      &ru_dl_rg_adapt,
+                                      workers.upper_dl_exec.get(),
+                                      workers.upper_pucch_exec.get(),
+                                      workers.upper_pusch_exec.get(),
+                                      workers.upper_prach_exec.get(),
+                                      workers.upper_pdsch_exec.get(),
+                                      &ru_ul_request_adapt);
+  // DU-high configuration.
+  srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
+  du_hi_cfg.exec_mapper                    = workers.du_high_exec_mapper.get();
+  du_hi_cfg.f1ap_notifier                  = &f1ap_du_to_cu_adapter;
+  du_hi_cfg.f1u_gw                         = f1u_conn->get_f1u_du_gateway();
+  du_hi_cfg.phy_adapter                    = nullptr;
+  du_hi_cfg.timers                         = &app_timers;
+  du_hi_cfg.cells                          = du_cells_cfg;
+  du_hi_cfg.qos                            = du_qos_cfg;
+  du_hi_cfg.pcap                           = mac_p.get();
+  du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
+  du_hi_cfg.metrics_notifier               = &console.get_metrics_notifier();
+  du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
   if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
@@ -859,32 +715,22 @@ int main(int argc, char** argv)
                                                                         gnb_cfg.test_mode_cfg.test_ue.pmi,
                                                                         gnb_cfg.test_mode_cfg.test_ue.ri};
   }
-
-  srs_du::du_high_impl du_obj(du_hi_cfg);
-  gnb_logger.info("DU-High created successfully");
+  // FAPI configuration.
+  du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
 
   // Instantiate a DU.
-  std::unique_ptr<du> du_inst = make_du(du_obj_cfg);
+  std::unique_ptr<du> du_inst = make_du(du_cfg);
 
-  // attach F1AP adapter to DU and CU-CP
+  // Make connections between DU and RU.
+  ru_ul_adapt.connect(du_inst->get_rx_symbol_handler());
+  ru_timing_adapt.connect(du_inst->get_timing_handler());
+
+  // Make F1AP connections between DU and CU-CP.
   f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
   f1ap_cu_to_du_adapter.attach_handler(&du_inst->get_f1ap_message_handler());
 
-  // Start execution.
-  gnb_logger.info("Starting DU-High...");
-  du_obj.start();
+  // Start DU execution.
   du_inst->start();
-  gnb_logger.info("DU-High started successfully");
-
-  // Give some time to the MAC to start.
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-  // Configure the DU slot handler.
-  du_cell_index_t cell_id = to_du_cell_index(0);
-  mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(cell_id));
-  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(cell_id));
-  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler());
-  mac_adaptor->set_cell_crc_handler(du_obj.get_control_information_handler(cell_id));
 
   // Start processing.
   gnb_logger.info("Starting Radio Unit...");
@@ -909,10 +755,8 @@ int main(int argc, char** argv)
   ru_object->get_controller().stop();
   gnb_logger.info("Radio Unit notify_stop successfully");
 
-  gnb_logger.info("Closing DU-high...");
-  du_obj.stop();
+  // Stop DU activity.
   du_inst->stop();
-  gnb_logger.info("DU-high closed successfully");
 
   if (not gnb_cfg.amf_cfg.no_core) {
     gnb_logger.info("Closing network connections...");

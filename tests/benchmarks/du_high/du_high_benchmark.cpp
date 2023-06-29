@@ -283,7 +283,7 @@ public:
     du_hi->start();
 
     // Connect PHY back to DU-High.
-    sim_phy.ctrl_info_handler = &du_hi->get_control_information_handler(to_du_cell_index(0));
+    sim_phy.ctrl_info_handler = &du_hi->get_control_info_handler(to_du_cell_index(0));
   }
 
   ~du_high_bench() { workers.stop(); }

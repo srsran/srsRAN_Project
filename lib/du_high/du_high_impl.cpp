@@ -85,6 +85,7 @@ public:
 
 du_high_impl::du_high_impl(const du_high_configuration& config_) :
   cfg(config_),
+  logger(srslog::fetch_basic_logger("DU")),
   timers(*config_.timers),
   adapters(std::make_unique<layer_connector>(config_)),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
@@ -135,12 +136,16 @@ du_high_impl::du_high_impl(const du_high_configuration& config_) :
 
 du_high_impl::~du_high_impl()
 {
+  logger.info("Stopping DU-High...");
   stop();
+  logger.info("DU-High stopped successfully");
 }
 
 void du_high_impl::start()
 {
+  logger.info("Starting DU-High...");
   du_manager->start();
+  logger.info("DU-High started successfully");
 }
 
 void du_high_impl::stop()
@@ -171,7 +176,7 @@ mac_cell_rach_handler& du_high_impl::get_rach_handler(du_cell_index_t cell_index
   return mac->get_rach_handler(cell_index);
 }
 
-mac_cell_control_information_handler& du_high_impl::get_control_information_handler(du_cell_index_t cell_index)
+mac_cell_control_information_handler& du_high_impl::get_control_info_handler(du_cell_index_t cell_index)
 {
   return mac->get_control_info_handler(cell_index);
 }

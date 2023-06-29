@@ -80,6 +80,39 @@ inline std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configurati
   return lphy_factory->create(config);
 }
 
+du_low_configuration srsran::create_du_low_config(const gnb_appconfig&                  params,
+                                                  upper_phy_rg_gateway*                 rg_gateway,
+                                                  task_executor*                        dl_executor,
+                                                  task_executor*                        pucch_executor,
+                                                  task_executor*                        pusch_executor,
+                                                  task_executor*                        prach_executor,
+                                                  task_executor*                        pdsch_codeblock_executor,
+                                                  upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
+{
+  du_low_configuration du_lo_cfg{};
+
+  du_lo_cfg.dl_proc_cfg.ldpc_encoder_type             = "auto";
+  du_lo_cfg.dl_proc_cfg.crc_calculator_type           = "auto";
+  du_lo_cfg.dl_proc_cfg.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;
+  du_lo_cfg.dl_proc_cfg.pdsch_codeblock_task_executor = pdsch_codeblock_executor;
+
+  du_lo_cfg.upper_phy = generate_du_low_config(params);
+
+  // Fill the rest with the parameters.
+  upper_phy_config& cfg          = du_lo_cfg.upper_phy.front();
+  cfg.rg_gateway                 = rg_gateway;
+  cfg.dl_executor                = dl_executor;
+  cfg.pucch_executor             = pucch_executor;
+  cfg.pusch_executor             = pusch_executor;
+  cfg.prach_executor             = prach_executor;
+  cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
+  cfg.crc_calculator_type        = "auto";
+  cfg.ldpc_rate_dematcher_type   = "auto";
+  cfg.ldpc_decoder_type          = "auto";
+
+  return du_lo_cfg;
+}
+
 std::unique_ptr<upper_phy> srsran::create_upper_phy(const gnb_appconfig&                  params,
                                                     upper_phy_rg_gateway*                 rg_gateway,
                                                     task_executor*                        dl_executor,
