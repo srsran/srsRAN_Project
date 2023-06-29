@@ -113,9 +113,72 @@ def test_android(
 @mark.parametrize(
     "band, common_scs, bandwidth, bitrate, always_download_artifacts",
     (
-        # Smoke
         param(3, 15, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
         param(41, 30, 20, LOW_BITRATE, True, marks=(mark.smoke, mark.zmq), id=ZMQ_ID),
+    ),
+)
+# pylint: disable=too-many-arguments
+def test_zmq_smoke(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_1: UEStub,
+    ue_2: UEStub,
+    ue_3: UEStub,
+    ue_4: UEStub,
+    epc: EPCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    always_download_artifacts: bool,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue_1, ue_2, ue_3, ue_4),
+        gnb=gnb,
+        epc=epc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        iperf_duration=SHORT_DURATION,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        log_search=True,
+        always_download_artifacts=always_download_artifacts,
+        bitrate_threshold=0,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (
+        param(IPerfProto.UDP, id="udp", marks=mark.udp),
+        param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
+    ),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate, always_download_artifacts",
+    (
         # ZMQ
         param(3, 15, 5, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
         param(3, 15, 10, HIGH_BITRATE, False, marks=mark.zmq, id=ZMQ_ID),
@@ -243,6 +306,7 @@ def _iperf(
     time_alignment_calibration: Union[int, str],
     log_search: bool,
     always_download_artifacts: bool,
+    bitrate_threshold: float = BITRATE_THRESHOLD,
 ):
     logging.info("Iperf Test")
 
@@ -272,6 +336,6 @@ def _iperf(
         direction,
         iperf_duration,
         bitrate,
-        BITRATE_THRESHOLD,
+        bitrate_threshold,
     )
     stop(ue_array, gnb, epc, retina_data)
