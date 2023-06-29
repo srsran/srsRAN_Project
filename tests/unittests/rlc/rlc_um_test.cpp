@@ -12,6 +12,7 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
+#include <list>
 #include <queue>
 
 using namespace srsran;

@@ -16,7 +16,6 @@
 #include "fmt/format.h"
 #include <cstdint>
 #include <functional>
-#include <list>
 
 namespace srsran {
 
