@@ -12,7 +12,7 @@
 
 #include "du_high_worker_manager.h"
 #include "dummy_test_components.h"
-#include "lib/du_high/du_high.h"
+#include "lib/du_high/du_high_impl.h"
 #include "srsran/f1ap/common/f1ap_types.h"
 
 namespace srsran {
@@ -91,7 +91,7 @@ public:
   timer_manager              timers;
 
   du_high_configuration du_high_cfg;
-  du_high               du_obj;
+  du_high_impl          du_obj;
 
   slot_point next_slot;
 };

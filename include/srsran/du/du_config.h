@@ -10,22 +10,13 @@
 
 #pragma once
 
-#include "srsran/du/du.h"
-#include "srsran/du/du_config.h"
+#include "srsran/du_high/du_high_configuration.h"
 
 namespace srsran {
 
-class du_impl : public du
-{
-public:
-  du_impl(const du_config& du_cfg);
-
-  void start() override;
-
-  void stop() override;
-
-private:
-  srslog::basic_logger& logger;
+struct du_config {
+  /// Configuration related to the L2 of the DU.
+  srs_du::du_high_configuration du_hi;
 };
 
 } // namespace srsran

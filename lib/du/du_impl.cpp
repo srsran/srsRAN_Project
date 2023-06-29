@@ -12,7 +12,10 @@
 
 using namespace srsran;
 
-du_impl::du_impl() {}
+du_impl::du_impl(const du_config& du_cfg) : logger(srslog::fetch_basic_logger("DU"))
+{
+  logger.info("DU created successfully");
+}
 
 void du_impl::start() {}
 

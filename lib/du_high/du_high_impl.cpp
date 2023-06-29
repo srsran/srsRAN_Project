@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_high.h"
+#include "du_high_impl.h"
 #include "adapters.h"
 #include "du_high_executor_strategies.h"
 #include "f1ap_adapters.h"
@@ -22,7 +22,7 @@ using namespace srsran;
 using namespace srs_du;
 
 /// \brief This class is responsible for providing the necessary adapters to connect layers in the DU-high.
-class du_high::layer_connector
+class du_high_impl::layer_connector
 {
 public:
   explicit layer_connector(const du_high_configuration& config_) :
@@ -83,7 +83,7 @@ public:
   }
 };
 
-du_high::du_high(const du_high_configuration& config_) :
+du_high_impl::du_high_impl(const du_high_configuration& config_) :
   cfg(config_),
   timers(*config_.timers),
   adapters(std::make_unique<layer_connector>(config_)),
@@ -133,32 +133,32 @@ du_high::du_high(const du_high_configuration& config_) :
   }
 }
 
-du_high::~du_high()
+du_high_impl::~du_high_impl()
 {
   stop();
 }
 
-void du_high::start()
+void du_high_impl::start()
 {
   du_manager->start();
 }
 
-void du_high::stop()
+void du_high_impl::stop()
 {
   du_manager->stop();
 }
 
-f1ap_message_handler& du_high::get_f1ap_message_handler()
+f1ap_message_handler& du_high_impl::get_f1ap_message_handler()
 {
   return *f1ap;
 }
 
-mac_pdu_handler& du_high::get_pdu_handler()
+mac_pdu_handler& du_high_impl::get_pdu_handler()
 {
   return mac->get_pdu_handler();
 }
 
-mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
+mac_cell_slot_handler& du_high_impl::get_slot_handler(du_cell_index_t cell_idx)
 {
   if (cell_idx == 0) {
     return *main_cell_slot_handler;
@@ -166,12 +166,12 @@ mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
   return mac->get_slot_handler(cell_idx);
 }
 
-mac_cell_rach_handler& du_high::get_rach_handler(du_cell_index_t cell_index)
+mac_cell_rach_handler& du_high_impl::get_rach_handler(du_cell_index_t cell_index)
 {
   return mac->get_rach_handler(cell_index);
 }
 
-mac_cell_control_information_handler& du_high::get_control_information_handler(du_cell_index_t cell_index)
+mac_cell_control_information_handler& du_high_impl::get_control_information_handler(du_cell_index_t cell_index)
 {
   return mac->get_control_info_handler(cell_index);
 }

@@ -41,8 +41,8 @@
 #include "helpers/gnb_console_helper.h"
 
 #include "fapi_factory.h"
-#include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/du_high/du_high_impl.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
@@ -838,18 +838,19 @@ int main(int argc, char** argv)
   // Cell configuration.
   phy_dummy phy(mac_adaptor->get_cell_result_notifier());
 
-  srs_du::du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.exec_mapper                   = workers.du_high_exec_mapper.get();
-  du_hi_cfg.f1ap_notifier                 = &f1ap_du_to_cu_adapter;
-  du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
-  du_hi_cfg.phy_adapter                   = &phy;
-  du_hi_cfg.timers                        = &app_timers;
-  du_hi_cfg.cells                         = du_cfg;
-  du_hi_cfg.qos                           = du_qos_cfg;
-  du_hi_cfg.pcap                          = mac_p.get();
-  du_hi_cfg.mac_cfg                       = generate_mac_expert_config(gnb_cfg);
-  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
-  du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
+  du_config                      du_obj_cfg = {};
+  srs_du::du_high_configuration& du_hi_cfg  = du_obj_cfg.du_hi;
+  du_hi_cfg.exec_mapper                     = workers.du_high_exec_mapper.get();
+  du_hi_cfg.f1ap_notifier                   = &f1ap_du_to_cu_adapter;
+  du_hi_cfg.f1u_gw                          = f1u_conn->get_f1u_du_gateway();
+  du_hi_cfg.phy_adapter                     = &phy;
+  du_hi_cfg.timers                          = &app_timers;
+  du_hi_cfg.cells                           = du_cfg;
+  du_hi_cfg.qos                             = du_qos_cfg;
+  du_hi_cfg.pcap                            = mac_p.get();
+  du_hi_cfg.mac_cfg                         = generate_mac_expert_config(gnb_cfg);
+  du_hi_cfg.metrics_notifier                = &console.get_metrics_notifier();
+  du_hi_cfg.sched_cfg                       = generate_scheduler_expert_config(gnb_cfg);
   if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
     du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
@@ -859,11 +860,11 @@ int main(int argc, char** argv)
                                                                         gnb_cfg.test_mode_cfg.test_ue.ri};
   }
 
-  srs_du::du_high du_obj(du_hi_cfg);
+  srs_du::du_high_impl du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
 
   // Instantiate a DU.
-  std::unique_ptr<du> du_inst = make_du();
+  std::unique_ptr<du> du_inst = make_du(du_obj_cfg);
 
   // attach F1AP adapter to DU and CU-CP
   f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));

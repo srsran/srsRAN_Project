@@ -13,7 +13,7 @@
 
 using namespace srsran;
 
-std::unique_ptr<du> srsran::make_du()
+std::unique_ptr<du> srsran::make_du(const du_config& du_cfg)
 {
-  return std::make_unique<du_impl>();
+  return std::make_unique<du_impl>(du_cfg);
 }

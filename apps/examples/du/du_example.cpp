@@ -8,9 +8,9 @@
  *
  */
 
-#include "../../../lib/du_high/du_high.h"
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
+#include "lib/du_high/du_high_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
@@ -772,7 +772,7 @@ int main(int argc, char** argv)
   // Fill cell specific PRACH configuration.
   fill_cell_prach_cfg(cell_cfg);
 
-  du_high du_obj(du_hi_cfg);
+  du_high_impl du_obj(du_hi_cfg);
   f1ap_notifier.attach_handler(&du_obj.get_f1ap_message_handler());
   du_logger.info("DU-High created successfully");
 

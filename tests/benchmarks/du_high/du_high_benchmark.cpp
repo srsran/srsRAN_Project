@@ -11,8 +11,8 @@
 /// \file
 /// \brief Benchmarks of the DU-high latency.
 
-#include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/du_high/du_high_impl.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -270,7 +270,7 @@ public:
     cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
     cfg.qos           = config_helpers::make_default_du_qos_config_list();
     cfg.pcap          = &pcap;
-    du_hi             = std::make_unique<du_high>(cfg);
+    du_hi             = std::make_unique<du_high_impl>(cfg);
 
     // Connect CU back to DU.
     sim_cu_cp.ctrl_exec        = &workers.ctrl_exec;
@@ -330,7 +330,7 @@ public:
   phy_simulator                      sim_phy;
   timer_manager                      timers;
   du_high_single_cell_worker_manager workers;
-  std::unique_ptr<du_high>           du_hi;
+  std::unique_ptr<du_high_impl>      du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count = 0;
   test_helpers::dummy_mac_pcap       pcap;

@@ -20,11 +20,11 @@
 namespace srsran {
 namespace srs_du {
 
-class du_high
+class du_high_impl
 {
 public:
-  explicit du_high(const du_high_configuration& cfg_);
-  ~du_high();
+  explicit du_high_impl(const du_high_configuration& cfg_);
+  ~du_high_impl();
 
   void start();
   void stop();
