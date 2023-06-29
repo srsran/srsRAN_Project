@@ -158,14 +158,16 @@ coreset_configuration srsran::config_helpers::make_default_coreset0_config(const
   return cfg;
 }
 
-search_space_configuration srsran::config_helpers::make_default_search_space_zero_config()
+search_space_configuration
+srsran::config_helpers::make_default_search_space_zero_config(const cell_config_builder_params& params)
 {
   search_space_configuration cfg{};
-  cfg.id                     = to_search_space_id(0);
-  cfg.cs_id                  = to_coreset_id(0);
-  cfg.monitoring_slot_period = 1;
-  cfg.monitoring_slot_offset = 0;
-  cfg.duration               = 1;
+  cfg.id    = to_search_space_id(0);
+  cfg.cs_id = to_coreset_id(0);
+  cfg.set_ss0_monitoring_slot_period(params);
+  cfg.set_ss0_monitoring_slot_offset(params);
+  cfg.set_ss0_duration();
+  cfg.set_ss0_monitoring_symbols_within_slot(params);
   // TODO: Use TS38.213, Table 10.1-1.
   cfg.nof_candidates       = {0, 0, 2, 0, 0};
   cfg.type                 = search_space_configuration::type_t::common;
@@ -173,19 +175,28 @@ search_space_configuration srsran::config_helpers::make_default_search_space_zer
   return cfg;
 }
 
-search_space_configuration srsran::config_helpers::make_default_common_search_space_config()
+search_space_configuration
+srsran::config_helpers::make_default_common_search_space_config(const cell_config_builder_params& params)
 {
-  search_space_configuration cfg = make_default_search_space_zero_config();
-  cfg.id                         = to_search_space_id(1);
-  cfg.nof_candidates             = {0, 0, 1, 0, 0};
-  cfg.monitoring_symbols_within_slot.emplace();
-  cfg.monitoring_symbols_within_slot->set(cfg.monitoring_symbols_within_slot->size() - 1, true);
+  search_space_configuration cfg{};
+  cfg.id    = to_search_space_id(1);
+  cfg.cs_id = to_coreset_id(0);
+  cfg.set_non_ss0_monitoring_slot_period(1);
+  cfg.set_non_ss0_monitoring_slot_offset(0);
+  cfg.set_non_ss0_duration(1);
+  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
+  monitoring_symbols_within_slot.set(monitoring_symbols_within_slot.size() - 1, true);
+  cfg.set_non_ss0_monitoring_symbols_within_slot(monitoring_symbols_within_slot);
+  cfg.nof_candidates       = {0, 0, 1, 0, 0};
+  cfg.type                 = search_space_configuration::type_t::common;
+  cfg.common.f0_0_and_f1_0 = true;
   return cfg;
 }
 
-search_space_configuration srsran::config_helpers::make_default_ue_search_space_config()
+search_space_configuration
+srsran::config_helpers::make_default_ue_search_space_config(const cell_config_builder_params& params)
 {
-  search_space_configuration cfg = make_default_common_search_space_config();
+  search_space_configuration cfg = make_default_common_search_space_config(params);
   cfg.cs_id                      = to_coreset_id(1);
   cfg.id                         = to_search_space_id(2);
   cfg.type                       = search_space_configuration::type_t::ue_dedicated;
@@ -220,8 +231,8 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   // Configure initial DL BWP.
   cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config(params));
-  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_search_space_zero_config());
-  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_common_search_space_config());
+  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_search_space_zero_config(params));
+  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_common_search_space_config(params));
   cfg.init_dl_bwp.pdcch_common.sib1_search_space_id     = to_search_space_id(0);
   cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);

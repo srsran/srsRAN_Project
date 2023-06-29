@@ -259,6 +259,13 @@ TEST_F(common_pdcch_allocator_tester, no_pdcch_allocation)
 
 TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
 {
+  // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
+  while (not is_pdcch_monitoring_active(next_slot, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+    run_slot();
+  }
+  // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
+  run_slot();
+
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), aggregation_level::n4);
 
@@ -376,9 +383,9 @@ TEST(pdcch_resource_allocator_test, monitoring_period)
         unsigned first_sl = (((randint / period) * period) + offset + 10239) % 10240;
 
         sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_period = period;
-        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_offset = offset;
-        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].duration               = duration;
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_monitoring_slot_period(period);
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_monitoring_slot_offset(offset);
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_duration(duration);
 
         cell_configuration      cfg{msg};
         cell_resource_allocator res_grid{cfg};
@@ -512,6 +519,13 @@ protected:
 
     switch (alloc.type) {
       case alloc_type::si_rnti: {
+        // Run until PDCCH monitoring occasion for SIB1 is active (i.e. every 20ms)
+        while (not is_pdcch_monitoring_active(next_slot,
+                                              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0])) {
+          run_slot();
+        }
+        // Since we schedule SIB1 on (n0 + 1)th slot we need to run once more.
+        run_slot();
         pdcch_dl_information* sib_pdcch =
             pdcch_sch.alloc_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), alloc.aggr_lvl);
         return sib_pdcch != nullptr ? &sib_pdcch->ctx : nullptr;

@@ -31,11 +31,11 @@ coreset_configuration make_default_coreset_config(const cell_config_builder_para
 
 coreset_configuration make_default_coreset0_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_search_space_zero_config();
+search_space_configuration make_default_search_space_zero_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_common_search_space_config();
+search_space_configuration make_default_common_search_space_config(const cell_config_builder_params& params = {});
 
-search_space_configuration make_default_ue_search_space_config();
+search_space_configuration make_default_ue_search_space_config(const cell_config_builder_params& params = {});
 
 bwp_configuration make_default_init_bwp(const cell_config_builder_params& params = {});
 
