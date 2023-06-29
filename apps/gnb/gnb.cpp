@@ -46,6 +46,7 @@
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
+#include "srsran/du/du_factory.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
@@ -861,6 +862,9 @@ int main(int argc, char** argv)
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
 
+  // Instantiate a DU.
+  std::unique_ptr<du> du_inst = make_du();
+
   // attach F1AP adapter to DU and CU-CP
   f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
   f1ap_cu_to_du_adapter.attach_handler(&du_obj.get_f1ap_message_handler());
@@ -885,6 +889,8 @@ int main(int argc, char** argv)
   ru_object->get_controller().start();
   gnb_logger.info("Radio Unit started successfully");
 
+  du_inst->start();
+
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
 
@@ -905,6 +911,7 @@ int main(int argc, char** argv)
 
   gnb_logger.info("Closing DU-high...");
   du_obj.stop();
+  du_inst->stop();
   gnb_logger.info("DU-high closed successfully");
 
   if (not gnb_cfg.amf_cfg.no_core) {

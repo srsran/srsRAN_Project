@@ -30,6 +30,7 @@ target_link_libraries(gnb
         srsran_ngap
         ngap_asn1
         srsran_du_high
+        srsran_du
         srsran_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
