@@ -9,7 +9,6 @@
  */
 
 #include "lib/du_high/du_high_executor_strategies.h"
-#include "lib/du_high/du_high_impl.h"
 #include "tests/unittests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
@@ -17,9 +16,8 @@
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/cu_cp/du_processor.h"
 #include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -73,7 +71,7 @@ protected:
     du_cfg.sched_cfg     = config_helpers::make_default_scheduler_expert_config();
 
     // create DU object
-    du_obj = std::make_unique<srs_du::du_high_impl>(std::move(du_cfg));
+    du_obj = make_du_high(std::move(du_cfg));
 
     // attach DU msg handler to CU message handler and vice-versa (in this order)
     cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1ap_message_handler());
@@ -88,7 +86,7 @@ public:
   timer_manager                               timers;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
-  std::unique_ptr<srs_du::du_high_impl>       du_obj;
+  std::unique_ptr<du_high>                    du_obj;
 };
 
 /// Test the f1 setup procedure was successful
