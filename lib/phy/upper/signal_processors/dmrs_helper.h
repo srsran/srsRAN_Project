@@ -77,6 +77,9 @@ inline void dmrs_sequence_generate(span<cf_t>                    sequence,
       continue;
     }
 
+    srsran_assert(nof_dmrs_per_rb <= 12, "The number of DM-RS per RB exceeds 12.");
+    srsran_assert(prb_count <= 275, "The number of PRB exceeds MAX_PRB=275.");
+
     // Generate contiguous pilots.
     prg.generate(sequence.first(prb_count * nof_dmrs_per_rb), amplitude);
 
@@ -89,6 +92,8 @@ inline void dmrs_sequence_generate(span<cf_t>                    sequence,
 
   // Generate the last group of contiguous RB.
   if (prb_count > 0) {
+    srsran_assert(nof_dmrs_per_rb <= 12, "The number of DM-RS per RB exceeds 12.");
+    srsran_assert(prb_count <= 275, "The number of PRB exceeds MAX_PRB=275.");
     prg.generate(sequence.first(prb_count * nof_dmrs_per_rb), amplitude);
   }
 }
