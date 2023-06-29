@@ -18,7 +18,6 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
-#include "srsran/srslog/srslog.h"
 #include <string>
 #include <vector>
 
@@ -81,7 +80,7 @@ inline asn1::rrc_nr::ssb_mtc_s ssb_mtc_to_rrc_asn1(rrc_ssb_mtc ssb_mtc)
     asn1_ssb_mtc.periodicity_and_offset.set_sf160();
     asn1_ssb_mtc.periodicity_and_offset.sf160() = ssb_mtc.periodicity_and_offset.sf160.value();
   } else {
-    srslog::fetch_basic_logger("RRC").error("Invalid SSB MTC configuration.");
+    report_fatal_error("Cannot convert SSB MTC to ASN.1 type");
   }
 
   asn1::number_to_enum(asn1_ssb_mtc.dur, ssb_mtc.dur);
@@ -120,7 +119,7 @@ inline asn1::rrc_nr::ssb_cfg_mob_s ssb_cfg_mob_to_rrc_asn1(const rrc_ssb_cfg_mob
             ssb_to_measure.setup.value().long_bitmap.value());
       }
       // error
-      srslog::fetch_basic_logger("RRC").error("Invalid ssb to measure.");
+      report_fatal_error("Cannot convert SSB to measure to ASN.1 type");
     }
   }
 
@@ -188,7 +187,7 @@ csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_r
           asn1_csi_rs_res_mob.slot_cfg.ms40() = csi_rs_res_mob.slot_cfg.ms40.value();
         } else {
           // error
-          srslog::fetch_basic_logger("RRC").error("Invalid slot cfg.");
+          report_fatal_error("Cannot convert slot cfg to ASN.1 type");
         }
         // associated ssb
         if (csi_rs_res_mob.associated_ssb.has_value()) {
@@ -206,7 +205,7 @@ csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_r
           asn1_csi_rs_res_mob.freq_domain_alloc.row2().from_number(csi_rs_res_mob.freq_domain_alloc.row2.value());
         } else {
           // error
-          srslog::fetch_basic_logger("RRC").error("Invalid freq domain alloc.");
+          report_fatal_error("Cannot convert freq domain alloc to ASN.1 type");
         }
         // first ofdm symbol in time domain
         asn1_csi_rs_res_mob.first_ofdm_symbol_in_time_domain = csi_rs_res_mob.first_ofdm_symbol_in_time_domain;
@@ -220,7 +219,7 @@ csi_res_cfg_mob_to_rrc_asn1(const rrc_csi_rs_res_cfg_mob_setup_release& csi_rs_r
     }
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid csi rs res cfg mob.");
+    report_fatal_error("Cannot convert CSI RS res cfg mob to ASN.1 type");
   }
 
   return asn1_csi_rs_res_cfg_mob;
@@ -512,7 +511,7 @@ void srs_periodicity_and_offset_to_rrc_asn1(asn1_srs_periodicity_and_offset&    
     asn1_srs_period_and_offset.sl2560() = srs_period_and_offset.sl2560.value();
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid srs periodicity and offset.");
+    report_fatal_error("Cannot convert SRS periodicity and offset to ASN.1 type");
   }
 };
 
@@ -543,7 +542,7 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
     asn1_srs_res.tx_comb.n4().cyclic_shift_n4 = srs_res.tx_comb.n4.value().cyclic_shift_n4;
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid tx comb.");
+    report_fatal_error("Cannot convert tx comb to ASN.1 type");
   }
 
   // res map
@@ -578,7 +577,7 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
                                            srs_res.res_type.periodic.value().periodicity_and_offset_sp_p);
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid res type.");
+    report_fatal_error("Cannot convert res type to ASN.1 type");
   }
 
   // seq id
@@ -607,7 +606,7 @@ inline asn1::rrc_nr::srs_res_s srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
           srs_res.spatial_relation_info.value().ref_sig.srs.value().ul_bwp;
     } else {
       // error
-      srslog::fetch_basic_logger("RRC").error("Invalid ref sig.");
+      report_fatal_error("Cannot convert ref sig to ASN.1 type");
     }
   }
 
@@ -689,7 +688,7 @@ void meas_trigger_quant_to_rrc_asn1(asn1_meas_trigger_quant_quant_offset& asn1_m
     asn1_meas_trigger_quant_offset.set_sinr() = meas_trigger_quant.sinr.value();
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid meas trigger quant.");
+    report_fatal_error("Cannot convert meas trigger quant to ASN.1 type");
   }
 }
 
@@ -780,7 +779,7 @@ event_triggered_report_cfg_to_rrc_asn1(const rrc_event_trigger_cfg& event_trigge
     asn1_event_a6.use_allowed_cell_list = event_triggered_cfg.event_id.event_a6.value().use_allowed_cell_list;
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid event id.");
+    report_fatal_error("Cannot convert event id to ASN.1 type");
   }
 
   // rs type
@@ -841,7 +840,7 @@ inline asn1::rrc_nr::report_cfg_nr_s report_cfg_nr_to_rrc_asn1(const rrc_report_
     asn1_report_cfg_nr.report_type.report_sftd().report_rsrp      = report_cfg_nr.report_sftd.value().report_rsrp;
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid report cfg nr.");
+    report_fatal_error("Cannot convert report cfg nr to ASN.1 type");
   }
 
   return asn1_report_cfg_nr;
@@ -861,7 +860,7 @@ report_cfg_to_add_mod_to_rrc_asn1(const rrc_report_cfg_to_add_mod& report_cfg_to
         report_cfg_nr_to_rrc_asn1(report_cfg_to_add_mod.report_cfg.report_cfg_nr.value());
   } else {
     // error
-    srslog::fetch_basic_logger("RRC").error("Invalid report cfg.");
+    report_fatal_error("Cannot convert report cfg to ASN.1 type");
   }
 
   return asn1_report_cfg_to_add_mod;
@@ -969,7 +968,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
       asn1_meas_cfg.s_measure_cfg.set_csi_rsrp() = meas_cfg.s_measure_cfg.value().csi_rsrp.value();
     } else {
       // error
-      srslog::fetch_basic_logger("RRC").error("Invalid s measure cfg.");
+      report_fatal_error("Cannot convert s measure cfg to ASN.1 type");
     }
   }
 
@@ -1015,7 +1014,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
                              meas_cfg.meas_gap_cfg.value().gap_fr2.value().setup.value().mgta);
       } else {
         // error
-        srslog::fetch_basic_logger("RRC").error("Invalid gap fr2.");
+        report_fatal_error("Cannot convert gap fr2 to ASN.1 type");
       }
     }
   }
@@ -1033,7 +1032,7 @@ inline asn1::rrc_nr::meas_cfg_s meas_config_to_rrc_asn1(const rrc_meas_cfg& meas
                              meas_cfg.meas_gap_sharing_cfg.value().gap_sharing_fr2.value().setup.value());
       } else {
         // error
-        srslog::fetch_basic_logger("RRC").error("Invalid gap sharing fr2.");
+        report_fatal_error("Cannot convert gap sharing fr2 to ASN.1 type");
       }
     }
   }
@@ -1153,8 +1152,8 @@ inline rrc_meas_results asn1_to_measurement_results(const asn1::rrc_nr::meas_res
       }
     } else {
       // error
-      srslog::fetch_basic_logger("RRC").error("Invalid meas result neigh cells type = {}.",
-                                              asn1_meas_results.meas_result_neigh_cells.type());
+      report_fatal_error("Invalid meas result neigh cells type = {}.",
+                         asn1_meas_results.meas_result_neigh_cells.type());
     }
 
     meas_results.meas_result_neigh_cells = meas_result_neigh_cell;

@@ -11,6 +11,7 @@
 #include "rrc_ue_test_messages.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/security/security.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -154,7 +155,7 @@ rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfigur
   security_config.key_to_use = "secondary";
 
   rrc_security_algorithm_config security_algorithm_config;
-  security_algorithm_config.ciphering_algorithm = "nea2";
+  security_algorithm_config.ciphering_algorithm = security::ciphering_algorithm::nea2;
   security_config.security_algorithm_cfg        = security_algorithm_config;
 
   rb_cfg.security_cfg = security_config;

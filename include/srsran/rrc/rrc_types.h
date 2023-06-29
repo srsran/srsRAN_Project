@@ -17,6 +17,7 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/security/security.h"
 #include <string>
 #include <vector>
 
@@ -46,8 +47,8 @@ struct rrc_drb_to_add_mod {
 };
 
 struct rrc_security_algorithm_config {
-  std::string           ciphering_algorithm;
-  optional<std::string> integrity_prot_algorithm;
+  security::ciphering_algorithm           ciphering_algorithm;
+  optional<security::integrity_algorithm> integrity_prot_algorithm;
 };
 
 struct rrc_security_config {

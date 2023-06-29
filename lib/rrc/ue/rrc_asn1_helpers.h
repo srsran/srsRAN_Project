@@ -14,7 +14,6 @@
 #include "rrc_measurement_types_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
 
 namespace srsran {
 
@@ -150,14 +149,15 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
         asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg_present = true;
 
         // ciphering algorithm
-        asn1::string_to_enum(asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.ciphering_algorithm,
-                             security_cfg.security_algorithm_cfg.value().ciphering_algorithm);
+        asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.ciphering_algorithm =
+            ciphering_algorithm_to_rrc_asn1(security_cfg.security_algorithm_cfg.value().ciphering_algorithm);
 
         // integrity prot algorithm
         if (security_cfg.security_algorithm_cfg.value().integrity_prot_algorithm.has_value()) {
           asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.integrity_prot_algorithm_present = true;
-          asn1::string_to_enum(asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.integrity_prot_algorithm,
-                               security_cfg.security_algorithm_cfg.value().integrity_prot_algorithm.value());
+          asn1_radio_bearer_cfg.security_cfg.security_algorithm_cfg.integrity_prot_algorithm =
+              integrity_prot_algorithm_to_rrc_asn1(
+                  security_cfg.security_algorithm_cfg.value().integrity_prot_algorithm.value());
         }
       }
       // key to use
