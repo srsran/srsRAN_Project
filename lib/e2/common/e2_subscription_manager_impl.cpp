@@ -15,9 +15,8 @@ using namespace asn1::e2ap;
 using namespace asn1::e2sm_kpm;
 using namespace srsran;
 
-e2_subscription_manager_impl::e2_subscription_manager_impl(e2sm_interface& e2sm_, e2_message_notifier& notif_) :
-
-  e2sm_iface(e2sm_), notif(notif_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
+e2_subscription_manager_impl::e2_subscription_manager_impl(e2_message_notifier& notif_) :
+  notif(notif_), logger(srslog::fetch_basic_logger("E2-SUBSCRIBER"))
 {
 }
 
@@ -29,8 +28,8 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
   subscription.subscription_info.request_id.ric_requestor_id = msg->ri_crequest_id.value.ric_requestor_id;
   e2_sm_kpm_event_trigger_definition_s event_trigger_def;
 
-  if (e2sm_packer_list.count(msg->ra_nfunction_id.value)) {
-    event_trigger_def = e2sm_packer_list[msg->ra_nfunction_id.value]->handle_packed_event_trigger_definition(
+  if (e2sm_iface_list.count("E2SM-KPM")) {
+    event_trigger_def = e2sm_iface_list["E2SM-KPM"]->get_e2sm_packer().handle_packed_event_trigger_definition(
         msg->ricsubscription_details->ric_event_trigger_definition);
     subscription.subscription_info.report_period =
         event_trigger_def.event_definition_formats.event_definition_format1().report_period;
@@ -56,7 +55,7 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
 int e2_subscription_manager_impl::start_subscription(int ric_instance_id, e2_event_manager& ev_mng)
 {
   subscriptions[ric_instance_id].indication_task = launch_async<e2_indication_procedure>(
-      notif, e2sm_iface, ev_mng, subscriptions[ric_instance_id].subscription_info, logger);
+      notif, *(e2sm_iface_list["E2SM-KPM"]), ev_mng, subscriptions[ric_instance_id].subscription_info, logger);
   return 0;
 }
 
@@ -64,8 +63,8 @@ bool e2_subscription_manager_impl::action_supported(const ri_caction_to_be_setup
                                                     uint16_t                             ran_func_id,
                                                     uint32_t                             ric_instance_id)
 {
-  auto action_def =
-      e2sm_packer_list[ran_func_id]->handle_packed_e2sm_kpm_action_definition(action.ric_action_definition);
+  auto action_def = e2sm_iface_list["E2SM-KPM"]->get_e2sm_packer().handle_packed_e2sm_kpm_action_definition(
+      action.ric_action_definition);
   auto action_type = action_def.action_definition_formats.type().value;
   if (action_type == e2_sm_kpm_action_definition_s::action_definition_formats_c_::types_opts::nulltype) {
     subscriptions[ric_instance_id].subscription_info.action_list.push_back(
@@ -104,7 +103,12 @@ void e2_subscription_manager_impl::get_subscription_result(uint16_t             
   }
 }
 
-void e2_subscription_manager_impl::add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer)
+void e2_subscription_manager_impl::add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface)
 {
-  e2sm_packer_list.emplace(ran_func_id, std::move(e2sm_packer));
+  e2sm_iface_list.emplace(oid, std::move(e2sm_iface));
+}
+
+e2sm_interface* e2_subscription_manager_impl::get_e2sm_interface(std::string oid)
+{
+  return &(*(e2sm_iface_list[oid]));
 }

@@ -21,7 +21,7 @@ namespace srsran {
 class e2_subscription_manager_impl : public e2_subscription_manager
 {
 public:
-  explicit e2_subscription_manager_impl(e2sm_interface& e2sm_, e2_message_notifier& notif_);
+  explicit e2_subscription_manager_impl(e2_message_notifier& notif_);
   virtual ~e2_subscription_manager_impl() = default;
 
   /// \brief  Handles the subscription request message.
@@ -55,17 +55,20 @@ public:
                                const asn1::e2ap::ri_cactions_to_be_setup_list_l& actions);
 
   /// \brief Adds an e2sm service to the list of services that can be used to unpack e2sm messages.
-  /// \param[in] ran_func_id The ran function id associated with the e2sm service.
-  /// \param[in] e2sm_packer The packer that will be used to unpack the e2sm messages for this service
-  void add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer) override;
-  void add_e2sm_service_unique(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer);
+  /// \param[in] oid The oid of the e2sm service.
+  /// \param[in] e2sm_packer The interface that will be used to unpack the e2sm messages for this service
+  void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) override;
+
+  /// \brief Gets the e2sm service interface associated with the given oid.
+  /// \param[in] oid The oid of the e2sm service.
+  /// \return The e2sm service interface associated with the given oid.
+  e2sm_interface* get_e2sm_interface(std::string oid) override;
 
 private:
-  std::map<int, e2_subscription_t>                  subscriptions;
-  std::map<uint16_t, std::unique_ptr<e2sm_handler>> e2sm_packer_list;
-  e2sm_interface&                                   e2sm_iface;
-  e2_message_notifier&                              notif;
-  srslog::basic_logger&                             logger;
+  std::map<int, e2_subscription_t>                       subscriptions;
+  std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
+  e2_message_notifier&                                   notif;
+  srslog::basic_logger&                                  logger;
 };
 
 } // namespace srsran

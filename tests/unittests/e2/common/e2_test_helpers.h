@@ -124,7 +124,9 @@ public:
   }
   int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override { return 0; }
 
-  void add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer) override {}
+  void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) override {}
+
+  e2sm_interface* get_e2sm_interface(std::string oid) override { return nullptr; }
 
 private:
   void get_subscription_result(e2_subscribe_reponse_message& msg)
@@ -296,8 +298,8 @@ class e2_test_subscriber : public e2_test_base
     e2sm_packer          = std::make_unique<dummy_e2sm_handler>();
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
-    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_iface, *msg_notifier);
-    e2_subscription_mngr->add_e2sm_service(1, std::move(e2sm_packer));
+    e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
+    e2_subscription_mngr->add_e2sm_service("E2SM-KPM", std::move(e2sm_iface));
     e2     = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);

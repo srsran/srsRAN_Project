@@ -156,3 +156,8 @@ void e2sm_kpm_impl::generate_indication_header(uint32_t action_id)
   };
   ind_hdr_map[action_id] = std::move(ind_hdr_bytes);
 }
+
+e2sm_handler& e2sm_kpm_impl::get_e2sm_packer()
+{
+  return e2sm_packer;
+}

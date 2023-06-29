@@ -41,4 +41,7 @@ public:
   /// \param[in] action_id
   /// \return Returns the indication header.
   virtual srsran::byte_buffer get_indication_header(uint32_t action_id) = 0;
+  /// \brief gets a reference to the packer for this service model.
+  /// \return Returns a reference to the packer.
+  virtual e2sm_handler& get_e2sm_packer() = 0;
 };

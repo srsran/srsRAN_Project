@@ -46,7 +46,9 @@ public:
   /// \brief start the subscription request
   virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) = 0;
 
-  virtual void add_e2sm_service(uint16_t ran_func_id, std::unique_ptr<e2sm_handler> e2sm_packer) = 0;
+  virtual void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) = 0;
+
+  virtual e2sm_interface* get_e2sm_interface(std::string oid) = 0;
 };
 
 } // namespace srsran
