@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  gnb:
+    container_name: gnb
+    # Build info
+    image: srsran/gnb
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        OS_VERSION: 22.04
+    # privileged mode is requred only for accessing usb devices
+    privileged: true
+    # Extra capabilities always required
+    cap_add:
+      - SYS_NICE
+      - CAP_SYS_PTRACE
+    volumes:
+      # Access USB to use some SDRs
+      - /dev/bus/usb/:/dev/bus/usb/
+      # Sharing images between the host and the pod.
+      # It's also possible to download the images inside the pod
+      - /usr/share/uhd/images:/usr/share/uhd/images
+    # It creates a file/folder into /config_name inside the container
+    # Its content would be the value of the file used to create the config
+    configs:
+      - gnb_config.yml
+    # Customize your desired network mode. 
+    # "host" would expose your host network into the container. It's the easiest to use
+    network_mode: "host"
+    # Command to run into the final container
+    command: gnb -c /gnb_config.yml
+
+configs:
+  gnb_config.yml:
+    file: ../configs/gnb_rf_b200_tdd_n78_20mhz.yml # Path to your desired config file

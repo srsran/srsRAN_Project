@@ -227,6 +227,32 @@ e2e tests tox:
 
 # In build.yml
 
+srsran docker compose:
+  stage: build and unit tests
+  image: docker:24.0.2
+  tags:
+    - docker
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - docker/**/*
+          - .gitlab/ci/builders/install_dependencies.sh
+          - .gitlab/ci/builders/builder.sh
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:24.0.2-dind
+      alias: docker
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+  script:
+    - docker compose -f docker/docker-compose.yml run gnb gnb --version
+  needs: []
+
 ################################################################################
 # Doc generation
 ################################################################################
