@@ -36,8 +36,8 @@ struct ru_ofh_sector_configuration {
   /// Tag control information field.
   uint16_t tci;
 
-  /// Uplink PRACH eAxC.
-  unsigned ul_prach_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Downlink eAxCs.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxCs.
@@ -91,6 +91,8 @@ struct ru_ofh_configuration {
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
   ofh::ru_compression_params dl_compression_params;
+  /// PRACH compression parameters.
+  ofh::ru_compression_params prach_compression_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.

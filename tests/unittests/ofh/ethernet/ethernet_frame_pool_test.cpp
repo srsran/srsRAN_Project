@@ -135,8 +135,7 @@ TEST_P(EthFramePoolFixture, read_after_write_should_return_correct_data)
       std::array<std::vector<uint8_t>, MAX_PACKETS_PER_SYM> test_data;
 
       // Number of Ethernet frames written in the current slot symbol.
-      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? ofh::MAX_CP_MESSAGES_PER_SYMBOL
-                                                                              : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
+      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? 1 : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
       unsigned num_frames      = test_rgen::uniform_int<unsigned>(1, max_num_packets);
 
       // Write random data to the buffers.
@@ -183,8 +182,7 @@ TEST_P(EthFramePoolFixture, read_two_sequentially_written_packets_should_return_
       std::array<std::vector<uint8_t>, MAX_PACKETS_PER_SYM> test_data_1;
 
       // Number of Ethernet frames written in the current slot symbol.
-      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? ofh::MAX_CP_MESSAGES_PER_SYMBOL
-                                                                              : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
+      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? 1 : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
       unsigned num_frames      = test_rgen::uniform_int<unsigned>(1, max_num_packets);
 
       /// Get first batch of frame buffers for the current slot symbol.
@@ -240,8 +238,7 @@ TEST_P(EthFramePoolFixture, read_two_packets_written_in_parallel_should_return_c
       std::array<std::vector<uint8_t>, MAX_PACKETS_PER_SYM> test_data_1;
 
       // Number of Ethernet frames written in the current slot symbol.
-      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? ofh::MAX_CP_MESSAGES_PER_SYMBOL
-                                                                              : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
+      unsigned max_num_packets = ofh_type == ofh::message_type::control_plane ? 1 : ofh::MAX_UP_MESSAGES_PER_SYMBOL;
       unsigned num_frames      = test_rgen::uniform_int<unsigned>(1, max_num_packets);
 
       /// Write two batches of frame buffers for the current slot symbol.

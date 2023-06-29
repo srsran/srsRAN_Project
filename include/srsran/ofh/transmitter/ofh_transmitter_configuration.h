@@ -59,12 +59,14 @@ struct transmitter_config {
   subcarrier_spacing scs;
   /// Cyclic prefix.
   cyclic_prefix cp;
-  /// Uplink PRACH eAxC.
-  optional<unsigned> ul_prach_eaxc;
   /// Downlink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
+  /// PRACH Contol-Plane enabled flag.
+  bool is_prach_cp_enabled;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.
@@ -81,6 +83,8 @@ struct transmitter_config {
   ru_compression_params dl_compr_params;
   /// Uplink compression parameters.
   ru_compression_params ul_compr_params;
+  /// PRACH compression parameters.
+  ru_compression_params prach_compr_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled;
   /// \brief Downlink broadcast flag.

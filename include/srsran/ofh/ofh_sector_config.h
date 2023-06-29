@@ -58,8 +58,8 @@ struct sector_configuration {
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
   bs_channel_bandwidth_fr1 ru_operating_bw;
 
-  /// Uplink PRACH eAxC.
-  unsigned ul_prach_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Downlink eAxC.
   static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxC.
@@ -75,6 +75,8 @@ struct sector_configuration {
   ofh::ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
   ofh::ru_compression_params dl_compression_params;
+  /// PRACH compression parameters.
+  ofh::ru_compression_params prach_compression_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.

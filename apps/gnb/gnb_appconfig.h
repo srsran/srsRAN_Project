@@ -598,7 +598,7 @@ struct ru_ofh_cell_appconfig {
   /// V-LAN Tag control information field.
   uint16_t vlan_tag = 1U;
   /// RU PRACH port.
-  unsigned ru_prach_port_id = 4U;
+  std::vector<unsigned> ru_prach_port_id = {4, 5};
   /// RU Downlink port.
   std::vector<unsigned> ru_dl_port_id = {0, 1};
   /// RU Uplink port.
@@ -643,6 +643,10 @@ struct ru_ofh_appconfig {
   std::string compression_method_dl = "bfp";
   /// Downlink compression bitwidth.
   unsigned compresion_bitwidth_dl = 9;
+  /// PRACH compression method.
+  std::string compression_method_prach = "none";
+  /// PRACH compression bitwidth.
+  unsigned compresion_bitwidth_prach = 16;
   /// Downlink static compression header flag.
   bool is_downlink_static_comp_hdr_enabled = true;
   /// Uplink static compression header flag.

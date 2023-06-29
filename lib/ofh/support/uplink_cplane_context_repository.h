@@ -20,13 +20,25 @@
 namespace srsran {
 namespace ofh {
 
+/// Uplink Control-Plane context.
+struct ul_cplane_context {
+  /// Control-Plane radio application header.
+  cplane_radio_application_header radio_hdr;
+  /// Starting PRB of data section.
+  uint16_t prb_start;
+  /// Number of contiguous PRBs per data section.
+  unsigned nof_prb;
+  /// Number of symbols.
+  uint8_t nof_symbols;
+};
+
 /// Uplink Control-Plane context repository.
 class uplink_cplane_context_repository
 {
   /// System frame number maximum value in this repository.
   static constexpr unsigned SFN_MAX_VALUE = 1U << 8;
 
-  using repo_entry = std::array<cplane_section_type1_parameters, MAX_SUPPORTED_EAXC_ID_VALUE>;
+  using repo_entry = std::array<ul_cplane_context, MAX_SUPPORTED_EAXC_ID_VALUE>;
 
   std::vector<repo_entry> repo;
   unsigned                size = 0;
@@ -34,7 +46,7 @@ class uplink_cplane_context_repository
   mutable std::mutex mutex;
 
   /// Returns the entry of the repository for the given slot and eAxC.
-  cplane_section_type1_parameters& entry(slot_point slot, unsigned eaxc)
+  ul_cplane_context& entry(slot_point slot, unsigned eaxc)
   {
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % size;
@@ -42,7 +54,7 @@ class uplink_cplane_context_repository
   }
 
   /// Returns the entry of the repository for the given slot and eAxC.
-  const cplane_section_type1_parameters& entry(slot_point slot, unsigned eaxc) const
+  const ul_cplane_context& entry(slot_point slot, unsigned eaxc) const
   {
     slot_point entry_slot(slot.numerology(), slot.sfn() % SFN_MAX_VALUE, slot.slot_index());
     unsigned   index = entry_slot.system_slot() % size;
@@ -53,7 +65,7 @@ public:
   explicit uplink_cplane_context_repository(unsigned size_) : repo(size_), size(size_) {}
 
   /// Add the given context to the repo at the given slot and eAxC.
-  void add(slot_point slot, unsigned eaxc, const cplane_section_type1_parameters& context)
+  void add(slot_point slot, unsigned eaxc, const ul_cplane_context& context)
   {
     std::lock_guard<std::mutex> lock(mutex);
     entry(slot, eaxc) = context;
@@ -61,14 +73,13 @@ public:
 
   /// Returns a context that matches the given slot, symbol, filter index and eAxC or an error if it does not exist in
   /// the repository.
-  expected<cplane_section_type1_parameters>
-  get(slot_point slot, unsigned symbol, filter_index_type filter_index, unsigned eaxc) const
+  expected<ul_cplane_context> get(slot_point slot, unsigned symbol, filter_index_type filter_index, unsigned eaxc) const
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    const cplane_section_type1_parameters& cp_param = entry(slot, eaxc);
+    const ul_cplane_context& cp_param = entry(slot, eaxc);
     if (symbol >= cp_param.radio_hdr.start_symbol &&
-        symbol < (cp_param.radio_hdr.start_symbol + cp_param.section_fields.common_fields.nof_symbols) &&
+        symbol < (cp_param.radio_hdr.start_symbol + cp_param.nof_symbols) &&
         filter_index == cp_param.radio_hdr.filter_index) {
       return cp_param;
     }

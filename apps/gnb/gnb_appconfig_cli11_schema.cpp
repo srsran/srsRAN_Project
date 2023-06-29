@@ -1055,9 +1055,7 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
-  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
+  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
   app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
   app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
 }
@@ -1156,6 +1154,12 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
       ->capture_default_str()
       ->check(compression_method_check);
   app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--compr_method_prach", config.compression_method_prach, "PRACH compression method")
+      ->capture_default_str()
+      ->check(compression_method_check);
+  app.add_option("--compr_bitwidth_prach", config.compresion_bitwidth_prach, "PRACH compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
   app.add_option("--enable_ul_static_compr_hdr",

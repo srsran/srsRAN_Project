@@ -28,6 +28,14 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
     return;
   }
 
+  if (symbol_point.get_symbol_index() == half_slot_symbol) {
+    time_notifier->on_ul_half_slot_boundary(symbol_point.get_slot());
+  }
+
+  if (symbol_point.get_symbol_index() == full_slot_symbol) {
+    time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
+  }
+
   // Skip if the slot did not change.
   if (symbol_point.get_slot() == current_slot) {
     return;
@@ -37,14 +45,6 @@ void ota_symbol_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
   if ((current_slot + 1) != symbol_point.get_slot()) {
     logger.warning(
         "Detected a non-consecutive slot change. current_slot={} , new_slot={}", current_slot, symbol_point.get_slot());
-  }
-
-  if (symbol_point.get_symbol_index() == half_slot_symbol) {
-    time_notifier->on_ul_half_slot_boundary(symbol_point.get_slot());
-  }
-
-  if (symbol_point.get_symbol_index() == full_slot_symbol) {
-    time_notifier->on_ul_full_slot_boundary(symbol_point.get_slot());
   }
 
   current_slot = symbol_point.get_slot();

@@ -52,8 +52,9 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   config.nof_symbols = get_nsymb_per_slot(tx_config.cp);
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
-  config.dl_compr_params = tx_config.dl_compr_params;
-  config.ul_compr_params = tx_config.ul_compr_params;
+  config.dl_compr_params    = tx_config.dl_compr_params;
+  config.ul_compr_params    = tx_config.ul_compr_params;
+  config.prach_compr_params = tx_config.prach_compr_params;
 
   // VLAN configuration.
   config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
@@ -171,7 +172,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(config.ru_operating_bw), config.scs, frequency_range::FR1);
   rx_config.is_prach_cp_enabled = config.is_prach_control_plane_enabled;
-  rx_config.ul_prach_eaxc       = config.ul_prach_eaxc;
+  rx_config.prach_eaxc          = config.prach_eaxc;
   rx_config.ul_eaxc             = config.ul_eaxc;
   rx_config.cp                  = config.cp;
   // In rx, dst and src addresses are swapped.
@@ -228,13 +229,12 @@ static transmitter_config generate_transmitter_config(const sector_configuration
 {
   transmitter_config tx_config;
 
-  tx_config.bw                 = sector_cfg.bw;
-  tx_config.scs                = sector_cfg.scs;
-  tx_config.cp                 = sector_cfg.cp;
-  tx_config.downlink_broadcast = sector_cfg.is_downlink_broadcast_enabled;
-  if (sector_cfg.is_prach_control_plane_enabled) {
-    tx_config.ul_prach_eaxc.emplace(sector_cfg.ul_prach_eaxc);
-  }
+  tx_config.bw                                  = sector_cfg.bw;
+  tx_config.scs                                 = sector_cfg.scs;
+  tx_config.cp                                  = sector_cfg.cp;
+  tx_config.downlink_broadcast                  = sector_cfg.is_downlink_broadcast_enabled;
+  tx_config.is_prach_cp_enabled                 = sector_cfg.is_prach_control_plane_enabled;
+  tx_config.prach_eaxc                          = sector_cfg.prach_eaxc;
   tx_config.ul_eaxc                             = sector_cfg.ul_eaxc;
   tx_config.dl_eaxc                             = sector_cfg.dl_eaxc;
   tx_config.mac_dst_address                     = sector_cfg.mac_dst_address;
@@ -282,10 +282,11 @@ create_uplink_request_handler(const transmitter_config&                         
 {
   uplink_request_handler_impl_config config;
 
-  config.ul_prach_eaxc = tx_config.ul_prach_eaxc;
-  config.ul_data_eaxc  = tx_config.ul_eaxc;
-  config.ul_slot_repo  = std::move(ul_slot_context_repo);
-  config.ul_prach_repo = std::move(prach_context_repo);
+  config.is_prach_cp_enabled = tx_config.is_prach_cp_enabled;
+  config.prach_eaxc          = tx_config.prach_eaxc;
+  config.ul_data_eaxc        = tx_config.ul_eaxc;
+  config.ul_slot_repo        = std::move(ul_slot_context_repo);
+  config.ul_prach_repo       = std::move(prach_context_repo);
   config.data_flow =
       create_data_flow_cplane_sched(tx_config, *tx_depen.logger, tx_depen.frame_pool, std::move(ul_cp_context_repo));
 

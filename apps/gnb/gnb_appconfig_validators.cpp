@@ -93,8 +93,14 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_ul_port_id)) {
       fmt::print("Detected duplicated uplink port identifiers\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_prach_port_id)) {
+      fmt::print("Detected duplicated uplink PRACH port identifiers\n");
 
       return false;
     }

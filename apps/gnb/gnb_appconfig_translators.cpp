@@ -862,6 +862,8 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
                                                  ru_cfg.compresion_bitwidth_ul};
   out_cfg.dl_compression_params               = {ofh::to_compression_type(ru_cfg.compression_method_dl),
                                                  ru_cfg.compresion_bitwidth_dl};
+  out_cfg.prach_compression_params            = {ofh::to_compression_type(ru_cfg.compression_method_prach),
+                                                 ru_cfg.compresion_bitwidth_prach};
   out_cfg.iq_scaling                          = ru_cfg.iq_scaling;
 
   // Add one cell.
@@ -878,8 +880,8 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
       srsran_terminate("Invalid Radio Unit MAC address");
     }
 
-    sector_cfg.tci           = cell_cfg.vlan_tag;
-    sector_cfg.ul_prach_eaxc = cell_cfg.ru_prach_port_id;
+    sector_cfg.tci = cell_cfg.vlan_tag;
+    sector_cfg.prach_eaxc.assign(cell_cfg.ru_prach_port_id.begin(), cell_cfg.ru_prach_port_id.end());
     sector_cfg.dl_eaxc.assign(cell_cfg.ru_dl_port_id.begin(), cell_cfg.ru_dl_port_id.end());
     sector_cfg.ul_eaxc.assign(cell_cfg.ru_ul_port_id.begin(), cell_cfg.ru_ul_port_id.end());
   }
