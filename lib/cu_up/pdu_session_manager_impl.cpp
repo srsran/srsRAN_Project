@@ -233,15 +233,13 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
 
     auto& drb = drb_iter->second;
     if (new_tnl_info_required) {
-      // disconnect old F1-U
-      f1u_gw.disconnect_cu_bearer(drb_iter->second->f1u_ul_teid);
-      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
-
+      // Allocate new UL TEID for DRB
       drb->f1u_ul_teid = allocate_new_local_f1u_teid(drb_iter->second->f1u_ul_teid);
 
-      // create new F1-U and connect it
+      // create new F1-U and connect it. This will automatically disconnect the old F1-U.
       drb->f1u = f1u_gw.create_cu_bearer(
           ue_index, drb->f1u_ul_teid, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
+      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
 
       up_transport_layer_info f1u_ul_tunnel_addr;
       f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);

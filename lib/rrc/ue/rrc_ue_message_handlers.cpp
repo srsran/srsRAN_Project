@@ -113,9 +113,9 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
 
   // check if reestablishment context exists
   if (reest_context.ue_index == ue_index_t::invalid) {
-    logger.debug("Reestablishment context for UE with pci={} and rnti={} not found.",
-                 msg.rrc_reest_request.ue_id.pci,
-                 to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
+    logger.warning("Reestablishment context for UE with pci={} and rnti={:#04x} not found.",
+                   msg.rrc_reest_request.ue_id.pci,
+                   to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
   } else {
     // store capabilities if available
     if (reest_context.capabilities.has_value()) {
