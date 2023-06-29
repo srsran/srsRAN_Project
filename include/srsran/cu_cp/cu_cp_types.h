@@ -158,7 +158,7 @@ struct cu_cp_gnb_du_sys_info {
 
 struct cu_cp_du_served_cells_item {
   cu_cp_served_cell_info          served_cell_info;
-  optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info;
+  optional<cu_cp_gnb_du_sys_info> gnb_du_sys_info; // not optional for NG-RAN
 };
 
 struct cu_cp_f1_setup_request {

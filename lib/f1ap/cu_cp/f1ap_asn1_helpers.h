@@ -16,6 +16,7 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -79,6 +80,8 @@ inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f
         gnb_du_sys_info.sib1_msg = asn1_served_cell.gnb_du_sys_info.sib1_msg.copy();
 
         served_cell.gnb_du_sys_info = gnb_du_sys_info;
+      } else {
+        srslog::fetch_basic_logger("CU-CP-F1").error("gNB DU system information must be present for NG-RAN.");
       }
 
       request.gnb_du_served_cells_list.push_back(served_cell);
