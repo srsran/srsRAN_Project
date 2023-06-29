@@ -10,12 +10,12 @@
 
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
-#include "lib/du_high/du_high_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du_high/du_high_factory.h"
 #include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
@@ -772,8 +772,8 @@ int main(int argc, char** argv)
   // Fill cell specific PRACH configuration.
   fill_cell_prach_cfg(cell_cfg);
 
-  du_high_impl du_obj(du_hi_cfg);
-  f1ap_notifier.attach_handler(&du_obj.get_f1ap_message_handler());
+  std::unique_ptr<du_high> du_obj = make_du_high(du_hi_cfg);
+  f1ap_notifier.attach_handler(&du_obj->get_f1ap_message_handler());
   du_logger.info("DU-High created successfully");
 
   // Set signal handler.
@@ -784,19 +784,17 @@ int main(int argc, char** argv)
   ::signal(SIGKILL, signal_handler);
 
   // Start execution.
-  du_logger.info("Starting DU-High...");
-  du_obj.start();
-  du_logger.info("DU-High started successfully");
+  du_obj->start();
 
   // Give some time to the MAC to start.
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Configure the DU slot handler.
   du_cell_index_t cell_id = to_du_cell_index(0);
-  mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(cell_id));
-  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(cell_id));
-  mac_adaptor->set_cell_pdu_handler(du_obj.get_pdu_handler());
-  mac_adaptor->set_cell_crc_handler(du_obj.get_control_info_handler(cell_id));
+  mac_adaptor->set_cell_slot_handler(du_obj->get_slot_handler(cell_id));
+  mac_adaptor->set_cell_rach_handler(du_obj->get_rach_handler(cell_id));
+  mac_adaptor->set_cell_pdu_handler(du_obj->get_pdu_handler());
+  mac_adaptor->set_cell_crc_handler(du_obj->get_control_info_handler(cell_id));
 
   // Start processing.
   du_logger.info("Starting Radio Unit...");

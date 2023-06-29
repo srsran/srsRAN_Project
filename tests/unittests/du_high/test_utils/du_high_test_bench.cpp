@@ -11,6 +11,7 @@
 #include "du_high_test_bench.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du_high/du_high_factory.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
@@ -160,14 +161,14 @@ du_high_test_bench::du_high_test_bench() :
 
     return cfg;
   }()),
-  du_obj(du_high_cfg),
+  du_hi(make_du_high(du_high_cfg)),
   next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
 {
   // Short-circuit the CU notifier to the F1AP-DU for automatic CU-CP responses.
-  cu_notifier.connect(du_obj.get_f1ap_message_handler());
+  cu_notifier.connect(du_hi->get_f1ap_message_handler());
 
   // Start DU and try to connect to CU.
-  du_obj.start();
+  du_hi->start();
 
   // Ensure the result is saved in the notifier.
   run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
@@ -196,7 +197,7 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
   cu_notifier.last_f1ap_msgs.clear();
 
   // Send UL-CCCH message.
-  du_obj.get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, rnti));
+  du_hi->get_pdu_handler().handle_rx_data_indication(create_ccch_message(next_slot, rnti));
 
   // Wait for Init UL RRC Message to come out of the F1AP.
   run_until([this]() { return not cu_notifier.last_f1ap_msgs.empty(); });
@@ -206,7 +207,7 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
 void du_high_test_bench::run_slot()
 {
   // Signal slot indication to l2.
-  du_obj.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
+  du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
 
   // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test main
   // thread).
