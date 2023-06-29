@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/du_high/du_high.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
@@ -20,16 +21,17 @@
 namespace srsran {
 namespace srs_du {
 
-class du_high_impl
+class du_high_impl final : public du_high
 {
 public:
   explicit du_high_impl(const du_high_configuration& cfg_);
   ~du_high_impl();
 
-  void start();
-  void stop();
+  void start() override;
 
-  f1ap_message_handler& get_f1ap_message_handler();
+  void stop() override;
+
+  f1ap_message_handler& get_f1ap_message_handler() override;
 
   mac_pdu_handler& get_pdu_handler();
 

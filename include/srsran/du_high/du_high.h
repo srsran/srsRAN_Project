@@ -14,18 +14,16 @@
 
 namespace srsran {
 
-class du
+/// \brief Interface to DU-high class, which owns and manages the interaction between MAC, RLC and F1 layers.
+class du_high
 {
 public:
-  virtual ~du() = default;
+  virtual ~du_high() = default;
 
-  /// \brief Start the DU.
   virtual void start() = 0;
 
-  /// \brief Stop the DU.
   virtual void stop() = 0;
 
-  /// \brief Get the handler for F1AP Rx PDUs coming from the CU-CP.
   virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
 };
 

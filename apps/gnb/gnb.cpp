@@ -868,11 +868,12 @@ int main(int argc, char** argv)
 
   // attach F1AP adapter to DU and CU-CP
   f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
-  f1ap_cu_to_du_adapter.attach_handler(&du_obj.get_f1ap_message_handler());
+  f1ap_cu_to_du_adapter.attach_handler(&du_inst->get_f1ap_message_handler());
 
   // Start execution.
   gnb_logger.info("Starting DU-High...");
   du_obj.start();
+  du_inst->start();
   gnb_logger.info("DU-High started successfully");
 
   // Give some time to the MAC to start.
@@ -889,8 +890,6 @@ int main(int argc, char** argv)
   gnb_logger.info("Starting Radio Unit...");
   ru_object->get_controller().start();
   gnb_logger.info("Radio Unit started successfully");
-
-  du_inst->start();
 
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
