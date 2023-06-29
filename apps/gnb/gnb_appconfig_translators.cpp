@@ -325,7 +325,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
       cset1_start_crb = 6;
     }
-    unsigned cset1_l_crb = nof_crbs;
+    unsigned cset1_l_crb = nof_crbs - cset1_start_crb;
     if (config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.has_value()) {
       cset1_l_crb = config.common_cell_cfg.pdcch_cfg.dedicated.coreset1_l_crb.value();
     }
