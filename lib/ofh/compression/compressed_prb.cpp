@@ -21,7 +21,7 @@ void compressed_prb::pack_compressed_data(span<const int16_t> compressed_iq,
                                           uint8_t             compression_param)
 {
   srsran_assert(compressed_iq.size() == NOF_SUBCARRIERS_PER_RB * 2, "Compressed data must contain 12 IQ samples");
-  srsran_assert(iq_width <= MAX_WIDTH, "Requested width can not exceed 16");
+  srsran_assert(iq_width <= MAX_IQ_WIDTH, "Requested width can not exceed 16");
 
   comp_param = compression_param;
 

@@ -11,21 +11,20 @@
 #pragma once
 
 #include "srsran/adt/bit_buffer.h"
+#include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ran/resource_block.h"
 
 namespace srsran {
 namespace ofh {
 
-/// \brief Describes storage of one compressed PRB.
+/// \brief Describes the storage of one compressed PRB.
 ///
 /// Compressed IQ samples are stored in packed format. The class provides methods to pack an array of compressed PRB
 /// samples as well as to extract samples from packed storage.
 class compressed_prb
 {
-  /// Maximum allowed bit width.
-  static constexpr size_t MAX_WIDTH = 16;
   /// Number of bytes required to store compressed IQ samples of one PRB.
-  static constexpr size_t CAPACITY_BITS = NOF_SUBCARRIERS_PER_RB * 2 * MAX_WIDTH;
+  static constexpr size_t CAPACITY_BITS = NOF_SUBCARRIERS_PER_RB * 2 * MAX_IQ_WIDTH;
 
 public:
   /// Constructors.
