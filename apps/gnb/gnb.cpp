@@ -12,7 +12,6 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
 #include "srsran/support/cpu_features.h"
-#include "srsran/support/executors/sync_task_executor.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 #include "srsran/support/version/version.h"
@@ -31,21 +30,19 @@
 #include "adapters/f1ap_adapter.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
-#include "srsran/support/executors/task_worker_pool.h"
 
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
+#include "gnb_worker_manager.h"
+
 #include "helpers/gnb_console_helper.h"
 
-#include "lib/du/adapters/fapi_factory.h"
-#include "lib/du_high/du_high_executor_strategies.h"
+#include "gnb_du_factory.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
-#include "phy_factory.h"
-#include "srsran/du/du_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 #include "srsran/ru/ru_adapters.h"
@@ -53,11 +50,9 @@
 #include "srsran/ru/ru_generic_factory.h"
 #include "srsran/ru/ru_ofh_factory.h"
 
-#include "srsran/support/executors/priority_multiqueue_task_worker.h"
 #include "srsran/support/sysinfo.h"
 
 #include <atomic>
-#include <unordered_map>
 
 using namespace srsran;
 
@@ -110,248 +105,6 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
     ngap_nw_config.max_init_timeo = gnb_params.amf_cfg.sctp_max_init_timeo;
   }
 }
-
-namespace {
-
-/// Manages the workers of the app.
-struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg)
-  {
-    optional<lower_phy_thread_profile> lower_phy_profile;
-    std::string                        driver = "";
-    if (variant_holds_alternative<ru_sdr_appconfig>(appcfg.ru_cfg)) {
-      const ru_sdr_appconfig& sdr_cfg = variant_get<ru_sdr_appconfig>(appcfg.ru_cfg);
-      driver                          = sdr_cfg.device_driver;
-
-      lower_phy_profile =
-          (driver != "zmq") ? sdr_cfg.expert_cfg.lphy_executor_profile : lower_phy_thread_profile::blocking;
-    }
-
-    if (appcfg.expert_phy_cfg.nof_pdsch_threads > 1) {
-      create_worker_pool("pdsch",
-                         appcfg.expert_phy_cfg.nof_pdsch_threads,
-                         2 * MAX_CBS_PER_PDU,
-                         os_thread_realtime_priority::max() - 10);
-    }
-
-    create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
-  }
-
-  void stop()
-  {
-    du_cell_worker->stop();
-    gnb_ctrl_worker->stop();
-    for (auto& worker : workers) {
-      worker.second->stop();
-    }
-    for (auto& pool : worker_pools) {
-      pool.second->stop();
-    }
-  }
-
-  /*
-  du ctrl exec points to general ctrl_worker
-  du ue exec points to the general ue_worker
-  cu-cp ctrl exec points to general ctrl_worker (just like the du ctrl exec)
-  cu-up ue exec points to the general ue_worker (just like the du ue exec)
-
-  The handler side is responsible for executor dispatching:
-  - ngap::handle_message calls cu-cp ctrl exec
-  - f1ap_cu::handle_message calls cu-cp ctrl exec
-  - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
-  - e1ap_cu_up::handle_message calls cu-up ue exec
-  */
-
-  std::unique_ptr<task_executor> cu_cp_exec;
-  std::unique_ptr<task_executor> cu_up_exec;
-  std::unique_ptr<task_executor> gtpu_pdu_exec;
-  std::unique_ptr<task_executor> du_ctrl_exec;
-  std::unique_ptr<task_executor> du_timer_exec;
-  std::unique_ptr<task_executor> du_ue_exec;
-  std::unique_ptr<task_executor> du_cell_exec;
-  std::unique_ptr<task_executor> du_slot_exec;
-  std::unique_ptr<task_executor> lower_phy_tx_exec;
-  std::unique_ptr<task_executor> lower_phy_rx_exec;
-  std::unique_ptr<task_executor> lower_phy_dl_exec;
-  std::unique_ptr<task_executor> lower_phy_ul_exec;
-  std::unique_ptr<task_executor> lower_prach_exec;
-  std::unique_ptr<task_executor> upper_dl_exec;
-  std::unique_ptr<task_executor> upper_pusch_exec;
-  std::unique_ptr<task_executor> upper_pucch_exec;
-  std::unique_ptr<task_executor> upper_prach_exec;
-  std::unique_ptr<task_executor> upper_pdsch_exec;
-  std::unique_ptr<task_executor> radio_exec;
-  std::unique_ptr<task_executor> ru_printer_exec;
-  std::unique_ptr<task_executor> ru_timing_exec;
-  std::unique_ptr<task_executor> ru_tx_exec;
-  std::unique_ptr<task_executor> ru_rx_exec;
-
-  std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
-
-private:
-  using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
-  using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
-
-  std::unique_ptr<du_cell_worker_type>                               du_cell_worker;
-  std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
-  std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
-  std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
-
-  // helper method to create workers
-  template <typename... Args>
-  void create_worker(const std::string& name, Args&&... args)
-  {
-    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, std::forward<Args>(args)...)));
-    srsran_assert(ret.second, "Unable to create worker {}.", name);
-  }
-  // helper method to create worker pool
-  void create_worker_pool(const std::string&          name,
-                          size_t                      nof_workers,
-                          size_t                      queue_size,
-                          os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
-  {
-    auto ret = worker_pools.insert(
-        std::make_pair(name, std::make_unique<task_worker_pool>(nof_workers, queue_size, name, prio)));
-    srsran_assert(ret.second, "Unable to create worker pool {}.", name);
-  }
-
-  void create_executors(bool                               blocking_mode_active,
-                        optional<lower_phy_thread_profile> lower_phy_profile,
-                        unsigned                           nof_ul_workers)
-  {
-    static const uint32_t task_worker_queue_size = 2048;
-
-    // Instantiate workers
-    create_worker("gnb_ue", 512);
-    gnb_ctrl_worker = std::make_unique<du_cell_worker_type>("gnb_ctrl",
-                                                            std::array<unsigned, 2>{64, task_worker_queue_size},
-                                                            std::chrono::microseconds{100},
-                                                            os_thread_realtime_priority::max() - 2,
-                                                            os_sched_affinity_bitmask{});
-    du_cell_worker  = std::make_unique<du_cell_worker_type>("du_cell",
-                                                           std::array<unsigned, 2>{8, task_worker_queue_size},
-                                                           std::chrono::microseconds{10},
-                                                           os_thread_realtime_priority::max() - 2,
-                                                           os_sched_affinity_bitmask{});
-
-    if (blocking_mode_active) {
-      create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
-    } else {
-      create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
-      create_worker("upper_phy_dl", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
-      create_worker_pool(
-          "upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
-    }
-
-    if (!blocking_mode_active && lower_phy_profile && *lower_phy_profile == lower_phy_thread_profile::blocking) {
-      create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
-    }
-
-    create_worker("radio", task_worker_queue_size);
-    create_worker("ru_stats_worker", 1);
-
-    // Instantiate task executors
-    cu_cp_exec      = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-    cu_up_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    gtpu_pdu_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
-    du_ctrl_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*gnb_ctrl_worker);
-    du_timer_exec   = make_priority_task_executor_ptr<task_queue_priority::max>(*gnb_ctrl_worker);
-    du_ue_exec      = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_cell_exec    = make_priority_task_executor_ptr<task_queue_priority::min>(*du_cell_worker);
-    ru_printer_exec = std::make_unique<task_worker_executor>(*workers.at("ru_stats_worker"));
-    if (blocking_mode_active) {
-      du_slot_exec = make_sync_executor(make_priority_task_worker_executor<task_queue_priority::max>(*du_cell_worker));
-      task_worker& phy_worker = *workers.at("phy_worker");
-      lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
-      lower_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
-      upper_dl_exec           = std::make_unique<task_worker_executor>(phy_worker);
-      upper_pusch_exec        = std::make_unique<task_worker_executor>(phy_worker);
-      upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
-      upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
-    } else {
-      du_slot_exec     = make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
-      lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-      upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_phy_dl"));
-      upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
-      upper_pucch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
-      upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-    }
-
-    if (worker_pools.count("pdsch")) {
-      upper_pdsch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("pdsch"));
-    }
-
-    if (lower_phy_profile) {
-      switch (*lower_phy_profile) {
-        case lower_phy_thread_profile::blocking: {
-          fmt::print("Lower PHY in executor blocking mode.\n");
-          task_worker& phy_worker = *workers.at("phy_worker");
-          lower_phy_tx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-          lower_phy_rx_exec       = std::make_unique<task_worker_executor>(phy_worker);
-          lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
-          lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
-          break;
-        }
-        case lower_phy_thread_profile::single: {
-          fmt::print("Lower PHY in single executor mode.\n");
-          create_worker("lower_phy", 128, os_thread_realtime_priority::max());
-          task_worker& lower_phy_worker = *workers.at("lower_phy");
-          lower_phy_tx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-          lower_phy_rx_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-          lower_phy_dl_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-          lower_phy_ul_exec             = std::make_unique<task_worker_executor>(lower_phy_worker);
-          break;
-        }
-        case lower_phy_thread_profile::dual: {
-          fmt::print("Lower PHY in dual executor mode.\n");
-          create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max());
-          create_worker("lower_phy_ul", 2, os_thread_realtime_priority::max() - 1);
-          lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-          lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-          lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-          lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-          break;
-        }
-        case lower_phy_thread_profile::quad: {
-          fmt::print("Lower PHY in quad executor mode.\n");
-          create_worker("lower_phy_tx", 128, os_thread_realtime_priority::max());
-          create_worker("lower_phy_rx", 1, os_thread_realtime_priority::max() - 2);
-          create_worker("lower_phy_dl", 128, os_thread_realtime_priority::max() - 1);
-          create_worker("lower_phy_ul", 128, os_thread_realtime_priority::max() - 3);
-          lower_phy_tx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_tx"));
-          lower_phy_rx_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_rx"));
-          lower_phy_dl_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_dl"));
-          lower_phy_ul_exec = std::make_unique<task_worker_executor>(*workers.at("lower_phy_ul"));
-          break;
-        }
-      }
-    }
-
-    radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
-
-    // RU executors.
-    create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1, os_sched_affinity_bitmask(0));
-    ru_timing_exec = std::make_unique<task_worker_executor>(*workers.at("ru_timing"));
-    create_worker("ru_tx", 128, os_thread_realtime_priority::max() - 3, os_sched_affinity_bitmask(1));
-    ru_tx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_tx"));
-    create_worker("ru_rx", 1, os_thread_realtime_priority::max() - 2, os_sched_affinity_bitmask(3));
-    ru_rx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_rx"));
-
-    // Executor mappers.
-    du_high_exec_mapper = std::make_unique<du_high_executor_mapper_impl>(
-        std::make_unique<cell_executor_mapper>(std::initializer_list<task_executor*>{du_cell_exec.get()},
-                                               std::initializer_list<task_executor*>{du_slot_exec.get()}),
-        std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
-        *du_ctrl_exec,
-        *du_timer_exec);
-  }
-};
-
-} // namespace
 
 static void local_signal_handler()
 {
@@ -678,48 +431,17 @@ int main(int argc, char** argv)
   // DU cell config
   std::vector<du_cell_config> du_cells_cfg = generate_du_cell_config(gnb_cfg);
 
-  // DU QoS config
-  std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
-  for (const auto& it : du_qos_cfg) {
-    gnb_logger.debug("QoS RLC configuration: 5QI={} RLC={}", it.first, it.second.rlc);
-  }
-
-  du_config du_cfg = {};
-  // DU-low configuration.
-  du_cfg.du_lo = create_du_low_config(gnb_cfg,
-                                      &ru_dl_rg_adapt,
-                                      workers.upper_dl_exec.get(),
-                                      workers.upper_pucch_exec.get(),
-                                      workers.upper_pusch_exec.get(),
-                                      workers.upper_prach_exec.get(),
-                                      workers.upper_pdsch_exec.get(),
-                                      &ru_ul_request_adapt);
-  // DU-high configuration.
-  srs_du::du_high_configuration& du_hi_cfg = du_cfg.du_hi;
-  du_hi_cfg.exec_mapper                    = workers.du_high_exec_mapper.get();
-  du_hi_cfg.f1ap_notifier                  = &f1ap_du_to_cu_adapter;
-  du_hi_cfg.f1u_gw                         = f1u_conn->get_f1u_du_gateway();
-  du_hi_cfg.phy_adapter                    = nullptr;
-  du_hi_cfg.timers                         = &app_timers;
-  du_hi_cfg.cells                          = du_cells_cfg;
-  du_hi_cfg.qos                            = du_qos_cfg;
-  du_hi_cfg.pcap                           = mac_p.get();
-  du_hi_cfg.mac_cfg                        = generate_mac_expert_config(gnb_cfg);
-  du_hi_cfg.metrics_notifier               = &console.get_metrics_notifier();
-  du_hi_cfg.sched_cfg                      = generate_scheduler_expert_config(gnb_cfg);
-  if (gnb_cfg.test_mode_cfg.test_ue.rnti != INVALID_RNTI) {
-    du_hi_cfg.test_cfg.test_ue = srs_du::du_test_config::test_ue_config{gnb_cfg.test_mode_cfg.test_ue.rnti,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.pusch_active,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.cqi,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.pmi,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.ri};
-  }
-  // FAPI configuration.
-  du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;
-
-  // Instantiate a DU.
-  std::unique_ptr<du> du_inst = make_du(du_cfg);
+  // Instantiate the DU.
+  std::unique_ptr<du> du_inst = make_gnb_du(gnb_cfg,
+                                            workers,
+                                            du_cells_cfg,
+                                            ru_dl_rg_adapt,
+                                            ru_ul_request_adapt,
+                                            f1ap_du_to_cu_adapter,
+                                            *f1u_conn->get_f1u_du_gateway(),
+                                            app_timers,
+                                            *mac_p,
+                                            console.get_metrics_notifier());
 
   // Make connections between DU and RU.
   ru_ul_adapt.connect(du_inst->get_rx_symbol_handler());
@@ -737,7 +459,7 @@ int main(int argc, char** argv)
   ru_object->get_controller().start();
   gnb_logger.info("Radio Unit started successfully");
 
-  console.set_cells(du_hi_cfg.cells);
+  console.set_cells(du_cells_cfg);
   console.on_app_running();
 
   while (is_running) {
