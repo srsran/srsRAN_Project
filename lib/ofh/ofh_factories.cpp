@@ -244,6 +244,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.ru_working_bw                       = sector_cfg.ru_operating_bw;
   tx_config.ul_compr_params                     = sector_cfg.ul_compression_params;
   tx_config.dl_compr_params                     = sector_cfg.dl_compression_params;
+  tx_config.prach_compr_params                  = sector_cfg.prach_compression_params;
   tx_config.is_downlink_static_comp_hdr_enabled = sector_cfg.is_downlink_static_comp_hdr_enabled;
 
   tx_config.ru_working_bw      = sector_cfg.ru_operating_bw;
