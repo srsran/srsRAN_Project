@@ -52,7 +52,6 @@ struct worker_manager {
   std::unique_ptr<task_executor> lower_phy_dl_exec;
   std::unique_ptr<task_executor> lower_phy_ul_exec;
   std::unique_ptr<task_executor> lower_prach_exec;
-  std::unique_ptr<task_executor> upper_dl_exec;
   std::unique_ptr<task_executor> upper_pusch_exec;
   std::unique_ptr<task_executor> upper_pucch_exec;
   std::unique_ptr<task_executor> upper_prach_exec;
@@ -67,6 +66,9 @@ struct worker_manager {
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
   std::unique_ptr<du_high_executor_mapper>                        du_high_exec_mapper;
 
+  // Gets the DU-low downlink executors.
+  void get_du_low_dl_executors(std::vector<task_executor*>& executors) const;
+
 private:
   using du_cell_worker_type  = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
   using gnb_ctrl_worker_type = priority_multiqueue_task_worker<task_queue_policy::spsc, task_queue_policy::blocking>;
@@ -75,6 +77,8 @@ private:
   std::unique_ptr<gnb_ctrl_worker_type>                              gnb_ctrl_worker;
   std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
+
+  std::vector<std::unique_ptr<task_executor>> du_low_dl_executors;
 
   // helper method to create workers
   template <typename... Args>
@@ -87,7 +91,8 @@ private:
                           os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime());
   void create_executors(bool                               blocking_mode_active,
                         optional<lower_phy_thread_profile> lower_phy_profile,
-                        unsigned                           nof_ul_workers);
+                        unsigned                           nof_ul_workers,
+                        unsigned                           nof_dl_workers);
 };
 
 } // namespace srsran

@@ -474,6 +474,20 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
     valid = false;
   }
 
+  if (!nof_ul_dl_threads_range.contains(config.nof_dl_threads)) {
+    fmt::print(
+        "Number of PHY DL threads (i.e., {}) must be in range {}.\n", config.nof_dl_threads, nof_ul_dl_threads_range);
+    valid = false;
+  }
+
+  if (config.nof_dl_threads > config.max_processing_delay_slots) {
+    fmt::print(
+        "Number of PHY DL threads (i.e., {}) cannot be larger than the maximum processing delay in slots (i.e., {}).\n",
+        config.nof_dl_threads,
+        config.max_processing_delay_slots);
+    valid = false;
+  }
+
   if (config.pusch_decoder_max_iterations == 0) {
     fmt::print("Maximum PUSCH LDPC decoder iterations cannot be zero.\n");
     valid = false;

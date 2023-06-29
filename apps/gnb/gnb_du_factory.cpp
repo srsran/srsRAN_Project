@@ -16,7 +16,7 @@ using namespace srsran;
 
 static du_low_configuration create_du_low_config(const gnb_appconfig&                  params,
                                                  upper_phy_rg_gateway*                 rg_gateway,
-                                                 task_executor*                        dl_executor,
+                                                 span<task_executor*>                  dl_executors,
                                                  task_executor*                        pucch_executor,
                                                  task_executor*                        pusch_executor,
                                                  task_executor*                        prach_executor,
@@ -37,7 +37,7 @@ static du_low_configuration create_du_low_config(const gnb_appconfig&           
   // Fill the rest with the parameters.
   upper_phy_config& cfg          = du_lo_cfg.upper_phy.front();
   cfg.rg_gateway                 = rg_gateway;
-  cfg.dl_executor                = dl_executor;
+  cfg.dl_executors               = dl_executors;
   cfg.pucch_executor             = pucch_executor;
   cfg.pusch_executor             = pusch_executor;
   cfg.prach_executor             = prach_executor;
@@ -64,10 +64,14 @@ std::unique_ptr<du> srsran::make_gnb_du(const gnb_appconfig&                  gn
   std::map<five_qi_t, du_qos_config> du_qos_cfg = generate_du_qos_config(gnb_cfg);
 
   du_config du_cfg = {};
+
+  std::vector<task_executor*> du_low_dl_executors;
+  workers.get_du_low_dl_executors(du_low_dl_executors);
+
   // DU-low configuration.
   du_cfg.du_lo = create_du_low_config(gnb_cfg,
                                       &rg_gateway,
-                                      workers.upper_dl_exec.get(),
+                                      du_low_dl_executors,
                                       workers.upper_pucch_exec.get(),
                                       workers.upper_pusch_exec.get(),
                                       workers.upper_prach_exec.get(),

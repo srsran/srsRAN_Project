@@ -32,7 +32,8 @@ worker_manager::worker_manager(const gnb_appconfig& appcfg)
         "pdsch", appcfg.expert_phy_cfg.nof_pdsch_threads, 2 * MAX_CBS_PER_PDU, os_thread_realtime_priority::max() - 10);
   }
 
-  create_executors(driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads);
+  create_executors(
+      driver == "zmq", lower_phy_profile, appcfg.expert_phy_cfg.nof_ul_threads, appcfg.expert_phy_cfg.nof_dl_threads);
 }
 
 void worker_manager::stop()
@@ -66,7 +67,8 @@ void worker_manager::create_worker_pool(const std::string&          name,
 
 void worker_manager::create_executors(bool                               blocking_mode_active,
                                       optional<lower_phy_thread_profile> lower_phy_profile,
-                                      unsigned                           nof_ul_workers)
+                                      unsigned                           nof_ul_workers,
+                                      unsigned                           nof_dl_workers)
 {
   static const uint32_t task_worker_queue_size = 2048;
 
@@ -87,7 +89,12 @@ void worker_manager::create_executors(bool                               blockin
     create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
   } else {
     create_worker("phy_prach", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
-    create_worker("upper_phy_dl", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
+    for (unsigned i_dl_worker = 0; i_dl_worker != nof_dl_workers; ++i_dl_worker) {
+      // Create upper PHY DL executors.
+      std::string worker_name = "upper_phy_dl#" + std::to_string(i_dl_worker);
+      create_worker(worker_name, task_worker_queue_size, os_thread_realtime_priority::max() - 10);
+      du_low_dl_executors.emplace_back(std::make_unique<task_worker_executor>(*workers.at(worker_name)));
+    }
     create_worker_pool("upper_phy_ul", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
   }
 
@@ -115,14 +122,13 @@ void worker_manager::create_executors(bool                               blockin
     lower_phy_dl_exec       = std::make_unique<task_worker_executor>(phy_worker);
     lower_phy_ul_exec       = std::make_unique<task_worker_executor>(phy_worker);
     lower_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
-    upper_dl_exec           = std::make_unique<task_worker_executor>(phy_worker);
     upper_pusch_exec        = std::make_unique<task_worker_executor>(phy_worker);
     upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
     upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
+    du_low_dl_executors.emplace_back(std::make_unique<task_worker_executor>(phy_worker));
   } else {
     du_slot_exec     = make_priority_task_executor_ptr<task_queue_priority::max>(*du_cell_worker);
     lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
-    upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_phy_dl"));
     upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
     upper_pucch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("upper_phy_ul"));
     upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("phy_prach"));
@@ -203,4 +209,12 @@ void worker_manager::create_executors(bool                               blockin
       std::make_unique<pcell_ue_executor_mapper>(std::initializer_list<task_executor*>{du_ue_exec.get()}),
       *du_ctrl_exec,
       *du_timer_exec);
+}
+
+void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors) const
+{
+  executors.resize(du_low_dl_executors.size());
+  for (unsigned i_exec = 0, nof_execs = du_low_dl_executors.size(); i_exec != nof_execs; ++i_exec) {
+    executors[i_exec] = du_low_dl_executors[i_exec].get();
+  }
 }

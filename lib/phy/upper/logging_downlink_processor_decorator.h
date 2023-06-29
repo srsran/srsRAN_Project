@@ -26,7 +26,7 @@ public:
                                        srslog::basic_logger&               logger_) :
     downlink_proc(std::move(downlink_proc_)), logger(logger_)
   {
-    srsran_assert(downlink_proc, "Invalid uplink processor.");
+    srsran_assert(downlink_proc, "Invalid downlink processor.");
   }
 
   // See interface for documentation.
@@ -58,9 +58,6 @@ public:
 
   // See interface for documentation.
   void finish_processing_pdus() override { downlink_proc->finish_processing_pdus(); }
-
-  // See interface for documentation.
-  bool is_reserved() const override { return downlink_proc->is_reserved(); }
 
 private:
   std::unique_ptr<downlink_processor> downlink_proc;

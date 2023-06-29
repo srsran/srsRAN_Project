@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/upper/upper_phy.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -30,7 +31,7 @@ struct upper_phy_params {
 
 std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_params&               params,
                                             upper_phy_rg_gateway*                 rg_gateway,
-                                            task_executor*                        dl_executor,
+                                            span<task_executor*>                  dl_executors,
                                             task_executor*                        ul_executor,
                                             upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier);
 

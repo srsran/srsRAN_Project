@@ -668,7 +668,7 @@ static void generate_low_phy_config(lower_phy_configuration& out_cfg, const gnb_
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
     out_cfg.dft_window_offset          = 0.5F;
-    out_cfg.max_processing_delay_slots = 2;
+    out_cfg.max_processing_delay_slots = config.expert_phy_cfg.max_processing_delay_slots;
 
     const ru_sdr_appconfig& ru_cfg = variant_get<ru_sdr_appconfig>(config.ru_cfg);
 
@@ -908,7 +908,7 @@ static void generate_ru_ofh_config(ru_ofh_configuration& out_cfg, const gnb_appc
   std::vector<ru_ofh_sector_configuration> sector_configs;
   const base_cell_appconfig&               cell = config.cells_cfg.front().cell;
 
-  out_cfg.max_processing_delay_slots          = ru_cfg.max_processing_delay_slots;
+  out_cfg.max_processing_delay_slots          = config.expert_phy_cfg.max_processing_delay_slots;
   out_cfg.gps_Alpha                           = ru_cfg.gps_Alpha;
   out_cfg.gps_Beta                            = ru_cfg.gps_Beta;
   out_cfg.cp                                  = cyclic_prefix::NORMAL;

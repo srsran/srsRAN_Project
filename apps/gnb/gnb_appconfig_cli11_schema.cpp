@@ -231,10 +231,19 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_par
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
 {
+  app.add_option("--max_proc_delay",
+                 expert_phy_params.max_processing_delay_slots,
+                 "Maximum allowed DL processing delay in slots")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 30));
   app.add_option("--nof_pdsch_threads", expert_phy_params.nof_pdsch_threads, "Number of threads to encode PDSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
+  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of upper PHY threads to process uplink")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option(
+         "--nof_dl_threads", expert_phy_params.nof_dl_threads, "Number of upper PHY threads to process downlink")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
@@ -1077,9 +1086,6 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
 
 static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
 {
-  app.add_option("--max_proc_delay", config.max_processing_delay_slots, "Maximum allowed processing delay in slots")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 30));
   app.add_option("--gps_alpha", config.gps_Alpha, "GPS Alpha")->capture_default_str()->check(CLI::Range(0.0, 1.2288e7));
   app.add_option("--gps_beta", config.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
 

@@ -667,10 +667,12 @@ int main(int argc, char** argv)
   ru_dl_rg_adapt.connect(ru_object->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru_object->get_uplink_plane_handler());
 
+  std::vector<task_executor*> dl_executors;
+  dl_executors.emplace_back((is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_ul_executor);
   auto upper = create_upper_phy(upper_params,
                                 &ru_dl_rg_adapt,
+                                dl_executors,
                                 (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_dl_executor,
-                                (is_zmq_used) ? &workers.lower_tx_task_executor : &workers.upper_ul_executor,
                                 &ru_ul_request_adapt);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   du_logger.info("Upper PHY created successfully");

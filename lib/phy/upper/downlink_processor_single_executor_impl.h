@@ -70,9 +70,6 @@ public:
   // See interface for documentation.
   void finish_processing_pdus() override;
 
-  // See interface for documentation.
-  bool is_reserved() const override;
-
 private:
   /// \brief Handles a send opportunity to send the resource grid. If all the conditions are met, the resource grid will
   /// be sent, otherwise it will do nothing.

@@ -18,13 +18,12 @@ namespace srsran {
 class downlink_processor_spy : public downlink_processor
 {
   unsigned id;
-  bool     reserved;
   bool     configure_resource_grid_method_called = false;
   bool     process_ssb_method_called             = false;
   bool     finish_processing_pdus_method_called  = false;
 
 public:
-  explicit downlink_processor_spy(unsigned id_, bool reserved_ = false) : id(id_), reserved(reserved_) {}
+  explicit downlink_processor_spy(unsigned id_) : id(id_) {}
 
   /// Returns the identifier of downlink processor.
   unsigned get_id() const { return id; }
@@ -51,8 +50,6 @@ public:
   }
 
   void finish_processing_pdus() override { finish_processing_pdus_method_called = true; }
-
-  bool is_reserved() const override { return reserved; }
 };
 
 } // namespace srsran

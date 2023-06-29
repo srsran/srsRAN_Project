@@ -511,11 +511,19 @@ enum class lower_phy_thread_profile {
 
 /// Expert upper physical layer configuration.
 struct expert_upper_phy_appconfig {
+  /// \brief Sets the maximum allowed downlink processing delay in slots.
+  ///
+  /// Higher values increase the downlink processing pipeline length, which improves performance and stability for
+  /// demanding cell configurations, such as using large bandwidths or higher order MIMO. Higher values also increase
+  /// the round trip latency of the radio link.
+  unsigned max_processing_delay_slots = 2U;
   /// Number of threads for encoding PDSCH. Set to one for no concurrency acceleration in the PDSCH encoding.
   unsigned nof_pdsch_threads = 1;
   /// Number of threads for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
   /// concurrency is limited, in which case the most suitable number of threads between one and three will be selected.
   unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
+  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
+  unsigned nof_dl_threads = 1;
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
@@ -632,8 +640,6 @@ struct ru_ofh_cell_appconfig {
 
 /// gNB app Open Fronthaul Radio Unit configuration.
 struct ru_ofh_appconfig {
-  /// Sets the maximum allowed processing delay in slots.
-  unsigned max_processing_delay_slots = 2U;
   /// GPS Alpha - Valid value range: [0, 1.2288e7].
   unsigned gps_Alpha = 0;
   /// GPS Beta - Valid value range: [-32768, 32767].
