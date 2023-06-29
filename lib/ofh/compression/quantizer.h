@@ -23,7 +23,9 @@ class quantizer
 public:
   /// Constructor receives width in bits of a resulting fixed point number.
   explicit quantizer(unsigned bit_width_) :
-    bit_width(bit_width_), nbits_shift_sign(16U - bit_width), gain((1 << (bit_width - 1)) - 1.0f){};
+    bit_width(bit_width_), nbits_shift_sign(16U - bit_width), gain((1 << (bit_width - 1)) - 1.0f)
+  {
+  }
 
   /// \brief Quantizes a floating point value into 16bit integer.
   ///

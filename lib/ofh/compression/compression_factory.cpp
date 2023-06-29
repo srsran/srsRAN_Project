@@ -114,13 +114,13 @@ std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor(compression
 }
 
 std::unique_ptr<iq_decompressor> srsran::ofh::create_iq_decompressor_selector(
-    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& decompressors)
+    std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED> decompressors)
 {
   return std::make_unique<iq_decompressor_selector>(std::move(decompressors));
 }
 
 std::unique_ptr<iq_compressor> srsran::ofh::create_iq_compressor_selector(
-    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED>&& compressors)
+    std::array<std::unique_ptr<iq_compressor>, NOF_COMPRESSION_TYPES_SUPPORTED> compressors)
 {
   return std::make_unique<iq_compressor_selector>(std::move(compressors));
 }
