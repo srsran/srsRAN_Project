@@ -9,7 +9,10 @@
  */
 
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_unpacking.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
+#include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
 
@@ -95,7 +98,8 @@ validator_result srsran::config_validators::validate_pdsch_cfg(const serving_cel
   return {};
 }
 
-validator_result srsran::config_validators::validate_pucch_cfg(const serving_cell_config& ue_cell_cfg)
+validator_result srsran::config_validators::validate_pucch_cfg(const serving_cell_config& ue_cell_cfg,
+                                                               unsigned                   nof_dl_antennas)
 {
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value(),
          "Missing configuration for uplinkConfig or pucch-Config in spCellConfig");
@@ -147,7 +151,7 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
   }
 
   // Verify the PUCCH resource id that indicated in the SR resource config exists in the PUCCH resource list.
-  VERIFY(not pucch_cfg.sr_res_list.empty(), "SchedulingRequestResourceConfig list is empty");
+  VERIFY(pucch_cfg.sr_res_list.size() == 1, "Only SchedulingRequestResourceConfig with size 1 supported");
   const auto* sr_pucch_res_id = std::find_if(pucch_cfg.pucch_res_list.begin(),
                                              pucch_cfg.pucch_res_list.end(),
                                              [sr_pucch_res_idx = pucch_cfg.sr_res_list.front().pucch_res_id](
@@ -171,18 +175,39 @@ validator_result srsran::config_validators::validate_pucch_cfg(const serving_cel
            pucch_cfg.sr_res_list.front().pucch_res_id);
 
     const auto& csi = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-                          csi_cfg.csi_report_cfg_list.front().report_cfg_type)
-                          .pucch_csi_res_list.front()
-                          .pucch_res_id;
+        csi_cfg.csi_report_cfg_list.front().report_cfg_type);
+    const unsigned csi_res_id = csi.pucch_csi_res_list.front().pucch_res_id;
     // Verify the PUCCH resource id that indicated in the CSI resource config exists in the PUCCH resource list.
-    const auto* csi_pucch_res_id = std::find_if(pucch_cfg.pucch_res_list.begin(),
-                                                pucch_cfg.pucch_res_list.end(),
-                                                [csi](const pucch_resource& res) { return csi == res.res_id; });
+    const auto* csi_pucch_res_id =
+        std::find_if(pucch_cfg.pucch_res_list.begin(),
+                     pucch_cfg.pucch_res_list.end(),
+                     [csi_res_id](const pucch_resource& res) { return csi_res_id == res.res_id; });
     VERIFY(csi_pucch_res_id != pucch_cfg.pucch_res_list.end(),
            "PUCCH res. index={} given in PUCCH-CSI-resourceList not found in the PUCCH resource list",
-           csi);
-    VERIFY(pucch_cfg.pucch_res_list[csi].format == pucch_format::FORMAT_2,
+           csi_res_id);
+    const auto& csi_pucch_res = pucch_cfg.pucch_res_list[csi_res_id];
+    VERIFY(pucch_cfg.pucch_res_list[csi_res_id].format == pucch_format::FORMAT_2,
            "PUCCH resource used for CSI is expected to be Format 2");
+
+    // Verify the CSI/SR bits do not exceed the PUCCH F2 payload.
+    const auto&    csi_pucch_res_params = variant_get<pucch_format_2_3_cfg>(csi_pucch_res.format_params);
+    const unsigned pucch_f2_max_payload =
+        get_pucch_format2_max_payload(csi_pucch_res_params.nof_prbs,
+                                      csi_pucch_res_params.nof_symbols,
+                                      to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+    const auto     csi_report_cfg  = create_csi_report_configuration(ue_cell_cfg.csi_meas_cfg.value());
+    const unsigned csi_report_size = get_csi_report_pucch_size(csi_report_cfg).value();
+    unsigned       sr_offset       = pucch_cfg.sr_res_list.front().offset;
+    // For 1 antenna tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
+    unsigned harq_bits_mplexed_with_csi = nof_dl_antennas > 1 ? 0U : 2U;
+    // If SR and CSI are reported within the same slot, 1 SR bit can be multiplexed with CSI within the same PUCCH
+    // resource.
+    unsigned       sr_bits_mplexed_with_csi = sr_offset != csi.report_slot_offset ? 0U : 1U;
+    const unsigned uci_bits                 = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
+    VERIFY(pucch_f2_max_payload >= uci_bits,
+           "UCI num. of bits ({}) exceeds the maximum PUCCH Format 2 payload ({})",
+           uci_bits,
+           pucch_f2_max_payload);
   }
 
   const auto& init_ul_bwp = ue_cell_cfg.ul_config.value().init_ul_bwp;
