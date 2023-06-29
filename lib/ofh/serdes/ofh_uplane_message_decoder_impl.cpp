@@ -142,7 +142,8 @@ bool uplane_message_decoder_impl::decode_section(uplane_message_decoder_results&
     return false;
   }
 
-  if (!decode_compression_header(ofh_up_section, deserializer)) {
+  bool is_prach_msg = is_a_prach_message(results.params.filter_index);
+  if (!decode_compression_header(ofh_up_section, deserializer, is_prach_msg)) {
     return false;
   }
 

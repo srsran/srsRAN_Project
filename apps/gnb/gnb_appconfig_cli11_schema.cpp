@@ -1190,12 +1190,38 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
         }
       },
       "Sets the cell configuration on a per cell basis, overwriting the default configuration defined by cell_cfg");
+
+  // Callback function for validating that both compression method and bitwidth parameters were specified.
+  auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
+    std::string method_param    = "--compr_method_" + direction;
+    std::string bitwidth_param  = "--compr_bitwidth_" + direction;
+    unsigned    comp_type_count = cli_app.count(method_param);
+    unsigned    comp_bit_count  = cli_app.count(bitwidth_param);
+    if (comp_type_count != comp_bit_count) {
+      report_error("Invalid Open Fronthaul Radio Unit configuration detected: both compression method and compression "
+                   "bitwidth must be specified\n");
+    }
+  };
+
+  // Post-parsing callback to configure PRACH compression parameters.
+  app.callback([&]() {
+    // First validate that compression method and bitwidth parameters were both specified or both set to default.
+    validate_compression_input(app, "dl");
+    validate_compression_input(app, "ul");
+    validate_compression_input(app, "prach");
+
+    if (app.count("--compr_method_prach") > 0) {
+      return;
+    }
+    config.compression_method_prach  = config.compression_method_ul;
+    config.compresion_bitwidth_prach = config.compresion_bitwidth_ul;
+  });
 }
 
 static void parse_ru_config(CLI::App& app, gnb_appconfig& config)
 {
-  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need to
-  // be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
+  // NOTE: CLI11 needs that the life of the variable last longer than the call of this function. As both options need
+  // to be added and a variant is used to store the Radio Unit configuration, the configuration is parsed in a helper
   // variable, but as it is requested later, the variable needs to be static.
   static ru_sdr_appconfig sdr_cfg;
   CLI::App*               ru_sdr_subcmd = app.add_subcommand("ru_sdr", "SDR Radio Unit configuration")->configurable();

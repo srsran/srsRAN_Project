@@ -16,7 +16,8 @@ using namespace ofh;
 
 bool uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
     uplane_section_params&             results,
-    network_order_binary_deserializer& deserializer)
+    network_order_binary_deserializer& deserializer,
+    bool                               is_a_prach_msg)
 {
   if (deserializer.remaining_bytes() < 2 * sizeof(uint8_t)) {
     logger.debug(

@@ -26,15 +26,18 @@ public:
                                                           unsigned                     nof_symbols_,
                                                           unsigned                     ru_nof_prbs_,
                                                           iq_decompressor&             decompressor_,
-                                                          const ru_compression_params& compression_params_);
+                                                          const ru_compression_params& compression_params_,
+                                                          const ru_compression_params& prach_compression_params_);
 
 private:
   // See parent for documentation.
   bool decode_compression_header(uplane_section_params&             results,
-                                 network_order_binary_deserializer& deserializer) override;
+                                 network_order_binary_deserializer& deserializer,
+                                 bool                               is_a_prach_msg = false) override;
 
 private:
   const ru_compression_params compression_params;
+  const ru_compression_params prach_compression_params;
 };
 
 } // namespace ofh

@@ -56,7 +56,8 @@ create_static_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger&   
                                                         cyclic_prefix                cp,
                                                         unsigned                     ru_nof_prbs,
                                                         iq_decompressor&             decompressor,
-                                                        const ru_compression_params& comp_params);
+                                                        const ru_compression_params& comp_params,
+                                                        const ru_compression_params& prach_comp_params);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports dynamic compression method.
 std::unique_ptr<uplane_message_decoder>

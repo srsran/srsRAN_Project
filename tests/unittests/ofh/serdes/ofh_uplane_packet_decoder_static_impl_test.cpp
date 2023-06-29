@@ -49,6 +49,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, valid_packet_should_decode_correctly
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -87,6 +88,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, missing_one_iq_sample_must_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -111,6 +113,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, missing_one_prb_must_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -135,6 +138,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, static_compression_with_compression_
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -157,6 +161,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, decoding_one_section_and_failing_to_
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -176,6 +181,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, missing_section_header_must_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -194,6 +200,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, missing_header_must_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -215,6 +222,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, downlink_packet_should_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -236,6 +244,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, reserved_filter_index_should_fail)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -257,6 +266,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, symbol_index_out_of_range_should_fai
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 16},
                                                          {compression_type::none, 16});
 
   uplane_message_decoder_results results;
@@ -278,6 +288,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, none_compression_with_15_bits_should
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::none, 15},
                                                          {compression_type::none, 15});
 
   uplane_message_decoder_results results;
@@ -299,6 +310,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, bfp_with_15_bits_should_pass)
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::BFP, 15},
                                                          {compression_type::BFP, 15});
 
   uplane_message_decoder_results results;
@@ -320,6 +332,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, bfp_with_15_bits_without_ud_comp_len
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          273,
                                                          dummy_decomp,
+                                                         {compression_type::BFP, 15},
                                                          {compression_type::BFP, 15});
 
   uplane_message_decoder_results results;
@@ -344,6 +357,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, if_message_num_prbs_equals_zero_deco
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          ru_nof_prbs,
                                                          dummy_decomp,
+                                                         {compression_type::BFP, 9},
                                                          {compression_type::BFP, 9});
 
   uplane_message_decoder_results results;
@@ -369,6 +383,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, if_message_contains_one_valid_sectio
                                                          get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                          ru_nof_prbs,
                                                          dummy_decomp,
+                                                         {compression_type::BFP, 9},
                                                          {compression_type::BFP, 9});
 
   uplane_message_decoder_results results;

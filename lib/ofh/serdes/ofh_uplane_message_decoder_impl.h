@@ -49,7 +49,8 @@ private:
 
   /// Decodes the compression header. Returns true on success, otherwise false.
   virtual bool decode_compression_header(uplane_section_params&             results,
-                                         network_order_binary_deserializer& deserializer) = 0;
+                                         network_order_binary_deserializer& deserializer,
+                                         bool                               is_a_prach_msg = false) = 0;
 
   /// Decodes the compression length field. Returns true on success, otherwise false.
   bool decode_compression_length(uplane_section_params&             results,

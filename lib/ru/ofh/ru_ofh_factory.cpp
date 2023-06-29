@@ -66,12 +66,14 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                               "The RU operating bandwidth should be greater or equal to the bandwidth of the cell");
   }
 
-  fmt::print("Initializing Open Fronthaul Interface with ul_comp=[{},{}], dl_comp=[{},{}], prach_cp_enabled={}, "
-             "downlink_broadcast={}.{}\n",
+  fmt::print("Initializing Open Fronthaul Interface with ul_comp=[{},{}], dl_comp=[{},{}], prach_comp=[{},{}] "
+             "prach_cp_enabled={}, downlink_broadcast={}.{}\n",
              to_string(config.ul_compression_params.type),
              config.ul_compression_params.data_width,
              to_string(config.dl_compression_params.type),
              config.dl_compression_params.data_width,
+             to_string(config.prach_compression_params.type),
+             config.prach_compression_params.data_width,
              config.is_prach_control_plane_enabled,
              config.is_downlink_broadcast_enabled,
              (config.ru_operating_bw && config.bw != *config.ru_operating_bw)

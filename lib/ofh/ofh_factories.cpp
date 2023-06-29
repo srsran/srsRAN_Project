@@ -125,10 +125,11 @@ srsran::ofh::create_static_comp_method_ofh_user_plane_packet_decoder(srslog::bas
                                                                      cyclic_prefix                cp,
                                                                      unsigned                     ru_nof_prbs,
                                                                      iq_decompressor&             decompressor,
-                                                                     const ru_compression_params& comp_params)
+                                                                     const ru_compression_params& comp_params,
+                                                                     const ru_compression_params& prach_comp_params)
 {
   return std::make_unique<uplane_message_decoder_static_compression_impl>(
-      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, decompressor, comp_params);
+      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, decompressor, comp_params, prach_comp_params);
 }
 
 std::unique_ptr<uplane_message_decoder>
@@ -210,7 +211,8 @@ resolve_receiver_dependencies(const sector_configuration&                       
                                                                          rx_config.cp,
                                                                          rx_config.ru_nof_prbs,
                                                                          *depen.decompressor_sel,
-                                                                         sector_cfg.ul_compression_params)
+                                                                         sector_cfg.ul_compression_params,
+                                                                         sector_cfg.prach_compression_params)
           : ofh::create_dynamic_comp_method_ofh_user_plane_packet_decoder(
                 *sector_cfg.logger, rx_config.scs, rx_config.cp, rx_config.ru_nof_prbs, *depen.decompressor_sel);
 
