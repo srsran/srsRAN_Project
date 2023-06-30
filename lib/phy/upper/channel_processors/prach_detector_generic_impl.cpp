@@ -194,12 +194,12 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
 
   for (unsigned i_sequence = 0; i_sequence != nof_sequences; ++i_sequence) {
     // Prepare root sequence configuration.
-    prach_generator::configuration generator_config;
-    generator_config.format                = config.format;
-    generator_config.root_sequence_index   = config.root_sequence_index;
-    generator_config.preamble_index        = i_sequence * nof_shifts;
-    generator_config.restricted_set        = config.restricted_set;
-    generator_config.zero_correlation_zone = config.zero_correlation_zone;
+    prach_generator::configuration generator_config = {};
+    generator_config.format                         = config.format;
+    generator_config.root_sequence_index            = config.root_sequence_index;
+    generator_config.preamble_index                 = i_sequence * nof_shifts;
+    generator_config.restricted_set                 = config.restricted_set;
+    generator_config.zero_correlation_zone          = config.zero_correlation_zone;
 
     // Generate root sequence.
     span<const cf_t> root = generator->generate(generator_config);
@@ -234,7 +234,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         span<float> mod_square = span<float>(temp).first(DFT_SIZE);
         srsvec::modulus_square(mod_square, no_root_time_simple);
 
-        srsvec::sc_prod(mod_square, 1.0 / static_cast<float>(DFT_SIZE * L_ra * L_ra), mod_square);
+        srsvec::sc_prod(mod_square, 1.0F / static_cast<float>(DFT_SIZE * L_ra * L_ra), mod_square);
 
         // Process each shift of the sequence.
         for (unsigned i_window = 0; i_window != nof_shifts; ++i_window) {

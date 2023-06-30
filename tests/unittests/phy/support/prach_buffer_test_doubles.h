@@ -39,7 +39,7 @@ public:
     buffer(1, nof_td_occasions, nof_fd_occasions, nof_symbols, sequence_length)
   {
     span<const cf_t> data      = data_;
-    unsigned         nof_ports = get_max_nof_ports();
+    unsigned         nof_ports = get_max_nof_ports_inner();
 
     report_fatal_error_if_not(data.size() == nof_td_occasions * nof_fd_occasions * sequence_length,
                               "The symbols data size is not consistent with the symbol size and number of symbols.");
@@ -57,11 +57,7 @@ public:
     }
   }
 
-  unsigned get_max_nof_ports() const override
-  {
-    ++count_get_max_nof_ports;
-    return buffer.get_max_nof_ports();
-  }
+  unsigned get_max_nof_ports() const override { return get_max_nof_ports_inner(); }
 
   unsigned get_max_nof_td_occasions() const override
   {
@@ -140,6 +136,12 @@ private:
   mutable unsigned             count_get_sequence_length      = 0;
   std::vector<entry_t>         get_symbol_entries;
   mutable std::vector<entry_t> get_symbol_const_entries;
+
+  unsigned get_max_nof_ports_inner() const
+  {
+    ++count_get_max_nof_ports;
+    return buffer.get_max_nof_ports();
+  }
 };
 
 /// Describes a generic resource grid implementation
@@ -159,7 +161,7 @@ public:
   using storage_type = tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cf_t, dims>;
 
   /// Creates a PRACH buffer from the maximum parameters depending on the configuration.
-  prach_buffer_tensor(storage_type& data_) : data(data_) {}
+  explicit prach_buffer_tensor(storage_type& data_) : data(data_) {}
 
   // See interface for documentation.
   unsigned get_max_nof_ports() const override { return data.get_dimension_size(dims::port); }

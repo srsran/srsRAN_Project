@@ -150,7 +150,7 @@ std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
 
 #if SRSRAN_SIMD_CF_SIZE
   // Prepare range of indexes in SIMD register.
-  alignas(SIMD_BYTE_ALIGN) std::array<int32_t, SRSRAN_SIMD_CF_SIZE> simd_vector_max_indexes;
+  alignas(SIMD_BYTE_ALIGN) std::array<int32_t, SRSRAN_SIMD_CF_SIZE> simd_vector_max_indexes = {};
   std::iota(simd_vector_max_indexes.begin(), simd_vector_max_indexes.end(), 0);
   simd_i_t simd_indexes = srsran_simd_i_load(simd_vector_max_indexes.data());
 
@@ -175,7 +175,7 @@ std::pair<unsigned, float> srsran::srsvec::max_element(span<const float> x)
   }
 
   // Store the indexes and values from SIMD registers into arrays.
-  alignas(SIMD_BYTE_ALIGN) std::array<float, SRSRAN_SIMD_I_SIZE> simd_vector_max_values;
+  alignas(SIMD_BYTE_ALIGN) std::array<float, SRSRAN_SIMD_I_SIZE> simd_vector_max_values = {};
   srsran_simd_i_store(simd_vector_max_indexes.data(), simd_max_indexes);
   srsran_simd_f_store(simd_vector_max_values.data(), simd_max_values);
 
