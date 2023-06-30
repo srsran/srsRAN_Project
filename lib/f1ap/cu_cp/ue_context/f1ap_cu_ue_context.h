@@ -36,20 +36,31 @@ struct f1ap_ue_context {
 class f1ap_ue_context_list
 {
 public:
-  f1ap_ue_context_list(timer_factory timers_) : timers(timers_) {}
+  f1ap_ue_context_list(timer_factory timers_, srslog::basic_logger& logger_) : timers(timers_), logger(logger_) {}
 
   bool contains(gnb_cu_ue_f1ap_id_t cu_ue_id) const { return ues.find(cu_ue_id) != ues.end(); }
 
   /// \brief Checks whether a UE with the given UE index exists.
   /// \param[in] ue_index The UE index used to find the UE.
   /// \return The CU UE ID.
-  bool contains(ue_index_t ue_idx) const { return ue_index_to_ue_f1ap_id.find(ue_idx) != ue_index_to_ue_f1ap_id.end(); }
+  bool contains(ue_index_t ue_idx) const
+  {
+    if (ue_index_to_ue_f1ap_id.find(ue_idx) == ue_index_to_ue_f1ap_id.end()) {
+      return false;
+    }
+    if (ues.find(ue_index_to_ue_f1ap_id.at(ue_idx)) == ues.end()) {
+      logger.warning("No UE context found for cu_ue_f1ap_id={}.", ue_index_to_ue_f1ap_id.at(ue_idx));
+      return false;
+    }
+    return true;
+  }
 
   f1ap_ue_context& operator[](gnb_cu_ue_f1ap_id_t cu_ue_id) { return ues.at(cu_ue_id); }
   f1ap_ue_context& operator[](ue_index_t ue_idx) { return ues.at(ue_index_to_ue_f1ap_id.at(ue_idx)); }
 
   f1ap_ue_context& add_ue(ue_index_t ue_idx, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
+    logger.debug("ue={}, f1ap_ue={} Adding F1AP UE context.", ue_idx, cu_ue_id);
     ues.emplace(
         std::piecewise_construct, std::forward_as_tuple(cu_ue_id), std::forward_as_tuple(ue_idx, cu_ue_id, timers));
     ue_index_to_ue_f1ap_id.emplace(ue_idx, cu_ue_id);
@@ -58,6 +69,7 @@ public:
 
   void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
+    logger.debug("ue={}, f1ap_ue={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
     ue_index_to_ue_f1ap_id.erase(ues.at(cu_ue_id).ue_index);
     ues.erase(cu_ue_id);
   }
@@ -87,7 +99,8 @@ public:
   }
 
 private:
-  timer_factory timers;
+  timer_factory         timers;
+  srslog::basic_logger& logger;
 
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
   std::unordered_map<ue_index_t, gnb_cu_ue_f1ap_id_t>      ue_index_to_ue_f1ap_id; // indexed by ue_index

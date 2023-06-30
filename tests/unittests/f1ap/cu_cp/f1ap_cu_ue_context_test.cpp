@@ -36,10 +36,11 @@ protected:
         test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   }
 
-  timer_manager        timer_mng;
-  manual_task_worker   ctrl_worker{128};
-  timer_factory        timers{timer_mng, ctrl_worker};
-  f1ap_ue_context_list ue_ctxt_list{timers};
+  srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
+  timer_manager         timer_mng;
+  manual_task_worker    ctrl_worker{128};
+  timer_factory         timers{timer_mng, ctrl_worker};
+  f1ap_ue_context_list  ue_ctxt_list{timers, f1ap_logger};
 };
 
 TEST_F(f1ap_cu_ue_context_test, when_ue_added_then_ue_exists)

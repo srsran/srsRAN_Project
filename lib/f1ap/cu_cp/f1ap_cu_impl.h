@@ -113,7 +113,7 @@ private:
   timer_manager timers;
 
   /// Repository of UE Contexts.
-  f1ap_ue_context_list ue_ctx_list;
+  f1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
   f1ap_message_notifier&       pdu_notifier;

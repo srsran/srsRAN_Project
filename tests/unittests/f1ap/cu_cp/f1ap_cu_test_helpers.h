@@ -193,7 +193,7 @@ protected:
   /// \brief Helper method to run F1AP CU UE Context Setup procedure to completion for a given UE.
   void run_ue_context_setup(ue_index_t ue_index);
 
-  srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("F1AP");
+  srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   slotted_id_table<ue_index_t, test_ue, MAX_NOF_UES_PER_DU> test_ues;
