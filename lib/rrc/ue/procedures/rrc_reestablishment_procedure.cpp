@@ -34,6 +34,8 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={} old_ue={}: \"{}\" initialized.", context.ue_index, old_ue_index, name());
+
   // create SRB1
   create_srb1();
 
@@ -50,9 +52,11 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   if (coro_res.has_value()) {
     logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
+    logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, old_ue_index, name());
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
     rrc_ue.on_ue_delete_request(cause_t::protocol);
+    logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, old_ue_index, name());
   }
 
   CORO_RETURN();
