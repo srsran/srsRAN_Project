@@ -98,7 +98,11 @@ void ue_manager::remove_du_ue(ue_index_t ue_index)
     rnti_t c_rnti = ues.at(ue_index).get_c_rnti();
     if (c_rnti != rnti_t::INVALID_RNTI) {
       pci_rnti_to_ue_index.erase(std::make_tuple(pci, c_rnti));
+    } else {
+      logger.error("RNTI for ueId={} not found.", ue_index);
     }
+  } else {
+    logger.error("PCI for ueId={} not found.", ue_index);
   }
 
   if (!ues.at(ue_index).ngap_ue_created) {
