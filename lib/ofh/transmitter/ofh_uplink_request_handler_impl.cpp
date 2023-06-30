@@ -112,7 +112,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   cp_prach_context.prach_scs                       = preamble_info.scs;
   cp_prach_context.scs                             = context.pusch_scs;
   cp_prach_context.prach_nof_rb                    = freq_mapping_info.nof_rb_ra * K;
-  cp_prach_context.timeOffset                      = cp_length;
+  cp_prach_context.time_offset                     = cp_length;
   cp_prach_context.prach_start_re                  = context.rb_offset * K * NOF_SUBCARRIERS_PER_RB;
 
   // Determine Open Fronthaul filter index.
