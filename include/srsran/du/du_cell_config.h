@@ -45,7 +45,7 @@ struct pucch_f1_params {
 
 /// Collects the parameters for PUCCH Format 2 that can be configured.
 struct pucch_f2_params {
-  bounded_integer<unsigned, 1, 2> nof_symbols{1};
+  bounded_integer<unsigned, 1, 2> nof_symbols{2};
   unsigned                        max_nof_rbs{1};
   /// Maximum payload in bits that can be carried by PUCCH Format 2. When this field is set, \c max_nof_rbs is ignored
   /// and the maximum number of RBs is computed according to \ref get_pucch_format2_max_nof_prbs.
