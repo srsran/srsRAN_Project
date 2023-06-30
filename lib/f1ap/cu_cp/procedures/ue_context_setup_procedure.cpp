@@ -16,10 +16,10 @@ using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
 ue_context_setup_procedure::ue_context_setup_procedure(const ue_context_setup_request_s& request_,
-                                                       f1ap_ue_context&                  ue_ctx_,
+                                                       f1ap_ue_context&                  ue_ctxt_,
                                                        f1ap_message_notifier&            f1ap_notif_,
                                                        srslog::basic_logger&             logger_) :
-  request(request_), ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_), logger(logger_)
+  request(request_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(logger_)
 {
 }
 
@@ -27,8 +27,10 @@ void ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctx.ev_mng.context_setup_outcome);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_setup_outcome);
 
   // Send command to DU.
   send_ue_context_setup_request();
@@ -49,8 +51,8 @@ void ue_context_setup_procedure::send_ue_context_setup_request()
   ue_context_setup_request_s& req = f1ap_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request();
 
   req                    = request;
-  req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
-  req->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
+  req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
+  req->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -70,13 +72,16 @@ f1ap_ue_context_setup_response ue_context_setup_procedure::create_ue_context_set
     logger.debug("Received UeContextSetupResponse");
     res.response = transaction_sink.response();
     res.success  = true;
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause));
     res.failure = transaction_sink.failure();
     res.success = false;
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   } else {
     logger.warning("UeContextSetup timeout");
     res.success = false;
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
   return res;
 }

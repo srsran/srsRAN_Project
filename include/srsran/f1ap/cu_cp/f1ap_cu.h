@@ -125,7 +125,7 @@ public:
   };
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP-F1");
 };
 
 /// Non-owning handlers to RRC message notifiers.

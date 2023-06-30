@@ -42,6 +42,8 @@ void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
   ue_ctxt.marked_for_release = true;
@@ -84,6 +86,9 @@ ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1a
   if (msg->gnb_du_ue_f1ap_id == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;
     ue_ctxt_list.remove_ue(ue_ctxt.cu_ue_f1ap_id);
+    logger.debug("ue={}: \"{}\" finalized.", ret, name());
+  } else {
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
 
   return ret;

@@ -60,7 +60,7 @@ public:
 
   f1ap_ue_context& add_ue(ue_index_t ue_idx, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    logger.debug("ue={}, f1ap_ue={} Adding F1AP UE context.", ue_idx, cu_ue_id);
+    logger.debug("ue={} f1ap_ue={} Adding F1AP UE context.", ue_idx, cu_ue_id);
     ues.emplace(
         std::piecewise_construct, std::forward_as_tuple(cu_ue_id), std::forward_as_tuple(ue_idx, cu_ue_id, timers));
     ue_index_to_ue_f1ap_id.emplace(ue_idx, cu_ue_id);
@@ -69,7 +69,7 @@ public:
 
   void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    logger.debug("ue={}, f1ap_ue={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
+    logger.debug("ue={} f1ap_ue={} Removing F1AP UE context.", ues.at(cu_ue_id).ue_index, cu_ue_id);
     ue_index_to_ue_f1ap_id.erase(ues.at(cu_ue_id).ue_index);
     ues.erase(cu_ue_id);
   }

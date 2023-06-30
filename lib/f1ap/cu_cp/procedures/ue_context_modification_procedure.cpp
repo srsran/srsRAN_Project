@@ -19,10 +19,10 @@ using namespace asn1::f1ap;
 
 ue_context_modification_procedure::ue_context_modification_procedure(
     const cu_cp_ue_context_modification_request& request_,
-    f1ap_ue_context&                             ue_ctx_,
+    f1ap_ue_context&                             ue_ctxt_,
     f1ap_message_notifier&                       f1ap_notif_,
     srslog::basic_logger&                        logger_) :
-  request(request_), ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_), logger(logger_)
+  request(request_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(logger_)
 {
 }
 
@@ -31,8 +31,10 @@ void ue_context_modification_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
+  logger.debug("ue={}: \"{}\" initialized.", ue_ctxt.ue_index, name());
+
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ue_ctx.ev_mng.context_modification_outcome);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_modification_outcome);
 
   // Send command to DU.
   send_ue_context_modification_request();
@@ -53,8 +55,8 @@ void ue_context_modification_procedure::send_ue_context_modification_request()
 
   fill_f1ap_ue_context_modification_request(ctx_mod, request);
 
-  ctx_mod->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctx.du_ue_f1ap_id);
-  ctx_mod->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctx.cu_ue_f1ap_id);
+  ctx_mod->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
+  ctx_mod->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -79,6 +81,8 @@ cu_cp_ue_context_modification_response ue_context_modification_procedure::create
       logger.debug("Containerized UeContextModificationResponse: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, resp);
+
+    logger.debug("ue={}: \"{}\" finalized.", ue_ctxt.ue_index, name());
   } else if (transaction_sink.failed()) {
     const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_sink.failure();
     logger.debug("Received UeContextModificationFailure cause={}", get_cause_str(fail->cause));
@@ -88,10 +92,14 @@ cu_cp_ue_context_modification_response ue_context_modification_procedure::create
       logger.debug("Containerized UeContextModificationFailure: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, fail);
+
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   } else {
     logger.warning("UeContextModificationResponse timeout");
     res.success = false;
     res.cause   = cause_t::misc;
+
+    logger.error("ue={}: \"{}\" failed.", ue_ctxt.ue_index, name());
   }
 
   return res;

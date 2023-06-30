@@ -24,11 +24,13 @@ class ue_context_setup_procedure
 {
 public:
   ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& request_,
-                             f1ap_ue_context&                              ue_ctx_,
+                             f1ap_ue_context&                              ue_ctxt_,
                              f1ap_message_notifier&                        f1ap_notif_,
                              srslog::basic_logger&                         logger_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx);
+
+  static const char* name() { return "UE Context Setup Procedure"; }
 
 private:
   /// Send F1 UE Context Setup Request to DU.
@@ -38,7 +40,7 @@ private:
   f1ap_ue_context_setup_response create_ue_context_setup_result();
 
   const asn1::f1ap::ue_context_setup_request_s request;
-  f1ap_ue_context&                             ue_ctx;
+  f1ap_ue_context&                             ue_ctxt;
   f1ap_message_notifier&                       f1ap_notifier;
   srslog::basic_logger&                        logger;
 
