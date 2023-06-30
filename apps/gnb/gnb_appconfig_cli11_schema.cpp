@@ -936,12 +936,30 @@ static void configure_cli11_test_ue_mode_args(CLI::App& app, test_mode_ue_appcon
   app.add_option("--cqi", test_params.cqi, "Channel Quality Information (CQI) to be forwarded to test UE.")
       ->capture_default_str()
       ->check(CLI::Range(1, 15));
-  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 3));
   app.add_option("--ri", test_params.ri, "Rank Indicator (RI) to be forwarded to test UE.")
       ->capture_default_str()
       ->check(CLI::Range(1, 4));
+  app.add_option("--pmi", test_params.pmi, "Precoder Matrix Indicator (PMI) to be forwarded to test UE.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
+  app.add_option(
+         "--i_1_1",
+         test_params.i_1_1,
+         "Precoder Matrix codebook index \"i_1_1\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 7));
+  app.add_option(
+         "--i_1_3",
+         test_params.i_1_3,
+         "Precoder Matrix codebook index \"i_1_3\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1));
+  app.add_option(
+         "--i_2",
+         test_params.i_2,
+         "Precoder Matrix codebook index \"i_2\" to be forwarded to test UE, in the case of more than 2 antennas.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
 }
 
 static void configure_cli11_test_mode_args(CLI::App& app, test_mode_appconfig& test_params)

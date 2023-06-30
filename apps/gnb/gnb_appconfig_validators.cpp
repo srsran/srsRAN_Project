@@ -577,6 +577,15 @@ static bool validate_test_mode_appconfig(const gnb_appconfig& config)
                config.common_cell_cfg.pdsch_cfg.nof_ports);
     return false;
   }
+
+  if (config.test_mode_cfg.test_ue.ri != 2 and config.test_mode_cfg.test_ue.i_1_3 != 0) {
+    fmt::print("For test mode with 4 antennas, i_1_3 can only be set for RI=2\n");
+  }
+
+  if (config.test_mode_cfg.test_ue.ri != 1 and config.test_mode_cfg.test_ue.i_2 > 1) {
+    fmt::print("For test mode with 4 antennas, i_2 can only be higher than 1 for RI=1\n");
+  }
+
   return true;
 }
 

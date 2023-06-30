@@ -91,8 +91,11 @@ std::unique_ptr<du> srsran::make_gnb_du(const gnb_appconfig&                  gn
                                                                         gnb_cfg.test_mode_cfg.test_ue.pdsch_active,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pusch_active,
                                                                         gnb_cfg.test_mode_cfg.test_ue.cqi,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.ri,
                                                                         gnb_cfg.test_mode_cfg.test_ue.pmi,
-                                                                        gnb_cfg.test_mode_cfg.test_ue.ri};
+                                                                        gnb_cfg.test_mode_cfg.test_ue.i_1_1,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.i_1_3,
+                                                                        gnb_cfg.test_mode_cfg.test_ue.i_2};
   }
   // FAPI configuration.
   du_cfg.fapi.log_level = gnb_cfg.log_cfg.fapi_level;

@@ -528,8 +528,12 @@ struct test_mode_ue_appconfig {
   unsigned cqi = 15;
   /// Rank Indicator to use for the test UE. This value has to be lower than the number of ports.
   unsigned ri = 1;
-  /// Precoding Matrix Indicator to use for the test UE.
+  /// Precoding Matrix Indicators to use for the test UE.
   unsigned pmi = 0;
+  /// Precoding codebook indexes to be used in case of more than 2 antenna ports.
+  unsigned i_1_1 = 0;
+  unsigned i_1_3 = 0;
+  unsigned i_2   = 0;
 };
 
 /// gNB app Test Mode configuration.
