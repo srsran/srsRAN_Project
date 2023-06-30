@@ -105,7 +105,7 @@ inline void calculate_max_abs(span<unsigned> max_abs, __m256i rb0_epi16, __m256i
   find_rbs_abs_min_max_values<_mm256_max_epi16>(abs_max_values, v0_epi16, v1_epi16, v2_epi16);
 
   max_abs[0] = std::max<unsigned>(abs_max_values[0], abs_min_values[0] - 1U);
-  max_abs[1] = std::max<unsigned>(abs_max_values[1], (abs_min_values[1] - 1U));
+  max_abs[1] = std::max<unsigned>(abs_max_values[1], abs_min_values[1] - 1U);
 }
 
 } // namespace mm256
