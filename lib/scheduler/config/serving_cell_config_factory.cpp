@@ -18,6 +18,8 @@
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/srslog/srslog.h"
+#include <set>
 #include <vector>
 
 using namespace srsran;
@@ -696,7 +698,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
       pattern2_nof_dl_symbols_in_special_slot = tdd_cfg->pattern2->nof_dl_symbols;
     }
   }
-  std::vector<ofdm_symbol_range> pdsch_symbols;
+  std::set<ofdm_symbol_range> pdsch_symbols;
 
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
   static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
@@ -745,20 +747,20 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
     }
 
     // For slots with all DL symbols. i.e. full DL slot.
-    pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+    pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP});
     // For special slots with DL symbols in TDD pattern 1 if configured.
     if (pattern1_nof_dl_symbols_in_special_slot > 0 and
         (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
         (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
             pdsch_mapping_typeA_normal_cp_min_L_value) {
-      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot);
+      pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot});
     }
     // For special slots with DL symbols in TDD pattern 2 if configured.
     if (pattern2_nof_dl_symbols_in_special_slot > 0 and
         (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
         (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
             pdsch_mapping_typeA_normal_cp_min_L_value) {
-      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot);
+      pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot});
     }
   }
   // SearchSpaces in Dedicated PDCCH configuration.
@@ -787,27 +789,23 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
       }
 
       // For slots with all DL symbols. i.e. full DL slot.
-      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+      pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP});
       // For special slots with DL symbols in TDD pattern 1 if configured.
       if (pattern1_nof_dl_symbols_in_special_slot > 0 and
           (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
           (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
               pdsch_mapping_typeA_normal_cp_min_L_value) {
-        pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot);
+        pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot});
       }
       // For special slots with DL symbols in TDD pattern 2 if configured.
       if (pattern2_nof_dl_symbols_in_special_slot > 0 and
           (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
           (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
               pdsch_mapping_typeA_normal_cp_min_L_value) {
-        pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot);
+        pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot});
       }
     }
   }
-
-  // Remove duplicates.
-  auto it_ptr = std::unique(pdsch_symbols.begin(), pdsch_symbols.end());
-  pdsch_symbols.resize(std::distance(pdsch_symbols.begin(), it_ptr));
 
   // Make PDSCH time domain resource allocation.
   std::vector<pdsch_time_domain_resource_allocation> result;
