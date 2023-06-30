@@ -19,6 +19,7 @@
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi/slot_time_message_notifier.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 
 namespace srsran {
 
@@ -48,6 +49,7 @@ private:
   std::unique_ptr<fapi::slot_message_gateway>       logging_slot_gateway;
   std::unique_ptr<fapi::slot_data_message_notifier> logging_slot_data_notifier;
   std::unique_ptr<fapi::slot_time_message_notifier> logging_slot_time_notifier;
+  std::unique_ptr<fapi_adaptor::phy_fapi_adaptor>   du_low_adaptor;
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>   du_high_adaptor;
   std::unique_ptr<mac_result_notifier>              du_high_result_notifier;
 

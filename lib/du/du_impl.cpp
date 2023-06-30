@@ -108,7 +108,7 @@ du_impl::du_impl(const du_config& du_cfg) :
   auto                     pm_tools = fapi_adaptor::generate_precoding_matrix_tables(du_cell.dl_carrier.nof_ant);
 
   // Instantiate adaptor of FAPI to DU-low.
-  auto du_low_adaptor =
+  du_low_adaptor =
       build_phy_fapi_adaptor(sector,
                              scs,
                              scs,

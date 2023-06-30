@@ -12,7 +12,7 @@
 
 using namespace srsran;
 
-du_low_impl::du_low_impl(const du_low_configuration& du_low_cfg) : logger(srslog::fetch_basic_logger("DU"))
+du_low_impl::du_low_impl(const du_low_configuration& du_low_cfg) : logger(*du_low_cfg.logger)
 {
   report_fatal_error_if_not(du_low_cfg.upper_phy.size() == 1, "Only one cell is supported.");
 

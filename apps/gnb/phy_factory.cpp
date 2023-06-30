@@ -91,6 +91,8 @@ du_low_configuration srsran::create_du_low_config(const gnb_appconfig&          
 {
   du_low_configuration du_lo_cfg{};
 
+  du_lo_cfg.logger = &srslog::fetch_basic_logger("DU");
+
   du_lo_cfg.dl_proc_cfg.ldpc_encoder_type             = "auto";
   du_lo_cfg.dl_proc_cfg.crc_calculator_type           = "auto";
   du_lo_cfg.dl_proc_cfg.nof_pdsch_codeblock_threads   = params.expert_phy_cfg.nof_pdsch_threads;

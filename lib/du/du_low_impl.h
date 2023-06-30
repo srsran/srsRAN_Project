@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/du/du_config.h"
+#include "srsran/du/du_low_config.h"
 #include "srsran/phy/upper/upper_phy.h"
 
 namespace srsran {
