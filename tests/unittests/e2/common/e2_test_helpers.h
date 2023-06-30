@@ -85,7 +85,7 @@ inline e2_message generate_e2_setup_request()
       "6C6F796D656E74010101010001051E804F2D43552D5550204D6561737572656D656E7420436F6E7461696E657220666F7220746865203547"
       "4320636F6E6E6563746564206465706C6F796D656E74010101010001061E804F2D43552D5550204D6561737572656D656E7420436F6E7461"
       "696E657220666F72207468652045504320636F6E6E6563746564206465706C6F796D656E7401010101");
-  ran_func_item.value().ra_nfunction_item().ran_function_oid.resize(20);
+  ran_func_item.value().ra_nfunction_item().ran_function_oid.resize(30);
   ran_func_item.value().ra_nfunction_item().ran_function_oid.from_string("1.3.6.1.4.1.53148.1.2.2.2");
   setup->ra_nfunctions_added.value.push_back(ran_func_item);
 
@@ -301,8 +301,8 @@ class e2_test_subscriber : public e2_test_base
     du_metrics           = std::make_unique<dummy_e2_du_metrics>();
     e2sm_iface           = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_packer, *du_metrics);
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*msg_notifier);
-    e2_subscription_mngr->add_e2sm_service("E2SM-KPM", std::move(e2sm_iface));
-    e2_subscription_mngr->add_ran_function_oid(1, "E2SM-KPM");
+    e2_subscription_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_iface));
+    e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     e2     = create_e2(factory, *msg_notifier, *e2_subscription_mngr);
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
