@@ -22,7 +22,7 @@ class prach_detector_validator_impl : public prach_detector_validator
 {
 public:
   // See interface for documentation.
-  bool is_valid(const prach_detector::configuration& config) override;
+  bool is_valid(const prach_detector::configuration& config) const override;
 };
 
 /// \brief Implements a simple PRACH detector.
@@ -61,13 +61,13 @@ private:
   /// \param[in]     reference   Reference power measurement.
   /// \param[in]     input       Input samples.
   /// \remark The input size must be equal to the accumulator size.
-  void vector_noise_estimation(span<float> accumulator, float reference, span<const float> input) const
+  static void vector_noise_estimation(span<float> accumulator, float reference, span<const float> input)
   {
     std::transform(
         input.begin(), input.end(), accumulator.begin(), accumulator.begin(), [&reference](float value, float acc) {
           float diff = reference - value;
-          if ((diff < 0.0) || !std::isnormal(diff)) {
-            diff = 1e-9F;
+          if (!std::isnormal(diff)) {
+            diff = 1e9F;
           }
           return diff + acc;
         });

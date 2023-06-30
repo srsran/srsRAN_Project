@@ -71,7 +71,7 @@ public:
 
   /// \brief Validates PRACH detector configuration parameters.
   /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const prach_detector::configuration& config) = 0;
+  virtual bool is_valid(const prach_detector::configuration& config) const = 0;
 };
 
 } // namespace srsran
