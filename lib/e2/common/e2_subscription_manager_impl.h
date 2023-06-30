@@ -33,7 +33,7 @@ public:
   /// \param[in] ric_instance_id  The ric instance id.
   /// \param[in] ev_mng The event manager that will be used to end the subscription procedure.
   /// \return true if the subscription procedure was started successfully, false otherwise.
-  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) override;
+  int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) override;
 
   /// \brief checks whether the given action is supported.
   /// \param[in] action The action to check.
@@ -64,9 +64,15 @@ public:
   /// \return The e2sm service interface associated with the given oid.
   e2sm_interface* get_e2sm_interface(std::string oid) override;
 
+  /// @brief Adds a supported ran function oid.
+  /// @param ran_func_id  The ran function id.
+  /// @param oid  The oid of the e2sm service associated with the ran function.
+  void add_ran_function_oid(uint16_t ran_func_id, std::string oid) override;
+
 private:
   std::map<int, e2_subscription_t>                       subscriptions;
   std::map<std::string, std::unique_ptr<e2sm_interface>> e2sm_iface_list;
+  std::map<uint16_t, std::string>                        supported_ran_functions;
   e2_message_notifier&                                   notif;
   srslog::basic_logger&                                  logger;
 };

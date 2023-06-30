@@ -44,11 +44,13 @@ public:
   /// \brief Handle the incoming subscription message.
   virtual e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
   /// \brief start the subscription request
-  virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng) = 0;
+  virtual int start_subscription(int ric_instance_id, e2_event_manager& ev_mng, uint16_t ran_func_id) = 0;
 
   virtual void add_e2sm_service(std::string oid, std::unique_ptr<e2sm_interface> e2sm_iface) = 0;
 
   virtual e2sm_interface* get_e2sm_interface(std::string oid) = 0;
+
+  virtual void add_ran_function_oid(uint16_t ran_func_id, std::string oid) = 0;
 };
 
 } // namespace srsran

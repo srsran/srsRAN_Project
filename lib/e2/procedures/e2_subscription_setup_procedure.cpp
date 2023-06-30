@@ -27,7 +27,8 @@ void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2a
   e2_subscribe_reponse_message response;
   response = subscription_mngr.handle_subscription_setup(request_);
   if (response.success) {
-    subscription_mngr.start_subscription(response.request_id.ric_instance_id, event_manager);
+    subscription_mngr.start_subscription(
+        response.request_id.ric_instance_id, event_manager, request_->ra_nfunction_id.value);
     send_e2_subscription_setup_response(response);
   } else {
     send_e2_subscription_setup_failure(response);
