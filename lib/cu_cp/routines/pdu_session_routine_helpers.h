@@ -55,7 +55,8 @@ void fill_rrc_reconfig_args(
     const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
     const cu_cp_ue_context_modification_response&                       ue_context_modification_response,
-    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus);
+    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus,
+    bool                                                                is_reestablishment = false);
 
 bool update_setup_list(
     slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item>& ngap_response_list,

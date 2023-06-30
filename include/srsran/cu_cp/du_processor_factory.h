@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cell_meas_manager.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "ue_manager.h"
@@ -45,6 +46,7 @@ std::unique_ptr<du_processor_interface> create_du_processor(const du_processor_c
                                                             rrc_ue_reestablishment_notifier& rrc_ue_cu_cp_notifier_,
                                                             du_processor_ue_task_scheduler&  task_sched_,
                                                             du_processor_ue_manager&         ue_manager_,
+                                                            cell_meas_manager&               cell_meas_mng_,
                                                             task_executor&                   ctrl_exec_);
 
 } // namespace srs_cu_cp

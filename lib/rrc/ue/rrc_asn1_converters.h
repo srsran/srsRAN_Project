@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/optional.h"
-#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/rrc_nr/common.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <string>
 #include <vector>

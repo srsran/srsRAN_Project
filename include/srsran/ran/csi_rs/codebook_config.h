@@ -61,7 +61,7 @@ struct codebook_config {
         n1_n2_restriction_type_t  n1_n2_restriction_type;
         n1_n2_restriction_value_t n1_n2_restriction_value;
         /// i2 codebook subset restriction for Type I Single-panel codebook used when reportQuantity is CRI/Ri/i1/CQI.
-        optional<bounded_bitset<16>> typei_single_panel_codebook_subset_restriction_i2;
+        bounded_bitset<16> typei_single_panel_codebook_subset_restriction_i2;
 
         bool operator==(const more_than_two_antenna_ports& rhs) const
         {

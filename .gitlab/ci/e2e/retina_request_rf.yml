@@ -20,7 +20,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_0.6.7
   count: 4
   requirements:
     cpu: 9
@@ -34,7 +34,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.7
   requirements:
     cpu: 9
     memory: 10G
@@ -42,11 +42,14 @@
   resources:
     - type: sdr
       model: b200
-  path: ../../build/apps/gnb/gnb
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.7
   requirements:
     cpu: 2
     memory: 2G

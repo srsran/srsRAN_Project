@@ -32,6 +32,8 @@
 #include "pucch/dmrs_pucch_processor_format2_impl.h"
 #include "sss_processor_impl.h"
 #include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/support/support_formatters.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 
 using namespace srsran;
 
@@ -265,4 +267,53 @@ std::shared_ptr<pss_processor_factory> srsran::create_pss_processor_factory_sw()
 std::shared_ptr<sss_processor_factory> srsran::create_sss_processor_factory_sw()
 {
   return std::make_shared<sss_processor_factory_sw>();
+}
+
+template <typename Func>
+static std::chrono::nanoseconds time_execution(Func&& func)
+{
+  auto start = std::chrono::steady_clock::now();
+  func();
+  auto end = std::chrono::steady_clock::now();
+
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+}
+
+namespace {
+
+class logging_nzp_csi_rs_generator_decorator : public nzp_csi_rs_generator
+{
+public:
+  logging_nzp_csi_rs_generator_decorator(srslog::basic_logger&                 logger_,
+                                         std::unique_ptr<nzp_csi_rs_generator> generator_) :
+    logger(logger_), generator(std::move(generator_))
+  {
+    srsran_assert(generator, "Invalid NZP CSI-RS generator.");
+  }
+
+  void map(resource_grid_mapper& mapper, const config_t& config) override
+  {
+    const auto&& func = [&]() { generator->map(mapper, config); };
+
+    std::chrono::nanoseconds time_ns = time_execution(func);
+
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all config fields.
+      logger.debug("NZP-CSI: {:s} {}\n  {:n}", config, time_ns, config);
+      return;
+    }
+    // Single line log entry.
+    logger.info("NZP-CSI: {:s} {}", config, time_ns);
+  }
+
+private:
+  srslog::basic_logger&                 logger;
+  std::unique_ptr<nzp_csi_rs_generator> generator;
+};
+
+} // namespace
+
+std::unique_ptr<nzp_csi_rs_generator> nzp_csi_rs_generator_factory::create(srslog::basic_logger& logger)
+{
+  return std::make_unique<logging_nzp_csi_rs_generator_decorator>(logger, create());
 }

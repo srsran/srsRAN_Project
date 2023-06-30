@@ -17,3 +17,13 @@
 # the LICENSE file in the top-level directory of this distribution
 # and at http://www.gnu.org/licenses/.
 #
+
+set(SOURCES
+  cell_meas_manager_factory.cpp
+  cell_meas_manager_impl.cpp
+  cell_meas_manager_helpers.cpp
+)
+
+add_library(srsran_cu_cp_cell_meas_manager STATIC ${SOURCES})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})

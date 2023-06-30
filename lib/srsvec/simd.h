@@ -51,23 +51,30 @@
 
 namespace srsran {
 
+inline bool is_simd_addr_aligned(const void* addr, uintptr_t mask)
+{
+  uintptr_t addr_i = reinterpret_cast<uintptr_t>(addr);
+  return (addr_i & mask) == 0;
+}
+
 /*
  * SIMD Vector bit alignment
  */
 #ifdef HAVE_AVX512
 #define SIMD_BYTE_ALIGN 64
-#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x3f) == 0)
+#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x3f)
+
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX
 #define SIMD_BYTE_ALIGN 32
-#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x1f) == 0)
+#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x1f)
 #else /* HAVE_AVX */
 #ifdef HAVE_SSE
 #define SIMD_BYTE_ALIGN 16
-#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x0f) == 0)
+#define SIMD_IS_ALIGNED(PTR) is_simd_addr_aligned(PTR, 0x0f)
 #else /* HAVE_SSE */
 #define SIMD_BYTE_ALIGN 16
-#define SIMD_IS_ALIGNED(PTR) (1)
+#define SIMD_IS_ALIGNED(PTR) (true)
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX */
 #endif /* HAVE_AVX512 */

@@ -47,7 +47,7 @@ struct uplane_section_params {
   /// Number of PRBs.
   unsigned nof_prbs;
   /// User data compression header.
-  optional<unsigned> ud_comp_hdr;
+  ru_compression_params ud_comp_hdr;
   /// User data compression length.
   optional<unsigned> ud_comp_len;
   /// User data compression parameter.

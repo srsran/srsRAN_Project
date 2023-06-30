@@ -139,6 +139,12 @@ public:
 
   /// \brief Return vector of ID of all active PDU sessions.
   virtual std::vector<pdu_session_id_t> get_pdu_sessions() = 0;
+
+  /// \brief Return up context for transfer.
+  virtual up_context get_up_context() = 0;
+
+  /// \brief Set up context from an already existing context.
+  virtual void set_up_context(const up_context& ctx) = 0;
 };
 
 /// Creates an instance of an UP resource manager.

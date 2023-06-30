@@ -20,7 +20,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_4e9821e_0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_0.6.7
   count: 4
   requirements:
     cpu: 8
@@ -30,17 +30,24 @@
     - type: zmq
     - type: license
       model: amarisoft-5g
+  shared_files:
+    - local_path: ../../build_trx_srsran/libtrx_srsran.so
+      remote_path: /opt/lteue/trx_srsran.so
+      is_executable: true
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/srsgnb:0.6.7
   requirements:
     cpu: 8
     memory: 8G
     ephemeral-storage: "3G"
   resources:
     - type: zmq
-  path: ../../build/apps/gnb/gnb
+  shared_files:
+    - local_path: ../../build/apps/gnb/gnb
+      remote_path: /usr/local/bin
+      is_executable: true
 
 - name: open5gs
   type: epc
@@ -48,4 +55,4 @@
     cpu: 2
     memory: 2G
     ephemeral-storage: "3G"
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.3
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/open5gs:2.5.6_0.6.7

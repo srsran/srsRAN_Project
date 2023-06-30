@@ -52,9 +52,6 @@ public:
   /// Construct from value. It allows implicit conversion from a cyclic prefix option.
   constexpr cyclic_prefix(options opt) : value(opt) {}
 
-  /// Construct from another cyclic prefix type.
-  constexpr cyclic_prefix(const cyclic_prefix& other) : value(other.value) {}
-
   /// Implicit conversion to enumerate.
   constexpr operator options() const { return value; }
 

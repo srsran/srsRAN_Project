@@ -62,7 +62,7 @@ void compressed_prb::pack_compressed_data(span<const int16_t> compressed_iq,
       (compressed_iq.size() * iq_width / BITS_IN_BYTE) + ((compressed_iq.size() * iq_width % BITS_IN_BYTE) ? 1U : 0);
 }
 
-int16_t compressed_prb::extract_bits(unsigned int pos, unsigned length) const
+int16_t compressed_prb::extract_bits(unsigned pos, unsigned length) const
 {
   int16_t  value        = 0;
   unsigned left_to_read = length;

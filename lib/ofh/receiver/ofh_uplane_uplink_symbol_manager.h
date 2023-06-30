@@ -39,13 +39,15 @@ struct uplane_uplink_symbol_manager_config {
                                       uplane_uplink_packet_handler&                          packet_handler_,
                                       uplink_context_repository<ul_prach_context>&           prach_repo_,
                                       uplink_context_repository<ul_slot_context>&            ul_slot_repo_,
-                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ul_eaxc_) :
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ul_eaxc_,
+                                      const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& prach_eaxc_) :
     logger(logger_),
     notifier(notifier_),
     packet_handler(packet_handler_),
     prach_repo(prach_repo_),
     ul_slot_repo(ul_slot_repo_),
-    ul_eaxc(ul_eaxc_)
+    ul_eaxc(ul_eaxc_),
+    prach_eaxc(prach_eaxc_)
   {
   }
 
@@ -61,6 +63,8 @@ struct uplane_uplink_symbol_manager_config {
   uplink_context_repository<ul_slot_context>& ul_slot_repo;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
 };
 
 /// User-Plane uplink symbol manager.
@@ -82,6 +86,7 @@ private:
 private:
   srslog::basic_logger&                                 logger;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   uplane_rx_symbol_notifier&                            notifier;
   uplane_uplink_packet_handler&                         packet_handler;
   uplink_context_repository<ul_prach_context>&          prach_repo;

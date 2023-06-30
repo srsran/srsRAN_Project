@@ -21,7 +21,9 @@
  */
 
 #include "du_high.h"
+#include "adapters.h"
 #include "du_high_executor_strategies.h"
+#include "f1ap_adapters.h"
 #include "mac_test_mode_adapter.h"
 #include "srsran/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
@@ -30,6 +32,33 @@
 
 using namespace srsran;
 using namespace srs_du;
+
+/// \brief This class is responsible for providing the necessary adapters to connect layers in the DU-high.
+class du_high::layer_connector
+{
+public:
+  explicit layer_connector(const du_high_configuration& config_) :
+    f1_to_du_notifier(timer_factory{*config_.timers, config_.exec_mapper->du_control_executor()})
+  {
+  }
+
+  /// Connect layers of the DU-high.
+  void connect(du_manager_interface& du_mng, mac_interface& mac_inst)
+  {
+    mac_ev_notifier.connect(du_mng);
+    f1_to_du_notifier.connect(du_mng);
+    f1ap_paging_notifier.connect(mac_inst.get_cell_paging_info_handler());
+  }
+
+  /// Notifier MAC -> DU manager.
+  du_manager_mac_event_indicator mac_ev_notifier;
+
+  /// Notifier F1AP -> DU manager
+  f1ap_du_configurator_adapter f1_to_du_notifier;
+
+  /// Notifier F1AP -> MAC for paging PDUs.
+  mac_f1ap_paging_handler f1ap_paging_notifier;
+};
 
 /// Cell slot handler that additionally increments the DU high timers.
 class du_high_slot_handler final : public mac_cell_slot_handler
@@ -69,11 +98,11 @@ public:
 du_high::du_high(const du_high_configuration& config_) :
   cfg(config_),
   timers(*config_.timers),
-  f1ap_du_cfg_handler(timer_factory{*config_.timers, config_.exec_mapper->du_control_executor()}),
+  adapters(std::make_unique<layer_connector>(config_)),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   // Create layers
-  mac = create_mac(mac_config{mac_ev_notifier,
+  mac = create_mac(mac_config{adapters->mac_ev_notifier,
                               cfg.exec_mapper->ue_mapper(),
                               cfg.exec_mapper->cell_mapper(),
                               cfg.exec_mapper->du_control_executor(),
@@ -87,10 +116,10 @@ du_high::du_high(const du_high_configuration& config_) :
   }
 
   f1ap       = create_f1ap(*cfg.f1ap_notifier,
-                     f1ap_du_cfg_handler,
+                     adapters->f1_to_du_notifier,
                      cfg.exec_mapper->du_control_executor(),
                      cfg.exec_mapper->ue_mapper(),
-                     f1ap_paging_notifier);
+                     adapters->f1ap_paging_notifier);
   du_manager = create_du_manager(du_manager_params{
       {"srsgnb", 1, 1, cfg.cells, cfg.qos},
       {timers, cfg.exec_mapper->du_control_executor(), cfg.exec_mapper->ue_mapper(), cfg.exec_mapper->cell_mapper()},
@@ -100,9 +129,7 @@ du_high::du_high(const du_high_configuration& config_) :
       {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
-  mac_ev_notifier.connect(*du_manager);
-  f1ap_du_cfg_handler.connect(*du_manager);
-  f1ap_paging_notifier.connect(mac->get_cell_paging_info_handler());
+  adapters->connect(*du_manager, *mac);
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac, cfg.exec_mapper->du_timer_executor());

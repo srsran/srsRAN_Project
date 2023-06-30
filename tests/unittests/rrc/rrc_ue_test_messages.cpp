@@ -21,8 +21,9 @@
  */
 
 #include "rrc_ue_test_messages.h"
-#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
+#include "srsran/cu_cp/meas_types.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -41,6 +42,97 @@ security::sec_128_key srsran::srs_cu_cp::make_sec_128_key(std::string hex_str)
   security::sec_128_key key     = {};
   std::copy(key_buf.begin(), key_buf.end(), key.begin());
   return key;
+}
+
+cu_cp_meas_cfg srsran::srs_cu_cp::generate_dummy_meas_config()
+{
+  cu_cp_meas_cfg meas_cfg;
+
+  // meas obj to add mod
+  cu_cp_meas_obj_to_add_mod meas_obj_to_add_mod;
+
+  meas_obj_to_add_mod.meas_obj_id = 1;
+
+  cu_cp_meas_obj_nr meas_obj_nr;
+  meas_obj_nr.ssb_freq               = 627242;
+  meas_obj_nr.ssb_subcarrier_spacing = subcarrier_spacing::kHz15;
+
+  cu_cp_ssb_mtc smtc1;
+
+  smtc1.periodicity_and_offset.sf20 = 0;
+  smtc1.dur                         = 2;
+  meas_obj_nr.smtc1                 = smtc1;
+
+  cu_cp_ssb_cfg_mob ssb_cfg_mob;
+  ssb_cfg_mob.derive_ssb_idx_from_cell = true;
+  meas_obj_nr.ref_sig_cfg.ssb_cfg_mob  = ssb_cfg_mob;
+
+  cu_cp_thres_nr thres;
+  thres.thres_rsrp                               = 36;
+  meas_obj_nr.abs_thresh_ss_blocks_consolidation = thres;
+
+  meas_obj_nr.nrof_ss_blocks_to_average = 8;
+  meas_obj_nr.quant_cfg_idx             = 1;
+  meas_obj_nr.freq_band_ind_nr          = 78;
+
+  meas_obj_to_add_mod.meas_obj_nr = meas_obj_nr;
+
+  meas_cfg.meas_obj_to_add_mod_list.push_back(meas_obj_to_add_mod);
+
+  // report config to add mod
+  cu_cp_report_cfg_to_add_mod report_cfg_to_add_mod;
+
+  report_cfg_to_add_mod.report_cfg_id = 1;
+
+  cu_cp_report_cfg            report_cfg;
+  cu_cp_report_cfg_nr         report_cfg_nr;
+  cu_cp_periodical_report_cfg periodical;
+
+  periodical.rs_type                = "ssb";
+  periodical.report_interv          = 1024;
+  periodical.report_amount          = -1;
+  periodical.report_quant_cell.rsrp = true;
+  periodical.report_quant_cell.rsrq = true;
+  periodical.report_quant_cell.sinr = true;
+  periodical.max_report_cells       = 4;
+
+  cu_cp_meas_report_quant report_quant_rs_idxes;
+  report_quant_rs_idxes.rsrp       = true;
+  report_quant_rs_idxes.rsrq       = true;
+  report_quant_rs_idxes.sinr       = true;
+  periodical.report_quant_rs_idxes = report_quant_rs_idxes;
+
+  periodical.max_nrof_rs_idxes_to_report = 4;
+  periodical.include_beam_meass          = true;
+  periodical.use_allowed_cell_list       = false;
+
+  report_cfg_nr.periodical         = periodical;
+  report_cfg.report_cfg_nr         = report_cfg_nr;
+  report_cfg_to_add_mod.report_cfg = report_cfg;
+
+  meas_cfg.report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);
+
+  // meas id to add mod list
+  cu_cp_meas_id_to_add_mod meas_id_to_add_mod;
+
+  meas_id_to_add_mod.meas_id       = 1;
+  meas_id_to_add_mod.meas_obj_id   = 1;
+  meas_id_to_add_mod.report_cfg_id = 1;
+
+  meas_cfg.meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
+
+  // quant config
+  cu_cp_quant_cfg quant_cfg;
+
+  cu_cp_quant_cfg_nr quant_cfg_nr;
+  quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp    = 6;
+  quant_cfg_nr.quant_cfg_cell.csi_rs_filt_cfg.filt_coef_rsrp = 6;
+
+  quant_cfg.quant_cfg_nr_list.push_back(quant_cfg_nr);
+
+  meas_cfg.quant_cfg = quant_cfg;
+
+  return meas_cfg;
 }
 
 cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfiguration_procedure_request()
@@ -83,6 +175,9 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   rb_cfg.drb_to_add_mod_list.emplace(drb_item.drb_id, drb_item);
 
   args.radio_bearer_cfg = rb_cfg;
+
+  // add dummy meas config
+  args.meas_cfg = generate_dummy_meas_config();
 
   cu_cp_rrc_recfg_v1530_ies non_crit_ext;
   // add dummy NAS PDU
@@ -144,6 +239,53 @@ byte_buffer srsran::srs_cu_cp::generate_rrc_reestablishment_complete_pdu()
   asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg{};
   ul_dcch_msg.msg.set_c1().set_rrc_reest_complete();
   ul_dcch_msg.msg.c1().rrc_reest_complete().crit_exts.set_rrc_reest_complete();
+
+  const asn1::SRSASN_CODE ret = ul_dcch_msg.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");
+
+  return pdu;
+}
+
+byte_buffer srsran::srs_cu_cp::generate_measurement_report_pdu()
+{
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+
+  asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg{};
+  auto& meas_results = ul_dcch_msg.msg.set_c1().set_meas_report().crit_exts.set_meas_report().meas_results;
+
+  meas_results.meas_id = 1U;
+  asn1::rrc_nr::meas_result_serv_mo_s meas_result_serv_mo;
+  meas_result_serv_mo.serv_cell_id = 0U;
+  // pci
+  meas_result_serv_mo.meas_result_serving_cell.pci_present = true;
+  meas_result_serv_mo.meas_result_serving_cell.pci         = 0U;
+  // meas result
+  // cell results
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell_present      = true;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.rsrp_present = true;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.rsrp         = 113U;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.rsrq_present = true;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.rsrq         = 65U;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.sinr_present = true;
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.cell_results.results_ssb_cell.sinr         = 92U;
+  // rs idx results
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.rs_idx_results_present = true;
+
+  asn1::rrc_nr::results_per_ssb_idx_s results_per_ssb_idx;
+  results_per_ssb_idx.ssb_idx                  = 0U;
+  results_per_ssb_idx.ssb_results_present      = true;
+  results_per_ssb_idx.ssb_results.rsrp_present = true;
+  results_per_ssb_idx.ssb_results.rsrp         = 113U;
+  results_per_ssb_idx.ssb_results.rsrq_present = true;
+  results_per_ssb_idx.ssb_results.rsrq         = 66U;
+  results_per_ssb_idx.ssb_results.sinr_present = true;
+  results_per_ssb_idx.ssb_results.sinr         = 92U;
+
+  meas_result_serv_mo.meas_result_serving_cell.meas_result.rs_idx_results.results_ssb_idxes.push_back(
+      results_per_ssb_idx);
+
+  meas_results.meas_result_serving_mo_list.push_back(meas_result_serv_mo);
 
   const asn1::SRSASN_CODE ret = ul_dcch_msg.pack(bref);
   srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack RRC PDU.");

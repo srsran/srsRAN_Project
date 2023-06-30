@@ -627,7 +627,7 @@ INSTANTIATE_TEST_SUITE_P(
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), nullopt}}},
   multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
-     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), nullopt}}},
+     {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
   multi_alloc_test_params{cell_bw::MHz20, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 8}}},

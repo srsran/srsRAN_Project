@@ -31,6 +31,8 @@
 namespace srsran {
 namespace config_helpers {
 
+static_vector<uint8_t, 8> generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg);
+
 carrier_configuration make_default_dl_carrier_configuration(const cell_config_builder_params& params = {});
 
 carrier_configuration make_default_ul_carrier_configuration(const cell_config_builder_params& params = {});
@@ -63,23 +65,7 @@ srs_config make_default_srs_config(const cell_config_builder_params& params);
 
 pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
 
-nzp_csi_rs_resource_set make_default_nzp_csi_rs_resource_set();
-
-nzp_csi_rs_resource make_default_nzp_csi_rs_resource(const cell_config_builder_params& params = {});
-
-csi_im_resource_set make_default_csi_im_resource_set();
-
-csi_im_resource make_default_csi_im_resource(const cell_config_builder_params& params = {});
-
-csi_resource_config make_default_csi_resource_config();
-
-csi_report_config make_default_csi_report_config(const cell_config_builder_params& params = {});
-
-csi_meas_config make_default_csi_meas_config(const cell_config_builder_params& params = {});
-
 pdsch_config make_default_pdsch_config(const cell_config_builder_params& params = {});
-
-zp_csi_rs_resource make_default_zp_csi_rs_resource(const cell_config_builder_params& params = {});
 
 /// \brief Creates a default UE Serving Cell configuration.
 serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});

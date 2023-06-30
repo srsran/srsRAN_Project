@@ -49,7 +49,11 @@ variables:
       - warning
       - error
     value: "info"
-  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.5.2
+  RETINA_LAUNCHER_IMAGE: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.7.0
+
+.txrx-lib: &txrx-lib
+  - job: "build trx driver"
+    artifacts: true
 
 .prepare_test:
   variables:
@@ -129,6 +133,7 @@ smoke-zmq-tsan:
     - job: "smoke tsan clean"
       artifacts: true
       optional: true
+    - *txrx-lib
 
 zmq:
   extends: .e2e-run
@@ -142,6 +147,7 @@ zmq:
   needs:
     - job: "smoke release update cache"
       artifacts: true
+    - *txrx-lib
 
 zmq-asan:
   extends: zmq
@@ -152,6 +158,7 @@ zmq-asan:
   needs:
     - job: "basic asan"
       artifacts: true
+    - *txrx-lib
 
 zmq-valgrind:
   extends: zmq
@@ -163,8 +170,13 @@ zmq-valgrind:
   needs:
     - job: "basic valgrind"
       artifacts: true
+    - *txrx-lib
 
-rf:
+################################################################################
+# RF
+################################################################################
+
+.rf:
   extends: .e2e-run
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
@@ -177,35 +189,36 @@ rf:
     - job: "smoke release update cache"
       artifacts: true
 
+rf:
+  extends: .rf
+  allow_failure: true
+
 rf-tsan:
-  extends: rf
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
+  extends: .rf
   variables:
     MARKERS: "rf_not_crash"
   needs:
     - job: "smoke tsan update cache"
       artifacts: true
+    - *txrx-lib
 
 rf-asan:
-  extends: rf
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
+  extends: .rf
   variables:
     MARKERS: "rf_not_crash"
   needs:
     - job: "basic asan"
       artifacts: true
+    - *txrx-lib
 
 rf-b200-config:
-  extends: rf
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
+  extends: .rf
   variables:
     MARKERS: "rf_b200"
+
+################################################################################
+# Android
+###############################################################################
 
 android:
   extends: .e2e-run
@@ -220,6 +233,7 @@ android:
   needs:
     - job: "smoke release update cache"
       artifacts: true
+    - *txrx-lib
 
 ################################################################################
 # Garbage collector

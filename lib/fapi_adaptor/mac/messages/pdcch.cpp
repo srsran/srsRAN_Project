@@ -21,14 +21,18 @@
  */
 
 #include "srsran/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
 
-void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu& mac_pdu)
+void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu&            fapi_pdu,
+                                                     const mac_pdcch_pdu&           mac_pdu,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
-  convert_pdcch_mac_to_fapi(builder, mac_pdu);
+  convert_pdcch_mac_to_fapi(builder, mac_pdu, pm_mapper, cell_nof_prbs);
 }
 
 static void fill_bwp_parameters(fapi::dl_pdcch_pdu_builder&  builder,
@@ -39,10 +43,7 @@ static void fill_bwp_parameters(fapi::dl_pdcch_pdu_builder&  builder,
   // point and size, otherwise, for the rest of CORESETs take it from the BWP where the CORESET belongs.
   const crb_interval& crbs = (coreset_cfg.id == to_coreset_id(0)) ? coreset_cfg.coreset0_crbs() : bwp_cfg.crbs;
 
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(crbs.length(), crbs.start(), bwp_cfg.scs, bwp_cfg.cp);
 }
 
 static freq_resource_bitmap calculate_coreset0_freq_res_bitmap(const coreset_configuration& coreset_cfg)
@@ -74,7 +75,21 @@ static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder&  builder,
       coreset_cfg.precoder_granurality);
 }
 
-void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
+static void fill_precoding_and_beamforming(fapi::dl_dci_pdu_builder&      builder,
+                                           const precoding_matrix_mapper& pm_mapper,
+                                           unsigned                       cell_nof_prbs)
+{
+  fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
+  pm_bf_builder.set_basic_parameters(cell_nof_prbs, 0);
+
+  mac_pdcch_precoding_info info;
+  pm_bf_builder.add_prg(pm_mapper.map(info), {});
+}
+
+void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&    builder,
+                                                     const mac_pdcch_pdu&           mac_pdu,
+                                                     const precoding_matrix_mapper& pm_mapper,
+                                                     unsigned                       cell_nof_prbs)
 {
   const static_vector<mac_pdcch_pdu::dci_info, fapi::MAX_NUM_DCIS_PER_PDCCH_PDU>& dcis = mac_pdu.dcis;
   srsran_assert(!dcis.empty(), "No DCIs to add into the PDCCH PDU");
@@ -99,6 +114,8 @@ void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
 
     // This parameter is not passed by the MAC, set it to zero.
     dci_builder.set_tx_power_info_parameter(0.F);
+
+    fill_precoding_and_beamforming(dci_builder, pm_mapper, cell_nof_prbs);
 
     // These parameters are not passed by the MAC, leave them as disabled.
     dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});

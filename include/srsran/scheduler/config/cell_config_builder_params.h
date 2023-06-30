@@ -45,13 +45,13 @@ struct cell_config_builder_params {
   /// provided DL ARFCN is automatically derived.
   optional<nr_band> band;
   /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA.
-  ssb_offset_to_pointA offset_to_point_a{12};
+  ssb_offset_to_pointA offset_to_point_a{18};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
-  unsigned coreset0_index = 6;
+  unsigned coreset0_index = 9;
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
-  ssb_subcarrier_offset k_ssb = 0;
+  ssb_subcarrier_offset k_ssb = 6;
   /// Whether to enable CSI-RS in the cell.
-  bool csi_rs_enabled = false;
+  bool csi_rs_enabled = true;
   /// Number of DL ports for the cell.
   unsigned nof_dl_ports = 1;
 };

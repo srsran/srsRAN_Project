@@ -51,10 +51,28 @@ public:
     info.filter_type                                      = filter_type;
   }
 
+  void enqueue_section_type_3_prach_message(slot_point                                    slot,
+                                            unsigned                                      eaxc,
+                                            filter_index_type                             filter_type,
+                                            const struct cplane_scheduling_prach_context& context) override
+  {
+    has_enqueue_section_type_3_message_method_been_called = true;
+    info.slot                                             = slot;
+    info.eaxc                                             = eaxc;
+    info.direction                                        = data_direction::uplink;
+    info.filter_type                                      = filter_type;
+  }
+
   /// Returns true if the method enqueue section type 1 message has been called, otherwise false.
   bool has_enqueue_section_type_1_method_been_called() const
   {
     return has_enqueue_section_type_1_message_method_been_called;
+  }
+
+  /// Returns true if the method enqueue section type 3 message has been called, otherwise false.
+  bool has_enqueue_section_type_3_method_been_called() const
+  {
+    return has_enqueue_section_type_3_message_method_been_called;
   }
 
   /// Returns the configured eAxC.
@@ -62,6 +80,7 @@ public:
 
 private:
   bool     has_enqueue_section_type_1_message_method_been_called = false;
+  bool     has_enqueue_section_type_3_message_method_been_called = false;
   spy_info info;
 };
 

@@ -200,7 +200,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 }
 
 pdu_session_modification_result
-pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session)
+pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
+                                             bool                                       new_tnl_info_required)
 {
   pdu_session_modification_result pdu_session_result;
   pdu_session_result.success        = false;
@@ -242,9 +243,46 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
+    if (new_tnl_info_required) {
+      uint32_t bitmask         = 0xffffff00;
+      uint32_t new_f1u_ul_teid = drb_iter->second->f1u_ul_teid.value();
+      new_f1u_ul_teid          = (new_f1u_ul_teid & bitmask) | ((new_f1u_ul_teid & 0x000000ffU) + 1);
+
+      // disconnect old F1-U
+      f1u_gw.disconnect_cu_bearer(drb_iter->second->f1u_ul_teid.value());
+      drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();
+
+      // create new F1-U and connect it
+      auto& drb = drb_iter->second;
+      drb->f1u  = f1u_gw.create_cu_bearer(
+          ue_index, new_f1u_ul_teid, drb->f1u_to_pdcp_adapter, drb->f1u_to_pdcp_adapter, timers);
+      drb->f1u_ul_teid = int_to_gtp_teid(new_f1u_ul_teid);
+
+      up_transport_layer_info f1u_ul_tunnel_addr;
+      f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
+      f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(new_f1u_ul_teid);
+      drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
+      logger.debug("New UL TNL info required for DRB. drb_id={}, pdu_session_id={} f1u_ul_teid={}.",
+                   drb_to_mod.drb_id,
+                   session.pdu_session_id,
+                   f1u_ul_tunnel_addr.gtp_teid);
+    }
+
     // F1-U apply modification
-    f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
-                          drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
+    if (!drb_to_mod.dl_up_params.empty()) {
+      f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid.value(),
+                            drb_to_mod.dl_up_params[0].up_tnl_info.gtp_teid.value());
+
+      drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
+    }
+
+    // Apply re-establishment at PDCP
+    if (drb_to_mod.pdcp_cfg.has_value() && drb_to_mod.pdcp_cfg->pdcp_reest.has_value()) {
+      // TODO get correct AS security config from E1AP
+      drb_iter->second->pdcp->get_rx_upper_control_interface().reestablish({});
+      drb_iter->second->pdcp->get_tx_upper_control_interface().reestablish({});
+    }
+
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
 
     // Apply QoS flows
@@ -325,5 +363,6 @@ uint32_t pdu_session_manager_impl::allocate_local_f1u_teid(pdu_session_id_t pdu_
   local_teid |= pdu_session_id_to_uint(pdu_session_id);
   local_teid <<= 8U;
   local_teid |= drb_id_to_uint(drb_id);
+  local_teid <<= 8U;
   return local_teid;
 }

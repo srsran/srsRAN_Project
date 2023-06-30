@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
@@ -30,7 +31,6 @@
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
-#include "srsran/ran/precoding/precoding_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/srsvec/copy.h"
@@ -212,7 +212,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "ncgwd={}", pdu.nof_cdm_groups_without_data);
     helper.format_if_verbose(ctx, "bg={}", (pdu.ldpc_base_graph == srsran::ldpc_base_graph_type::BG1) ? "BG1" : "BG2");
     helper.format_if_verbose(ctx, "lbrm={}bytes", pdu.tbs_lbrm_bytes);
-    helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", pdu.ratio_pdsch_dmrs_to_sss_dB);
+    helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", -pdu.ratio_pdsch_dmrs_to_sss_dB);
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.ratio_pdsch_data_to_sss_dB);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());

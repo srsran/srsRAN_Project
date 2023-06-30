@@ -25,18 +25,17 @@
 
 using namespace srsran;
 
-bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
+error_type<std::string> mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
 {
   byte_buffer_reader reader = subpdu;
   return unpack(reader);
 }
 
-bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
+error_type<std::string> mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
   unsigned subpdu_len = subpdu_reader.length();
   if (subpdu_len == 0) {
-    srslog::fetch_basic_logger("MAC", true).info("Invalid UL MAC PDU. Cause: Empty subPDU.");
-    return false;
+    return std::string{"Empty subPDU."};
   }
   payload_view = {};
 
@@ -47,8 +46,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   header_length = 1;
 
   if (not lcid_val.is_valid_lcid()) {
-    srslog::fetch_basic_logger("MAC").info("Invalid UL MAC PDU. Cause: Unrecognized lcid={}.", lcid_val);
-    return false;
+    return fmt::format("Unrecognized lcid={}.", lcid_val);
   }
 
   uint32_t sdu_length = 0;
@@ -56,9 +54,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
     // Variable-sized MAC CEs or SDUs
 
     if (subpdu_len < (F_bit ? 3 : 2)) {
-      srslog::fetch_basic_logger("MAC").info(
-          "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode length prefix.");
-      return false;
+      return fmt::format("Not enough bytes remaining in PDU to decode length prefix.");
     }
 
     // Read first length byte
@@ -74,11 +70,8 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
     }
 
     if (subpdu_len < header_length + sdu_length) {
-      srslog::fetch_basic_logger("MAC").info(
-          "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
-          subpdu_len - header_length,
-          sdu_length);
-      return false;
+      return fmt::format(
+          "Not enough bytes remaining in PDU to decode SDU payload ({} < {}).", subpdu_len - header_length, sdu_length);
     }
     payload_view = subpdu_reader.split_and_advance(sdu_length);
   } else {
@@ -92,16 +85,14 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
       sdu_length = lcid_val.sizeof_ce();
 
       if (subpdu_len < header_length + sdu_length) {
-        srslog::fetch_basic_logger("MAC").info(
-            "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
-            subpdu_len - header_length,
-            sdu_length);
-        return false;
+        return fmt::format("Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
+                           subpdu_len - header_length,
+                           sdu_length);
       }
       payload_view = subpdu_reader.split_and_advance(sdu_length);
     }
   }
-  return true;
+  return {};
 }
 
 void mac_ul_sch_pdu::clear()
@@ -109,22 +100,24 @@ void mac_ul_sch_pdu::clear()
   subpdus.clear();
 }
 
-bool mac_ul_sch_pdu::unpack(const byte_buffer& payload)
+error_type<std::string> mac_ul_sch_pdu::unpack(const byte_buffer& payload)
 {
   byte_buffer_reader reader = payload;
   while (not reader.empty()) {
     if (subpdus.full()) {
       srslog::fetch_basic_logger("MAC", true)
           .warning("Maximum number of subPDUs per UL MAC PDU limit of {} was reached.", (unsigned)MAX_SUBPDUS_PER_PDU);
-      return true;
+      return {};
     }
-    mac_ul_sch_subpdu& subpdu = subpdus.emplace_back();
-    if (not subpdu.unpack(reader)) {
+
+    mac_ul_sch_subpdu&      subpdu = subpdus.emplace_back();
+    error_type<std::string> ret    = subpdu.unpack(reader);
+    if (ret.is_error()) {
       // Discard all decoded subPDUs.
       clear();
-      return false;
+      return ret;
     }
   }
 
-  return true;
+  return {};
 }

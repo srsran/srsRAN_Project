@@ -61,7 +61,7 @@ public:
   downlink_handler& get_downlink_handler() override;
 
   // See interface for documentation.
-  symbol_handler& get_symbol_handler() override;
+  ota_symbol_handler& get_ota_symbol_handler() override;
 
 private:
   std::unique_ptr<downlink_handler>       dl_handler;

@@ -25,10 +25,10 @@
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/ofh_cplane_message_builder.h"
 #include "srsran/ofh/ofh_ota_symbol_boundary_notifier.h"
+#include "srsran/ofh/ofh_ota_symbol_handler.h"
 #include "srsran/ofh/ofh_receiver_configuration.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/ofh_sector_config.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
 #include "srsran/ofh/ofh_timing_notifier.h"
 #include "srsran/ofh/ofh_uplane_message_builder.h"
 #include "srsran/ofh/ofh_uplane_message_decoder.h"
@@ -53,9 +53,13 @@ class ota_symbol_boundary_notifier;
 /// Creates an Open Fronthaul Control-Plane packet builder.
 std::unique_ptr<cplane_message_builder> create_ofh_control_plane_packet_builder();
 
-/// Creates an Open Fronthaul User-Plane packet builder.
+/// Creates an Open Fronthaul User-Plane packet builder with static compression header.
 std::unique_ptr<uplane_message_builder>
 create_static_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger, iq_compressor& compressor);
+
+/// Creates an Open Fronthaul User-Plane packet builder with dynamic compression header.
+std::unique_ptr<uplane_message_builder>
+create_dynamic_comp_method_ofh_user_plane_packet_builder(srslog::basic_logger& logger, iq_compressor& compressor);
 
 /// Creates an Open Fronthaul User-Plane packet decoder which supports static compression method.
 std::unique_ptr<uplane_message_decoder>
@@ -65,6 +69,14 @@ create_static_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger&   
                                                         unsigned                     ru_nof_prbs,
                                                         iq_decompressor&             decompressor,
                                                         const ru_compression_params& comp_params);
+
+/// Creates an Open Fronthaul User-Plane packet decoder which supports dynamic compression method.
+std::unique_ptr<uplane_message_decoder>
+create_dynamic_comp_method_ofh_user_plane_packet_decoder(srslog::basic_logger& logger,
+                                                         subcarrier_spacing    scs,
+                                                         cyclic_prefix         cp,
+                                                         unsigned              ru_nof_prbs,
+                                                         iq_decompressor&      decompressor);
 
 /// Open Fronthaul controller config.
 struct controller_config {
@@ -89,12 +101,11 @@ std::unique_ptr<controller> create_ofh_timing_controller(const controller_config
 
 /// Creates an Open Fronthaul OTA symbol notifier.
 std::unique_ptr<ota_symbol_boundary_notifier>
-create_ofh_ota_symbol_notifier(unsigned                            nof_slot_offset_du_ru,
-                               unsigned                            nof_symbols_per_slot,
-                               srslog::basic_logger&               logger,
-                               std::unique_ptr<timing_notifier>    timing_notifier,
-                               span<symbol_handler*>               symbol_handlers,
-                               span<ota_symbol_boundary_notifier*> ota_notifiers);
+create_ofh_ota_symbol_notifier(unsigned                         nof_slot_offset_du_ru,
+                               unsigned                         nof_symbols_per_slot,
+                               srslog::basic_logger&            logger,
+                               std::unique_ptr<timing_notifier> timing_notifier,
+                               span<ota_symbol_handler*>        symbol_handlers);
 
 struct symbol_handler_factory_config {
   /// Cyclic prefix.
@@ -112,7 +123,7 @@ struct symbol_handler_factory_config {
 };
 
 /// Creates an Open Fronthaul symbol handler.
-std::unique_ptr<symbol_handler> create_ofh_symbol_handler(symbol_handler_factory_config& config);
+std::unique_ptr<ota_symbol_handler> create_ofh_symbol_handler(symbol_handler_factory_config& config);
 
 /// Creates an Open Fronthaul sector.
 std::unique_ptr<sector> create_ofh_sector(const sector_configuration& sector_cfg);

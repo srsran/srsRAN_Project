@@ -27,6 +27,40 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
+// Free function to amend to the final procedure response message. This will take the results from the various
+// sub-procedures and update the succeeded/failed fields.
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       response_msg,
+                               cu_cp_ue_context_modification_request&           ue_context_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request   setup_msg,
+                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+                               const up_config_update&                          next_config,
+                               up_resource_manager&                             rrc_ue_up_resource_manager_,
+                               srslog::basic_logger&                            logger);
+
+// Same as above but taking the result from E1AP Bearer Context Setup message
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               cu_cp_ue_context_modification_request&          ue_context_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                               const up_config_update&                         next_config,
+                               up_resource_manager&                            rrc_ue_up_resource_manager_,
+                               srslog::basic_logger&                           logger);
+
+// This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
+// bearer context modification message to be send to the CU-UP.
+// In case of a negative outcome it also prefills the final PDU session resource setup respone message.
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               const cu_cp_ue_context_modification_response&   ue_context_modification_response,
+                               const up_config_update&                         next_config,
+                               const srslog::basic_logger&                     logger);
+
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               bool                                            rrc_reconfig_result,
+                               const srslog::basic_logger&                     logger);
+
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
     const ue_configuration&                         ue_cfg_,
@@ -45,132 +79,6 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   rrc_ue_up_resource_manager(rrc_ue_up_resource_manager_),
   logger(logger_)
 {
-}
-
-// Free function to amend to the final procedure response message. This will take the results from the various
-// sub-procedures and update the succeeded/failed fields.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       response_msg,
-                               cu_cp_ue_context_modification_request&           ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request   setup_msg,
-                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
-                               const up_config_update&                          next_config,
-                               up_resource_manager&                             rrc_ue_up_resource_manager_,
-                               srslog::basic_logger&                            logger)
-{
-  // Traverse setup list
-  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                        ue_context_mod_request,
-                        setup_msg.pdu_session_res_setup_items,
-                        bearer_context_modification_response.pdu_session_resource_setup_list,
-                        next_config,
-                        rrc_ue_up_resource_manager_,
-                        logger) == false) {
-    return false;
-  }
-
-  // Traverse failed list
-  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
-                     bearer_context_modification_response.pdu_session_resource_failed_list);
-
-  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
-    // modified list
-    logger.info("Implement handling of resource modified item {}.", e1ap_item.pdu_session_id);
-  }
-
-  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
-    // modified list
-    logger.info("Implement handling of resource failed to modify item {}.", e1ap_item.pdu_session_id);
-  }
-
-  return bearer_context_modification_response.success;
-}
-
-// Same as above but taking the result from E1AP Bearer Context Setup message
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               cu_cp_ue_context_modification_request&          ue_context_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
-                               const up_config_update&                         next_config,
-                               up_resource_manager&                            rrc_ue_up_resource_manager_,
-                               srslog::basic_logger&                           logger)
-{
-  // Traverse setup list
-  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                        ue_context_mod_request,
-                        setup_msg.pdu_session_res_setup_items,
-                        bearer_context_setup_response.pdu_session_resource_setup_list,
-                        next_config,
-                        rrc_ue_up_resource_manager_,
-                        logger) == false) {
-    return false;
-  }
-
-  // Traverse failed list
-  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
-                     bearer_context_setup_response.pdu_session_resource_failed_list);
-
-  return bearer_context_setup_response.success;
-}
-
-// Helper function to fail all requested PDU session.
-void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                            const cu_cp_pdu_session_resource_setup_request& setup_msg)
-{
-  for (const auto& item : setup_msg.pdu_session_res_setup_items) {
-    cu_cp_pdu_session_res_setup_failed_item failed_item;
-    failed_item.pdu_session_id                                         = item.pdu_session_id;
-    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::misc;
-    response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
-  }
-}
-
-// This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
-// bearer context modification message to be send to the CU-UP.
-// In case of a negative outcome it also prefills the final PDU session resource setup respone message.
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               const cu_cp_ue_context_modification_response&   ue_context_modification_response,
-                               const up_config_update&                         next_config,
-                               const srslog::basic_logger&                     logger)
-{
-  // Fail procedure if (single) DRB couldn't be setup
-  if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
-    logger.error("Couldn't setup {} DRBs at DU.",
-                 ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
-    return false;
-  }
-
-  if (update_setup_list(response_msg.pdu_session_res_setup_response_items,
-                        bearer_ctxt_mod_request,
-                        setup_msg.pdu_session_res_setup_items,
-                        ue_context_modification_response,
-                        next_config,
-                        logger) == false) {
-    return false;
-  }
-
-  // Let all PDU sessions fail if response is negative.
-  if (ue_context_modification_response.success == false) {
-    fill_setup_failed_list(response_msg, setup_msg);
-  }
-
-  // TODO: traverse other fields
-
-  return ue_context_modification_response.success;
-}
-
-bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
-                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                               bool                                            rrc_reconfig_result,
-                               const srslog::basic_logger&                     logger)
-{
-  // Let all PDU sessions fail if response is negative.
-  if (rrc_reconfig_result == false) {
-    fill_setup_failed_list(response_msg, setup_msg);
-  }
-
-  return rrc_reconfig_result;
 }
 
 void pdu_session_resource_setup_routine::operator()(
@@ -319,6 +227,132 @@ void pdu_session_resource_setup_routine::operator()(
   CORO_RETURN(handle_pdu_session_resource_setup_result(true));
 }
 
+// Free function to amend to the final procedure response message. This will take the results from the various
+// sub-procedures and update the succeeded/failed fields.
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&       response_msg,
+                               cu_cp_ue_context_modification_request&           ue_context_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request   setup_msg,
+                               const e1ap_bearer_context_modification_response& bearer_context_modification_response,
+                               const up_config_update&                          next_config,
+                               up_resource_manager&                             rrc_ue_up_resource_manager_,
+                               srslog::basic_logger&                            logger)
+{
+  // Traverse setup list
+  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                         ue_context_mod_request,
+                         setup_msg.pdu_session_res_setup_items,
+                         bearer_context_modification_response.pdu_session_resource_setup_list,
+                         next_config,
+                         rrc_ue_up_resource_manager_,
+                         logger)) {
+    return false;
+  }
+
+  // Traverse failed list
+  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
+                     bearer_context_modification_response.pdu_session_resource_failed_list);
+
+  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_modified_list) {
+    // modified list
+    logger.info("Implement handling of resource modified item {}.", e1ap_item.pdu_session_id);
+  }
+
+  for (const auto& e1ap_item : bearer_context_modification_response.pdu_session_resource_failed_to_modify_list) {
+    // modified list
+    logger.info("Implement handling of resource failed to modify item {}.", e1ap_item.pdu_session_id);
+  }
+
+  return bearer_context_modification_response.success;
+}
+
+// Same as above but taking the result from E1AP Bearer Context Setup message
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               cu_cp_ue_context_modification_request&          ue_context_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               const e1ap_bearer_context_setup_response&       bearer_context_setup_response,
+                               const up_config_update&                         next_config,
+                               up_resource_manager&                            rrc_ue_up_resource_manager_,
+                               srslog::basic_logger&                           logger)
+{
+  // Traverse setup list
+  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                         ue_context_mod_request,
+                         setup_msg.pdu_session_res_setup_items,
+                         bearer_context_setup_response.pdu_session_resource_setup_list,
+                         next_config,
+                         rrc_ue_up_resource_manager_,
+                         logger)) {
+    return false;
+  }
+
+  // Traverse failed list
+  update_failed_list(response_msg.pdu_session_res_failed_to_setup_items,
+                     bearer_context_setup_response.pdu_session_resource_failed_list);
+
+  return bearer_context_setup_response.success;
+}
+
+// Helper function to fail all requested PDU session.
+void fill_setup_failed_list(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                            const cu_cp_pdu_session_resource_setup_request& setup_msg)
+{
+  for (const auto& item : setup_msg.pdu_session_res_setup_items) {
+    cu_cp_pdu_session_res_setup_failed_item failed_item;
+    failed_item.pdu_session_id                                         = item.pdu_session_id;
+    failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause = cause_t::misc;
+    response_msg.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+  }
+}
+
+// This method takes the F1AP UE Context Modification Response message and pre-fills the subsequent
+// bearer context modification message to be send to the CU-UP.
+// In case of a negative outcome it also prefills the final PDU session resource setup respone message.
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               e1ap_bearer_context_modification_request&       bearer_ctxt_mod_request,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               const cu_cp_ue_context_modification_response&   ue_context_modification_response,
+                               const up_config_update&                         next_config,
+                               const srslog::basic_logger&                     logger)
+{
+  // Fail procedure if (single) DRB couldn't be setup
+  if (!ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
+    logger.error("Couldn't setup {} DRBs at DU.",
+                 ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
+    return false;
+  }
+
+  if (!update_setup_list(response_msg.pdu_session_res_setup_response_items,
+                         bearer_ctxt_mod_request,
+                         setup_msg.pdu_session_res_setup_items,
+                         ue_context_modification_response,
+                         next_config,
+                         logger)) {
+    return false;
+  }
+
+  // Let all PDU sessions fail if response is negative.
+  if (!ue_context_modification_response.success) {
+    fill_setup_failed_list(response_msg, setup_msg);
+  }
+
+  // TODO: traverse other fields
+
+  return ue_context_modification_response.success;
+}
+
+bool handle_procedure_response(cu_cp_pdu_session_resource_setup_response&      response_msg,
+                               const cu_cp_pdu_session_resource_setup_request& setup_msg,
+                               bool                                            rrc_reconfig_result,
+                               const srslog::basic_logger&                     logger)
+{
+  // Let all PDU sessions fail if response is negative.
+  if (!rrc_reconfig_result) {
+    fill_setup_failed_list(response_msg, setup_msg);
+  }
+
+  return rrc_reconfig_result;
+}
+
 // Helper to mark all PDU sessions that were requested to be set up as failed.
 void mark_all_sessions_as_failed(cu_cp_pdu_session_resource_setup_response&      response_msg,
                                  const cu_cp_pdu_session_resource_setup_request& setup_msg,
@@ -376,8 +410,12 @@ void fill_e1ap_pdu_session_res_to_setup_list(
     e1ap_pdu_session_item.snssai            = pdu_session_cfg.s_nssai;
     e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_cfg.ul_ngu_up_tnl_info;
 
-    e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
-    e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
+    if (pdu_session_cfg.security_ind.has_value()) {
+      e1ap_pdu_session_item.security_ind = pdu_session_cfg.security_ind.value();
+    } else {
+      e1ap_pdu_session_item.security_ind = {};
+    }
+
     // TODO: set `e1ap_pdu_session_item.pdu_session_inactivity_timer` if configured
     fill_drb_to_setup_list(e1ap_pdu_session_item.drb_to_setup_list_ng_ran,
                            pdu_session_cfg.qos_flow_setup_request_items,

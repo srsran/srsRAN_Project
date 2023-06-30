@@ -20,35 +20,23 @@
  *
  */
 
-#include "ofh_ota_rx_symbol_handler.h"
+#pragma once
 
-using namespace srsran;
-using namespace ofh;
+#include "cu_cp_types.h"
 
-/// Number of slots after the OTA when the repositories will be cleared.
-static constexpr unsigned delay_slots_to_clear = 10U;
+namespace srsran {
 
-void ota_rx_symbol_handler::on_new_symbol(slot_point slot, unsigned symbol_index)
-{
-  if (!current_slot.valid()) {
-    current_slot = slot;
-    clear_slot_in_repositories(slot);
+namespace srs_cu_cp {
 
-    return;
-  }
+/// \brief Cell manager configuration.
+struct cell_meas_manager_cfg {
+  std::map<nr_cell_id_t, std::vector<nr_cell_id_t>> neighbor_cell_list; ///< List of neighbor cells
+  optional<cu_cp_cond_event_a3> a3_event_config; // A3 event config is currently the only supported event.
+};
 
-  // Same slot, do nothing.
-  if (slot == current_slot) {
-    return;
-  }
+/// \brief Validates configuration. Returns true if config is valid, false otherwise.
+bool is_valid_configuration(const cell_meas_manager_cfg& cfg);
 
-  current_slot = slot;
-  clear_slot_in_repositories(slot + delay_slots_to_clear);
-}
+} // namespace srs_cu_cp
 
-void ota_rx_symbol_handler::clear_slot_in_repositories(slot_point slot)
-{
-  cp_context_repo.clear_slot(slot);
-  prach_repo.clear(slot);
-  ul_slot_repo.clear(slot);
-}
+} // namespace srsran

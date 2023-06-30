@@ -323,7 +323,9 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
       context.direction = PCAP_DIRECTION_DOWNLINK;
       context.rntiType  = PCAP_C_RNTI;
       context.rnti      = dl_alloc.pdsch_cfg.rnti;
-      context.ueid      = dl_alloc.context.ue_index;
+      context.ueid      = dl_alloc.context.ue_index == du_ue_index_t::INVALID_DU_UE_INDEX
+                              ? du_ue_index_t::INVALID_DU_UE_INDEX
+                              : dl_alloc.context.ue_index + 1;
       context.harqid    = dl_alloc.pdsch_cfg.harq_id;
       context.system_frame_number = sl_tx.sfn();
       context.sub_frame_number    = sl_tx.subframe_index();

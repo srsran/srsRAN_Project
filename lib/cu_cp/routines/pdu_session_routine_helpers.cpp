@@ -69,7 +69,8 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     const slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item>& srbs_to_be_setup_mod_list,
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
     const cu_cp_ue_context_modification_response&                       ue_context_modification_response,
-    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus)
+    const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus,
+    bool                                                                is_reestablishment)
 {
   cu_cp_radio_bearer_config radio_bearer_config;
   // if default DRB is being setup, SRB2 needs to be setup as well
@@ -77,6 +78,9 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     for (const cu_cp_srbs_to_be_setup_mod_item& srb_to_add_mod : srbs_to_be_setup_mod_list) {
       cu_cp_srb_to_add_mod srb = {};
       srb.srb_id               = srb_to_add_mod.srb_id;
+      if (is_reestablishment) {
+        srb.reestablish_pdcp_present = true;
+      }
       radio_bearer_config.srb_to_add_mod_list.emplace(srb_to_add_mod.srb_id, srb);
     }
   }
@@ -85,13 +89,18 @@ void srsran::srs_cu_cp::fill_rrc_reconfig_args(
     // Add radio bearer config
     for (const auto& drb_to_add : pdu_session_to_add_mod.second.drb_to_add) {
       cu_cp_drb_to_add_mod drb_to_add_mod;
-      drb_to_add_mod.drb_id   = drb_to_add.first;
-      drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
+      drb_to_add_mod.drb_id = drb_to_add.first;
 
-      // Add CN association and SDAP config
-      cu_cp_cn_assoc cn_assoc;
-      cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
-      drb_to_add_mod.cn_assoc = cn_assoc;
+      if (is_reestablishment) {
+        drb_to_add_mod.reestablish_pdcp_present = true;
+      } else {
+        drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
+
+        // Add CN association and SDAP config
+        cu_cp_cn_assoc cn_assoc;
+        cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
+        drb_to_add_mod.cn_assoc = cn_assoc;
+      }
 
       radio_bearer_config.drb_to_add_mod_list.emplace(drb_to_add.first, drb_to_add_mod);
     }

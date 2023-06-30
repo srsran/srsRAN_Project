@@ -23,6 +23,7 @@
 #include "ue_context_modification_procedure.h"
 #include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_helpers.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

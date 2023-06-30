@@ -148,7 +148,7 @@ TEST_P(PdschProcessorFixture, UnitTest)
     pdu.codewords.back().rv         = dist_rv(rgen);
   }
   pdu.n_id             = 0;
-  pdu.precoding        = make_wideband_identity(nof_layers);
+  pdu.precoding        = precoding_configuration::make_wideband(make_identity(nof_layers));
   pdu.ref_point        = dist_bool(rgen) ? pdsch_processor::pdu_t::PRB0 : pdsch_processor::pdu_t::CRB0;
   pdu.dmrs_symbol_mask = symbol_slot_mask(nof_symbols_slot);
   while (pdu.dmrs_symbol_mask.none()) {

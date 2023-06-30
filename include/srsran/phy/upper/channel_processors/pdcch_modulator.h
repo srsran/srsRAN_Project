@@ -27,7 +27,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/mask_types.h"
-#include "srsran/ran/precoding/precoding_configuration.h"
+#include "srsran/phy/support/precoding_configuration.h"
 
 namespace srsran {
 

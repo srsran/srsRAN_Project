@@ -40,6 +40,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(config_.ue_config),
+  cell_meas_mng(create_cell_meas_manager(config_.mobility_config.meas_manager_config)),
   ue_task_sched(timers, *config_.cu_cp_executor),
   du_task_sched(timers, *config_.cu_cp_executor),
   cu_up_task_sched(timers, *config_.cu_cp_executor)
@@ -283,6 +284,7 @@ du_index_t cu_cp::add_du()
                                                                    rrc_ue_cu_cp_notifier,
                                                                    du_processor_task_sched,
                                                                    ue_mng,
+                                                                   *cell_meas_mng,
                                                                    *cfg.cu_cp_executor);
 
   du_processor_ev_notifier.connect_cu_cp(this->get_cu_cp_du_handler());

@@ -45,7 +45,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   ul_carrier(msg.ul_carrier),
   pucch_guardbands(msg.pucch_guardbands),
   zp_csi_rs_list(msg.zp_csi_rs_list),
-  csi_meas_cfg(msg.csi_meas_cfg),
+  nzp_csi_rs_list(msg.nzp_csi_rs_res_list),
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),
@@ -58,14 +58,14 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
     dl_symbols_per_slot_lst.resize(tdd_period_slots);
     ul_symbols_per_slot_lst.resize(tdd_period_slots);
     for (unsigned slot_period_idx = 0; slot_period_idx < dl_symbols_per_slot_lst.size(); ++slot_period_idx) {
-      dl_symbols_per_slot_lst[slot_period_idx] =
-          get_active_tdd_dl_symbols(
-              *msg.tdd_ul_dl_cfg_common, slot_period_idx, dl_cfg_common.init_dl_bwp.generic_params.cp_extended)
-              .length();
-      ul_symbols_per_slot_lst[slot_period_idx] =
-          get_active_tdd_ul_symbols(
-              *msg.tdd_ul_dl_cfg_common, slot_period_idx, ul_cfg_common.init_ul_bwp.generic_params.cp_extended)
-              .length();
+      dl_symbols_per_slot_lst[slot_period_idx] = get_active_tdd_dl_symbols(*msg.tdd_ul_dl_cfg_common,
+                                                                           slot_period_idx,
+                                                                           dl_cfg_common.init_dl_bwp.generic_params.cp)
+                                                     .length();
+      ul_symbols_per_slot_lst[slot_period_idx] = get_active_tdd_ul_symbols(*msg.tdd_ul_dl_cfg_common,
+                                                                           slot_period_idx,
+                                                                           ul_cfg_common.init_ul_bwp.generic_params.cp)
+                                                     .length();
     }
   }
 }

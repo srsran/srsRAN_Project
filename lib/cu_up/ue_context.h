@@ -82,9 +82,10 @@ public:
   {
     return pdu_session_manager.setup_pdu_session(session);
   }
-  pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session) override
+  pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
+                                                     bool new_ul_tnl_info_required) override
   {
-    return pdu_session_manager.modify_pdu_session(session);
+    return pdu_session_manager.modify_pdu_session(session, new_ul_tnl_info_required);
   }
   void remove_pdu_session(pdu_session_id_t pdu_session_id) override
   {

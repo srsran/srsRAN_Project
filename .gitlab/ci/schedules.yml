@@ -49,9 +49,9 @@ Nightly:
       value: "#ci_gnb"
 
 Weekly:
-  cron: "00 23 * * 6"
+  cron: "00 13 * * 6"
   cron_timezone: "Europe/Madrid"
-  ref: next
+  ref: dev
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
@@ -66,14 +66,14 @@ Weekly:
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
 
-Archlinux:
-  cron: "30 21 * * 6"
+Alternative OSs:
+  cron: "00 10 * * 6"
   cron_timezone: "Europe/Madrid"
   ref: dev
   variables:
     - variable_type: env_var
       key: CI_DESCRIPTION
-      value: "Archlinux"
+      value: "Alternative OSs"
     - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"

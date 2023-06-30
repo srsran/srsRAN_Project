@@ -25,8 +25,8 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_buffer.h"
-#include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {
 

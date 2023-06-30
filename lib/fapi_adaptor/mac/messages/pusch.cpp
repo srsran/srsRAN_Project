@@ -59,10 +59,7 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
   builder.set_basic_parameters(pusch_pdu.rnti, handle);
 
   const bwp_configuration& bwp_cfg = *pusch_pdu.bwp_cfg;
-  builder.set_bwp_parameters(bwp_cfg.crbs.length(),
-                             bwp_cfg.crbs.start(),
-                             bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(bwp_cfg.crbs.length(), bwp_cfg.crbs.start(), bwp_cfg.scs, bwp_cfg.cp);
 
   builder.set_information_parameters(pusch_pdu.mcs_descr.target_code_rate,
                                      pusch_pdu.mcs_descr.modulation,

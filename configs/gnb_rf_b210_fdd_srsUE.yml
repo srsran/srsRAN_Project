@@ -1,0 +1,40 @@
+# This example configuration outlines how to configure the srsRAN Project gNB to create a single FDD cell
+# transmitting in band 3, with 20 MHz bandwidth and 15 kHz sub-carrier-spacing. A USRP B200 is configured 
+# as the RF frontend using split 8, with a Leo Bodnar GPSDO as an external reference clock. 
+
+# This particular configuration is intended to be used with srsUE. Note the `pdcch` parameters set in the 
+# `cell_cfg` section. These are set to match the capabilities of srsUE. 
+
+amf:
+  addr: 127.0.1.100                                               # The address or hostname of the AMF.
+  bind_addr: 127.0.0.1                                            # A local IP that the gNB binds to for>
+
+ru_sdr:
+  device_driver: uhd                                              # The RF driver name.
+  device_args: type=b200                                          # Optionally pass arguments to the selected RF driver.
+  sync: external                                                  # Set sync to external. This set-up uses a LEO BODNAR GPDSO providing a 10 MHz ref.
+  srate: 11.52                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
+  tx_gain: 70                                                     # Transmit gain of the RF might need to adjusted to the given situation.
+  rx_gain: 60                                                     # Receive gain of the RF might need to adjusted to the given situation. 
+
+cell_cfg:
+  dl_arfcn: 368500                                                # ARFCN of the downlink carrier (center frequency).
+  band: 3                                                         # The NR band.
+  channel_bandwidth_MHz: 10                                       # Bandwith in MHz. Number of PRBs will be automatically derived.
+  common_scs: 15                                                  # Subcarrier spacing in kHz used for data.
+  plmn: "00101"                                                   # PLMN broadcasted by the gNB.
+  tac: 7                                                          # Tracking area code (needs to match the core configuration). 
+  pdcch:
+    dedicated:
+      ss2_type: common                                            # Set search space to common to match capabilities
+      dci_format_0_1_and_1_1: false                               # Use fallback DCI to match srsUE capabilities
+
+log:
+  filename: /tmp/gnb.log                                          # Path of the log file.
+  all_level: info                                                 # Logging level applied to all layers.
+
+pcap:
+  mac_enable: enable                                              # Set to true to enable MAC-layer PCAP>
+  mac_filename: /tmp/gnb_mac.pcap                                 # Path where the MAC PCAP is stored.
+  ngap_enable: enable                                             # Set to true to enable NGAP PCAPs.
+  ngap_filename: /tmp/gnb_ngap.pcap                               # Path where the NGAP PCAP is stored.

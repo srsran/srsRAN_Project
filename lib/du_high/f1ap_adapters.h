@@ -88,6 +88,11 @@ public:
     return du_mng->handle_ue_delete_request(request);
   }
 
+  void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override
+  {
+    du_mng->handle_ue_reestablishment(new_ue_index, old_ue_index);
+  }
+
 private:
   timer_factory                                                 timers;
   du_manager_configurator*                                      du_mng = nullptr;

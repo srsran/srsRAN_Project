@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/slot_point.h"
+#include "srsran/ofh/slot_symbol_point.h"
 
 namespace srsran {
 namespace ofh {
@@ -37,9 +37,8 @@ public:
   ///
   /// Notifies that the beginning of a new OTA symbol has started.
   ///
-  /// \param[in] slot         Current slot point.
-  /// \param[in] symbol_index Current symbol index within the slot.
-  virtual void on_new_symbol(slot_point slot, unsigned symbol_index) = 0;
+  /// \param[in] symbol_point Current slot and symbol point.
+  virtual void on_new_symbol(slot_symbol_point symbol_point) = 0;
 };
 
 } // namespace ofh

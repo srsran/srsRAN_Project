@@ -197,7 +197,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         // For each DCI in the PDCCH PDU, create a pdcch_processor::pdu_t.
         for (unsigned i_dci = 0, i_dci_end = pdu.pdcch_pdu.dl_dci.size(); i_dci != i_dci_end; ++i_dci) {
           pdcch_processor::pdu_t& pdcch_pdu = pdus.pdcch.emplace_back();
-          convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci);
+          convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci, pm_repo);
           if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
             logger.warning(
                 "Unsupported DL DCI {} detected. Skipping DL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
@@ -435,7 +435,7 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
     // For each DCI in the PDCCH PDU, create a pdcch_processor::pdu_t.
     for (unsigned i_dci = 0, i_dci_end = pdu.pdu.dl_dci.size(); i_dci != i_dci_end; ++i_dci) {
       pdcch_processor::pdu_t& pdcch_pdu = pdus.emplace_back();
-      convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot, i_dci);
+      convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot, i_dci, *pm_repo);
       if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
         logger.warning(
             "Unsupported UL DCI {} detected. Skipping UL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);

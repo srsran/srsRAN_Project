@@ -168,7 +168,5 @@ srsran::get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_c
   }
 
   // default A table case.
-  return pdsch_default_time_allocations_default_A_table(
-      active_bwp_dl_common.generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
-      dmrs_typeA_pos);
+  return pdsch_default_time_allocations_default_A_table(active_bwp_dl_common.generic_params.cp, dmrs_typeA_pos);
 }

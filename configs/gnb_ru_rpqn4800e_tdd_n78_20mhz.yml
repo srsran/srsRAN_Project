@@ -1,3 +1,8 @@
+# This example configuration outlines how to configure the srsRAN Project CU/DU to use an O-RU and split 7.2. This is specifically for use 
+# with the Foxconn RPQN O-RU. This config will create a single TDD cell transmitting in band 3, with 20 MHz bandwidth and 30 kHz sub-carrier-spacing. 
+# The parameters used to configure the RU are found in the `ru_ofh` sub-section. This configuration makes used of the OFH Lib from SRS to enable split 7.2. 
+
+
 amf:
   addr: 127.0.1.100                                               # The address or hostname of the AMF.
   bind_addr: 127.0.0.1                                            # A local IP that the gNB binds to for traffic from the AMF.
@@ -9,23 +14,27 @@ ru_ofh:
   t1a_min_cp_ul: 250                                              # Minimum T1a on Control-Plane for Uplink in microseconds.
   t1a_max_up: 250                                                 # Maximum T1a on User-Plane in microseconds.
   t1a_min_up: 80                                                  # Minimum T1a on User-Plane in microseconds.
-  is_prach_cp_enabled: false                                      # Configures if Control-Plane messages should be used to receive PRACH messages.
+  is_prach_cp_enabled: true                                       # Configures if Control-Plane messages should be used to receive PRACH messages.
   compr_method_ul: bfp                                            # Uplink compression method.
   compr_bitwidth_ul: 9                                            # Uplink IQ samples bitwidth after compression.
   compr_method_dl: bfp                                            # Downlink compression method.
   compr_bitwidth_dl: 9                                            # Downlink IQ samples bitwidth after compression.
-  iq_scaling: 0.002                                               # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
+  compr_method_prach: bfp                                         # PRACH compression method.
+  compr_bitwidth_prach: 9                                         # PRACH IQ samples bitwidth after compression.
+  enable_ul_static_compr_hdr: true                                # Configures if the compression header is present for uplink User-Plane messages (false) or not present (true).
+  enable_dl_static_compr_hdr: true                                # Configures if the compression header is present for downlink User-Plane messages (false) or not present (true).
+  iq_scaling: 0.025                                               # IQ samples scaling factor applied before compression, should be a positive value smaller than 1.
   cells:
     - network_interface: enp1s0f1                                 # Ethernet interface name used to communicate with the RU.
       ru_mac_addr: 6c:ad:ad:00:08:c4                              # RU MAC address.
       du_mac_addr: 80:61:5f:0d:df:ab                              # DU MAC address.
       vlan_tag: 2                                                 # VLAN tag value.
-      prach_port_id: 4                                            # PRACH eAxC port value.
-      dl_port_id: 0                                               # Downlink eAxC port values.
-      ul_port_id: 0                                               # Uplink eAxC port values.
+      prach_port_id: [4, 5, 6, 7]                                 # PRACH eAxC port values.
+      dl_port_id: [1]                                             # Downlink eAxC port values.
+      ul_port_id: [0, 1, 2, 3]                                    # Uplink eAxC port values.
 
 cell_cfg:
-  dl_arfcn: 640000                                                # ARFCN of the downlink carrier (center frequency).
+  dl_arfcn: 637336                                                # ARFCN of the downlink carrier (center frequency).
   band: 78                                                        # The NR band.
   channel_bandwidth_MHz: 20                                       # Bandwith in MHz. Number of PRBs will be automatically derived.
   common_scs: 30                                                  # Subcarrier spacing in kHz used for data.
@@ -33,10 +42,10 @@ cell_cfg:
   tac: 7                                                          # Tracking area code (needs to match the core configuration).
   pci: 1                                                          # Physical cell ID.
   prach:
-    prach_config_index: 7                                         # PRACH configuration index.
+    prach_config_index: 159                                       # PRACH configuration index.
     prach_root_sequence_index: 1                                  # PRACH root sequence index.
     zero_correlation_zone: 0                                      # Zero correlation zone.
-    prach_frequency_start: 0                                      # Offset in PRBs of lowest PRACH transmission occasion in frequency domain respective to PRB 0.
+    prach_frequency_start: 12                                     # Offset in PRBs of lowest PRACH transmission occasion in frequency domain respective to PRB 0.
 
 log:
   filename: /tmp/gnb.log                                          # Path of the log file.

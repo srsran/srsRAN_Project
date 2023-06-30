@@ -24,7 +24,6 @@
 
 #include "../support/uplink_context_repository.h"
 #include "../support/uplink_cplane_context_repository.h"
-#include "ofh_ota_rx_symbol_handler.h"
 #include "ofh_uplane_uplink_packet_handler.h"
 #include "ofh_uplane_uplink_symbol_manager.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
@@ -65,16 +64,12 @@ public:
   receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen);
 
   // See interface for documentation.
-  ota_symbol_boundary_notifier& get_ota_symbol_notifier() override;
-
-  // See interface for documentation.
   ether::frame_notifier& get_ethernet_frame_notifier() override;
 
 private:
   std::unique_ptr<iq_decompressor> decompressor_sel;
   uplane_uplink_packet_handler     ul_packet_handler;
   uplane_uplink_symbol_manager     ul_symbol_manager;
-  ota_rx_symbol_handler            ota_rx_handler;
 };
 
 } // namespace ofh

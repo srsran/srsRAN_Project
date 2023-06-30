@@ -28,6 +28,7 @@
 #include "radio_notifier_sample.h"
 #include "srsran/asn1/rrc_nr/msg_common.h"
 #include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/fapi/logging_decorator_factories.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"

@@ -158,7 +158,11 @@ bool uplane_message_decoder_impl::decode_section(uplane_message_decoder_results&
     return false;
   }
 
-  if (!decode_iq_data(ofh_up_section, deserializer)) {
+  if (!decode_compression_length(ofh_up_section, deserializer, ofh_up_section.ud_comp_hdr)) {
+    return false;
+  }
+
+  if (!decode_iq_data(ofh_up_section, deserializer, ofh_up_section.ud_comp_hdr)) {
     return false;
   }
 
@@ -192,33 +196,6 @@ bool uplane_message_decoder_impl::decode_section_header(uplane_section_params&  
   unsigned& nof_prb = results.nof_prbs;
   nof_prb           = deserializer.read<uint8_t>();
   nof_prb           = (nof_prb == 0) ? ru_nof_prbs : nof_prb;
-
-  return true;
-}
-
-bool uplane_message_decoder_static_compression_impl::decode_compression_header(
-    uplane_section_params&             results,
-    network_order_binary_deserializer& deserializer)
-{
-  switch (compression_params.type) {
-    case compression_type::none:
-    case compression_type::BFP:
-    case compression_type::block_scaling:
-    case compression_type::mu_law:
-    case compression_type::modulation:
-      return true;
-    default:
-      break;
-  }
-
-  if (deserializer.remaining_bytes() < sizeof(uint16_t)) {
-    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the user data compression length",
-                 deserializer.remaining_bytes());
-
-    return false;
-  }
-
-  results.ud_comp_len.emplace(deserializer.read<uint16_t>());
 
   return true;
 }
@@ -287,8 +264,36 @@ static bool decode_prbs_with_ud_comp_param_field(span<compressed_prb>           
   return true;
 }
 
-bool uplane_message_decoder_static_compression_impl::decode_iq_data(uplane_section_params&             results,
-                                                                    network_order_binary_deserializer& deserializer)
+bool uplane_message_decoder_impl::decode_compression_length(uplane_section_params&             results,
+                                                            network_order_binary_deserializer& deserializer,
+                                                            const ru_compression_params&       compression_params)
+{
+  switch (compression_params.type) {
+    case compression_type::none:
+    case compression_type::BFP:
+    case compression_type::block_scaling:
+    case compression_type::mu_law:
+    case compression_type::modulation:
+      return true;
+    default:
+      break;
+  }
+
+  if (deserializer.remaining_bytes() < sizeof(uint16_t)) {
+    logger.debug("Incoming Open Fronthaul message size is {} and it is smaller than the user data compression length",
+                 deserializer.remaining_bytes());
+
+    return false;
+  }
+
+  results.ud_comp_len.emplace(deserializer.read<uint16_t>());
+
+  return true;
+}
+
+bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&             results,
+                                                 network_order_binary_deserializer& deserializer,
+                                                 const ru_compression_params&       compression_params)
 {
   static_vector<compressed_prb, MAX_NOF_PRBS> comp_prbs(results.nof_prbs);
   units::bits prb_iq_data_size_bits(NOF_SUBCARRIERS_PER_RB * 2 * compression_params.data_width);

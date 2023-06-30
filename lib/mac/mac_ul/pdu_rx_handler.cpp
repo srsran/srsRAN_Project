@@ -88,9 +88,10 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   du_ue_index_t ue_index = rnti_table[pdu.rnti];
 
   // > Decode MAC UL PDU.
-  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
-  if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
-    logger.warning("{}: Failed to decode PDU", create_prefix(ctx));
+  decoded_mac_rx_pdu      ctx{sl_rx, cell_index, std::move(pdu), ue_index};
+  error_type<std::string> ret = ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu);
+  if (ret.is_error()) {
+    logger.info("{}: Failed to decode MAC UL PDU. Cause: {}", create_prefix(ctx), ret.error());
     return false;
   }
 
@@ -288,7 +289,8 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
           return;
         }
 
-        // >> In case no positive BSR was provided, we force a SR in the scheduler to complete the RA procedure.
+        // >> In case no positive BSR was provided, we force a positive BSR in the scheduler to complete the RA
+        // procedure.
         if (not contains_positive_bsr(ctx.decoded_subpdus)) {
           sched.handle_ul_sched_command(
               mac_ul_scheduling_command{ctx.cell_index_rx, ctx.slot_rx, ctx.ue_index, ctx.pdu_rx.rnti});
@@ -307,12 +309,13 @@ void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu
   }
 
   srsran::mac_nr_context_info context;
-  context.radioType           = PCAP_FDD_RADIO;
-  context.direction           = PCAP_DIRECTION_UPLINK;
-  context.rntiType            = PCAP_C_RNTI;
-  context.rnti                = pdu.rnti;
-  context.ueid                = rnti_table[pdu.rnti];
-  context.harqid              = pdu.harq_id;
+  context.radioType = PCAP_FDD_RADIO;
+  context.direction = PCAP_DIRECTION_UPLINK;
+  context.rntiType  = PCAP_C_RNTI;
+  context.rnti      = pdu.rnti;
+  context.ueid      = rnti_table[pdu.rnti] == du_ue_index_t::INVALID_DU_UE_INDEX ? du_ue_index_t::INVALID_DU_UE_INDEX
+                                                                                 : rnti_table[pdu.rnti] + 1;
+  context.harqid    = pdu.harq_id;
   context.system_frame_number = sl_rx.sfn();
   context.sub_frame_number    = sl_rx.subframe_index();
   context.length              = pdu.pdu.length();

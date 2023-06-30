@@ -1,0 +1,30 @@
+builder version:
+  stage: ci
+  image: ubuntu:22.04
+  rules:
+    - if: $ON_MR
+    - if: $ON_WEB
+    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  script:
+    - |
+      hash_multiple() {
+        # Create a temporary tar archive of the folder
+        temp_archive=$(mktemp)
+        tar -cf "$temp_archive" -C "$@" --mtime='1970-01-01' --sort=name .
+
+        # Compute the hash of the archive using sha256sum
+        hash=$(sha256sum "$temp_archive" | cut -c 1-32)
+        echo "$hash"
+
+        # Clean up the temporary archive
+        rm "$temp_archive"
+      }
+    - DOCKER_BUILDER_VERSION=$(hash_multiple .gitlab/ci/builders)
+    - echo "DOCKER_BUILDER_VERSION=$DOCKER_BUILDER_VERSION" >> builder.env
+    - echo $DOCKER_BUILDER_VERSION
+  artifacts:
+    reports:
+      dotenv: builder.env
+  needs: []

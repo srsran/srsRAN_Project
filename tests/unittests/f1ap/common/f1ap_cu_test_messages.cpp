@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_cu_test_messages.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -301,7 +302,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   drbs_to_be_setup_mod_item.qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
 
   // reflective qos attribute
-  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute = "subject-to";
+  drbs_to_be_setup_mod_item.qos_info.drb_qos.reflective_qos_attribute = true;
 
   // s nssai
   drbs_to_be_setup_mod_item.qos_info.s_nssai.sst = 1;
@@ -324,7 +325,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   // gbr qos flow info
   flows_mapped_to_drb_item.qos_flow_level_qos_params.gbr_qos_info = gbr_qos_info;
   // reflective qos attribute
-  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = "subject-to";
+  flows_mapped_to_drb_item.qos_flow_level_qos_params.reflective_qos_attribute = true;
 
   drbs_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(uint_to_qos_flow_id(1), flows_mapped_to_drb_item);
 
@@ -366,7 +367,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   qos_info.drb_qos.gbr_qos_info = gbr_qos_info;
 
   // reflective qos attribute
-  qos_info.drb_qos.reflective_qos_attribute = "subject-to";
+  qos_info.drb_qos.reflective_qos_attribute = true;
 
   // s nssai
   qos_info.s_nssai.sst = 1;
@@ -396,7 +397,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.drbs_to_be_released_list.push_back(uint_to_drb_id(1));
 
   // inactivity monitoring request
-  msg.inactivity_monitoring_request = "true";
+  msg.inactivity_monitoring_request = true;
 
   // rat freq prio info
   cu_cp_rat_freq_prio_info rat_freq_prio_info;
@@ -405,7 +406,7 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.rat_freq_prio_info                = rat_freq_prio_info;
 
   // drx cfg ind
-  msg.drx_cfg_ind = "release";
+  msg.drx_cfg_ind = true;
 
   // rlc fail ind
   cu_cp_rlc_fail_ind rlc_fail_ind;
@@ -416,16 +417,16 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.ul_tx_direct_current_list_info = make_byte_buffer("deadbeef");
 
   // gnb du cfg query
-  msg.gnb_du_cfg_query = "true";
+  msg.gnb_du_cfg_query = true;
 
   // gnb du ue ambr ul
   msg.gnb_du_ue_ambr_ul = 200000000;
 
   // execute dupl
-  msg.execute_dupl = "true";
+  msg.execute_dupl = true;
 
   // rrc delivery status request
-  msg.rrc_delivery_status_request = "true";
+  msg.rrc_delivery_status_request = true;
 
   // res coordination transfer info
   cu_cp_res_coordination_transfer_info res_coordination_transfer_info;
@@ -436,10 +437,10 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.serving_cell_mo = 1;
 
   // need for gap
-  msg.need_for_gap = "true";
+  msg.need_for_gap = true;
 
   // full cfg
-  msg.full_cfg = "full";
+  msg.full_cfg = true;
 
   return msg;
 }
@@ -512,7 +513,7 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   paging_msg.ue_radio_cap_for_paging                    = ue_radio_cap_for_paging;
 
   // add paging origin
-  paging_msg.paging_origin = "non-3gpp";
+  paging_msg.paging_origin = true;
 
   // add assist data for paging
   cu_cp_assist_data_for_paging assist_data_for_paging;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/qos_prio_level.h"
 
@@ -121,15 +122,15 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   // reflective qos attribute
   if (qos_flow_level_params.reflective_qos_attribute.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
-                         qos_flow_level_params.reflective_qos_attribute.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_attribute,
+                       qos_flow_level_params.reflective_qos_attribute.value());
   }
 
   // add qos info
   if (qos_flow_level_params.add_qos_info.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
-                         qos_flow_level_params.add_qos_info.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.add_qos_info,
+                       qos_flow_level_params.add_qos_info.value());
   }
 
   // paging policy ind
@@ -142,8 +143,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   // reflective qos ind
   if (qos_flow_level_params.reflective_qos_ind.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
-                         qos_flow_level_params.reflective_qos_ind.value());
+    asn1::bool_to_enum(asn1_qos_flow_info_item.qos_flow_level_qos_params.reflective_qos_ind,
+                       qos_flow_level_params.reflective_qos_ind.value());
   }
 
   // qos flow map ind
@@ -291,15 +292,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
                                     pdu_session_res_item.ng_ul_up_tnl_info);
 
     // security indication
-    asn1::string_to_enum(asn1_pdu_session_res_item.security_ind.confidentiality_protection_ind,
-                         pdu_session_res_item.security_ind.confidentiality_protection_ind);
-    asn1::string_to_enum(asn1_pdu_session_res_item.security_ind.integrity_protection_ind,
-                         pdu_session_res_item.security_ind.integrity_protection_ind);
-    if (pdu_session_res_item.security_ind.maximum_ipdatarate.has_value()) {
-      asn1_pdu_session_res_item.security_ind.max_ip_datarate_present = true;
-      asn1::string_to_enum(asn1_pdu_session_res_item.security_ind.max_ip_datarate.max_ip_rate,
-                           pdu_session_res_item.security_ind.maximum_ipdatarate.value());
-    }
+    security_indication_to_asn1(asn1_pdu_session_res_item.security_ind, pdu_session_res_item.security_ind);
 
     // drb to setup list ng ran
     for (const auto& drb_to_setup_item : pdu_session_res_item.drb_to_setup_list_ng_ran) {
@@ -529,6 +522,11 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_context_mod_request_s&       asn1_request,
                                                           const e1ap_bearer_context_modification_request& request)
 {
+  if (request.new_ul_tnl_info_required.has_value()) {
+    asn1_request->new_ul_tnl_info_required_present = true;
+    asn1::bool_to_enum(asn1_request->new_ul_tnl_info_required, request.new_ul_tnl_info_required.value());
+  }
+
   // ng ran bearer context mod
   if (request.ng_ran_bearer_context_mod_request.has_value()) {
     asn1_request->sys_bearer_context_mod_request_present = true;
@@ -592,15 +590,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
                                         res_to_setup_mod_item.ng_ul_up_tnl_info);
 
         // security indication
-        asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.confidentiality_protection_ind,
-                             res_to_setup_mod_item.security_ind.confidentiality_protection_ind);
-        asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.integrity_protection_ind,
-                             res_to_setup_mod_item.security_ind.integrity_protection_ind);
-        if (res_to_setup_mod_item.security_ind.maximum_ipdatarate.has_value()) {
-          asn1_res_to_setup_mod_item.security_ind.max_ip_datarate_present = true;
-          asn1::string_to_enum(asn1_res_to_setup_mod_item.security_ind.max_ip_datarate.max_ip_rate,
-                               res_to_setup_mod_item.security_ind.maximum_ipdatarate.value());
-        }
+        security_indication_to_asn1(asn1_res_to_setup_mod_item.security_ind, res_to_setup_mod_item.security_ind);
 
         for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_list_ng_ran) {
           asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;

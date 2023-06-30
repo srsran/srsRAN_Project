@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "ofh_downlink_handler.h"
-#include "ofh_uplink_request_handler.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
+#include "srsran/ofh/ofh_ota_symbol_handler.h"
+#include "srsran/ofh/transmitter/ofh_downlink_handler.h"
+#include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 
 namespace srsran {
 namespace ofh {
@@ -42,8 +42,8 @@ public:
   /// Returns the downlink handler of this Open Fronthaul transmitter.
   virtual downlink_handler& get_downlink_handler() = 0;
 
-  /// Returns the symbol handler of this Open Fronthaul transmitter.
-  virtual symbol_handler& get_symbol_handler() = 0;
+  /// Returns the OTA symbol handler of this Open Fronthaul transmitter.
+  virtual ota_symbol_handler& get_ota_symbol_handler() = 0;
 };
 
 } // namespace ofh

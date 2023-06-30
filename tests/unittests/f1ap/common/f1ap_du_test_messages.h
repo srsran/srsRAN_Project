@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/ran/lcid.h"
 

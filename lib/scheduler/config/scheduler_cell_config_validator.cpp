@@ -84,7 +84,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     const cell_configuration cell_cfg{msg};
 
     auto ret = prach_helper::prach_fits_in_tdd_pattern(pusch_scs,
-                                                       msg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended,
+                                                       msg.ul_cfg_common.init_ul_bwp.generic_params.cp,
                                                        rach_cfg_cmn.rach_cfg_generic.prach_config_index,
                                                        *msg.tdd_ul_dl_cfg_common);
     if (ret.is_error()) {

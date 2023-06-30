@@ -21,6 +21,7 @@
  */
 
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/support/srsran_test.h"
 #include "srsran/support/test_utils.h"
 #include <cmath>
 #include <gtest/gtest.h>
@@ -610,6 +611,45 @@ TEST(asn1_enumerated, pack_unpack)
   srslog::flush();
   TESTASSERT(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
 }
+
+class EnumBoolTest
+{
+public:
+  enum options { true_value, nulltype };
+  options               value;
+  static const uint32_t nof_types = 1, nof_exts = 0;
+  static const bool     has_ext = false;
+  EnumBoolTest() {}
+  EnumBoolTest(options v) : value(v) {}
+  EnumBoolTest& operator=(options v)
+  {
+    value = v;
+    return *this;
+  }
+              operator uint8_t() { return (uint8_t)value; }
+  std::string to_string() const
+  {
+    switch (value) {
+      case true_value:
+        return "true";
+      default:
+        printf("invalid value\n");
+    }
+    return "";
+  }
+};
+
+TEST(asn1_enumerated, bool_to_enum_test)
+{
+  EnumBoolTest e, e2;
+  TESTASSERT(e.nof_types == 1);
+  bool_to_enum<EnumBoolTest>(e, true);
+  TESTASSERT(e.to_string() == "true");
+  e2 = EnumBoolTest::options::true_value;
+  TESTASSERT(enum_to_bool(e2));
+  e2 = EnumBoolTest::options::nulltype;
+  TESTASSERT(!enum_to_bool(e2));
+};
 
 void test_json_writer()
 {

@@ -70,7 +70,7 @@ void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::conf
   proc_pdu.amplitude = translate_amplitude(fapi_pdu.power_control_offset_ss_profile_nr);
 
   unsigned nof_ports = csi_rs::get_nof_csi_rs_ports(fapi_pdu.row);
-  proc_pdu.precoding = make_wideband_identity(nof_ports);
+  proc_pdu.precoding = precoding_configuration::make_wideband(make_identity(nof_ports));
 }
 
 void srsran::fapi_adaptor::get_csi_rs_pattern_from_fapi_pdu(csi_rs_pattern&            pattern,

@@ -28,6 +28,8 @@
 namespace srsran {
 namespace fapi_adaptor {
 
+class precoding_matrix_mapper;
+
 /// Collection of downlink DCIs that share the same BWP, CORESET and starting symbol.
 struct mac_pdcch_pdu {
   /// Groups the DCI information.
@@ -47,13 +49,23 @@ struct mac_pdcch_pdu {
 ///
 /// \param[out] fapi_pdu PDCCH FAPI PDU that will store the converted data.
 /// \param[in] mac_pdu  MAC PDCCH PDU to convert to FAPI.
-void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu& mac_pdu);
+/// \param[in] pm_mapper Precoding matrix mapper.
+/// \param[in] cell_nof_prbs Cell number of PRBs.
+void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu&            fapi_pdu,
+                               const mac_pdcch_pdu&           mac_pdu,
+                               const precoding_matrix_mapper& pm_mapper,
+                               unsigned                       cell_nof_prbs);
 
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.
 ///
 /// \param[out] builder PDCCH FAPI builder that helps to fill the PDU.
 /// \param[in] mac_pdu  MAC PDCCH PDU to convert to FAPI.
-void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu);
+/// \param[in] pm_mapper Precoding matrix mapper.
+/// \param[in] cell_nof_prbs Cell number of PRBs.
+void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&    builder,
+                               const mac_pdcch_pdu&           mac_pdu,
+                               const precoding_matrix_mapper& pm_mapper,
+                               unsigned                       cell_nof_prbs);
 
 } // namespace fapi_adaptor
 } // namespace srsran

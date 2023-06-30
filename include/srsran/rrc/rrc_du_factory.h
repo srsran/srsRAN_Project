@@ -25,6 +25,7 @@
 #include "rrc_config.h"
 #include "rrc_ue_config.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_du.h"
@@ -43,12 +44,14 @@ struct rrc_du_creation_message {
                           rrc_ue_du_processor_notifier&    rrc_ue_du_proc_notif_,
                           rrc_ue_nas_notifier&             nas_notif_,
                           rrc_ue_control_notifier&         ngap_ctrl_notif_,
-                          rrc_ue_reestablishment_notifier& cu_cp_notif_) :
+                          rrc_ue_reestablishment_notifier& cu_cp_notif_,
+                          cell_meas_manager&               cell_meas_mng_) :
     cfg(cfg_),
     rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
     nas_notifier(nas_notif_),
     ngap_ctrl_notifier(ngap_ctrl_notif_),
-    cu_cp_notifier(cu_cp_notif_)
+    cu_cp_notifier(cu_cp_notif_),
+    cell_meas_mng(cell_meas_mng_)
   {
   }
   const rrc_cfg_t&                 cfg;
@@ -56,6 +59,7 @@ struct rrc_du_creation_message {
   rrc_ue_nas_notifier&             nas_notifier;
   rrc_ue_control_notifier&         ngap_ctrl_notifier;
   rrc_ue_reestablishment_notifier& cu_cp_notifier;
+  cell_meas_manager&               cell_meas_mng; // cell measurement manager
 };
 
 /// Create an instance of an RRC entity

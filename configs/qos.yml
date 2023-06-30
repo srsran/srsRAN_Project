@@ -1,5 +1,10 @@
 # Quality of Service (QoS) example configurations for 5QI 1, 2, 5, 7 and 9
-# Based on 5QI characteristics in TS 23.501 table 5.7.4-1
+# Based on 5QI characteristics in TS 23.501 table 5.7.4-1 
+
+# This is a supplementary configuration to modify the RLC and PDCP radio bearers on 
+# a per 5QI basis. This file will be passed to the gNB along with the base configuration 
+# at start-up. The following command may be used to run the gNB with this configuration file: 
+#   sudo ./gnb -c gnb_ru_ran550_tdd_n78_100mhz_2x2.yml -c qos.yml
 
 qos:
   -

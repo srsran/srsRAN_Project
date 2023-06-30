@@ -41,11 +41,11 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
   harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS, harq_timeout_notifier),
-  channel_state(ue_serv_cell, expert_cfg_),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  logger(srslog::fetch_basic_logger("SCHED")),
+  channel_state(expert_cfg_, ue_cfg.get_nof_dl_ports())
 {
 }
 

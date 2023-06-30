@@ -1,0 +1,342 @@
+include:
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/setup/default.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/setup/workflow.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/tools/docker.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "8"
+    file: .gitlab/ci-shared/setup/versions.yml
+  - local: .gitlab/ci/builders/version.yml
+  - local: .gitlab/ci/src_cache.yml
+
+################################################################################
+# Stages
+################################################################################
+stages:
+  - ci
+  - uhd
+  - publish
+  - manifest
+
+################################################################################
+# UHD builder
+################################################################################
+.ubuntu-uhd-builder:
+  stage: uhd
+  image: ubuntu:${os_version}
+  rules:
+    - if: $ON_MR
+  tags:
+    - aws-spot-amd64
+  variables:
+    os_version: ""
+    uhd_version: ""
+    GIT_STRATEGY: none
+    KUBERNETES_MEMORY_REQUEST: 7Gi
+    KUBERNETES_CPU_REQUEST: 4
+  before_script:
+    - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+    # Download existing package in the registry, if exists
+    - |
+      download_from_registry() {
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${uhd_version}/uhd.tar.gz" -o output.tar.gz)
+        if [[ $http_code == "200" ]]; then
+          tar -xf output.tar.gz
+          return 0
+        else
+          return 1
+        fi
+      }
+
+    # Install dependencies and compile
+    - |
+      build_uhd() {
+        DEBIAN_FRONTEND=noninteractive apt-get update &&  apt-get install -y --no-install-recommends \
+          cmake build-essential pkg-config \
+          libboost-all-dev libusb-1.0-0-dev doxygen \
+          python3-docutils python3-mako python3-numpy python3-setuptools python3-requests
+
+        cd /tmp
+        curl -LJO "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz"
+        tar -xf "uhd-${uhd_version}.tar.gz"
+        cd "uhd-${uhd_version}/host" && mkdir -p build && cd build
+        cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" .. || cmake -DENABLE_LIBUHD=On -DCMAKE_INSTALL_PREFIX="${CI_PROJECT_DIR}/.gitlab/ci/builders/uhd/${uhd_version}" ..
+        make -j "$(nproc --all)"
+        make install
+      }
+
+    # Publish compiled version to the registry
+    - |
+      publish_to_registry() {
+        cd ${CI_PROJECT_DIR}
+        tar -czf uhd.tar.gz .gitlab/ci/builders/uhd/${uhd_version}
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file uhd.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/uhd/ubuntu-${os_version}-${uhd_version}/uhd.tar.gz"
+      }
+  script:
+    - |
+      if download_from_registry; then
+        echo "Reusing existing package"
+      else
+        echo "Not found on the package registry. It will be compiled and published"
+        build_uhd
+        publish_to_registry
+      fi
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/uhd
+    expire_in: 30 minutes
+
+ubuntu-23-uhd:
+  extends: .ubuntu-uhd-builder
+  variables:
+    os_version: "23.04"
+  parallel:
+    matrix:
+      - uhd_version: ["4.3.0.0"]
+
+ubuntu-22-uhd:
+  extends: .ubuntu-uhd-builder
+  variables:
+    os_version: "22.04"
+  parallel:
+    matrix:
+      - uhd_version: ["4.2.0.0"]
+
+ubuntu-20-uhd:
+  extends: .ubuntu-uhd-builder
+  variables:
+    os_version: "20.04"
+  parallel:
+    matrix:
+      - uhd_version: ["4.2.0.0", "4.1.0.5"]
+
+################################################################################
+# Common
+################################################################################
+.docker-builder-gnb:
+  extends: .docker-builder
+  stage: publish
+  variables:
+    OS_FAMILY: none
+    OS_NAME: none
+    OS_VERSION: none
+    MULTI_ARCH_BUILD: none
+    RHEL_CT_VERSION: none
+    MODE: publish
+  tags:
+    - aws-spot-$PLATFORM
+  rules:
+    - if: $ON_MR
+  before_script:
+    - !reference [.fetch_src_cache, before_script]
+    - !reference [.fetch_src_cache, script]
+    - |
+      export NAME=builder-$OS_NAME-$OS_VERSION
+      export VERSION=$DOCKER_BUILDER_VERSION
+      export CONTEXT=.gitlab/ci/builders
+      export DOCKERFILE=$CONTEXT/$OS_FAMILY
+      export BUILD_ARGS="OS_NAME=${OS_NAME};VERSION=${OS_VERSION};TAG=${VERSION};RHEL_VERSION=${RHEL_CT_VERSION};CR_REGISTRY_URI=${CR_REGISTRY_URI}"
+      mkdir -p $CONTEXT/uhd  # make sure those jobs that don't need UHD can copy something
+  needs:
+    - builder version
+  cache:
+    - !reference [.fetch_src_cache, cache]
+
+################################################################################
+# Publish
+################################################################################
+
+# Codechecker
+docker-builder-publish [codechecker]:
+  extends: .docker-builder
+  stage: publish
+  variables:
+    MULTI_ARCH_BUILD: none
+    RHEL_CT_VERSION: none
+    PLATFORM: amd64
+    MODE: publish
+  tags:
+    - aws-spot-$PLATFORM
+  rules:
+    - if: $ON_MR
+  before_script:
+    - !reference [.fetch_src_cache, before_script]
+    - !reference [.fetch_src_cache, script]
+    - |
+      export NAME=codechecker
+      export VERSION=$DOCKER_BUILDER_VERSION
+      export CONTEXT=.gitlab/ci/builders
+      export DOCKERFILE=$CONTEXT/codechecker
+      export BUILD_ARGS="CR_REGISTRY_URI=${CR_REGISTRY_URI};CI_TOOLS_REPO=${CI_TOOLS_REPO}"
+  needs:
+    - builder version
+  cache:
+    - !reference [.fetch_src_cache, cache]
+
+# Ubuntu 20.04
+docker-builder-publish [ubuntu, 20.04]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "20.04"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+    - ubuntu-20-uhd
+
+docker manifest ubuntu 20.04:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [ubuntu, 20.04]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-20.04:${VERSION}
+
+# Ubuntu 22.04
+docker-builder-publish [ubuntu, 22.04]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "22.04"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+    - ubuntu-22-uhd
+
+docker manifest ubuntu 22.04:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [ubuntu, 22.04]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-22.04:${VERSION}
+
+# Ubuntu 23.04
+docker-builder-publish [ubuntu, 23.04]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: ubuntu
+    OS_VERSION: "23.04"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+    - ubuntu-23-uhd
+
+docker manifest ubuntu 23.04:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [ubuntu, 23.04]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-ubuntu-23.04:${VERSION}
+
+# debian
+docker-builder-publish [debian]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: debian
+    OS_NAME: debian
+    PLATFORM: amd64
+  parallel:
+    matrix:
+      - OS_VERSION: ["11", "12"]
+  needs:
+    - builder version
+
+# archlinux
+docker-builder-publish [archlinux, latest]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: archlinux
+    OS_NAME: archlinux
+    OS_VERSION: latest
+    PLATFORM: amd64
+  needs:
+    - builder version
+
+# rhel 8
+docker-builder-publish [rhel, 8]:
+  extends:
+    - .docker-builder-gnb
+  variables:
+    OS_FAMILY: rhel
+    OS_NAME: rhel
+    OS_VERSION: "8"
+    VERSION: $DOCKER_BUILDER_VERSION
+    RHEL_CT_VERSION: "1.0.6"
+    MULTI_ARCH_BUILD: "true"
+  parallel:
+    matrix:
+      - PLATFORM: ["arm64", "amd64"]
+  needs:
+    - builder version
+
+docker manifest rhel 8:
+  extends: .docker manifest
+  stage: manifest
+  variables:
+    VERSION: $DOCKER_BUILDER_VERSION
+  needs:
+    - builder version
+    - job: docker-builder-publish [rhel, 8]
+      optional: false
+  script:
+    - |
+      docker manifest create \
+        ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION} \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-amd64 \
+        --amend ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}-arm64
+      docker manifest push ${CR_REGISTRY_URI}${CI_PROJECT_NAMESPACE#'softwareradiosystems'}/${CI_PROJECT_NAME}/builder-rhel-8:${VERSION}

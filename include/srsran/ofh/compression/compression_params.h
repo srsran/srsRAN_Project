@@ -63,6 +63,13 @@ struct ru_compression_params {
   unsigned data_width;
 };
 
+inline compression_type to_compression_type(unsigned compr_value)
+{
+  srsran_assert(compr_value < NOF_COMPRESSION_TYPES_SUPPORTED, "Unsupported compression type={}", compr_value);
+
+  return static_cast<compression_type>(compr_value);
+}
+
 inline compression_type to_compression_type(const std::string& compr)
 {
   std::string compr_lower = compr;

@@ -25,46 +25,6 @@
 using namespace srsran;
 using namespace srs_du;
 
-rlc_mode srsran::srs_du::convert_asn1_f1ap_to_rlc_mode(asn1::f1ap::rlc_mode_e mode)
-{
-  switch (mode.value) {
-    case asn1::f1ap::rlc_mode_opts::rlc_am:
-      return rlc_mode::am;
-      break;
-    case asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional:
-      return rlc_mode::um_bidir;
-      break;
-    case asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
-      return rlc_mode::um_unidir_dl;
-      break;
-    case asn1::f1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
-      return rlc_mode::um_unidir_ul;
-      break;
-    default:
-      report_fatal_error("Invalid RLC mode {}", mode.value);
-      break;
-  }
-  return {};
-}
-
-rlc_mode srsran::srs_du::convert_asn1_f1ap_to_rlc_mode(drb_rlc_mode mode)
-{
-  switch (mode) {
-    case drb_rlc_mode::am:
-      return rlc_mode::am;
-    case drb_rlc_mode::um_bidir:
-      return rlc_mode::um_bidir;
-    case drb_rlc_mode::um_unidir_dl:
-      return rlc_mode::um_unidir_dl;
-    case drb_rlc_mode::um_unidir_ul:
-      return rlc_mode::um_unidir_ul;
-    default:
-      report_fatal_error("Invalid RLC mode {}", mode);
-      break;
-  }
-  return {};
-}
-
 rlc_config srsran::srs_du::make_default_srb_rlc_config()
 {
   rlc_config cfg;

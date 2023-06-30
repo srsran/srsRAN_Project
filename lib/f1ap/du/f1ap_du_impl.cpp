@@ -21,13 +21,13 @@
  */
 
 #include "f1ap_du_impl.h"
-#include "../../ran/gnb_format.h"
 #include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 
@@ -145,6 +145,9 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   if (ue == nullptr) {
     // [TS38.473, 8.4.2.2.] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established at reception of the DL RRC MESSAGE TRANSFER message.
+    logger.warning(
+        "gNB-DU-UE-F1AP-ID={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
+        gnb_du_ue_f1ap_id);
     // TODO.
     return;
   }
@@ -161,25 +164,21 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
     ue->context.gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(msg->new_gnb_cu_ue_f1ap_id);
   }
 
-  // TODO: Check old gNB-DU UE F1AP ID.
-
   if (msg->old_gnb_du_ue_f1ap_id_present) {
     // > If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE in the
     // DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old gNB-DU
     // UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
-    gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
-    f1ap_du_ue*         old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
+    const gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
+    f1ap_du_ue*               old_ue                = ues.find(old_gnb_du_ue_f1ap_id);
     if (old_ue != nullptr) {
-      f1ap_ue_delete_request request{};
-      request.ue_index = old_ue->context.ue_index;
-      du_mng.get_ue_handler(old_ue->context.ue_index).schedule_async_task(du_mng.request_ue_removal(request));
+      du_mng.notify_reestablishment_of_old_ue(ue->context.ue_index, old_ue->context.ue_index);
     } else {
       logger.warning("old gNB-DU UE F1AP ID={} not found", old_gnb_du_ue_f1ap_id);
     }
   }
 
-  srb_id_t    srb_id     = int_to_srb_id(msg->srb_id);
-  f1c_bearer* srb_bearer = ue->bearers.find_srb(srb_id);
+  const srb_id_t srb_id     = int_to_srb_id(msg->srb_id);
+  f1c_bearer*    srb_bearer = ue->bearers.find_srb(srb_id);
   if (srb_bearer == nullptr) {
     logger.warning("Discarding DlRrcMessageTransfer cause=SRB-ID={} not found", srb_id);
     // TODO: Handle error.

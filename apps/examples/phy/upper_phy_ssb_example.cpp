@@ -216,7 +216,8 @@ public:
       data_modulator->modulate(data_symbols.get_slice(0), data, data_modulation);
 
       // Precoding configuration for data. It transmits the data REs over all ports.
-      precoding_configuration precoding_config = make_wideband_one_layer_all_ports(nof_ports);
+      precoding_configuration precoding_config =
+          precoding_configuration::precoding_configuration::make_wideband(make_one_layer_all_ports(nof_ports));
 
       // Contiguous allocation pattern in time and frequency.
       re_pattern grid_allocation(0, nof_subcs / NRE, 1, ~re_prb_mask(), ~symbol_slot_mask());

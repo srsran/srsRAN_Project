@@ -1,0 +1,28 @@
+# Example configuration file for mobility.
+
+cu_cp:
+  mobility:
+    # List of all cells known to the CU-CP and their respective neighbor cells.
+    cells:
+      - nr_cell_id: 1
+        ncells:
+          - rat: nr
+            nr_cell_id: 0x2
+            # Must be present if values are not provided over F1.
+            #ssb_arfcn: 12323 
+            #band: 78
+            #ssb_scs: 30
+            #ssb_period: 20
+            #ssb_offset: 0
+            #ssb_duration: 5
+      - nr_cell_id: 0x2
+        ncells:
+          - rat: "nr"
+            nr_cell_id: 0x1
+
+    # gNB uses this measurement config to dynamically build a measConfig sent to the UEs using the below values.
+    meas_config:
+      a3_report_type: rsrp
+      a3_offset_db: 6
+      a3_hysteresis_db: 0
+      a3_time_to_trigger_ms: 100

@@ -140,6 +140,11 @@ async_task<void> du_manager_impl::handle_ue_delete_request(const f1ap_ue_delete_
   return ue_mng.handle_ue_delete_request(request);
 }
 
+void du_manager_impl::handle_ue_reestablishment(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
+{
+  ue_mng.handle_reestablishment_request(new_ue_index, old_ue_index);
+}
+
 size_t du_manager_impl::nof_ues()
 {
   // TODO: This is temporary code.

@@ -22,13 +22,10 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap.h"
-
 namespace srsran {
 
-struct f1ap_message {
-  asn1::f1ap::f1ap_pdu_c pdu;
-};
+// Forward declaration.
+struct f1ap_message;
 
 /// This interface is used to push F1AP messages to the F1 interface.
 class f1ap_message_handler

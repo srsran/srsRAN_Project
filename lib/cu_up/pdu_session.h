@@ -61,12 +61,12 @@ struct pdu_session {
   gtpu_sdap_adapter gtpu_to_sdap_adapter;
   sdap_gtpu_adapter sdap_to_gtpu_adapter;
 
-  pdcp_f1u_adapter  pdcp_to_f1u_adapter;
-  pdu_session_id_t  pdu_session_id; //< PDU session ID (0-255)
-  std::string       session_type;
-  s_nssai_t         snssai;
-  e1ap_security_ind security_ind;
-  uint64_t          pdu_session_res_ambr = 0;
+  pdcp_f1u_adapter      pdcp_to_f1u_adapter;
+  pdu_session_id_t      pdu_session_id; //< PDU session ID (0-255)
+  std::string           session_type;
+  s_nssai_t             snssai;
+  security_indication_t security_ind;
+  uint64_t              pdu_session_res_ambr = 0;
 
   // Tunneling info used by all DRBs/QoS flows in this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID

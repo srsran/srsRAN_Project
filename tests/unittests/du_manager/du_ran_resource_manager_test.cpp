@@ -73,7 +73,9 @@ protected:
       unsigned sr_period_slots = sr_periodicity_to_slot(sr_res_list[i].period);
       if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
         for (unsigned j = 0; j != sr_period_slots; ++j) {
-          if (has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, j % slots_per_frame)) {
+          if (get_active_tdd_ul_symbols(
+                  *cell_cfg_list[0].tdd_ul_dl_cfg_common, j % slots_per_frame, cyclic_prefix::NORMAL)
+                  .length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
             nof_offsets++;
           }
         }
@@ -104,7 +106,7 @@ protected:
 
     // We always put the CSI PUCCH resource is always at the end of the list.
     if (csi_pucch_res.has_value()) {
-      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size();
+      pucch_checker = pucch_checker and csi_pucch_res.value() == pucch_cfg.pucch_res_list.size() - 1;
     }
 
     return pucch_checker;
@@ -161,8 +163,10 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
     ASSERT_FALSE(sr_res_list.empty());
     ASSERT_EQ(sr_periodicity_to_slot(sr_res_list[0].period), sr_period);
     if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
-      ASSERT_TRUE(
-          has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, sr_res_list[0].offset % slots_per_frame));
+      ASSERT_TRUE(get_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common,
+                                            sr_res_list[0].offset % slots_per_frame,
+                                            cyclic_prefix::NORMAL)
+                      .length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     }
     ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
     sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));

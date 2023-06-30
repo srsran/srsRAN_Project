@@ -144,9 +144,9 @@ static bwp_configuration generate_bwp_configuration()
 {
   bwp_configuration config;
 
-  config.cp_extended = generate_bool();
-  config.scs         = subcarrier_spacing::kHz240;
-  config.crbs        = generate_crb_interval();
+  config.cp   = generate_bool() ? cyclic_prefix::NORMAL : cyclic_prefix::EXTENDED;
+  config.scs  = subcarrier_spacing::kHz240;
+  config.crbs = generate_crb_interval();
 
   return config;
 }
@@ -334,7 +334,7 @@ ul_sched_info unittests::build_valid_pusch_pdu()
   ul_sched_info      info;
   pusch_information& pusch = info.pusch_cfg;
 
-  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {10, 10}};
+  static bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {10, 10}};
 
   pusch.rnti                       = to_rnti(29);
   pusch.bwp_cfg                    = &bwp_cfg;
@@ -377,7 +377,7 @@ pucch_info unittests::build_valid_pucch_format_1_pdu()
 {
   pucch_info pucch;
 
-  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {2, 10}};
+  static bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
   pucch.crnti                         = to_rnti(29);
   pucch.bwp_cfg                       = &bwp_cfg;
@@ -400,7 +400,7 @@ pucch_info srsran::unittests::build_valid_pucch_format_2_pdu()
 {
   pucch_info pucch;
 
-  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {2, 10}};
+  static constexpr bwp_configuration bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
   pucch.crnti                      = to_rnti(29);
   pucch.bwp_cfg                    = &bwp_cfg;

@@ -47,10 +47,10 @@ public:
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
-  virtual ~f1u_bearer_impl() { disconnector.disconnect_cu_bearer(ul_teid); }
+  ~f1u_bearer_impl() override { disconnector.disconnect_cu_bearer(ul_teid); }
 
-  virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
-  virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+  f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
+  f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(pdcp_tx_pdu sdu) override;

@@ -35,6 +35,7 @@ variables:
     description: Computer architecture and supported instruction sets
     options:
       - "aws-spot-amd64"
+      - "aws-demand-amd64-avx2"
       - "aws-demand-amd64-avx2-avx512"
       - "aws-spot-arm64"
     value: "aws-spot-amd64"
@@ -44,6 +45,8 @@ variables:
       - "ubuntu-23.04"
       - "ubuntu-22.04"
       - "ubuntu-20.04"
+      - "debian-12"
+      - "debian-11"
       - "archlinux-latest"
       - "rhel-8"
     value: "ubuntu-22.04"
@@ -58,7 +61,6 @@ variables:
     options:
       - "default"
       - "coverage"
-      - "asan"
       - "tsan"
       - "valgrind"
       - "none"
@@ -67,8 +69,8 @@ variables:
     description: It will be passed to cmake
     value: ""
   MAKE_ARGS:
-    description: It will be passed to make/ninja
-    value: "-j4"
+    description: It will be passed to make
+    value: ""
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
@@ -78,12 +80,12 @@ variables:
 ################
 
 .cache_build_set: &cache_build_set
-  - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
+  - key: ${OS}-${COMPILER}
     paths: [ccache]
     policy: push
 
 .cache_build_get: &cache_build_get
-  - key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
+  - key: ${OS}-${COMPILER}
     paths: [ccache]
     policy: pull
 
@@ -94,7 +96,7 @@ variables:
 # Base job
 
 .build_and_unit:
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
+  image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - ${INFRASTRUCTURE_TAG}
   stage: build and unit tests
@@ -111,18 +113,27 @@ variables:
     ENABLE_WERROR: "" # Empty for cmake default
     AUTO_DETECT_ISA: ""
     # CI
-    DOCKER_BUILDER_VERSION: "1.8.3"
     SAVE_ARTIFACTS: "" # Empty by default
     KUBERNETES_MEMORY_REQUEST: 12Gi
     GIT_STRATEGY: none
   needs:
     - !reference [.fetch_src_cache, needs]
+    - job: builder version
+      optional: false
+      artifacts: true
+    - job: trigger builder
+      optional: true
+      artifacts: false
   resource_group: ${CI_JOB_NAME_SLUG}_${GITLAB_USER_LOGIN}
   before_script:
-    - !reference [.fetch_src_cache, before_script]
+    - !reference [.fetch_src_cache, script]
     - |
       build_srsgnb() {
         start_time=$(date +%s)
+        if [ -e "/usr/local/bin/ram_reporter.py" ]; then
+          /usr/local/builder_tools/bin/python3 /usr/local/bin/ram_reporter.py ${CI_PROJECT_DIR}/ram_usage.txt &
+          ram_reporter_pid=$!
+        fi
 
         if [ -n "${UHD_VERSION}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -u ${UHD_VERSION}"
@@ -180,7 +191,6 @@ variables:
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
-        cd build && ninja install && cd ..
 
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
@@ -192,9 +202,18 @@ variables:
         end_time=$(date +%s)
         execution_time=$((end_time - start_time))
         echo "Build time is: $execution_time seconds"
+
         export metric_prefix=""
         if [[ $ON_MR == "true" ]]; then metric_prefix="_cached"; fi
-        echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+
+        if [ -e "${CI_PROJECT_DIR}/ram_usage.txt" ]; then
+          ram_usage=$(cat ${CI_PROJECT_DIR}/ram_usage.txt)
+          echo "RAM usage is: $ram_usage GB"
+          kill $ram_reporter_pid
+          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}, {"name":"ram_usage'$metric_prefix'","description":"RAM usage","value":['$ram_usage'],"unit":"GB","type":"ram"}],"duts":[]}]}]' >> build_time_metrics.json
+        else
+          echo '[{"name":"build","description":"Compilation","tests":[{"name":"'$OS'","description":"'$OS' build","metrics":[{"name":"build_time'$metric_prefix'","description":"Build time","value":['$execution_time'],"unit":"seconds","type":"time"}],"duts":[]}]}]' >> build_time_metrics.json
+        fi
       }
     - |
       launch_tests() {
@@ -230,27 +249,27 @@ variables:
         $CTEST_CMD && ret=0 || ret=1
 
         if [[ $TEST_MODE = "coverage" ]]; then 
-          gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
+          common_options="-j $(nproc --all) \
+            --exclude-unreachable-branches \
             --gcov-ignore-parse-errors \
-            --exclude "${CI_PROJECT_DIR}/tests/*" \
-            --exclude "${CI_PROJECT_DIR}/benchmarks/*" \
-            --exclude "${CI_PROJECT_DIR}/apps/examples/*" \
-            --exclude "${CI_PROJECT_DIR}/external/*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e2ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/ngap/.*" \
-            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/e2ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.*" \
-            --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
-            --root ${CI_PROJECT_DIR} \
-            -o coverage.xml
+            --exclude=${CI_PROJECT_DIR}/tests/* \
+            --exclude=${CI_PROJECT_DIR}/apps/examples/* \
+            --exclude=${CI_PROJECT_DIR}/external/* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/e1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/e2ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/f1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/include/srsran/asn1/rrc_nr/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/e1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/e2ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/f1ap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/ngap/.* \
+            --exclude=${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.* \
+            --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
+            --root=${CI_PROJECT_DIR}"
+
+          gcovr $common_options --keep >/dev/null
+          gcovr $common_options --xml --print-summary --use-gcov-files -o coverage.xml
 
           filesize=$(stat -c%s coverage.xml)
           maxsize=$((10*1204*1024))
@@ -258,7 +277,7 @@ variables:
         fi
         exit $ret
       }
-  script: &build_unit_script
+  script:
     - build_srsgnb
     - launch_tests
   after_script:
@@ -266,6 +285,7 @@ variables:
     - |
       if [ -z "${SAVE_ARTIFACTS}" ]; then
         rm -Rf ${CI_PROJECT_DIR}/build
+        rm -Rf build_time_metrics.json
       fi
   timeout: 4h
   artifacts:
@@ -281,7 +301,7 @@ variables:
       - build_time_metrics.json
     expire_in: 10 minutes
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
 
 # Basic builds (MR and update cache on Nightly)
 
@@ -297,6 +317,7 @@ variables:
     INFRASTRUCTURE_TAG: aws-demand-amd64-avx2
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    SAVE_ARTIFACTS: "True"
 
 .smoke tsan:
   extends: .build_and_unit
@@ -352,15 +373,15 @@ variables:
 smoke release cached:
   extends: .smoke release
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke tsan cached:
@@ -368,22 +389,22 @@ smoke tsan cached:
   timeout: 45 min
   variables:
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
     SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke rhel cached:
   extends: .smoke rhel
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -392,15 +413,15 @@ smoke rhel cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke archlinux cached:
   extends: .smoke archlinux
   timeout: 45 min
-  variables:
-    # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+  # variables:
+  # KUBERNETES_MEMORY_REQUEST: 6Gi
+  # MAKE_ARGS: ""
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
@@ -409,17 +430,15 @@ smoke archlinux cached:
       when: manual
       allow_failure: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 smoke release clean:
   extends: .smoke release
-  variables:
-    SAVE_ARTIFACTS: "True"
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
 
 smoke tsan clean:
   extends: .smoke tsan
@@ -456,8 +475,9 @@ intermediate commits:
     INFRASTRUCTURE_TAG: aws-spot-amd64
     AUTO_DETECT_ISA: "True"
     ENABLE_AVX512: "False"
+    ENABLE_WERROR: "False"
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -468,12 +488,10 @@ intermediate commits:
         echo "#### $rev ####"
         echo "##################################################"
         git checkout $rev
-        sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
         build_srsgnb
-        sed -i "s/-Wall/-Wall -Werror/" CMakeLists.txt
       done
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 valgrind changed tests:
@@ -482,11 +500,10 @@ valgrind changed tests:
     - if: $CI_MERGE_REQUEST_LABELS =~ /urgent/
       when: never
     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
-      allow_failure: true
     - if: $ON_MR
       when: manual
       allow_failure: true
-  timeout: 45 min
+  timeout: 1h
   variables:
     OS: ubuntu-22.04
     COMPILER: gcc
@@ -497,8 +514,9 @@ valgrind changed tests:
     CLEAN_BUILD: "False"
     TEST_MODE: valgrind
     # KUBERNETES_MEMORY_REQUEST: 6Gi
-    MAKE_ARGS: ""
+    # MAKE_ARGS: ""
     FINGERPRINT: "fingerprints.csv"
+    SAVE_ARTIFACTS: "True"
   script:
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 20
@@ -519,7 +537,7 @@ valgrind changed tests:
       build_srsgnb
     - launch_tests
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get
 
 ###########
@@ -538,7 +556,7 @@ smoke release update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke tsan update cache:
@@ -551,7 +569,7 @@ smoke tsan update cache:
   variables:
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke rhel update cache:
@@ -562,7 +580,7 @@ smoke rhel update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 smoke archlinux update cache:
@@ -573,7 +591,7 @@ smoke archlinux update cache:
     - if: $CI_DESCRIPTION =~ /Nightly/
   interruptible: false
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_set
 
 # High priority smoke checks. Some of them save the binary for e2e tests
@@ -601,7 +619,7 @@ basic asan:
   interruptible: false
   variables:
     OS: ubuntu-22.04
-    COMPILER: gcc
+    COMPILER: clang
     BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
@@ -626,27 +644,6 @@ basic valgrind:
     ENABLE_AVX512: "False"
     TEST_MODE: valgrind
     SAVE_ARTIFACTS: "True"
-
-# When building without rf and without zmq, we check no binary is generated
-
-not rf and not zmq:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  interruptible: false
-  variables:
-    OS: ubuntu-22.04
-    COMPILER: gcc
-    BUILD_TYPE: Release
-    TEST_MODE: default
-    ENABLE_ZEROMQ: "False"
-    ENABLE_UHD: "False"
-    INFRASTRUCTURE_TAG: aws-spot-amd64
-    AUTO_DETECT_ISA: "False"
-  script:
-    - build_srsgnb
-    - launch_tests
-    - exit $(find build/apps/ -executable -type f | wc -l)
 
 # Packaging
 
@@ -781,19 +778,82 @@ rhel-8 amd64 avx2:
         AUTO_DETECT_ISA: "True"
         ENABLE_AVX512: "False"
 
-#############
-# Archlinux #
-#############
-.build_and_unit_arch:
-  extends: .build_and_unit
-  script:
-    - sed -i "s/-Wall -Werror/-Wall/" CMakeLists.txt
-    - *build_unit_script
+# Basic AMD NO_ISA / AVX512
 
-archlinux amd64 no isa:
-  extends: .build_and_unit_arch
+ubuntu-22.04 amd64 no isa release:
+  extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-amd64
+    AUTO_DETECT_ISA: "False"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+ubuntu-22.04 amd64 avx512 release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+    AUTO_DETECT_ISA: "True"
+    ENABLE_AVX512: "True"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+# Basic ARM NO_ISA / NEON
+
+ubuntu-22.04 arm no isa release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-arm64
+    AUTO_DETECT_ISA: "False"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+ubuntu-22.04 arm neon release:
+  extends: .smoke release
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      when: delayed
+      start_in: 60 minutes
+  interruptible: false
+  variables:
+    ENABLE_GCOV: "False"
+    TEST_MODE: default
+    INFRASTRUCTURE_TAG: aws-spot-arm64
+    AUTO_DETECT_ISA: "True"
+  parallel:
+    matrix:
+      - COMPILER: [gcc, clang]
+
+###################
+# Alternative OSs #
+###################
+archlinux amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   parallel:
     matrix:
@@ -804,9 +864,9 @@ archlinux amd64 no isa:
         AUTO_DETECT_ISA: "False"
 
 archlinux amd64 avx2:
-  extends: .build_and_unit_arch
+  extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
       when: delayed
       start_in: 30 minutes
   interruptible: false
@@ -820,13 +880,97 @@ archlinux amd64 avx2:
         ENABLE_AVX512: "False"
 
 archlinux amd64 avx512:
-  extends: .build_and_unit_arch
+  extends: .build_and_unit
   rules:
-    - if: $CI_DESCRIPTION =~ /Archlinux/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
   interruptible: false
   parallel:
     matrix:
       - OS: archlinux-latest
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+
+debian 12 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+debian 12 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+debian 12 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-12
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
+        AUTO_DETECT_ISA: "True"
+
+debian 11 amd64 no isa:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "False"
+
+debian 11 amd64 avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+      when: delayed
+      start_in: 30 minutes
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
+        ENABLE_WERROR: "False"
+        <<: *basic_combinations
+        INFRASTRUCTURE_TAG: aws-spot-amd64
+        AUTO_DETECT_ISA: "True"
+        ENABLE_AVX512: "False"
+
+debian 11 amd64 avx512:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  interruptible: false
+  parallel:
+    matrix:
+      - OS: debian-11
         ENABLE_WERROR: "False"
         <<: *basic_combinations
         INFRASTRUCTURE_TAG: aws-demand-amd64-avx2-avx512
@@ -853,9 +997,14 @@ archlinux amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
-        COMPILER: gcc
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-23.04]
+        SANITIZER: asan
+        COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       - OS: [ubuntu-23.04, ubuntu-22.04]
@@ -882,9 +1031,14 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_TSAN: "True"
         TEST_MODE: tsan
-      - OS: [ubuntu-23.04, ubuntu-22.04, ubuntu-20.04]
+      - OS: [ubuntu-22.04, ubuntu-20.04]
         SANITIZER: asan
-        COMPILER: gcc
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-23.04]
+        SANITIZER: asan
+        COMPILER: clang
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set
@@ -1169,5 +1323,5 @@ custom-build:
     AUTO_DETECT_ISA: ""
     SAVE_ARTIFACTS: "True"
   cache:
-    - !reference [.fetch_src_cache,  cache]
+    - !reference [.fetch_src_cache, cache]
     - *cache_build_get

@@ -231,7 +231,26 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
-  calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
+  if (ue->reestablishment_pending) {
+    // In case of reestablishment, we send the full configuration to the UE but without an SRB1 and with SRB2 and DRBs
+    // set to "RLCReestablish".
+    ue->reestablishment_pending = false;
+
+    calculate_cell_group_config_diff(asn1_cell_group, cell_group_config{}, *ue->resources);
+    auto it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
+                           asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
+                           [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
+    if (it != asn1_cell_group.rlc_bearer_to_add_mod_list.end()) {
+      asn1_cell_group.rlc_bearer_to_add_mod_list.erase(it);
+    }
+    for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
+      b.rlc_cfg_present         = false;
+      b.mac_lc_ch_cfg_present   = false;
+      b.reestablish_rlc_present = true;
+    }
+  } else {
+    calculate_cell_group_config_diff(asn1_cell_group, prev_cell_group, *ue->resources);
+  }
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);

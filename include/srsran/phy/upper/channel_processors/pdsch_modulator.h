@@ -24,12 +24,12 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {
 

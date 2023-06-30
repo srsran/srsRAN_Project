@@ -67,8 +67,10 @@ protected:
     this->mac.wait_ue_reconf.ready_ev.set();
   }
 
-  void
-  check_du_to_cu_rrc_container(const f1ap_ue_context_update_request& req, const byte_buffer& container, bool verbose)
+  void check_du_to_cu_rrc_container(const f1ap_ue_context_update_request& req,
+                                    const byte_buffer&                    container,
+                                    bool                                  reestablishment,
+                                    bool                                  verbose)
   {
     ASSERT_FALSE(container.empty());
     asn1::rrc_nr::cell_group_cfg_s cell_group;
@@ -90,8 +92,15 @@ protected:
                        [srb_id](const auto& b) { return b.served_radio_bearer.srb_id() == srb_id_to_uint(srb_id); });
       ASSERT_NE(srb_it, cell_group.rlc_bearer_to_add_mod_list.end());
       ASSERT_EQ(srb_it->lc_ch_id, srb_id_to_lcid(srb_id));
-      ASSERT_TRUE(srb_it->mac_lc_ch_cfg_present);
-      ASSERT_TRUE(srb_it->rlc_cfg_present);
+      if (reestablishment) {
+        ASSERT_FALSE(srb_it->mac_lc_ch_cfg_present);
+        ASSERT_FALSE(srb_it->rlc_cfg_present);
+        ASSERT_TRUE(srb_it->reestablish_rlc_present);
+      } else {
+        ASSERT_TRUE(srb_it->mac_lc_ch_cfg_present);
+        ASSERT_TRUE(srb_it->rlc_cfg_present);
+        ASSERT_FALSE(srb_it->reestablish_rlc_present);
+      }
     }
     for (const f1ap_drb_to_setup& drb : req.drbs_to_setup) {
       auto drb_it =
@@ -100,14 +109,32 @@ protected:
                        [&drb](const auto& b) { return b.served_radio_bearer.srb_id() == drb_id_to_uint(drb.drb_id); });
       ASSERT_NE(drb_it, cell_group.rlc_bearer_to_add_mod_list.end());
       ASSERT_FALSE(is_srb(uint_to_lcid(drb_it->lc_ch_id)));
-      ASSERT_TRUE(drb_it->mac_lc_ch_cfg_present);
-      ASSERT_TRUE(drb_it->rlc_cfg_present);
+      if (reestablishment) {
+        ASSERT_FALSE(drb_it->mac_lc_ch_cfg_present);
+        ASSERT_FALSE(drb_it->rlc_cfg_present);
+        ASSERT_TRUE(drb_it->reestablish_rlc_present);
+      } else {
+        ASSERT_TRUE(drb_it->mac_lc_ch_cfg_present);
+        ASSERT_TRUE(drb_it->rlc_cfg_present);
+        ASSERT_FALSE(drb_it->reestablish_rlc_present);
+      }
     }
 
     ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), req.drbs_to_rem.size());
     for (unsigned i = 0; i != req.drbs_to_rem.size(); ++i) {
       uint8_t lcid = LCID_MIN_DRB - 1 + (unsigned)req.drbs_to_rem[i];
       ASSERT_EQ(lcid, cell_group.rlc_bearer_to_release_list[i]);
+    }
+
+    if (reestablishment) {
+      ASSERT_TRUE(cell_group.sp_cell_cfg_present);
+      ASSERT_TRUE(cell_group.sp_cell_cfg.sp_cell_cfg_ded_present);
+      ASSERT_TRUE(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg_present);
+      ASSERT_TRUE(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg_present);
+      ASSERT_EQ(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.type().value,
+                asn1::setup_release_opts::setup);
+    } else {
+      ASSERT_FALSE(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg_present);
     }
   }
 
@@ -156,7 +183,7 @@ TEST_F(ue_config_tester, when_du_manager_completes_ue_configuration_procedure_th
   ASSERT_TRUE(proc.ready());
   f1ap_ue_context_update_response resp = proc.get();
   ASSERT_TRUE(resp.result);
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, resp.du_to_cu_rrc_container, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, resp.du_to_cu_rrc_container, false, true));
 }
 
 TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_then_mac_rlc_f1c_bearers_are_connected)
@@ -322,12 +349,12 @@ TEST_F(ue_config_tester, when_drbs_are_released_then_they_are_added_in_rrc_conta
   res             = this->configure_ue(req);
 
   ASSERT_TRUE(res.result);
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, false, true));
 }
 
 TEST_F(ue_config_tester, when_drb_to_be_released_does_not_exist_then_request_is_ignored)
 {
-  // Run procedure to create DRB1.
+  // Run procedure to create SRB2 and DRB1.
   f1ap_ue_context_update_request req =
       create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
   f1ap_ue_context_update_response res = this->configure_ue(req);
@@ -340,5 +367,19 @@ TEST_F(ue_config_tester, when_drb_to_be_released_does_not_exist_then_request_is_
   ASSERT_TRUE(res.result);
   auto req_no_drb_release = req;
   req_no_drb_release.drbs_to_rem.clear();
-  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req_no_drb_release, res.du_to_cu_rrc_container, true));
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req_no_drb_release, res.du_to_cu_rrc_container, false, true));
+}
+
+TEST_F(ue_config_tester,
+       when_reestablishment_is_signalled_then_bearers_are_marked_as_reestablishRLC_and_cell_config_are_sent)
+{
+  // Mark UE as reestablishing.
+  test_ue->reestablishment_pending = true;
+
+  // Run procedure to create SRB2 and DRB1.
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.du_to_cu_rrc_container, true, true));
 }

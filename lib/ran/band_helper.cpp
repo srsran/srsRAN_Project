@@ -1229,6 +1229,82 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
   return result;
 }
 
+optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                                         nr_band            band,
+                                                                                         unsigned           n_rbs,
+                                                                                         subcarrier_spacing scs_common,
+                                                                                         subcarrier_spacing scs_ssb,
+                                                                                         uint8_t            ss0_idx,
+                                                                                         unsigned           cset0_idx)
+{
+  srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
+                "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
+
+  optional<ssb_coreset0_freq_location> result;
+
+  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
+
+  // Get the maximum Coreset0 index that can be used for the Tables 13-[1-6], TS 38.213.
+  const unsigned max_cset0_idx = get_max_coreset0_index(band, scs_common, scs_ssb);
+
+  if (cset0_idx > max_cset0_idx) {
+    return result;
+  }
+
+  // Iterate over different SSB candidates and verify whether the given CORESET#0 index results in CORESET#0 CRBs not
+  // intersecting with the SSB.
+  unsigned          max_cset0_rbs = 0;
+  ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
+  while (ssb.is_valid) {
+    // CRB index where the first SSB's subcarrier is located.
+    const unsigned crbs_ssb =
+        scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
+
+    auto coreset0_cfg = pdcch_type0_css_coreset_get(band, scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
+    // CORESET#0 must be within cell bandwidth limits.
+    if (coreset0_cfg.nof_rb_coreset > n_rbs) {
+      break;
+    }
+
+    const pdcch_type0_css_occasion_pattern1_description ss0_config =
+        pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+            .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = coreset0_cfg.nof_symb_coreset});
+
+    // CORESET#0 offset must be between pointA and max CRB.
+    const bool coreset0_not_below_pointA = crbs_ssb >= static_cast<unsigned>(coreset0_cfg.offset);
+    const bool coreset0_not_above_bw_ub =
+        crbs_ssb - static_cast<unsigned>(coreset0_cfg.offset) + coreset0_cfg.nof_rb_coreset <= n_rbs;
+
+    // CORESET#0 number of symbols should not overlap with SSB symbols.
+    const bool ss0_not_overlapping_with_ssb_symbols =
+        ss0_config.offset == 0 ? coreset0_cfg.nof_symb_coreset <= du_cfg.get_ssb_first_symbol() : true;
+
+    // If it passes all the checks.
+    if (coreset0_not_below_pointA and coreset0_not_above_bw_ub and ss0_not_overlapping_with_ssb_symbols) {
+      // Compute the number of non-intersecting RBs between CORESET#0 and SSB.
+      const unsigned nof_avail_cset0_rbs = get_nof_coreset0_rbs_not_intersecting_ssb(
+          cset0_idx, band, scs_common, scs_ssb, ssb.offset_to_point_A, ssb.k_ssb);
+
+      // If the number of non-intersecting CORESET#0 RBs is the highest so far, save result.
+      if (nof_avail_cset0_rbs > max_cset0_rbs) {
+        max_cset0_rbs = nof_avail_cset0_rbs;
+
+        result.emplace();
+        result->offset_to_point_A = ssb.offset_to_point_A;
+        result->k_ssb             = ssb.k_ssb;
+        result->coreset0_idx      = cset0_idx;
+        result->searchspace0_idx  = ss0_idx;
+        result->ssb_arfcn         = freq_to_nr_arfcn(ssb.ss_ref);
+      }
+    }
+
+    ssb = du_cfg.get_next_ssb_location();
+  }
+
+  return result;
+}
+
 optional<unsigned> srsran::band_helper::get_coreset0_index(nr_band               band,
                                                            unsigned              n_rbs,
                                                            subcarrier_spacing    scs_common,
@@ -1315,4 +1391,27 @@ n_ta_offset srsran::band_helper::get_ta_offset(nr_band band)
   } else {
     return n_ta_offset::n13792;
   }
+}
+
+optional<unsigned> srsran::band_helper::get_ssb_arfcn(unsigned              dl_arfcn,
+                                                      nr_band               band,
+                                                      unsigned              n_rbs,
+                                                      subcarrier_spacing    scs_common,
+                                                      subcarrier_spacing    scs_ssb,
+                                                      ssb_offset_to_pointA  offset_to_point_A,
+                                                      ssb_subcarrier_offset k_ssb)
+{
+  srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
+                "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
+
+  // Get f_ref, point_A from dl_arfcn, band and bandwidth.
+  ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
+  ssb_freq_location           ssb = du_cfg.get_next_ssb_location();
+  while (ssb.is_valid) {
+    if (ssb.offset_to_point_A == offset_to_point_A and ssb.k_ssb == k_ssb) {
+      return freq_to_nr_arfcn(ssb.ss_ref);
+    }
+    ssb = du_cfg.get_next_ssb_location();
+  }
+  return {};
 }

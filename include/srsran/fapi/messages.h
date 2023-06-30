@@ -158,7 +158,7 @@ struct dl_dci_pdu {
   uint16_t                         nrnti_pdcch_data;
   uint8_t                          cce_index;
   uint8_t                          aggregation_level;
-  tx_precoding_and_beamforming_pdu preconding_and_beamforming;
+  tx_precoding_and_beamforming_pdu precoding_and_beamforming;
   uint8_t                          beta_pdcch_1_0;
   int8_t                           power_control_offset_ss_profile_nr;
   dci_payload                      payload;
@@ -352,7 +352,7 @@ struct dl_csi_rs_pdu {
   uint16_t                          scramb_id;
   uint8_t                           power_control_offset_profile_nr;
   nzp_csi_rs_epre_to_ssb            power_control_offset_ss_profile_nr;
-  tx_precoding_and_beamforming_pdu  preconding_and_beamforming;
+  tx_precoding_and_beamforming_pdu  precoding_and_beamforming;
   dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4
 };
@@ -400,7 +400,7 @@ struct dl_ssb_pdu {
   ssb_offset_to_pointA             ssb_offset_pointA;
   bch_payload_type                 bch_payload_flag;
   dl_ssb_bch_payload               bch_payload;
-  tx_precoding_and_beamforming_pdu preconding_and_beamforming;
+  tx_precoding_and_beamforming_pdu precoding_and_beamforming;
   dl_ssb_maintenance_v3            ssb_maintenance_v3;
   //: TODO: params v4 - MU-MIMO
 };

@@ -56,8 +56,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
 
   {
     // prepare first BearerContextModificationRequest
-    bearer_context_modification_request.ue_index                 = ue_index;
-    bearer_context_modification_request.new_ul_tnl_info_required = "true";
+    generate_bearer_context_modification_request_for_new_ul_tnl();
 
     // call E1AP procedure and wait for BearerContextModificationResponse
     CORO_AWAIT_VALUE(bearer_context_modification_response,
@@ -66,9 +65,11 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle BearerContextModificationResponse and fill subsequent UE context modification
     if (!generate_ue_context_modification_request(
             ue_context_mod_request, bearer_context_modification_response.pdu_session_resource_modified_list)) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
+
+    bearer_context_modification_request = {};
   }
 
   {
@@ -87,30 +88,6 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     }
   }
 
-  {
-    // prepare RRC Reconfiguration and call RRC UE notifier
-    {
-      // convert pdu session context
-      std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
-      for (const auto& pdu_session_id : rrc_ue_up_resource_manager.get_pdu_sessions()) {
-        up_pdu_session_context_update context_update{pdu_session_id};
-        context_update.drb_to_add = rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session_id).drbs;
-
-        pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
-      }
-
-      fill_rrc_reconfig_args(rrc_reconfig_args, {}, pdu_sessions_to_setup_list, ue_context_modification_response, {});
-    }
-
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
-
-    // Handle RRC Reconfiguration result.
-    if (not rrc_reconfig_result) {
-      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", ue_index, name());
-      CORO_EARLY_RETURN(false);
-    }
-  }
-
   // Inform CU-UP about the new TEID for UL F1u traffic
   {
     // add remaining fields to BearerContextModificationRequest
@@ -123,7 +100,44 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
     // Handle BearerContextModificationResponse
     if (!generate_ue_context_modification_request(
             ue_context_mod_request, bearer_context_modification_response.pdu_session_resource_modified_list)) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", ue_index, name());
+      CORO_EARLY_RETURN(false);
+    }
+  }
+
+  {
+    // prepare RRC Reconfiguration and call RRC UE notifier
+    {
+      // add SRB2 again
+      slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item> srbs_to_setup_list;
+      cu_cp_srbs_to_be_setup_mod_item                              srb_to_setup = {};
+
+      srb_to_setup.srb_id                   = srb_id_t::srb2;
+      srb_to_setup.reestablish_pdcp_present = true;
+      srbs_to_setup_list.insert(srb_id_t::srb2, srb_to_setup);
+
+      // convert pdu session context
+      std::map<pdu_session_id_t, up_pdu_session_context_update> pdu_sessions_to_setup_list;
+      for (const auto& pdu_session_id : rrc_ue_up_resource_manager.get_pdu_sessions()) {
+        up_pdu_session_context_update context_update{pdu_session_id};
+        context_update.drb_to_add = rrc_ue_up_resource_manager.get_pdu_session_context(pdu_session_id).drbs;
+
+        pdu_sessions_to_setup_list.emplace(pdu_session_id, context_update);
+      }
+
+      fill_rrc_reconfig_args(rrc_reconfig_args,
+                             srbs_to_setup_list,
+                             pdu_sessions_to_setup_list,
+                             ue_context_modification_response,
+                             {},
+                             true);
+    }
+
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
+
+    // Handle RRC Reconfiguration result.
+    if (not rrc_reconfig_result) {
+      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
   }
@@ -132,12 +146,39 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
   CORO_RETURN(true);
 }
 
+bool reestablishment_context_modification_routine::generate_bearer_context_modification_request_for_new_ul_tnl()
+{
+  bearer_context_modification_request.ue_index                 = ue_index;
+  bearer_context_modification_request.new_ul_tnl_info_required = true;
+
+  // Request new UL TNL info for all DRBs
+  std::vector<pdu_session_id_t>          pdu_session_ids              = rrc_ue_up_resource_manager.get_pdu_sessions();
+  e1ap_ng_ran_bearer_context_mod_request ngran_bearer_context_mod_req = {};
+  for (const pdu_session_id_t& psi : pdu_session_ids) {
+    e1ap_pdu_session_res_to_modify_item pdu_sess_mod_item;
+    pdu_sess_mod_item.pdu_session_id = psi;
+
+    const std::map<drb_id_t, up_drb_context>& drbs = rrc_ue_up_resource_manager.get_pdu_session_context(psi).drbs;
+    for (const std::pair<const drb_id_t, up_drb_context>& drb : drbs) {
+      logger.debug("Requesting new UL TNL for DRB. psi={}, drb={}", psi, drb.first);
+      e1ap_drb_to_modify_item_ng_ran drb_to_mod = {};
+      drb_to_mod.drb_id                         = drb.first;
+      pdu_sess_mod_item.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
+    }
+
+    ngran_bearer_context_mod_req.pdu_session_res_to_modify_list.emplace(psi, pdu_sess_mod_item);
+  }
+
+  bearer_context_modification_request.ng_ran_bearer_context_mod_request = ngran_bearer_context_mod_req;
+  return true;
+}
+
 bool reestablishment_context_modification_routine::generate_ue_context_modification_request(
     cu_cp_ue_context_modification_request& ue_context_mod_req,
     const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&
         e1ap_pdu_session_resource_modify_list)
 {
-  // Set up SRB2
+  // Set up SRB2 in DU
   cu_cp_srbs_to_be_setup_mod_item srb2;
   srb2.srb_id = srb_id_t::srb2;
   ue_context_mod_req.srbs_to_be_setup_mod_list.emplace(srb2.srb_id, srb2);
@@ -146,7 +187,7 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
     cu_cp_pdu_session_resource_modify_response_item item;
     item.pdu_session_id = e1ap_item.pdu_session_id;
 
-    for (const auto& e1ap_drb_item : e1ap_item.drb_setup_list_ng_ran) {
+    for (const auto& e1ap_drb_item : e1ap_item.drb_modified_list_ng_ran) {
       // Catch implementation limitations.
       if (!e1ap_drb_item.flow_failed_list.empty()) {
         logger.warning("Non-empty QoS flow failed list not supported");
@@ -160,9 +201,13 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
       }
 
       item.transfer.qos_flow_add_or_modify_response_list.emplace();
-      for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
+
+      // re-establish old flows
+      const up_drb_context& drb_up_context = rrc_ue_up_resource_manager.get_drb_context(e1ap_drb_item.drb_id);
+
+      for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
         qos_flow_add_or_mod_response_item qos_flow;
-        qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
+        qos_flow.qos_flow_id = flow_id;
         item.transfer.qos_flow_add_or_modify_response_list.value().emplace(qos_flow.qos_flow_id, qos_flow);
       }
 
@@ -179,6 +224,18 @@ bool reestablishment_context_modification_routine::generate_ue_context_modificat
         // Add rlc mode
         drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
+        // fill QoS info
+        drb_setup_mod_item.qos_info.drb_qos    = drb_up_context.qos_params;
+        drb_setup_mod_item.qos_info.s_nssai    = drb_up_context.s_nssai;
+        drb_setup_mod_item.qos_info.notif_ctrl = "active";
+        // Fill QoS flows for UE context modification.
+        for (const qos_flow_id_t& flow_id : drb_up_context.qos_flows) {
+          // Add mapped flows and extract required QoS info from original NGAP request
+          cu_cp_flows_mapped_to_drb_item mapped_flow_item;
+          mapped_flow_item.qos_flow_id               = flow_id;
+          mapped_flow_item.qos_flow_level_qos_params = drb_up_context.qos_params;
+          drb_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow_item.qos_flow_id, mapped_flow_item);
+        }
         ue_context_mod_req.drbs_to_be_setup_mod_list.emplace(e1ap_drb_item.drb_id, drb_setup_mod_item);
       }
     }
@@ -230,6 +287,7 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
         }
 
         // set pdcp reestablishment
+        e1ap_drb_item.pdcp_cfg.emplace(e1ap_pdcp_config{});
         e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
 
         e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);

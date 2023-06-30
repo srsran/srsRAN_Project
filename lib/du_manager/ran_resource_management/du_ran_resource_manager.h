@@ -56,7 +56,7 @@ public:
   {
   }
 
-  /// \brief Updates the resources (PCell, SCells, Bearers) used by the UE.
+  /// \brief Initiates the update of the resources (PCell, SCells, Bearers) used by the UE.
   ///
   /// \param pcell_index DU Cell Index of the UE's PCell.
   /// \param upd_req UE Context Update Request for a given UE.

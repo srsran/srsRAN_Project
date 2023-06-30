@@ -158,16 +158,18 @@ void realtime_timing_worker::poll()
   // Check if we have missed more than one symbol.
   if (delta > 1) {
     logger.warning("Real-time timing worker late, skipped {} symbols", delta);
-    return;
   }
 
-  // Only one symbol has elapsed, notify the event.
-  slot_point slot =
+  slot_symbol_point symbol_point(
       calculate_slot_point(scs,
                            std::chrono::time_point_cast<std::chrono::seconds>(now).time_since_epoch().count(),
                            std::chrono::duration_cast<std::chrono::microseconds>(ns_fraction).count(),
-                           1000 / get_nof_slots_per_subframe(scs));
-  unsigned symbol_idx_in_slot = current_symbol_index % nof_symbols_per_slot;
+                           1000 / get_nof_slots_per_subframe(scs)),
+      current_symbol_index % nof_symbols_per_slot,
+      nof_symbols_per_slot);
 
-  notifier.on_new_symbol(slot, symbol_idx_in_slot);
+  for (unsigned i = 0; i != delta; ++i) {
+    // Notify pending symbols from oldest to newest.
+    notifier.on_new_symbol(symbol_point - (delta - 1 - i));
+  }
 }

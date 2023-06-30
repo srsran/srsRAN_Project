@@ -34,7 +34,7 @@ namespace srsran {
 class ue_channel_state_manager
 {
 public:
-  ue_channel_state_manager(const serving_cell_config& ue_serv_cell, const scheduler_ue_expert_config& expert_cfg_);
+  ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg_, unsigned nof_dl_ports_);
 
   const optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
 

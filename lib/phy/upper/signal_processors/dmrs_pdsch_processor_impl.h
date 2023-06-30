@@ -50,7 +50,6 @@ private:
 
   /// Defines generation parameters.
   struct params_t {
-    unsigned             cdm_group_id;
     std::array<float, 2> w_f;
     std::array<float, 2> w_t;
   };
@@ -76,12 +75,16 @@ private:
 
   /// \brief Applies the corresponding set of CDM codes to the DM-RS sequence.
   ///
-  /// \param[out] re_buffer_symbol Buffer where the output DM-RS sequences belonging to each DM-RS port are stored.
-  /// \param[in] sequence The DM-RS sequence.
+  /// \param[out] sequence The DM-RS sequence after the application of CDM.
+  /// \param[in] base_sequence The original DM-RS sequence.
+  /// \param[in] dmrs_port DM-RS port number, determining the CDM code to apply.
   /// \param[in] symbol OFDM symbol corresponding to the input DM-RS sequence.
   /// \param[in] config PDSCH DM-RS configuration parameters.
-  static void
-  apply_cdm(re_buffer_writer& re_buffer_symbol, span<const cf_t> sequence, unsigned symbol, const config_t& config);
+  static void apply_cdm(span<cf_t>       sequence,
+                        span<const cf_t> base_sequence,
+                        unsigned         dmrs_port,
+                        unsigned         symbol,
+                        const config_t&  config);
 
   /// Temporal resource element storage.
   static_re_buffer<MAX_PORTS, MAX_DMRS_PER_SYMBOL * MAX_DMRS_SYMBOLS> temp_re;

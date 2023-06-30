@@ -25,6 +25,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/srsvec/bit.h"
 #include <chrono>
 #include <random>
@@ -155,6 +156,7 @@ static void pdcch_conversion_benchmark()
     optional<float> profile_nr;
     profile_nr.emplace(power_dist(gen));
     builder_dci.set_tx_power_info_parameter(profile_nr);
+    builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_basic_parameters(275, 0).add_prg(0, {});
 
     // Payload.
     dci_payload payload;
@@ -165,11 +167,13 @@ static void pdcch_conversion_benchmark()
     builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
     builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
 
-    pdcch_processor::pdu_t proc_pdu;
+    pdcch_processor::pdu_t             proc_pdu;
+    auto                               pm_tools = generate_precoding_matrix_tables(1);
+    const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
     // Conversion block.
     auto start = std::chrono::high_resolution_clock::now();
-    convert_pdcch_fapi_to_phy(proc_pdu, msg.pdus[0].pdcch_pdu, msg.sfn, msg.slot, 0);
+    convert_pdcch_fapi_to_phy(proc_pdu, msg.pdus[0].pdcch_pdu, msg.sfn, msg.slot, 0, pm_repo);
     auto end = std::chrono::high_resolution_clock::now();
 
     // Print how much time it took.

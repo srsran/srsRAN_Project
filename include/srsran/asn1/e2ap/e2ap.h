@@ -1,3 +1,4 @@
+
 /*
  *
  * Copyright 2021-2023 Software Radio Systems Limited
@@ -643,7 +644,7 @@ struct globalen_gnb_id_s {
 
 // RICsubsequentActionType ::= ENUMERATED
 struct ricsubsequent_action_type_opts {
-  enum options { continuee, wait, /*...*/ nulltype } value;
+  enum options { continue_value, wait, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };

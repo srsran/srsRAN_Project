@@ -36,10 +36,13 @@ namespace srsran {
 class mac_ul_sch_subpdu
 {
 public:
-  /// Returns buffer view with begin() pointing at the first byte after the decoded subPDU.
-  bool unpack(byte_buffer_reader& subpdu_reader);
-  bool unpack(const byte_buffer& subpdu);
+  /// \brief Unpacks a subPDU from a byte buffer reader.
+  error_type<std::string> unpack(byte_buffer_reader& subpdu_reader);
 
+  /// \brief Unpacks a subPDU from a byte buffer containing a subPDU.
+  error_type<std::string> unpack(const byte_buffer& subpdu);
+
+  /// Get LCID of the unpacked subPDU.
   lcid_ul_sch_t    lcid() const { return lcid_val; }
   uint32_t         total_length() const { return header_length + payload().length(); }
   byte_buffer_view payload() const { return payload_view; }
@@ -67,7 +70,7 @@ public:
 
   void clear();
 
-  bool unpack(const byte_buffer& payload);
+  error_type<std::string> unpack(const byte_buffer& payload);
 
   mac_ul_sch_subpdu&       subpdu(size_t i) { return subpdus[i]; }
   const mac_ul_sch_subpdu& subpdu(size_t i) const { return subpdus[i]; }

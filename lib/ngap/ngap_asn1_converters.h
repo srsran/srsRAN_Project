@@ -378,5 +378,61 @@ inline guami_t asn1_guami_to_guami(const asn1::ngap::guami_s& asn1_guami)
   return guami;
 }
 
+/// \brief Converts type \c security_indication to an ASN.1 type.
+/// \param asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param security_indication Security Indication IE contents.
+inline void security_indication_to_asn1(asn1::ngap::security_ind_s& asn1obj, const security_indication_t& security_ind)
+{
+  switch (security_ind.integrity_protection_ind) {
+    case integrity_protection_indication_t::not_needed:
+    case integrity_protection_indication_t::preferred:
+    case integrity_protection_indication_t::required:
+      asn1obj.integrity_protection_ind.value =
+          static_cast<asn1::ngap::integrity_protection_ind_opts::options>(security_ind.integrity_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to NGAP type");
+  }
+
+  switch (security_ind.confidentiality_protection_ind) {
+    case confidentiality_protection_indication_t::not_needed:
+    case confidentiality_protection_indication_t::preferred:
+    case confidentiality_protection_indication_t::required:
+      asn1obj.confidentiality_protection_ind.value =
+          static_cast<asn1::ngap::confidentiality_protection_ind_opts::options>(security_ind.integrity_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to NGAP type");
+  }
+}
+
+/// \brief Converts type \c security_indication to an ASN.1 type.
+/// \param asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param security_indication Security Indication IE contents.
+inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::ngap::security_ind_s& asn1obj)
+{
+  switch (asn1obj.integrity_protection_ind) {
+    case asn1::ngap::integrity_protection_ind_opts::not_needed:
+    case asn1::ngap::integrity_protection_ind_opts::preferred:
+    case asn1::ngap::integrity_protection_ind_opts::required:
+      security_ind.integrity_protection_ind =
+          static_cast<integrity_protection_indication_t>(asn1obj.integrity_protection_ind.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("NGAP").error("Cannot convert security indication to NGAP type");
+  }
+
+  switch (asn1obj.confidentiality_protection_ind) {
+    case asn1::ngap::confidentiality_protection_ind_opts::not_needed:
+    case asn1::ngap::confidentiality_protection_ind_opts::preferred:
+    case asn1::ngap::confidentiality_protection_ind_opts::required:
+      security_ind.confidentiality_protection_ind =
+          static_cast<confidentiality_protection_indication_t>(asn1obj.confidentiality_protection_ind.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("NGAP").error("Cannot convert security indication to NGAP type");
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

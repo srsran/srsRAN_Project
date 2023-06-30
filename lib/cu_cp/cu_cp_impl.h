@@ -34,6 +34,7 @@
 #include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
 #include "ue_manager_impl.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <memory>
@@ -148,6 +149,8 @@ private:
   std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>> cu_up_db;
 
   ue_manager ue_mng;
+
+  std::unique_ptr<cell_meas_manager> cell_meas_mng; // cell measurement manager
 
   // UE task scheduler
   ue_task_scheduler ue_task_sched;

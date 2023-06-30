@@ -27,7 +27,7 @@ using namespace srsran;
 
 static void fill_csi_rs_info_res_map(csi_rs_info& csi_rs, const csi_rs_resource_mapping& res_map)
 {
-  csi_rs.crbs        = {res_map.freq_band_start_rb, res_map.freq_band_start_rb + res_map.freq_band_nof_rb};
+  csi_rs.crbs        = res_map.freq_band_rbs;
   csi_rs.freq_domain = res_map.fd_alloc;
   csi_rs.row         = csi_rs::get_csi_rs_resource_mapping_row_number(
       res_map.nof_ports, res_map.freq_density, res_map.cdm, res_map.fd_alloc);
@@ -73,10 +73,8 @@ csi_rs_scheduler::csi_rs_scheduler(const cell_configuration& cell_cfg_) : cell_c
     cached_csi_rs.push_back(build_csi_rs_info(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, res));
   }
 
-  if (cell_cfg.csi_meas_cfg.has_value()) {
-    for (const auto& nzp_csi : cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list) {
-      cached_csi_rs.push_back(build_csi_rs_info(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, nzp_csi));
-    }
+  for (const auto& nzp_csi : cell_cfg.nzp_csi_rs_list) {
+    cached_csi_rs.push_back(build_csi_rs_info(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, nzp_csi));
   }
 }
 
@@ -98,8 +96,8 @@ void csi_rs_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   }
 
   // Schedule nzp-CSI-RS PDUs.
-  for (unsigned i = 0; i != cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list.size(); ++i) {
-    const nzp_csi_rs_resource& nzp_csi    = cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list[i];
+  for (unsigned i = 0; i != cell_cfg.nzp_csi_rs_list.size(); ++i) {
+    const nzp_csi_rs_resource& nzp_csi    = cell_cfg.nzp_csi_rs_list[i];
     const auto&                csi_rs_pdu = cached_csi_rs[cell_cfg.zp_csi_rs_list.size() + i];
     if ((res_grid.slot - *nzp_csi.csi_res_offset).to_uint() % (unsigned)*nzp_csi.csi_res_period == 0) {
       res_grid.result.dl.csi_rs.push_back(csi_rs_pdu);

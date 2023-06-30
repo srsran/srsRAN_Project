@@ -52,6 +52,7 @@ struct du_ue {
   std::unique_ptr<mac_ue_radio_link_notifier> mac_rlf_notifier;
   du_ue_bearer_manager                        bearers;
   ue_ran_resource_configurator                resources;
+  bool                                        reestablishment_pending = false;
 };
 
 } // namespace srs_du

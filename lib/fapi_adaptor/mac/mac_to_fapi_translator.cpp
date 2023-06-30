@@ -58,8 +58,11 @@ struct pdcch_group {
 } // namespace
 
 template <typename builder_type, typename pdu_type>
-static void
-add_pdcch_pdus_to_builder(builder_type& builder, span<const pdu_type> pdcch_info, span<const dci_payload> payloads)
+static void add_pdcch_pdus_to_builder(builder_type&                  builder,
+                                      span<const pdu_type>           pdcch_info,
+                                      span<const dci_payload>        payloads,
+                                      const precoding_matrix_mapper& pm_mapper,
+                                      unsigned                       cell_nof_prbs)
 {
   srsran_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
 
@@ -89,7 +92,7 @@ add_pdcch_pdus_to_builder(builder_type& builder, span<const pdu_type> pdcch_info
     }
 
     fapi::dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
-    convert_pdcch_mac_to_fapi(pdcch_builder, pdu);
+    convert_pdcch_mac_to_fapi(pdcch_builder, pdu, pm_mapper, cell_nof_prbs);
   }
 }
 
@@ -133,8 +136,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                                                      pdu.freq_density,
                                                                      (is_nzp_csi) ? pdu.scrambling_id : 0);
 
-    csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs,
-                                   pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+    csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs, pdu.bwp_cfg->cp);
     if (is_nzp_csi) {
       csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset_profile_nr,
                                                to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss_profile_nr));
@@ -193,7 +195,11 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   builder.set_basic_parameters(dl_res.slot.sfn(), dl_res.slot.slot_index(), num_pdu_groups);
 
   // Add PDCCH PDUs to the DL_TTI.request message.
-  add_pdcch_pdus_to_builder(builder, span<const pdcch_dl_information>(dl_res.dl_res->dl_pdcchs), dl_res.dl_pdcch_pdus);
+  add_pdcch_pdus_to_builder(builder,
+                            span<const pdcch_dl_information>(dl_res.dl_res->dl_pdcchs),
+                            dl_res.dl_pdcch_pdus,
+                            *pm_mapper,
+                            cell_nof_prbs);
 
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
@@ -334,7 +340,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   fapi::ul_dci_request_message_builder builder(msg);
 
   builder.set_basic_parameters(slot.sfn(), slot.slot_index());
-  add_pdcch_pdus_to_builder(builder, pdcch_info, payloads);
+  add_pdcch_pdus_to_builder(builder, pdcch_info, payloads, *pm_mapper, cell_nof_prbs);
 
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);

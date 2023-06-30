@@ -84,10 +84,6 @@ struct amf_cp_relocation_ind_ies_o {
 };
 
 struct amf_cp_relocation_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool            s_nssai_present       = false;
   bool            allowed_nssai_present = false;
   uint64_t        amf_ue_ngap_id;
@@ -178,10 +174,6 @@ struct amf_cfg_upd_ies_o {
 };
 
 struct amf_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 amf_name_present                  = false;
   bool                                 served_guami_list_present         = false;
   bool                                 relative_amf_capacity_present     = false;
@@ -253,10 +245,6 @@ struct amf_cfg_upd_ack_ies_o {
 };
 
 struct amf_cfg_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                       amf_tnl_assoc_setup_list_present           = false;
   bool                       amf_tnl_assoc_failed_to_setup_list_present = false;
   bool                       crit_diagnostics_present                   = false;
@@ -318,10 +306,6 @@ struct amf_cfg_upd_fail_ies_o {
 };
 
 struct amf_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   cause_c            cause;
@@ -419,10 +403,6 @@ struct broadcast_session_mod_fail_ies_o {
 };
 
 struct broadcast_session_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_session_mod_fail_transfer_present = false;
   bool                      crit_diagnostics_present              = false;
   mbs_session_id_s          mbs_session_id;
@@ -484,10 +464,6 @@ struct broadcast_session_mod_request_ies_o {
 };
 
 struct broadcast_session_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_service_area_present                 = false;
   bool                      mbs_session_mod_request_transfer_present = false;
   mbs_session_id_s          mbs_session_id;
@@ -548,10 +524,6 @@ struct broadcast_session_mod_resp_ies_o {
 };
 
 struct broadcast_session_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_session_mod_resp_transfer_present = false;
   bool                      crit_diagnostics_present              = false;
   mbs_session_id_s          mbs_session_id;
@@ -610,10 +582,6 @@ struct broadcast_session_release_request_ies_o {
 };
 
 struct broadcast_session_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   mbs_session_id_s mbs_session_id;
   cause_c          cause;
 
@@ -670,10 +638,6 @@ struct broadcast_session_release_required_ies_o {
 };
 
 struct broadcast_session_release_required_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   mbs_session_id_s mbs_session_id;
   cause_c          cause;
 
@@ -732,10 +696,6 @@ struct broadcast_session_release_resp_ies_o {
 };
 
 struct broadcast_session_release_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_session_release_resp_transfer_present = false;
   bool                      crit_diagnostics_present                  = false;
   mbs_session_id_s          mbs_session_id;
@@ -798,10 +758,6 @@ struct broadcast_session_setup_fail_ies_o {
 };
 
 struct broadcast_session_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_session_setup_fail_transfer_present = false;
   bool                      crit_diagnostics_present                = false;
   mbs_session_id_s          mbs_session_id;
@@ -865,10 +821,6 @@ struct broadcast_session_setup_request_ies_o {
 };
 
 struct broadcast_session_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   mbs_session_id_s          mbs_session_id;
   s_nssai_s                 s_nssai;
   mbs_service_area_c        mbs_service_area;
@@ -928,10 +880,6 @@ struct broadcast_session_setup_resp_ies_o {
 };
 
 struct broadcast_session_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_session_setup_resp_transfer_present = false;
   bool                      crit_diagnostics_present                = false;
   mbs_session_id_s          mbs_session_id;
@@ -1013,10 +961,6 @@ struct cell_traffic_trace_ies_o {
 };
 
 struct cell_traffic_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                                  privacy_ind_present                 = false;
   bool                                                  trace_collection_entity_uri_present = false;
   uint64_t                                              amf_ue_ngap_id;
@@ -1122,10 +1066,6 @@ struct conn_establishment_ind_ies_o {
 };
 
 struct conn_establishment_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             ue_radio_cap_present               = false;
   bool                             end_ind_present                    = false;
   bool                             s_nssai_present                    = false;
@@ -1205,10 +1145,6 @@ struct deactiv_trace_ies_o {
 };
 
 struct deactiv_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                 amf_ue_ngap_id;
   uint64_t                 ran_ue_ngap_id;
   fixed_octstring<8, true> ngran_trace_id;
@@ -1277,10 +1213,6 @@ struct distribution_release_request_ies_o {
 };
 
 struct distribution_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_area_session_id_present = false;
   mbs_session_id_s          mbs_session_id;
   uint32_t                  mbs_area_session_id;
@@ -1343,10 +1275,6 @@ struct distribution_release_resp_ies_o {
 };
 
 struct distribution_release_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               mbs_area_session_id_present = false;
   bool               crit_diagnostics_present    = false;
   mbs_session_id_s   mbs_session_id;
@@ -1420,10 +1348,6 @@ struct distribution_setup_fail_ies_o {
 };
 
 struct distribution_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_area_session_id_present = false;
   bool                      crit_diagnostics_present    = false;
   mbs_session_id_s          mbs_session_id;
@@ -1488,10 +1412,6 @@ struct distribution_setup_request_ies_o {
 };
 
 struct distribution_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_area_session_id_present = false;
   mbs_session_id_s          mbs_session_id;
   uint32_t                  mbs_area_session_id;
@@ -1561,10 +1481,6 @@ struct distribution_setup_resp_ies_o {
 };
 
 struct distribution_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_area_session_id_present = false;
   bool                      crit_diagnostics_present    = false;
   mbs_session_id_s          mbs_session_id;
@@ -1690,10 +1606,6 @@ struct dl_nas_transport_ies_o {
 };
 
 struct dl_nas_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 old_amf_present                    = false;
   bool                                 ran_paging_prio_present            = false;
   bool                                 mob_restrict_list_present          = false;
@@ -1784,10 +1696,6 @@ struct dl_non_ue_associated_nrppa_transport_ies_o {
 };
 
 struct dl_non_ue_associated_nrppa_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   unbounded_octstring<true> routing_id;
   unbounded_octstring<true> nrppa_pdu;
 
@@ -1846,10 +1754,6 @@ struct dl_ran_cfg_transfer_ies_o {
 };
 
 struct dl_ran_cfg_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                        son_cfg_transfer_dl_present          = false;
   bool                        endc_son_cfg_transfer_dl_present     = false;
   bool                        intersys_son_cfg_transfer_dl_present = false;
@@ -1911,10 +1815,6 @@ struct dl_ran_early_status_transfer_ies_o {
 };
 
 struct dl_ran_early_status_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                      amf_ue_ngap_id;
   uint64_t                                      ran_ue_ngap_id;
   early_status_transfer_transparent_container_s early_status_transfer_transparent_container;
@@ -1973,10 +1873,6 @@ struct dl_ran_status_transfer_ies_o {
 };
 
 struct dl_ran_status_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                    amf_ue_ngap_id;
   uint64_t                                    ran_ue_ngap_id;
   ran_status_transfer_transparent_container_s ran_status_transfer_transparent_container;
@@ -2072,10 +1968,6 @@ struct dl_ue_associated_nrppa_transport_ies_o {
 };
 
 struct dl_ue_associated_nrppa_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                  amf_ue_ngap_id;
   uint64_t                  ran_ue_ngap_id;
   unbounded_octstring<true> routing_id;
@@ -2139,10 +2031,6 @@ struct error_ind_ies_o {
 };
 
 struct error_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               amf_ue_ngap_id_present   = false;
   bool               ran_ue_ngap_id_present   = false;
   bool               cause_present            = false;
@@ -2208,10 +2096,6 @@ struct ho_cancel_ies_o {
 };
 
 struct ho_cancel_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t amf_ue_ngap_id;
   uint64_t ran_ue_ngap_id;
   cause_c  cause;
@@ -2270,10 +2154,6 @@ struct ho_cancel_ack_ies_o {
 };
 
 struct ho_cancel_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           amf_ue_ngap_id;
   uint64_t           ran_ue_ngap_id;
@@ -2357,10 +2237,6 @@ struct ho_cmd_ies_o {
 };
 
 struct ho_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                     nas_security_params_from_ngran_present         = false;
   bool                                     pdu_session_res_ho_list_present                = false;
   bool                                     pdu_session_res_to_release_list_ho_cmd_present = false;
@@ -2438,10 +2314,6 @@ struct ho_fail_ies_o {
 };
 
 struct ho_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      crit_diagnostics_present                           = false;
   bool                      targetto_source_fail_transparent_container_present = false;
   uint64_t                  amf_ue_ngap_id;
@@ -2505,10 +2377,6 @@ struct ho_notify_ies_o {
 };
 
 struct ho_notify_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                       notify_source_ngran_node_present = false;
   uint64_t                   amf_ue_ngap_id;
   uint64_t                   ran_ue_ngap_id;
@@ -2580,10 +2448,6 @@ struct ho_prep_fail_ies_o {
 };
 
 struct ho_prep_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      crit_diagnostics_present                           = false;
   bool                      targetto_source_fail_transparent_container_present = false;
   uint64_t                  amf_ue_ngap_id;
@@ -2784,10 +2648,6 @@ struct ho_request_ies_o {
 };
 
 struct ho_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                     core_network_assist_info_for_inactive_present  = false;
   bool                                     new_security_context_ind_present               = false;
   bool                                     nasc_present                                   = false;
@@ -2936,10 +2796,6 @@ struct ho_request_ack_ies_o {
 };
 
 struct ho_request_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                          pdu_session_res_failed_to_setup_list_ho_ack_present = false;
   bool                                          crit_diagnostics_present                            = false;
   bool                                          npn_access_info_present                             = false;
@@ -3027,10 +2883,6 @@ struct ho_required_ies_o {
 };
 
 struct ho_required_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  direct_forwarding_path_availability_present = false;
   uint64_t                              amf_ue_ngap_id;
   uint64_t                              ran_ue_ngap_id;
@@ -3093,10 +2945,6 @@ struct ho_success_ies_o {
 };
 
 struct ho_success_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t amf_ue_ngap_id;
   uint64_t ran_ue_ngap_id;
 
@@ -3165,10 +3013,6 @@ struct init_context_setup_fail_ies_o {
 };
 
 struct init_context_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            pdu_session_res_failed_to_setup_list_cxt_fail_present = false;
   bool                                            crit_diagnostics_present                              = false;
   uint64_t                                        amf_ue_ngap_id;
@@ -3387,10 +3231,6 @@ struct init_context_setup_request_ies_o {
 };
 
 struct init_context_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                     old_amf_present                                  = false;
   bool                                     ue_aggr_max_bit_rate_present                     = false;
   bool                                     core_network_assist_info_for_inactive_present    = false;
@@ -3542,10 +3382,6 @@ struct init_context_setup_resp_ies_o {
 };
 
 struct init_context_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                           pdu_session_res_setup_list_cxt_res_present           = false;
   bool                                           pdu_session_res_failed_to_setup_list_cxt_res_present = false;
   bool                                           crit_diagnostics_present                             = false;
@@ -3666,10 +3502,6 @@ struct init_ue_msg_ies_o {
 };
 
 struct init_ue_msg_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                five_g_s_tmsi_present                     = false;
   bool                                amf_set_id_present                        = false;
   bool                                ue_context_request_present                = false;
@@ -7667,10 +7499,6 @@ struct write_replace_warning_resp_ies_o {
 };
 
 struct location_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                   ue_presence_in_area_of_interest_list_present = false;
   uint64_t                               amf_ue_ngap_id;
   uint64_t                               ran_ue_ngap_id;
@@ -7688,10 +7516,6 @@ struct location_report_ies_container {
 using location_report_s = elementary_procedure_option<location_report_ies_container>;
 
 struct location_report_ctrl_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                       amf_ue_ngap_id;
   uint64_t                       ran_ue_ngap_id;
   location_report_request_type_s location_report_request_type;
@@ -7706,10 +7530,6 @@ struct location_report_ctrl_ies_container {
 using location_report_ctrl_s = elementary_procedure_option<location_report_ctrl_ies_container>;
 
 struct location_report_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t amf_ue_ngap_id;
   uint64_t ran_ue_ngap_id;
   cause_c  cause;
@@ -7724,10 +7544,6 @@ struct location_report_fail_ind_ies_container {
 using location_report_fail_ind_s = elementary_procedure_option<location_report_fail_ind_ies_container>;
 
 struct multicast_group_paging_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               mbs_service_area_present = false;
   mbs_session_id_s                   mbs_session_id;
   mbs_service_area_c                 mbs_service_area;
@@ -7743,10 +7559,6 @@ struct multicast_group_paging_ies_container {
 using multicast_group_paging_s = elementary_procedure_option<multicast_group_paging_ies_container>;
 
 struct multicast_session_activation_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   mbs_session_id_s   mbs_session_id;
   cause_c            cause;
@@ -7763,10 +7575,6 @@ using multicast_session_activation_fail_s =
     elementary_procedure_option<multicast_session_activation_fail_ies_container>;
 
 struct multicast_session_activation_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   mbs_session_id_s          mbs_session_id;
   unbounded_octstring<true> multicast_session_activation_request_transfer;
 
@@ -7781,10 +7589,6 @@ using multicast_session_activation_request_s =
     elementary_procedure_option<multicast_session_activation_request_ies_container>;
 
 struct multicast_session_activation_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   mbs_session_id_s   mbs_session_id;
   crit_diagnostics_s crit_diagnostics;
@@ -7800,10 +7604,6 @@ using multicast_session_activation_resp_s =
     elementary_procedure_option<multicast_session_activation_resp_ies_container>;
 
 struct multicast_session_deactivation_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   mbs_session_id_s          mbs_session_id;
   unbounded_octstring<true> multicast_session_deactivation_request_transfer;
 
@@ -7818,10 +7618,6 @@ using multicast_session_deactivation_request_s =
     elementary_procedure_option<multicast_session_deactivation_request_ies_container>;
 
 struct multicast_session_deactivation_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   mbs_session_id_s   mbs_session_id;
   crit_diagnostics_s crit_diagnostics;
@@ -7837,10 +7633,6 @@ using multicast_session_deactivation_resp_s =
     elementary_procedure_option<multicast_session_deactivation_resp_ies_container>;
 
 struct multicast_session_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               mbs_area_session_id_present = false;
   bool               crit_diagnostics_present    = false;
   mbs_session_id_s   mbs_session_id;
@@ -7858,10 +7650,6 @@ struct multicast_session_upd_fail_ies_container {
 using multicast_session_upd_fail_s = elementary_procedure_option<multicast_session_upd_fail_ies_container>;
 
 struct multicast_session_upd_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      mbs_area_session_id_present = false;
   mbs_session_id_s          mbs_session_id;
   uint32_t                  mbs_area_session_id;
@@ -7877,10 +7665,6 @@ struct multicast_session_upd_request_ies_container {
 using multicast_session_upd_request_s = elementary_procedure_option<multicast_session_upd_request_ies_container>;
 
 struct multicast_session_upd_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               mbs_area_session_id_present = false;
   bool               crit_diagnostics_present    = false;
   mbs_session_id_s   mbs_session_id;
@@ -7897,10 +7681,6 @@ struct multicast_session_upd_resp_ies_container {
 using multicast_session_upd_resp_s = elementary_procedure_option<multicast_session_upd_resp_ies_container>;
 
 struct nas_non_delivery_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                  amf_ue_ngap_id;
   uint64_t                  ran_ue_ngap_id;
   unbounded_octstring<true> nas_pdu;
@@ -7916,10 +7696,6 @@ struct nas_non_delivery_ind_ies_container {
 using nas_non_delivery_ind_s = elementary_procedure_option<nas_non_delivery_ind_ies_container>;
 
 struct ng_reset_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   cause_c      cause;
   reset_type_c reset_type;
 
@@ -7933,10 +7709,6 @@ struct ng_reset_ies_container {
 using ng_reset_s = elementary_procedure_option<ng_reset_ies_container>;
 
 struct ng_reset_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            ue_associated_lc_ng_conn_list_present = false;
   bool                            crit_diagnostics_present              = false;
   ue_associated_lc_ng_conn_list_l ue_associated_lc_ng_conn_list;
@@ -7952,10 +7724,6 @@ struct ng_reset_ack_ies_container {
 using ng_reset_ack_s = elementary_procedure_option<ng_reset_ack_ies_container>;
 
 struct ng_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   cause_c            cause;
@@ -7972,10 +7740,6 @@ struct ng_setup_fail_ies_container {
 using ng_setup_fail_s = elementary_procedure_option<ng_setup_fail_ies_container>;
 
 struct ng_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 ran_node_name_present             = false;
   bool                                 ue_retention_info_present         = false;
   bool                                 nb_iot_default_paging_drx_present = false;
@@ -7998,10 +7762,6 @@ struct ng_setup_request_ies_container {
 using ng_setup_request_s = elementary_procedure_option<ng_setup_request_ies_container>;
 
 struct ng_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 crit_diagnostics_present  = false;
   bool                                 ue_retention_info_present = false;
   bool                                 iab_supported_present     = false;
@@ -8025,10 +7785,6 @@ struct ng_setup_resp_ies_container {
 using ng_setup_resp_s = elementary_procedure_option<ng_setup_resp_ies_container>;
 
 struct overload_start_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                        amf_overload_resp_present              = false;
   bool                        amf_traffic_load_reduction_ind_present = false;
   bool                        overload_start_nssai_list_present      = false;
@@ -8051,10 +7807,6 @@ using overload_stop_ies_container = protocol_ie_container_empty_l;
 using overload_stop_s = elementary_procedure_option<overload_stop_ies_container>;
 
 struct pdu_session_res_modify_confirm_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            pdu_session_res_modify_list_mod_cfm_present           = false;
   bool                                            pdu_session_res_failed_to_modify_list_mod_cfm_present = false;
   bool                                            crit_diagnostics_present                              = false;
@@ -8074,10 +7826,6 @@ struct pdu_session_res_modify_confirm_ies_container {
 using pdu_session_res_modify_confirm_s = elementary_procedure_option<pdu_session_res_modify_confirm_ies_container>;
 
 struct pdu_session_res_modify_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  user_location_info_present = false;
   uint64_t                              amf_ue_ngap_id;
   uint64_t                              ran_ue_ngap_id;
@@ -8094,10 +7842,6 @@ struct pdu_session_res_modify_ind_ies_container {
 using pdu_session_res_modify_ind_s = elementary_procedure_option<pdu_session_res_modify_ind_ies_container>;
 
 struct pdu_session_res_modify_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  ran_paging_prio_present = false;
   uint64_t                              amf_ue_ngap_id;
   uint64_t                              ran_ue_ngap_id;
@@ -8114,10 +7858,6 @@ struct pdu_session_res_modify_request_ies_container {
 using pdu_session_res_modify_request_s = elementary_procedure_option<pdu_session_res_modify_request_ies_container>;
 
 struct pdu_session_res_modify_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            pdu_session_res_modify_list_mod_res_present           = false;
   bool                                            pdu_session_res_failed_to_modify_list_mod_res_present = false;
   bool                                            user_location_info_present                            = false;
@@ -8139,10 +7879,6 @@ struct pdu_session_res_modify_resp_ies_container {
 using pdu_session_res_modify_resp_s = elementary_procedure_option<pdu_session_res_modify_resp_ies_container>;
 
 struct pdu_session_res_notify_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                pdu_session_res_notify_list_present       = false;
   bool                                pdu_session_res_released_list_not_present = false;
   bool                                user_location_info_present                = false;
@@ -8162,10 +7898,6 @@ struct pdu_session_res_notify_ies_container {
 using pdu_session_res_notify_s = elementary_procedure_option<pdu_session_res_notify_ies_container>;
 
 struct pdu_session_res_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                      ran_paging_prio_present = false;
   bool                                      nas_pdu_present         = false;
   uint64_t                                  amf_ue_ngap_id;
@@ -8184,10 +7916,6 @@ struct pdu_session_res_release_cmd_ies_container {
 using pdu_session_res_release_cmd_s = elementary_procedure_option<pdu_session_res_release_cmd_ies_container>;
 
 struct pdu_session_res_release_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    user_location_info_present = false;
   bool                                    crit_diagnostics_present   = false;
   uint64_t                                amf_ue_ngap_id;
@@ -8206,10 +7934,6 @@ struct pdu_session_res_release_resp_ies_container {
 using pdu_session_res_release_resp_s = elementary_procedure_option<pdu_session_res_release_resp_ies_container>;
 
 struct pdu_session_res_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                ran_paging_prio_present            = false;
   bool                                nas_pdu_present                    = false;
   bool                                ue_aggr_max_bit_rate_present       = false;
@@ -8232,10 +7956,6 @@ struct pdu_session_res_setup_request_ies_container {
 using pdu_session_res_setup_request_s = elementary_procedure_option<pdu_session_res_setup_request_ies_container>;
 
 struct pdu_session_res_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                          pdu_session_res_setup_list_su_res_present           = false;
   bool                                          pdu_session_res_failed_to_setup_list_su_res_present = false;
   bool                                          crit_diagnostics_present                            = false;
@@ -8257,10 +7977,6 @@ struct pdu_session_res_setup_resp_ies_container {
 using pdu_session_res_setup_resp_s = elementary_procedure_option<pdu_session_res_setup_resp_ies_container>;
 
 struct pws_cancel_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             warning_area_list_present       = false;
   bool                             cancel_all_warning_msgs_present = false;
   fixed_bitstring<16, false, true> msg_id;
@@ -8278,10 +7994,6 @@ struct pws_cancel_request_ies_container {
 using pws_cancel_request_s = elementary_procedure_option<pws_cancel_request_ies_container>;
 
 struct pws_cancel_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             broadcast_cancelled_area_list_present = false;
   bool                             crit_diagnostics_present              = false;
   fixed_bitstring<16, false, true> msg_id;
@@ -8299,10 +8011,6 @@ struct pws_cancel_resp_ies_container {
 using pws_cancel_resp_s = elementary_procedure_option<pws_cancel_resp_ies_container>;
 
 struct pws_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   pws_failed_cell_id_list_c pws_failed_cell_id_list;
   global_ran_node_id_c      global_ran_node_id;
 
@@ -8316,10 +8024,6 @@ struct pws_fail_ind_ies_container {
 using pws_fail_ind_s = elementary_procedure_option<pws_fail_ind_ies_container>;
 
 struct pws_restart_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 emergency_area_id_list_for_restart_present = false;
   cell_id_list_for_restart_c           cell_id_list_for_restart;
   global_ran_node_id_c                 global_ran_node_id;
@@ -8336,10 +8040,6 @@ struct pws_restart_ind_ies_container {
 using pws_restart_ind_s = elementary_procedure_option<pws_restart_ind_ies_container>;
 
 struct paging_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         paging_drx_present                 = false;
   bool                         paging_prio_present                = false;
   bool                         ue_radio_cap_for_paging_present    = false;
@@ -8381,10 +8081,6 @@ struct paging_ies_container {
 using paging_s = elementary_procedure_option<paging_ies_container>;
 
 struct path_switch_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                          pdu_session_res_failed_to_setup_list_ps_req_present = false;
   bool                                          rrc_resume_cause_present                            = false;
   bool                                          red_cap_ind_present                                 = false;
@@ -8407,10 +8103,6 @@ struct path_switch_request_ies_container {
 using path_switch_request_s = elementary_procedure_option<path_switch_request_ies_container>;
 
 struct path_switch_request_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                     ue_security_cap_present                        = false;
   bool                                     new_security_context_ind_present               = false;
   bool                                     pdu_session_res_released_list_ps_ack_present   = false;
@@ -8479,10 +8171,6 @@ struct path_switch_request_ack_ies_container {
 using path_switch_request_ack_s = elementary_procedure_option<path_switch_request_ack_ies_container>;
 
 struct path_switch_request_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    crit_diagnostics_present = false;
   uint64_t                                amf_ue_ngap_id;
   uint64_t                                ran_ue_ngap_id;
@@ -8499,9 +8187,6 @@ struct path_switch_request_fail_ies_container {
 using path_switch_request_fail_s = elementary_procedure_option<path_switch_request_fail_ies_container>;
 
 struct private_ie_container_empty_l {
-  template <class valueT_>
-  using ie_field_s = private_ie_container_item_s<valueT_>;
-
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -8522,10 +8207,6 @@ struct private_msg_s {
 };
 
 struct ran_cp_relocation_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t              ran_ue_ngap_id;
   five_g_s_tmsi_s       five_g_s_tmsi;
   eutra_cgi_s           eutra_cgi;
@@ -8542,10 +8223,6 @@ struct ran_cp_relocation_ind_ies_container {
 using ran_cp_relocation_ind_s = elementary_procedure_option<ran_cp_relocation_ind_ies_container>;
 
 struct ran_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 ran_node_name_present               = false;
   bool                                 supported_ta_list_present           = false;
   bool                                 default_paging_drx_present          = false;
@@ -8574,10 +8251,6 @@ using ran_cfg_upd_s = elementary_procedure_option<ran_cfg_upd_ies_container>;
 using ran_cfg_upd_ack_s = elementary_procedure_option<protocol_ie_container_l<ran_cfg_upd_ack_ies_o>>;
 
 struct ran_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   cause_c            cause;
@@ -8594,10 +8267,6 @@ struct ran_cfg_upd_fail_ies_container {
 using ran_cfg_upd_fail_s = elementary_procedure_option<ran_cfg_upd_fail_ies_container>;
 
 struct rrc_inactive_transition_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t             amf_ue_ngap_id;
   uint64_t             ran_ue_ngap_id;
   rrc_state_e          rrc_state;
@@ -8613,10 +8282,6 @@ struct rrc_inactive_transition_report_ies_container {
 using rrc_inactive_transition_report_s = elementary_procedure_option<rrc_inactive_transition_report_ies_container>;
 
 struct reroute_nas_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                amf_ue_ngap_id_present                    = false;
   bool                                allowed_nssai_present                     = false;
   bool                                source_to_target_amf_info_reroute_present = false;
@@ -8640,10 +8305,6 @@ using reroute_nas_request_s = elementary_procedure_option<reroute_nas_request_ie
 using retrieve_ue_info_s = elementary_procedure_option<protocol_ie_container_l<retrieve_ue_info_ies_o>>;
 
 struct secondary_rat_data_usage_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                       ho_flag_present            = false;
   bool                                       user_location_info_present = false;
   uint64_t                                   amf_ue_ngap_id;
@@ -8662,10 +8323,6 @@ struct secondary_rat_data_usage_report_ies_container {
 using secondary_rat_data_usage_report_s = elementary_procedure_option<secondary_rat_data_usage_report_ies_container>;
 
 struct trace_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                 amf_ue_ngap_id;
   uint64_t                 ran_ue_ngap_id;
   fixed_octstring<8, true> ngran_trace_id;
@@ -8681,10 +8338,6 @@ struct trace_fail_ind_ies_container {
 using trace_fail_ind_s = elementary_procedure_option<trace_fail_ind_ies_container>;
 
 struct trace_start_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t           amf_ue_ngap_id;
   uint64_t           ran_ue_ngap_id;
   trace_activation_s trace_activation;
@@ -8699,10 +8352,6 @@ struct trace_start_ies_container {
 using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
 
 struct ue_context_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           amf_ue_ngap_id;
   uint64_t           ran_ue_ngap_id;
@@ -8719,10 +8368,6 @@ struct ue_context_mod_fail_ies_container {
 using ue_context_mod_fail_s = elementary_procedure_option<ue_context_mod_fail_ies_container>;
 
 struct ue_context_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                     ran_paging_prio_present                          = false;
   bool                                     security_key_present                             = false;
   bool                                     idx_to_rfsp_present                              = false;
@@ -8792,10 +8437,6 @@ struct ue_context_mod_request_ies_container {
 using ue_context_mod_request_s = elementary_procedure_option<ue_context_mod_request_ies_container>;
 
 struct ue_context_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                 rrc_state_present          = false;
   bool                 user_location_info_present = false;
   bool                 crit_diagnostics_present   = false;
@@ -8815,10 +8456,6 @@ struct ue_context_mod_resp_ies_container {
 using ue_context_mod_resp_s = elementary_procedure_option<ue_context_mod_resp_ies_container>;
 
 struct ue_context_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   ue_ngap_ids_c ue_ngap_ids;
   cause_c       cause;
 
@@ -8832,10 +8469,6 @@ struct ue_context_release_cmd_ies_container {
 using ue_context_release_cmd_s = elementary_procedure_option<ue_context_release_cmd_ies_container>;
 
 struct ue_context_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                 user_location_info_present                                 = false;
   bool                 info_on_recommended_cells_and_ran_nodes_for_paging_present = false;
   bool                 pdu_session_res_list_cxt_rel_cpl_present                   = false;
@@ -8859,10 +8492,6 @@ struct ue_context_release_complete_ies_container {
 using ue_context_release_complete_s = elementary_procedure_option<ue_context_release_complete_ies_container>;
 
 struct ue_context_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               pdu_session_res_list_cxt_rel_req_present = false;
   uint64_t                           amf_ue_ngap_id;
   uint64_t                           ran_ue_ngap_id;
@@ -8879,10 +8508,6 @@ struct ue_context_release_request_ies_container {
 using ue_context_release_request_s = elementary_procedure_option<ue_context_release_request_ies_container>;
 
 struct ue_context_resume_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           amf_ue_ngap_id;
   uint64_t           ran_ue_ngap_id;
@@ -8899,10 +8524,6 @@ struct ue_context_resume_fail_ies_container {
 using ue_context_resume_fail_s = elementary_procedure_option<ue_context_resume_fail_ies_container>;
 
 struct ue_context_resume_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            pdu_session_res_resume_list_res_req_present                = false;
   bool                                            pdu_session_res_failed_to_resume_list_res_req_present      = false;
   bool                                            suspend_request_ind_present                                = false;
@@ -8927,10 +8548,6 @@ struct ue_context_resume_request_ies_container {
 using ue_context_resume_request_s = elementary_procedure_option<ue_context_resume_request_ies_container>;
 
 struct ue_context_resume_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            pdu_session_res_resume_list_res_res_present           = false;
   bool                                            pdu_session_res_failed_to_resume_list_res_res_present = false;
   bool                                            security_context_present                              = false;
@@ -8956,10 +8573,6 @@ struct ue_context_resume_resp_ies_container {
 using ue_context_resume_resp_s = elementary_procedure_option<ue_context_resume_resp_ies_container>;
 
 struct ue_context_suspend_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           amf_ue_ngap_id;
   uint64_t           ran_ue_ngap_id;
@@ -8976,10 +8589,6 @@ struct ue_context_suspend_fail_ies_container {
 using ue_context_suspend_fail_s = elementary_procedure_option<ue_context_suspend_fail_ies_container>;
 
 struct ue_context_suspend_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool     info_on_recommended_cells_and_ran_nodes_for_paging_present = false;
   bool     paging_assis_datafor_c_ecapab_ue_present                   = false;
   bool     pdu_session_res_suspend_list_sus_req_present               = false;
@@ -8999,10 +8608,6 @@ struct ue_context_suspend_request_ies_container {
 using ue_context_suspend_request_s = elementary_procedure_option<ue_context_suspend_request_ies_container>;
 
 struct ue_context_suspend_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               security_context_present = false;
   bool               crit_diagnostics_present = false;
   uint64_t           amf_ue_ngap_id;
@@ -9020,10 +8625,6 @@ struct ue_context_suspend_resp_ies_container {
 using ue_context_suspend_resp_s = elementary_procedure_option<ue_context_suspend_resp_ies_container>;
 
 struct ue_info_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             nb_iot_ue_prio_present = false;
   bool                             ue_radio_cap_present   = false;
   bool                             s_nssai_present        = false;
@@ -9048,10 +8649,6 @@ struct ue_info_transfer_ies_container {
 using ue_info_transfer_s = elementary_procedure_option<ue_info_transfer_ies_container>;
 
 struct ue_radio_cap_check_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      ue_radio_cap_present    = false;
   bool                      ue_radio_cap_id_present = false;
   uint64_t                  amf_ue_ngap_id;
@@ -9069,10 +8666,6 @@ struct ue_radio_cap_check_request_ies_container {
 using ue_radio_cap_check_request_s = elementary_procedure_option<ue_radio_cap_check_request_ies_container>;
 
 struct ue_radio_cap_check_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                    crit_diagnostics_present = false;
   uint64_t                amf_ue_ngap_id;
   uint64_t                ran_ue_ngap_id;
@@ -9093,10 +8686,6 @@ using ue_radio_cap_id_map_request_s =
     elementary_procedure_option<protocol_ie_container_l<ue_radio_cap_id_map_request_ies_o>>;
 
 struct ue_radio_cap_id_map_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      crit_diagnostics_present = false;
   unbounded_octstring<true> ue_radio_cap_id;
   unbounded_octstring<true> ue_radio_cap;
@@ -9112,10 +8701,6 @@ struct ue_radio_cap_id_map_resp_ies_container {
 using ue_radio_cap_id_map_resp_s = elementary_procedure_option<ue_radio_cap_id_map_resp_ies_container>;
 
 struct ue_radio_cap_info_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      ue_radio_cap_for_paging_present   = false;
   bool                      ue_radio_cap_eutra_format_present = false;
   uint64_t                  amf_ue_ngap_id;
@@ -9134,10 +8719,6 @@ struct ue_radio_cap_info_ind_ies_container {
 using ue_radio_cap_info_ind_s = elementary_procedure_option<ue_radio_cap_info_ind_ies_container>;
 
 struct ue_tnla_binding_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t amf_ue_ngap_id;
   uint64_t ran_ue_ngap_id;
 
@@ -9151,10 +8732,6 @@ struct ue_tnla_binding_release_request_ies_container {
 using ue_tnla_binding_release_request_s = elementary_procedure_option<ue_tnla_binding_release_request_ies_container>;
 
 struct ul_nas_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      w_agf_id_info_present = false;
   bool                      tngf_id_info_present  = false;
   bool                      twif_id_info_present  = false;
@@ -9176,10 +8753,6 @@ struct ul_nas_transport_ies_container {
 using ul_nas_transport_s = elementary_procedure_option<ul_nas_transport_ies_container>;
 
 struct ul_non_ue_associated_nrppa_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   unbounded_octstring<true> routing_id;
   unbounded_octstring<true> nrppa_pdu;
 
@@ -9194,10 +8767,6 @@ using ul_non_ue_associated_nrppa_transport_s =
     elementary_procedure_option<ul_non_ue_associated_nrppa_transport_ies_container>;
 
 struct ul_ran_cfg_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                        son_cfg_transfer_ul_present          = false;
   bool                        endc_son_cfg_transfer_ul_present     = false;
   bool                        intersys_son_cfg_transfer_ul_present = false;
@@ -9215,10 +8784,6 @@ struct ul_ran_cfg_transfer_ies_container {
 using ul_ran_cfg_transfer_s = elementary_procedure_option<ul_ran_cfg_transfer_ies_container>;
 
 struct ul_ran_early_status_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                      amf_ue_ngap_id;
   uint64_t                                      ran_ue_ngap_id;
   early_status_transfer_transparent_container_s early_status_transfer_transparent_container;
@@ -9233,10 +8798,6 @@ struct ul_ran_early_status_transfer_ies_container {
 using ul_ran_early_status_transfer_s = elementary_procedure_option<ul_ran_early_status_transfer_ies_container>;
 
 struct ul_ran_status_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                    amf_ue_ngap_id;
   uint64_t                                    ran_ue_ngap_id;
   ran_status_transfer_transparent_container_s ran_status_transfer_transparent_container;
@@ -9254,10 +8815,6 @@ using ul_ran_status_transfer_s = elementary_procedure_option<ul_ran_status_trans
 using ul_rim_info_transfer_s = elementary_procedure_option<protocol_ie_container_l<ul_rim_info_transfer_ies_o>>;
 
 struct ul_ue_associated_nrppa_transport_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                  amf_ue_ngap_id;
   uint64_t                  ran_ue_ngap_id;
   unbounded_octstring<true> routing_id;
@@ -9273,10 +8830,6 @@ struct ul_ue_associated_nrppa_transport_ies_container {
 using ul_ue_associated_nrppa_transport_s = elementary_procedure_option<ul_ue_associated_nrppa_transport_ies_container>;
 
 struct write_replace_warning_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             warning_area_list_present          = false;
   bool                             warning_type_present               = false;
   bool                             warning_security_info_present      = false;
@@ -9306,10 +8859,6 @@ struct write_replace_warning_request_ies_container {
 using write_replace_warning_request_s = elementary_procedure_option<write_replace_warning_request_ies_container>;
 
 struct write_replace_warning_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             broadcast_completed_area_list_present = false;
   bool                             crit_diagnostics_present              = false;
   fixed_bitstring<16, false, true> msg_id;

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include <vector>
 

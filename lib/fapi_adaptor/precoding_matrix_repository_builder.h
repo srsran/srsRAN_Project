@@ -35,7 +35,7 @@ public:
   explicit precoding_matrix_repository_builder(unsigned size) { repository.reserve(size); }
 
   /// Adds the given precoding configuration to the repository with the given index.
-  void add(unsigned index, const precoding_configuration& precoding)
+  void add(unsigned index, const precoding_weight_matrix& precoding)
   {
     if (index >= repository.size()) {
       repository.resize(index + 1U);
@@ -51,7 +51,7 @@ public:
   }
 
 private:
-  std::vector<precoding_configuration> repository;
+  std::vector<precoding_weight_matrix> repository;
 };
 
 } // namespace fapi_adaptor

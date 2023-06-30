@@ -82,13 +82,14 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
 
   // prepare request
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id                              = uint_to_pdu_session_id(1);
-  pdu_session_setup_item.pdu_session_type                            = "ipv4";
-  pdu_session_setup_item.snssai.sst                                  = 1;
-  pdu_session_setup_item.snssai.sd                                   = 10203;
-  pdu_session_setup_item.security_ind.integrity_protection_ind       = "not-needed";
-  pdu_session_setup_item.security_ind.confidentiality_protection_ind = "not-needed";
-  pdu_session_setup_item.pdu_session_res_dl_ambr                     = 330000000;
+  pdu_session_setup_item.pdu_session_id                        = uint_to_pdu_session_id(1);
+  pdu_session_setup_item.pdu_session_type                      = "ipv4";
+  pdu_session_setup_item.snssai.sst                            = 1;
+  pdu_session_setup_item.snssai.sd                             = 10203;
+  pdu_session_setup_item.security_ind.integrity_protection_ind = integrity_protection_indication_t::not_needed;
+  pdu_session_setup_item.security_ind.confidentiality_protection_ind =
+      confidentiality_protection_indication_t::not_needed;
+  pdu_session_setup_item.pdu_session_res_dl_ambr = 330000000;
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
   pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
   pdu_session_setup_item.ng_ul_up_tnl_info          = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
@@ -126,7 +127,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 257);
+  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 65792);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to remove non-existing session
@@ -177,7 +178,8 @@ TEST_F(pdu_session_manager_test, when_unexisting_pdu_session_is_modified_operati
   e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
   pdu_session_modify_item.pdu_session_id = uint_to_pdu_session_id(1);
 
-  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+  pdu_session_modification_result modification_result =
+      pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
 
   // check successful outcome
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
@@ -242,7 +244,9 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(valid_drb_to_remove);
 
   // attempt to remove bearers
-  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+  pdu_session_modification_result modification_result =
+      pdu_session_mng->modify_pdu_session(pdu_session_modify_item, false);
+
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
 

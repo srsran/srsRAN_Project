@@ -74,9 +74,10 @@ void rrc_reestablishment_procedure::create_srb1()
 {
   // create SRB1
   srb_creation_message srb1_msg{};
-  srb1_msg.ue_index = context.ue_index;
-  srb1_msg.srb_id   = srb_id_t::srb1;
-  srb1_msg.pdcp_cfg = srb1_pdcp_cfg;
+  srb1_msg.ue_index     = context.ue_index;
+  srb1_msg.old_ue_index = old_ue_index;
+  srb1_msg.srb_id       = srb_id_t::srb1;
+  srb1_msg.pdcp_cfg     = srb1_pdcp_cfg;
   du_processor_notifier.on_create_srb(srb1_msg);
 
   // activate SRB1 PDCP security

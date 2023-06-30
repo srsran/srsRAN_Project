@@ -69,12 +69,6 @@ constexpr inline gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx
   return static_cast<gnb_cu_up_ue_e1ap_id_t>(idx);
 }
 
-struct e1ap_security_ind {
-  std::string           integrity_protection_ind;
-  std::string           confidentiality_protection_ind;
-  optional<std::string> maximum_ipdatarate;
-};
-
 struct e1ap_cell_group_info_item {
   uint8_t               cell_group_id = 0;
   optional<std::string> ul_cfg;
@@ -101,10 +95,10 @@ struct e1ap_qos_flow_level_qos_params {
   qos_characteristics_t                qos_characteristics;
   e1ap_ng_ran_alloc_and_retention_prio ng_ran_alloc_retention_prio;
   optional<e1ap_gbr_qos_flow_info>     gbr_qos_flow_info;
-  optional<std::string>                reflective_qos_attribute;
-  optional<std::string>                add_qos_info;
+  optional<bool>                       reflective_qos_attribute;
+  optional<bool>                       add_qos_info;
   optional<uint8_t>                    paging_policy_ind;
-  optional<std::string>                reflective_qos_ind;
+  optional<bool>                       reflective_qos_ind;
 };
 
 struct e1ap_qos_flow_qos_param_item {
@@ -180,7 +174,7 @@ struct e1ap_pdu_session_res_to_setup_item {
   std::string                                                pdu_session_type;
   s_nssai_t                                                  snssai;
   up_transport_layer_info                                    ng_ul_up_tnl_info;
-  e1ap_security_ind                                          security_ind;
+  security_indication_t                                      security_ind;
   slotted_id_vector<drb_id_t, e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;
@@ -288,7 +282,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
   optional<sdap_config_t>                                        sdap_cfg;
   optional<e1ap_pdcp_config>                                     pdcp_cfg;
   optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
-  optional<std::string>                                          pdcp_sn_status_request;
+  optional<bool>                                                 pdcp_sn_status_request;
   std::vector<e1ap_up_params_item>                               dl_up_params;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_add;
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_modify;
@@ -299,7 +293,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
 
 struct e1ap_pdu_session_res_to_modify_item {
   pdu_session_id_t                                            pdu_session_id = pdu_session_id_t::invalid;
-  optional<e1ap_security_ind>                                 security_ind;
+  optional<security_indication_t>                             security_ind;
   optional<uint64_t>                                          pdu_session_res_dl_ambr;
   optional<up_transport_layer_info>                           ng_ul_up_tnl_info;
   optional<e1ap_data_forwarding_info_request>                 pdu_session_data_forwarding_info_request;

@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_du_ue_context_release_procedure.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;

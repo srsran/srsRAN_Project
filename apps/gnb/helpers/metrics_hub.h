@@ -22,26 +22,22 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
-#include "srsran/asn1/e2ap/e2ap.h"
-#include "srsran/support/async/event_signal.h"
-#include "srsran/support/async/protocol_transaction_manager.h"
+#include "srsran/adt/span.h"
+#include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 
-using e2ap_outcome     = expected<asn1::e2ap::successful_outcome_s, asn1::e2ap::unsuccessful_outcome_s>;
-using e2ap_transaction = protocol_transaction<e2ap_outcome>;
-class e2_event_manager
+class metrics_hub : public scheduler_ue_metrics_notifier
 {
 public:
-  /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
-  protocol_transaction_manager<e2ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
-  // CU initiated E2 Setup Procedure
+  metrics_hub(task_executor& du_executor_);
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override;
+  void add_subscriber(scheduler_ue_metrics_notifier& subscriber);
 
-  explicit e2_event_manager(timer_factory timers) :
-    transactions(timers, e2ap_outcome{asn1::e2ap::unsuccessful_outcome_s{}})
-  {
-  }
+private:
+  std::vector<scheduler_ue_metrics_notifier*> subscribers;
+  task_executor&                              du_executor;
 };
+
 } // namespace srsran

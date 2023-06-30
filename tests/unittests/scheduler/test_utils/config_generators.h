@@ -26,6 +26,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
@@ -68,8 +69,14 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
       default_pucch_builder_params, sched_req.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
 
   if (params.csi_rs_enabled) {
-    sched_req.zp_csi_rs_list = config_helpers::make_default_pdsch_config(params).zp_csi_rs_res_list;
-    sched_req.csi_meas_cfg   = config_helpers::make_default_csi_meas_config(params);
+    csi_helper::csi_builder_params csi_params{};
+    csi_params.pci           = params.pci;
+    csi_params.nof_rbs       = sched_req.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+    csi_params.nof_ports     = params.nof_dl_ports;
+    csi_params.csi_rs_period = csi_helper::get_max_csi_rs_period(params.scs_common);
+
+    sched_req.zp_csi_rs_list      = csi_helper::make_periodic_zp_csi_rs_resource_list(csi_params);
+    sched_req.nzp_csi_rs_res_list = csi_helper::make_nzp_csi_rs_resource_list(csi_params);
   }
 
   return sched_req;

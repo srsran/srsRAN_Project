@@ -43,6 +43,8 @@ public:
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
   async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
+  void handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index);
+
   /// \brief Force the interruption of all UE activity.
   async_task<void> stop();
 

@@ -34,6 +34,7 @@ using namespace ofh;
 using namespace srsran::ofh::testing;
 
 static const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> eaxc            = {2};
+static const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc      = {4};
 static constexpr unsigned                                    REPOSITORY_SIZE = 20U;
 
 namespace {
@@ -165,25 +166,57 @@ public:
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
+  uplink_request_handler_impl_config           cfg;
   uplink_context_repository<ul_slot_context>*  ul_slot_repo;
   uplink_context_repository<ul_prach_context>* ul_prach_repo;
   data_flow_cplane_scheduling_commands_spy*    data_flow;
+  data_flow_cplane_scheduling_commands_spy*    data_flow_prach;
   uplink_request_handler_impl                  handler;
+  uplink_request_handler_impl                  handler_prach_cp_en;
 
-  explicit ofh_uplink_request_handler_impl_fixture() : handler(get_config()) {}
+  explicit ofh_uplink_request_handler_impl_fixture() :
+    cfg(init_config()),
+    ul_slot_repo(cfg.ul_slot_repo.get()),
+    ul_prach_repo(cfg.ul_prach_repo.get()),
+    handler(get_config_prach_cp_disabled()),
+    handler_prach_cp_en(get_config_prach_cp_enabled())
+  {
+  }
 
-  uplink_request_handler_impl_config get_config()
+  uplink_request_handler_impl_config init_config()
   {
     uplink_request_handler_impl_config config;
-    config.ul_prach_eaxc = {};
-    config.ul_data_eaxc  = eaxc;
     config.ul_slot_repo  = std::make_shared<uplink_context_repository<ul_slot_context>>(REPOSITORY_SIZE);
-    ul_slot_repo         = config.ul_slot_repo.get();
     config.ul_prach_repo = std::make_shared<uplink_context_repository<ul_prach_context>>(REPOSITORY_SIZE);
-    ul_prach_repo        = config.ul_prach_repo.get();
-    auto temp            = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow            = temp.get();
-    config.data_flow     = std::move(temp);
+    return config;
+  }
+
+  uplink_request_handler_impl_config get_config_prach_cp_disabled()
+  {
+    uplink_request_handler_impl_config config;
+    config.prach_eaxc          = {};
+    config.ul_data_eaxc        = eaxc;
+    config.is_prach_cp_enabled = false;
+    config.ul_slot_repo        = cfg.ul_slot_repo;
+    config.ul_prach_repo       = cfg.ul_prach_repo;
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow                  = temp.get();
+    config.data_flow           = std::move(temp);
+
+    return config;
+  }
+
+  uplink_request_handler_impl_config get_config_prach_cp_enabled()
+  {
+    uplink_request_handler_impl_config config;
+    config.prach_eaxc          = prach_eaxc;
+    config.ul_data_eaxc        = {};
+    config.is_prach_cp_enabled = true;
+    config.ul_slot_repo        = cfg.ul_slot_repo;
+    config.ul_prach_repo       = cfg.ul_prach_repo;
+    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow_prach            = temp.get();
+    config.data_flow           = std::move(temp);
 
     return config;
   }
@@ -195,17 +228,42 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
        handle_prach_request_when_cplane_message_is_disable_for_prach_does_not_generate_cplane_message)
 {
   prach_buffer_context context;
-  context.slot = slot_point(1, 20, 1);
+  context.nof_fd_occasions = 1;
+  context.nof_td_occasions = 1;
+  context.format           = prach_format_type::B4;
+  context.slot             = slot_point(1, 20, 1);
+  context.pusch_scs        = subcarrier_spacing::kHz30;
   prach_buffer_dummy buffer_dummy;
 
   handler.handle_prach_occasion(context, buffer_dummy);
 
   // Assert data flow.
   ASSERT_FALSE(data_flow->has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(data_flow->has_enqueue_section_type_3_method_been_called());
+}
 
-  // Assert repository.
-  const ul_prach_context& prach_ctx = ul_prach_repo->get(context.slot);
-  ASSERT_EQ(prach_ctx.buffer, &buffer_dummy);
+TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_cplane_message)
+{
+  prach_buffer_context context;
+  context.nof_fd_occasions = 1;
+  context.nof_td_occasions = 1;
+  context.format           = prach_format_type::B4;
+  context.slot             = slot_point(1, 20, 1);
+  context.pusch_scs        = subcarrier_spacing::kHz30;
+  context.start_symbol     = 0;
+  prach_buffer_dummy buffer_dummy;
+
+  handler_prach_cp_en.handle_prach_occasion(context, buffer_dummy);
+
+  // Assert data flow.
+  ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_1_method_been_called());
+  ASSERT_TRUE(data_flow_prach->has_enqueue_section_type_3_method_been_called());
+
+  const data_flow_cplane_scheduling_commands_spy::spy_info& info = data_flow_prach->get_spy_info();
+  ASSERT_EQ(context.slot, info.slot);
+  ASSERT_EQ(prach_eaxc[0], info.eaxc);
+  ASSERT_EQ(data_direction::uplink, info.direction);
+  ASSERT_EQ(filter_index_type::ul_prach_preamble_short, info.filter_type);
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cplane_message)

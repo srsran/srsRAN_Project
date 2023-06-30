@@ -36,7 +36,7 @@ TEST(ULPUCCHFormat1PDUTest, ValidPUCCHFormat1ShouldPass)
   convert_pucch_mac_to_fapi(fapi_pdu, mac_pdu);
 
   // BWP.
-  ASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
+  ASSERT_EQ(mac_pdu.bwp_cfg->cp, fapi_pdu.cp);
   ASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
@@ -72,7 +72,7 @@ TEST(ul_pucch_format2_pdu_valid, valid_pucch_format2_should_pass)
   convert_pucch_mac_to_fapi(fapi_pdu, mac_pdu);
 
   // BWP.
-  ASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
+  ASSERT_EQ(mac_pdu.bwp_cfg->cp, fapi_pdu.cp);
   ASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);

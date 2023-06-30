@@ -33,7 +33,6 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
   pool_ptr(frame_pool),
   pool(*pool_ptr),
   gateway(std::move(gw)),
-  symbols_per_slot(cfg.symbols_per_slot),
   timing_params(
       cfg.tx_timing_params,
       std::chrono::duration<double, std::nano>(1e6 / (cfg.symbols_per_slot * get_nof_slots_per_subframe(cfg.scs))))
@@ -41,24 +40,12 @@ message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&        
   srsran_assert(gateway, "Invalid Ethernet gateway");
 }
 
-/// Calculates the transmission slot and symbol given the offset from the current slot and symbol.
-static std::pair<slot_point, unsigned>
-calculate_tx_slot_and_symbol(slot_point slot, unsigned tx_symbol_start, unsigned symbols_per_slot)
+void message_transmitter_impl::transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type)
 {
-  slot_point tx_slot   = slot;
-  unsigned   tx_symbol = tx_symbol_start;
-  // Check slot boundaries.
-  if (tx_symbol_start >= symbols_per_slot) {
-    tx_symbol         = tx_symbol_start % symbols_per_slot;
-    unsigned slot_adv = tx_symbol_start / symbols_per_slot;
-    tx_slot += slot_adv;
-  }
-  return {tx_slot, tx_symbol};
-}
+  slot_point slot         = symbol_point.get_slot();
+  unsigned   symbol_index = symbol_point.get_symbol_index();
 
-void message_transmitter_impl::transmit_enqueued_messages(slot_point slot, unsigned symbol, message_type type)
-{
-  span<const span<const ether::frame_buffer>> frame_buffers = pool.read_frame_buffers(slot, symbol, type);
+  span<const span<const ether::frame_buffer>> frame_buffers = pool.read_frame_buffers(slot, symbol_index, type);
 
   for (const auto buffers_span : frame_buffers) {
     for (const auto& eth_buffer : buffers_span) {
@@ -72,31 +59,22 @@ void message_transmitter_impl::transmit_enqueued_messages(slot_point slot, unsig
       logger.debug("Sending Ethernet frame through gateway of size={} in slot={}, symbol={}, type={}",
                    eth_buffer.size(),
                    slot,
-                   symbol,
+                   symbol_index,
                    (type == message_type::control_plane) ? "control" : "user");
     }
   }
 
-  pool.eth_frames_sent(slot, symbol, type);
+  pool.eth_frames_sent(slot, symbol_index, type);
 }
 
-void message_transmitter_impl::handle_new_symbol(slot_point slot, unsigned symbol)
+void message_transmitter_impl::handle_new_ota_symbol(slot_symbol_point symbol_point)
 {
-  slot_point tx_slot;
-  unsigned   tx_symbol;
-
   // Transmit pending DL Control-Plane messages.
-  std::tie(tx_slot, tx_symbol) =
-      calculate_tx_slot_and_symbol(slot, symbol + timing_params.sym_cp_dl_start, symbols_per_slot);
-  transmit_enqueued_messages(tx_slot, tx_symbol, message_type::control_plane);
+  transmit_enqueued_messages(symbol_point + timing_params.sym_cp_dl_start, message_type::control_plane);
 
   // Transmit pending UL Control-Plane messages.
-  std::tie(tx_slot, tx_symbol) =
-      calculate_tx_slot_and_symbol(slot, symbol + timing_params.sym_cp_ul_start, symbols_per_slot);
-  transmit_enqueued_messages(tx_slot, tx_symbol, message_type::control_plane);
+  transmit_enqueued_messages(symbol_point + timing_params.sym_cp_ul_start, message_type::control_plane);
 
   // Transmit pending User-Plane messages.
-  std::tie(tx_slot, tx_symbol) =
-      calculate_tx_slot_and_symbol(slot, symbol + timing_params.sym_up_dl_start, symbols_per_slot);
-  transmit_enqueued_messages(tx_slot, tx_symbol, message_type::user_plane);
+  transmit_enqueued_messages(symbol_point + timing_params.sym_up_dl_start, message_type::user_plane);
 }

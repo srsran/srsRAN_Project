@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "adapters/du_processor_adapters.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include <unordered_map>
 

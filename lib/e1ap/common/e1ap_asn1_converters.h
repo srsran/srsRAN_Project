@@ -1185,13 +1185,13 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     // Add reflective qos attribute
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute);
     }
 
     // Add add qos info
     if (asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info_present) {
       flow_map_item.qos_flow_level_qos_params.add_qos_info =
-          asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info);
     }
 
     // Add paging policy ind
@@ -1203,7 +1203,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
     // Add reflective qos ind
     if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind_present) {
       flow_map_item.qos_flow_level_qos_params.reflective_qos_ind =
-          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind.to_string();
+          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind);
     }
 
     // Add qos flow map ind
@@ -1346,6 +1346,63 @@ asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& as
   }
 
   return activity_notification_level;
+}
+
+/// \brief Converts type \c security_indication to an ASN.1 type.
+/// \param asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param security_indication Security Indication IE contents.
+inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, const security_indication_t& security_ind)
+{
+  switch (security_ind.integrity_protection_ind) {
+    case integrity_protection_indication_t::not_needed:
+    case integrity_protection_indication_t::preferred:
+    case integrity_protection_indication_t::required:
+      asn1obj.integrity_protection_ind.value =
+          static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(security_ind.integrity_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to E1AP type");
+  }
+
+  switch (security_ind.confidentiality_protection_ind) {
+    case confidentiality_protection_indication_t::not_needed:
+    case confidentiality_protection_indication_t::preferred:
+    case confidentiality_protection_indication_t::required:
+      asn1obj.confidentiality_protection_ind.value =
+          static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(
+              security_ind.confidentiality_protection_ind);
+      break;
+    default:
+      report_fatal_error("Cannot convert security indication to E1AP type");
+  }
+}
+
+/// \brief Converts type \c security_indication to an ASN.1 type.
+/// \param asn1obj ASN.1 object where the result of the conversion is stored.
+/// \param security_indication Security Indication IE contents.
+inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::e1ap::security_ind_s& asn1obj)
+{
+  switch (asn1obj.integrity_protection_ind) {
+    case asn1::e1ap::integrity_protection_ind_opts::not_needed:
+    case asn1::e1ap::integrity_protection_ind_opts::preferred:
+    case asn1::e1ap::integrity_protection_ind_opts::required:
+      security_ind.integrity_protection_ind =
+          static_cast<integrity_protection_indication_t>(asn1obj.integrity_protection_ind.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security indication to E1AP type");
+  }
+
+  switch (asn1obj.confidentiality_protection_ind) {
+    case asn1::e1ap::confidentiality_protection_ind_opts::not_needed:
+    case asn1::e1ap::confidentiality_protection_ind_opts::preferred:
+    case asn1::e1ap::confidentiality_protection_ind_opts::required:
+      security_ind.confidentiality_protection_ind =
+          static_cast<confidentiality_protection_indication_t>(asn1obj.confidentiality_protection_ind.value);
+      break;
+    default:
+      srslog::fetch_basic_logger("E1AP").error("Cannot convert security indication to E1AP type");
+  }
 }
 
 } // namespace srsran

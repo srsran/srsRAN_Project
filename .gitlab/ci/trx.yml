@@ -20,14 +20,11 @@ build trx driver:
   variables:
     AMARISOFT_PACKAGE_REGISTRY: ${CI_API_V4_URL}/projects/40350474/packages/generic/amarisoft
     AMARISOFT_VERSION: "2023-02-06"
-    PUBLISH: "false"
     KUBERNETES_MEMORY_REQUEST: 2.5Gi
   timeout: 30 min
   rules:
     - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Weekly/
-      variables:
-        PUBLISH: "true"
+    - if: $CI_DESCRIPTION =~ /Nightly/
   script:
     - |
       download_amarisoft() {
@@ -56,22 +53,13 @@ build trx driver:
         rm -Rf build 
         mkdir build
         cd build
-        cmake -G Ninja -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
-        ninja trx_srsran_test
+        cmake -DENABLE_TRX_DRIVER=True -DTRX_DRIVER_DIR=${CI_PROJECT_DIR}/amarisoft/trx_uhd-linux -DENABLE_EXPORT=True -DENABLE_UHD=False -DENABLE_ZEROMQ=True -DAUTO_DETECT_ISA=True -DENABLE_AVX512=False ..
+        make trx_srsran_test
       }
     - |
       test_srsran_trx() {
         cd ${CI_PROJECT_DIR}/build
         ctest -R trx_srsran_test
-      }
-    - |
-      upload_lib() {
-        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates git
-
-        trx_version=$(cd ${CI_PROJECT_DIR} && git rev-parse --short HEAD)
-
-        cd ${CI_PROJECT_DIR}
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file build/utils/trx_srsran/libtrx_srsran.so "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${AMARISOFT_VERSION}/${trx_version}/libtrx_srsran.so"
       }
     - download_amarisoft
     - unpack_amarisoft
@@ -79,11 +67,11 @@ build trx driver:
     - test_srsran_trx
     - ls -lah ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so
     - |
-      if [[ $PUBLISH == "true" ]]; then
-        upload_lib
-      fi
+      mkdir ${CI_PROJECT_DIR}/build_trx_srsran
+      mv ${CI_PROJECT_DIR}/build/utils/trx_srsran/libtrx_srsran.so ${CI_PROJECT_DIR}/build_trx_srsran/
+
   after_script: []
   artifacts:
     paths:
-      - build/utils/trx_srsran/libtrx_srsran.so
+      - build_trx_srsran/libtrx_srsran.so
     expire_in: 10 minutes

@@ -69,6 +69,19 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
   return launch_async<ue_deletion_procedure>(msg, *this, cfg);
 }
 
+void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index)
+{
+  srsran_assert(get_ues().contains(new_ue_index), "Invalid UE index={}", new_ue_index);
+  srsran_assert(get_ues().contains(old_ue_index), "Invalid UE index={}", old_ue_index);
+
+  // Reset the cellGroupConfig of the new UE context, so that previous changes are included in the next UEContextUpdate.
+  du_ue& new_ue                  = *get_ues()[new_ue_index];
+  new_ue.reestablishment_pending = true;
+
+  // Delete the old UE context.
+  schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));
+}
+
 async_task<void> du_ue_manager::stop()
 {
   auto ue_it = ue_db.begin();

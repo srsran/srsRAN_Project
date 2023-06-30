@@ -39,6 +39,7 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "8"
     file: .gitlab/ci-shared/tools/tagger.yml
+  - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/trx.yml
   - local: .gitlab/ci/e2e.yml
@@ -68,6 +69,19 @@ autorebaser full:
     - if: $ON_DEFAULT_BRANCH
       when: never
 
+trigger builder:
+  stage: ci
+  rules:
+    - if: $ON_MR
+      changes:
+        paths:
+          - .gitlab/ci/src_cache.yml
+          - .gitlab/ci/builders.yml
+          - .gitlab/ci/builders/**/*
+  trigger:
+    include: .gitlab/ci/builders.yml
+    strategy: depend
+
 ################################################################################
 ## Static
 ################################################################################
@@ -89,9 +103,15 @@ full-code-format:
     - if: $CI_DESCRIPTION =~ /Nightly/
 
 .codechecker:
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/codechecker-gnb:1.0.3
+  image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
   stage: static
-  needs: []
+  needs:
+    - job: builder version
+      optional: false
+      artifacts: true
+    - job: trigger builder
+      optional: true
+      artifacts: false
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
@@ -225,8 +245,6 @@ unit coverage:
   image:
     name: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
-  variables:
-    GIT_STRATEGY: none
   rules:
     - if: $ON_MR
       variables:
@@ -281,7 +299,6 @@ unit coverage:
     - apk update; apk add python3 py3-pip
     - pip3 install --verbose retina-reporter --index-url https://__token__:$CODEBOT_TOKEN@gitlab.com/api/v4/projects/44296988/packages/pypi/simple
     - retina-reporter --input build_time_metrics.json --bucket ci --db-config token=$INFLUXDB_TOKEN org=$INFLUXDB_ORG url=$INFLUXDB_URL
-
   coverage: /^\s*Line coverage:\s*\d+.\d+\%/
   artifacts:
     paths:
@@ -303,19 +320,23 @@ pages:
   rules:
     - if: $CI_DESCRIPTION == "Nightly"
       when: always # Even if previous stages/required jobs fail
-  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.5.0
+  image: ${CR_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:2.0.0
   script:
-    - ls
-    - ls zmq
-    - cat ./zmq/job.env
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv docs/index.html public/index.html
-    - doxygen_generator.sh
+    - .gitlab/ci/builders/install_dependencies.sh
+    - |
+      rm -Rf build
+      mkdir build
+      cd build || exit
+      cmake -G Ninja ..
+      ninja doxygen
+      mv ./docs/html ./public
+      cd ..
     - mv build/public/index.html build/public/index_doxygen.html
     - find build/public/ -name '*.*' -exec mv {} public/ \;
-
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
@@ -395,8 +416,10 @@ tag successful schedule:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: manual
+      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: manual
+      allow_failure: true
   variables:
     GIT_STRATEGY: none
   interruptible: false

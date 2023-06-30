@@ -43,7 +43,17 @@ public:
   /// \param[in] nof_ports  Number of ports.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
-  precoding_weight_matrix(unsigned nof_layers, unsigned nof_ports) { resize(nof_layers, nof_ports); }
+  precoding_weight_matrix(unsigned nof_layers, unsigned nof_ports) : data({nof_layers, nof_ports})
+  {
+    srsran_assert(nof_layers <= precoding_constants::MAX_NOF_LAYERS,
+                  "The number of layers (i.e., {}) exceeds the maximum (i.e., {}).",
+                  nof_layers,
+                  precoding_constants::MAX_NOF_LAYERS);
+    srsran_assert(nof_ports <= precoding_constants::MAX_NOF_PORTS,
+                  "The number of ports (i.e., {}) exceeds the maximum (i.e., {}).",
+                  nof_ports,
+                  precoding_constants::MAX_NOF_PORTS);
+  }
 
   /// \brief Constructs a weight matrix with the desired number of layers and ports.
   ///
@@ -55,7 +65,8 @@ public:
   /// \param[in] nof_ports  Number of ports.
   /// \remark An assertion is triggered if the number of layers exceeds \ref precoding_constants::MAX_NOF_LAYERS.
   /// \remark An assertion is triggered if the number of ports exceeds \ref precoding_constants::MAX_NOF_PORTS.
-  precoding_weight_matrix(span<const cf_t> weights, unsigned nof_layers, unsigned nof_ports)
+  precoding_weight_matrix(span<const cf_t> weights, unsigned nof_layers, unsigned nof_ports) :
+    data({nof_layers, nof_ports})
   {
     srsran_assert(
         weights.size() == nof_ports * nof_layers,
@@ -64,11 +75,71 @@ public:
         nof_layers,
         nof_ports);
 
-    // Resize the tensor.
-    resize(nof_layers, nof_ports);
+    srsran_assert(nof_layers <= precoding_constants::MAX_NOF_LAYERS,
+                  "The number of layers (i.e., {}) exceeds the maximum (i.e., {}).",
+                  nof_layers,
+                  precoding_constants::MAX_NOF_LAYERS);
+    srsran_assert(nof_ports <= precoding_constants::MAX_NOF_PORTS,
+                  "The number of ports (i.e., {}) exceeds the maximum (i.e., {}).",
+                  nof_ports,
+                  precoding_constants::MAX_NOF_PORTS);
+
     // Copy the weights into the tensor.
     srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}), weights);
   }
+
+  /// Copy constructor.
+  precoding_weight_matrix(const precoding_weight_matrix& other) : data({other.get_nof_layers(), other.get_nof_ports()})
+  {
+    // Copy the weights into the tensor.
+    srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}),
+                 other.data.get_view<static_cast<unsigned>(dims::all)>({}));
+  }
+
+  /// \brief Overload assigment operator.
+  /// \param[in] other Precoding weight matrix to copy.
+  precoding_weight_matrix& operator=(const precoding_weight_matrix& other)
+  {
+    if (this == &other) {
+      return *this;
+    }
+
+    // Resize the tensor.
+    resize(other.get_nof_layers(), other.get_nof_ports());
+    // Copy the weights into the tensor.
+    srsvec::copy(data.get_view<static_cast<unsigned>(dims::all)>({}),
+                 other.data.get_view<static_cast<unsigned>(dims::all)>({}));
+    return *this;
+  }
+
+  /// \brief Overload equality comparison operator.
+  /// \param[in] other Precoding weight matrix to compare against.
+  /// \return \c true if both precoding matrices are exactly the same, \c false otherwise.
+  bool operator==(const precoding_weight_matrix& other) const
+  {
+    unsigned nof_layers = get_nof_layers();
+    unsigned nof_ports  = get_nof_ports();
+
+    if (nof_layers != other.get_nof_layers()) {
+      return false;
+    }
+    if (nof_ports != other.get_nof_ports()) {
+      return false;
+    }
+
+    for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+        if (get_coefficient(i_layer, i_port) != other.get_coefficient(i_layer, i_port)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /// Overload inequality comparison operator.
+  bool operator!=(const precoding_weight_matrix& other) const { return !(*this == other); }
 
   /// Gets the current number of layers.
   unsigned get_nof_layers() const { return data.get_dimension_size(dims::layer); }
@@ -78,7 +149,7 @@ public:
 
   /// \brief Gets a read-only view of the precoding weights for a given port.
   ///
-  /// \param[in] i_port port identifier.
+  /// \param[in] i_port Port identifier.
   /// \return The corresponding precoding weights, indexed by layer.
   /// \remark An assertion is triggered if the port identifier is greater than or equal to get_nof_ports().
   span<const cf_t> get_port_coefficients(unsigned i_port) const
@@ -93,7 +164,7 @@ public:
 
   /// \brief Gets a read-write view of the precoding weights for a given port.
   ///
-  /// \param[in] i_port port identifier.
+  /// \param[in] i_port Port identifier.
   /// \return The corresponding precoding weights, indexed by layer.
   /// \remark An assertion is triggered if the port identifier is greater than or equal to get_nof_ports().
   span<cf_t> get_port_coefficients(unsigned i_port)
@@ -104,6 +175,41 @@ public:
                   get_nof_ports());
 
     return data.get_view({i_port});
+  }
+
+  /// \brief Gets a precoding coefficient from the matrix.
+  ///
+  /// \param[in] i_layer Layer identifier.
+  /// \param[in] i_port Port identifier.
+  /// \return The precoding coefficient for the given layer and port.
+  cf_t get_coefficient(unsigned i_layer, unsigned i_port) const
+  {
+    srsran_assert(i_layer < get_nof_layers(),
+                  "The layer identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  i_layer,
+                  get_nof_layers() - 1);
+    srsran_assert(i_port < get_nof_ports(),
+                  "The ports identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  i_port,
+                  get_nof_ports() - 1);
+    return data[{i_layer, i_port}];
+  }
+
+  /// \brief Sets a precoding coefficient in the matrix to a specified value.
+  ///
+  /// \param[in] i_layer Layer identifier.
+  /// \param[in] i_port Port identifier.
+  void set_coefficient(cf_t coefficient, unsigned i_layer, unsigned i_port)
+  {
+    srsran_assert(i_layer < get_nof_layers(),
+                  "The layer identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  i_layer,
+                  get_nof_layers() - 1);
+    srsran_assert(i_port < get_nof_ports(),
+                  "The ports identifier (i.e., {}) exceeds the maximum (i.e., {}).",
+                  i_port,
+                  get_nof_ports() - 1);
+    data[{i_layer, i_port}] = coefficient;
   }
 
 private:

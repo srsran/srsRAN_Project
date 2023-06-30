@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_types.h"
@@ -76,6 +75,11 @@ public:
   /// \brief Set the RRC UE control message notifier of the UE.
   /// \param[in] rrc_ue_notifier_ RRC UE control message notifier of the UE.
   virtual void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier_) = 0;
+};
+
+/// UE configuration passed to CU-CP
+struct ue_configuration {
+  std::chrono::seconds inactivity_timer;
 };
 
 /// Common UE manager interface.

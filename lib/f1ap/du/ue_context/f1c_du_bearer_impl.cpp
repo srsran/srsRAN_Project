@@ -22,6 +22,7 @@
 
 #include "f1c_du_bearer_impl.h"
 #include "du/procedures/f1ap_du_event_manager.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran::srs_du;

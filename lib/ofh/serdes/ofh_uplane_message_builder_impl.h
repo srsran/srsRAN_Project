@@ -59,23 +59,5 @@ protected:
   const bool            ud_comp_length_support = false;
 };
 
-/// Open Fronthaul User-Plane message builder implementation with static IQ compression.
-class ofh_uplane_message_builder_static_compression_impl : public uplane_message_builder_impl
-{
-public:
-  ofh_uplane_message_builder_static_compression_impl(srslog::basic_logger& logger_, iq_compressor& compressor_) :
-    uplane_message_builder_impl(logger_, compressor_)
-  {
-  }
-
-  // See interface for documentation.
-  units::bytes get_header_size(const ru_compression_params& params) const override;
-
-private:
-  // See parent for documentation.
-  void serialize_compression_header(network_order_binary_serializer& serializer,
-                                    const ru_compression_params&     params) override;
-};
-
 } // namespace ofh
 } // namespace srsran

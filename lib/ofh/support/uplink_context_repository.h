@@ -30,6 +30,8 @@
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/resource_block.h"
 #include <mutex>
 
@@ -37,14 +39,112 @@ namespace srsran {
 namespace ofh {
 
 /// Uplink PRACH context.
-struct ul_prach_context {
+class ul_prach_context
+{
+  /// PRACH buffer writer statistics.
+  struct prach_buffer_writer_stats {
+    /// Number of REs of the grid.
+    unsigned buffer_nof_re = 0;
+    /// Number of REs written indexed by port.
+    static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> re_written;
+
+    /// Returns true when all the RE for all the ports have been written.
+    explicit operator bool() const noexcept { return buffer_nof_re != 0; }
+
+    /// Returns true when all the REs for the current symbol have been written.
+    bool have_all_res_been_written() const
+    {
+      return std::all_of(re_written.begin(), re_written.end(), [this](unsigned port_re_written) {
+        return port_re_written == this->buffer_nof_re;
+      });
+    }
+  };
+
+public:
+  /// Default constructor.
+  ul_prach_context() = default;
+
+  /// Constructs an uplink PRACH context with the given PRACH buffer and PRACH buffer context.
+  ul_prach_context(const prach_buffer_context& context_, prach_buffer& buffer_) :
+    context(context_), buffer(&buffer_), nof_symbols(get_preamble_duration(context.format))
+  {
+    srsran_assert(context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
+    srsran_assert(context.nof_td_occasions == 1, "Only supporting one time domain occasion");
+
+    // Get preamble information.
+    preamble_info =
+        is_long_preamble(context.format)
+            ? get_prach_preamble_long_info(context.format)
+            : get_prach_preamble_short_info(context.format, to_ra_subcarrier_spacing(context.pusch_scs), true);
+
+    freq_mapping_info = prach_frequency_mapping_get(preamble_info.scs, context.pusch_scs);
+
+    if (!nof_symbols) {
+      nof_symbols = 1;
+    }
+    // Initialize statistic.
+    buffer_stats.buffer_nof_re = (preamble_info.sequence_length * nof_symbols);
+    buffer_stats.re_written    = static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>(buffer->get_max_nof_ports(), 0);
+  }
+
   /// Returns true if this context is empty, otherwise false.
   bool empty() const { return buffer == nullptr; }
 
+  /// Returns the number of REs of one PRACH repetition or zero if no PRACH buffer is associated with this context.
+  unsigned get_prach_nof_re() const { return empty() ? 0U : (preamble_info.sequence_length + freq_mapping_info.k_bar); }
+
+  /// Returns the number of symbols used by the PRACH associated with the stored context.
+  unsigned get_prach_nof_symbols() const { return empty() ? 0U : nof_symbols; }
+
+  /// Writes the given IQ buffer corresponding to the given symbol and port and notifies that an uplink PRACH buffer is
+  /// ready when all the PRBs for all the symbols and ports have been written in the buffer.
+  bool update_buffer_and_notify(unsigned                   port,
+                                unsigned                   symbol,
+                                span<const cf_t>           iq_buffer,
+                                uplane_rx_symbol_notifier& notifier)
+  {
+    srsran_assert(buffer, "No valid PRACH buffer in the context");
+    srsran_assert(symbol < nof_symbols, "Invalid symbol index");
+
+    if (!buffer_stats) {
+      return false;
+    }
+
+    // Update the buffer.
+    span<cf_t> prach_out_buffer =
+        buffer->get_symbol(port, context.nof_fd_occasions - 1, context.nof_td_occasions - 1, symbol);
+
+    unsigned nof_re_to_prach_data = freq_mapping_info.k_bar;
+    // Grab the data.
+    span<const cf_t> prach_in_data = iq_buffer.subspan(nof_re_to_prach_data, preamble_info.sequence_length);
+    std::copy(prach_in_data.begin(), prach_in_data.end(), prach_out_buffer.begin());
+    // Update statistics.
+    buffer_stats.re_written[port] += prach_in_data.size();
+
+    // Notify when PRACH buffer is ready.
+    if (!buffer_stats || !buffer_stats.have_all_res_been_written()) {
+      return false;
+    }
+    notifier.on_new_prach_window_data(context, *buffer);
+
+    // Mark the symbol as sent.
+    buffer_stats = {};
+    return true;
+  }
+
+private:
   /// PRACH buffer context.
   prach_buffer_context context;
   /// PRACH buffer.
   prach_buffer* buffer = nullptr;
+  /// Statistic of written data.
+  prach_buffer_writer_stats buffer_stats;
+  /// Preamble info of the PRACH associated with the stored context.
+  prach_preamble_information preamble_info;
+  /// Stored PRACH frequency mapping.
+  prach_frequency_mapping_information freq_mapping_info;
+  /// Number of OFDM symbols used by the stored PRACH.
+  unsigned nof_symbols;
 };
 
 /// Uplink slot context.
@@ -218,18 +318,24 @@ public:
     entry(slot).update_grid_and_notify(port, symbol, start_re, re_iq_buffer, notifier);
   }
 
+  /// Function to write the uplink PRACH buffer. Returns True in case notifier was called, false otherwise.
+  template <typename X = T>
+  typename std::enable_if<std::is_same<ul_prach_context, X>::value, bool>::type
+  update_buffer_and_notify(slot_point                 slot,
+                           unsigned                   port,
+                           unsigned                   symbol,
+                           span<const cf_t>           iq_buffer,
+                           uplane_rx_symbol_notifier& notifier)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    return entry(slot).update_buffer_and_notify(port, symbol, iq_buffer, notifier);
+  }
+
   /// Returns the entry of the repository for the given slot.
   T get(slot_point slot) const
   {
     std::lock_guard<std::mutex> lock(mutex);
     return entry(slot);
-  }
-
-  /// Clears the repository entry at slot.
-  void clear(slot_point slot)
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    entry(slot) = T();
   }
 };
 

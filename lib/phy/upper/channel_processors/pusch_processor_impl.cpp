@@ -41,7 +41,7 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // The implementation only accepts one receive port.
+  // The number of receive ports cannot exceed the maximum dimensions.
   if (pdu.rx_ports.size() > ce_dims.nof_rx_ports) {
     return false;
   }

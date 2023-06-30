@@ -24,20 +24,22 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_notifier&  ric_notif_,
-                                                                 e2_subscriber&        sub_notif_,
-                                                                 timer_factory         timers_,
-                                                                 srslog::basic_logger& logger_) :
-  logger(logger_), ric_notif(ric_notif_), sub_notif(sub_notif_), timers(timers_)
+e2_subscription_setup_procedure::e2_subscription_setup_procedure(e2_message_notifier&     ric_notif_,
+                                                                 e2_subscription_manager& subscription_mngr_,
+                                                                 timer_factory            timers_,
+                                                                 srslog::basic_logger&    logger_) :
+  logger(logger_), ric_notif(ric_notif_), subscription_mngr(subscription_mngr_), timers(timers_)
 {
 }
 
-void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_)
+void e2_subscription_setup_procedure::run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_,
+                                                                 e2_event_manager& event_manager)
 {
   logger.info("E2AP: Received subscription request");
   e2_subscribe_reponse_message response;
-  response = sub_notif.handle_subscription_setup(request_);
+  response = subscription_mngr.handle_subscription_setup(request_);
   if (response.success) {
+    subscription_mngr.start_subscription(response.request_id.ric_instance_id, event_manager);
     send_e2_subscription_setup_response(response);
   } else {
     send_e2_subscription_setup_failure(response);
@@ -63,5 +65,11 @@ void e2_subscription_setup_procedure::send_e2_subscription_setup_response(const 
 
 void e2_subscription_setup_procedure::send_e2_subscription_setup_failure(const e2_subscribe_reponse_message& failure)
 {
-  logger.info("E2AP: Sending subscription response");
+  e2_message msg;
+  msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E2AP_ID_RICSUBSCRIPTION);
+  auto& sub_fail                                  = msg.pdu.unsuccessful_outcome().value.ricsubscription_fail();
+  sub_fail->ri_crequest_id.value.ric_instance_id  = failure.request_id.ric_instance_id;
+  sub_fail->ri_crequest_id.value.ric_requestor_id = failure.request_id.ric_requestor_id;
+  sub_fail->cause.value                           = failure.cause;
+  logger.info("E2AP: Sending subscription failure");
 }

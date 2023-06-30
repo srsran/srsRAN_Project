@@ -310,7 +310,12 @@ public:
     }
     report_fatal_error_if_not(ssb, "Invalid SSB processor.");
 
-    std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
+    std::unique_ptr<nzp_csi_rs_generator> nzp_csi;
+    if (enable_broadcast) {
+      nzp_csi = nzp_csi_rs_factory->create(logger);
+    } else {
+      nzp_csi = nzp_csi_rs_factory->create();
+    }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
     std::unique_ptr<downlink_processor> downlink_proc = std::make_unique<downlink_processor_single_executor_impl>(

@@ -24,6 +24,7 @@
 
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/lcid.h"
@@ -397,7 +398,7 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // inactivity monitoring request
   if (msg.inactivity_monitoring_request.has_value()) {
     asn1_request->inactivity_monitoring_request_present = true;
-    asn1::string_to_enum(asn1_request->inactivity_monitoring_request, msg.inactivity_monitoring_request.value());
+    asn1::bool_to_enum(asn1_request->inactivity_monitoring_request, msg.inactivity_monitoring_request.value());
   }
 
   // rat freq prio info
@@ -418,7 +419,7 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // drx cfg ind
   if (msg.drx_cfg_ind.has_value()) {
     asn1_request->drx_cfg_ind_present = true;
-    asn1::string_to_enum(asn1_request->drx_cfg_ind, msg.drx_cfg_ind.value());
+    asn1::bool_to_enum(asn1_request->drx_cfg_ind, msg.drx_cfg_ind.value());
   }
 
   // rlc fail ind
@@ -436,7 +437,7 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // gnb du cfg query
   if (msg.gnb_du_cfg_query.has_value()) {
     asn1_request->gnb_du_cfg_query_present = true;
-    asn1::string_to_enum(asn1_request->gnb_du_cfg_query, msg.gnb_du_cfg_query.value());
+    asn1::bool_to_enum(asn1_request->gnb_du_cfg_query, msg.gnb_du_cfg_query.value());
   }
 
   // gnb du ue ambr ul
@@ -448,13 +449,13 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // execute dupl
   if (msg.execute_dupl.has_value()) {
     asn1_request->execute_dupl_present = true;
-    asn1::string_to_enum(asn1_request->execute_dupl, msg.execute_dupl.value());
+    asn1::bool_to_enum(asn1_request->execute_dupl, msg.execute_dupl.value());
   }
 
   // rrc delivery status request
   if (msg.rrc_delivery_status_request.has_value()) {
     asn1_request->rrc_delivery_status_request_present = true;
-    asn1::string_to_enum(asn1_request->rrc_delivery_status_request, msg.rrc_delivery_status_request.value());
+    asn1::bool_to_enum(asn1_request->rrc_delivery_status_request, msg.rrc_delivery_status_request.value());
   }
 
   // res coordination transfer info
@@ -474,13 +475,13 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   // need for gap
   if (msg.need_for_gap.has_value()) {
     asn1_request->needfor_gap_present = true;
-    asn1::string_to_enum(asn1_request->needfor_gap, msg.need_for_gap.value());
+    asn1::bool_to_enum(asn1_request->needfor_gap, msg.need_for_gap.value());
   }
 
   // full cfg
   if (msg.full_cfg.has_value()) {
     asn1_request->full_cfg_present = true;
-    asn1::string_to_enum(asn1_request->full_cfg, msg.full_cfg.value());
+    asn1::bool_to_enum(asn1_request->full_cfg, msg.full_cfg.value());
   }
 }
 
@@ -712,7 +713,7 @@ inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu
   // Add paging origin
   if (paging.paging_origin.has_value()) {
     asn1_paging->paging_origin_present = true;
-    asn1::string_to_enum(asn1_paging->paging_origin, paging.paging_origin.value());
+    asn1::bool_to_enum(asn1_paging->paging_origin, paging.paging_origin.value());
   }
 }
 

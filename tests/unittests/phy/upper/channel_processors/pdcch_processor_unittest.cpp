@@ -24,10 +24,10 @@
 #include "../signal_processors/dmrs_pdcch_processor_test_doubles.h"
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
+#include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
-#include "srsran/ran/precoding/precoding_formatters.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -132,7 +132,7 @@ int main()
                   bit = dist_payload(rgen);
                 }
                 dci.payload.resize(dist_payload_sz(rgen));
-                dci.precoding = make_single_port();
+                dci.precoding = precoding_configuration::make_wideband(make_single_port());
 
                 // Reset spy classes.
                 encoder->reset();

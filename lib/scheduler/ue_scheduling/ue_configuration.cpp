@@ -312,12 +312,30 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
   return dci_sz_cfg;
 }
 
+/// Find the number of DL ports for a given UE serving cell configuration.
+static unsigned compute_nof_dl_ports(const serving_cell_config& serv_cell_cfg)
+{
+  if (not serv_cell_cfg.csi_meas_cfg.has_value()) {
+    return 1;
+  }
+
+  unsigned max_ports = 1;
+  for (const auto& nzp : serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list) {
+    if (max_ports < nzp.res_mapping.nof_ports) {
+      max_ports = nzp.res_mapping.nof_ports;
+    }
+  }
+  return max_ports;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ue_cell_configuration::ue_cell_configuration(const cell_configuration&  cell_cfg_common_,
                                              const serving_cell_config& serv_cell_cfg_,
                                              bool                       multi_cells_configured_) :
-  cell_cfg_common(cell_cfg_common_), multi_cells_configured(multi_cells_configured_)
+  cell_cfg_common(cell_cfg_common_),
+  multi_cells_configured(multi_cells_configured_),
+  nof_dl_ports(compute_nof_dl_ports(serv_cell_cfg_))
 {
   // Apply UE-dedicated Config.
   reconfigure(serv_cell_cfg_);

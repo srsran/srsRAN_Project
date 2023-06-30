@@ -66,11 +66,8 @@ void pdcch_modulator_impl::map(resource_grid_mapper& mapper, const re_buffer_rea
   pattern.symbols.fill(config.start_symbol_index, config.start_symbol_index + config.duration);
   pattern.re_mask = re_mask;
 
-  // Create single layer, single port precoding.
-  precoding_configuration precoding = make_single_port();
-
   // Actual mapping.
-  mapper.map(d_pdcch, pattern, precoding);
+  mapper.map(d_pdcch, pattern, config.precoding);
 }
 
 void pdcch_modulator_impl::modulate(resource_grid_mapper&            mapper,

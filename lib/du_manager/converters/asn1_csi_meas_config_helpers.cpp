@@ -120,8 +120,8 @@ static asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(cons
       srsran_assertion_failure("Invalid freq. density={}", cfg.freq_density);
   }
 
-  out.freq_band.start_rb = cfg.freq_band_start_rb;
-  out.freq_band.nrof_rbs = cfg.freq_band_nof_rb;
+  out.freq_band.start_rb = cfg.freq_band_rbs.start();
+  out.freq_band.nrof_rbs = cfg.freq_band_rbs.length();
 
   return out;
 }
@@ -359,10 +359,10 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
     }
   }
 
-  if (cfg.freq_band_nof_rb.has_value() and cfg.freq_band_start_rb.has_value()) {
+  if (not cfg.freq_band_rbs.empty()) {
     out.freq_band_present  = true;
-    out.freq_band.start_rb = cfg.freq_band_start_rb.value();
-    out.freq_band.nrof_rbs = cfg.freq_band_nof_rb.value();
+    out.freq_band.start_rb = cfg.freq_band_rbs.start();
+    out.freq_band.nrof_rbs = cfg.freq_band_rbs.length();
   }
 
   if (cfg.csi_res_period.has_value() and cfg.csi_res_offset.has_value()) {
@@ -592,10 +592,10 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
           default:
             srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction.n1_n2_restriction_type);
         }
-        if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.has_value()) {
+        if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.size() > 0) {
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2_present = true;
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2.from_number(
-              ant_restriction.typei_single_panel_codebook_subset_restriction_i2.value().to_uint64());
+              ant_restriction.typei_single_panel_codebook_subset_restriction_i2.to_uint64());
         }
       }
       out_sp_cfg.type_i_single_panel_ri_restrict.from_number(sp_cfg_val.typei_single_panel_ri_restriction.to_uint64());

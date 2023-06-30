@@ -141,6 +141,9 @@ public:
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;
 
+  /// \brief Notify DU that a given UE is performing RRC Reestablishment.
+  virtual void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) = 0;
+
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
 };
@@ -156,14 +159,14 @@ public:
 };
 
 /// Combined entry point for F1AP handling.
-class f1ap_interface : public f1ap_message_handler,
-                       public f1ap_event_handler,
-                       public f1ap_rrc_message_transfer_procedure_handler,
-                       public f1ap_connection_manager,
-                       public f1ap_ue_context_manager
+class f1ap_du : public f1ap_message_handler,
+                public f1ap_event_handler,
+                public f1ap_rrc_message_transfer_procedure_handler,
+                public f1ap_connection_manager,
+                public f1ap_ue_context_manager
 {
 public:
-  virtual ~f1ap_interface() = default;
+  virtual ~f1ap_du() = default;
 };
 
 } // namespace srs_du

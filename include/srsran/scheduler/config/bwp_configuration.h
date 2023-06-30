@@ -26,6 +26,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/ran/band_helper.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
@@ -68,19 +69,19 @@ constexpr inline bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
 /// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.
 /// \remark See TS 38.331, Bandwidth-Part (BWP).
 struct bwp_configuration {
-  bool               cp_extended;
+  cyclic_prefix      cp;
   subcarrier_spacing scs;
   /// Common RBs where the BWP is located. CRB=0 overlaps with pointA.
   crb_interval crbs;
 
   bool operator==(const bwp_configuration& other) const
   {
-    return std::tie(cp_extended, scs, crbs) == std::tie(other.cp_extended, other.scs, other.crbs);
+    return std::tie(cp, scs, crbs) == std::tie(other.cp, other.scs, other.crbs);
   }
 
   bool operator<(const bwp_configuration& other) const
   {
-    return std::tie(cp_extended, scs, crbs) < std::tie(other.cp_extended, other.scs, other.crbs);
+    return std::tie(cp, scs, crbs) < std::tie(other.cp, other.scs, other.crbs);
   }
 };
 

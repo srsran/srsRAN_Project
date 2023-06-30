@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/support/config/validator_result.h"
 
 namespace srsran {
 
@@ -31,6 +31,6 @@ namespace srsran {
 ///
 /// \param cell_cfg DU cell configuration.
 /// \return in case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> is_du_cell_config_valid(const du_cell_config& cell_cfg);
+validator_result is_du_cell_config_valid(const du_cell_config& cell_cfg);
 
 } // namespace srsran

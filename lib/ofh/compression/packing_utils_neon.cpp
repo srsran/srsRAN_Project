@@ -152,7 +152,7 @@ static void unpack_prb_9b_big_endian(span<int16_t> unpacked_iq_data, span<const 
   vst1q_s16(unpacked_iq_data.data() + 16, unpacked_data_2_s16);
 }
 
-void neon::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned int iq_width)
+void neon::unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width)
 {
   if (iq_width == 9) {
     return unpack_prb_9b_big_endian(unpacked_iq_data, packed_data);

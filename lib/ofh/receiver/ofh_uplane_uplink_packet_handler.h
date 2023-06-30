@@ -49,7 +49,7 @@ struct uplane_uplink_packet_handler_config {
   /// VLAN ethernet frame parameters.
   ether::vlan_frame_params vlan_params;
   /// Uplink PRACH eAxC.
-  unsigned ul_prach_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// User-Plane message decoder.
@@ -85,7 +85,7 @@ private:
   const bool                                            is_prach_cp_enabled;
   uplink_cplane_context_repository&                     cplane_repo;
   ether::vlan_frame_params                              vlan_params;
-  const unsigned                                        ul_prach_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   std::unique_ptr<uplane_message_decoder>               uplane_decoder;
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;

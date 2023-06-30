@@ -507,10 +507,6 @@ using slice_support_list_l = dyn_array<slice_support_item_s>;
 using extended_amf_name_ext_ies_o = protocol_ext_empty_o;
 
 struct plmn_support_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          npn_support_present                 = false;
   bool                          extended_slice_support_list_present = false;
   bool                          onboarding_support_present          = false;
@@ -2833,10 +2829,6 @@ struct paging_attempt_info_s {
 };
 
 struct assist_data_for_paging_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                               npn_paging_assist_info_present           = false;
   bool                               paging_assis_datafor_c_ecapab_ue_present = false;
   npn_paging_assist_info_c           npn_paging_assist_info;
@@ -3902,10 +3894,6 @@ struct broadcast_plmn_item_ext_ies_o {
 };
 
 struct broadcast_plmn_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          npn_support_present                     = false;
   bool                          extended_tai_slice_support_list_present = false;
   bool                          tai_nsag_support_list_present           = false;
@@ -5065,10 +5053,6 @@ private:
 };
 
 struct core_network_assist_info_for_inactive_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                 eutra_paginge_drx_info_present             = false;
   bool                                 extended_ue_id_idx_value_present           = false;
   bool                                 ue_radio_cap_for_paging_present            = false;
@@ -5888,10 +5872,6 @@ using target_nssai_info_item_ext_ies_o = protocol_ext_empty_o;
 using ue_aggr_max_bit_rate_ext_ies_o = protocol_ext_empty_o;
 
 struct mob_restrict_list_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                               last_eutran_plmn_id_present              = false;
   bool                               cn_type_restricts_for_serving_present    = false;
   bool                               cn_type_restricts_for_equivalent_present = false;
@@ -8177,10 +8157,6 @@ struct dyn_5qi_descriptor_ext_ies_o {
 };
 
 struct dyn_5qi_descriptor_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool     extended_packet_delay_budget_present = false;
   bool     cn_packet_delay_budget_dl_present    = false;
   bool     cn_packet_delay_budget_ul_present    = false;
@@ -8269,10 +8245,6 @@ struct erab_info_item_ext_ies_o {
 };
 
 struct erab_info_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                  source_tnla_ddr_info_present      = false;
   bool                                  source_node_tnla_ddr_info_present = false;
   bounded_bitstring<1, 160, true, true> source_tnla_ddr_info;
@@ -9187,10 +9159,6 @@ struct ho_cmd_transfer_ext_ies_o {
 using qos_flow_to_be_forwarded_list_l = dyn_array<qos_flow_to_be_forwarded_item_s>;
 
 struct ho_cmd_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                             add_dl_forwarding_up_tnl_info_present  = false;
   bool                             ul_forwarding_up_tnl_info_present      = false;
   bool                             add_ul_forwarding_up_tnl_info_present  = false;
@@ -9637,10 +9605,6 @@ struct user_location_info_n3_iwf_s {
 };
 
 struct user_location_info_nr_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                             pscell_info_present     = false;
   bool                             n_id_present            = false;
   bool                             nr_ntn_tai_info_present = false;
@@ -10560,10 +10524,6 @@ struct logging_interv_opts {
 using logging_interv_e = enumerated<logging_interv_opts, true>;
 
 struct m1_cfg_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                     include_beam_meass_ind_present = false;
   bool                     beam_meass_report_cfg_present  = false;
   include_beam_meass_ind_e include_beam_meass_ind;
@@ -10622,10 +10582,6 @@ struct m5_cfg_s {
 };
 
 struct m6_cfg_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                            m6_report_amount_present              = false;
   bool                            excess_packet_delay_thres_cfg_present = false;
   m6_report_amount_mdt_e          m6_report_amount;
@@ -11398,10 +11354,6 @@ struct time_sync_assist_info_s {
 };
 
 struct trace_activation_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                                  mdt_cfg_present                     = false;
   bool                                                  trace_collection_entity_uri_present = false;
   mdt_cfg_s                                             mdt_cfg;
@@ -11739,10 +11691,6 @@ struct security_result_s {
 };
 
 struct ho_request_ack_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                             add_dl_up_tnl_info_for_ho_list_present = false;
   bool                             ul_forwarding_up_tnl_info_present      = false;
   bool                             add_ul_forwarding_up_tnl_info_present  = false;
@@ -13212,10 +13160,6 @@ struct pdu_session_res_modify_item_mod_ind_s {
 };
 
 struct pdu_session_res_modify_item_mod_req_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                             s_nssai_present                                    = false;
   bool                             pdu_session_expected_ue_activity_behaviour_present = false;
   s_nssai_s                        s_nssai;
@@ -13550,10 +13494,6 @@ using reset_all_e = enumerated<reset_all_opts, true>;
 using reset_type_ext_ies_o = protocol_ies_empty_o;
 
 struct supported_ta_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool          cfg_tac_ind_present = false;
   bool          rat_info_present    = false;
   cfg_tac_ind_e cfg_tac_ind;
@@ -14507,10 +14447,6 @@ struct non_dyn_5qi_descriptor_ext_ies_o {
 };
 
 struct non_dyn_5qi_descriptor_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool     cn_packet_delay_budget_dl_present = false;
   bool     cn_packet_delay_budget_ul_present = false;
   uint32_t cn_packet_delay_budget_dl;
@@ -14753,10 +14689,6 @@ private:
 };
 
 struct qos_flow_level_qos_params_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                     qos_monitoring_request_present     = false;
   bool                     qos_monitoring_report_freq_present = false;
   qos_monitoring_request_e qos_monitoring_request;
@@ -15338,10 +15270,6 @@ struct mbs_session_setup_or_mod_request_transfer_ies_o {
 };
 
 struct mbs_session_setup_or_mod_request_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             mbs_session_tnl_info5_gc_present = false;
   bool                             mbs_session_fsa_id_list_present  = false;
   mbs_session_tnl_info5_gc_c       mbs_session_tnl_info5_gc;
@@ -15577,10 +15505,6 @@ struct multicast_session_upd_request_transfer_ies_o {
 };
 
 struct multicast_session_upd_request_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             mbs_service_area_present                   = false;
   bool                             mbs_qos_flows_to_be_setup_mod_list_present = false;
   bool                             mbs_qos_flow_to_release_list_present       = false;
@@ -15734,10 +15658,6 @@ struct qos_flow_info_item_ext_ies_o {
 };
 
 struct qos_flow_info_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                  ul_forwarding_present             = false;
   bool                                  source_tnla_ddr_info_present      = false;
   bool                                  source_node_tnla_ddr_info_present = false;
@@ -15882,10 +15802,6 @@ struct pdu_session_res_modify_confirm_transfer_ext_ies_o {
 using qos_flow_modify_confirm_list_l = dyn_array<qos_flow_modify_confirm_item_s>;
 
 struct pdu_session_res_modify_confirm_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                redundant_ul_ngu_up_tnl_info_present  = false;
   bool                                add_redundant_ngu_up_tnl_info_present = false;
   up_transport_layer_info_c           redundant_ul_ngu_up_tnl_info;
@@ -16081,10 +15997,6 @@ struct pdu_session_res_modify_ind_transfer_ext_ies_o {
 };
 
 struct pdu_session_res_modify_ind_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                         secondary_rat_usage_info_present               = false;
   bool                         security_result_present                        = false;
   bool                         redundant_dl_qos_flow_per_tnl_info_present     = false;
@@ -16325,10 +16237,6 @@ struct integrity_protection_ind_opts {
 using integrity_protection_ind_e = enumerated<integrity_protection_ind_opts, true>;
 
 struct qos_flow_add_or_modify_request_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          tsc_traffic_characteristics_present = false;
   bool                          redundant_qos_flow_ind_present      = false;
   tsc_traffic_characteristics_s tsc_traffic_characteristics;
@@ -16391,10 +16299,6 @@ struct security_ind_ext_ies_o {
 };
 
 struct ul_ngu_up_tnl_modify_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                      redundant_ul_ngu_up_tnl_info_present = false;
   bool                      redundant_dl_ngu_up_tnl_info_present = false;
   up_transport_layer_info_c redundant_ul_ngu_up_tnl_info;
@@ -16535,10 +16439,6 @@ struct pdu_session_res_modify_request_transfer_ies_o {
 };
 
 struct pdu_session_res_modify_request_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                      pdu_session_aggr_max_bit_rate_present           = false;
   bool                                      ul_ngu_up_tnl_modify_list_present               = false;
   bool                                      network_instance_present                        = false;
@@ -16700,10 +16600,6 @@ struct pdu_session_res_modify_resp_transfer_ext_ies_o {
 using qos_flow_add_or_modify_resp_list_l = dyn_array<qos_flow_add_or_modify_resp_item_s>;
 
 struct pdu_session_res_modify_resp_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                add_ngu_up_tnl_info_present                      = false;
   bool                                redundant_dl_ngu_up_tnl_info_present             = false;
   bool                                redundant_ul_ngu_up_tnl_info_present             = false;
@@ -16945,10 +16841,6 @@ struct pdu_session_res_notify_transfer_ext_ies_o {
 using qos_flow_notify_list_l = dyn_array<qos_flow_notify_item_s>;
 
 struct pdu_session_res_notify_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                       secondary_rat_usage_info_present = false;
   bool                       qos_flow_feedback_list_present   = false;
   secondary_rat_usage_info_s secondary_rat_usage_info;
@@ -17081,10 +16973,6 @@ struct qos_flow_setup_request_item_ext_ies_o {
 };
 
 struct qos_flow_setup_request_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                          tsc_traffic_characteristics_present = false;
   bool                          redundant_qos_flow_ind_present      = false;
   tsc_traffic_characteristics_s tsc_traffic_characteristics;
@@ -17228,10 +17116,6 @@ struct pdu_session_res_setup_request_transfer_ies_o {
 };
 
 struct pdu_session_res_setup_request_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  pdu_session_aggr_max_bit_rate_present       = false;
   bool                                  add_ul_ngu_up_tnl_info_present              = false;
   bool                                  data_forwarding_not_possible_present        = false;
@@ -17338,10 +17222,6 @@ struct pdu_session_res_setup_resp_transfer_ext_ies_o {
 };
 
 struct pdu_session_res_setup_resp_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                              redundant_dl_qos_flow_per_tnl_info_present     = false;
   bool                              add_redundant_dl_qos_flow_per_tnl_info_present = false;
   bool                              used_r_sn_info_present                         = false;
@@ -17447,10 +17327,6 @@ struct qos_flow_params_item_ext_ies_o {
 };
 
 struct qos_flow_params_item_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                      cn_packet_delay_budget_dl_present = false;
   bool                      cn_packet_delay_budget_ul_present = false;
   bool                      burst_arrival_time_dl_present     = false;
@@ -17535,10 +17411,6 @@ struct path_switch_request_ack_transfer_ext_ies_o {
 };
 
 struct path_switch_request_ack_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                add_ngu_up_tnl_info_present           = false;
   bool                                redundant_ul_ngu_up_tnl_info_present  = false;
   bool                                add_redundant_ngu_up_tnl_info_present = false;
@@ -17734,10 +17606,6 @@ struct user_plane_security_info_s {
 };
 
 struct path_switch_request_transfer_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                         add_dl_qos_flow_per_tnl_info_present           = false;
   bool                         redundant_dl_ngu_up_tnl_info_present           = false;
   bool                         redundant_dl_ngu_tnl_info_reused_present       = false;
@@ -17996,10 +17864,6 @@ struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o {
 using ue_history_info_l = dyn_array<last_visited_cell_item_s>;
 
 struct source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                           s_gnb_ue_x2ap_id_present                             = false;
   bool                                           ue_history_info_from_the_ue_present                  = false;
   bool                                           source_node_id_present                               = false;
@@ -18143,10 +18007,6 @@ struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o {
 };
 
 struct target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container {
-  template <class extT_>
-  using ie_field_s = protocol_ext_container_item_s<extT_>;
-
-  // member variables
   bool                                           daps_resp_info_list_present                          = false;
   bool                                           direct_forwarding_path_availability_present          = false;
   bool                                           mbs_active_session_info_targetto_source_list_present = false;

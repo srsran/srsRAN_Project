@@ -23,6 +23,8 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
+add_subdirectory(precoding)
+
 add_executable(dft_processor_test dft_processor_test.cpp)
 target_link_libraries(dft_processor_test srslog srsran_generic_funcs)
 

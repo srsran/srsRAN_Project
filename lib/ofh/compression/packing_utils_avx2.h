@@ -54,7 +54,7 @@ void pack_prbs_big_endian(span<ofh::compressed_prb> c_prbs, __m256i r0, __m256i 
 ///
 /// \note The \c unpacked_iq_data parameter should be sized to store 32 output IQ samples: it is 24 IQ samples of one RB
 /// rounded up to 32-byte boundary required by AVX2 intrinsics.
-void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned int iq_width);
+void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data, unsigned iq_width);
 
 /// \brief Checks whether the requested bit width is supported by the AVX2 implementation.
 /// \param[in] iq_width Requested bit width.

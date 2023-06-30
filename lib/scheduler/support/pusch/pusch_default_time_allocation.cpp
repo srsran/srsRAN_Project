@@ -173,7 +173,6 @@ srsran::get_c_rnti_pusch_time_domain_list(const search_space_configuration& ss_c
   }
 
   // default A table case.
-  return pusch_default_time_allocations_default_A_table(
-      active_bwp_ul_common.generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
-      active_bwp_ul_common.generic_params.scs);
+  return pusch_default_time_allocations_default_A_table(active_bwp_ul_common.generic_params.cp,
+                                                        active_bwp_ul_common.generic_params.scs);
 }

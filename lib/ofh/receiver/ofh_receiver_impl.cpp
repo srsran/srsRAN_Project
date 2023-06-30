@@ -32,7 +32,7 @@ static uplane_uplink_packet_handler_config get_packet_handler_config(const recei
 {
   uplane_uplink_packet_handler_config out_cfg(*depen.logger, *depen.ul_cp_context_repo);
   out_cfg.is_prach_cp_enabled = config.is_prach_cp_enabled;
-  out_cfg.ul_prach_eaxc       = config.ul_prach_eaxc;
+  out_cfg.ul_prach_eaxc       = config.prach_eaxc;
   out_cfg.ul_eaxc             = config.ul_eaxc;
   out_cfg.uplane_decoder      = std::move(depen.uplane_decoder);
   out_cfg.ecpri_decoder       = std::move(depen.ecpri_decoder);
@@ -53,14 +53,16 @@ static uplane_uplink_symbol_manager_config
 get_uplink_symbol_manager_config(const receiver_config&                                 config,
                                  receiver_impl_dependencies&                            depen,
                                  uplane_uplink_packet_handler&                          packet_handler,
-                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_data_port)
+                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_ul_eaxc,
+                                 const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>& ru_prach_eaxc)
 {
   uplane_uplink_symbol_manager_config out_cfg(*depen.logger,
                                               *depen.notifier,
                                               packet_handler,
                                               *depen.prach_context_repo,
                                               *depen.ul_slot_context_repo,
-                                              ru_ul_data_port);
+                                              ru_ul_eaxc,
+                                              ru_prach_eaxc);
 
   return out_cfg;
 }
@@ -68,14 +70,9 @@ get_uplink_symbol_manager_config(const receiver_config&                         
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& depen) :
   decompressor_sel(std::move(depen.decompressor_sel)),
   ul_packet_handler(get_packet_handler_config(config, depen)),
-  ul_symbol_manager(get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ul_eaxc)),
-  ota_rx_handler(*depen.ul_cp_context_repo, *depen.prach_context_repo, *depen.ul_slot_context_repo)
+  ul_symbol_manager(
+      get_uplink_symbol_manager_config(config, depen, ul_packet_handler, config.ul_eaxc, config.prach_eaxc))
 {
-}
-
-ota_symbol_boundary_notifier& receiver_impl::get_ota_symbol_notifier()
-{
-  return ota_rx_handler;
 }
 
 ether::frame_notifier& receiver_impl::get_ethernet_frame_notifier()

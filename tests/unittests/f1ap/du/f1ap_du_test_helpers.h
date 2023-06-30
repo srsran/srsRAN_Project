@@ -59,7 +59,7 @@ public:
   timer_factory        timers;
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
-  f1ap_interface*      f1ap;
+  f1ap_du*             f1ap;
 
   // DU manager -> F1AP.
   f1ap_ue_configuration_request            next_ue_cfg_req;
@@ -72,7 +72,7 @@ public:
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
-  void connect(f1ap_interface& f1ap_) { f1ap = &f1ap_; }
+  void connect(f1ap_du& f1ap_) { f1ap = &f1ap_; }
 
   timer_factory& get_timer_factory() override { return timers; }
 
@@ -97,6 +97,8 @@ public:
       CORO_RETURN();
     });
   }
+
+  void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override {}
 
   /// \brief Retrieve task scheduler specific to a given UE.
   f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
@@ -212,13 +214,13 @@ protected:
   /// Notifier for messages coming out from F1AP to Gateway.
   f1ap_null_notifier msg_notifier = {};
 
-  timer_manager                   timer_service;
-  timer_factory                   f1ap_timers{timer_service, ctrl_worker};
-  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{f1ap_timers};
-  manual_task_worker              ctrl_worker{128};
-  dummy_ue_executor_mapper        ue_exec_mapper{ctrl_worker};
-  dummy_mac_f1ap_paging_handler   paging_handler;
-  std::unique_ptr<f1ap_interface> f1ap;
+  timer_manager                 timer_service;
+  timer_factory                 f1ap_timers{timer_service, ctrl_worker};
+  dummy_f1ap_du_configurator    f1ap_du_cfg_handler{f1ap_timers};
+  manual_task_worker            ctrl_worker{128};
+  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
+  dummy_mac_f1ap_paging_handler paging_handler;
+  std::unique_ptr<f1ap_du>      f1ap;
 
   /// Storage of UE context related to the current unit test.
   slotted_array<ue_test_context, MAX_NOF_DU_UES> test_ues;

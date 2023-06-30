@@ -200,4 +200,13 @@ struct formatter<srsran::transport_layer_address> : public formatter<std::string
   }
 };
 
+template <>
+struct formatter<srsran::gtp_teid_t> : public formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const srsran::gtp_teid_t& t, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:#08x}", t.value());
+  }
+};
+
 } // namespace fmt

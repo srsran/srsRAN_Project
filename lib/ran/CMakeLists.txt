@@ -21,6 +21,7 @@
 add_library(srsran_ran
         csi_report/csi_report_unpacking.cpp
         csi_report/csi_report_unpacking_helpers.cpp
+        csi_report/csi_report_config_helpers.cpp
         csi_rs/csi_rs_pattern.cpp
         csi_rs/csi_rs_config_helpers.cpp
         csi_rs/frequency_allocation_type.cpp

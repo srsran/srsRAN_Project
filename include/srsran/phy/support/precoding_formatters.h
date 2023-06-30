@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "srsran/ran/precoding/precoding_configuration.h"
+#include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/support/format_utils.h"
 
 namespace fmt {
@@ -57,7 +57,7 @@ struct formatter<srsran::precoding_configuration> {
       for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
         format_to(ctx.out(), "layer{}=[", i_layer);
         for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-          format_to(ctx.out(), "{} ", config.get_coefficient(i_layer, i_port, i_prg));
+          format_to(ctx.out(), "{:+.2f} ", config.get_coefficient(i_layer, i_port, i_prg));
         }
         format_to(ctx.out(), "] ");
       }

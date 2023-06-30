@@ -138,10 +138,10 @@ void pdsch_modulator_impl::modulate(resource_grid_mapper&            mapper,
 
   if (nof_layers > 1) {
     // Apply TS 38.211 Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
-    for (unsigned i = 0; i != nof_re_layer; ++i) {
-      // Apply layer mapping for codeword 0.
-      for (unsigned layer = 0; layer != nof_layers; ++layer) {
-        temp_re.get_slice(layer)[i] = pdsch_symbols[nof_layers * i + layer];
+    for (unsigned layer = 0; layer != nof_layers; ++layer) {
+      span<cf_t> re_layer = temp_re.get_slice(layer);
+      for (unsigned i = 0; i != nof_re_layer; ++i) {
+        re_layer[i] = pdsch_symbols[nof_layers * i + layer];
       }
     }
   }

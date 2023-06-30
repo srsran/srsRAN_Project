@@ -37,8 +37,9 @@ public:
   uplane_message_decoder_impl(srslog::basic_logger& logger_,
                               subcarrier_spacing    scs_,
                               unsigned              nof_symbols_,
-                              unsigned              ru_nof_prbs_) :
-    logger(logger_), scs(scs_), nof_symbols(nof_symbols_), ru_nof_prbs(ru_nof_prbs_)
+                              unsigned              ru_nof_prbs_,
+                              iq_decompressor&      decompressor_) :
+    logger(logger_), scs(scs_), nof_symbols(nof_symbols_), ru_nof_prbs(ru_nof_prbs_), decompressor(decompressor_)
   {
   }
 
@@ -62,43 +63,22 @@ private:
   virtual bool decode_compression_header(uplane_section_params&             results,
                                          network_order_binary_deserializer& deserializer) = 0;
 
+  /// Decodes the compression length field. Returns true on success, otherwise false.
+  bool decode_compression_length(uplane_section_params&             results,
+                                 network_order_binary_deserializer& deserializer,
+                                 const ru_compression_params&       compression_params);
+
   /// Decodes the IQ data from the given deserializer. Returns true on success, otherwise false.
-  virtual bool decode_iq_data(uplane_section_params& results, network_order_binary_deserializer& deserializer) = 0;
+  bool decode_iq_data(uplane_section_params&             results,
+                      network_order_binary_deserializer& deserializer,
+                      const ru_compression_params&       compression_params);
 
 protected:
   srslog::basic_logger&    logger;
   const subcarrier_spacing scs;
   const unsigned           nof_symbols;
   const unsigned           ru_nof_prbs;
-};
-
-/// Open Fronthaul User-Plane message decoder implementation with static IQ compression.
-class uplane_message_decoder_static_compression_impl : public uplane_message_decoder_impl
-{
-public:
-  explicit uplane_message_decoder_static_compression_impl(srslog::basic_logger&        logger_,
-                                                          subcarrier_spacing           scs_,
-                                                          unsigned                     nof_symbols_,
-                                                          unsigned                     ru_nof_prbs_,
-                                                          iq_decompressor&             decompressor_,
-                                                          const ru_compression_params& compression_params_) :
-    uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_),
-    decompressor(decompressor_),
-    compression_params(compression_params_)
-  {
-  }
-
-private:
-  // See parent for documentation.
-  bool decode_compression_header(uplane_section_params&             results,
-                                 network_order_binary_deserializer& deserializer) override;
-
-  // See parent for documentation.
-  bool decode_iq_data(uplane_section_params& results, network_order_binary_deserializer& deserializer) override;
-
-private:
-  iq_decompressor&            decompressor;
-  const ru_compression_params compression_params;
+  iq_decompressor&         decompressor;
 };
 
 } // namespace ofh

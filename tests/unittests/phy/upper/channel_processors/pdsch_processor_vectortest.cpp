@@ -160,12 +160,7 @@ TEST_P(PdschProcessorFixture, PdschProcessorVectortest)
   const test_case_context&      context   = test_case.context;
   const pdsch_processor::pdu_t& config    = context.pdu;
 
-  // More than two layers are not currently supported. Skip test cases.
-  if (config.precoding.get_nof_layers() > 2) {
-    GTEST_SKIP();
-  }
-
-  resource_grid_writer_spy grid_actual(2, context.rg_nof_symb, context.rg_nof_rb, "info");
+  resource_grid_writer_spy grid_actual(4, context.rg_nof_symb, context.rg_nof_rb, "info");
   resource_grid_mapper_spy mapper(grid_actual);
 
   // Read input data as a bit-packed transport block.

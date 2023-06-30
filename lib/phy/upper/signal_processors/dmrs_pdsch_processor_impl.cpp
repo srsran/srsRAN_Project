@@ -55,30 +55,30 @@ static const re_prb_mask& get_re_mask_type_2(unsigned cdm_group_id)
 
 const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE1>
     dmrs_pdsch_processor_impl::params_type1 = {{
-        /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-        /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-        /* Port 1002 */ {1, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-        /* Port 1003 */ {1, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-        /* Port 1004 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-        /* Port 1005 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-        /* Port 1006 */ {1, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-        /* Port 1007 */ {1, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1000 */ {{+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1001 */ {{+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1002 */ {{+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1003 */ {{+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1004 */ {{+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1005 */ {{+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1006 */ {{+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1007 */ {{+1.0f, -1.0f}, {+1.0f, -1.0f}},
     }};
 
 const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE2>
     dmrs_pdsch_processor_impl::params_type2 = {{
-        /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-        /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-        /* Port 1002 */ {1, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-        /* Port 1003 */ {1, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-        /* Port 1004 */ {2, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-        /* Port 1005 */ {2, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-        /* Port 1006 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-        /* Port 1007 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-        /* Port 1008 */ {1, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-        /* Port 1009 */ {1, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-        /* Port 1010 */ {2, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-        /* Port 1011 */ {2, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1000 */ {{+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1001 */ {{+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1002 */ {{+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1003 */ {{+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1004 */ {{+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1005 */ {{+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1006 */ {{+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1007 */ {{+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1008 */ {{+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1009 */ {{+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1010 */ {{+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1011 */ {{+1.0f, -1.0f}, {+1.0f, -1.0f}},
     }};
 
 void srsran::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
@@ -105,10 +105,11 @@ void srsran::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
       sequence, *prg, amplitude, config.reference_point_k_rb, config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
-void dmrs_pdsch_processor_impl::apply_cdm(re_buffer_writer& re_buffer_symbol,
-                                          span<const cf_t>  sequence,
-                                          unsigned          symbol,
-                                          const config_t&   config)
+void dmrs_pdsch_processor_impl::apply_cdm(span<cf_t>       sequence,
+                                          span<const cf_t> base_sequence,
+                                          unsigned         dmrs_port,
+                                          unsigned         symbol,
+                                          const config_t&  config)
 {
   // Set l_prime to 1 if the symbol follows another one.
   unsigned l_prime = 0;
@@ -116,42 +117,35 @@ void dmrs_pdsch_processor_impl::apply_cdm(re_buffer_writer& re_buffer_symbol,
     l_prime = config.symbols_mask.test(symbol - 1) ? 1 : 0;
   }
 
-  unsigned nof_dmrs_ports = re_buffer_symbol.get_nof_slices();
-
   // Apply CDM to DM-RS ports other than port zero.
-  for (unsigned i_dmrs_port = 0; i_dmrs_port != nof_dmrs_ports; ++i_dmrs_port) {
-    const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[i_dmrs_port] : params_type2[i_dmrs_port];
+  const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[dmrs_port] : params_type2[dmrs_port];
 
-    // If no weights are applied, copy the original sequence.
-    if (params.w_t[l_prime] == +1.0F && params.w_f[0] == params.w_f[1]) {
-      srsvec::copy(re_buffer_symbol.get_slice(i_dmrs_port), sequence);
-      continue;
-    }
+  // If no weights are applied, copy the original sequence.
+  if ((params.w_t[l_prime] == +1.0F) && (params.w_f[0] == params.w_f[1])) {
+    srsvec::copy(sequence, base_sequence);
+    return;
+  }
 
-    // Apply w_t weight can be +1 or -1 depending on l_prime and port.
-    if (params.w_t[l_prime] != +1.0F) {
-      srsvec::sc_prod(sequence, -1, re_buffer_symbol.get_slice(i_dmrs_port));
-    } else {
-      srsvec::copy(re_buffer_symbol.get_slice(i_dmrs_port), sequence);
-    }
+  // Apply w_t weight can be +1 or -1 depending on l_prime and port.
+  if (params.w_t[l_prime] != +1.0F) {
+    srsvec::sc_prod(base_sequence, -1, sequence);
+  } else {
+    srsvec::copy(sequence, base_sequence);
+  }
 
-    // Apply w_f weight. It can be {+1, +1} or {+1, -1} depending on l_prime and port. On the first case, no operation
-    // is required. On the second case, re with odd sequence indexes are multiplied by -1.
-    if (params.w_f[0] != params.w_f[1]) {
-      for (unsigned i_re = 1, nof_re_symbol = re_buffer_symbol.get_nof_re(); i_re < nof_re_symbol; i_re += 2) {
-        re_buffer_symbol.get_slice(i_dmrs_port)[i_re] *= -1;
-      }
+  // Apply w_f weight. It can be {+1, +1} or {+1, -1} depending on l_prime and port. On the first case, no operation
+  // is required. On the second case, RE with odd sequence indices are multiplied by -1.
+  if (params.w_f[0] != params.w_f[1]) {
+    for (unsigned i_re = 1, nof_re_symbol = sequence.size(); i_re < nof_re_symbol; i_re += 2) {
+      sequence[i_re] *= -1;
     }
   }
 }
 
 void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const config_t& config)
 {
-  // Number of DM-RS RE in an RB.
-  unsigned nof_dmrs_re_rb = config.type.nof_dmrs_per_rb();
-
   // Number of DM-RS RE in an OFDM symbol.
-  unsigned nof_dmrs_re_symbol = nof_dmrs_re_rb * config.rb_mask.count();
+  unsigned nof_dmrs_re_symbol = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
 
   // Number of DM-RS RE in the entire slot.
   unsigned nof_dmrs_re_slot = nof_dmrs_re_symbol * config.symbols_mask.count();
@@ -159,71 +153,114 @@ void srsran::dmrs_pdsch_processor_impl::map(resource_grid_mapper& mapper, const 
   // Number of logical DM-RS ports. It is equivalent to the number of PDSCH transmit layers.
   unsigned nof_dmrs_ports = config.precoding.get_nof_layers();
 
-  // Resize RE buffer where the DM-RS RE are stored.
-  if ((nof_dmrs_re_slot != temp_re.get_nof_re()) || (nof_dmrs_ports != temp_re.get_nof_slices())) {
-    temp_re.resize(nof_dmrs_ports, nof_dmrs_re_slot);
-  }
+  // Number of physical antenna ports.
+  unsigned nof_antenna_ports = config.precoding.get_nof_ports();
 
   // Number of grid OFDM symbols.
   unsigned nof_symbols = config.symbols_mask.size();
 
-  // For each symbol in the slot....
-  unsigned i_gen_dmrs_symbols = 0;
-  for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-    // Skip symbol if it is not selected.
-    if (!config.symbols_mask.test(i_symbol)) {
-      continue;
+  // CDM group size in number of DM-RS ports.
+  static constexpr unsigned cdm_group_size = 2;
+
+  // Calculate number of CDM groups.
+  unsigned nof_cdm_groups = divide_ceil(nof_dmrs_ports, cdm_group_size);
+
+  // Iterate each CDM group.
+  for (unsigned i_cdm_group = 0; i_cdm_group != nof_cdm_groups; ++i_cdm_group) {
+    // Number of DM-RS ports belonging to the current CDM group.
+    unsigned nof_dmrs_ports_cdm = std::min(cdm_group_size, nof_dmrs_ports - (cdm_group_size * i_cdm_group));
+
+    // Resize RE buffer where the DM-RS RE are stored.
+    temp_re.resize(nof_dmrs_ports_cdm, nof_dmrs_re_slot);
+
+    // Prepare precoding configuration for the CDM group.
+    precoding_configuration cdm_group_precoding(nof_dmrs_ports_cdm, nof_antenna_ports, 1, MAX_RB);
+
+    // For each symbol in the slot....
+    unsigned i_gen_dmrs_symbols = 0;
+    for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
+      // Skip symbol if it is not selected.
+      if (!config.symbols_mask.test(i_symbol)) {
+        continue;
+      }
+
+      // Buffer to hold the DM-RS sequence.
+      span<cf_t> base_sequence = temp_re.get_slice(0).subspan(i_gen_dmrs_symbols, nof_dmrs_re_symbol);
+
+      // Generate sequence for the given symbol.
+      sequence_generation(base_sequence, i_symbol, config);
+
+      // Advance view.
+      i_gen_dmrs_symbols += nof_dmrs_re_symbol;
     }
 
-    // View over the RE of all logical DM-RS ports for the current OFDM symbol.
-    re_buffer_writer_view re_buffer_symbol(temp_re, i_gen_dmrs_symbols, nof_dmrs_re_symbol);
+    srsran_assert((i_gen_dmrs_symbols == nof_dmrs_re_slot),
+                  "The number of generated DM-RS seymbols (i.e., {}) does not match the expected (i.e., {})",
+                  i_gen_dmrs_symbols,
+                  nof_dmrs_re_slot);
 
-    // Buffer to hold the DM-RS sequence.
-    static_vector<cf_t, MAX_DMRS_SYMBOLS * MAX_DMRS_PER_SYMBOL> sequence(nof_dmrs_re_symbol);
+    // Allocation pattern for the mapper.
+    re_pattern_list allocation;
 
-    // Generate sequence for the given symbol.
-    sequence_generation(sequence, i_symbol, config);
+    // Set DM-RS allocation pattern of the CDM group.
+    re_pattern dmrs_pattern_cdm;
+    dmrs_pattern_cdm.prb_mask = config.rb_mask;
+    dmrs_pattern_cdm.symbols  = config.symbols_mask;
+    dmrs_pattern_cdm.re_mask =
+        (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(i_cdm_group) : get_re_mask_type_2(i_cdm_group);
+    allocation.merge(dmrs_pattern_cdm);
 
-    // Apply CDM codes.
-    apply_cdm(re_buffer_symbol, sequence, i_symbol, config);
+    // Iterate each port within the CDM group
+    for (unsigned i_cdm_port = 0; i_cdm_port != nof_dmrs_ports_cdm; ++i_cdm_port) {
+      // Current DM-RS port.
+      unsigned i_dmrs_port = (cdm_group_size * i_cdm_group) + i_cdm_port;
 
-    // Advance view.
-    i_gen_dmrs_symbols += nof_dmrs_re_symbol;
-  }
+      // Load the port coefficients for the CDM port.
+      for (unsigned i_ant_port = 0, i_port_end = nof_antenna_ports; i_ant_port != i_port_end; ++i_ant_port) {
+        for (unsigned i_prg = 0, i_prg_end = config.precoding.get_nof_prg(); i_prg != i_prg_end; ++i_prg) {
+          // Extract the coefficient for mapping the DM-RS port to the antenna port.
+          cf_t coefficient = config.precoding.get_coefficient(i_dmrs_port, i_ant_port, i_prg);
 
-  srsran_assert((i_gen_dmrs_symbols == nof_dmrs_re_slot),
-                "The number of generated DM-RS seymbols (i.e., {}) does not match the expected (i.e., {})",
-                i_gen_dmrs_symbols,
-                nof_dmrs_re_slot);
+          // Set coefficient in the CDM group precoding.
+          cdm_group_precoding.set_coefficient(coefficient, i_cdm_port, i_ant_port, i_prg);
+        }
+      }
 
-  // Allocation pattern for the mapper.
-  re_pattern_list allocation;
+      // Skip CDM weights for first DM-RS port.
+      if (i_dmrs_port == 0) {
+        continue;
+      }
 
-  if (nof_dmrs_ports > 2) {
-    for (unsigned i_dmrs_port = 1; i_dmrs_port != nof_dmrs_ports; ++i_dmrs_port) {
-      const params_t& params =
-          (config.type == dmrs_type::TYPE1) ? params_type1[i_dmrs_port] : params_type2[i_dmrs_port];
+      // Apply CDM weights for each symbol.
+      unsigned nof_proc_re_cdm = 0;
+      for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
+        // Skip symbol if it is not selected.
+        if (!config.symbols_mask.test(i_symbol)) {
+          continue;
+        }
 
-      // Set DM-RS allocation pattern for each DM-RS port.
-      re_pattern i_dmrs_pattern;
-      i_dmrs_pattern.prb_mask = config.rb_mask;
-      i_dmrs_pattern.symbols  = config.symbols_mask;
-      i_dmrs_pattern.re_mask  = (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(params.cdm_group_id)
-                                                                  : get_re_mask_type_2(params.cdm_group_id);
+        // Get view of the base DM-RS sequence.
+        span<const cf_t> base_sequence = temp_re.get_slice(0).subspan(nof_proc_re_cdm, nof_dmrs_re_symbol);
 
-      // Combine all port DM-RS mappings into the DM-RS allocation.
-      allocation.merge(i_dmrs_pattern);
+        // Get view of the CDM sequence destination.
+        span<cf_t> sequence = temp_re.get_slice(i_cdm_port).subspan(nof_proc_re_cdm, nof_dmrs_re_symbol);
+
+        // Apply the CDM codes.
+        apply_cdm(sequence, base_sequence, i_dmrs_port, i_symbol, config);
+
+        // Advance view.
+        nof_proc_re_cdm += nof_dmrs_re_symbol;
+      }
+
+      srsran_assert((nof_proc_re_cdm == i_gen_dmrs_symbols),
+                    "The length of the CDM-coded DM-RS (i.e., {}) for DM-RS port {} does not match the DM-RS sequence "
+                    "length (i.e., {})",
+                    nof_proc_re_cdm,
+                    i_dmrs_port,
+                    i_gen_dmrs_symbols);
     }
 
-  } else {
-    // Set DM-RS allocation pattern.
-    re_pattern dmrs_pattern;
-    dmrs_pattern.prb_mask = config.rb_mask;
-    dmrs_pattern.symbols  = config.symbols_mask;
-    dmrs_pattern.re_mask  = (config.type == dmrs_type::TYPE1) ? get_re_mask_type_1(0) : get_re_mask_type_2(0);
-    allocation.merge(dmrs_pattern);
-
-    // Mapping to physical resources for the given symbol.
-    mapper.map(temp_re, allocation, config.precoding);
+    // Map the CDM group symbols into the resource grid.
+    mapper.map(temp_re, allocation, cdm_group_precoding);
   }
 }

@@ -124,10 +124,6 @@ struct dl_rrc_msg_transfer_ies_o {
 };
 
 struct dl_rrc_msg_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             old_gnb_du_ue_f1ap_id_present         = false;
   bool                             execute_dupl_present                  = false;
   bool                             rat_freq_prio_info_present            = false;
@@ -1713,10 +1709,6 @@ struct ul_rrc_msg_transfer_ies_o {
 };
 
 struct init_ul_rrc_msg_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      du_to_cu_rrc_container_present           = false;
   bool                      sul_access_ind_present                   = false;
   bool                      ran_ue_id_present                        = false;
@@ -1747,10 +1739,6 @@ struct init_ul_rrc_msg_transfer_ies_container {
 using init_ul_rrc_msg_transfer_s = elementary_procedure_option<init_ul_rrc_msg_transfer_ies_container>;
 
 struct ue_context_mod_confirm_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                               res_coordination_transfer_container_present              = false;
   bool                                               drbs_modified_conf_list_present                          = false;
   bool                                               rrc_container_present                                    = false;
@@ -1784,10 +1772,6 @@ struct ue_context_mod_confirm_ies_container {
 using ue_context_mod_confirm_s = elementary_procedure_option<ue_context_mod_confirm_ies_container>;
 
 struct ue_context_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present                = false;
   bool               requested_target_cell_global_id_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
@@ -1806,10 +1790,6 @@ struct ue_context_mod_fail_ies_container {
 using ue_context_mod_fail_s = elementary_procedure_option<ue_context_mod_fail_ies_container>;
 
 struct ue_context_mod_refuse_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -1826,10 +1806,6 @@ struct ue_context_mod_refuse_ies_container {
 using ue_context_mod_refuse_s = elementary_procedure_option<ue_context_mod_refuse_ies_container>;
 
 struct ue_context_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                            sp_cell_id_present                                    = false;
   bool                                            serv_cell_idx_present                                 = false;
   bool                                            sp_cell_ul_cfg_present                                = false;
@@ -1991,10 +1967,6 @@ struct ue_context_mod_request_ies_container {
 using ue_context_mod_request_s = elementary_procedure_option<ue_context_mod_request_ies_container>;
 
 struct ue_context_mod_required_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                              res_coordination_transfer_container_present             = false;
   bool                                              du_to_cu_rrc_info_present                               = false;
   bool                                              drbs_required_to_be_modified_list_present               = false;
@@ -2039,10 +2011,6 @@ struct ue_context_mod_required_ies_container {
 using ue_context_mod_required_s = elementary_procedure_option<ue_context_mod_required_ies_container>;
 
 struct ue_context_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    res_coordination_transfer_container_present   = false;
   bool                                    du_to_cu_rrc_info_present                     = false;
   bool                                    drbs_setup_mod_list_present                   = false;
@@ -2128,10 +2096,6 @@ struct ue_context_mod_resp_ies_container {
 using ue_context_mod_resp_s = elementary_procedure_option<ue_context_mod_resp_ies_container>;
 
 struct ue_context_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                          rrc_container_present               = false;
   bool                          srb_id_present                      = false;
   bool                          old_gnb_du_ue_f1ap_id_present       = false;
@@ -2162,10 +2126,6 @@ struct ue_context_release_cmd_ies_container {
 using ue_context_release_cmd_s = elementary_procedure_option<ue_context_release_cmd_ies_container>;
 
 struct ue_context_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -2181,10 +2141,6 @@ struct ue_context_release_complete_ies_container {
 using ue_context_release_complete_s = elementary_procedure_option<ue_context_release_complete_ies_container>;
 
 struct ue_context_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               target_cells_to_cancel_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -2201,10 +2157,6 @@ struct ue_context_release_request_ies_container {
 using ue_context_release_request_s = elementary_procedure_option<ue_context_release_request_ies_container>;
 
 struct ue_context_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                     gnb_du_ue_f1ap_id_present               = false;
   bool                     crit_diagnostics_present                = false;
   bool                     potential_sp_cell_list_present          = false;
@@ -2226,10 +2178,6 @@ struct ue_context_setup_fail_ies_container {
 using ue_context_setup_fail_s = elementary_procedure_option<ue_context_setup_fail_ies_container>;
 
 struct ue_context_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  gnb_du_ue_f1ap_id_present                     = false;
   bool                                  sp_cell_ul_cfg_present                        = false;
   bool                                  candidate_sp_cell_list_present                = false;
@@ -2339,10 +2287,6 @@ struct ue_context_setup_request_ies_container {
 using ue_context_setup_request_s = elementary_procedure_option<ue_context_setup_request_ies_container>;
 
 struct ue_context_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  c_rnti_present                              = false;
   bool                                  res_coordination_transfer_container_present = false;
   bool                                  full_cfg_present                            = false;
@@ -2399,10 +2343,6 @@ struct ue_context_setup_resp_ies_container {
 using ue_context_setup_resp_s = elementary_procedure_option<ue_context_setup_resp_ies_container>;
 
 struct ue_inactivity_notif_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      sdt_termination_request_present = false;
   uint64_t                  gnb_cu_ue_f1ap_id;
   uint64_t                  gnb_du_ue_f1ap_id;
@@ -2419,10 +2359,6 @@ struct ue_inactivity_notif_ies_container {
 using ue_inactivity_notif_s = elementary_procedure_option<ue_inactivity_notif_ies_container>;
 
 struct ul_rrc_msg_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      sel_plmn_id_present           = false;
   bool                      new_gnb_du_ue_f1ap_id_present = false;
   uint64_t                  gnb_cu_ue_f1ap_id;

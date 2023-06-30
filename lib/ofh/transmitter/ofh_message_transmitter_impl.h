@@ -24,7 +24,8 @@
 
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
+#include "srsran/ofh/ofh_ota_symbol_handler.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 
 namespace srsran {
 namespace ofh {
@@ -32,7 +33,7 @@ namespace ofh {
 /// \brief Transmits enqueued Open Fronthaul messages through an Ethernet gateway.
 ///
 /// Message transmission is managed according the given transmission window.
-class message_transmitter_impl : public symbol_handler
+class message_transmitter_impl : public ota_symbol_handler
 {
   /// Internal structure used to store transmission window timing parameters expressed in a number of symbols.
   struct tx_timing_parameters {
@@ -75,8 +76,6 @@ class message_transmitter_impl : public symbol_handler
   ether::eth_frame_pool&                 pool;
   /// Gateway handling message transmission.
   std::unique_ptr<ether::gateway> gateway;
-  /// Number of symbols per slot.
-  const unsigned symbols_per_slot;
   /// Internal representation of timing parameters.
   const tx_timing_parameters timing_params;
 
@@ -87,11 +86,11 @@ public:
                            std::shared_ptr<ether::eth_frame_pool> frame_pool);
 
   // See interface for documentation.
-  void handle_new_symbol(slot_point slot, unsigned symbol) override;
+  void handle_new_ota_symbol(slot_symbol_point symbol_point) override;
 
 private:
   /// Transmits enqueued messages for the given time slot and symbol.
-  void transmit_enqueued_messages(slot_point slot, unsigned symbol, message_type type);
+  void transmit_enqueued_messages(slot_symbol_point symbol_point, message_type type);
 };
 
 } // namespace ofh

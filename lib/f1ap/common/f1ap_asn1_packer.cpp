@@ -21,7 +21,7 @@
  */
 
 #include "f1ap_asn1_packer.h"
-#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 namespace srsran {
 

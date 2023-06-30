@@ -40,17 +40,8 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
   if (not cell_cfg.tdd_cfg_common.has_value()) {
     return;
   }
-  unsigned          nof_dl_symbol_per_slot = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp_extended
-                                                 ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
-                                                 : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  unsigned          nof_ul_symbol_per_slot = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
-                                                 ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
-                                                 : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  ofdm_symbol_range dl_symbols             = get_active_tdd_dl_symbols(
-      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp_extended);
-  ofdm_symbol_range ul_symbols = get_active_tdd_ul_symbols(
-      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended);
-
+  ofdm_symbol_range dl_symbols = get_active_tdd_dl_symbols(
+      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp);
   if (dl_symbols.empty()) {
     ASSERT_TRUE(result.dl.dl_pdcchs.empty());
     ASSERT_TRUE(result.dl.ul_pdcchs.empty());
@@ -59,7 +50,7 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
     ASSERT_TRUE(result.dl.rar_grants.empty());
     ASSERT_TRUE(result.dl.ue_grants.empty());
     ASSERT_TRUE(result.dl.paging_grants.empty());
-  } else if (dl_symbols.length() != nof_dl_symbol_per_slot) {
+  } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp)) {
     for (const auto& sib : result.dl.bc.sibs) {
       ASSERT_TRUE(dl_symbols.contains(sib.pdsch_cfg.symbols));
     }
@@ -71,11 +62,13 @@ void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
     }
   }
 
+  ofdm_symbol_range ul_symbols = get_active_tdd_ul_symbols(
+      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp);
   if (ul_symbols.empty()) {
     ASSERT_TRUE(result.ul.pucchs.empty());
     ASSERT_TRUE(result.ul.puschs.empty());
     ASSERT_TRUE(result.ul.prachs.empty());
-  } else if (dl_symbols.length() != nof_ul_symbol_per_slot) {
+  } else if (dl_symbols.length() != get_nsymb_per_slot(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp)) {
     for (const auto& ue_grant : result.ul.puschs) {
       ASSERT_TRUE(ul_symbols.contains(ue_grant.pusch_cfg.symbols));
     }

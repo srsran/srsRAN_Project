@@ -74,12 +74,12 @@ class frame_buffer_array
 {
   /// Maximum number of ethernet frames of each OFH type stored for each slot symbol.
   /// Every read-write operation retrieves either CP_PACKETS_PER_SYMBOL or UP_PACKETS_PER_SYMBOL buffers.
-  /// \note Minimum value of stored frames is 2, which allows differentiation the written/read frame counters.
+  /// \note Minimum value of stored frames is 2, which allows differentiation of the written/read frame counters.
   static constexpr size_t MAX_ETH_FRAMES_PER_SYMBOL =
-      std::max(2 * ofh::MAX_CP_MESSAGES_PER_SYMBOL, 2 * ofh::MAX_UP_MESSAGES_PER_SYMBOL);
+      std::max(ofh::MAX_CP_MESSAGES_PER_SYMBOL, ofh::MAX_UP_MESSAGES_PER_SYMBOL) * 4 * ofh::MAX_NOF_SUPPORTED_EAXC;
 
   /// Maximum number of \c ethernet_frame_buffer arrays with prepared ethernet frames.
-  static constexpr size_t MAX_NOF_PREPARED_FRAME_BATCHES = 2;
+  static constexpr size_t MAX_NOF_PREPARED_FRAME_BATCHES = 8;
 
   /// Type of the buffer used in the pool to store Ethernet frames with a specific OFH packet.
   using storage_array_type = std::array<frame_buffer, MAX_ETH_FRAMES_PER_SYMBOL>;
@@ -99,7 +99,10 @@ class frame_buffer_array
 
 public:
   // Receives number of packets stored/read at a time, reserves storage to accommodate (2 * n_packets) packets.
-  explicit frame_buffer_array(unsigned n_packets) : write_position(2 * n_packets), increment_quant(n_packets) {}
+  explicit frame_buffer_array(unsigned n_packets) :
+    write_position(MAX_ETH_FRAMES_PER_SYMBOL), increment_quant(n_packets)
+  {
+  }
 
   // Returns view over increment_quant buffers for writing. Unread buffers might be overwritten
   span<frame_buffer> get_wr_buffers()
@@ -150,10 +153,14 @@ class eth_frame_pool
   struct pool_entry {
     /// Pool entry stores \c POOL_ENTRY_SIZE circular arrays for every OFH type.
     static constexpr size_t POOL_ENTRY_SIZE = (size_t)ofh::message_type::num_ofh_types;
+    /// Number of buffers returned for Control-Plane messages at a time.
+    static constexpr size_t NUM_CP_MESSAGES_TO_RETURN = 1;
+    /// Number of buffers returned for User-Plane messages at a time.
+    static constexpr size_t NUM_UP_MESSAGES_TO_RETURN = ofh::MAX_UP_MESSAGES_PER_SYMBOL;
 
     /// Circular arrays of Ethernet frame buffers for each OFH type.
-    std::array<frame_buffer_array, POOL_ENTRY_SIZE> buffers = {frame_buffer_array{ofh::MAX_CP_MESSAGES_PER_SYMBOL},
-                                                               frame_buffer_array{ofh::MAX_UP_MESSAGES_PER_SYMBOL}};
+    std::array<frame_buffer_array, POOL_ENTRY_SIZE> buffers = {frame_buffer_array{NUM_CP_MESSAGES_TO_RETURN},
+                                                               frame_buffer_array{NUM_UP_MESSAGES_TO_RETURN}};
 
     /// Returns an entry_buffer given the OFH type.
     frame_buffer_array& get_ofh_type_buffers(ofh::message_type type) { return buffers[static_cast<unsigned>(type)]; }

@@ -19,7 +19,6 @@
 #
 
 set(SOURCES
-        ofh_ota_rx_symbol_handler.cpp
         ofh_uplane_uplink_packet_handler.cpp
         ofh_uplane_uplink_symbol_manager.cpp
         ofh_receiver_impl.cpp)

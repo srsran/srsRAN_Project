@@ -71,7 +71,7 @@ static void test_works_in_order()
   TESTASSERT(ssb_ref.is_process_called());
 
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = make_single_port();
+  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   TESTASSERT(pdcch_ref.is_process_called());
 
@@ -119,7 +119,7 @@ static void test_finish_is_called_before_processing_pdus()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = make_single_port();
+  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -177,7 +177,7 @@ static void test_process_pdu_after_finish_processing_pdus_does_nothing()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = make_single_port();
+  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -217,7 +217,7 @@ static void test_process_pdu_before_configure_does_nothing()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = make_single_port();
+  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});
@@ -273,7 +273,7 @@ static void test_2consecutive_slots()
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  pdu.dci.precoding = make_single_port();
+  pdu.dci.precoding = precoding_configuration::make_wideband(make_single_port());
   dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({data}, {});

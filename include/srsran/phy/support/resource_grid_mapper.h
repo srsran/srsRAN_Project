@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "precoding_configuration.h"
 #include "re_buffer.h"
 #include "re_pattern.h"
-#include "srsran/ran/precoding/precoding_configuration.h"
 
 namespace srsran {
 

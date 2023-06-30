@@ -109,8 +109,8 @@ bool uplane_uplink_packet_handler::should_ecpri_packet_be_filtered(const ecpri::
   }
 
   const ecpri::iq_data_parameters& ecpri_iq_params = variant_get<ecpri::iq_data_parameters>(ecpri_params.type_params);
-  if (std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end() &&
-      ecpri_iq_params.pc_id != ul_prach_eaxc) {
+  if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
+      (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
     logger.debug("Dropping Open Fronthaul User-Plane packet as decoded eAxC is {}", ecpri_iq_params.pc_id);
 
     return true;
@@ -120,6 +120,7 @@ bool uplane_uplink_packet_handler::should_ecpri_packet_be_filtered(const ecpri::
 
   return false;
 }
+
 bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(const message_decoder_results& results) const
 {
   const uplane_message_decoder_results& uplane_results = results.uplane_results;
@@ -132,16 +133,16 @@ bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(const messag
     return true;
   }
 
-  // When no CP for PRACH configure, skip the CP check.
-  if (!is_prach_cp_enabled && uplane_results.params.filter_index == filter_index_type::ul_prach_preamble_1p25khz) {
+  // When Control-Plane message for PRACH is not configured, skip the check.
+  if (!is_prach_cp_enabled && is_a_prach_message(uplane_results.params.filter_index)) {
     return false;
   }
 
-  const uplane_message_params&              params = uplane_results.params;
-  expected<cplane_section_type1_parameters> cp_context =
+  const uplane_message_params& params = uplane_results.params;
+  expected<ul_cplane_context>  ex_cp_context =
       cplane_repo.get(params.slot, params.symbol_id, params.filter_index, results.eaxc);
 
-  if (!cp_context) {
+  if (!ex_cp_context) {
     logger.debug("Dropping Open Fronthaul User-Plane packet as no Control-Packet associated was found for slot={}, "
                  "symbol={}, eAxC={}",
                  params.slot,
@@ -152,10 +153,15 @@ bool uplane_uplink_packet_handler::should_uplane_packet_be_filtered(const messag
   }
 
   // Check the PRBs.
-  const cplane_common_section_0_1_3_5_fields& cp_section = cp_context.value().section_fields.common_fields;
+  const ul_cplane_context& cp_context = ex_cp_context.value();
   for (const auto& up_section : uplane_results.sections) {
-    if (up_section.start_prb < cp_section.prb_start ||
-        (up_section.start_prb + up_section.nof_prbs) > (cp_section.prb_start + cp_section.nof_prb)) {
+    if (up_section.start_prb < cp_context.prb_start ||
+        (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb)) {
+      logger.debug("Dropping Open Fronthaul User-Plane packet as PRB indexes {}:{} don't match Control-Packet {}:{}.",
+                   up_section.start_prb,
+                   up_section.nof_prbs,
+                   cp_context.prb_start,
+                   cp_context.nof_prb);
       return true;
     }
   }

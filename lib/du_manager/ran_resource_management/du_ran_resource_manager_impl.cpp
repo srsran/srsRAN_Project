@@ -91,7 +91,6 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   }
   ue_res_pool.emplace(ue_index);
   auto& mcg = ue_res_pool[ue_index].cg_cfg;
-  mcg.cells.clear();
 
   // UE initialized PCell.
   if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {

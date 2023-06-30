@@ -26,6 +26,7 @@
 #include "du_processor_routine_manager_test_helpers.h"
 #include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 

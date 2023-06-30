@@ -161,8 +161,8 @@ e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_set
   res_to_setup_item.pdu_session_type                            = "ipv4";
   res_to_setup_item.snssai.sst                                  = 1;
   res_to_setup_item.snssai.sd                                   = 10203;
-  res_to_setup_item.security_ind.integrity_protection_ind       = "not-needed";
-  res_to_setup_item.security_ind.confidentiality_protection_ind = "not-needed";
+  res_to_setup_item.security_ind.integrity_protection_ind       = integrity_protection_indication_t::not_needed;
+  res_to_setup_item.security_ind.confidentiality_protection_ind = confidentiality_protection_indication_t::not_needed;
   res_to_setup_item.pdu_session_res_dl_ambr                     = 330000000;
   res_to_setup_item.ng_ul_up_tnl_info = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
 

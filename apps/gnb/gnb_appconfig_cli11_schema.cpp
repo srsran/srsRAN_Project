@@ -106,7 +106,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
     }
-    if (app.count("--radio_level") == 0) {
+    // Update the radio log level to all levels when radio level was not found and all level is not warning.
+    if (app.count("--radio_level") == 0 && log_params.all_level != "warning") {
       log_params.radio_level = log_params.all_level;
     }
     if (app.count("--fapi_level") == 0) {
@@ -170,11 +171,77 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
+static void configure_cli11_ncell_args(CLI::App& app, cu_cp_ncell_appconfig_item& config)
+{
+  app.add_option("--rat", config.rat, "RAT of this neighbor cell");
+  app.add_option("--nr_cell_id", config.n_id_cell, "NR cell id");
+  // TODO: Add SSB related params here.
+}
+
+static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
+{
+  app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+
+  // Neighbor cell parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--ncells",
+      [&config](const std::vector<std::string>& values) {
+        config.ncells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("Neighbor cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_ncell_args(subapp, config.ncells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of neightbor cells");
+}
+
+static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
+{
+  app.add_option("--a3_report_type", meas_params.a3_report_type, "A3 report type");
+  app.add_option("--a3_offset_db", meas_params.a3_offset_db, "A3 offset in dB used for measurement report trigger");
+  app.add_option(
+      "--a3_hysteresis_db", meas_params.a3_hysteresis_db, "A3 hysteresis in dB used for measurement report trigger");
+  app.add_option("--a3_time_to_trigger_ms",
+                 meas_params.a3_time_to_trigger_ms,
+                 "Time in ms during which A3 condition must be met before measurement report trigger");
+}
+
+static void configure_cli11_mobility_args(CLI::App& app, mobility_appconfig& config)
+{
+  // Cell map parameters.
+  app.add_option_function<std::vector<std::string>>(
+      "--cells",
+      [&config](const std::vector<std::string>& values) {
+        config.cells.resize(values.size());
+
+        for (unsigned i = 0, e = values.size(); i != e; ++i) {
+          CLI::App subapp("CU-CP cell list");
+          subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
+          configure_cli11_cells_args(subapp, config.cells[i]);
+          std::istringstream ss(values[i]);
+          subapp.parse_from_stream(ss);
+        }
+      },
+      "Sets the list of cells known to the CU-CP");
+
+  CLI::App* meas_config_subcmd = app.add_subcommand("meas_config", "Measurement configuration");
+  configure_cli11_measurement_args(*meas_config_subcmd, config.meas_config);
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_appconfig& cu_cp_params)
 {
   app.add_option("--inactivity_timer", cu_cp_params.inactivity_timer, "UE/PDU Session/DRB inactivity timer in seconds")
       ->capture_default_str()
       ->check(CLI::Range(1, 7200));
+
+  CLI::App* mobility_subcmd = app.add_subcommand("mobility", "Mobility configuration");
+  configure_cli11_mobility_args(*mobility_subcmd, cu_cp_params.mobility_config);
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appconfig& expert_phy_params)
@@ -200,19 +267,76 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_upper_phy_appc
       ->capture_default_str();
 }
 
-static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_appconfig& common_params)
 {
+  app.add_option("--coreset0_index", common_params.coreset0_index, "CORESET#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+
+  app.add_option("--ss1_n_candidates",
+                 common_params.ss1_n_candidates,
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#1. Default: {0, 0, 1, 0, 0}")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
+
+  app.add_option("--ss0_index", common_params.ss0_index, "SearchSpace#0 index")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 15));
+}
+
+static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_appconfig& ded_params)
+{
+  app.add_option("--coreset1_rb_start",
+                 ded_params.coreset1_rb_start,
+                 "Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0. Default: CRB0")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 275));
+
+  app.add_option("--coreset1_l_crb",
+                 ded_params.coreset1_l_crb,
+                 "Length of CORESET 1 in number of CRBs. Default: Across entire BW of cell")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 275));
+
+  // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has been
+  // set to 3. And, we use only pos2 or pos1.
+  app.add_option("--coreset1_duration",
+                 ded_params.coreset1_duration,
+                 "Duration of CORESET 1 in number of OFDM symbols. Default: Max(2, Nof. CORESET#0 symbols)")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 2));
+
+  app.add_option("--ss2_n_candidates",
+                 ded_params.ss2_n_candidates,
+                 "Number of PDCCH candidates per aggregation level for SearchSpace#2. Default: {0, 0, 0, 0, 0} i.e. "
+                 "auto-compute nof. candidates")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 1, 2, 3, 4, 5, 6, 8}));
+
+  app.add_option("--dci_format_0_1_and_1_1",
+                 ded_params.dci_format_0_1_and_1_1,
+                 "DCI format to use in UE dedicated SearchSpace#2")
+      ->capture_default_str();
   app.add_option_function<std::string>(
-         "--ss_type",
-         [&pdcch_params](const std::string& value) {
-           pdcch_params.ue_ss_type = (value == "common") ? search_space_configuration::type_t::common
-                                                         : search_space_configuration::type_t::ue_dedicated;
+         "--ss2_type",
+         [&ded_params](const std::string& value) {
+           ded_params.ss2_type = (value == "common") ? search_space_configuration::type_t::common
+                                                     : search_space_configuration::type_t::ue_dedicated;
          },
-         "SearchSpace type for UE data")
+         "SearchSpace type for UE dedicated SearchSpace#2")
       ->default_str("ue_dedicated")
       ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
-  app.add_option("--dci_format_0_1_and_1_1", pdcch_params.dci_format_0_1_and_1_1, "DCI format to use for UE data")
-      ->capture_default_str();
+}
+
+static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+{
+  // PDCCH Common configuration.
+  CLI::App* pdcch_common_subcmd = app.add_subcommand("common", "PDCCH Common configuration parameters");
+  configure_cli11_pdcch_common_args(*pdcch_common_subcmd, pdcch_params.common);
+
+  // PDCCH Dedicated configuration.
+  CLI::App* pdcch_dedicated_subcmd = app.add_subcommand("dedicated", "PDCCH Dedicated configuration parameters");
+  configure_cli11_pdcch_dedicated_args(*pdcch_dedicated_subcmd, pdcch_params.dedicated);
 }
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
@@ -419,7 +543,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
              pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
            }
          },
-         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot25")
+         "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   app.add_option("--f2_intraslot_freq_hop",
                  pucch_params.f2_intraslot_freq_hopping,
@@ -506,7 +630,7 @@ static void configure_cli11_tdd_ul_dl_pattern_args(CLI::App& app, tdd_ul_dl_patt
   app.add_option("--dl_ul_tx_period",
                  pattern_params.dl_ul_period_slots,
                  "TDD pattern periodicity in slots. The combination of this value and the chosen numerology must lead"
-                 " to a TDD periodicity of 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.")
+                 " to a TDD periodicity of 0.5, 0.625, 1, 1.25, 2, 2.5, 3, 4, 5 or 10 milliseconds.")
       ->capture_default_str()
       ->check(CLI::Range(2, 80));
   app.add_option("--nof_dl_slots", pattern_params.nof_dl_slots, "TDD pattern nof. consecutive full DL slots")
@@ -576,6 +700,17 @@ static void configure_cli11_paging_args(CLI::App& app, paging_appconfig& pg_para
 
 static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params)
 {
+  app.add_option("--csi_rs_period", csi_params.csi_rs_period_msec, "CSI-RS period in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::IsMember({10, 20, 40, 80}));
+  app.add_option("--meas_csi_rs_slot_offset",
+                 csi_params.meas_csi_slot_offset,
+                 "Slot offset of first CSI-RS resource used for measurement")
+      ->capture_default_str();
+  app.add_option("--tracking_csi_rs_slot_offset",
+                 csi_params.tracking_csi_slot_offset,
+                 "Slot offset of first CSI-RS resource used for tracking")
+      ->capture_default_str();
   app.add_option("--pwr_ctrl_offset",
                  csi_params.pwr_ctrl_offset,
                  "powerControlOffset, Power offset of PDSCH RE to NZP CSI-RS RE in dB")
@@ -932,9 +1067,7 @@ static void configure_cli11_ru_ofh_cells_args(CLI::App& app, ru_ofh_cell_appconf
   app.add_option("--ru_mac_addr", config.ru_mac_address, "Radio Unit MAC address")->capture_default_str();
   app.add_option("--du_mac_addr", config.du_mac_address, "Distributed Unit MAC address")->capture_default_str();
   app.add_option("--vlan_tag", config.vlan_tag, "V-LAN identifier")->capture_default_str()->check(CLI::Range(1, 4094));
-  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
+  app.add_option("--prach_port_id", config.ru_prach_port_id, "RU PRACH port identifier")->capture_default_str();
   app.add_option("--dl_port_id", config.ru_dl_port_id, "RU downlink port identifier")->capture_default_str();
   app.add_option("--ul_port_id", config.ru_ul_port_id, "RU uplink port identifier")->capture_default_str();
 }
@@ -1035,6 +1168,20 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_appconfig& config)
   app.add_option("--compr_bitwidth_dl", config.compresion_bitwidth_dl, "Downlink compression bit width")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
+  app.add_option("--compr_method_prach", config.compression_method_prach, "PRACH compression method")
+      ->capture_default_str()
+      ->check(compression_method_check);
+  app.add_option("--compr_bitwidth_prach", config.compresion_bitwidth_prach, "PRACH compression bit width")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 16));
+  app.add_option("--enable_ul_static_compr_hdr",
+                 config.is_uplink_static_comp_hdr_enabled,
+                 "Uplink static compression header enabled flag")
+      ->capture_default_str();
+  app.add_option("--enable_dl_static_compr_hdr",
+                 config.is_downlink_static_comp_hdr_enabled,
+                 "Downlink static compression header enabled flag")
+      ->capture_default_str();
   app.add_option("--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
       ->check(CLI::Range(0.0, 1.0));

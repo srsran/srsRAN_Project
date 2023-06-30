@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -97,12 +98,41 @@ struct paging_appconfig {
   unsigned nof_po_per_pf = 1;
 };
 
+/// PDCCH Common configuration.
+struct pdcch_common_appconfig {
+  /// CORESET#0 index as per tables in TS 38.213, clause 13.
+  optional<unsigned> coreset0_index;
+  /// Number of PDCCH candidates per aggregation level for SearchSpace#1. The aggregation level for the array element
+  /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
+  std::array<uint8_t, 5> ss1_n_candidates = {0, 0, 1, 0, 0};
+  /// SearchSpace#0 index as per tables in TS 38.213, clause 13.
+  unsigned ss0_index = 0;
+};
+
+/// PDCCH Dedicated configuration.
+struct pdcch_dedicated_appconfig {
+  /// Starting Common Resource Block (CRB) number for CORESET 1 relative to CRB 0.
+  optional<unsigned> coreset1_rb_start;
+  /// Length of CORESET 1 in number of CRBs.
+  optional<unsigned> coreset1_l_crb;
+  /// Duration of CORESET 1 in number of OFDM symbols.
+  optional<unsigned> coreset1_duration;
+  /// Number of PDCCH candidates per aggregation level for SearchSpace#2. The aggregation level for the array element
+  /// with index "x" is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
+  /// NOTE: A value of {0, 0, 0, 0, 0} lets the gNB decide nof. candidates for SearchSpace#2.
+  std::array<uint8_t, 5> ss2_n_candidates = {0, 0, 0, 0, 0};
+  /// Flag specifying whether to use non-fallback or fallback DCI format in SearchSpace#2.
+  bool dci_format_0_1_and_1_1 = true;
+  /// SearchSpace type of SearchSpace#2.
+  search_space_configuration::type_t ss2_type = search_space_configuration::type_t::ue_dedicated;
+};
+
 /// PDCCH application configuration.
 struct pdcch_appconfig {
-  /// Use an UE-dedicated or Common Search Space.
-  search_space_configuration::type_t ue_ss_type = search_space_configuration::type_t::ue_dedicated;
-  /// Flag specifying whether to use non-fallback or fallback DCI format in UE dedicated SearchSpace.
-  bool dci_format_0_1_and_1_1 = true;
+  /// PDCCH Common configuration applicable for entire cell.
+  pdcch_common_appconfig common;
+  /// PDCCH Dedicated configuration applicable for each UE.
+  pdcch_dedicated_appconfig dedicated;
 };
 
 /// PDSCH application configuration.
@@ -202,7 +232,7 @@ struct pucch_appconfig {
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
   /// Max code rate.
-  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_25;
+  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
 };
 
 /// Parameters that are used to initialize or build the \c PhysicalCellGroupConfig, TS 38.331.
@@ -234,6 +264,12 @@ struct ssb_appconfig {
 };
 
 struct csi_appconfig {
+  /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
+  unsigned csi_rs_period_msec = 80;
+  /// Slot offset for measurement CSI-RS resources. Note: Should avoid collisions with SSB and SIB1.
+  unsigned meas_csi_slot_offset = 2;
+  /// Slot offset of the first CSI-RS resource used for tracking. Note: Should avoid collisions with SSB and SIB1.
+  unsigned tracking_csi_slot_offset = 12;
   /// \brief \c powerControlOffset, part of \c NZP-CSI-RS-Resource, as per TS 38.331.
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB {-8,...,15}.
   int pwr_ctrl_offset = 0;
@@ -386,8 +422,37 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
+/// \brief Each item describes the parameters of a single neighbor cell.
+struct cu_cp_ncell_appconfig_item {
+  uint64_t    n_id_cell; ///< Cell id of the neighbor cell
+  std::string rat;       ///< RAT of this neighbor cell.
+  // TODO: Add optional SSB parameters.
+  optional<unsigned> ssb_arfcn;
+};
+
+/// \brief Each item describes the relationship between one cell to all other cells.
+struct cu_cp_cell_appconfig_item {
+  uint64_t                                n_id_cell; ///< Cell id.
+  std::vector<cu_cp_ncell_appconfig_item> ncells;    ///< Map of cell ids with their neigbors as value.
+};
+
+/// \brief Measurement conifguration, for now only supporting the A3 event.
+struct cu_cp_measurement_appconfig {
+  std::string a3_report_type;
+  unsigned    a3_offset_db;
+  unsigned    a3_hysteresis_db;
+  unsigned    a3_time_to_trigger_ms;
+};
+
+/// \brief All mobility related configuration parameters.
+struct mobility_appconfig {
+  std::vector<cu_cp_cell_appconfig_item> cells;       ///< List of all cells known to the CU-CP.
+  cu_cp_measurement_appconfig            meas_config; ///< Measurement config.
+};
+
 struct cu_cp_appconfig {
-  int inactivity_timer = 7200; // in seconds
+  int                inactivity_timer = 7200; // in seconds
+  mobility_appconfig mobility_config;
 };
 
 struct log_appconfig {
@@ -545,7 +610,7 @@ struct ru_ofh_cell_appconfig {
   /// V-LAN Tag control information field.
   uint16_t vlan_tag = 1U;
   /// RU PRACH port.
-  unsigned ru_prach_port_id = 4U;
+  std::vector<unsigned> ru_prach_port_id = {4, 5};
   /// RU Downlink port.
   std::vector<unsigned> ru_dl_port_id = {0, 1};
   /// RU Uplink port.
@@ -590,6 +655,14 @@ struct ru_ofh_appconfig {
   std::string compression_method_dl = "bfp";
   /// Downlink compression bitwidth.
   unsigned compresion_bitwidth_dl = 9;
+  /// PRACH compression method.
+  std::string compression_method_prach = "none";
+  /// PRACH compression bitwidth.
+  unsigned compresion_bitwidth_prach = 16;
+  /// Downlink static compression header flag.
+  bool is_downlink_static_comp_hdr_enabled = true;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled = true;
   /// IQ data scaling to be applied prior to Downlink data compression.
   float iq_scaling = 0.35F;
   /// Individual Open Fronthaul cells configurations.

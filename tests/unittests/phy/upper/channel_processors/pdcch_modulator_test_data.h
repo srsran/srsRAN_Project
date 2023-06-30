@@ -22,7 +22,7 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 28-04-2023:
+// This file was generated using the following MATLAB class on 23-06-2023:
 //   + "srsPDCCHModulatorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
@@ -32,7 +32,7 @@
 
 namespace srsran {
 
-static const precoding_configuration default_precoding = make_single_port();
+static const precoding_configuration default_precoding = precoding_configuration::make_wideband(make_single_port());
 
 struct test_case_t {
   pdcch_modulator::config_t                               config;
@@ -42,25 +42,22 @@ struct test_case_t {
 
 static const std::vector<test_case_t> pdcch_modulator_test_data = {
     // clang-format off
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 1, 409, 42433, 1, default_precoding}, {"test_data/pdcch_modulator_test_input0.dat"}, {"test_data/pdcch_modulator_test_output0.dat"}},
-  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 13, 1, 963, 28842, 1, default_precoding}, {"test_data/pdcch_modulator_test_input1.dat"}, {"test_data/pdcch_modulator_test_output1.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 3, 1, 243, 40353, 1, default_precoding}, {"test_data/pdcch_modulator_test_input2.dat"}, {"test_data/pdcch_modulator_test_output2.dat"}},
-  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 9, 1, 574, 46197, 1, default_precoding}, {"test_data/pdcch_modulator_test_input3.dat"}, {"test_data/pdcch_modulator_test_output3.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 10, 2, 942, 33863, 1, default_precoding}, {"test_data/pdcch_modulator_test_input4.dat"}, {"test_data/pdcch_modulator_test_output4.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 3, 2, 35, 51493, 1, default_precoding}, {"test_data/pdcch_modulator_test_input5.dat"}, {"test_data/pdcch_modulator_test_output5.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 2, 483, 61444, 1, default_precoding}, {"test_data/pdcch_modulator_test_input6.dat"}, {"test_data/pdcch_modulator_test_output6.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 4, 2, 170, 1299, 1, default_precoding}, {"test_data/pdcch_modulator_test_input7.dat"}, {"test_data/pdcch_modulator_test_output7.dat"}},
-  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 12, 2, 259, 28238, 1, default_precoding}, {"test_data/pdcch_modulator_test_input8.dat"}, {"test_data/pdcch_modulator_test_output8.dat"}},
-  {{{1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 5, 2, 939, 60326, 1, default_precoding}, {"test_data/pdcch_modulator_test_input9.dat"}, {"test_data/pdcch_modulator_test_output9.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 655, 58370, 1, default_precoding}, {"test_data/pdcch_modulator_test_input10.dat"}, {"test_data/pdcch_modulator_test_output10.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 10, 3, 494, 11496, 1, default_precoding}, {"test_data/pdcch_modulator_test_input11.dat"}, {"test_data/pdcch_modulator_test_output11.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 3, 641, 14795, 1, default_precoding}, {"test_data/pdcch_modulator_test_input12.dat"}, {"test_data/pdcch_modulator_test_output12.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 7, 3, 666, 61261, 1, default_precoding}, {"test_data/pdcch_modulator_test_input13.dat"}, {"test_data/pdcch_modulator_test_output13.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 8, 3, 392, 15883, 1, default_precoding}, {"test_data/pdcch_modulator_test_input14.dat"}, {"test_data/pdcch_modulator_test_output14.dat"}},
-  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 5, 3, 907, 63482, 1, default_precoding}, {"test_data/pdcch_modulator_test_input15.dat"}, {"test_data/pdcch_modulator_test_output15.dat"}},
-  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 11, 3, 703, 2623, 1, default_precoding}, {"test_data/pdcch_modulator_test_input16.dat"}, {"test_data/pdcch_modulator_test_output16.dat"}},
-  {{{0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 3, 390, 42027, 1, default_precoding}, {"test_data/pdcch_modulator_test_input17.dat"}, {"test_data/pdcch_modulator_test_output17.dat"}},
-  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 2, 3, 256, 26952, 1, default_precoding}, {"test_data/pdcch_modulator_test_input18.dat"}, {"test_data/pdcch_modulator_test_output18.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 12, 1, 93, 53393, 1, default_precoding}, {"test_data/pdcch_modulator_test_input0.dat"}, {"test_data/pdcch_modulator_test_output0.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 2, 1, 648, 29526, 1, default_precoding}, {"test_data/pdcch_modulator_test_input1.dat"}, {"test_data/pdcch_modulator_test_output1.dat"}},
+  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 9, 1, 350, 43047, 1, default_precoding}, {"test_data/pdcch_modulator_test_input2.dat"}, {"test_data/pdcch_modulator_test_output2.dat"}},
+  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 11, 1, 293, 5299, 1, default_precoding}, {"test_data/pdcch_modulator_test_input3.dat"}, {"test_data/pdcch_modulator_test_output3.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 2, 969, 42094, 1, default_precoding}, {"test_data/pdcch_modulator_test_input4.dat"}, {"test_data/pdcch_modulator_test_output4.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 7, 2, 651, 50048, 1, default_precoding}, {"test_data/pdcch_modulator_test_input5.dat"}, {"test_data/pdcch_modulator_test_output5.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 9, 2, 421, 6288, 1, default_precoding}, {"test_data/pdcch_modulator_test_input6.dat"}, {"test_data/pdcch_modulator_test_output6.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 2, 2, 633, 25091, 1, default_precoding}, {"test_data/pdcch_modulator_test_input7.dat"}, {"test_data/pdcch_modulator_test_output7.dat"}},
+  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 3, 2, 608, 26694, 1, default_precoding}, {"test_data/pdcch_modulator_test_input8.dat"}, {"test_data/pdcch_modulator_test_output8.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, 8, 2, 403, 23945, 1, default_precoding}, {"test_data/pdcch_modulator_test_input9.dat"}, {"test_data/pdcch_modulator_test_output9.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 1, 3, 636, 14563, 1, default_precoding}, {"test_data/pdcch_modulator_test_input10.dat"}, {"test_data/pdcch_modulator_test_output10.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 3, 3, 713, 30019, 1, default_precoding}, {"test_data/pdcch_modulator_test_input11.dat"}, {"test_data/pdcch_modulator_test_output11.dat"}},
+  {{{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 9, 3, 979, 9054, 1, default_precoding}, {"test_data/pdcch_modulator_test_input12.dat"}, {"test_data/pdcch_modulator_test_output12.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0}, 4, 3, 788, 62364, 1, default_precoding}, {"test_data/pdcch_modulator_test_input13.dat"}, {"test_data/pdcch_modulator_test_output13.dat"}},
+  {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 5, 3, 229, 25806, 1, default_precoding}, {"test_data/pdcch_modulator_test_input14.dat"}, {"test_data/pdcch_modulator_test_output14.dat"}},
+  {{{0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 5, 3, 301, 42847, 1, default_precoding}, {"test_data/pdcch_modulator_test_input15.dat"}, {"test_data/pdcch_modulator_test_output15.dat"}},
     // clang-format on
 };
 

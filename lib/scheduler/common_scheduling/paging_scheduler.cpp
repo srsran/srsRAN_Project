@@ -109,11 +109,9 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
     // See TS 38.214, Table 5.1.2.1.1-1.
     // TODO: Select PDSCH time domain resource allocation to apply based on SS/PBCH and CORESET mux. pattern.
-    pdsch_td_alloc_list =
-        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.empty()
-            ? pdsch_default_time_allocations_default_A_table(
-                  bwp_cfg.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, cell_cfg.dmrs_typeA_pos)
-            : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    pdsch_td_alloc_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.empty()
+                              ? pdsch_default_time_allocations_default_A_table(bwp_cfg.cp, cell_cfg.dmrs_typeA_pos)
+                              : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
 
   } else {
     srsran_assertion_failure("Paging Search Space not configured in DL BWP.");

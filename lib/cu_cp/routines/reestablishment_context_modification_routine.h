@@ -45,6 +45,7 @@ public:
   static const char* name() { return "Reestablishment Context Modification Routine"; }
 
 private:
+  bool generate_bearer_context_modification_request_for_new_ul_tnl();
   bool generate_ue_context_modification_request(
       cu_cp_ue_context_modification_request& ue_context_mod_req,
       const slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>&

@@ -200,7 +200,7 @@ void pdu_session_resource_modification_routine::operator()(
                                   bearer_context_modification_response,
                                   next_config,
                                   logger) == false) {
-      logger.error("ue={}: \"{}\" failed to modifify bearer at CU-UP.", modify_request.ue_index, name());
+      logger.error("ue={}: \"{}\" failed to modify bearer at CU-UP.", modify_request.ue_index, name());
       CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
     }
   }

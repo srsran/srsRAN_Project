@@ -82,15 +82,19 @@ public:
 class pdcp_f1u_adapter : public pdcp_tx_lower_notifier
 {
 public:
-  pdcp_f1u_adapter()           = default;
-  ~pdcp_f1u_adapter() override = default;
+  pdcp_f1u_adapter() = default;
+  ~pdcp_f1u_adapter() override {}
 
   void connect_f1u(f1u_tx_sdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
+  void disconnect_f1u() { f1u_handler = nullptr; }
 
   void on_new_pdu(pdcp_tx_pdu pdu) override
   {
-    srsran_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
-    f1u_handler->handle_sdu(std::move(pdu));
+    if (f1u_handler == nullptr) {
+      srslog::fetch_basic_logger("PDCP").warning("Unconnected F1-U handler. Dropping PDCP PDU");
+    } else {
+      f1u_handler->handle_sdu(std::move(pdu));
+    }
   }
 
   void on_discard_pdu(uint32_t pdcp_sn) override

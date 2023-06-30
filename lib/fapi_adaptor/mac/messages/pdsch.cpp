@@ -152,10 +152,17 @@ static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&          
   }
 }
 
-static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder&    builder,
-                                   const pdsch_information&       pdsch_cfg,
-                                   const precoding_matrix_mapper& pm_mapper,
-                                   unsigned                       cell_nof_prbs)
+static void fill_omnidirectional_precoding(fapi::dl_pdsch_pdu_builder&    builder,
+                                           const precoding_matrix_mapper& pm_mapper,
+                                           unsigned                       nof_layers,
+                                           unsigned                       cell_nof_prbs)
+{
+  fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
+  pm_bf_builder.set_basic_parameters(cell_nof_prbs, 0);
+  pm_bf_builder.add_prg(pm_mapper.map({}, nof_layers), {});
+}
+
+static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pdsch_information& pdsch_cfg)
 {
   // Basic parameters.
   builder.set_basic_parameters(pdsch_cfg.rnti);
@@ -168,9 +175,6 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder&    builder,
 
   // Time allocation.
   fill_time_allocation(builder, pdsch_cfg.symbols);
-
-  // Precoding and beamforming.
-  fill_precoding_and_beamforming(builder, pdsch_cfg.precoding, pm_mapper, pdsch_cfg.nof_layers, cell_nof_prbs);
 }
 
 static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
@@ -242,17 +246,18 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+
+  // Omnidirectional precoding.
+  fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::subcarrier_0);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -301,17 +306,18 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+
+  // Omnidirectional precoding.
+  fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -360,17 +366,19 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+
+  // Precoding and beamforming.
+  fill_precoding_and_beamforming(
+      builder, mac_pdu.pdsch_cfg.precoding, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 
@@ -411,17 +419,18 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
-  fill_pdsch_information(builder, mac_pdu.pdsch_cfg, pm_mapper, cell_nof_prbs);
+  fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
+
+  // Omnidirectional precoding.
+  fill_omnidirectional_precoding(builder, pm_mapper, mac_pdu.pdsch_cfg.nof_layers, cell_nof_prbs);
 
   // Codeword information.
   fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
 
   // BWP parameters.
   const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
-  builder.set_bwp_parameters(crbs.length(),
-                             crbs.start(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->scs,
-                             mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(
+      crbs.length(), crbs.start(), mac_pdu.pdsch_cfg.bwp_cfg->scs, mac_pdu.pdsch_cfg.bwp_cfg->cp);
 
   fill_power_parameters(builder);
 

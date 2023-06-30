@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../support/uplink_context_repository.h"
-#include "ofh_data_flow_cplane_scheduling_commands_impl.h"
+#include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
 
@@ -32,8 +32,10 @@ namespace ofh {
 
 /// Uplink request handler implementation configuration.
 struct uplink_request_handler_impl_config {
-  /// Uplink PRACH eAxC.
-  optional<unsigned> ul_prach_eaxc;
+  /// PRACH Contol-Plane enabled flag.
+  bool is_prach_cp_enabled;
+  /// PRACH eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink data eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_data_eaxc;
   /// Uplink slot context repository.
@@ -57,7 +59,8 @@ public:
   void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
 
 private:
-  const optional<unsigned>                                     ul_prach_eaxc;
+  bool                                                         is_prach_cp_enabled;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>        ul_eaxc;
   std::shared_ptr<uplink_context_repository<ul_slot_context>>  ul_slot_repo_ptr;
   std::shared_ptr<uplink_context_repository<ul_prach_context>> ul_prach_repo_ptr;

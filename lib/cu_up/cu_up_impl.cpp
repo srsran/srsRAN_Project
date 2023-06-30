@@ -157,7 +157,7 @@ void process_successful_pdu_resource_modification_outcome(
     modified_item.pdu_session_id = result.pdu_session_id;
 
     for (const auto& drb_setup_item : result.drb_setup_results) {
-      logger.debug("Adding DRB setup result item for ID {}", drb_setup_item.drb_id);
+      logger.debug("Adding DRB setup result item. {}, success={}", drb_setup_item.drb_id, drb_setup_item.success);
       if (drb_setup_item.success) {
         e1ap_drb_setup_item_ng_ran res_drb_setup_item;
         res_drb_setup_item.drb_id = drb_setup_item.drb_id;
@@ -188,8 +188,14 @@ void process_successful_pdu_resource_modification_outcome(
       }
     }
     for (const auto& drb_modified_item : result.drb_modification_results) {
+      logger.debug(
+          "Adding DRB modified result item. {}, success={}", drb_modified_item.drb_id, drb_modified_item.success);
       e1ap_drb_modified_item_ng_ran e1ap_mod_item;
       e1ap_mod_item.drb_id = drb_modified_item.drb_id;
+
+      e1ap_up_params_item up_param_item;
+      up_param_item.up_tnl_info = drb_modified_item.gtp_tunnel;
+      e1ap_mod_item.ul_up_transport_params.push_back(up_param_item);
       modified_item.drb_modified_list_ng_ran.emplace(e1ap_mod_item.drb_id, e1ap_mod_item);
     }
 
@@ -246,6 +252,8 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
 e1ap_bearer_context_modification_response
 cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
 {
+  logger.debug("Handling bearer context modification request ue={}", msg.ue_index);
+
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
@@ -255,6 +263,8 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   e1ap_bearer_context_modification_response response = {};
   response.ue_index                                  = ue_ctxt->get_index();
   response.success                                   = true;
+
+  bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
 
   if (msg.ng_ran_bearer_context_mod_request.has_value()) {
     // Traverse list of PDU sessions to be setup/modified
@@ -269,7 +279,8 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     // Traverse list of PDU sessions to be modified.
     for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       logger.debug("Modifying PDU session id {}", pdu_session_item.pdu_session_id);
-      pdu_session_modification_result session_result = ue_ctxt->modify_pdu_session(pdu_session_item);
+      pdu_session_modification_result session_result =
+          ue_ctxt->modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
       process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
                                                            response.pdu_session_resource_failed_to_modify_list,
                                                            session_result,

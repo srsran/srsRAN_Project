@@ -32,7 +32,7 @@ namespace srsran {
 struct mac_pdsch_precoding_info {
   /// \brief CSI-RS report.
   ///
-  /// This field is empty in case of 1-antenna port setups.
+  /// This field is empty in case of omnidirectional precoding.
   optional<csi_report_pmi> report;
 };
 
@@ -44,13 +44,15 @@ namespace fapi_adaptor {
 
 /// Precoding matrix mapper codebook offset configuration.
 struct precoding_matrix_mapper_codebook_offset_configuration {
-  /// Codebook offsets for SSB. Each entry represents a codebook.
+  /// Codebook offset for the omnidirectional PDSCH.
+  unsigned pdsch_omni_offset;
+  /// Codebook offsets for SSB. Each entry represents a layer.
   std::vector<unsigned> ssb_codebook_offsets;
-  /// Codebook offsets for PDSCH. Each entry represents a codebook.
+  /// Codebook offsets for PDSCH. Each entry represents a layer.
   std::vector<unsigned> pdsch_codebook_offsets;
-  /// Codebook offsets for PDCCH. Each entry represents a codebook.
+  /// Codebook offsets for PDCCH. Each entry represents a layer.
   std::vector<unsigned> pdcch_codebook_offsets;
-  /// Codebook offsets for CSI-RS. Each entry represents a codebook.
+  /// Codebook offsets for CSI-RS. Each entry represents a layer.
   std::vector<unsigned> csi_rs_codebook_offsets;
 };
 
@@ -60,7 +62,7 @@ struct precoding_matrix_mapper_codebook_offset_configuration {
 class precoding_matrix_mapper
 {
 public:
-  precoding_matrix_mapper(const precoding_matrix_mapper_codebook_offset_configuration& config);
+  precoding_matrix_mapper(unsigned nof_ports_, const precoding_matrix_mapper_codebook_offset_configuration& config);
 
   /// Maps the given MAC precoding information into a precoding matrix index.
   unsigned map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const;
@@ -75,13 +77,17 @@ public:
   unsigned map(const mac_ssb_precoding_info& precoding_info) const;
 
 private:
-  /// Codebook offsets for SSB. Each entry represents a codebook.
+  /// Number of ports.
+  const unsigned nof_ports;
+  /// Codebook offset for the omnidirectional PDSCH.
+  unsigned pdsch_omni_offset;
+  /// Codebook offsets for SSB. Each entry represents a layer.
   std::vector<unsigned> ssb_codebook_offsets;
-  /// Codebook offsets for PDSCH. Each entry represents a codebook.
+  /// Codebook offsets for PDSCH. Each entry represents a layer.
   std::vector<unsigned> pdsch_codebook_offsets;
-  /// Codebook offsets for PDCCH. Each entry represents a codebook.
+  /// Codebook offsets for PDCCH. Each entry represents a layer.
   std::vector<unsigned> pdcch_codebook_offsets;
-  /// Codebook offsets for CSI-RS. Each entry represents a codebook.
+  /// Codebook offsets for CSI-RS. Each entry represents a layer.
   std::vector<unsigned> csi_rs_codebook_offsets;
 };
 

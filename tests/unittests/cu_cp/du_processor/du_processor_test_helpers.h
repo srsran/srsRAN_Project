@@ -58,6 +58,7 @@ protected:
   timer_manager                                         timers;
   ue_configuration                                      ue_config;
   ue_manager                                            ue_mng{ue_config};
+  std::unique_ptr<cell_meas_manager>                    cell_meas_mng;
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
   dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
   dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;

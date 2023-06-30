@@ -62,9 +62,9 @@ struct e1ap_bearer_context_modification_request {
   optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
   optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
   optional<std::string>                            bearer_context_status_change;
-  optional<std::string>                            new_ul_tnl_info_required;
+  optional<bool>                                   new_ul_tnl_info_required;
   optional<std::chrono::seconds>                   ue_inactivity_timer;
-  optional<std::string>                            data_discard_required;
+  optional<bool>                                   data_discard_required;
   optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
   optional<ran_ue_id_t>                            ran_ue_id;
   optional<uint64_t>                               gnb_du_id;

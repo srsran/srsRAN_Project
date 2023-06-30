@@ -125,15 +125,17 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   if (log_broadcast) {
     for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
       fmt::format_to(fmtbuf,
-                     "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={} scramb_id={}",
+                     "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={}",
                      csi_rs.type == csi_rs_type::CSI_RS_NZP ? "nzp" : "zp",
                      csi_rs.crbs,
                      csi_rs.row,
                      csi_rs.freq_domain,
                      csi_rs.symbol0,
-                     csi_rs.cdm_type == csi_rs_cdm_type::no_CDM ? "no_cdm" : "other",
-                     (unsigned)csi_rs.freq_density,
-                     csi_rs.scrambling_id);
+                     to_string(csi_rs.cdm_type),
+                     (unsigned)csi_rs.freq_density);
+      if (csi_rs.type == csi_rs_type::CSI_RS_NZP) {
+        fmt::format_to(fmtbuf, " scramb_id={}", csi_rs.scrambling_id);
+      }
     }
 
     for (const sib_information& sib : result.dl.bc.sibs) {

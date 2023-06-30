@@ -21,7 +21,11 @@
 set(SOURCES
         ofh_cplane_message_builder_impl.cpp
         ofh_uplane_message_builder_impl.cpp
-        ofh_uplane_message_decoder_impl.cpp)
+        ofh_uplane_message_builder_dynamic_compression_impl.cpp
+        ofh_uplane_message_builder_static_compression_impl.cpp
+        ofh_uplane_message_decoder_impl.cpp
+        ofh_uplane_message_decoder_dynamic_compression_impl.cpp
+        ofh_uplane_message_decoder_static_compression_impl.cpp)
 
 add_library(srsran_ofh_message_serdes STATIC ${SOURCES})
 target_link_libraries(srsran_ofh_message_serdes srslog)

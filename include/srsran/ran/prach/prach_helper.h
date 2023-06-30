@@ -25,6 +25,7 @@
 #include "rach_config_common.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/interval.h"
+#include "srsran/ran/cyclic_prefix.h"
 
 namespace srsran {
 
@@ -36,13 +37,13 @@ namespace prach_helper {
 /// \return In case of failure, returns the range of PRACH slots that did not fit in the TDD pattern. If the PRACH
 /// configuration is invalid, an empty interval of slots is returned.
 error_type<interval<uint8_t>> prach_fits_in_tdd_pattern(subcarrier_spacing             pusch_scs,
-                                                        bool                           cp_extended,
+                                                        cyclic_prefix                  cp,
                                                         uint8_t                        prach_cfg_idx,
                                                         const tdd_ul_dl_config_common& tdd_cfg);
 
 /// \brief Finds a PRACH configuration index that ensures that PRACH falls in an TDD UL slot.
 optional<uint8_t>
-find_valid_prach_config_index(subcarrier_spacing pusch_scs, bool cp_extended, const tdd_ul_dl_config_common& tdd_cfg);
+find_valid_prach_config_index(subcarrier_spacing pusch_scs, cyclic_prefix cp, const tdd_ul_dl_config_common& tdd_cfg);
 
 } // namespace prach_helper
 } // namespace srsran

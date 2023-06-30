@@ -22,6 +22,8 @@
 
 #include "uci_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_unpacking.h"
 
 using namespace srsran;
 
@@ -30,8 +32,8 @@ constexpr static size_t DAI_MOD = 4;
 
 ////////////    C-tors and d-tors    ////////////
 
-uci_allocator_impl::uci_allocator_impl(const cell_configuration& cell_cfg_, pucch_allocator& pucch_alloc_) :
-  cell_cfg(cell_cfg_), pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("SCHED"))
+uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
+  pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -203,8 +205,8 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
                                                       rnti_t                        crnti,
                                                       const ue_cell_configuration&  ue_cell_cfg)
 {
-  // [Implementation-defined] This is the only supported CSI format, for the time being.
-  const unsigned CSI_PART1_NOF_BITS = cell_cfg.dl_carrier.nof_ant == 1 ? 4U : 7U;
+  const auto csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.cfg_dedicated().csi_meas_cfg);
+  const auto csi_report_size = get_csi_report_pucch_size(csi_report_cfg);
 
   auto&          puschs         = slot_alloc.result.ul.puschs;
   ul_sched_info* existing_pusch = std::find_if(
@@ -217,7 +219,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   if (has_pusch_grants) {
     // No HARQ bits to be reported when the UCI is initiated by the CSI.
     unsigned nof_harq_ack_bits  = 0;
-    unsigned nof_csi_part1_bits = CSI_PART1_NOF_BITS;
+    unsigned nof_csi_part1_bits = csi_report_size.value();
     // If there is UCI grant allocated, allocate it.
     if (not existing_pusch->uci.has_value()) {
       existing_pusch->uci.emplace();
@@ -242,7 +244,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   }
 
   // Else, allocate the CSI on the PUCCH.
-  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, CSI_PART1_NOF_BITS);
+  pucch_alloc.pucch_allocate_csi_opportunity(slot_alloc, crnti, ue_cell_cfg, csi_report_size.value());
 }
 
 uint8_t uci_allocator_impl::get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc,

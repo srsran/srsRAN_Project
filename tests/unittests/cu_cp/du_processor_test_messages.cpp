@@ -26,6 +26,7 @@
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -108,6 +109,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(unsigned num_pdu_sessions
     item.pdu_session_aggregate_maximum_bit_rate_ul = 100;
     item.ul_ngu_up_tnl_info                        = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(0x1)};
     item.pdu_session_type                          = "ipv4";
+    item.security_ind                              = {};
 
     for (unsigned k = 0; k < num_qos_flows; ++k) {
       qos_flow_setup_request_item qos_item;

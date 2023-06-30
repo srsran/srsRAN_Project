@@ -602,7 +602,7 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
   }
 
   mac_ul_sch_pdu pdu;
-  pdu.unpack(msg); // Should not crash.
+  ASSERT_TRUE(pdu.unpack(msg)); // Should not crash.
   ASSERT_GT(pdu.nof_subpdus(), 0);
 }
 

@@ -23,6 +23,8 @@
 #pragma once
 
 #include "f1ap_du_ue.h"
+#include <mutex>
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {

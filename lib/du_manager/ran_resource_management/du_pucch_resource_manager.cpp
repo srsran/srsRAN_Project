@@ -102,7 +102,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
       if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
         const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;
         const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
+        if (srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() !=
+            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
           // UL disabled for this slot.
           continue;
         }
@@ -119,7 +120,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
       if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
         const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;
         const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
+        if (srsran::get_active_tdd_ul_symbols(tdd_cfg, slot_index, cyclic_prefix::NORMAL).length() !=
+            NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
           // UL disabled for this slot.
           continue;
         }

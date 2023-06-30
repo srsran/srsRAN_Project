@@ -194,3 +194,13 @@ std::vector<pdu_session_id_t> up_resource_manager_impl::get_pdu_sessions()
 
   return pdu_session_ids;
 }
+
+up_context up_resource_manager_impl::get_up_context()
+{
+  return context;
+}
+
+void up_resource_manager_impl::set_up_context(const up_context& ctx)
+{
+  context = ctx;
+}

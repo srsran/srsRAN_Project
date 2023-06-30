@@ -122,10 +122,7 @@ void srsran::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu_builder&
   builder.set_basic_parameters(mac_pdu.crnti, handle);
 
   const bwp_configuration& bwp_cfg = *mac_pdu.bwp_cfg;
-  builder.set_bwp_parameters(bwp_cfg.crbs.length(),
-                             bwp_cfg.crbs.start(),
-                             bwp_cfg.scs,
-                             (bwp_cfg.cp_extended) ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+  builder.set_bwp_parameters(bwp_cfg.crbs.length(), bwp_cfg.crbs.start(), bwp_cfg.scs, bwp_cfg.cp);
 
   const prb_interval& freq_prbs = mac_pdu.resources.prbs;
   builder.set_allocation_in_frequency_parameters(freq_prbs.start(), freq_prbs.length());

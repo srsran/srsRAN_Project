@@ -37,7 +37,7 @@ enum class rb_id_type : uint8_t { every_rb_used, every_other_rb_used };
 enum class symbol_incr_type : uint8_t { current_symbol_number, increment_current_symbol_number };
 
 /// Filter index type.
-enum class filter_index_type {
+enum class filter_index_type : uint8_t {
   standard_channel_filter       = 0,
   ul_prach_preamble_1p25khz     = 1,
   ul_prach_preamble_5kHz        = 2,
@@ -78,6 +78,13 @@ constexpr filter_index_type to_filter_index_type(unsigned index)
     default:
       return filter_index_type::reserved;
   }
+}
+
+/// Returns true is passed filter index corresponds to a PRACH filter, otherwise returns false.
+constexpr bool is_a_prach_message(filter_index_type filter_index)
+{
+  return ((filter_index >= filter_index_type::ul_prach_preamble_1p25khz) &&
+          (filter_index <= filter_index_type::ul_prach_preamble_short_30kHz));
 }
 
 /// Open Fronthaul section types.

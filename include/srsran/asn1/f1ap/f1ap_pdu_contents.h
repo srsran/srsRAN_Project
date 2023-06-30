@@ -92,10 +92,6 @@ struct access_and_mob_ind_ies_o {
 };
 
 struct access_and_mob_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             rach_report_info_list_present          = false;
   bool                             rlf_report_info_list_present           = false;
   bool                             successful_ho_report_info_list_present = false;
@@ -158,10 +154,6 @@ struct access_success_ies_o {
 };
 
 struct access_success_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_ue_f1ap_id;
   uint64_t gnb_du_ue_f1ap_id;
   nr_cgi_s nr_cgi;
@@ -274,10 +266,6 @@ struct bap_map_cfg_ies_o {
 };
 
 struct bap_map_cfg_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                           bh_routing_info_added_list_present   = false;
   bool                           bh_routing_info_remd_list_present    = false;
   bool                           traffic_map_info_present             = false;
@@ -348,10 +336,6 @@ struct bap_map_cfg_ack_ies_o {
 };
 
 struct bap_map_cfg_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   crit_diagnostics_s crit_diagnostics;
@@ -414,10 +398,6 @@ struct bap_map_cfg_fail_ies_o {
 };
 
 struct bap_map_cfg_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -481,10 +461,6 @@ struct broadcast_context_mod_fail_ies_o {
 };
 
 struct broadcast_context_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
   uint64_t           gnb_du_mbs_f1ap_id;
@@ -567,10 +543,6 @@ struct broadcast_context_mod_request_ies_o {
 };
 
 struct broadcast_context_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                   mbs_service_area_present                     = false;
   bool                                   broadcast_m_rbs_to_be_setup_mod_list_present = false;
   bool                                   broadcast_m_rbs_to_be_modified_list_present  = false;
@@ -659,10 +631,6 @@ struct broadcast_context_mod_resp_ies_o {
 };
 
 struct broadcast_context_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                          broadcast_m_rbs_setup_mod_list_present              = false;
   bool                                          broadcast_m_rbs_failed_to_be_setup_mod_list_present = false;
   bool                                          broadcast_m_rbs_modified_list_present               = false;
@@ -730,10 +698,6 @@ struct broadcast_context_release_cmd_ies_o {
 };
 
 struct broadcast_context_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_mbs_f1ap_id;
   uint64_t gnb_du_mbs_f1ap_id;
   cause_c  cause;
@@ -792,10 +756,6 @@ struct broadcast_context_release_complete_ies_o {
 };
 
 struct broadcast_context_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
   uint64_t           gnb_du_mbs_f1ap_id;
@@ -856,10 +816,6 @@ struct broadcast_context_release_request_ies_o {
 };
 
 struct broadcast_context_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_mbs_f1ap_id;
   uint64_t gnb_du_mbs_f1ap_id;
   cause_c  cause;
@@ -921,10 +877,6 @@ struct broadcast_context_setup_fail_ies_o {
 };
 
 struct broadcast_context_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_du_mbs_f1ap_id_present = false;
   bool               crit_diagnostics_present   = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
@@ -1007,10 +959,6 @@ struct broadcast_context_setup_request_ies_o {
 };
 
 struct broadcast_context_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               mbs_service_area_present = false;
   uint64_t                           gnb_cu_mbs_f1ap_id;
   mbs_session_id_s                   mbs_session_id;
@@ -1091,10 +1039,6 @@ struct broadcast_context_setup_resp_ies_o {
 };
 
 struct broadcast_context_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                      broadcast_m_rbs_failed_to_be_setup_list_present = false;
   bool                                      broadcast_area_scope_present                    = false;
   bool                                      crit_diagnostics_present                        = false;
@@ -1159,10 +1103,6 @@ struct cu_du_radio_info_transfer_ies_o {
 };
 
 struct cu_du_radio_info_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                transaction_id;
   cu_du_radio_info_type_c cu_du_radio_info_type;
 
@@ -1237,10 +1177,6 @@ struct cell_traffic_trace_ies_o {
 };
 
 struct cell_traffic_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                                  privacy_ind_present                 = false;
   bool                                                  trace_collection_entity_uri_present = false;
   uint64_t                                              gnb_cu_ue_f1ap_id;
@@ -1304,10 +1240,6 @@ struct du_cu_radio_info_transfer_ies_o {
 };
 
 struct du_cu_radio_info_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                transaction_id;
   du_cu_radio_info_type_c du_cu_radio_info_type;
 
@@ -1365,10 +1297,6 @@ struct deactiv_trace_ies_o {
 };
 
 struct deactiv_trace_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                 gnb_cu_ue_f1ap_id;
   uint64_t                 gnb_du_ue_f1ap_id;
   fixed_octstring<8, true> trace_id;
@@ -1431,10 +1359,6 @@ struct e_c_id_meas_fail_ind_ies_o {
 };
 
 struct e_c_id_meas_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_ue_f1ap_id;
   uint64_t gnb_du_ue_f1ap_id;
   uint16_t lmf_ue_meas_id;
@@ -1509,10 +1433,6 @@ struct e_c_id_meas_initiation_fail_ies_o {
 };
 
 struct e_c_id_meas_initiation_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -1595,10 +1515,6 @@ struct e_c_id_meas_initiation_request_ies_o {
 };
 
 struct e_c_id_meas_initiation_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            e_c_id_meas_periodicity_present      = false;
   bool                            pos_meas_periodicity_nr_ao_a_present = false;
   uint64_t                        gnb_cu_ue_f1ap_id;
@@ -1681,10 +1597,6 @@ struct e_c_id_meas_initiation_resp_ies_o {
 };
 
 struct e_c_id_meas_initiation_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                 e_c_id_meas_result_present = false;
   bool                 cell_portion_id_present    = false;
   bool                 crit_diagnostics_present   = false;
@@ -1764,10 +1676,6 @@ struct e_c_id_meas_report_ies_o {
 };
 
 struct e_c_id_meas_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                 cell_portion_id_present = false;
   uint64_t             gnb_cu_ue_f1ap_id;
   uint64_t             gnb_du_ue_f1ap_id;
@@ -1832,10 +1740,6 @@ struct e_c_id_meas_termination_cmd_ies_o {
 };
 
 struct e_c_id_meas_termination_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_ue_f1ap_id;
   uint64_t gnb_du_ue_f1ap_id;
   uint16_t lmf_ue_meas_id;
@@ -1899,10 +1803,6 @@ struct error_ind_ies_o {
 };
 
 struct error_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_cu_ue_f1ap_id_present = false;
   bool               gnb_du_ue_f1ap_id_present = false;
   bool               cause_present             = false;
@@ -7135,10 +7035,6 @@ struct write_replace_warning_resp_ies_o {
 };
 
 struct f1_removal_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   cause_c            cause;
@@ -7157,10 +7053,6 @@ using f1_removal_fail_s = elementary_procedure_option<f1_removal_fail_ies_contai
 using f1_removal_request_s = elementary_procedure_option<protocol_ie_container_l<f1_removal_request_ies_o>>;
 
 struct f1_removal_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   crit_diagnostics_s crit_diagnostics;
@@ -7175,10 +7067,6 @@ struct f1_removal_resp_ies_container {
 using f1_removal_resp_s = elementary_procedure_option<f1_removal_resp_ies_container>;
 
 struct f1_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7196,10 +7084,6 @@ struct f1_setup_fail_ies_container {
 using f1_setup_fail_s = elementary_procedure_option<f1_setup_fail_ies_container>;
 
 struct f1_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_du_name_present                  = false;
   bool                                 gnb_du_served_cells_list_present     = false;
   bool                                 transport_layer_address_info_present = false;
@@ -7224,10 +7108,6 @@ struct f1_setup_request_ies_container {
 using f1_setup_request_s = elementary_procedure_option<f1_setup_request_ies_container>;
 
 struct f1_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 gnb_cu_name_present                  = false;
   bool                                 cells_to_be_activ_list_present       = false;
   bool                                 transport_layer_address_info_present = false;
@@ -7253,10 +7133,6 @@ struct f1_setup_resp_ies_container {
 using f1_setup_resp_s = elementary_procedure_option<f1_setup_resp_ies_container>;
 
 struct gnb_cu_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 cells_to_be_activ_list_present       = false;
   bool                                 cells_to_be_deactiv_list_present     = false;
   bool                                 gnb_cu_tnl_assoc_to_add_list_present = false;
@@ -7299,10 +7175,6 @@ struct gnb_cu_cfg_upd_ies_container {
 using gnb_cu_cfg_upd_s = elementary_procedure_option<gnb_cu_cfg_upd_ies_container>;
 
 struct gnb_cu_cfg_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    cells_failed_to_be_activ_list_present         = false;
   bool                                    crit_diagnostics_present                      = false;
   bool                                    gnb_cu_tnl_assoc_setup_list_present           = false;
@@ -7327,10 +7199,6 @@ struct gnb_cu_cfg_upd_ack_ies_container {
 using gnb_cu_cfg_upd_ack_s = elementary_procedure_option<gnb_cu_cfg_upd_ack_ies_container>;
 
 struct gnb_cu_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7348,10 +7216,6 @@ struct gnb_cu_cfg_upd_fail_ies_container {
 using gnb_cu_cfg_upd_fail_s = elementary_procedure_option<gnb_cu_cfg_upd_fail_ies_container>;
 
 struct gnb_du_cfg_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                 served_cells_to_add_list_present       = false;
   bool                                 served_cells_to_modify_list_present    = false;
   bool                                 served_cells_to_delete_list_present    = false;
@@ -7386,10 +7250,6 @@ struct gnb_du_cfg_upd_ies_container {
 using gnb_du_cfg_upd_s = elementary_procedure_option<gnb_du_cfg_upd_ies_container>;
 
 struct gnb_du_cfg_upd_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             cells_to_be_activ_list_present       = false;
   bool                             crit_diagnostics_present             = false;
   bool                             cells_to_be_deactiv_list_present     = false;
@@ -7416,10 +7276,6 @@ struct gnb_du_cfg_upd_ack_ies_container {
 using gnb_du_cfg_upd_ack_s = elementary_procedure_option<gnb_du_cfg_upd_ack_ies_container>;
 
 struct gnb_du_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7437,10 +7293,6 @@ struct gnb_du_cfg_upd_fail_ies_container {
 using gnb_du_cfg_upd_fail_s = elementary_procedure_option<gnb_du_cfg_upd_fail_ies_container>;
 
 struct gnb_du_res_cfg_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         activ_cells_to_be_upd_list_present = false;
   bool                         child_nodes_list_present           = false;
   bool                         neighbour_node_cells_list_present  = false;
@@ -7461,10 +7313,6 @@ struct gnb_du_res_cfg_ies_container {
 using gnb_du_res_cfg_s = elementary_procedure_option<gnb_du_res_cfg_ies_container>;
 
 struct gnb_du_res_cfg_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   crit_diagnostics_s crit_diagnostics;
@@ -7479,10 +7327,6 @@ struct gnb_du_res_cfg_ack_ies_container {
 using gnb_du_res_cfg_ack_s = elementary_procedure_option<gnb_du_res_cfg_ack_ies_container>;
 
 struct gnb_du_res_cfg_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7500,10 +7344,6 @@ struct gnb_du_res_cfg_fail_ies_container {
 using gnb_du_res_cfg_fail_s = elementary_procedure_option<gnb_du_res_cfg_fail_ies_container>;
 
 struct gnb_du_res_coordination_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                ignore_res_coordination_container_present = false;
   uint16_t                            transaction_id;
   request_type_e                      request_type;
@@ -7520,10 +7360,6 @@ struct gnb_du_res_coordination_request_ies_container {
 using gnb_du_res_coordination_request_s = elementary_procedure_option<gnb_du_res_coordination_request_ies_container>;
 
 struct gnb_du_res_coordination_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                  transaction_id;
   unbounded_octstring<true> eutra_nr_cell_res_coordination_req_ack_container;
 
@@ -7537,10 +7373,6 @@ struct gnb_du_res_coordination_resp_ies_container {
 using gnb_du_res_coordination_resp_s = elementary_procedure_option<gnb_du_res_coordination_resp_ies_container>;
 
 struct gnb_du_status_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                   iab_congestion_ind_present = false;
   uint16_t               transaction_id;
   gnb_du_overload_info_e gnb_du_overload_info;
@@ -7556,10 +7388,6 @@ struct gnb_du_status_ind_ies_container {
 using gnb_du_status_ind_s = elementary_procedure_option<gnb_du_status_ind_ies_container>;
 
 struct iab_tnl_address_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7577,10 +7405,6 @@ struct iab_tnl_address_fail_ies_container {
 using iab_tnl_address_fail_s = elementary_procedure_option<iab_tnl_address_fail_ies_container>;
 
 struct iab_tnl_address_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            ia_bv4_addresses_requested_present    = false;
   bool                            iab_ip_v6_request_type_present        = false;
   bool                            iab_tnl_addresses_to_rem_list_present = false;
@@ -7601,10 +7425,6 @@ struct iab_tnl_address_request_ies_container {
 using iab_tnl_address_request_s = elementary_procedure_option<iab_tnl_address_request_ies_container>;
 
 struct iab_tnl_address_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                         transaction_id;
   iab_allocated_tnl_address_list_l iab_allocated_tnl_address_list;
 
@@ -7618,10 +7438,6 @@ struct iab_tnl_address_resp_ies_container {
 using iab_tnl_address_resp_s = elementary_procedure_option<iab_tnl_address_resp_ies_container>;
 
 struct iab_up_cfg_upd_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -7639,10 +7455,6 @@ struct iab_up_cfg_upd_fail_ies_container {
 using iab_up_cfg_upd_fail_s = elementary_procedure_option<iab_up_cfg_upd_fail_ies_container>;
 
 struct iab_up_cfg_upd_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            ul_up_tnl_info_to_upd_list_present    = false;
   bool                            ul_up_tnl_address_to_upd_list_present = false;
   uint16_t                        transaction_id;
@@ -7659,10 +7471,6 @@ struct iab_up_cfg_upd_request_ies_container {
 using iab_up_cfg_upd_request_s = elementary_procedure_option<iab_up_cfg_upd_request_ies_container>;
 
 struct iab_up_cfg_upd_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                            crit_diagnostics_present              = false;
   bool                            dl_up_tnl_address_to_upd_list_present = false;
   uint16_t                        transaction_id;
@@ -7679,10 +7487,6 @@ struct iab_up_cfg_upd_resp_ies_container {
 using iab_up_cfg_upd_resp_s = elementary_procedure_option<iab_up_cfg_upd_resp_ies_container>;
 
 struct meas_activation_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                      prs_meas_info_list_present = false;
   uint64_t                  gnb_cu_ue_f1ap_id;
   uint64_t                  gnb_du_ue_f1ap_id;
@@ -7699,10 +7503,6 @@ struct meas_activation_ies_container {
 using meas_activation_s = elementary_procedure_option<meas_activation_ies_container>;
 
 struct meas_precfg_confirm_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                        pos_meas_gap_pre_cfg_list_present = false;
   bool                        crit_diagnostics_present          = false;
   uint64_t                    gnb_cu_ue_f1ap_id;
@@ -7720,10 +7520,6 @@ struct meas_precfg_confirm_ies_container {
 using meas_precfg_confirm_s = elementary_procedure_option<meas_precfg_confirm_ies_container>;
 
 struct meas_precfg_refuse_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -7740,10 +7536,6 @@ struct meas_precfg_refuse_ies_container {
 using meas_precfg_refuse_s = elementary_procedure_option<meas_precfg_refuse_ies_container>;
 
 struct meas_precfg_required_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t            gnb_cu_ue_f1ap_id;
   uint64_t            gnb_du_ue_f1ap_id;
   trp_prs_info_list_l trp_prs_info_list;
@@ -7758,10 +7550,6 @@ struct meas_precfg_required_ies_container {
 using meas_precfg_required_s = elementary_procedure_option<meas_precfg_required_ies_container>;
 
 struct multicast_context_mod_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
   uint64_t           gnb_du_mbs_f1ap_id;
@@ -7778,10 +7566,6 @@ struct multicast_context_mod_fail_ies_container {
 using multicast_context_mod_fail_s = elementary_procedure_option<multicast_context_mod_fail_ies_container>;
 
 struct multicast_context_mod_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                   mbs_service_area_present                     = false;
   bool                                   multicast_m_rbs_to_be_setup_mod_list_present = false;
   bool                                   multicast_m_rbs_to_be_modified_list_present  = false;
@@ -7803,10 +7587,6 @@ struct multicast_context_mod_request_ies_container {
 using multicast_context_mod_request_s = elementary_procedure_option<multicast_context_mod_request_ies_container>;
 
 struct multicast_context_mod_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                          multicast_m_rbs_setup_mod_list_present              = false;
   bool                                          multicast_m_rbs_failed_to_be_setup_mod_list_present = false;
   bool                                          multicast_m_rbs_modified_list_present               = false;
@@ -7830,10 +7610,6 @@ struct multicast_context_mod_resp_ies_container {
 using multicast_context_mod_resp_s = elementary_procedure_option<multicast_context_mod_resp_ies_container>;
 
 struct multicast_context_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_mbs_f1ap_id;
   uint64_t gnb_du_mbs_f1ap_id;
   cause_c  cause;
@@ -7848,10 +7624,6 @@ struct multicast_context_release_cmd_ies_container {
 using multicast_context_release_cmd_s = elementary_procedure_option<multicast_context_release_cmd_ies_container>;
 
 struct multicast_context_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
   uint64_t           gnb_du_mbs_f1ap_id;
@@ -7868,10 +7640,6 @@ using multicast_context_release_complete_s =
     elementary_procedure_option<multicast_context_release_complete_ies_container>;
 
 struct multicast_context_release_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_mbs_f1ap_id;
   uint64_t gnb_du_mbs_f1ap_id;
   cause_c  cause;
@@ -7887,10 +7655,6 @@ using multicast_context_release_request_s =
     elementary_procedure_option<multicast_context_release_request_ies_container>;
 
 struct multicast_context_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               gnb_du_mbs_f1ap_id_present = false;
   bool               crit_diagnostics_present   = false;
   uint64_t           gnb_cu_mbs_f1ap_id;
@@ -7908,10 +7672,6 @@ struct multicast_context_setup_fail_ies_container {
 using multicast_context_setup_fail_s = elementary_procedure_option<multicast_context_setup_fail_ies_container>;
 
 struct multicast_context_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               mbs_service_area_present = false;
   uint64_t                           gnb_cu_mbs_f1ap_id;
   mbs_session_id_s                   mbs_session_id;
@@ -7929,10 +7689,6 @@ struct multicast_context_setup_request_ies_container {
 using multicast_context_setup_request_s = elementary_procedure_option<multicast_context_setup_request_ies_container>;
 
 struct multicast_context_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                      multicast_m_rbs_failed_to_be_setup_list_present = false;
   bool                                      crit_diagnostics_present                        = false;
   uint64_t                                  gnb_cu_mbs_f1ap_id;
@@ -7951,10 +7707,6 @@ struct multicast_context_setup_resp_ies_container {
 using multicast_context_setup_resp_s = elementary_procedure_option<multicast_context_setup_resp_ies_container>;
 
 struct multicast_distribution_release_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                gnb_cu_mbs_f1ap_id;
   uint64_t                                gnb_du_mbs_f1ap_id;
   mbs_multicast_f1_u_context_descriptor_s mbs_multicast_f1_u_context_descriptor;
@@ -7971,10 +7723,6 @@ using multicast_distribution_release_cmd_s =
     elementary_procedure_option<multicast_distribution_release_cmd_ies_container>;
 
 struct multicast_distribution_release_complete_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    crit_diagnostics_present = false;
   uint64_t                                gnb_cu_mbs_f1ap_id;
   uint64_t                                gnb_du_mbs_f1ap_id;
@@ -7992,10 +7740,6 @@ using multicast_distribution_release_complete_s =
     elementary_procedure_option<multicast_distribution_release_complete_ies_container>;
 
 struct multicast_distribution_setup_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    gnb_du_mbs_f1ap_id_present = false;
   bool                                    crit_diagnostics_present   = false;
   uint64_t                                gnb_cu_mbs_f1ap_id;
@@ -8015,10 +7759,6 @@ using multicast_distribution_setup_fail_s =
     elementary_procedure_option<multicast_distribution_setup_fail_ies_container>;
 
 struct multicast_distribution_setup_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t                                  gnb_cu_mbs_f1ap_id;
   uint64_t                                  gnb_du_mbs_f1ap_id;
   mbs_multicast_f1_u_context_descriptor_s   mbs_multicast_f1_u_context_descriptor;
@@ -8035,10 +7775,6 @@ using multicast_distribution_setup_request_s =
     elementary_procedure_option<multicast_distribution_setup_request_ies_container>;
 
 struct multicast_distribution_setup_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                             multicast_f1_u_context_failed_to_be_setup_list_present = false;
   bool                                             crit_diagnostics_present                               = false;
   uint64_t                                         gnb_cu_mbs_f1ap_id;
@@ -8060,10 +7796,6 @@ using multicast_distribution_setup_resp_s =
     elementary_procedure_option<multicast_distribution_setup_resp_ies_container>;
 
 struct multicast_group_paging_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         ue_id_list_for_paging_list_present = false;
   bool                         mc_paging_cell_list_present        = false;
   mbs_session_id_s             mbs_session_id;
@@ -8080,10 +7812,6 @@ struct multicast_group_paging_ies_container {
 using multicast_group_paging_s = elementary_procedure_option<multicast_group_paging_ies_container>;
 
 struct network_access_rate_reduction_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t          transaction_id;
   uac_assist_info_s uac_assist_info;
 
@@ -8097,10 +7825,6 @@ struct network_access_rate_reduction_ies_container {
 using network_access_rate_reduction_s = elementary_procedure_option<network_access_rate_reduction_ies_container>;
 
 struct notify_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t          gnb_cu_ue_f1ap_id;
   uint64_t          gnb_du_ue_f1ap_id;
   drb_notify_list_l drb_notify_list;
@@ -8115,10 +7839,6 @@ struct notify_ies_container {
 using notify_s = elementary_procedure_option<notify_ies_container>;
 
 struct pdc_meas_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_ue_f1ap_id;
   uint64_t gnb_du_ue_f1ap_id;
   uint8_t  ran_ue_pdc_meas_id;
@@ -8134,10 +7854,6 @@ struct pdc_meas_fail_ind_ies_container {
 using pdc_meas_fail_ind_s = elementary_procedure_option<pdc_meas_fail_ind_ies_container>;
 
 struct pdc_meas_initiation_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -8155,10 +7871,6 @@ struct pdc_meas_initiation_fail_ies_container {
 using pdc_meas_initiation_fail_s = elementary_procedure_option<pdc_meas_initiation_fail_ies_container>;
 
 struct pdc_meas_initiation_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                   pdc_meas_periodicity_present = false;
   uint64_t               gnb_cu_ue_f1ap_id;
   uint64_t               gnb_du_ue_f1ap_id;
@@ -8177,10 +7889,6 @@ struct pdc_meas_initiation_request_ies_container {
 using pdc_meas_initiation_request_s = elementary_procedure_option<pdc_meas_initiation_request_ies_container>;
 
 struct pdc_meas_initiation_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               pdc_meas_result_present  = false;
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
@@ -8199,10 +7907,6 @@ struct pdc_meas_initiation_resp_ies_container {
 using pdc_meas_initiation_resp_s = elementary_procedure_option<pdc_meas_initiation_resp_ies_container>;
 
 struct pdc_meas_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t          gnb_cu_ue_f1ap_id;
   uint64_t          gnb_du_ue_f1ap_id;
   uint8_t           ran_ue_pdc_meas_id;
@@ -8218,10 +7922,6 @@ struct pdc_meas_report_ies_container {
 using pdc_meas_report_s = elementary_procedure_option<pdc_meas_report_ies_container>;
 
 struct pdc_meas_termination_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t gnb_cu_ue_f1ap_id;
   uint64_t gnb_du_ue_f1ap_id;
   uint8_t  ran_ue_pdc_meas_id;
@@ -8236,10 +7936,6 @@ struct pdc_meas_termination_cmd_ies_container {
 using pdc_meas_termination_cmd_s = elementary_procedure_option<pdc_meas_termination_cmd_ies_container>;
 
 struct prs_cfg_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   cause_c            cause;
@@ -8255,10 +7951,6 @@ struct prs_cfg_fail_ies_container {
 using prs_cfg_fail_s = elementary_procedure_option<prs_cfg_fail_ies_container>;
 
 struct prs_cfg_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   prs_cfg_request_type_e prs_cfg_request_type;
   prstrp_list_l          prstrp_list;
 
@@ -8272,10 +7964,6 @@ struct prs_cfg_request_ies_container {
 using prs_cfg_request_s = elementary_procedure_option<prs_cfg_request_ies_container>;
 
 struct prs_cfg_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               prs_tx_trp_list_present  = false;
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -8292,10 +7980,6 @@ struct prs_cfg_resp_ies_container {
 using prs_cfg_resp_s = elementary_procedure_option<prs_cfg_resp_ies_container>;
 
 struct pws_cancel_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             broadcast_to_be_cancelled_list_present = false;
   bool                             cancel_all_warning_msgs_ind_present    = false;
   bool                             notif_info_present                     = false;
@@ -8315,10 +7999,6 @@ struct pws_cancel_request_ies_container {
 using pws_cancel_request_s = elementary_procedure_option<pws_cancel_request_ies_container>;
 
 struct pws_cancel_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             cells_broadcast_cancelled_list_present = false;
   bool                             crit_diagnostics_present               = false;
   uint16_t                         transaction_id;
@@ -8335,10 +8015,6 @@ struct pws_cancel_resp_ies_container {
 using pws_cancel_resp_s = elementary_procedure_option<pws_cancel_resp_ies_container>;
 
 struct pws_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                     pws_failed_nr_cgi_list_present = false;
   uint16_t                 transaction_id;
   pws_failed_nr_cgi_list_l pws_failed_nr_cgi_list;
@@ -8353,10 +8029,6 @@ struct pws_fail_ind_ies_container {
 using pws_fail_ind_s = elementary_procedure_option<pws_fail_ind_ies_container>;
 
 struct pws_restart_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t                       transaction_id;
   nr_cgi_list_for_restart_list_l nr_cgi_list_for_restart_list;
 
@@ -8370,10 +8042,6 @@ struct pws_restart_ind_ies_container {
 using pws_restart_ind_s = elementary_procedure_option<pws_restart_ind_ies_container>;
 
 struct paging_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                  paging_drx_present                          = false;
   bool                                  paging_prio_present                         = false;
   bool                                  paging_origin_present                       = false;
@@ -8410,10 +8078,6 @@ struct paging_ies_container {
 using paging_s = elementary_procedure_option<paging_ies_container>;
 
 struct pos_sys_info_delivery_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t          transaction_id;
   nr_cgi_s          nr_cgi;
   pos_sitype_list_l pos_sitype_list;
@@ -8429,10 +8093,6 @@ struct pos_sys_info_delivery_cmd_ies_container {
 using pos_sys_info_delivery_cmd_s = elementary_procedure_option<pos_sys_info_delivery_cmd_ies_container>;
 
 struct positioning_activation_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -8449,10 +8109,6 @@ struct positioning_activation_fail_ies_container {
 using positioning_activation_fail_s = elementary_procedure_option<positioning_activation_fail_ies_container>;
 
 struct positioning_activation_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             activation_time_present = false;
   uint64_t                         gnb_cu_ue_f1ap_id;
   uint64_t                         gnb_du_ue_f1ap_id;
@@ -8469,10 +8125,6 @@ struct positioning_activation_request_ies_container {
 using positioning_activation_request_s = elementary_procedure_option<positioning_activation_request_ies_container>;
 
 struct positioning_activation_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               sys_frame_num_present    = false;
   bool               slot_num_present         = false;
   bool               crit_diagnostics_present = false;
@@ -8492,10 +8144,6 @@ struct positioning_activation_resp_ies_container {
 using positioning_activation_resp_s = elementary_procedure_option<positioning_activation_resp_ies_container>;
 
 struct positioning_assist_info_ctrl_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                          pos_assist_info_present             = false;
   bool                          pos_broadcast_present               = false;
   bool                          positioning_broadcast_cells_present = false;
@@ -8516,10 +8164,6 @@ struct positioning_assist_info_ctrl_ies_container {
 using positioning_assist_info_ctrl_s = elementary_procedure_option<positioning_assist_info_ctrl_ies_container>;
 
 struct positioning_assist_info_feedback_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                          pos_assist_info_fail_list_present   = false;
   bool                          positioning_broadcast_cells_present = false;
   bool                          routing_id_present                  = false;
@@ -8540,10 +8184,6 @@ struct positioning_assist_info_feedback_ies_container {
 using positioning_assist_info_feedback_s = elementary_procedure_option<positioning_assist_info_feedback_ies_container>;
 
 struct positioning_deactivation_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t   gnb_cu_ue_f1ap_id;
   uint64_t   gnb_du_ue_f1ap_id;
   abort_tx_c abort_tx;
@@ -8558,10 +8198,6 @@ struct positioning_deactivation_ies_container {
 using positioning_deactivation_s = elementary_procedure_option<positioning_deactivation_ies_container>;
 
 struct positioning_info_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
@@ -8578,10 +8214,6 @@ struct positioning_info_fail_ies_container {
 using positioning_info_fail_s = elementary_procedure_option<positioning_info_fail_ies_container>;
 
 struct positioning_info_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                               requested_srs_tx_characteristics_present = false;
   bool                               ue_report_info_present                   = false;
   bool                               srs_pos_rrc_inactive_query_ind_present   = false;
@@ -8601,10 +8233,6 @@ struct positioning_info_request_ies_container {
 using positioning_info_request_s = elementary_procedure_option<positioning_info_request_ies_container>;
 
 struct positioning_info_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             srs_cfg_present                  = false;
   bool                             sfn_initisation_time_present     = false;
   bool                             crit_diagnostics_present         = false;
@@ -8626,10 +8254,6 @@ struct positioning_info_resp_ies_container {
 using positioning_info_resp_s = elementary_procedure_option<positioning_info_resp_ies_container>;
 
 struct positioning_info_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             srs_cfg_present              = false;
   bool                             sfn_initisation_time_present = false;
   uint64_t                         gnb_cu_ue_f1ap_id;
@@ -8647,10 +8271,6 @@ struct positioning_info_upd_ies_container {
 using positioning_info_upd_s = elementary_procedure_option<positioning_info_upd_ies_container>;
 
 struct positioning_meas_abort_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t transaction_id;
   uint32_t lmf_meas_id;
   uint32_t ran_meas_id;
@@ -8665,10 +8285,6 @@ struct positioning_meas_abort_ies_container {
 using positioning_meas_abort_s = elementary_procedure_option<positioning_meas_abort_ies_container>;
 
 struct positioning_meas_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   uint32_t           lmf_meas_id;
@@ -8686,10 +8302,6 @@ struct positioning_meas_fail_ies_container {
 using positioning_meas_fail_s = elementary_procedure_option<positioning_meas_fail_ies_container>;
 
 struct positioning_meas_fail_ind_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t transaction_id;
   uint32_t lmf_meas_id;
   uint32_t ran_meas_id;
@@ -8705,10 +8317,6 @@ struct positioning_meas_fail_ind_ies_container {
 using positioning_meas_fail_ind_s = elementary_procedure_option<positioning_meas_fail_ind_ies_container>;
 
 struct positioning_meas_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t               transaction_id;
   uint32_t               lmf_meas_id;
   uint32_t               ran_meas_id;
@@ -8724,10 +8332,6 @@ struct positioning_meas_report_ies_container {
 using positioning_meas_report_s = elementary_procedure_option<positioning_meas_report_ies_container>;
 
 struct positioning_meas_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             pos_meas_periodicity_present             = false;
   bool                             sfn_initisation_time_present             = false;
   bool                             srs_cfg_present                          = false;
@@ -8767,10 +8371,6 @@ struct positioning_meas_request_ies_container {
 using positioning_meas_request_s = elementary_procedure_option<positioning_meas_request_ies_container>;
 
 struct positioning_meas_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                   pos_meas_result_list_present = false;
   bool                   crit_diagnostics_present     = false;
   uint16_t               transaction_id;
@@ -8789,10 +8389,6 @@ struct positioning_meas_resp_ies_container {
 using positioning_meas_resp_s = elementary_procedure_option<positioning_meas_resp_ies_container>;
 
 struct positioning_meas_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             srs_cfg_present                          = false;
   bool                             trp_meas_upd_list_present                = false;
   bool                             meas_characteristics_request_ind_present = false;
@@ -8815,9 +8411,6 @@ struct positioning_meas_upd_ies_container {
 using positioning_meas_upd_s = elementary_procedure_option<positioning_meas_upd_ies_container>;
 
 struct private_ie_container_empty_l {
-  template <class valueT_>
-  using ie_field_s = private_ie_container_item_s<valueT_>;
-
   // sequence methods
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -8838,10 +8431,6 @@ struct private_msg_s {
 };
 
 struct qo_e_info_transfer_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool        qo_e_info_present = false;
   uint64_t    gnb_cu_ue_f1ap_id;
   uint64_t    gnb_du_ue_f1ap_id;
@@ -8857,10 +8446,6 @@ struct qo_e_info_transfer_ies_container {
 using qo_e_info_transfer_s = elementary_procedure_option<qo_e_info_transfer_ies_container>;
 
 struct rrc_delivery_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t              gnb_cu_ue_f1ap_id;
   uint64_t              gnb_du_ue_f1ap_id;
   rrc_delivery_status_s rrc_delivery_status;
@@ -8876,10 +8461,6 @@ struct rrc_delivery_report_ies_container {
 using rrc_delivery_report_s = elementary_procedure_option<rrc_delivery_report_ies_container>;
 
 struct ref_time_info_report_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t        transaction_id;
   time_ref_info_s time_ref_info;
 
@@ -8893,10 +8474,6 @@ struct ref_time_info_report_ies_container {
 using ref_time_info_report_s = elementary_procedure_option<ref_time_info_report_ies_container>;
 
 struct ref_time_info_report_ctrl_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t              transaction_id;
   report_request_type_s report_request_type;
 
@@ -8910,10 +8487,6 @@ struct ref_time_info_report_ctrl_ies_container {
 using ref_time_info_report_ctrl_s = elementary_procedure_option<ref_time_info_report_ctrl_ies_container>;
 
 struct reset_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t     transaction_id;
   cause_c      cause;
   reset_type_c reset_type;
@@ -8928,10 +8501,6 @@ struct reset_ies_container {
 using reset_s = elementary_procedure_option<reset_ies_container>;
 
 struct reset_ack_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                                    ue_associated_lc_f1_conn_list_res_ack_present = false;
   bool                                    crit_diagnostics_present                      = false;
   uint16_t                                transaction_id;
@@ -8948,10 +8517,6 @@ struct reset_ack_ies_container {
 using reset_ack_s = elementary_procedure_option<reset_ack_ies_container>;
 
 struct res_status_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   uint16_t           gnb_cu_meas_id;
@@ -8969,10 +8534,6 @@ struct res_status_fail_ies_container {
 using res_status_fail_s = elementary_procedure_option<res_status_fail_ies_container>;
 
 struct res_status_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             gnb_du_meas_id_present         = false;
   bool                             report_characteristics_present = false;
   bool                             cell_to_report_list_present    = false;
@@ -8995,10 +8556,6 @@ struct res_status_request_ies_container {
 using res_status_request_s = elementary_procedure_option<res_status_request_ies_container>;
 
 struct res_status_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   uint16_t           gnb_cu_meas_id;
@@ -9015,10 +8572,6 @@ struct res_status_resp_ies_container {
 using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
 
 struct res_status_upd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                    hardware_load_ind_present     = false;
   bool                    tnl_capacity_ind_present      = false;
   bool                    cell_meas_result_list_present = false;
@@ -9039,10 +8592,6 @@ struct res_status_upd_ies_container {
 using res_status_upd_s = elementary_procedure_option<res_status_upd_ies_container>;
 
 struct sys_info_delivery_cmd_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint16_t      transaction_id;
   nr_cgi_s      nr_cgi;
   sitype_list_l sitype_list;
@@ -9058,10 +8607,6 @@ struct sys_info_delivery_cmd_ies_container {
 using sys_info_delivery_cmd_s = elementary_procedure_option<sys_info_delivery_cmd_ies_container>;
 
 struct trp_info_fail_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   cause_c            cause;
@@ -9077,10 +8622,6 @@ struct trp_info_fail_ies_container {
 using trp_info_fail_s = elementary_procedure_option<trp_info_fail_ies_container>;
 
 struct trp_info_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         trp_list_present = false;
   uint16_t                     transaction_id;
   trp_list_l                   trp_list;
@@ -9096,10 +8637,6 @@ struct trp_info_request_ies_container {
 using trp_info_request_s = elementary_procedure_option<trp_info_request_ies_container>;
 
 struct trp_info_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                     crit_diagnostics_present = false;
   uint16_t                 transaction_id;
   trp_info_list_trp_resp_l trp_info_list_trp_resp;
@@ -9115,10 +8652,6 @@ struct trp_info_resp_ies_container {
 using trp_info_resp_s = elementary_procedure_option<trp_info_resp_ies_container>;
 
 struct trace_start_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   uint64_t           gnb_cu_ue_f1ap_id;
   uint64_t           gnb_du_ue_f1ap_id;
   trace_activation_s trace_activation;
@@ -9133,10 +8666,6 @@ struct trace_start_ies_container {
 using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
 
 struct write_replace_warning_request_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                         cells_to_be_broadcast_list_present = false;
   uint16_t                     transaction_id;
   pws_sys_info_s               pws_sys_info;
@@ -9154,10 +8683,6 @@ struct write_replace_warning_request_ies_container {
 using write_replace_warning_request_s = elementary_procedure_option<write_replace_warning_request_ies_container>;
 
 struct write_replace_warning_resp_ies_container {
-  template <class valueT_>
-  using ie_field_s = protocol_ie_container_item_s<valueT_>;
-
-  // member variables
   bool                             cells_broadcast_completed_list_present = false;
   bool                             crit_diagnostics_present               = false;
   bool                             ded_si_delivery_needed_ue_list_present = false;

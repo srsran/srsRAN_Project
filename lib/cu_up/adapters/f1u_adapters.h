@@ -43,8 +43,11 @@ public:
 
   void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
-    srsran_assert(pdcp_rx_handler != nullptr, "PDCP handler must not be nullptr");
-    pdcp_rx_handler->handle_pdu(std::move(sdu));
+    if (pdcp_rx_handler == nullptr) {
+      srslog::fetch_basic_logger("F1-U").warning("Unconnected PDCP handler. Dropping F1-U SDU");
+    } else {
+      pdcp_rx_handler->handle_pdu(std::move(sdu));
+    }
   }
 
   void on_transmit_notification(uint32_t highest_pdcp_sn) override

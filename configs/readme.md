@@ -1,5 +1,4 @@
 # Configuration Examples
-========================
 
 This folder contains a number of selected example configuration files that represent some
 of the most common use-cases and configuration options. Their main goal is to simplify
@@ -9,17 +8,19 @@ list all available configuration sections, subsection and fields.
 
 ## Usage
 
-srsRAN Project allows to read configuration files. All configuration options can be included in
-config files. If an option is not present in the file its default value is used instead.
-Furthermore, all values can also be specified on the command line. Options passed as command line arguments
-overwrite values specified in the config file.
-It is also possible to instruct the binary to read multiple configuration. The contents of
-the files get concatenated in this case. This is very useful to load a main configuration file
-that might contain site or cell specific options but then pass a further configuration file
-that is commonly used in various configurations, such as the QoS configuration.
+The srsRAN Project gNB can be configured via one or multiple configuration files and/or via 
+the command line. When multiple configuration files are specified, their content gets combined 
+by the gNB application. In case there are repeated parameters across configuration files, the 
+parameter values of the last file are selected. Similarly, the parameters passed via command 
+line overwrite the parameters specified via configuration files. If the value of a parameter is 
+not specified by neither the configuration files nor through the command line, a default value 
+is selected by the application.
 
-For example, run `$ ./apps/gnb/gnb -c gnb_ru_ran550_tdd_n78_20mhz.yml -c qos.yml` to load and use both config
-files at the same time.
+The capability to overlay parameters via multiple configuration files and through the command line 
+is useful to minimize config duplication. For example users can share the same QoS configuration 
+across many experiments in different bands as follows: 
+
+  sudo ./gnb -c qos.yml -c gnb_ru_ran550_tdd_n78_20mhz.yml
 
 
 ## Full list of configuration options

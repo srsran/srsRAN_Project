@@ -22,7 +22,7 @@ add_library(f1ap_test_helpers f1ap_cu_test_messages.cpp f1ap_du_test_messages.cp
 target_include_directories(f1ap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(f1ap_test_helpers srsran_support f1ap_asn1 srslog)
 
-add_executable(f1ap_asn1_packer_test f1ap_asn1_packer_test.cpp)
+add_executable(f1ap_asn1_packer_test f1ap_asn1_packer_test.cpp f1ap_asn1_helpers_test.cpp)
 target_link_libraries(f1ap_asn1_packer_test
         f1ap_test_helpers
         srsran_f1ap_common

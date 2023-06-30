@@ -306,6 +306,8 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     return;
   }
 
+  bearer_context_mod.ue_index = ue_ctxt.ue_index;
+
   // sys bearer context mod request
   if (msg->sys_bearer_context_mod_request_present) {
     // We only support NG-RAN Bearer
@@ -319,7 +321,6 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
       return;
     }
 
-    bearer_context_mod.ue_index = ue_ctxt.ue_index;
     fill_e1ap_bearer_context_modification_request(bearer_context_mod, msg);
   }
 

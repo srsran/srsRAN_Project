@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "ofh_constants.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
-#include "srsran/ofh/ofh_symbol_handler.h"
+#include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_message_decoder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -44,10 +43,12 @@ struct receiver_config {
   unsigned ru_nof_prbs;
   /// PRACH Contol-Plane enabled flag.
   bool is_prach_cp_enabled;
-  /// Uplink PRACH eAxC.
-  unsigned ul_prach_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// Uplink static compression header flag.
+  bool is_uplink_static_comp_hdr_enabled;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// Destination MAC address.

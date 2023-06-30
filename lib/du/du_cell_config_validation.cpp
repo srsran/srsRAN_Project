@@ -23,20 +23,13 @@
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/ran/band_helper.h"
-#include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/ssb_mapping.h"
+#include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"
+#include "srsran/support/config/validator_helpers.h"
 
 using namespace srsran;
-
-#define HANDLE_RETURN(cond)                                                                                            \
-  {                                                                                                                    \
-    auto ret = cond;                                                                                                   \
-    if (ret.is_error()) {                                                                                              \
-      return ret;                                                                                                      \
-    }                                                                                                                  \
-  }
 
 #define CHECK_TRUE(cond, ...)                                                                                          \
   if (not(cond)) {                                                                                                     \
@@ -162,7 +155,7 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   const bwp_downlink_common& bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
   // PDCCH
   if (bwp.pdcch_common.coreset0.has_value()) {
-    HANDLE_RETURN(is_coreset0_params_valid(cell_cfg));
+    HANDLE_ERROR(is_coreset0_params_valid(cell_cfg));
   }
   if (bwp.pdcch_common.sib1_search_space_id != srsran::MAX_NOF_SEARCH_SPACES) {
     CHECK_EQ(bwp.pdcch_common.sib1_search_space_id, 0, "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
@@ -171,7 +164,7 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
     CHECK_NEQ(bwp.pdcch_common.common_coreset->id, 0, "Common CORESET");
   }
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
-    HANDLE_RETURN(is_search_space_valid(ss));
+    HANDLE_ERROR(is_search_space_valid(ss));
     CHECK_EQ(ss.type, search_space_configuration::type_t::common, "common SearchSpace#{} type", ss.id);
     CHECK_TRUE(ss.common.f0_0_and_f1_0, "common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.id);
     if (ss.cs_id == 0) {
@@ -330,11 +323,12 @@ check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");
-  HANDLE_RETURN(is_coreset0_ss0_idx_valid(cell_cfg));
-  HANDLE_RETURN(check_dl_config_common(cell_cfg));
-  HANDLE_RETURN(check_ul_config_common(cell_cfg));
-  HANDLE_RETURN(check_ssb_configuration(cell_cfg));
-  HANDLE_RETURN(check_tdd_ul_dl_config(cell_cfg));
+  HANDLE_ERROR(is_coreset0_ss0_idx_valid(cell_cfg));
+  HANDLE_ERROR(check_dl_config_common(cell_cfg));
+  HANDLE_ERROR(check_ul_config_common(cell_cfg));
+  HANDLE_ERROR(check_ssb_configuration(cell_cfg));
+  HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
+  HANDLE_ERROR(config_validators::validate_csi_meas_cfg(cell_cfg.ue_ded_serv_cell_cfg, cell_cfg.tdd_ul_dl_cfg_common));
   // TODO: Remaining.
   return {};
 }

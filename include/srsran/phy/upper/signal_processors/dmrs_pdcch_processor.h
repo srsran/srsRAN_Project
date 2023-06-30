@@ -24,8 +24,8 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/precoding/precoding_configuration.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {

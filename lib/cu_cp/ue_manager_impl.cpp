@@ -266,8 +266,8 @@ void ue_manager::transfer_ngap_ue_context(ue_index_t new_ue_index, ue_index_t ol
       new_ue.get_ran_ue_id(),
       new_ue.get_amf_ue_id());
 
-  // Remove old ue
-  ues.erase(old_ue_index);
+  // Mark NGAP UE as removed
+  ues.at(old_ue_index).ngap_ue_created = false;
 }
 
 // private functions

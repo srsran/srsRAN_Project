@@ -159,6 +159,9 @@ public:
   /// Default constructor with all dimensions and elements to zero.
   static_tensor() = default;
 
+  /// Constructs a tensor with initial dimensions.
+  explicit static_tensor(const dimensions_size_type& dimensions) { resize(dimensions); }
+
   /// Copy constructor.
   explicit static_tensor(const tensor<NDIMS, Type>& other) noexcept :
     dimensions_size(other.get_dimensions_size()), elements(other.get_data())

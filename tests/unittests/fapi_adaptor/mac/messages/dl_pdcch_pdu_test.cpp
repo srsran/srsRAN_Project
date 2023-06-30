@@ -22,6 +22,7 @@
 
 #include "helpers.h"
 #include "srsran/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/support/srsran_test.h"
 
@@ -31,17 +32,19 @@ using namespace unittests;
 
 static void test_conversion_ok()
 {
-  const mac_dl_sched_result& result  = build_valid_mac_dl_sched_result();
-  const mac_pdcch_pdu&       mac_pdu = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
-                                        result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
-                                        result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
-                                        {{&result.dl_res->dl_pdcchs.front().ctx, &result.dl_pdcch_pdus.front()}}};
+  unsigned                   nof_prbs = 51;
+  const mac_dl_sched_result& result   = build_valid_mac_dl_sched_result();
+  const mac_pdcch_pdu&       mac_pdu  = {result.dl_res->dl_pdcchs.front().ctx.bwp_cfg,
+                                         result.dl_res->dl_pdcchs.front().ctx.coreset_cfg,
+                                         result.dl_res->dl_pdcchs.front().ctx.starting_symbol,
+                                         {{&result.dl_res->dl_pdcchs.front().ctx, &result.dl_pdcch_pdus.front()}}};
 
   fapi::dl_pdcch_pdu fapi_pdu;
-  convert_pdcch_mac_to_fapi(fapi_pdu, mac_pdu);
+  auto               pm_tools = generate_precoding_matrix_tables(1);
+  convert_pdcch_mac_to_fapi(fapi_pdu, mac_pdu, *std::get<0>(pm_tools), nof_prbs);
 
   // BWP.
-  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
+  TESTASSERT_EQ(mac_pdu.bwp_cfg->cp, fapi_pdu.cp);
   TESTASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().start(), fapi_pdu.coreset_bwp_start);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().length(), fapi_pdu.coreset_bwp_size);

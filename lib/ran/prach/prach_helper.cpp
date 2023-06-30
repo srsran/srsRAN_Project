@@ -28,11 +28,10 @@
 using namespace srsran;
 
 error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(subcarrier_spacing pusch_scs,
-                                                                              bool               cp_extended,
+                                                                              cyclic_prefix      cp,
                                                                               uint8_t            prach_cfg_idx,
                                                                               const tdd_ul_dl_config_common& tdd_cfg)
 {
-  const unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
   const unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(pusch_scs);
 
   const prach_configuration prach_cfg = prach_configuration_get(frequency_range::FR1, duplex_mode::TDD, prach_cfg_idx);
@@ -48,10 +47,10 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
     uint8_t start_slot_index = subframe_index * nof_slots_per_subframe + dur.start_slot_pusch_scs;
     for (uint8_t prach_slot_idx = 0; prach_slot_idx != dur.prach_length_slots; ++prach_slot_idx) {
       uint8_t           slot_index        = start_slot_index + prach_slot_idx;
-      ofdm_symbol_range active_ul_symbols = get_active_tdd_ul_symbols(tdd_cfg, slot_index, cp_extended);
+      ofdm_symbol_range active_ul_symbols = get_active_tdd_ul_symbols(tdd_cfg, slot_index, cp);
 
       // Note: For now, PRACH in special slots is not supported.
-      if (active_ul_symbols.length() != symbols_per_slot) {
+      if (active_ul_symbols.length() != get_nsymb_per_slot(cp)) {
         // No UL symbols exist in this slot.
         return interval<uint8_t>{start_slot_index, start_slot_index + dur.prach_length_slots};
       }
@@ -62,14 +61,14 @@ error_type<interval<uint8_t>> srsran::prach_helper::prach_fits_in_tdd_pattern(su
 }
 
 optional<uint8_t> srsran::prach_helper::find_valid_prach_config_index(subcarrier_spacing             pusch_scs,
-                                                                      bool                           cp_extended,
+                                                                      cyclic_prefix                  cp,
                                                                       const tdd_ul_dl_config_common& tdd_cfg)
 {
   static constexpr size_t NOF_PRACH_CONFIG_INDEXES = 256;
 
   // Iterate over different PRACH configuration indexes until a valid one is found.
   for (unsigned prach_cfg_idx = 0; prach_cfg_idx != NOF_PRACH_CONFIG_INDEXES; ++prach_cfg_idx) {
-    if (prach_fits_in_tdd_pattern(pusch_scs, cp_extended, prach_cfg_idx, tdd_cfg).has_value()) {
+    if (prach_fits_in_tdd_pattern(pusch_scs, cp, prach_cfg_idx, tdd_cfg).has_value()) {
       return prach_cfg_idx;
     }
   }

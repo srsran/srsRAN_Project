@@ -45,6 +45,8 @@ struct data_flow_cplane_scheduling_commands_impl_config {
   ru_compression_params dl_compr_params;
   /// Uplink compression parameters.
   ru_compression_params ul_compr_params;
+  /// PRACH compression parameters.
+  ru_compression_params prach_compr_params;
   /// Uplink Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
   /// Ethernet frame pool.
@@ -71,11 +73,18 @@ public:
                                       data_direction    direction,
                                       filter_index_type filter_type) override;
 
+  // See interface for documentation.
+  void enqueue_section_type_3_prach_message(slot_point                                    slot,
+                                            unsigned                                      eaxc,
+                                            filter_index_type                             filter_type,
+                                            const struct cplane_scheduling_prach_context& context) override;
+
 private:
   const unsigned                                    nof_symbols;
   const unsigned                                    ru_nof_prbs;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
+  const ru_compression_params                       prach_compr_params;
   const ether::vlan_frame_params                    vlan_params;
   srslog::basic_logger&                             logger;
   sequence_identifier_generator                     cp_dl_seq_gen;

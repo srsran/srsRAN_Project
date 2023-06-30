@@ -41,6 +41,7 @@
 #include "ssb_processor_impl.h"
 #include "uci_decoder_impl.h"
 #include "ulsch_demultiplex_impl.h"
+#include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
@@ -880,24 +881,6 @@ static bool is_broadcast_rnti(uint16_t rnti)
 {
   return ((rnti < rnti_t::MIN_CRNTI) || (rnti > rnti_t::MAX_CRNTI));
 }
-
-namespace fmt {
-template <>
-struct formatter<std::chrono::nanoseconds> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const std::chrono::nanoseconds& nanoseconds, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
-  {
-    return format_to(ctx.out(), "t={:.1f}us", static_cast<float>(nanoseconds.count()) * 1e-3F);
-  }
-};
-} // namespace fmt
 
 namespace {
 

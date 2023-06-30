@@ -37,6 +37,32 @@
 namespace srsran {
 namespace ofh {
 
+/// \brief Structure storing the transmission window timing parameters.
+struct du_tx_window_timing_parameters {
+  /// Offset from the current OTA symbol to the start of DL Control-Plane transmission window.
+  std::chrono::microseconds T1a_max_cp_dl;
+  /// Offset from the current OTA symbol to the end of DL Control-Plane transmission window.
+  std::chrono::microseconds T1a_min_cp_dl;
+  /// Offset from the current OTA symbol to the start of UL Control-Plane transmission window.
+  std::chrono::microseconds T1a_max_cp_ul;
+  /// Offset from the current OTA symbol to the end of UL Control-Plane transmission window.
+  std::chrono::microseconds T1a_min_cp_ul;
+  /// Offset from the current OTA symbol to the start of DL User-Plane transmission window.
+  std::chrono::microseconds T1a_max_up;
+  /// Offset from the current OTA symbol to the end of DL User-Plane transmission window.
+  std::chrono::microseconds T1a_min_up;
+};
+
+/// Configuration used by ofh_symbol_handler implementations.
+struct symbol_handler_config {
+  /// Transmission window timing parameters for delay management.
+  du_tx_window_timing_parameters tx_timing_params;
+  /// Number of symbols per slot.
+  unsigned symbols_per_slot;
+  /// Highest subcarrier spacing.
+  subcarrier_spacing scs;
+};
+
 /// Open Fronthaul transmitter configuration.
 struct transmitter_config {
   /// Channel bandwidth.
@@ -45,12 +71,14 @@ struct transmitter_config {
   subcarrier_spacing scs;
   /// Cyclic prefix.
   cyclic_prefix cp;
-  /// Uplink PRACH eAxC.
-  optional<unsigned> ul_prach_eaxc;
   /// Downlink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// PRACH eAxC.
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
+  /// PRACH Contol-Plane enabled flag.
+  bool is_prach_cp_enabled;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.
@@ -67,6 +95,10 @@ struct transmitter_config {
   ru_compression_params dl_compr_params;
   /// Uplink compression parameters.
   ru_compression_params ul_compr_params;
+  /// PRACH compression parameters.
+  ru_compression_params prach_compr_params;
+  /// Downlink static compression header flag.
+  bool is_downlink_static_comp_hdr_enabled;
   /// \brief Downlink broadcast flag.
   ///
   /// If this flag is enabled the same downlink data will be send to all the configured downlink eAxCs.

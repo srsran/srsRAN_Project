@@ -38,7 +38,7 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
 
   // BWP.
   const pusch_information& pusch_cfg = mac_pdu.pusch_cfg;
-  ASSERT_EQ(pusch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, fapi_pdu.cp);
+  ASSERT_EQ(pusch_cfg.bwp_cfg->cp, fapi_pdu.cp);
   ASSERT_EQ(pusch_cfg.bwp_cfg->scs, fapi_pdu.scs);
   ASSERT_EQ(pusch_cfg.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(pusch_cfg.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);

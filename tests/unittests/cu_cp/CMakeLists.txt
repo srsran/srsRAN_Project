@@ -20,6 +20,7 @@
 
 include_directories(../../..)
 
+add_subdirectory(cell_meas_manager)
 add_subdirectory(du_processor)
 add_subdirectory(cu_up_processor)
 add_subdirectory(ue_manager)

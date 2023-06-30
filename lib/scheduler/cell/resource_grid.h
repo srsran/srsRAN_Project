@@ -45,9 +45,7 @@ struct bwp_sch_grant_info {
   bwp_sch_grant_info(const bwp_configuration& bwp_, ofdm_symbol_range symbols_, prb_interval prbs_) :
     bwp_cfg(&bwp_), symbols(symbols_), prbs(prbs_)
   {
-    srsran_sanity_check(
-        symbols.stop() <= (bwp_cfg->cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP),
-        "OFDM symbols do not fit slot");
+    srsran_sanity_check(symbols.stop() <= get_nsymb_per_slot(bwp_cfg->cp), "OFDM symbols do not fit slot");
     srsran_sanity_check(prbs.stop() <= bwp_cfg->crbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->crbs);
   }
 };

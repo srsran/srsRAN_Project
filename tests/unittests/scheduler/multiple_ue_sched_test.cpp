@@ -205,6 +205,7 @@ protected:
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
+    cell_cfg.csi_rs_enabled = true;
     return cell_cfg;
   }
 
@@ -212,15 +213,6 @@ protected:
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params();
     auto        ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg_params);
-
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
-    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
-        test_helpers::make_test_ue_uplink_config(cell_cfg_params));
-
-    if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
-      ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-          config_helpers::make_default_csi_meas_config(cell_cfg_params));
-    }
 
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
@@ -708,7 +700,7 @@ TEST_P(multiple_ue_sched_tester, test_multiplexing_of_csi_rs_and_pdsch)
   // Add UE.
   add_ue(to_du_ue_index(0), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
-  if (bench->cell_cfg.csi_meas_cfg.has_value()) {
+  if (not bench->cell_cfg.nzp_csi_rs_list.empty()) {
     // Flag to keep track of multiplexing status of PDSCH and CSI-RS.
     bool is_csi_muplxed_with_pdsch = false;
 

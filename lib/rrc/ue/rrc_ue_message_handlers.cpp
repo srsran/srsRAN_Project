@@ -26,7 +26,9 @@
 #include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
+#include "ue/rrc_measurement_types_asn1_converters.h"
 #include "srsran/asn1/rrc_nr/nr_ue_variables.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/security/integrity.h"
 
@@ -131,6 +133,8 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
     if (reest_context.capabilities.has_value()) {
       context.capabilities = reest_context.capabilities.value();
     }
+
+    context.get_up_manager().set_up_context(reest_context.up_ctx);
 
     // Get RX short MAC
     security::sec_short_mac_i short_mac     = {};
@@ -245,6 +249,9 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
     case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete:
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_reest_complete().rrc_transaction_id);
       break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::meas_report:
+      handle_measurement_report(ul_dcch_msg.msg.c1().meas_report());
+      break;
     default:
       log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Unsupported message type");
       break;
@@ -262,6 +269,14 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
   std::copy(ul_info_transfer.ded_nas_msg.begin(), ul_info_transfer.ded_nas_msg.end(), ul_nas_msg.nas_pdu.begin());
 
   nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
+}
+
+void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg)
+{
+  // convert asn1 to common type
+  cu_cp_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
+  // send measurement results to cell measurement manager
+  cell_meas_mng.report_measurement(meas_results);
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
@@ -328,6 +343,8 @@ rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
   if (context.capabilities.has_value()) {
     rrc_reest_context.capabilities = context.capabilities.value();
   }
+  up_resource_manager& old_up_manager = context.get_up_manager();
+  rrc_reest_context.up_ctx            = old_up_manager.get_up_context();
 
   return rrc_reest_context;
 }

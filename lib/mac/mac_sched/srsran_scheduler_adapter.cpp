@@ -133,17 +133,17 @@ void srsran_scheduler_adapter::handle_ul_bsr_indication(const mac_bsr_ce_info& b
 
 void srsran_scheduler_adapter::handle_ul_sched_command(const mac_ul_scheduling_command& cmd)
 {
-  // Convert UL scheduling command to Scheduler UCI indication with a SR included.
-  uci_indication uci{};
-  uci.cell_index = cmd.cell_index;
-  uci.slot_rx    = cmd.sl_rx;
-  uci.ucis.resize(1);
-  uci.ucis[0].ue_index = cmd.ue_index;
-  uci.ucis[0].crnti    = cmd.rnti;
-  uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
+  // Convert UL scheduling command into a small BSR indication. The SR indication is not used for this purpose
+  // because the Scheduler relies on UCI signalling to know the current UE state.
+  ul_bsr_indication_message bsr{};
+  bsr.cell_index    = cmd.cell_index;
+  bsr.ue_index      = cmd.ue_index;
+  bsr.crnti         = cmd.rnti;
+  bsr.type          = bsr_format::SHORT_BSR;
+  bsr.reported_lcgs = {ul_bsr_lcg_report{uint_to_lcg_id(0), 8U}};
 
-  // Send SR indication to Scheduler.
-  sched_impl->handle_uci_indication(uci);
+  // Send BSR indication to Scheduler.
+  sched_impl->handle_ul_bsr_indication(bsr);
 }
 
 void srsran_scheduler_adapter::handle_dl_mac_ce_indication(const mac_ce_scheduling_command& mac_ce)

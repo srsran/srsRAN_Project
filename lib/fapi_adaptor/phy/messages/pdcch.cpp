@@ -21,14 +21,17 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
-#include "srsran/ran/precoding/precoding_codebooks.h"
+#include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Fills the DL DCI parameters of the PDCCH processor PDU.
-static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu, uint16_t i_dci)
+static void fill_dci(pdcch_processor::pdu_t&            proc_pdu,
+                     const fapi::dl_pdcch_pdu&          fapi_pdu,
+                     uint16_t                           i_dci,
+                     const precoding_matrix_repository& pm_repo)
 {
   const auto& fapi_dci    = fapi_pdu.dl_dci[i_dci];
   const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i_dci];
@@ -58,8 +61,11 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu&
     dci.payload[j] = fapi_dci.payload.test(j);
   }
 
-  // :TODO: Fill this in the future.
-  dci.precoding = make_single_port();
+  srsran_assert(fapi_dci.precoding_and_beamforming.prgs.size() == 1U,
+                "Unsupported number of PRGs={}",
+                fapi_dci.precoding_and_beamforming.prgs.size());
+  dci.precoding = precoding_configuration::make_wideband(
+      pm_repo.get_precoding_matrix(fapi_dci.precoding_and_beamforming.prgs.front().pm_index));
 
   // Fill PDCCH context for logging.
   proc_pdu.context = fapi_pdu.dl_dci[i_dci].context;
@@ -107,16 +113,17 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const fa
   coreset.shift_index      = fapi_pdu.shift_index;
 }
 
-void srsran::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   proc_pdu,
-                                                     const fapi::dl_pdcch_pdu& fapi_pdu,
-                                                     uint16_t                  sfn,
-                                                     uint16_t                  slot,
-                                                     uint16_t                  i_dci)
+void srsran::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&            proc_pdu,
+                                                     const fapi::dl_pdcch_pdu&          fapi_pdu,
+                                                     uint16_t                           sfn,
+                                                     uint16_t                           slot,
+                                                     uint16_t                           i_dci,
+                                                     const precoding_matrix_repository& pm_repo)
 {
   proc_pdu.slot = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.cp   = fapi_pdu.cp;
 
   fill_coreset(proc_pdu.coreset, fapi_pdu);
 
-  fill_dci(proc_pdu, fapi_pdu, i_dci);
+  fill_dci(proc_pdu, fapi_pdu, i_dci, pm_repo);
 }

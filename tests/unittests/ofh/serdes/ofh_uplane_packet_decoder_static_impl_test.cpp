@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../../../lib/ofh/serdes/ofh_uplane_message_decoder_impl.h"
+#include "../../../../lib/ofh/serdes/ofh_uplane_message_decoder_static_compression_impl.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include <gtest/gtest.h>

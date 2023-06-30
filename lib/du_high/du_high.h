@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include "adapters.h"
-#include "f1ap_adapters.h"
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/f1ap/du/f1ap_du.h"
@@ -54,23 +52,23 @@ public:
   mac_cell_control_information_handler& get_control_information_handler(du_cell_index_t cell_index);
 
 private:
+  class layer_connector;
+
   du_high_configuration cfg;
 
   timer_manager& timers;
 
-  f1ap_du_configurator_adapter f1ap_du_cfg_handler;
+  // Connection between DU-high layers.
+  std::unique_ptr<layer_connector> adapters;
 
   std::unique_ptr<scheduler_ue_metrics_notifier> metrics_notifier;
 
+  // DU-high Layers.
   std::unique_ptr<du_manager_interface> du_manager;
-  std::unique_ptr<f1ap_interface>       f1ap;
+  std::unique_ptr<f1ap_du>              f1ap;
   std::unique_ptr<mac_interface>        mac;
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
-
-  du_manager_mac_event_indicator mac_ev_notifier;
-
-  mac_f1ap_paging_handler f1ap_paging_notifier;
 };
 
 } // namespace srs_du

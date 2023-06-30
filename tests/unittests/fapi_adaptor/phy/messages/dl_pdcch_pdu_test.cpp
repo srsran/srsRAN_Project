@@ -22,6 +22,7 @@
 
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/support/math_utils.h"
 #include "srsran/support/test_utils.h"
@@ -48,6 +49,9 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
   std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
+
+  auto                               pm_tools = generate_precoding_matrix_tables(1);
+  const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
   for (auto cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
     for (auto cce_reg_mapping :
@@ -105,6 +109,8 @@ static void pdcch_conversion_test()
                   }
 
                   builder_dci.set_tx_power_info_parameter(profile_nr);
+                  builder_dci.get_tx_precoding_and_beamforming_pdu_builder().set_basic_parameters(275, 0).add_prg(0,
+                                                                                                                  {});
 
                   // Payload.
                   dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
@@ -119,7 +125,8 @@ static void pdcch_conversion_test()
                   builder_dci.set_parameters_v4_dci(nid_dmrs);
 
                   pdcch_processor::pdu_t proc_pdu;
-                  convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot, 0);
+
+                  convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot, 0, pm_repo);
 
                   // Test basic parameters.
                   TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());

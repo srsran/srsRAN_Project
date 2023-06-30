@@ -77,8 +77,10 @@ static bool check_eaxcs_id(const ru_ofh_configuration& config)
 {
   for (const auto& sector : config.sector_configs) {
     // Check PRACH eAxC.
-    if (!check_eaxc_id(sector.ul_prach_eaxc)) {
-      return false;
+    for (auto eaxc : sector.prach_eaxc) {
+      if (!check_eaxc_id(eaxc)) {
+        return false;
+      }
     }
 
     // Check uplink eAxCs.
@@ -109,17 +111,15 @@ bool srsran::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
     return false;
   }
 
+  if (!check_compression_params(config.prach_compression_params)) {
+    return false;
+  }
+
   if (!check_dl_eaxc_if_broadcast_is_enabled(config)) {
     return false;
   }
 
   if (!check_eaxcs_id(config)) {
-    return false;
-  }
-
-  if (config.is_prach_control_plane_enabled) {
-    fmt::print("Control-Plane for PRACH is not supported\n");
-
     return false;
   }
 

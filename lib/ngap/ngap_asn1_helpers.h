@@ -25,6 +25,7 @@
 #include "ngap_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ran/bcd_helpers.h"
@@ -155,8 +156,8 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
 /// \param[in] asn1_session_item The pdu_session_res_setup_item_su_req_s or pdu_session_res_setup_item_cxt_req_s ASN1
 /// struct.
 template <typename template_asn1_item>
-inline void _fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
-                                                             const template_asn1_item&         asn1_session_item)
+inline void fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_res_setup_item& setup_item,
+                                                            const template_asn1_item&         asn1_session_item)
 {
   // pDUSessionID
   setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
@@ -190,6 +191,13 @@ inline void _fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_r
 
   // id-PDUSessionType
   setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
+
+  // id-SecurityIndication
+  if (asn1_setup_req_transfer->security_ind_present) {
+    security_indication_t ind = {};
+    asn1_to_security_indication(ind, asn1_setup_req_transfer->security_ind);
+    setup_item.security_ind = ind;
+  }
 
   // id-QosFlowSetupRequestList
   for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list) {
@@ -242,7 +250,7 @@ inline void _fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_r
 
     if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
       qos_flow_setup_req_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+          asn1::enum_to_bool(asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute);
     }
 
     if (asn1_flow_item.erab_id_present) {
@@ -264,7 +272,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    _fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
 
     // pDUSessionNAS-PDU
     if (!asn1_session_item.pdu_session_nas_pdu.empty()) {
@@ -383,7 +391,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
   for (const auto& asn1_session_item : asn1_pdu_session_res_setup_list) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
-    _fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
+    fill_cu_cp_pdu_session_resource_setup_item_base(setup_item, asn1_session_item);
 
     // NAS-PDU
     if (!asn1_session_item.nas_pdu.empty()) {

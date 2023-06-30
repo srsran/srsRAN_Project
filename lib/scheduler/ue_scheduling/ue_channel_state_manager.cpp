@@ -24,27 +24,9 @@
 
 using namespace srsran;
 
-/// Find the number of DL ports for a given UE serving cell configuration.
-static unsigned compute_nof_dl_ports(const serving_cell_config& serv_cell_cfg)
-{
-  if (not serv_cell_cfg.csi_meas_cfg.has_value()) {
-    return 1;
-  }
-
-  unsigned max_ports = 1;
-  for (const auto& nzp : serv_cell_cfg.csi_meas_cfg->nzp_csi_rs_res_list) {
-    if (max_ports < nzp.res_mapping.nof_ports) {
-      max_ports = nzp.res_mapping.nof_ports;
-    }
-  }
-  return max_ports;
-}
-
-ue_channel_state_manager::ue_channel_state_manager(const serving_cell_config&        ue_serv_cell,
-                                                   const scheduler_ue_expert_config& expert_cfg) :
-  nof_dl_ports(compute_nof_dl_ports(ue_serv_cell)),
-  pusch_snr_db(expert_cfg.initial_ul_sinr),
-  wideband_cqi(expert_cfg.initial_cqi)
+ue_channel_state_manager::ue_channel_state_manager(const scheduler_ue_expert_config& expert_cfg,
+                                                   unsigned                          nof_dl_ports_) :
+  nof_dl_ports(nof_dl_ports_), pusch_snr_db(expert_cfg.initial_ul_sinr), wideband_cqi(expert_cfg.initial_cqi)
 {
   // Set initial precoding value when no CSI has yet been received.
   if (nof_dl_ports == 2) {

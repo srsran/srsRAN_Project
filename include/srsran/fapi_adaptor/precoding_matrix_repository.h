@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/precoding/precoding_configuration.h"
+#include "srsran/ran/precoding/precoding_weight_matrix.h"
 
 namespace srsran {
 namespace fapi_adaptor {
@@ -33,15 +33,15 @@ namespace fapi_adaptor {
 class precoding_matrix_repository
 {
 public:
-  explicit precoding_matrix_repository(std::vector<precoding_configuration>&& repo_) : repo(std::move(repo_)) {}
+  explicit precoding_matrix_repository(std::vector<precoding_weight_matrix>&& repo_) : repo(std::move(repo_)) {}
 
   /// \brief Returns the precoding matrix associated to the given index.
   ///
   /// Index value must be valid, i.e. a precoding configuration must exist in the repository for that index.
-  const precoding_configuration& get_precoding_configuration(unsigned index) const;
+  const precoding_weight_matrix& get_precoding_matrix(unsigned index) const;
 
 private:
-  std::vector<precoding_configuration> repo;
+  std::vector<precoding_weight_matrix> repo;
 };
 
 } // namespace fapi_adaptor

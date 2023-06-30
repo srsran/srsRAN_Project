@@ -34,6 +34,7 @@ using namespace ofh;
 uplane_uplink_symbol_manager::uplane_uplink_symbol_manager(const uplane_uplink_symbol_manager_config& config) :
   logger(config.logger),
   ul_eaxc(config.ul_eaxc),
+  prach_eaxc(config.prach_eaxc),
   notifier(config.notifier),
   packet_handler(config.packet_handler),
   prach_repo(config.prach_repo),
@@ -53,7 +54,7 @@ void uplane_uplink_symbol_manager::on_new_frame(span<const uint8_t> payload)
   const uplane_message_decoder_results& results = decoding_results.value().uplane_results;
 
   // Copy the PRBs into the PRACH buffer.
-  if (results.params.filter_index == filter_index_type::ul_prach_preamble_1p25khz) {
+  if (is_a_prach_message(results.params.filter_index)) {
     handle_prach_prbs(decoding_results.value());
 
     return;
@@ -70,49 +71,37 @@ void uplane_uplink_symbol_manager::on_new_frame(span<const uint8_t> payload)
 void uplane_uplink_symbol_manager::handle_prach_prbs(const message_decoder_results& results)
 {
   const uplane_message_decoder_results& uplane_results = results.uplane_results;
-  // NOTE: RU notifies the PRACH in slot 1, but MAC asked for that in slot 0.
-  slot_point slot(uplane_results.params.slot.numerology(),
-                  uplane_results.params.slot.sfn(),
-                  uplane_results.params.slot.subframe_index(),
-                  0);
+  slot_point                            slot           = uplane_results.params.slot;
 
   ul_prach_context prach_context = prach_repo.get(slot);
   if (prach_context.empty()) {
+    logger.debug("Dropping Open Fronthaul message as no uplink PRACH context was found for slot={}, symbol={}",
+                 slot,
+                 uplane_results.params.symbol_id);
     return;
   }
+  const uplane_section_params& sect_params = uplane_results.sections.front();
 
-  srsran_assert(prach_context.context.nof_fd_occasions == 1, "Only supporting one frequency domain occasion");
-  srsran_assert(prach_context.context.nof_td_occasions == 1, "Only supporting one time domain occasion");
-
-  span<cf_t> buffer = prach_context.buffer->get_symbol(prach_context.context.port,
-                                                       prach_context.context.nof_fd_occasions - 1,
-                                                       prach_context.context.nof_td_occasions - 1,
-                                                       uplane_results.params.symbol_id);
-
-  // Note assuming all PRBs in 1 packet.
-  const uplane_section_params& sect_params        = uplane_results.sections.front();
-  unsigned                     prach_length_in_re = (is_long_preamble(prach_context.context.format))
-                                                        ? prach_constants::LONG_SEQUENCE_LENGTH
-                                                        : prach_constants::SHORT_SEQUENCE_LENGTH;
-
-  srsran_assert(is_long_preamble(prach_context.context.format), "SHORT PRACH format not supported");
-
-  const prach_preamble_information& prem_info = get_prach_preamble_long_info(prach_context.context.format);
-  unsigned nof_re_to_prach_data = prach_frequency_mapping_get(prem_info.scs, prach_context.context.pusch_scs).k_bar;
-
-  if (sect_params.nof_prbs * NOF_SUBCARRIERS_PER_RB < nof_re_to_prach_data + prach_length_in_re) {
+  if (sect_params.nof_prbs * NOF_SUBCARRIERS_PER_RB < prach_context.get_prach_nof_re()) {
     logger.error("PRACH message segmentation not supported");
 
     return;
   }
 
-  // Grab the data.
-  span<const cf_t> prach_data =
-      span<const cf_t>(sect_params.iq_samples).subspan(nof_re_to_prach_data, prach_length_in_re);
+  // Find resource grid port with eAxC.
+  unsigned port = std::distance(prach_eaxc.begin(), std::find(prach_eaxc.begin(), prach_eaxc.end(), results.eaxc));
+  if (port > 0) {
+    logger.debug("Skipping port {} as PRACH buffer currently supports only 1 port", results.eaxc);
 
-  std::copy(prach_data.begin(), prach_data.end(), buffer.begin());
+    return;
+  }
+  logger.debug("Handling PRACH in slot {}: port={}, symbol={}", slot, port, uplane_results.params.symbol_id);
 
-  notifier.on_new_prach_window_data(prach_context.context, *(prach_context.buffer));
+  bool notified = prach_repo.update_buffer_and_notify(
+      slot, port, uplane_results.params.symbol_id, sect_params.iq_samples, notifier);
+  if (notified) {
+    logger.debug("Finished PRACH reception in slot {}", slot);
+  }
 }
 
 void uplane_uplink_symbol_manager::handle_grid_prbs(const message_decoder_results& results)

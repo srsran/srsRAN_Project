@@ -26,6 +26,7 @@
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/cu_cp/cell_meas_manager.h"
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -50,6 +51,10 @@ protected:
     tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>();
     rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>();
 
+    // create measurement config
+    cell_meas_manager_cfg meas_cfg = {};
+    cell_meas_mng                  = create_cell_meas_manager(meas_cfg);
+
     // create RRC UE
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = ALLOCATED_UE_INDEX;
@@ -65,6 +70,7 @@ protected:
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_cu_cp_notifier,
+                                           *cell_meas_mng,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -344,6 +350,78 @@ protected:
     rrc_ue_cu_cp_notifier.add_ue_context(reest_context);
   }
 
+  void check_meas_results(const cu_cp_meas_results& meas_results)
+  {
+    ASSERT_EQ(meas_results.meas_id, 1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.size(), 1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->serv_cell_id, 0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.pci.value(), 0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrp.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrp.value(),
+              113);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrq.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->rsrq.value(),
+              65);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.cell_results.results_ssb_cell->sinr.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.cell_results.results_ssb_cell->sinr.value(),
+              92);
+
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()->meas_result_serving_cell.rs_idx_results.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.size(),
+              1);
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes[0]
+                  .ssb_idx,
+              0);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes[0]
+                    .ssb_results.has_value());
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes[0]
+                    .ssb_results.value()
+                    .rsrp.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes[0]
+                  .ssb_results.value()
+                  .rsrp.value(),
+              113);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes.begin()
+                    ->ssb_results.value()
+                    .rsrq.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.begin()
+                  ->ssb_results.value()
+                  .rsrq.value(),
+              66);
+    ASSERT_TRUE(meas_results.meas_result_serving_mo_list.begin()
+                    ->meas_result_serving_cell.rs_idx_results.value()
+                    .results_ssb_idxes.begin()
+                    ->ssb_results.value()
+                    .sinr.has_value());
+    ASSERT_EQ(meas_results.meas_result_serving_mo_list.begin()
+                  ->meas_result_serving_cell.rs_idx_results.value()
+                  .results_ssb_idxes.begin()
+                  ->ssb_results.value()
+                  .sinr.value(),
+              92);
+  }
+
 private:
   const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
@@ -351,6 +429,7 @@ private:
   dummy_rrc_ue_du_processor_adapter                      rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                              rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter                             rrc_ue_cu_cp_notifier;
+  std::unique_ptr<cell_meas_manager>                     cell_meas_mng;
   timer_manager                                          timers;
   std::array<std::unique_ptr<dummy_rrc_pdu_notifier>, 3> rrc_srb_pdu_notifiers;
   std::unique_ptr<dummy_rrc_tx_security_notifier>        tx_security_notifier;
@@ -443,8 +522,10 @@ private:
       0x16, 0x97, 0xa0, 0xa1, 0x23, 0x20, 0x00};
 
   // DL-DCCH with RRC reconfiguration
-  std::array<uint8_t, 20> rrc_reconfig_pdu = {0x02, 0x88, 0xa0, 0x49, 0x40, 0xbc, 0x3e, 0x00, 0x61, 0x68,
-                                              0x01, 0x37, 0xab, 0x6f, 0xbb, 0xc0, 0x07, 0x55, 0x77, 0x98};
+  std::array<uint8_t, 48> rrc_reconfig_pdu = {0x02, 0xa8, 0xa0, 0x49, 0x40, 0xbc, 0x3e, 0x00, 0x61, 0x4a, 0xa0, 0x00,
+                                              0x3c, 0xa0, 0x09, 0x92, 0x2a, 0x08, 0x06, 0x18, 0x91, 0x80, 0x00, 0x81,
+                                              0x42, 0x68, 0x00, 0x00, 0x64, 0xfd, 0xf1, 0xc0, 0x00, 0x00, 0x09, 0x0d,
+                                              0x0d, 0x40, 0x09, 0xbd, 0x5b, 0x7d, 0xde, 0x00, 0x3a, 0xab, 0xbc, 0xc0};
 
   // UL-DCCH with RRC reconfiguration complete
   std::array<uint8_t, 2> rrc_reconfig_complete_pdu = {0x0a, 0x00};

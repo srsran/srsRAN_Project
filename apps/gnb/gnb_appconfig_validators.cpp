@@ -24,6 +24,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/srslog/logger.h"
 
@@ -104,8 +105,14 @@ static bool validate_ru_ofh_appconfig(const gnb_appconfig& config)
       return false;
     }
 
-    if (!validate_ru_duplicated_ports(ofh_cell.ru_dl_port_id)) {
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_ul_port_id)) {
       fmt::print("Detected duplicated uplink port identifiers\n");
+
+      return false;
+    }
+
+    if (!validate_ru_duplicated_ports(ofh_cell.ru_prach_port_id)) {
+      fmt::print("Detected duplicated uplink PRACH port identifiers\n");
 
       return false;
     }
@@ -191,11 +198,12 @@ static bool validate_tdd_ul_dl_pattern_appconfig(const tdd_ul_dl_pattern_appconf
 
   const unsigned period_msec = config.dl_ul_period_slots / get_nof_slots_per_subframe(common_scs);
 
-  if (period_msec != 0.5F and period_msec != 0.625F and period_msec != 1.0F and period_msec != 1.25F and
-      period_msec != 2.0F and period_msec != 2.5F and period_msec != 5.0F and period_msec != 10.0F) {
+  static constexpr std::array<float, 10> valid_periods = {0.5F, 0.625, 1.0, 1.25, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0};
+  if (std::none_of(valid_periods.begin(), valid_periods.end(), [period_msec](float v) {
+        return std::abs(period_msec - v) < 1e-3;
+      })) {
     fmt::print(
-        "Invalid TDD pattern 1 UL DL periodicity={}ms. Must be 0.5, 0.625, 1, 1.25, 2, 2.5, 5 or 10 milliseconds.\n",
-        period_msec);
+        "Invalid TDD pattern periodicity={}ms. It must be in {{{}}}.\n", period_msec, fmt::join(valid_periods, ", "));
     return false;
   }
 
@@ -487,9 +495,78 @@ static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& conf
   return valid;
 }
 
+static bool validate_pdcch_appconfig(const gnb_appconfig& config)
+{
+  for (const auto& cell : config.cells_cfg) {
+    const base_cell_appconfig& base_cell = cell.cell;
+    const auto                 band =
+        base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        base_cell.channel_bw_mhz, base_cell.common_scs, band_helper::get_freq_range(band));
+    if (base_cell.pdcch_cfg.common.coreset0_index.has_value()) {
+      const uint8_t  ss0_idx               = base_cell.pdcch_cfg.common.ss0_index;
+      const unsigned cs0_idx               = base_cell.pdcch_cfg.common.coreset0_index.value();
+      const auto     ssb_coreset0_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          base_cell.dl_arfcn, band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx, cs0_idx);
+      if (not ssb_coreset0_freq_loc.has_value()) {
+        fmt::print("Unable to derive a valid SSB pointA and k_SSB for CORESET#0 index={}, SearchSpace#0 index={} and "
+                   "cell bandwidth={}Mhz\n",
+                   cs0_idx,
+                   ss0_idx,
+                   base_cell.channel_bw_mhz);
+        return false;
+      }
+      // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
+      // been set to 3. And, we use only pos2 or pos1
+      const pdcch_type0_css_coreset_description desc = srsran::pdcch_type0_css_coreset_get(
+          band, base_cell.common_scs, base_cell.common_scs, cs0_idx, ssb_coreset0_freq_loc->k_ssb.to_uint());
+      if (desc.pattern != PDCCH_TYPE0_CSS_CORESET_RESERVED.pattern and desc.nof_symb_coreset == 3) {
+        fmt::print("CORESET duration of 3 OFDM symbols corresponding to CORESET#0 index={} is not supported\n",
+                   cs0_idx);
+        return false;
+      }
+    }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() > nof_crbs) {
+      fmt::print("Invalid CORESET#1 RBs start={}\n", base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value());
+      return false;
+    }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value() > nof_crbs) {
+      fmt::print("Invalid CORESET#1 length in RBs={}\n", base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value());
+      return false;
+    }
+    if (base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_l_crb.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() + base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value() >
+            nof_crbs) {
+      fmt::print("CORESET#1 range={{},{}} outside of cell bandwidth={}CRBs\n",
+                 base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value(),
+                 base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() +
+                     base_cell.pdcch_cfg.dedicated.coreset1_l_crb.value(),
+                 nof_crbs);
+      return false;
+    }
+    if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common and
+        config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
+      fmt::print("Non-fallback DCI format not allowed in Common SearchSpace\n");
+      return false;
+    }
+    if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1 and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.has_value() and
+        base_cell.pdcch_cfg.dedicated.coreset1_rb_start.value() == 0) {
+      // [Implementation-defined] Reason for starting from frequency resource 1 (i.e. CRB6) to remove the ambiguity of
+      // UE decoding the DCI in CSS rather than USS when using fallback DCI formats (DCI format 1_0 and 0_0).
+      fmt::print("Cannot start CORESET#1 from CRB0 in Common SearchSpace\n");
+      return false;
+    }
+  }
+  return true;
+}
+
 static bool validate_test_mode_appconfig(const gnb_appconfig& config)
 {
-  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dci_format_0_1_and_1_1) {
+  if ((config.test_mode_cfg.test_ue.ri > 1) and not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
     fmt::print("For test mode, RI shall not be set if UE is configured to use DCI format 1_0\n");
     return false;
   }
@@ -555,6 +632,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_cells_appconfig(config.cells_cfg)) {
+    return false;
+  }
+
+  if (!validate_pdcch_appconfig(config)) {
     return false;
   }
 

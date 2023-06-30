@@ -229,7 +229,8 @@ void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&    
   srsran_assert(fapi_pdu.precoding_and_beamforming.prgs.size() == 1U,
                 "Unsupported number of PRGs={}",
                 fapi_pdu.precoding_and_beamforming.prgs.size());
-  proc_pdu.precoding = pm_repo.get_precoding_configuration(fapi_pdu.precoding_and_beamforming.prgs.front().pm_index);
+  proc_pdu.precoding = precoding_configuration::make_wideband(
+      pm_repo.get_precoding_matrix(fapi_pdu.precoding_and_beamforming.prgs.front().pm_index));
 
   // Fill PDSCH context for logging.
   proc_pdu.context = fapi_pdu.context;

@@ -25,6 +25,7 @@
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_message.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
@@ -106,12 +107,17 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->rrc_container                    = msg.rrc_container.copy();
 
   if (msg.old_ue_index != ue_index_t::invalid) {
-    f1ap_ue_context& old_ue_ctxt             = ue_ctx_list[msg.old_ue_index];
-    dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
-    dlrrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
+    if (ue_ctx_list.contains(msg.old_ue_index)) {
+      f1ap_ue_context& old_ue_ctxt             = ue_ctx_list[msg.old_ue_index];
+      dlrrc_msg->old_gnb_du_ue_f1ap_id_present = true;
+      dlrrc_msg->old_gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(old_ue_ctxt.du_ue_f1ap_id);
 
-    // Remove old UE context from F1
-    ue_ctx_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
+      // Remove old UE context from F1
+      ue_ctx_list.remove_ue(old_ue_ctxt.cu_ue_f1ap_id);
+    } else {
+      logger.error(
+          "ue={} old_ue={} Old F1AP UE Context for reestablishing UE not found.", msg.ue_index, msg.old_ue_index);
+    }
   }
 
   // Pack message into PDU

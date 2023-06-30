@@ -521,6 +521,24 @@ bool number_string_to_enum(EnumType& e, const std::string& val)
   }
   return false;
 }
+template <class EnumType>
+void bool_to_enum(EnumType& e, const bool s)
+{
+  srsran_assert(e.nof_types == 1, "Can't convert enum with too many values");
+
+  if (s) {
+    e = (typename EnumType::options)0;
+  } else {
+    e = EnumType::nulltype;
+  }
+}
+template <class EnumType>
+bool enum_to_bool(EnumType& e)
+{
+  srsran_assert(e.nof_types == 1, "Can't convert enum with too many values");
+
+  return !(bool)e;
+}
 
 template <class EnumType, bool E = false, uint32_t M = 0>
 class enumerated : public EnumType

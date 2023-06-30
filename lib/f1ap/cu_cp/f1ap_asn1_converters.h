@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/nr_cgi.h"
@@ -254,8 +255,8 @@ inline asn1::f1ap::qos_info_c qos_info_to_f1ap_asn1(const cu_cp_drb_info& qos_in
   // reflective qos attribute
   if (qos_info.drb_qos.reflective_qos_attribute.has_value()) {
     asn1_drb_info.drb_qos.reflective_qos_attribute_present = true;
-    asn1::string_to_enum(asn1_drb_info.drb_qos.reflective_qos_attribute,
-                         qos_info.drb_qos.reflective_qos_attribute.value());
+    asn1::bool_to_enum(asn1_drb_info.drb_qos.reflective_qos_attribute,
+                       qos_info.drb_qos.reflective_qos_attribute.value());
   }
 
   // s nssai

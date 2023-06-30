@@ -21,12 +21,11 @@
  */
 
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
-#include "srsran/ran/frame_types.h"
 
 using namespace srsran;
 
 static unsigned
-nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended, bool is_dl)
+nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp, bool is_dl)
 {
   const unsigned period_slots = nof_slots_per_tdd_period(cfg);
 
@@ -43,7 +42,7 @@ nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool
   if (is_dl) {
     // Check DL boundaries. Both fully DL slots and partially DL slots return a positive value.
     if (slot_idx_period < pattern->nof_dl_slots) {
-      return cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+      return get_nsymb_per_slot(cp);
     } else if (slot_idx_period == pattern->nof_dl_slots) {
       return pattern->nof_dl_symbols;
     }
@@ -53,7 +52,7 @@ nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool
   // UL case.
   const unsigned ul_pattern_start = pattern->dl_ul_tx_period_nof_slots - pattern->nof_ul_slots;
   if (slot_idx_period >= ul_pattern_start) {
-    return cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+    return get_nsymb_per_slot(cp);
   }
   if (slot_idx_period == ul_pattern_start - 1) {
     return pattern->nof_ul_symbols;
@@ -63,25 +62,53 @@ nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool
 
 bool srsran::has_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
 {
-  return nof_active_symbols(cfg, slot_index, false, true) > 0;
+  return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, true) > 0;
 }
 
 bool srsran::has_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
 {
-  return nof_active_symbols(cfg, slot_index, false, false) > 0;
+  return nof_active_symbols(cfg, slot_index, cyclic_prefix::NORMAL, false) > 0;
 }
 
 ofdm_symbol_range
-srsran::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
+srsran::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
 {
-  const unsigned nof_symbols = nof_active_symbols(cfg, slot_index, cp_extended, true);
+  const unsigned nof_symbols = nof_active_symbols(cfg, slot_index, cp, true);
   return {0, nof_symbols};
 }
 
 ofdm_symbol_range
-srsran::get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
+srsran::get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, cyclic_prefix cp)
 {
-  const unsigned nof_symbols      = nof_active_symbols(cfg, slot_index, cp_extended, false);
-  const unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  const unsigned nof_symbols      = nof_active_symbols(cfg, slot_index, cp, false);
+  const unsigned symbols_per_slot = get_nsymb_per_slot(cp);
   return nof_symbols > 0 ? ofdm_symbol_range{symbols_per_slot - nof_symbols, symbols_per_slot} : ofdm_symbol_range{};
+}
+
+optional<unsigned> srsran::find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index)
+{
+  const unsigned period = nof_slots_per_tdd_period(cfg);
+
+  optional<unsigned> ret;
+  for (unsigned i = start_slot_index; i < period; ++i) {
+    if (has_active_tdd_ul_symbols(cfg, i)) {
+      ret = i;
+      break;
+    }
+  }
+  return ret;
+}
+
+optional<unsigned> srsran::find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index)
+{
+  const unsigned period = nof_slots_per_tdd_period(cfg);
+
+  optional<unsigned> ret;
+  for (unsigned i = start_slot_index; i < period; ++i) {
+    if (get_active_tdd_ul_symbols(cfg, i, cyclic_prefix::NORMAL).length() == NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) {
+      ret = i;
+      break;
+    }
+  }
+  return ret;
 }

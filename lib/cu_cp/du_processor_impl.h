@@ -51,6 +51,7 @@ public:
                     rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
                     du_processor_ue_manager&            ue_manager_,
+                    cell_meas_manager&                  cell_meas_mng_,
                     task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 

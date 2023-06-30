@@ -23,6 +23,7 @@
 #pragma once
 
 #include "rrc_asn1_converters.h"
+#include "rrc_measurement_types_asn1_converters.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
@@ -121,6 +122,8 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
       asn1::rrc_nr::drb_to_add_mod_s asn1_drb_to_add;
       asn1_drb_to_add.drb_id = drb_id_to_uint(drb_to_add.drb_id);
 
+      asn1_drb_to_add.reestablish_pdcp_present = drb_to_add.reestablish_pdcp_present;
+
       // PDCP config
       if (drb_to_add.pdcp_cfg.has_value()) {
         asn1_drb_to_add.pdcp_cfg_present = true;
@@ -183,7 +186,11 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
   // secondary cell group
   asn1_reconfig_ies.secondary_cell_group = cu_cp_rrc_reconf.secondary_cell_group.copy();
 
-  // TODO: Add meas config
+  // meas config
+  if (cu_cp_rrc_reconf.meas_cfg.has_value()) {
+    asn1_reconfig_ies.meas_cfg_present = true;
+    asn1_reconfig_ies.meas_cfg         = meas_config_to_rrc_asn1(cu_cp_rrc_reconf.meas_cfg.value());
+  }
 
   // non crit ext
   if (cu_cp_rrc_reconf.non_crit_ext.has_value()) {

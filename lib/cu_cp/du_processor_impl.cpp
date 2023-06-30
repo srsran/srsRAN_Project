@@ -43,6 +43,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
                                      rrc_ue_reestablishment_notifier&    rrc_ue_cu_cp_notifier_,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
+                                     cell_meas_manager&                  cell_meas_mng_,
                                      task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
@@ -66,8 +67,12 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(
-      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier, rrc_ue_cu_cp_notifier);
+  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg,
+                                           rrc_ue_ev_notifier,
+                                           rrc_ue_nas_pdu_notifier,
+                                           rrc_ue_ngap_ctrl_notifier,
+                                           rrc_ue_cu_cp_notifier,
+                                           cell_meas_mng_);
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_ue_repository());
 
@@ -330,7 +335,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context.emplace();
 
     // add adapter for PDCP to talk to F1AP (Tx), RRC data (Rx) and RRC control (Tx/Rx)
-    srb.pdcp_context->pdcp_tx_notifier = std::make_unique<pdcp_du_processor_adapter>(*f1ap, msg.ue_index, msg.srb_id);
+    srb.pdcp_context->pdcp_tx_notifier =
+        std::make_unique<pdcp_du_processor_adapter>(*f1ap, msg.ue_index, msg.srb_id, msg.old_ue_index);
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
