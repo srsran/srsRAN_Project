@@ -86,7 +86,7 @@ static void avx512_pack_prb_9b_big_endian(compressed_prb& c_prb, __m512i reg)
   __m512i iq_packed_epi8 = _mm512_or_si512(tmp_iq_0_epi8, tmp_iq_1_epi8);
 
   // Store first 9 bytes of the first three 128bit lanes of the AVX512 register.
-  uint8_t* data = c_prb.get_buffer().data();
+  uint8_t* data = c_prb.get_byte_buffer().data();
   _mm_mask_storeu_epi8(data, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 0));
   _mm_mask_storeu_epi8(data + bytes_per_lane, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 1));
   _mm_mask_storeu_epi8(data + bytes_per_lane * 2, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 2));

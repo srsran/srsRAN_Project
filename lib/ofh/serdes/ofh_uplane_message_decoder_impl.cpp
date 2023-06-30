@@ -214,7 +214,7 @@ static bool decode_prbs_no_ud_comp_param_field(span<compressed_prb>             
   for (auto& prb : comp_prb) {
     // No need to read the udCompParam field.
     prb.set_compression_param(0);
-    deserializer.read<uint8_t>(prb.get_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
+    deserializer.read<uint8_t>(prb.get_byte_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
   }
 
   return true;
@@ -247,7 +247,7 @@ static bool decode_prbs_with_ud_comp_param_field(span<compressed_prb>           
   // For each PRB, udCompParam must be decoded.
   for (auto& prb : comp_prb) {
     prb.set_compression_param(deserializer.read<uint8_t>());
-    deserializer.read<uint8_t>(prb.get_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
+    deserializer.read<uint8_t>(prb.get_byte_buffer().first(prb_iq_data_size.round_up_to_bytes().value()));
   }
 
   return true;

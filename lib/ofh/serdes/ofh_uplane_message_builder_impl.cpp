@@ -117,7 +117,7 @@ void uplane_message_builder_impl::serialize_iq_data(network_order_binary_seriali
     }
   }
 
-  for (compressed_prb& c_prb : compressed_prbs) {
+  for (const auto& c_prb : compressed_prbs) {
     // Serialize compression parameter.
     if (compr_params.type != compression_type::none && compr_params.type != compression_type::modulation) {
       serializer.write(c_prb.get_compression_param());

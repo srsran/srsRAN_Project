@@ -8,6 +8,7 @@
  *
  */
 
+#include "../../../../lib/ofh/compression/compressed_prb_unpacker.h"
 #include "../../../../lib/ofh/compression/quantizer.h"
 #include "ofh_compression_test_data.h"
 #include "srsran/ofh/compression/compression_factory.h"
@@ -78,9 +79,10 @@ TEST_P(OFHCompressionFixture, match_test_case_result_and_decompress_to_original)
     // Parameter should match.
     ASSERT_EQ(compressed_data[j].get_compression_param(), test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
     // Data should match.
-    compressed_prb& c_prb = compressed_data[j];
+    compressed_prb&         c_prb = compressed_data[j];
+    compressed_prb_unpacker unpacker(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB * 2; ++i) {
-      int16_t sample = q.sign_extend(c_prb.extract_bits(read_pos, params.data_width));
+      int16_t sample = q.sign_extend(unpacker.unpack(read_pos, params.data_width));
       read_pos += params.data_width;
 
       ASSERT_TRUE(std::abs(sample - test_compr_data[j * NOF_SUBCARRIERS_PER_RB * 2 + i]) <= 1)
@@ -150,11 +152,12 @@ TEST(ru_compression_test, bpsk_input_compression_is_correct)
     // Parameter should match.
     ASSERT_EQ(compressed_data[j].get_compression_param(), test_compr_param[j]) << fmt::format("wrong PRB={} param", j);
     // Data should match.
-    compressed_prb& c_prb = compressed_data[j];
+    compressed_prb&         c_prb = compressed_data[j];
+    compressed_prb_unpacker unpacker(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-      int16_t re = q.sign_extend(c_prb.extract_bits(read_pos, 9));
+      int16_t re = q.sign_extend(unpacker.unpack(read_pos, 9));
       read_pos += params.data_width;
-      int16_t im = q.sign_extend(c_prb.extract_bits(read_pos, 9));
+      int16_t im = q.sign_extend(unpacker.unpack(read_pos, 9));
       read_pos += params.data_width;
 
       ASSERT_TRUE(std::abs(re - std::real(test_compressed_prbs[j][i])) <= 1)

@@ -9,6 +9,8 @@
  */
 
 #include "iq_compression_bfp_impl.h"
+#include "compressed_prb_packer.h"
+#include "compressed_prb_unpacker.h"
 
 using namespace srsran;
 using namespace ofh;
@@ -58,7 +60,11 @@ void iq_compression_bfp_impl::compress_prb_generic(compressed_prb&     c_prb,
   for (unsigned i = 0; i != NOF_SAMPLES_PER_PRB; ++i) {
     compressed_samples[i] = input_quantized[i] >> exponent;
   }
-  c_prb.pack_compressed_data(compressed_samples, data_width, exponent);
+
+  c_prb.set_compression_param(exponent);
+
+  compressed_prb_packer packer(c_prb);
+  packer.pack(compressed_samples, data_width);
 }
 
 void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
@@ -93,9 +99,10 @@ void iq_compression_bfp_impl::decompress_prb_generic(span<cf_t>            outpu
   uint8_t exponent = c_prb.get_compression_param();
   int16_t scaler   = 1 << exponent;
 
+  compressed_prb_unpacker unpacker(c_prb);
   for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
-    int16_t re = q_in.sign_extend(c_prb.extract_bits(read_pos, data_width));
-    int16_t im = q_in.sign_extend(c_prb.extract_bits(read_pos + data_width, data_width));
+    int16_t re = q_in.sign_extend(unpacker.unpack(read_pos, data_width));
+    int16_t im = q_in.sign_extend(unpacker.unpack(read_pos + data_width, data_width));
     read_pos += (data_width * 2);
 
     float scaled_re = q_out.to_float(re * scaler);
