@@ -215,3 +215,29 @@ TEST(byte_buffer_segment_list, pop_front)
   list.pop_front();
   ASSERT_TRUE(list.empty());
 }
+
+TEST(byte_buffer_segment_list_span_iterator, multi_segment_comparison)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+  std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(32);
+  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(32);
+  node.append(bytes1);
+  node2.append(bytes2);
+
+  unsigned start_idx = test_rgen::uniform_int<unsigned>(0, 5);
+  unsigned length    = bytes1.size() + bytes2.size() - start_idx - test_rgen::uniform_int<unsigned>(0, 5);
+  byte_buffer_segment_span_range range{list.front(), start_idx, length};
+
+  auto it    = range.begin();
+  auto span1 = span<uint8_t>{bytes1}.subspan(start_idx, bytes1.size() - start_idx);
+  ASSERT_EQ(*it, span1);
+  ++it;
+  auto span2 = span<uint8_t>{bytes2}.subspan(0, length - span1.size());
+  ASSERT_EQ(*it, span2);
+  ++it;
+  ASSERT_EQ(it, range.end());
+}

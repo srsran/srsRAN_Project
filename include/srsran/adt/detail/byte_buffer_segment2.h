@@ -174,5 +174,5 @@ private:
   span<uint8_t> payload;
 };
 
-}
+} // namespace detail
 } // namespace srsran
