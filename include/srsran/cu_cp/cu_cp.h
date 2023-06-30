@@ -84,7 +84,7 @@ public:
   /// \brief Handle a RRC UE creation notification from the DU processor.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
-  /// \param[in] rrc_ue_msg_handler The rrc_ue_dl_nas_message_handler of the created RRC UE.
+  /// \param[in] rrc_ue The interface of the created RRC UE.
   virtual void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
 };
 

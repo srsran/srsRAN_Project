@@ -13,6 +13,9 @@
 #include "rrc_cell_context.h"
 #include "rrc_types.h"
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/asn1/rrc_nr/dl_dcch_msg.h"
+#include "srsran/asn1/rrc_nr/msg_common.h"
+#include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/up_resource_manager.h"
 #include "srsran/rrc/rrc.h"
@@ -221,10 +224,6 @@ struct ul_nas_transport_message {
   rrc_cell_context cell;
 };
 
-struct dl_nas_transport_message {
-  byte_buffer nas_pdu;
-};
-
 /// Interface to notify about NAS messages.
 class rrc_ue_nas_notifier
 {
@@ -252,17 +251,6 @@ public:
   virtual ~rrc_ue_control_notifier() = default;
 
   virtual void on_ue_context_release_request(const cu_cp_ue_context_release_request& msg) = 0;
-};
-
-/// Handle downlink NAS transport messages.
-class rrc_ue_dl_nas_message_handler
-{
-public:
-  virtual ~rrc_ue_dl_nas_message_handler() = default;
-
-  /// \brief Handle the received Downlink NAS Transport message.
-  /// \param[in] msg The Downlink NAS Transport message.
-  virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
 };
 
 struct rrc_ue_release_context {
@@ -343,7 +331,7 @@ public:
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ul_dcch_pdu_handler,
-                         public rrc_ue_dl_nas_message_handler,
+                         public rrc_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
                          public rrc_ue_setup_proc_notifier,
@@ -358,7 +346,7 @@ public:
 
   virtual rrc_ul_ccch_pdu_handler&              get_ul_ccch_pdu_handler()                  = 0;
   virtual rrc_ul_dcch_pdu_handler&              get_ul_dcch_pdu_handler()                  = 0;
-  virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
+  virtual rrc_dl_nas_message_handler&           get_rrc_dl_nas_message_handler()           = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual up_resource_manager&                  get_rrc_ue_up_resource_manager()           = 0;

@@ -154,7 +154,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngap_rrc_ue_adapter&       rrc_ue_adapter       = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
   ngap_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
   ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
-  rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
+  rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_dl_nas_message_handler(),
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
 
   // Create and connect cu-cp to rrc ue adapter
@@ -238,7 +238,6 @@ void cu_cp::handle_rrc_reestablishment_complete(ue_index_t ue_index, ue_index_t 
   ue_mng.transfer_ngap_ue_context(ue_index, old_ue_index);
 
   // Transfer E1AP UE Context to new UE and remove old context
-  // TODO: Add ue index to cu up index lookup
   cu_up_db.begin()->second->update_ue_index(ue_index, old_ue_index);
 
   // Remove old RRC UE and DU UE
