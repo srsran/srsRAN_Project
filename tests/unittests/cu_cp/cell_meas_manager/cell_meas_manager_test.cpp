@@ -19,7 +19,7 @@ TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_validation_fails)
   ASSERT_FALSE(is_complete(cell_cfg));
 }
 
-TEST_F(cell_meas_manager_test, when_empty_cell_config_is_used_validation_succeeds)
+TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeeds)
 {
   cell_meas_cfg cell_cfg;
   cell_cfg.nci                 = 0;
