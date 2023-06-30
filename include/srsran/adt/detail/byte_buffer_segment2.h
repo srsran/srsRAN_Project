@@ -16,6 +16,7 @@
 #include <cstdint>
 
 namespace srsran {
+namespace detail {
 
 /// \brief Span of bytes (non owning) divided into three parts [ HEADROOM | PAYLOAD | TAILROOM ].
 /// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append().
@@ -173,4 +174,5 @@ private:
   span<uint8_t> payload;
 };
 
+}
 } // namespace srsran

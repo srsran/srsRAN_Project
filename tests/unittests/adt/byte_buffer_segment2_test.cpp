@@ -9,10 +9,12 @@
  */
 
 #include "srsran/adt/detail/byte_buffer_segment2.h"
+#include "srsran/adt/detail/byte_buffer_segment_list.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
+using namespace detail;
 
 ///////////////////////// byte_buffer_segment //////////////////////////////
 
@@ -137,4 +139,79 @@ TEST(buffer_segment_test2, move_ctor)
   byte_buffer_segment2 segment2 = std::move(segment);
   ASSERT_EQ(segment, segment2);
   ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
+}
+
+TEST(byte_buffer_segment_list, default_ctor)
+{
+  detail::byte_buffer_segment_list list;
+
+  ASSERT_TRUE(list.empty());
+}
+
+TEST(byte_buffer_segment_list, push_back)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+
+  list.push_back(node);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.push_back(node2);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node2, &list.back());
+}
+
+TEST(byte_buffer_segment_list, push_front)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+
+  list.push_front(node);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.push_front(node2);
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node2, &list.front());
+  ASSERT_EQ(&node, &list.back());
+}
+
+TEST(byte_buffer_segment_list, pop_back)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+
+  list.pop_back();
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node, &list.front());
+  ASSERT_EQ(&node, &list.back());
+
+  list.pop_back();
+  ASSERT_TRUE(list.empty());
+}
+
+TEST(byte_buffer_segment_list, pop_front)
+{
+  detail::byte_buffer_segment_list         list;
+  std::vector<uint8_t>                     buffer(128), buffer2(128);
+  detail::byte_buffer_segment_list::node_t node{buffer, 32}, node2{buffer2, 32};
+  list.push_back(node);
+  list.push_back(node2);
+
+  list.pop_front();
+  ASSERT_FALSE(list.empty());
+  ASSERT_EQ(&node2, &list.front());
+  ASSERT_EQ(&node2, &list.back());
+
+  list.pop_front();
+  ASSERT_TRUE(list.empty());
 }
