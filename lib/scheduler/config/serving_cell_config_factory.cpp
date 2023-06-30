@@ -9,10 +9,12 @@
  */
 
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/adt/optional.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/ofdm_symbol_range.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/csi_helper.h"
@@ -222,14 +224,8 @@ dl_config_common srsran::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id       = to_search_space_id(1);
-  const auto pdsch_ofdm_symbol_ranges =
-      generate_pdsch_ofdm_symbol_ranges(cfg.init_dl_bwp.pdcch_common.coreset0->duration,
-                                        params.search_space0_index,
-                                        cfg.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
-                                        14);
-  for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
-    cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.push_back(make_pdsch_time_domain_resource(symb_range));
-  }
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+      make_pdsch_time_domain_resource(params.search_space0_index, cfg.init_dl_bwp.pdcch_common, nullopt, nullopt);
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -684,59 +680,150 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
   return max_nof_candidates > PDCCH_MAX_NOF_CANDIDATES_SS ? PDCCH_MAX_NOF_CANDIDATES_SS : max_nof_candidates;
 }
 
-pdsch_time_domain_resource_allocation
-srsran::config_helpers::make_pdsch_time_domain_resource(ofdm_symbol_range ofdm_symbols)
+std::vector<pdsch_time_domain_resource_allocation>
+srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                           ss0_idx,
+                                                        const pdcch_config_common&        common_pdcch_cfg,
+                                                        optional<pdcch_config>            ded_pdcch_cfg,
+                                                        optional<tdd_ul_dl_config_common> tdd_cfg)
 {
-  return pdsch_time_domain_resource_allocation{.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbols};
-}
-
-std::vector<ofdm_symbol_range>
-srsran::config_helpers::generate_pdsch_ofdm_symbol_ranges(unsigned           cs0_duration,
-                                                          uint8_t            ss0_idx,
-                                                          unsigned           ss1_first_monitoring_symb_idx,
-                                                          unsigned           nof_dl_symbols_in_slot,
-                                                          optional<unsigned> cs1_duration,
-                                                          optional<unsigned> ss2_first_monitoring_symb_idx)
-{
-  std::vector<ofdm_symbol_range> result;
-  // Fetch SearchSpace#0 configuration.
-  const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
-      pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-          .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs0_duration});
-  const auto ss0_start_symbol_idx =
-      *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
-  // NOTE1: Number of DL symbols must be atleast greater than SearchSpace monitoring symbol index + CORESET duration
-  // for PDSCH allocation in partial slot. Otherwise, it can be used only for UL PDCCH allocations.
-  // NOTE2: The following PDSCH OFDM symbol ranges are created based on the assumption/fact that SS#0 uses CORESET#0,
-  // SS#1 uses CORESET#0, SS#2 uses CORESET#1.
-  // NOTE3: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
+  const optional<coreset_configuration> coreset0                                = common_pdcch_cfg.coreset0;
+  const optional<coreset_configuration> common_coreset                          = common_pdcch_cfg.common_coreset;
+  unsigned                              pattern1_nof_dl_symbols_in_special_slot = 0;
+  unsigned                              pattern2_nof_dl_symbols_in_special_slot = 0;
+  if (tdd_cfg.has_value()) {
+    pattern1_nof_dl_symbols_in_special_slot = tdd_cfg->pattern1.nof_dl_symbols;
+    if (tdd_cfg->pattern2.has_value()) {
+      pattern2_nof_dl_symbols_in_special_slot = tdd_cfg->pattern2->nof_dl_symbols;
+    }
+  }
+  std::vector<ofdm_symbol_range> pdsch_symbols;
 
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
   static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
 
   // TODO: Consider SearchSpace periodicity while generating PDSCH OFDM symbol range. If there is no PDCCH, there is no
-  //  PDSCH since we dont support k0 != 0 yet. For SS#0 (CORESET#0).
-  if ((nof_dl_symbols_in_slot > (ss0_start_symbol_idx + cs0_duration)) and
-      (nof_dl_symbols_in_slot - ss0_start_symbol_idx - cs0_duration) >= pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(ss0_start_symbol_idx + cs0_duration, nof_dl_symbols_in_slot);
+  //  PDSCH since we dont support k0 != 0 yet.
+
+  // NOTE1: Number of DL PDSCH symbols must be atleast greater than SearchSpace monitoring symbol index + CORESET
+  // duration for PDSCH allocation in partial slot. Otherwise, it can be used only for UL PDCCH allocations.
+  // NOTE2: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
+  // NOTE3: It is assumed that a validator has ensured that a CORESET exists corresponding to the CORESET Id set in
+  // SearchSpace configuration.
+  optional<unsigned> cs_duration;
+  unsigned           ss_start_symbol_idx;
+  // SearchSpaces in Common PDCCH configuration.
+  for (const search_space_configuration& ss_cfg : common_pdcch_cfg.search_spaces) {
+    cs_duration         = {};
+    ss_start_symbol_idx = 0;
+    if (coreset0.has_value()) {
+      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+        cs_duration = coreset0->duration;
+        // Fetch SearchSpace#0 configuration.
+        const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
+            pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+                .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs_duration.value()});
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+        cs_duration         = coreset0->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+    if (common_coreset.has_value()) {
+      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+        cs_duration = common_coreset->duration;
+        // Fetch SearchSpace#0 configuration.
+        const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
+            pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+                .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs_duration.value()});
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+        cs_duration         = common_coreset->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+
+    // For slots with all DL symbols. i.e. full DL slot.
+    pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+    // For special slots with DL symbols in TDD pattern 1 if configured.
+    if (pattern1_nof_dl_symbols_in_special_slot > 0 and
+        (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
+        (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
+            pdsch_mapping_typeA_normal_cp_min_L_value) {
+      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot);
+    }
+    // For special slots with DL symbols in TDD pattern 2 if configured.
+    if (pattern2_nof_dl_symbols_in_special_slot > 0 and
+        (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
+        (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
+            pdsch_mapping_typeA_normal_cp_min_L_value) {
+      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot);
+    }
   }
-  // For SS#1 (CORESET#0).
-  if ((nof_dl_symbols_in_slot > (ss1_first_monitoring_symb_idx + cs0_duration)) and
-      (nof_dl_symbols_in_slot - ss1_first_monitoring_symb_idx - cs0_duration) >=
-          pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(ss1_first_monitoring_symb_idx + cs0_duration, nof_dl_symbols_in_slot);
-  }
-  // For SS#2 (CORESET#1).
-  if (cs1_duration.has_value() and ss2_first_monitoring_symb_idx.has_value() and
-      (nof_dl_symbols_in_slot > (*ss2_first_monitoring_symb_idx + *cs1_duration)) and
-      (nof_dl_symbols_in_slot - *ss2_first_monitoring_symb_idx - *cs1_duration) >=
-          pdsch_mapping_typeA_normal_cp_min_L_value) {
-    result.emplace_back(*ss2_first_monitoring_symb_idx + *cs1_duration, nof_dl_symbols_in_slot);
+  // SearchSpaces in Dedicated PDCCH configuration.
+  if (ded_pdcch_cfg.has_value()) {
+    for (const search_space_configuration& ss_cfg : ded_pdcch_cfg->search_spaces) {
+      cs_duration         = {};
+      ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      if (coreset0.has_value()) {
+        if (ss_cfg.cs_id == coreset0->id) {
+          cs_duration = coreset0->duration;
+        }
+      }
+      if ((not cs_duration.has_value()) and common_coreset.has_value()) {
+        if (ss_cfg.cs_id == common_coreset->id) {
+          cs_duration = common_coreset->duration;
+        }
+      }
+
+      if (not cs_duration.has_value()) {
+        for (const coreset_configuration& cs_cfg : ded_pdcch_cfg->coresets) {
+          if (ss_cfg.cs_id == cs_cfg.id) {
+            cs_duration = cs_cfg.duration;
+            break;
+          }
+        }
+      }
+
+      // For slots with all DL symbols. i.e. full DL slot.
+      pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+      // For special slots with DL symbols in TDD pattern 1 if configured.
+      if (pattern1_nof_dl_symbols_in_special_slot > 0 and
+          (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
+          (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
+              pdsch_mapping_typeA_normal_cp_min_L_value) {
+        pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot);
+      }
+      // For special slots with DL symbols in TDD pattern 2 if configured.
+      if (pattern2_nof_dl_symbols_in_special_slot > 0 and
+          (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
+          (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
+              pdsch_mapping_typeA_normal_cp_min_L_value) {
+        pdsch_symbols.emplace_back(ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot);
+      }
+    }
   }
 
   // Remove duplicates.
-  auto it_ptr = std::unique(result.begin(), result.end());
-  result.resize(std::distance(result.begin(), it_ptr));
+  auto it_ptr = std::unique(pdsch_symbols.begin(), pdsch_symbols.end());
+  pdsch_symbols.resize(std::distance(pdsch_symbols.begin(), it_ptr));
+
+  // Make PDSCH time domain resource allocation.
+  std::vector<pdsch_time_domain_resource_allocation> result;
+  for (const auto& symbs : pdsch_symbols) {
+    result.push_back(
+        pdsch_time_domain_resource_allocation{.k0 = 0, .map_type = sch_mapping_type::typeA, .symbols = symbs});
+  }
+
+  // Sort PDSCH time domain resource allocations in descending order of OFDM symbol range length to always choose
+  // the resource which occupies most of the DL symbols in a slot.
+  std::sort(result.begin(),
+            result.end(),
+            [](const pdsch_time_domain_resource_allocation& res_alloc_a,
+               const pdsch_time_domain_resource_allocation& res_alloc_b) {
+              return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
+            });
 
   return result;
 }

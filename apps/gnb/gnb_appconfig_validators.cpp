@@ -12,6 +12,8 @@
 #include "srsran/adt/span.h"
 #include "srsran/adt/variant.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/srslog/logger.h"
@@ -293,7 +295,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!band_helper::is_paired_spectrum(band) and config.tdd_ul_dl_cfg.has_value() and
+  if (band_helper::get_duplex_mode(band) == duplex_mode::TDD and config.tdd_ul_dl_cfg.has_value() and
       !validate_tdd_ul_dl_appconfig(config.tdd_ul_dl_cfg.value(), config.common_scs)) {
     return false;
   }

@@ -270,7 +270,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     out_cell.pcg_params.p_nr_fr1 = base_cell.pcg_cfg.p_nr_fr1;
 
     // TDD UL DL config.
-    if (not band_helper::is_paired_spectrum(param.band.value()) and config.common_cell_cfg.tdd_ul_dl_cfg.has_value()) {
+    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD and
+        config.common_cell_cfg.tdd_ul_dl_cfg.has_value()) {
       if (not out_cell.tdd_ul_dl_cfg_common.has_value()) {
         report_error("TDD UL DL configuration is absent for TDD Cell with id={} and pci={}\n", cell_id, base_cell.pci);
       }
@@ -376,43 +377,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
-    // Generating PDSCH time domain resources requires CORESET#0,  CORESET#01, SearchSpace#(0, 1, 2) configuration.
-    if (not band_helper::is_paired_spectrum(param.band.value())) {
-      const auto& tdd_cfg                  = out_cell.tdd_ul_dl_cfg_common.value();
-      auto        pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
-          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
-          param.search_space0_index,
-          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
-          tdd_cfg.pattern1.nof_dl_symbols,
-          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration,
-          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index());
-      if (tdd_cfg.pattern2.has_value()) {
-        const auto& pattern2_pdsch_ofdm_symbol_ranges = config_helpers::generate_pdsch_ofdm_symbol_ranges(
-            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration,
-            param.search_space0_index,
-            out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index(),
-            tdd_cfg.pattern2->nof_dl_symbols,
-            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration,
-            out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index());
-        pdsch_ofdm_symbol_ranges.insert(pdsch_ofdm_symbol_ranges.end(),
-                                        pattern2_pdsch_ofdm_symbol_ranges.begin(),
-                                        pattern2_pdsch_ofdm_symbol_ranges.end());
-      }
-      auto& pdsch_td_alloc_list = out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-      for (const auto& symb_range : pdsch_ofdm_symbol_ranges) {
-        pdsch_td_alloc_list.push_back(config_helpers::make_pdsch_time_domain_resource(symb_range));
-      }
-      // Remove duplicates in PDSCH time domain resources.
-      auto pdsch_td_alloc_it_ptr = std::unique(pdsch_td_alloc_list.begin(), pdsch_td_alloc_list.end());
-      pdsch_td_alloc_list.resize(std::distance(pdsch_td_alloc_list.begin(), pdsch_td_alloc_it_ptr));
-      // Sort PDSCH time domain resource allocations in descending order of OFDM symbol range length to always choose
-      // the resource which occupies most of the DL symbols in a slot.
-      std::sort(out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.begin(),
-                out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.end(),
-                [](const pdsch_time_domain_resource_allocation& res_alloc_a,
-                   const pdsch_time_domain_resource_allocation& res_alloc_b) {
-                  return res_alloc_a.symbols.length() > res_alloc_b.symbols.length();
-                });
+    if (band_helper::get_duplex_mode(param.band.value()) == duplex_mode::TDD) {
+      const auto& tdd_cfg = out_cell.tdd_ul_dl_cfg_common.value();
+      out_cell.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list =
+          config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
+                                                          out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
+                                                          out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
+                                                          tdd_cfg);
     }
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
