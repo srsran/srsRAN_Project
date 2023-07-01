@@ -730,4 +730,146 @@ private:
   std::shared_ptr<control_block> ctrl_blk_ptr = nullptr;
 };
 
+/// Converts a hex string (e.g. 01FA02) to a byte buffer.
+inline byte_buffer2 make_byte_buffer(const std::string& hex_str)
+{
+  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+  byte_buffer2 ret;
+  for (size_t i = 0; i < hex_str.size(); i += 2) {
+    uint8_t val;
+    sscanf(hex_str.data() + i, "%02hhX", &val);
+    ret.append(val);
+  }
+  return ret;
+}
+
+/// Perfoms a segment-wise copy of the byte_buffer into a span<uint8_t> object.
+/// The length is limited by the length of src and dst, whichever is smaller.
+///
+/// \param src Source byte_buffer.
+/// \param dst Destination span<uint8_t>.
+/// \return Number of bytes copied.
+inline size_t copy_segments(const byte_buffer2& src, span<uint8_t> dst)
+{
+  size_t bytes_copied    = 0;
+  size_t bytes_remaining = std::min(src.length(), dst.size_bytes());
+  for (const auto& src_segment : src.segments()) {
+    size_t        block_size  = std::min(bytes_remaining, src_segment.size());
+    span<uint8_t> dst_segment = dst.subspan(bytes_copied, block_size);
+    std::copy(src_segment.begin(), src_segment.begin() + block_size, dst_segment.begin());
+    bytes_copied += block_size;
+    bytes_remaining -= block_size;
+    if (bytes_remaining == 0) {
+      break;
+    }
+  }
+  return bytes_copied;
+}
+
+/// Perfoms a segment-wise copy of the byte_buffer to a generic iterator over uint8_t.
+/// The destination must have sufficient space to fit the whole byte_buffer's length.
+///
+/// \param src Source byte_buffer.
+/// \param dst_begin Destination iterator over uint8_t.
+template <typename It>
+void copy_segments(const byte_buffer2& src, It dst_begin)
+{
+  static_assert(std::is_same<std::decay_t<decltype(*dst_begin)>, uint8_t>::value, "Iterator value type is not uint8_t");
+  for (const auto& src_segment : src.segments()) {
+    dst_begin = std::copy(src_segment.begin(), src_segment.end(), dst_begin);
+  }
+}
+
+/// Provides a contiguous view of a byte_buffer.
+/// It is bound to the lifetime of the byte_buffer \p src and the temporary buffer \p tmp_mem, whichever is shorter.
+/// Important: \p tmp_mem must be at least as large as \p src.
+///
+/// The memory used for the result and the complexity depends on whether \p src is contiguous or not:
+/// - Contiguous: Result is a view of the first and only segment of \p src.
+/// - Non-Contiguous: Result is a view of \p tmp_mem in which all segments of \p src are copied.
+///
+/// \param src Source byte_buffer.
+/// \param tmp_mem Temporary memory for a possible copy. Must be at least as large as \p src.
+/// \return A contiguous view of the byte_buffer
+inline span<const uint8_t> to_span(const byte_buffer2& src, span<uint8_t> tmp_mem)
+{
+  // empty buffer
+  if (src.empty()) {
+    return {};
+  }
+
+  // is contiguous: shortcut without copy
+  if (src.is_contiguous()) {
+    return *src.segments().begin();
+  }
+  // non-contiguous: copy required
+  srsran_assert(src.length() <= tmp_mem.size_bytes(),
+                "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
+                src.length(),
+                tmp_mem.size());
+  span<uint8_t> result = {tmp_mem.data(), src.length()};
+  copy_segments(src, result);
+  return result;
+}
+
 } // namespace srsran
+
+namespace fmt {
+
+/// \brief Custom formatter for byte_buffer_view.
+template <>
+struct formatter<srsran::byte_buffer_view2> {
+  enum { hexadecimal, binary } mode = hexadecimal;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    auto it = ctx.begin();
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'b') {
+        mode = binary;
+      }
+      ++it;
+    }
+    return it;
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::byte_buffer_view2& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (mode == hexadecimal) {
+      return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+    }
+    return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+/// \brief Custom formatter for byte_buffer.
+template <>
+struct formatter<srsran::byte_buffer2> {
+  enum { hexadecimal, binary } mode = hexadecimal;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    auto it = ctx.begin();
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'b') {
+        mode = binary;
+      }
+      ++it;
+    }
+    return it;
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::byte_buffer2& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (mode == hexadecimal) {
+      return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+    }
+    return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+} // namespace fmt
