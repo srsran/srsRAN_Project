@@ -230,7 +230,7 @@ TEST(byte_buffer_segment_list_span_iterator, multi_segment_comparison)
 
   unsigned start_idx = test_rgen::uniform_int<unsigned>(0, 5);
   unsigned length    = bytes1.size() + bytes2.size() - start_idx - test_rgen::uniform_int<unsigned>(0, 5);
-  byte_buffer_segment_span_range range{list.front(), start_idx, length};
+  byte_buffer_segment_span_range range{&list.front(), start_idx, length};
 
   auto it    = range.begin();
   auto span1 = span<uint8_t>{bytes1}.subspan(start_idx, bytes1.size() - start_idx);

@@ -127,12 +127,12 @@ public:
   using iterator_category = std::forward_iterator_tag;
 
   byte_buffer_segment_byte_iterator_impl() = default;
-  byte_buffer_segment_byte_iterator_impl(byte_buffer_segment_list::node_t& start_segment) :
-    current_segment(&start_segment)
+  byte_buffer_segment_byte_iterator_impl(byte_buffer_segment_list::node_t* start_segment) :
+    current_segment(start_segment)
   {
   }
-  byte_buffer_segment_byte_iterator_impl(byte_buffer_segment_list::node_t& start_segment, size_t offset_) :
-    current_segment(&start_segment), offset(offset_)
+  byte_buffer_segment_byte_iterator_impl(byte_buffer_segment_list::node_t* start_segment, size_t offset_) :
+    current_segment(start_segment), offset(offset_)
   {
   }
 
@@ -316,8 +316,7 @@ public:
   using iterator       = byte_buffer_segment_list_span_iterator_impl<SegmentNodeType>;
   using const_iterator = byte_buffer_segment_list_span_iterator_impl<const SegmentNodeType>;
 
-  byte_buffer_segment_list_span_range_impl(SegmentNodeType& seg, size_t offset, size_t size) :
-    begin_(&seg, offset, size)
+  byte_buffer_segment_list_span_range_impl(SegmentNodeType* seg, size_t offset, size_t size) : begin_(seg, offset, size)
   {
   }
   template <typename U>
