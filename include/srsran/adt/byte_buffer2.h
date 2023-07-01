@@ -22,7 +22,7 @@ namespace srsran {
 /// memory chunks, aka byte buffer segments.
 class byte_buffer_view2
 {
-  /// Checks whether type is a byte_buffer/byte_buffer_slice.
+  /// Checks whether type is a byte_buffer/byte_buffer_slice2.
   template <typename ByteBufferType>
   using is_owning_byte_buffer_type =
       std::conditional_t<std::is_same<std::decay_t<ByteBufferType>, byte_buffer_view2>::value,
@@ -112,6 +112,8 @@ protected:
   iterator it;
   iterator it_end;
 };
+
+class byte_buffer_slice2;
 
 /// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.
 /// This container is not contiguous in memory.
@@ -341,6 +343,9 @@ public:
       append(seg);
     }
   }
+
+  /// Appends an owning view of bytes into current byte buffer.
+  void append(const byte_buffer_slice2& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   bool prepend(span<const uint8_t> bytes)
@@ -729,6 +734,114 @@ private:
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
   std::shared_ptr<control_block> ctrl_blk_ptr = nullptr;
 };
+
+/// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
+/// Like byte_buffer and byte_buffer_view, the represented bytes by this class are not contiguous in memory.
+/// Contrarily to byte_buffer_view, this class retains shared ownership of the segments held by the byte_buffer
+/// which it references.
+/// Due to the shared ownership model, the usage of this class may involve additional overhead associated with
+/// reference counting, which does not take place when using byte_buffer_view.
+class byte_buffer_slice2
+{
+public:
+  using value_type     = byte_buffer_view2::value_type;
+  using iterator       = byte_buffer_view2::iterator;
+  using const_iterator = byte_buffer_view2::const_iterator;
+
+  byte_buffer_slice2()                                            = default;
+  explicit byte_buffer_slice2(const byte_buffer_slice2&) noexcept = default;
+  byte_buffer_slice2(byte_buffer_slice2&&) noexcept               = default;
+  byte_buffer_slice2(span<const uint8_t> bytes) : byte_buffer_slice2(byte_buffer2{bytes}) {}
+  byte_buffer_slice2(std::initializer_list<uint8_t> bytes) : byte_buffer_slice2(byte_buffer2{bytes}) {}
+  byte_buffer_slice2(byte_buffer2&& buf_) : buf(std::move(buf_)), sliced_view(buf) {}
+  byte_buffer_slice2(const byte_buffer2& buf_) : buf(buf_.copy()), sliced_view(buf) {}
+  byte_buffer_slice2(const byte_buffer2& buf_, size_t offset, size_t length) :
+    buf(buf_.copy()), sliced_view(buf, offset, length)
+  {
+  }
+  byte_buffer_slice2(const byte_buffer2& buf_, byte_buffer_view2 view) : buf(buf_.copy()), sliced_view(view)
+  {
+    srsran_sanity_check(view.begin() - byte_buffer_view2{buf}.begin() < (int)buf.length(),
+                        "byte_buffer_view2 is not part of the owned byte_buffer");
+  }
+
+  /// Copy assignment is disabled. Use std::move or .copy() instead
+  byte_buffer_slice2& operator=(const byte_buffer_slice2&) noexcept = delete;
+
+  /// Move assignment of byte_buffer_slice2. It avoids unnecessary reference counting increment.
+  byte_buffer_slice2& operator=(byte_buffer_slice2&& other) noexcept = default;
+
+  /// Performs a shallow copy. Nested segment reference counter is incremented.
+  byte_buffer_slice2 copy() const { return byte_buffer_slice2{*this}; }
+
+  void clear()
+  {
+    buf.clear();
+    sliced_view = {};
+  }
+
+  /// Converts to non-owning byte buffer view.
+  byte_buffer_view2 view() const { return sliced_view; }
+  explicit          operator byte_buffer_view2() const { return sliced_view; }
+
+  /// Returns another owning sub-view with dimensions specified in arguments.
+  byte_buffer_slice2 make_slice(size_t offset, size_t size) const
+  {
+    srsran_assert(offset + size <= length(), "Invalid view dimensions.");
+    return {buf, sliced_view.view(offset, size)};
+  }
+
+  /// Advances slice by provided offset. The length of the slice gets automatically reduced by the provided offset.
+  byte_buffer_slice2& advance(size_t offset)
+  {
+    sliced_view = byte_buffer_view2{sliced_view.begin() + offset, sliced_view.end()};
+    return *this;
+  }
+
+  bool   empty() const { return sliced_view.empty(); }
+  size_t length() const { return sliced_view.length(); }
+
+  const uint8_t& operator[](size_t idx) const { return sliced_view[idx]; }
+
+  iterator       begin() { return sliced_view.begin(); }
+  const_iterator begin() const { return sliced_view.begin(); }
+  iterator       end() { return sliced_view.end(); }
+  const_iterator end() const { return sliced_view.end(); }
+
+  /// Returns a non-owning list of segments that compose the byte_buffer.
+  const_byte_buffer_segment_span_range segments() const { return sliced_view.segments(); }
+
+  /// \brief Equality comparison between byte buffer slice and another range.
+  template <typename T>
+  friend bool operator==(const byte_buffer_slice2& lhs, const T& r)
+  {
+    return detail::compare_byte_buffer_range(lhs, r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator==(const T& r, const byte_buffer_slice2& rhs)
+  {
+    return detail::compare_byte_buffer_range(rhs, r);
+  }
+  template <typename T>
+  friend bool operator!=(const byte_buffer_slice2& lhs, const T& r)
+  {
+    return not(lhs == r);
+  }
+  template <typename T, std::enable_if_t<not is_byte_buffer_range<T>::value, int> = 0>
+  friend bool operator!=(const T& r, const byte_buffer_slice2& rhs)
+  {
+    return not(rhs == r);
+  }
+
+private:
+  byte_buffer2      buf;
+  byte_buffer_view2 sliced_view;
+};
+
+inline void byte_buffer2::append(const byte_buffer_slice2& slice)
+{
+  append(slice.view());
+}
 
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
 inline byte_buffer2 make_byte_buffer(const std::string& hex_str)

@@ -28,6 +28,8 @@ static_assert(std::is_same<byte_buffer2::value_type, uint8_t>::value, "Invalid v
 static_assert(std::is_same<byte_buffer2::iterator::value_type, uint8_t>::value, "Invalid valid_type");
 static_assert(is_byte_buffer_range<byte_buffer2>::value, "Invalid metafunction is_byte_buffer_range");
 
+static_assert(is_byte_buffer_range<byte_buffer_slice2>::value, "Invalid metafunction is_byte_buffer_range");
+
 // Performs several checks that ensure the valid state of the byte_buffer2 length.
 // Note1: the byte_buffer2::iterator operator- sums the lengths of the byte_buffer2 individual segments.
 // Note2: std::distance counts the number of iterations between begin() and end().
@@ -441,7 +443,7 @@ TEST_P(three_vector_size_param_test, shallow_copy_reserve_prepend_and_append_kee
   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer2::length() got corrupted";
 }
 
-TEST(byte_buffer_test, is_contiguous)
+TEST(byte_buffer2_test, is_contiguous)
 {
   byte_buffer2         pdu;
   std::vector<uint8_t> bytes        = test_rgen::random_vector<uint8_t>(small_vec_size);
@@ -702,16 +704,16 @@ TEST(byte_buffer2_test, append_rvalue_byte_buffer)
   ASSERT_EQ(pdu, bytes_concat2);
 }
 
-INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+INSTANTIATE_TEST_SUITE_P(byte_buffer2_test,
                          one_vector_size_param_test,
                          ::testing::Values(small_vec_size, large_vec_size, random_vec_size()));
 
-INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+INSTANTIATE_TEST_SUITE_P(byte_buffer2_test,
                          two_vector_size_param_test,
                          ::testing::Combine(::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
                                             ::testing::Values(small_vec_size, large_vec_size, random_vec_size())));
 
-INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+INSTANTIATE_TEST_SUITE_P(byte_buffer2_test,
                          three_vector_size_param_test,
                          ::testing::Combine(::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
                                             ::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
@@ -770,3 +772,5 @@ TEST(byte_buffer_view2_test, segment_iterator)
   }
   ASSERT_EQ(seg_offset, last_offset);
 }
+
+///////////////////////// byte_buffer_slice_test //////////////////////////////
