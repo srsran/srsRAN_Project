@@ -773,6 +773,138 @@ TEST(byte_buffer_view_test, segment_iterator)
   ASSERT_EQ(seg_offset, last_offset);
 }
 
+///////////////////////// byte_buffer_slice_test //////////////////////////////
+
+TEST(byte_buffer_slice_test, empty_slice_is_in_valid_state)
+{
+  byte_buffer_slice2 pkt;
+
+  ASSERT_TRUE(pkt.empty());
+  ASSERT_EQ(0, pkt.length());
+  ASSERT_EQ(pkt.begin(), pkt.end());
+}
+
+TEST(byte_buffer_slice_test, ctor_with_span)
+{
+  std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
+  byte_buffer_slice2   slice(vec);
+
+  ASSERT_EQ_LEN(slice, vec.size());
+  // Test operator[].
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    ASSERT_EQ(vec[i], slice[i]);
+  }
+  // Test iterator.
+  ASSERT_TRUE(std::equal(slice.begin(), slice.end(), vec.begin(), vec.end()));
+  unsigned count = 0;
+  for (uint8_t b : slice) {
+    ASSERT_EQ(vec[count++], b);
+  }
+  // Test operator==.
+  ASSERT_EQ(slice, vec);
+}
+
+TEST(byte_buffer_slice_test, shallow_copy)
+{
+  std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, large_vec_size));
+  byte_buffer2         pdu(vec);
+
+  byte_buffer_slice2 slice{pdu.copy()};
+
+  // Test operator==.
+  ASSERT_EQ_LEN(slice, vec.size());
+  ASSERT_EQ(slice, pdu);
+  ASSERT_EQ(pdu, slice);
+  ASSERT_EQ(slice, vec);
+  ASSERT_EQ(vec, slice);
+
+  // slice gets altered because it is a shallow copy.
+  pdu[0]++;
+  ASSERT_EQ(pdu, slice);
+  ASSERT_NE(slice, vec);
+
+  // Test slice doesn't get altered by underlying byte_buffer extension.
+  // pdu.append(1);
+  // ASSERT_NE(slice.length(), pdu.length());
+  // ASSERT_NE(slice, pdu);
+  // byte_buffer_view v{pdu, 0, pdu.length() - 1};
+  // TESTASSERT(slice == v);
+  // TODO: Fix.
+}
+
+TEST(byte_buffer_slice_test, deep_slice)
+{
+  std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
+  byte_buffer2         pdu{vec};
+
+  byte_buffer_slice2 slice{pdu.deep_copy()};
+
+  // Test operator[].
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    ASSERT_EQ(vec[i], slice[i]);
+  }
+
+  // Test iterator.
+  ASSERT_NE(slice.begin(), slice.end());
+  unsigned count = 0;
+  for (uint8_t v : slice) {
+    ASSERT_EQ(vec[count++], v);
+  }
+  ASSERT_EQ(vec.size(), count);
+
+  // Test operator==.
+  ASSERT_EQ(slice, pdu);
+  ASSERT_EQ(pdu, slice);
+  ASSERT_EQ(slice, vec);
+
+  // Test slice doesn't get altered by underlying byte_buffer extension.
+  pdu.append(1);
+  ASSERT_NE(slice, pdu);
+  byte_buffer_view2 v{pdu, 0, pdu.length() - 1};
+  ASSERT_EQ(slice, v);
+
+  // Test that slice is a shallow copy.
+  *pdu.begin() = 255U;
+  ASSERT_NE(slice, pdu);
+  ASSERT_EQ(slice, vec);
+}
+
+TEST(byte_buffer_slice_test, move_ctor)
+{
+  std::vector<uint8_t> vec = test_rgen::random_vector<uint8_t>(random_vec_size());
+  byte_buffer2         pdu{vec};
+
+  byte_buffer_slice2 slice{std::move(pdu)};
+  ASSERT_TRUE(pdu.empty());
+
+  // Test operator[].
+  for (unsigned i = 0; i < vec.size(); ++i) {
+    ASSERT_EQ(vec[i], slice[i]);
+  }
+
+  // Test iterator.
+  ASSERT_NE(slice.begin(), slice.end());
+  unsigned count = 0;
+  for (uint8_t v : slice) {
+    ASSERT_EQ(vec[count++], v);
+  }
+  ASSERT_EQ(vec.size(), count);
+
+  // Test operator==.
+  ASSERT_EQ(slice, vec);
+}
+
+TEST(byte_buffer_slice_test, formatter)
+{
+  byte_buffer2         pdu;
+  std::vector<uint8_t> bytes = {1, 2, 3, 4, 15, 16, 255};
+  pdu.append(bytes);
+  byte_buffer_slice2 slice{std::move(pdu), 1, 4};
+
+  std::string result = fmt::format("{}", slice);
+  ASSERT_EQ("02 03 04 0f", result);
+}
+
 ///////////////////////// byte_buffer_reader_test //////////////////////////////
 
 TEST(byte_buffer_reader_test, split_advance)

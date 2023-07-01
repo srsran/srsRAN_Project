@@ -748,9 +748,13 @@ public:
   using iterator       = byte_buffer_view2::iterator;
   using const_iterator = byte_buffer_view2::const_iterator;
 
-  byte_buffer_slice2()                                            = default;
+  /// Constructs an empty byte_buffer_slice.
+  byte_buffer_slice2() = default;
+
+  /// Copy-construction of a byte_buffer_slice is a shallow copy of the underlying byte_buffer.
   explicit byte_buffer_slice2(const byte_buffer_slice2&) noexcept = default;
-  byte_buffer_slice2(byte_buffer_slice2&&) noexcept               = default;
+
+  byte_buffer_slice2(byte_buffer_slice2&&) noexcept = default;
   byte_buffer_slice2(span<const uint8_t> bytes) : byte_buffer_slice2(byte_buffer2{bytes}) {}
   byte_buffer_slice2(std::initializer_list<uint8_t> bytes) : byte_buffer_slice2(byte_buffer2{bytes}) {}
   byte_buffer_slice2(byte_buffer2&& buf_) : buf(std::move(buf_)), sliced_view(buf) {}
@@ -1064,6 +1068,17 @@ struct formatter<srsran::byte_buffer2> {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
     }
     return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+/// \brief Custom formatter for byte_buffer_slice.
+template <>
+struct formatter<srsran::byte_buffer_slice2> : public formatter<srsran::byte_buffer_view2> {
+  template <typename FormatContext>
+  auto format(const srsran::byte_buffer_slice2& buf, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return formatter<srsran::byte_buffer_view2>::format(buf.view(), ctx);
   }
 };
 
