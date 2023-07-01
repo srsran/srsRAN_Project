@@ -18,8 +18,6 @@ add_test(interval_test interval_test)
 
 add_executable(byte_buffer_test
         byte_buffer_segment_test.cpp
-        byte_buffer_segment2_test.cpp
-        byte_buffer2_test.cpp
         byte_buffer_test.cpp
         byte_buffer_slice_test.cpp
         byte_buffer_slice_chain_test.cpp)
