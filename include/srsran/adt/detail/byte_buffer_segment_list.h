@@ -256,15 +256,18 @@ public:
   {
   }
 
+  /// Access span of bytes representing the payload of the current segment.
   reference operator*()
   {
-    return reference{current_segment->data() + offset,
-                     std::min(rem_bytes, (unsigned)current_segment->length() - offset)};
+    return current_segment != nullptr ? reference{current_segment->data() + offset,
+                                                  std::min(rem_bytes, (unsigned)current_segment->length() - offset)}
+                                      : reference{};
   }
   reference operator*() const
   {
-    return reference{current_segment->data() + offset,
-                     std::min(rem_bytes, (unsigned)current_segment->length() - offset)};
+    return current_segment != nullptr ? reference{current_segment->data() + offset,
+                                                  std::min(rem_bytes, (unsigned)current_segment->length() - offset)}
+                                      : reference{};
   }
   pointer operator->() { return pointer{this->operator*()}; }
   pointer operator->() const { return pointer{this->operator*()}; }
@@ -334,11 +337,18 @@ private:
   iterator begin_;
 };
 
+} // namespace detail
+
 /// Range of byte spans belonging to a byte_buffer_segment_list.
 using byte_buffer_segment_span_range =
-    byte_buffer_segment_list_span_range_impl<detail::byte_buffer_segment_list::node_t>;
+    detail::byte_buffer_segment_list_span_range_impl<detail::byte_buffer_segment_list::node_t>;
 using const_byte_buffer_segment_span_range =
-    byte_buffer_segment_list_span_range_impl<const detail::byte_buffer_segment_list::node_t>;
+    detail::byte_buffer_segment_list_span_range_impl<const detail::byte_buffer_segment_list::node_t>;
 
-} // namespace detail
+/// \brief Checks whether a type represents a range of byte_buffer_iterators (e.g. byte_buffer, byte_buffer_slice,
+/// byte_buffer_view).
+template <typename ByteBufferType>
+using is_byte_buffer_range =
+    std::is_same<typename ByteBufferType::iterator, detail::byte_buffer_segment_list_byte_iterator>;
+
 } // namespace srsran
