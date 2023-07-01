@@ -19,7 +19,7 @@ namespace srsran {
 
 /// \brief Non-owning view to a byte sequence.
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
-/// memory chunks, aka byte buffer segments.
+/// byte buffer segments, where each segment contains a span of bytes.
 class byte_buffer_view2
 {
   /// Checks whether type is a byte_buffer/byte_buffer_slice2.
@@ -842,6 +842,88 @@ inline void byte_buffer2::append(const byte_buffer_slice2& slice)
 {
   append(slice.view());
 }
+
+/// Used to read a range of bytes stored in a byte_buffer.
+class byte_buffer_reader2 : private byte_buffer_view2
+{
+public:
+  using byte_buffer_view2::begin;
+  using byte_buffer_view2::byte_buffer_view2;
+  using byte_buffer_view2::empty;
+  using byte_buffer_view2::end;
+  using byte_buffer_view2::length;
+
+  byte_buffer_reader2(const byte_buffer_view2& other) : byte_buffer_view2(other) {}
+
+  /// Obtain a range view to the bytes pointed by the reader.
+  byte_buffer_view2 view() const { return {it, it_end}; }
+
+  const uint8_t& operator*() const { return *it; }
+
+  const_iterator operator++() { return ++it; }
+
+  /// Advance reader by offset bytes. Returns an iterator to new position.
+  const_iterator operator+=(size_t offset) { return it += offset; }
+
+  /// Advance offset bytes and returns view to skipped bytes.
+  byte_buffer_view2 split_and_advance(size_t offset)
+  {
+    auto prev_it = it;
+    it += offset;
+    return {prev_it, it};
+  }
+};
+
+/// Used to write into a range of bytes stored in a byte_buffer.
+class byte_buffer_writer
+{
+public:
+  byte_buffer_writer(byte_buffer2& other) : buffer(&other) {}
+
+  /// Obtain a range view to the bytes pointed by the reader.
+  byte_buffer_view2 view() const { return *buffer; }
+
+  /// Appends bytes.
+  void append(byte_buffer_view2 bytes)
+  {
+    // TODO: do batch append.
+    for (uint8_t byte : bytes) {
+      buffer->append(byte);
+    }
+  }
+
+  /// Appends initializer list of bytes.
+  void append(const std::initializer_list<uint8_t>& bytes)
+  {
+    buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
+  }
+
+  /// Appends span of bytes.
+  void append(span<const uint8_t> bytes) { buffer->append(bytes); }
+
+  /// Appends single byte.
+  void append(uint8_t byte) { buffer->append(byte); }
+
+  void append_zeros(size_t nof_zeros)
+  {
+    // TODO: optimize.
+    for (size_t i = 0; i < nof_zeros; ++i) {
+      buffer->append(0);
+    }
+  }
+
+  /// Checks last appended byte.
+  uint8_t& back() { return buffer->back(); }
+
+  /// Number of bytes in the byte_buffer.
+  size_t length() const { return buffer->length(); }
+
+  /// Checks whether any byte has been written.
+  bool empty() const { return buffer->empty(); }
+
+private:
+  byte_buffer2* buffer;
+};
 
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
 inline byte_buffer2 make_byte_buffer(const std::string& hex_str)
