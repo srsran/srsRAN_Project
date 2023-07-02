@@ -151,6 +151,86 @@ class byte_buffer
     }
   };
 
+  /// \brief Linear allocator for memory_block obtained from byte_buffer_segment_pool.
+  struct memory_arena_linear_allocator {
+    /// Pointer to the memory block obtained from byte_buffer_segment_pool.
+    void* mem_block = nullptr;
+    /// Offset in bytes from the beginning of the memory block, determining where the next allocation will be made.
+    size_t offset = 0;
+
+    memory_arena_linear_allocator() noexcept :
+      mem_block([]() {
+        static auto& pool = detail::get_default_byte_buffer_segment_pool();
+        return pool.allocate_node(pool.memory_block_size());
+      }())
+    {
+    }
+
+    void* allocate(size_t sz, size_t al) noexcept
+    {
+      void* p = align_next(static_cast<char*>(mem_block) + offset, al);
+      offset  = (static_cast<char*>(p) - static_cast<char*>(mem_block)) + sz;
+      return p;
+    }
+
+    bool empty() const { return mem_block == nullptr; }
+
+    size_t space_left() const { return detail::get_default_byte_buffer_segment_pool().memory_block_size() - offset; }
+  };
+
+  /// Allocator for byte_buffer control_block that will leverage the \c memory_arena_linear_allocator.
+  template <typename T>
+  struct control_block_allocator {
+  public:
+    using value_type = T;
+
+    template <typename U>
+    struct rebind {
+      typedef control_block_allocator<U> other;
+    };
+
+    control_block_allocator(memory_arena_linear_allocator& arena_) noexcept : arena(&arena_) {}
+
+    control_block_allocator(const control_block_allocator<T>& other) noexcept = default;
+
+    template <typename U, std::enable_if_t<not std::is_same<U, T>::value, int> = 0>
+    control_block_allocator(const control_block_allocator<U>& other) noexcept : arena(other.arena)
+    {
+    }
+
+    control_block_allocator& operator=(const control_block_allocator<T>& other) noexcept = default;
+
+    value_type* allocate(size_t n) noexcept
+    {
+      srsran_sanity_check(n == 1, "control_block_allocator can only allocate one control block at a time.");
+      srsran_sanity_check(not arena->empty(), "Memory arena is empty");
+      srsran_assert(arena->space_left() >= sizeof(value_type),
+                    "control_block_allocator memory block size is too small.");
+
+      return static_cast<value_type*>(arena->allocate(sizeof(value_type), alignof(std::max_align_t)));
+    }
+
+    void deallocate(value_type* p, size_t n) noexcept
+    {
+      // Note: at this stage the arena ptr is probably dangling. Do not touch it.
+
+      static auto& pool = detail::get_default_byte_buffer_segment_pool();
+
+      srsran_assert(n == 1, "control_block_allocator can only deallocate one control block at a time.");
+
+      pool.deallocate_node(static_cast<void*>(p));
+    }
+
+    bool operator==(const control_block_allocator& other) const { return arena == other.arena; }
+    bool operator!=(const control_block_allocator& other) const { return !(*this == other); }
+
+  private:
+    template <typename U>
+    friend struct control_block_allocator;
+
+    memory_arena_linear_allocator* arena;
+  };
+
   /// Headroom given to the first segment of the byte_buffer.
   constexpr static size_t DEFAULT_FIRST_SEGMENT_HEADROOM = 16;
 
@@ -636,25 +716,22 @@ private:
     static auto&        pool       = detail::get_default_byte_buffer_segment_pool();
     static const size_t block_size = pool.memory_block_size();
 
-    // Allocate memory block.
-    void* memblock = pool.allocate_node(block_size);
-    if (memblock == nullptr) {
-      warn_alloc_failure();
+    // Create control block using allocator.
+    memory_arena_linear_allocator arena;
+    if (arena.empty()) {
+      byte_buffer::warn_alloc_failure();
+      return nullptr;
+    }
+    ctrl_blk_ptr = std::allocate_shared<control_block>(control_block_allocator<control_block>{arena});
+    if (ctrl_blk_ptr == nullptr) {
       return nullptr;
     }
 
-    // Create control block.
-    ctrl_blk_ptr = std::shared_ptr<control_block>(new (memblock) control_block(), [](control_block* p) {
-      if (p != nullptr) {
-        p->~control_block();
-        pool.deallocate_node(static_cast<void*>(p));
-      }
-    });
-
     // For first segment of byte_buffer, add a headroom.
-    void*   segment_start = align_next(static_cast<char*>(memblock) + sizeof(control_block), alignof(node_t));
-    void*   payload_start = static_cast<char*>(segment_start) + sizeof(node_t);
-    size_t  segment_size  = block_size - (static_cast<char*>(payload_start) - static_cast<char*>(memblock));
+    void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+    srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
+    size_t  segment_size  = block_size - arena.offset;
+    void*   payload_start = arena.allocate(segment_size, 1);
     node_t* node          = new (segment_start)
         node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
 
@@ -670,14 +747,16 @@ private:
     static const size_t block_size = pool.memory_block_size();
 
     // Allocate memory block.
-    void* memblock = pool.allocate_node(block_size);
-    if (memblock == nullptr) {
-      warn_alloc_failure();
+    memory_arena_linear_allocator arena;
+    if (arena.empty()) {
+      byte_buffer::warn_alloc_failure();
       return nullptr;
     }
-    void*  payload_start = static_cast<char*>(memblock) + sizeof(node_t);
-    size_t segment_size  = block_size - (static_cast<char*>(payload_start) - static_cast<char*>(memblock));
-    return new (memblock)
+    void* segment_start = arena.allocate(sizeof(node_t), alignof(node_t));
+    srsran_assert(block_size > arena.offset, "The memory block provided by the pool is too small");
+    size_t segment_size  = block_size - arena.offset;
+    void*  payload_start = arena.allocate(segment_size, 1);
+    return new (segment_start)
         node_t(span<uint8_t>{static_cast<uint8_t*>(payload_start), segment_size}, std::min(headroom, segment_size));
   }
 
@@ -725,13 +804,14 @@ private:
     ctrl_blk_ptr->destroy_node(tail);
   }
 
-  void warn_alloc_failure() const
+  static void warn_alloc_failure()
   {
     static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
     logger.warning("POOL: Failure to allocate byte buffer segment");
   }
 
-  // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
+  // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need. It is also hard to determine the size
+  // of the shared_ptr control block allocation and how much we need to discount in the segment.
   std::shared_ptr<control_block> ctrl_blk_ptr = nullptr;
 };
 
