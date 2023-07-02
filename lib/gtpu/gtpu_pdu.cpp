@@ -84,7 +84,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_
     }
   }
 
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
   return true;
 }
 

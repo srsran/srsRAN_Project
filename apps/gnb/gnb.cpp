@@ -181,7 +181,7 @@ int main(int argc, char** argv)
   enable_backtrace();
 
   // Setup size of byte buffer pool.
-  init_byte_buffer_segment_pool(524288);
+  init_byte_buffer_segment_pool(262144);
 
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");

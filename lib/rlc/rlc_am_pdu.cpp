@@ -457,7 +457,7 @@ bool rlc_am_status_pdu::pack_12bit(byte_buffer& pdu) const
       }
     }
   }
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
   return true;
 }
 
@@ -506,7 +506,7 @@ bool rlc_am_status_pdu::pack_18bit(byte_buffer& pdu) const
     }
   }
 
-  pdu.chain_before(std::move(hdr_buf));
+  pdu.prepend(std::move(hdr_buf));
   return true;
 }
 

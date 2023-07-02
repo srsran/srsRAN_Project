@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/adt/detail/byte_buffer_segment2.h"
+#include "srsran/adt/detail/byte_buffer_segment.h"
 #include "srsran/adt/detail/byte_buffer_segment_list.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -20,20 +20,20 @@ using namespace detail;
 
 TEST(byte_buffer_segment_test, default_ctor)
 {
-  byte_buffer_segment2 segment;
+  byte_buffer_segment segment;
   ASSERT_TRUE(segment.empty());
   ASSERT_EQ(segment.length(), 0);
   ASSERT_EQ(segment.capacity(), 0);
   ASSERT_EQ(segment.headroom(), 0);
   ASSERT_EQ(segment.tailroom(), 0);
   ASSERT_EQ(segment.begin(), segment.end());
-  ASSERT_EQ(segment, byte_buffer_segment2{});
+  ASSERT_EQ(segment, byte_buffer_segment{});
 }
 
 TEST(byte_buffer_segment_test, segment_with_no_data)
 {
   std::vector<uint8_t> buffer(1024);
-  byte_buffer_segment2 segment{buffer, 16}, segment2{buffer, 15};
+  byte_buffer_segment  segment{buffer, 16}, segment2{buffer, 15};
   ASSERT_TRUE(segment.empty());
   ASSERT_EQ(0, segment.length());
   ASSERT_EQ(segment.capacity(), buffer.size());
@@ -47,7 +47,7 @@ TEST(byte_buffer_segment_test, segment_with_no_data)
 TEST(byte_buffer_segment_test, append_bytes_on_empty_buffer)
 {
   std::vector<uint8_t>       buffer(1024);
-  byte_buffer_segment2       segment{buffer, 16};
+  byte_buffer_segment        segment{buffer, 16};
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
 
   segment.append(bytes);
@@ -60,7 +60,7 @@ TEST(byte_buffer_segment_test, append_bytes_on_empty_buffer)
 TEST(byte_buffer_segment_test, prepend_bytes_on_empty_buffer)
 {
   std::vector<uint8_t> buffer(1024);
-  byte_buffer_segment2 segment{buffer, 16};
+  byte_buffer_segment  segment{buffer, 16};
 
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.prepend(bytes);
@@ -72,7 +72,7 @@ TEST(byte_buffer_segment_test, prepend_bytes_on_empty_buffer)
 TEST(byte_buffer_segment_test, multiple_appends)
 {
   std::vector<uint8_t> buffer(1024);
-  byte_buffer_segment2 segment{buffer, 16};
+  byte_buffer_segment  segment{buffer, 16};
   std::vector<uint8_t> tot_bytes;
 
   for (unsigned i = 0; i != 5; ++i) {
@@ -86,7 +86,7 @@ TEST(byte_buffer_segment_test, multiple_appends)
 TEST(byte_buffer_segment_test, trim_head)
 {
   std::vector<uint8_t>       buffer(1024);
-  byte_buffer_segment2       segment{buffer, 16};
+  byte_buffer_segment        segment{buffer, 16};
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
@@ -99,7 +99,7 @@ TEST(byte_buffer_segment_test, trim_head)
 TEST(byte_buffer_segment_test, trim_tail)
 {
   std::vector<uint8_t>       buffer(1024);
-  byte_buffer_segment2       segment{buffer, 16};
+  byte_buffer_segment        segment{buffer, 16};
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
@@ -112,11 +112,11 @@ TEST(byte_buffer_segment_test, trim_tail)
 TEST(byte_buffer_segment_test, copy_ctor)
 {
   std::vector<uint8_t>       buffer(1024);
-  byte_buffer_segment2       segment{buffer, 16};
+  byte_buffer_segment        segment{buffer, 16};
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
-  byte_buffer_segment2 segment2 = segment;
+  byte_buffer_segment segment2 = segment;
   ASSERT_EQ(segment2, segment);
   ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
 
@@ -132,11 +132,11 @@ TEST(byte_buffer_segment_test, copy_ctor)
 TEST(byte_buffer_segment_test, move_ctor)
 {
   std::vector<uint8_t>       buffer(1024);
-  byte_buffer_segment2       segment{buffer, 32};
+  byte_buffer_segment        segment{buffer, 32};
   const std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(6);
   segment.append(bytes);
 
-  byte_buffer_segment2 segment2 = std::move(segment);
+  byte_buffer_segment segment2 = std::move(segment);
   ASSERT_EQ(segment, segment2);
   ASSERT_TRUE(std::equal(segment2.begin(), segment2.end(), bytes.begin(), bytes.end()));
 }

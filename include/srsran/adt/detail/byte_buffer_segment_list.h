@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/detail/byte_buffer_segment2.h"
+#include "srsran/adt/detail/byte_buffer_segment.h"
 
 namespace srsran {
 namespace detail {
@@ -20,10 +20,10 @@ class byte_buffer_segment_list
 {
 public:
   /// \brief Node of the linked list containing a byte_buffer_segment and next pointer.
-  struct node_t : public byte_buffer_segment2 {
+  struct node_t : public byte_buffer_segment {
     node_t* next = nullptr;
 
-    using byte_buffer_segment2::byte_buffer_segment2;
+    using byte_buffer_segment::byte_buffer_segment;
   };
 
   /// First segment of the linked list of segments.
