@@ -86,15 +86,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
       const search_space_configuration& ss_cfg =
           cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
               .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id];
-      unsigned coreset_duration = 0;
-      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value() and
-          ss_cfg.cs_id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id) {
-        coreset_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
-      }
-      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value() and
-          ss_cfg.cs_id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->id) {
-        coreset_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->duration;
-      }
+      const unsigned coreset_duration = cell_cfg.get_common_coreset(ss_cfg.cs_id).duration;
       // Ensure slot has enough DL symbols for CORESET.
       if (cell_cfg.get_nof_dl_symbol_per_slot(sl_point) < ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
         logger.error(
