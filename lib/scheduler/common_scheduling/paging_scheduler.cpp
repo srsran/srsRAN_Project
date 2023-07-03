@@ -262,7 +262,8 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
 
   // - [Implementation defined] PDCCH Monitoring Occasions (PMO) are pre-computed over max of nof. slots in radio frame
   // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
-  const auto periodicity_in_slots = std::max(ss_cfg.monitoring_slot_period(), pdcch_slot.nof_slots_per_frame());
+  const auto periodicity_in_slots =
+      std::max(ss_cfg.get_monitoring_slot_periodicity(), pdcch_slot.nof_slots_per_frame());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -468,9 +469,9 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
 
 void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)
 {
-  const auto& ss_periodicity = ss_cfg.monitoring_slot_period();
-  const auto& ss_slot_offset = ss_cfg.monitoring_slot_offset();
-  const auto& ss_duration    = ss_cfg.duration();
+  const auto& ss_periodicity = ss_cfg.get_monitoring_slot_periodicity();
+  const auto& ss_slot_offset = ss_cfg.get_monitoring_slot_offset();
+  const auto& ss_duration    = ss_cfg.get_duration();
 
   std::vector<slot_point> pdcch_monitoring_occasions;
   // Initialize slot point to 0.

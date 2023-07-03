@@ -136,15 +136,18 @@ static check_outcome is_search_space_valid(const search_space_configuration& ss_
   CHECK_EQ_OR_BELOW(ss_cfg.cs_id, srsran::MAX_CORESET_ID, "SearchSpace#{} CORESET ID", ss_cfg.id);
   bool valid_period =
       is_valid_enum_number<asn1::rrc_nr::search_space_s::monitoring_slot_periodicity_and_offset_c_::types>(
-          ss_cfg.monitoring_slot_period());
-  CHECK_TRUE(valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.id, ss_cfg.monitoring_slot_period());
-  CHECK_BELOW(ss_cfg.monitoring_slot_offset(),
-              ss_cfg.monitoring_slot_period(),
+          ss_cfg.get_monitoring_slot_periodicity());
+  CHECK_TRUE(
+      valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.id, ss_cfg.get_monitoring_slot_periodicity());
+  CHECK_BELOW(ss_cfg.get_monitoring_slot_offset(),
+              ss_cfg.get_monitoring_slot_periodicity(),
               "SearchSpace#{} monitoring slot offset",
               ss_cfg.id);
-  CHECK_EQ_OR_BELOW(
-      ss_cfg.duration(), ss_cfg.monitoring_slot_period(), "SearchSpace#{} monitoring slot duration", ss_cfg.id);
-  CHECK_NEQ(ss_cfg.duration(), 0, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
+  CHECK_EQ_OR_BELOW(ss_cfg.get_duration(),
+                    ss_cfg.get_monitoring_slot_periodicity(),
+                    "SearchSpace#{} monitoring slot duration",
+                    ss_cfg.id);
+  CHECK_NEQ(ss_cfg.get_duration(), 0, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
   return {};
 }
 

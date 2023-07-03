@@ -164,7 +164,7 @@ srsran::config_helpers::make_default_search_space_zero_config(const cell_config_
   search_space_configuration cfg{};
   cfg.id    = to_search_space_id(0);
   cfg.cs_id = to_coreset_id(0);
-  cfg.set_ss0_monitoring_slot_period(params);
+  cfg.set_ss0_monitoring_slot_periodicity(params);
   cfg.set_ss0_monitoring_slot_offset(params);
   cfg.set_ss0_duration();
   cfg.set_ss0_monitoring_symbols_within_slot(params);
@@ -181,8 +181,8 @@ srsran::config_helpers::make_default_common_search_space_config(const cell_confi
   search_space_configuration cfg{};
   cfg.id    = to_search_space_id(1);
   cfg.cs_id = to_coreset_id(0);
-  cfg.set_non_ss0_monitoring_slot_period(1);
-  cfg.set_non_ss0_monitoring_slot_offset(0);
+  cfg.set_non_ss0_monitoring_slot_periodicity(1);
+  cfg.set_non_ss0_monitoring_slot_offset(0, params.scs_common);
   cfg.set_non_ss0_duration(1);
   std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
   monitoring_symbols_within_slot.set(monitoring_symbols_within_slot.size() - 1, true);

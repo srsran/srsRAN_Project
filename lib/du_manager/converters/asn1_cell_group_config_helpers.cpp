@@ -51,64 +51,64 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
   ss.coreset_id                                     = cfg.cs_id;
   ss.monitoring_slot_periodicity_and_offset_present = true;
   search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
-  bool success = asn1::number_to_enum(period, cfg.monitoring_slot_period());
+  bool success = asn1::number_to_enum(period, cfg.get_monitoring_slot_periodicity());
   srsran_assert(success, "Invalid slot period");
   ss.monitoring_slot_periodicity_and_offset.set(period);
   switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2:
-      ss.monitoring_slot_periodicity_and_offset.sl2() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl2() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl4:
-      ss.monitoring_slot_periodicity_and_offset.sl4() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl4() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl5:
-      ss.monitoring_slot_periodicity_and_offset.sl5() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl5() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl8:
-      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl10:
-      ss.monitoring_slot_periodicity_and_offset.sl10() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl10() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl16:
-      ss.monitoring_slot_periodicity_and_offset.sl16() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl16() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl20:
-      ss.monitoring_slot_periodicity_and_offset.sl20() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl20() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl40:
-      ss.monitoring_slot_periodicity_and_offset.sl40() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl40() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl80:
-      ss.monitoring_slot_periodicity_and_offset.sl80() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl80() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl160:
-      ss.monitoring_slot_periodicity_and_offset.sl160() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl160() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl320:
-      ss.monitoring_slot_periodicity_and_offset.sl320() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl320() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl640:
-      ss.monitoring_slot_periodicity_and_offset.sl640() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl640() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1280:
-      ss.monitoring_slot_periodicity_and_offset.sl1280() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl1280() = cfg.get_monitoring_slot_offset();
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2560:
-      ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset();
+      ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.get_monitoring_slot_offset();
       break;
     default:
-      srsran_assertion_failure("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset());
+      srsran_assertion_failure("Invalid PDCCH slot offset={}", cfg.get_monitoring_slot_offset());
   }
-  if (cfg.duration() != 1) {
+  if (cfg.get_duration() != 1) {
     ss.dur_present = true;
-    ss.dur         = cfg.duration();
+    ss.dur         = cfg.get_duration();
   }
-  if (cfg.monitoring_symbols_within_slot().any()) {
+  if (cfg.get_monitoring_symbols_within_slot().any()) {
     ss.monitoring_symbols_within_slot_present = true;
-    ss.monitoring_symbols_within_slot.from_number(cfg.monitoring_symbols_within_slot().to_ulong());
+    ss.monitoring_symbols_within_slot.from_number(cfg.get_monitoring_symbols_within_slot().to_ulong());
   }
   ss.nrof_candidates_present = true;
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.nof_candidates[0]);

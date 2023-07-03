@@ -13,6 +13,7 @@
 #include "pdcch_type0_css_coreset_config.h"
 #include "pdcch_type0_css_occasions.h"
 #include "srsran/adt/optional.h"
+#include "srsran/adt/variant.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/pdcch/coreset.h"
@@ -88,14 +89,9 @@ struct search_space_configuration {
 
   bool operator==(const search_space_configuration& rhs) const
   {
-    return id == rhs.id and cs_id == rhs.cs_id and ss0_monitoring_slot_period == rhs.ss0_monitoring_slot_period and
-           ss0_monitoring_slot_offset == rhs.ss0_monitoring_slot_offset and ss0_duration == rhs.ss0_duration and
-           ss0_monitoring_symbols_within_slot_per_ssb_beam == rhs.ss0_monitoring_symbols_within_slot_per_ssb_beam and
-           other_ss_monitoring_slot_period == rhs.other_ss_monitoring_slot_period and
-           other_ss_monitoring_slot_offset == rhs.other_ss_monitoring_slot_offset and
-           other_ss_duration == rhs.other_ss_duration and
-           other_ss_monitoring_symbols_within_slot == rhs.other_ss_monitoring_symbols_within_slot and
-           nof_candidates == rhs.nof_candidates and type == rhs.type and
+    return id == rhs.id and cs_id == rhs.cs_id and monitoring_slot_periodicity == rhs.monitoring_slot_periodicity and
+           monitoring_slot_offset == rhs.monitoring_slot_offset and duration == rhs.duration and
+           ss_params == rhs.ss_params and nof_candidates == rhs.nof_candidates and type == rhs.type and
            ((type == type_t::common and common == rhs.common) or
             (type == type_t::ue_dedicated and ue_specific == rhs.ue_specific));
   }
@@ -106,16 +102,20 @@ struct search_space_configuration {
     std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
     if (id == search_space_id(0)) {
       // TODO: Revise this when FR2 support is added.
-      // For multiplexing pattern 1, number of entries in Type0-PDCCH CSS monitoring occasion's start symbol field is
-      // greater than 1 only for SearchSpaceZero values of 1, 3, 5, 7 as per TS 38.213, Table 13-11.
-      if (ss0_monitoring_symbols_within_slot_per_ssb_beam.size() > 1) {
-        monitoring_symbols_within_slot =
-            ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx % TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
-      } else {
-        monitoring_symbols_within_slot = ss0_monitoring_symbols_within_slot_per_ssb_beam.front();
-      }
+      srsran_assert(variant_holds_alternative<ss0_params>(ss_params),
+                    "Monitoring symbols within slot not set for SearchSpace#0");
+      const auto& cfg_monitoring_symb_in_slot_per_ssb_beam =
+          variant_get<ss0_params>(ss_params).ss0_monitoring_symbols_within_slot_per_ssb_beam;
+      // As per TS 38.213, Table 13-11.
+      srsran_assert(
+          ssb_beam_idx < cfg_monitoring_symb_in_slot_per_ssb_beam.size(), "Invalid SSB beam index={}", ssb_beam_idx);
+      monitoring_symbols_within_slot = cfg_monitoring_symb_in_slot_per_ssb_beam[ssb_beam_idx];
     } else {
-      monitoring_symbols_within_slot = other_ss_monitoring_symbols_within_slot;
+      srsran_assert(variant_holds_alternative<other_ss_params>(ss_params),
+                    "Monitoring symbols within slot not set for SearchSpace Id > 0");
+      const auto& cfg_monitoring_symb_in_slot_per_ssb_beam =
+          variant_get<other_ss_params>(ss_params).other_ss_monitoring_symbols_within_slot;
+      monitoring_symbols_within_slot = cfg_monitoring_symb_in_slot_per_ssb_beam;
     }
     for (unsigned n = 0; n < monitoring_symbols_within_slot.size(); ++n) {
       if (monitoring_symbols_within_slot.test(monitoring_symbols_within_slot.size() - n - 1)) {
@@ -127,32 +127,26 @@ struct search_space_configuration {
   }
 
   /// \brief Sets the SearchSpace#0 periodicity in number of slots.
-  void set_ss0_monitoring_slot_period(const cell_config_builder_params& params)
+  void set_ss0_monitoring_slot_periodicity(const cell_config_builder_params& params)
   {
     srsran_assert(id == search_space_id(0),
                   "Invalid access to SearchSpace#0 monitoring slot period for a SearchSpace Id > 0");
     // NOTE: Currently, we support only SS/PBCH and CORESET multiplexing pattern 1 where the periodicity of
     // SearchSpace#0 is 20 ms.
     // TODO: Revise the below assignment when other multiplexing patterns are supported.
-    ss0_monitoring_slot_period = get_nof_slots_per_subframe(params.scs_common) * 20;
+    monitoring_slot_periodicity = get_nof_slots_per_subframe(params.scs_common) * 20;
   }
 
   /// \brief Sets the non-SearchSpace#0 periodicity in number of slots.
-  void set_non_ss0_monitoring_slot_period(unsigned monitoring_slot_period)
+  void set_non_ss0_monitoring_slot_periodicity(unsigned periodicity)
   {
     srsran_assert(
         id != search_space_id(0), "Invalid access to SearchSpace#{} monitoring slot period for a SearchSpace#0", id);
-    other_ss_monitoring_slot_period = monitoring_slot_period;
+    monitoring_slot_periodicity = periodicity;
   }
 
   /// \brief Returns the SearchSpace periodicity in number of slots.
-  unsigned monitoring_slot_period() const
-  {
-    if (id == search_space_id(0)) {
-      return ss0_monitoring_slot_period;
-    }
-    return other_ss_monitoring_slot_period;
-  }
+  unsigned get_monitoring_slot_periodicity() const { return monitoring_slot_periodicity; }
 
   /// \brief Sets the SearchSpace#0 slot offset.
   void set_ss0_monitoring_slot_offset(const cell_config_builder_params& params)
@@ -161,29 +155,28 @@ struct search_space_configuration {
                   "Invalid access to SearchSpace#0 monitoring slot offset for a SearchSpace Id > 0");
     const pdcch_type0_css_occasion_pattern1_description ss0_occasion = fetch_ss0_occasion_info(params);
     for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
-      const auto pdcch_slot = srsran::get_type0_pdcch_css_n0(
-          static_cast<unsigned>(ss0_occasion.offset), ss0_occasion.M, params.scs_common, ssb_idx);
-
-      ss0_monitoring_slot_offset.push_back(pdcch_slot);
+      monitoring_slot_offset.push_back(srsran::get_type0_pdcch_css_n0(
+          static_cast<unsigned>(ss0_occasion.offset), ss0_occasion.M, params.scs_common, ssb_idx));
     }
   }
 
   /// \brief Sets the non-SearchSpace#0 slot offset.
-  void set_non_ss0_monitoring_slot_offset(unsigned monitoring_slot_offset)
+  void set_non_ss0_monitoring_slot_offset(unsigned slot_offset, subcarrier_spacing scs_common)
   {
     srsran_assert(
         id != search_space_id(0), "Invalid access to SearchSpace#{} monitoring slot offset for a SearchSpace#0", id);
-    other_ss_monitoring_slot_offset = monitoring_slot_offset;
+    const uint8_t numerology_mu = to_numerology_value(scs_common);
+    monitoring_slot_offset.push_back({numerology_mu, slot_offset});
   }
 
   /// \brief Returns the SearchSpace slot offset.
-  unsigned monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
+  unsigned get_monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
-      srsran_assert(ssb_beam_idx < ss0_monitoring_slot_offset.size(), "Invalid SSB beam index");
-      return ss0_monitoring_slot_offset[ssb_beam_idx].to_uint();
+      srsran_assert(ssb_beam_idx < monitoring_slot_offset.size(), "Invalid SSB beam index={}", ssb_beam_idx);
+      return monitoring_slot_offset[ssb_beam_idx].to_uint();
     }
-    return other_ss_monitoring_slot_offset;
+    return monitoring_slot_offset.back().to_uint();
   }
 
   /// \brief Sets the SearchSpace#0 duration in number of slots.
@@ -193,35 +186,33 @@ struct search_space_configuration {
     // NOTE: Currently, we support only SS/PBCH and CORESET multiplexing pattern 1 where the duration of SearchSpace#0
     // is 2 consecutive slots.
     // TODO: Revise the below assignment when other multiplexing patterns are supported.
-    ss0_duration = 2;
+    duration = 2;
   }
 
   /// \brief Sets the non-SearchSpace#0 duration in number of slots.
-  void set_non_ss0_duration(unsigned duration)
+  void set_non_ss0_duration(unsigned duration_)
   {
     srsran_assert(id != search_space_id(0), "Invalid access to SearchSpace#{} duration for a SearchSpace#0", id);
-    other_ss_duration = duration;
+    duration = duration_;
   }
 
   /// \brief Returns the SearchSpace duration in number of slots.
-  unsigned duration() const
-  {
-    if (id == search_space_id(0)) {
-      return ss0_duration;
-    }
-    return other_ss_duration;
-  }
+  unsigned get_duration() const { return duration; }
 
   void set_ss0_monitoring_symbols_within_slot(const cell_config_builder_params& params)
   {
     srsran_assert(id == search_space_id(0),
                   "Invalid access to SearchSpace#0 monitoring symbols within slot for a SearchSpace Id > 0");
+    ss0_params                                          monitoring_params{};
     const pdcch_type0_css_occasion_pattern1_description ss0_occasion = fetch_ss0_occasion_info(params);
-    for (const auto symbol : ss0_occasion.start_symbol) {
-      ss0_monitoring_symbols_within_slot_per_ssb_beam.emplace_back();
-      ss0_monitoring_symbols_within_slot_per_ssb_beam.back().set(
-          ss0_monitoring_symbols_within_slot_per_ssb_beam.back().size() - 1 - symbol, true);
+    for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
+      monitoring_params.ss0_monitoring_symbols_within_slot_per_ssb_beam.emplace_back();
+      monitoring_params.ss0_monitoring_symbols_within_slot_per_ssb_beam.back().set(
+          monitoring_params.ss0_monitoring_symbols_within_slot_per_ssb_beam.back().size() - 1 -
+              ss0_occasion.start_symbol[ssb_idx % ss0_occasion.start_symbol.size()],
+          true);
     }
+    ss_params = monitoring_params;
   }
 
   void set_non_ss0_monitoring_symbols_within_slot(
@@ -233,26 +224,57 @@ struct search_space_configuration {
     srsran_assert(not monitoring_symbols_within_slot.none(),
                   "None of the symbols are set in monitoring symbols within a slot when configuring SearchSpace#{}",
                   id);
-    other_ss_monitoring_symbols_within_slot = monitoring_symbols_within_slot;
+    other_ss_params monitoring_params{};
+    monitoring_params.other_ss_monitoring_symbols_within_slot = monitoring_symbols_within_slot;
+    ss_params                                                 = monitoring_params;
   }
 
-  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
+  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> get_monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
       // TODO: Revise this when FR2 support is added.
-      // Based on Table 13-11 in TS 38.213 and clause 13.
-      if (ss0_monitoring_symbols_within_slot_per_ssb_beam.size() > 1) {
-        return ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx %
-                                                               TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
-      }
-      return ss0_monitoring_symbols_within_slot_per_ssb_beam.front();
+      srsran_assert(variant_holds_alternative<ss0_params>(ss_params),
+                    "Monitoring symbols within slot not set for SearchSpace#0");
+      const auto& cfg_monitoring_symb_in_slot_per_ssb_beam =
+          variant_get<ss0_params>(ss_params).ss0_monitoring_symbols_within_slot_per_ssb_beam;
+      // As per TS 38.213, Table 13-11.
+      srsran_assert(
+          ssb_beam_idx < cfg_monitoring_symb_in_slot_per_ssb_beam.size(), "Invalid SSB beam index={}", ssb_beam_idx);
+      return cfg_monitoring_symb_in_slot_per_ssb_beam[ssb_beam_idx];
     }
-    return other_ss_monitoring_symbols_within_slot;
+    srsran_assert(variant_holds_alternative<other_ss_params>(ss_params),
+                  "Monitoring symbols within slot not set for SearchSpace Id > 0");
+    return variant_get<other_ss_params>(ss_params).other_ss_monitoring_symbols_within_slot;
   }
 
 private:
-  /// Maximum number of Type0-PDCCH CSS monitoring occasions in a single slot.
-  static const unsigned TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT = 2;
+  /// Parameters specific to SearchSpace#0.
+  struct ss0_params {
+    /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring per SSB beam. The most significant
+    /// bit represents the first OFDM in a slot. Each element in vector corresponds to a SSB beam of index equal to
+    /// index in vector.
+    static_vector<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>, MAX_NUM_BEAMS>
+        ss0_monitoring_symbols_within_slot_per_ssb_beam;
+
+    bool operator==(const ss0_params& rhs) const
+    {
+      return ss0_monitoring_symbols_within_slot_per_ssb_beam == rhs.ss0_monitoring_symbols_within_slot_per_ssb_beam;
+    }
+    bool operator!=(const ss0_params& rhs) const { return !(rhs == *this); }
+  };
+
+  /// Parameters specific to SearchSpaces other than SearchSpace#0.
+  struct other_ss_params {
+    /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring for SearchSpaces other than
+    /// SearchSpace#0. The most significant bit represents the first OFDM in a slot.
+    std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> other_ss_monitoring_symbols_within_slot;
+
+    bool operator==(const other_ss_params& rhs) const
+    {
+      return other_ss_monitoring_symbols_within_slot == rhs.other_ss_monitoring_symbols_within_slot;
+    }
+    bool operator!=(const other_ss_params& rhs) const { return !(rhs == *this); }
+  };
 
   /// \brief Helper function to fetch SearchSpace#0 monitoring occasion information.
   static pdcch_type0_css_occasion_pattern1_description fetch_ss0_occasion_info(const cell_config_builder_params& params)
@@ -267,30 +289,20 @@ private:
         .nof_symb_coreset = desc.nof_symb_coreset});
   }
 
-  /// SearchSpace#0 periodicity in nof. slots for PDCCH monitoring. Set based on tables in TS 38.213, Section 13.
-  unsigned ss0_monitoring_slot_period;
-  /// SearchSpace#0 slot offset for PDCCH monitoring. Set based on tables in TS 38.213, Section 13. Each element in
-  /// vector corresponds to a SSB beam of index equal to index in vector.
-  std::vector<slot_point> ss0_monitoring_slot_offset;
-  /// Number of consecutive slots that SearchSpace#0 lasts in every occasion.
-  unsigned ss0_duration;
-  /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring per SSB beam. The most significant
-  /// bit represents the first OFDM in a slot. Each element in vector corresponds to a SSB beam of index equal to index
-  /// in vector.
-  std::vector<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>> ss0_monitoring_symbols_within_slot_per_ssb_beam;
-  /// Periodicity in nof. slots for PDCCH monitoring for SearchSpaces other than SearchSpace#0. Possible values: {1,
-  /// 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320, 640, 1280, 2560}.
-  unsigned other_ss_monitoring_slot_period;
-  /// Slot offset for PDCCH monitoring for SearchSpaces other than SearchSpace#0. Possible values: {0,
-  /// ...,monitoring_slot_period}.
-  unsigned other_ss_monitoring_slot_offset;
-  /// Number of consecutive slots that a SearchSpace other than SearchSpace#0 lasts in every occasion. Values:
-  /// (1..2559). If the field is absent, the UE applies the value 1 slot, except for DCI format 2_0. The UE ignores
-  /// this field for DCI format 2_0.
-  unsigned other_ss_duration;
-  /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring for SearchSpaces other than
-  /// SearchSpace#0. The most significant bit represents the first OFDM in a slot.
-  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> other_ss_monitoring_symbols_within_slot;
+  /// SearchSpace periodicity in nof. slots for PDCCH monitoring.
+  /// For SearchSpace == 0, set based on tables in TS 38.213, Section 13.
+  /// For SearchSpace != 0, possible values: {1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320, 640, 1280, 2560}.
+  unsigned monitoring_slot_periodicity;
+  /// Number of consecutive slots that SearchSpace lasts in every occasion.
+  /// For SearchSpace != 0, Values: (1..2559). If the field is absent, the UE applies the value 1 slot, except for DCI
+  /// format 2_0. The UE ignores this field for DCI format 2_0.
+  unsigned duration;
+  /// SearchSpace slot offset for PDCCH monitoring.
+  /// For SearchSpace == 0, set based on tables in TS 38.213, Section 13. Each element in vector corresponds to a SSB
+  /// beam of index equal to index in vector.
+  /// For SearchSpace != 0, possible values: {0,...,monitoring_slot_period}.
+  static_vector<slot_point, MAX_NUM_BEAMS> monitoring_slot_offset;
+  variant<ss0_params, other_ss_params>     ss_params;
 };
 
 } // namespace srsran
