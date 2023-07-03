@@ -52,13 +52,13 @@ const T* find(span<const T> input, T value)
 
 /// \brief Finds the maximum absolute value in a complex span.
 ///
-/// In case two elements have the same value, the one with lowest index is selected.
+/// In case two elements have the same absolute value, the one with lowest index is selected.
 ///
 /// The implementation is equivalent to:
 /// \code
-///  std::pair<unsigned, float> max_element(span<const cf_t> x) {
-///    const cf_t* it = std::max_element(x.begin(), x.end());
-///    return {static_cast<unsigned>(it - x.begin()), *it};
+///  std::pair<unsigned, float> max_abs_element(span<const cf_t> x) {
+///    const cf_t* it = std::max_element(x.begin(), x.end(), [](cf_t a, cf_t b){ return (abs_sq(a) < abs_sq(b)); });
+///    return {static_cast<unsigned>(it - x.begin()), abs_sq(*it)};
 ///  }
 /// \endcode
 ///
@@ -68,13 +68,13 @@ std::pair<unsigned, float> max_abs_element(span<const cf_t> x);
 
 /// \brief Finds the maximum value in a real span.
 ///
-/// In case two elements have the same absolute value, the one with lowest index is selected.
+/// In case two elements have the same value, the one with lowest index is selected.
 ///
 /// The implementation is equivalent to:
 /// \code
-///  std::pair<unsigned, float> max_element(span<const cf_t> x) {
-///    const cf_t* it = std::max_element(x.begin(), x.end());
-///    return {static_cast<unsigned>(it - x.begin()), abs_sq(*it)};
+///  std::pair<unsigned, float> max_element(span<const float> x) {
+///    const float* it = std::max_element(x.begin(), x.end());
+///    return {static_cast<unsigned>(it - x.begin()), *it};
 ///  }
 /// \endcode
 ///

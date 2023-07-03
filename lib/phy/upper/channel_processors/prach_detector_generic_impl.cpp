@@ -67,11 +67,11 @@ static std::tuple<float, unsigned> get_th_and_margin(const prach_detector::confi
       case prach_format_type::one:
       case prach_format_type::two:
       case prach_format_type::three:
-        // This threshold has been tuned for Format zero and one receive port.
+        // This threshold has been tuned for Format 0, ZCZ = 1, and one receive port.
         return {/* threshold = */ 2.0F, /* win_margin = */ 5};
       case prach_format_type::A1:
       case prach_format_type::B4:
-        // This threshold has been tuned for Format B4 and one receive port.
+        // This threshold has been tuned for Format B4, ZCZ = 11, and one receive port.
         return {/* threshold = */ 0.15F, /* win_margin = */ 12};
       default: // Do nothing.
         return {0.0F, 0};
@@ -82,11 +82,11 @@ static std::tuple<float, unsigned> get_th_and_margin(const prach_detector::confi
     case prach_format_type::one:
     case prach_format_type::two:
     case prach_format_type::three:
-      // This threshold has been tuned for Format zero and two receive port.
+      // This threshold has been tuned for Format 0, ZCZ = 1, and two receive ports.
       return {/* threshold = */ 0.88F, /* win_margin = */ 5};
     case prach_format_type::A1:
     case prach_format_type::B4:
-      // This threshold has been tuned for Format A1 and two receive port.
+      // This threshold has been tuned for Format A1, ZCZ = 11, and two receive ports.
       return {/* threshold = */ 0.37F, /* win_margin = */ 12};
     default: // Do nothing.
       return {0.0F, 0};
@@ -95,10 +95,11 @@ static std::tuple<float, unsigned> get_th_and_margin(const prach_detector::confi
 
 prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& input, const configuration& config)
 {
-  srsran_assert(config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
-                "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
-                config.start_preamble_index,
-                config.nof_preamble_indices);
+  srsran_assert(
+      config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
+      "The start preamble index (i.e., {}) and the number of preambles to detect (i.e., {}), exceed the maximum of 64.",
+      config.start_preamble_index,
+      config.nof_preamble_indices);
 
   // Get preamble information.
   prach_preamble_information preamble_info = {};
@@ -170,7 +171,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   float rssi = 0.0F;
   for (unsigned i_port = 0; i_port != config.nof_rx_ports; ++i_port) {
     for (unsigned i_symbol = 0; i_symbol != nof_symbols; ++i_symbol) {
-      rssi += srsvec::average_power(input.get_symbol(0, i_td_occasion, i_fd_occasion, 0));
+      rssi += srsvec::average_power(input.get_symbol(i_port, i_td_occasion, i_fd_occasion, i_symbol));
     }
   }
   rssi /= static_cast<float>(config.nof_rx_ports * nof_symbols * L_ra);
@@ -234,6 +235,8 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
         span<float> mod_square = span<float>(temp).first(DFT_SIZE);
         srsvec::modulus_square(mod_square, no_root_time_simple);
 
+        // Normalize the signal: we divide by the DFT size to compensate for the inherent scaling of the DFT, and by
+        // L_ra^2 to compensate for the amplitude of the ZC sequence in the frequency domain.
         srsvec::sc_prod(mod_square, 1.0F / static_cast<float>(DFT_SIZE * L_ra * L_ra), mod_square);
 
         // Process each shift of the sequence.

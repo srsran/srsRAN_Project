@@ -55,10 +55,11 @@ public:
 private:
   /// \brief Estimates and accumulates the noise estimation.
   ///
-  /// The noise is estimated by subtracting \c input from \c reference.
+  /// For each possible timing offset in the detection window, the noise is estimated by subtracting \c input (roughly
+  /// speaking, an estimation of the PRACH power) from \c reference (roughly speaking, the total measured energy).
   ///
   /// \param[in,out] accumulator Noise estimation accumulator.
-  /// \param[in]     reference   Reference power measurement.
+  /// \param[in]     reference   Reference power measurement, including noise.
   /// \param[in]     input       Input samples.
   /// \remark The input size must be equal to the accumulator size.
   static void vector_noise_estimation(span<float> accumulator, float reference, span<const float> input)

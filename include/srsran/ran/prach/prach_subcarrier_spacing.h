@@ -18,25 +18,25 @@ namespace srsran {
 /// Random Access subcarrier spacing.
 enum class prach_subcarrier_spacing : uint8_t { kHz15 = 0, kHz30, kHz60, kHz120, kHz1_25, kHz5, invalid };
 
-/// Check if SCS value is valid.
+/// Checks if SCS value is valid.
 constexpr inline bool is_scs_valid(prach_subcarrier_spacing scs)
 {
   return scs < prach_subcarrier_spacing::invalid;
 }
 
-/// Check if the RA subcarrier spacing is suitable for long preambles formats.
+/// Checks if the RA subcarrier spacing is suitable for long preambles formats.
 constexpr inline bool is_long_preamble(prach_subcarrier_spacing ra_scs)
 {
   return (ra_scs != prach_subcarrier_spacing::invalid) && (ra_scs >= prach_subcarrier_spacing::kHz1_25);
 }
 
-/// Check if the RA subcarrier spacing is suitable for short preambles formats.
+/// Checks if the RA subcarrier spacing is suitable for short preambles formats.
 constexpr inline bool is_short_preamble(prach_subcarrier_spacing ra_scs)
 {
   return (ra_scs != prach_subcarrier_spacing::invalid) && (ra_scs < prach_subcarrier_spacing::kHz1_25);
 }
 
-/// Convert SCS to string.
+/// Converts SCS to string.
 inline const char* to_string(prach_subcarrier_spacing ra_scs)
 {
   switch (ra_scs) {
@@ -58,7 +58,7 @@ inline const char* to_string(prach_subcarrier_spacing ra_scs)
   }
 }
 
-/// Convert SCS to numerology index (\f$\mu\f$).
+/// Converts SCS to numerology index (\f$\mu\f$).
 constexpr inline unsigned to_numerology_value(prach_subcarrier_spacing ra_scs)
 {
   srsran_assert(
@@ -85,7 +85,7 @@ constexpr inline unsigned ra_scs_to_Hz(prach_subcarrier_spacing ra_scs)
   }
 }
 
-/// Adapt common resource grid subcarrier spacing to RA subcarrier spacing.
+/// Adapts common resource grid subcarrier spacing to RA subcarrier spacing.
 constexpr inline prach_subcarrier_spacing to_ra_subcarrier_spacing(subcarrier_spacing scs)
 {
   // Convert to numerology.
@@ -100,7 +100,7 @@ constexpr inline prach_subcarrier_spacing to_ra_subcarrier_spacing(subcarrier_sp
   return static_cast<prach_subcarrier_spacing>(numerology);
 }
 
-/// Convert a string to SCS.
+/// Converts a numerical value (a bandwidth in hertz) to an SCS.
 inline prach_subcarrier_spacing to_ra_subcarrier_spacing(unsigned in_scs_Hz)
 {
   for (unsigned index = 0, index_end = static_cast<unsigned>(prach_subcarrier_spacing::invalid); index != index_end;
@@ -115,7 +115,7 @@ inline prach_subcarrier_spacing to_ra_subcarrier_spacing(unsigned in_scs_Hz)
   return prach_subcarrier_spacing::invalid;
 }
 
-/// Convert a string to SCS.
+/// Converts a numeric string (representing a bandwidth in kilohertz) to an SCS.
 inline prach_subcarrier_spacing to_ra_subcarrier_spacing(const char* str)
 {
   unsigned in_scs_Hz = static_cast<unsigned>(1e3F * std::strtof(str, nullptr));
