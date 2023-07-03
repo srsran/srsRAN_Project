@@ -40,7 +40,7 @@ ul_bsr_indication_message make_sbsr(lcg_id_t lcg_id, unsigned bytes)
   bsr.crnti      = to_rnti(0x4601);
   bsr.cell_index = to_du_cell_index(0);
   bsr.type       = bsr_format::SHORT_BSR;
-  bsr.reported_lcgs.push_back(ul_bsr_lcg_report{uint_to_lcg_id(0), 10});
+  bsr.reported_lcgs.push_back(ul_bsr_lcg_report{lcg_id, bytes});
   return bsr;
 }
 
@@ -261,7 +261,7 @@ TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_include_ot
 
 TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_ul_bytes_are_pending)
 {
-  lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(0, 3);
+  lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(0, MAX_LCG_ID);
 
   ul_logical_channel_manager ul_lch_mng;
   ul_logical_channel_manager ul_lch_mng2;
