@@ -73,7 +73,7 @@ protected:
 
 private:
   /// Scaling factor applied to IQ data prior to quantization.
-  float iq_scaling;
+  const float iq_scaling;
 };
 
 } // namespace ofh

@@ -64,7 +64,7 @@ void iq_compression_bfp_neon::compress(span<srsran::ofh::compressed_prb>        
                                        const srsran::ofh::ru_compression_params& params)
 {
   // Auxiliary arrays used for float to fixed point conversion of the input data.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB* MAX_NOF_PRBS> input_quantized = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
   span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
   span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
@@ -195,7 +195,7 @@ void iq_compression_bfp_neon::decompress(span<srsran::cf_t>                     
     // Determine array size so that NEON store operation doesn't write the data out of array bounds.
     constexpr size_t neon_size_iqs = 8;
     constexpr size_t arr_size      = divide_ceil(NOF_SAMPLES_PER_PRB, neon_size_iqs) * neon_size_iqs;
-    alignas(64) std::array<int16_t, arr_size> unpacked_iq_data = {};
+    alignas(64) std::array<int16_t, arr_size> unpacked_iq_data;
     // Unpack resource block.
     neon::unpack_prb_big_endian(unpacked_iq_data, c_prb.get_packed_data(), params.data_width);
 

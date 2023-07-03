@@ -48,7 +48,7 @@ void iq_compression_none_impl::decompress(span<cf_t>                   output,
   quantizer q(params.data_width);
 
   unsigned out_idx = 0;
-  for (const compressed_prb& c_prb : input) {
+  for (const auto& c_prb : input) {
     compressed_prb_unpacker unpacker(c_prb);
     for (unsigned i = 0, read_pos = 0; i != NOF_SUBCARRIERS_PER_RB; ++i) {
       int16_t re = q.sign_extend(unpacker.unpack(read_pos, params.data_width));

@@ -54,7 +54,7 @@ void iq_compression_bfp_impl::compress_prb_generic(compressed_prb&     c_prb,
   uint8_t exponent = determine_exponent(max_abs, data_width);
 
   // Auxiliary arrays to store compressed samples before packing.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB> compressed_samples = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB> compressed_samples;
 
   // Compress data.
   for (unsigned i = 0; i != NOF_SAMPLES_PER_PRB; ++i) {
@@ -72,7 +72,7 @@ void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
                                        const ru_compression_params& params)
 {
   // Auxiliary arrays used for float to fixed point conversion of the input data.
-  std::array<int16_t, NOF_SAMPLES_PER_PRB* MAX_NOF_PRBS> input_quantized = {};
+  std::array<int16_t, NOF_SAMPLES_PER_PRB * MAX_NOF_PRBS> input_quantized;
 
   span<const float> float_samples_span(reinterpret_cast<const float*>(input.data()), input.size() * 2U);
   span<int16_t>     input_quantized_span(input_quantized.data(), input.size() * 2U);
@@ -80,7 +80,7 @@ void iq_compression_bfp_impl::compress(span<compressed_prb>         output,
   quantize_input(input_quantized_span, float_samples_span);
 
   unsigned sample_idx = 0;
-  for (compressed_prb& c_prb : output) {
+  for (auto& c_prb : output) {
     const auto* start_it = input_quantized.begin() + sample_idx;
     // Compress one resource block.
     compress_prb_generic(c_prb, {start_it, NOF_SAMPLES_PER_PRB}, params.data_width);
@@ -119,7 +119,7 @@ void iq_compression_bfp_impl::decompress(span<cf_t>                   output,
   quantizer q_in(params.data_width);
 
   unsigned out_idx = 0;
-  for (const compressed_prb& c_prb : input) {
+  for (const auto& c_prb : input) {
     span<cf_t> out_rb_samples = output.subspan(out_idx, NOF_SUBCARRIERS_PER_RB);
     // Decompress resource block.
     decompress_prb_generic(out_rb_samples, c_prb, q_in, params.data_width);
