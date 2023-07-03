@@ -251,6 +251,7 @@ srsran docker compose:
       command: ["dockerd-entrypoint.sh"]
   script:
     - docker compose -f docker/docker-compose.yml run gnb gnb --version
+    - docker compose -f docker/docker-compose.yml run epc 5gc -v
   needs: []
 
 ################################################################################

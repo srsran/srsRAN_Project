@@ -1,8 +1,36 @@
 version: '3.9'
 
 services:
+  epc:
+    container_name: open5gs_epc
+    build:
+      context: open5gs
+      target: open5gs
+      args:
+        OS_VERSION: "20.04"
+        OPEN5GS_VERSION: "v2.6.1"
+    environment:
+      MONGODB_IP: ${MONGODB_IP:-127.0.0.1}
+      OPEN5GS_IP: ${OPEN5GS_IP:-10.53.1.2}
+      UE_IP_BASE: ${UE_IP_BASE:-10.45.0}
+      DEBUG: ${DEBUG:-false}
+    privileged: true
+    ports:
+      - "3000:3000/tcp"
+    # Uncomment port to use the epc from outside the docker network
+    #   - "38412:38412/sctp"
+    command: 5gc -c open5gs-5gc.yml
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z 127.0.0.20 7777" ]
+      interval: 3s
+      timeout: 1s
+      retries: 5
+    networks:
+      ran:
+        ipv4_address: ${OPEN5GS_IP:-10.53.1.2}
+
   gnb:
-    container_name: gnb
+    container_name: srsran_gnb
     # Build info
     image: srsran/gnb
     build:
@@ -27,11 +55,25 @@ services:
     configs:
       - gnb_config.yml
     # Customize your desired network mode. 
-    # "host" would expose your host network into the container. It's the easiest to use
-    network_mode: "host"
+    # current netowrk configuration creastes a private netwoek with both containers attached
+    # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the EPC is not in your PC
+    networks:
+      ran:
+        ipv4_address: ${GNB_IP:-10.53.1.3}
+    # Start GNB container after EPC is up and running
+    depends_on:
+      epc:
+        condition: service_healthy
     # Command to run into the final container
-    command: gnb -c /gnb_config.yml
+    command: gnb  -c /gnb_config.yml amf --addr ${OPEN5GS_IP:-10.53.1.2}
 
 configs:
   gnb_config.yml:
     file: ../configs/gnb_rf_b200_tdd_n78_20mhz.yml # Path to your desired config file
+
+networks:
+  ran:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.53.1.0/24
