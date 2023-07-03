@@ -17,7 +17,7 @@ using namespace srs_cu_cp;
 cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg& cfg_) :
   cfg(cfg_), logger(srslog::fetch_basic_logger("CU-CP"))
 {
-  srsran_assert(is_valid_configuration(cfg), "Invalid cell measurment configuration");
+  srsran_assert(is_valid_configuration(cfg), "Invalid cell measurement configuration");
   log_cells(logger, cfg);
 }
 
