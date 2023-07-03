@@ -712,7 +712,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
   std::set<ofdm_symbol_range> pdsch_symbols;
 
   // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
-  static const unsigned pdsch_mapping_typeA_normal_cp_min_L_value = 3;
+  static const unsigned pdsch_mapping_typeA_min_L_value = 3;
 
   // TODO: Consider SearchSpace periodicity while generating PDSCH OFDM symbol range. If there is no PDCCH, there is no
   //  PDSCH since we dont support k0 != 0 yet.
@@ -763,14 +763,14 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
     if (pattern1_nof_dl_symbols_in_special_slot > 0 and
         (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
         (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
-            pdsch_mapping_typeA_normal_cp_min_L_value) {
+            pdsch_mapping_typeA_min_L_value) {
       pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot});
     }
     // For special slots with DL symbols in TDD pattern 2 if configured.
     if (pattern2_nof_dl_symbols_in_special_slot > 0 and
         (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
         (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
-            pdsch_mapping_typeA_normal_cp_min_L_value) {
+            pdsch_mapping_typeA_min_L_value) {
       pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot});
     }
   }
@@ -805,14 +805,14 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
       if (pattern1_nof_dl_symbols_in_special_slot > 0 and
           (pattern1_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
           (pattern1_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
-              pdsch_mapping_typeA_normal_cp_min_L_value) {
+              pdsch_mapping_typeA_min_L_value) {
         pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern1_nof_dl_symbols_in_special_slot});
       }
       // For special slots with DL symbols in TDD pattern 2 if configured.
       if (pattern2_nof_dl_symbols_in_special_slot > 0 and
           (pattern2_nof_dl_symbols_in_special_slot > (ss_start_symbol_idx + cs_duration.value())) and
           (pattern2_nof_dl_symbols_in_special_slot - ss_start_symbol_idx - cs_duration.value()) >=
-              pdsch_mapping_typeA_normal_cp_min_L_value) {
+              pdsch_mapping_typeA_min_L_value) {
         pdsch_symbols.insert({ss_start_symbol_idx + cs_duration.value(), pattern2_nof_dl_symbols_in_special_slot});
       }
     }

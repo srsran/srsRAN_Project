@@ -44,7 +44,11 @@ using namespace srsran;
 
 /// Checks if "val" is above or equal to "max_val".
 #define CHECK_EQ_OR_ABOVE(val, max_val, ...)                                                                           \
-  CHECK_TRUE((val >= max_val), "Invalid {} ({} > {})", fmt::format(__VA_ARGS__), val, max_val)
+  CHECK_TRUE((val >= max_val), "Invalid {} ({} < {})", fmt::format(__VA_ARGS__), val, max_val)
+
+/// Checks if "val" is above or equal to "max_val".
+#define CHECK_ABOVE(val, max_val, ...)                                                                                 \
+  CHECK_TRUE((val > max_val), "Invalid {} ({} <= {})", fmt::format(__VA_ARGS__), val, max_val)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -287,21 +291,18 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
   if (not cell_cfg.tdd_ul_dl_cfg_common.has_value()) {
     return {};
   }
-  const auto cs0_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
+
+  // See TS 38.214, Table 5.1.2.1-1: Valid S and L combinations.
+  static const unsigned pdsch_mapping_typeA_min_L_value = 3;
+
+  const pdcch_config_common&            common_pdcch_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common;
+  const pdcch_config&                   ded_pdcch_cfg    = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg.value();
+  const optional<coreset_configuration> coreset0         = common_pdcch_cfg.coreset0;
+  const optional<coreset_configuration> common_coreset   = common_pdcch_cfg.common_coreset;
   const pdcch_type0_css_occasion_pattern1_description ss0_occasion = pdcch_type0_css_occasions_get_pattern1(
       pdcch_type0_css_occasion_pattern1_configuration{.is_fr2        = false,
                                                       .ss_zero_index = static_cast<uint8_t>(cell_cfg.searchspace0_idx),
-                                                      .nof_symb_coreset = cs0_duration});
-  // Consider the starting index of the last PDCCH monitoring occasion in SearchSpace#0.
-  // TODO: Revise this logic once we have introduced the check for PDCCH symbols present in special slot in scheduler.
-  // TODO: Consider SearchSpace periodicity while validating DL symbols in special slots.
-  const auto ss0_start_symbol_idx =
-      *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
-  const auto ss1_first_monitoring_symb_idx =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back().get_first_symbol_index();
-  const auto cs1_duration = cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets[0].duration;
-  const auto ss2_first_monitoring_symb_idx =
-      cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces.back().get_first_symbol_index();
+                                                      .nof_symb_coreset = coreset0->duration});
 
   const auto& tdd_cfg                  = cell_cfg.tdd_ul_dl_cfg_common.value();
   const auto  pattern1_period_slots    = tdd_cfg.pattern1.dl_ul_tx_period_nof_slots;
@@ -311,20 +312,6 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                     pattern1_period_slots,
                     "TDD UL DL pattern 1 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
                     "exceeds TDD pattern period.");
-  if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
-    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
-                      ss0_start_symbol_idx + cs0_duration,
-                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
-                      "CORESET#0 duration for SearchSpace#0.");
-    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
-                      ss1_first_monitoring_symb_idx + cs0_duration,
-                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
-                      "CORESET#0 duration for SearchSpace#1.");
-    CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
-                      ss2_first_monitoring_symb_idx + cs1_duration,
-                      "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than start of CORESET#1 + "
-                      "CORESET#1 duration for SearchSpace#2.");
-  }
 
   if (tdd_cfg.pattern2.has_value()) {
     const auto pattern2_period_slots = tdd_cfg.pattern2.value().dl_ul_tx_period_nof_slots;
@@ -337,22 +324,135 @@ static check_outcome check_tdd_ul_dl_config(const du_cell_config& cell_cfg)
                       pattern2_period_slots,
                       "TDD UL DL pattern 2 configuration. UL(slots + symbols) + DL(slots + symbols) configuration "
                       "exceeds TDD pattern period.");
-    if (tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
-      CHECK_EQ_OR_ABOVE(
-          tdd_cfg.pattern2.value().nof_dl_symbols,
-          ss0_start_symbol_idx + cs0_duration,
-          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
-          "CORESET#0 duration for SearchSpace#0.");
-      CHECK_EQ_OR_ABOVE(
-          tdd_cfg.pattern2.value().nof_dl_symbols,
-          ss1_first_monitoring_symb_idx + cs0_duration,
-          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#0 + "
-          "CORESET#0 duration for SearchSpace#1.");
-      CHECK_EQ_OR_ABOVE(
-          tdd_cfg.pattern2.value().nof_dl_symbols,
-          ss2_first_monitoring_symb_idx + cs1_duration,
-          "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than start of CORESET#1 + "
-          "CORESET#1 duration for SearchSpace#2.");
+  }
+
+  // NOTE1: Number of DL PDSCH symbols must be atleast greater than SearchSpace monitoring start symbol index + CORESET
+  // duration for PDSCH allocation in partial slot. Otherwise, it can be used only for PDCCH allocations.
+  // NOTE2: We don't support multiple monitoring occasions in a slot belonging to a SearchSpace.
+  // TODO: Consider SearchSpace periodicity while validating DL symbols in special slots.
+  optional<unsigned> cs_duration;
+  unsigned           ss_start_symbol_idx;
+  // SearchSpaces in Common PDCCH configuration.
+  for (const search_space_configuration& ss_cfg : common_pdcch_cfg.search_spaces) {
+    cs_duration         = {};
+    ss_start_symbol_idx = 0;
+    if (coreset0.has_value()) {
+      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+        cs_duration = coreset0->duration;
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+        cs_duration         = coreset0->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+    if (common_coreset.has_value()) {
+      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+        cs_duration = common_coreset->duration;
+        // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
+        ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
+      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+        cs_duration         = common_coreset->duration;
+        ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+      }
+    }
+
+    if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
+      // Ensuring there is enough DL symbols for PDCCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                        "{}) for SearchSpace#{}.",
+                        ss_start_symbol_idx,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        ss_cfg.id);
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.id);
+    }
+
+    if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
+      // Ensuring there is enough DL symbols for PDCCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                        "{}) for SearchSpace#{}.",
+                        ss_start_symbol_idx,
+                        ss_start_symbol_idx + cs_duration.value(),
+                        ss_cfg.id);
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.id);
+    }
+  }
+  // SearchSpaces in Dedicated PDCCH configuration.
+  for (const search_space_configuration& ss_cfg : ded_pdcch_cfg.search_spaces) {
+    cs_duration         = {};
+    ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
+    if (coreset0.has_value()) {
+      if (ss_cfg.cs_id == coreset0->id) {
+        cs_duration = coreset0->duration;
+      }
+    }
+    if ((not cs_duration.has_value()) and common_coreset.has_value()) {
+      if (ss_cfg.cs_id == common_coreset->id) {
+        cs_duration = common_coreset->duration;
+      }
+    }
+
+    if (not cs_duration.has_value()) {
+      for (const coreset_configuration& cs_cfg : ded_pdcch_cfg.coresets) {
+        if (ss_cfg.cs_id == cs_cfg.id) {
+          cs_duration = cs_cfg.duration;
+          break;
+        }
+      }
+    }
+
+    CHECK_TRUE(cs_duration.has_value(), "CORESET not configured for SearchSpace#{}", ss_cfg.id);
+
+    if (tdd_cfg.pattern1.nof_dl_symbols > 0) {
+      // Ensuring there is atleast 1 OFDM symbol for PDSCH.
+      CHECK_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                  "{}) for SearchSpace#{}.",
+                  ss_start_symbol_idx,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  ss_cfg.id);
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern1.nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 1 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.id);
+    }
+
+    if (tdd_cfg.pattern2.has_value() and tdd_cfg.pattern2.value().nof_dl_symbols > 0) {
+      // Ensuring there is atleast 1 OFDM symbol for PDSCH.
+      CHECK_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than CORESET symbols[{}, "
+                  "{}) for SearchSpace#{}.",
+                  ss_start_symbol_idx,
+                  ss_start_symbol_idx + cs_duration.value(),
+                  ss_cfg.id);
+
+      // Ensuring there is enough DL symbols for PDSCH.
+      CHECK_EQ_OR_ABOVE(tdd_cfg.pattern2.value().nof_dl_symbols,
+                        ss_start_symbol_idx + cs_duration.value() + pdsch_mapping_typeA_min_L_value,
+                        "TDD UL DL pattern 2 configuration. DL(symbols) configuration is less than the minimum nof. "
+                        "OFDM symbols required for PDSCH allocation of mapping typeA in SearchSpace#{}.",
+                        ss_cfg.id);
     }
   }
 
