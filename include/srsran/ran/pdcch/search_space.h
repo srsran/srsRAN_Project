@@ -126,6 +126,7 @@ struct search_space_configuration {
     return monitoring_symbols_within_slot.size();
   }
 
+  /// \brief Sets the SearchSpace#0 periodicity in number of slots.
   void set_ss0_monitoring_slot_period(const cell_config_builder_params& params)
   {
     srsran_assert(id == search_space_id(0),
@@ -136,6 +137,7 @@ struct search_space_configuration {
     ss0_monitoring_slot_period = get_nof_slots_per_subframe(params.scs_common) * 20;
   }
 
+  /// \brief Sets the non-SearchSpace#0 periodicity in number of slots.
   void set_non_ss0_monitoring_slot_period(unsigned monitoring_slot_period)
   {
     srsran_assert(
@@ -143,6 +145,7 @@ struct search_space_configuration {
     other_ss_monitoring_slot_period = monitoring_slot_period;
   }
 
+  /// \brief Returns the SearchSpace periodicity in number of slots.
   unsigned monitoring_slot_period() const
   {
     if (id == search_space_id(0)) {
@@ -151,6 +154,7 @@ struct search_space_configuration {
     return other_ss_monitoring_slot_period;
   }
 
+  /// \brief Sets the SearchSpace#0 slot offset.
   void set_ss0_monitoring_slot_offset(const cell_config_builder_params& params)
   {
     srsran_assert(id == search_space_id(0),
@@ -164,6 +168,7 @@ struct search_space_configuration {
     }
   }
 
+  /// \brief Sets the non-SearchSpace#0 slot offset.
   void set_non_ss0_monitoring_slot_offset(unsigned monitoring_slot_offset)
   {
     srsran_assert(
@@ -171,6 +176,7 @@ struct search_space_configuration {
     other_ss_monitoring_slot_offset = monitoring_slot_offset;
   }
 
+  /// \brief Returns the SearchSpace slot offset.
   unsigned monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
@@ -180,6 +186,7 @@ struct search_space_configuration {
     return other_ss_monitoring_slot_offset;
   }
 
+  /// \brief Sets the SearchSpace#0 duration in number of slots.
   void set_ss0_duration()
   {
     srsran_assert(id == search_space_id(0), "Invalid access to SearchSpace#0 duration for a SearchSpace Id > 0");
@@ -189,12 +196,14 @@ struct search_space_configuration {
     ss0_duration = 2;
   }
 
+  /// \brief Sets the non-SearchSpace#0 duration in number of slots.
   void set_non_ss0_duration(unsigned duration)
   {
     srsran_assert(id != search_space_id(0), "Invalid access to SearchSpace#{} duration for a SearchSpace#0", id);
     other_ss_duration = duration;
   }
 
+  /// \brief Returns the SearchSpace duration in number of slots.
   unsigned duration() const
   {
     if (id == search_space_id(0)) {
