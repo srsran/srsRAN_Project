@@ -66,6 +66,11 @@ static bool alloc_dl_ue(const ue&                    u,
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
 
+    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
+      // DL needs to be active for PDCCH in this slot.
+      continue;
+    }
+
     // Search available HARQ.
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
@@ -94,6 +99,16 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
+        // Check whether CORESET fits in DL symbols of the slot.
+        if (res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot) <
+            ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
+          continue;
+        }
+        // Check whether PDSCH time domain resource does not overlap with CORESET.
+        if (pdsch.symbols.start() < ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
+          continue;
+        }
+        // Check whether PDSCH time domain resource fits in DL symbols of the slot.
         if (pdsch.symbols.stop() >
             res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot + pdsch.k0)) {
           // DL needs to be active for PDSCH in this slot.
@@ -174,6 +189,11 @@ static bool alloc_ul_ue(const ue&                    u,
       continue;
     }
 
+    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
+      // DL needs to be active for PDCCH in this slot.
+      continue;
+    }
+
     optional<dci_ul_rnti_config_type> preferred_dci_rnti_type;
     if (is_retx) {
       preferred_dci_rnti_type = h->last_tx_params().dci_cfg_type;
@@ -182,6 +202,12 @@ static bool alloc_ul_ue(const ue&                    u,
         ue_cc.get_active_ul_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
       if (ss->cfg->id == to_search_space_id(0)) {
+        continue;
+      }
+
+      // Check whether CORESET fits in DL symbols of the slot.
+      if (res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot) <
+          ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
         continue;
       }
 
