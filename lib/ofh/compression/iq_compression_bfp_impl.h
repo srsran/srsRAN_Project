@@ -46,7 +46,8 @@ protected:
   /// \return An exponent to be applied to the input sample to compress it to \c data_width bits.
   static unsigned determine_exponent(uint16_t x, unsigned data_width)
   {
-    srsran_assert(data_width < 17, "Passed IQ data width exceeds 16 bits");
+    srsran_assert(data_width != 0, "Invalid data width");
+    srsran_assert(data_width <= MAX_IQ_WIDTH, "Passed IQ data width exceeds 16 bits");
 
     unsigned max_shift       = MAX_IQ_WIDTH - data_width;
     unsigned lz_without_sign = max_shift;

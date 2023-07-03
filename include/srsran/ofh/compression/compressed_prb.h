@@ -50,6 +50,7 @@ public:
   span<const uint8_t> get_packed_data() const
   {
     srsran_assert(bytes_used != 0, "No bytes yet packed");
+    srsran_assert(bytes_used * 8 <= CAPACITY_BITS, "Bit buffer overflow");
     return data.get_buffer().first(bytes_used);
   }
 
