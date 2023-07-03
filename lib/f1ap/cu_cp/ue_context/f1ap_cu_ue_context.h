@@ -12,6 +12,7 @@
 
 #include "f1ap_cu_ue_transaction_manager.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/f1ap/common/f1ap_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
 
@@ -77,22 +78,31 @@ public:
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available GNB-CU-F1AP-UE-ID.
-  gnb_cu_ue_f1ap_id_t next_gnb_cu_ue_f1ap_id() const
+  gnb_cu_ue_f1ap_id_t next_gnb_cu_ue_f1ap_id()
   {
+    // return invalid when no cu ue f1ap id is available
     if (ue_index_to_ue_f1ap_id.size() == MAX_NOF_UES_PER_DU) {
       return gnb_cu_ue_f1ap_id_t::invalid;
     }
 
-    for (unsigned it = 0; it < gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max); it++) {
+    // iterate over all ids starting with the next_cu_ue_f1ap_id to find the available id
+    while (true) {
       // Only iterate over ue_index_to_ue_f1ap_id (size=MAX_NOF_UES_PER_DU)
       // to avoid iterating over all possible values of gnb_cu_ue_f1ap_id_t (size=2^32-1)
-      auto it2 = std::find_if(ue_index_to_ue_f1ap_id.begin(), ue_index_to_ue_f1ap_id.end(), [it](auto& u) {
-        return u.second == int_to_gnb_cu_ue_f1ap_id(it);
+      auto it = std::find_if(ue_index_to_ue_f1ap_id.begin(), ue_index_to_ue_f1ap_id.end(), [this](auto& u) {
+        return u.second == next_cu_ue_f1ap_id;
       });
 
-      if (it2 == ue_index_to_ue_f1ap_id.end()) {
-        return int_to_gnb_cu_ue_f1ap_id(it);
+      // return the id if it is not already used
+      if (it == ue_index_to_ue_f1ap_id.end()) {
+        gnb_cu_ue_f1ap_id_t ret = next_cu_ue_f1ap_id;
+        // increase the next cu ue f1ap id
+        increase_next_cu_ue_f1ap_id();
+        return ret;
       }
+
+      // increase the next cu ue f1ap id and try again
+      increase_next_cu_ue_f1ap_id();
     }
 
     return gnb_cu_ue_f1ap_id_t::invalid;
@@ -102,8 +112,20 @@ private:
   timer_factory         timers;
   srslog::basic_logger& logger;
 
+  inline void increase_next_cu_ue_f1ap_id()
+  {
+    if (next_cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::max) {
+      // reset cu ue f1ap id counter
+      next_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::min;
+    } else {
+      // increase cu ue f1ap id counter
+      next_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_to_uint(next_cu_ue_f1ap_id) + 1);
+    }
+  }
+
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
   std::unordered_map<ue_index_t, gnb_cu_ue_f1ap_id_t>      ue_index_to_ue_f1ap_id; // indexed by ue_index
+  gnb_cu_ue_f1ap_id_t                                      next_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::min;
 };
 
 } // namespace srs_cu_cp
