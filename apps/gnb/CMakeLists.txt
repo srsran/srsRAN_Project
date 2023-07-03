@@ -12,7 +12,6 @@ add_executable(gnb
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
         gnb_worker_manager.cpp
-        phy_factory.cpp
         gnb_du_factory.cpp
         helpers/metrics_plotter_stdout.cpp
         helpers/gnb_console_helper.cpp
