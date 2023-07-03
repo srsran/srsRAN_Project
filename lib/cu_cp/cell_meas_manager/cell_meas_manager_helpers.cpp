@@ -26,8 +26,18 @@ void srsran::srs_cu_cp::log_cells(const srslog::basic_logger& logger, const cell
 
 bool srsran::srs_cu_cp::is_complete(const cell_meas_cfg& cfg)
 {
-  // True if all mendatory values are present.
-  return cfg.band.has_value() && cfg.ssb_mtc.has_value() && cfg.ssb_arfcn.has_value() && cfg.ssb_scs.has_value();
+  // All mendatory values must be present.
+  if (!cfg.band.has_value() || !cfg.ssb_mtc.has_value() || !cfg.ssb_arfcn.has_value() || !cfg.ssb_scs.has_value()) {
+    return false;
+  }
+  // Call validators of individual params.
+  if (!is_scs_valid(cfg.ssb_scs.value())) {
+    return false;
+  }
+
+  // TODO: Add additional validators for band/FR, etc.
+
+  return true;
 }
 
 bool srsran::srs_cu_cp::is_valid_configuration(const cell_meas_manager_cfg& cfg)
