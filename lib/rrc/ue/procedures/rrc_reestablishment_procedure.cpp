@@ -55,7 +55,6 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, old_ue_index, name());
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
-    rrc_ue.on_ue_delete_request(cause_t::protocol);
     logger.debug("ue={} old_ue={}: \"{}\" failed.", context.ue_index, old_ue_index, name());
   }
 
