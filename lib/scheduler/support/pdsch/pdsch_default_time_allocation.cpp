@@ -118,7 +118,7 @@ srsran::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_ty
       pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp_, i, dmrs_pos_);
       table[i].k0                              = cfg.pdcch_to_pdsch_delay;
       table[i].map_type                        = cfg.mapping_type;
-      table[i].symbols                         = {cfg.start_symbol, cfg.duration};
+      table[i].symbols                         = {cfg.start_symbol, cfg.start_symbol + cfg.duration};
     }
     return table;
   };
@@ -157,4 +157,13 @@ srsran::get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_c
 
   // default A table case.
   return pdsch_default_time_allocations_default_A_table(active_bwp_dl_common.generic_params.cp, dmrs_typeA_pos);
+}
+
+span<const pdsch_time_domain_resource_allocation>
+srsran::get_si_rnti_pdsch_time_domain_list(cyclic_prefix cp, dmrs_typeA_position dmrs_typeA_pos)
+{
+  // TODO: Check for multiplexing pattern and SearchSpace type (Type0 common or Type0A common).
+  // NOTE: Type0 common PDCCH and multiplexing pattern 1 is assumed to fetch applicable PDSCH time domain resource
+  // allocation.
+  return pdsch_default_time_allocations_default_A_table(cp, dmrs_typeA_pos);
 }
