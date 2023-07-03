@@ -18,6 +18,7 @@
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
+#include "srsran/scheduler/sched_consts.h"
 #include <bitset>
 #include <cstdint>
 #include <vector>
@@ -105,7 +106,8 @@ struct search_space_configuration {
     std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
     if (id == search_space_id(0)) {
       // TODO: Revise this when FR2 support is added.
-      // Based on Table 13-11 in TS 38.213.
+      // For multiplexing pattern 1, number of entries in Type0-PDCCH CSS monitoring occasion's start symbol field is
+      // greater than 1 only for SearchSpaceZero values of 1, 3, 5, 7 as per TS 38.213, Table 13-11.
       if (ss0_monitoring_symbols_within_slot_per_ssb_beam.size() > 1) {
         monitoring_symbols_within_slot =
             ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx % TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
@@ -154,7 +156,7 @@ struct search_space_configuration {
     srsran_assert(id == search_space_id(0),
                   "Invalid access to SearchSpace#0 monitoring slot offset for a SearchSpace Id > 0");
     const pdcch_type0_css_occasion_pattern1_description ss0_occasion = fetch_ss0_occasion_info(params);
-    for (unsigned ssb_idx = 0; ssb_idx < ss0_occasion.start_symbol.size(); ++ssb_idx) {
+    for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
       // Initialize n0 to a slot_point = 0.
       const uint8_t numerology_mu = to_numerology_value(params.scs_common);
       slot_point    type0_pdcch_css_n0{numerology_mu, 0};
@@ -178,12 +180,8 @@ struct search_space_configuration {
   unsigned monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
-      // TODO: Revise this when FR2 support is added.
-      // Based on Table 13-11 in TS 38.213 and clause 13.
-      if (ss0_monitoring_slot_offset.size() > 1) {
-        return ss0_monitoring_slot_offset[ssb_beam_idx % TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
-      }
-      return ss0_monitoring_slot_offset.front();
+      srsran_assert(ssb_beam_idx < ss0_monitoring_slot_offset.size(), "Invalid SSB beam index");
+      return ss0_monitoring_slot_offset[ssb_beam_idx];
     }
     return other_ss_monitoring_slot_offset;
   }
