@@ -104,8 +104,14 @@ struct search_space_configuration {
   {
     std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
     if (id == search_space_id(0)) {
-      srsran_assert(ssb_beam_idx < ss0_monitoring_symbols_within_slot_per_ssb_beam.size(), "Invalid SSB beam index");
-      monitoring_symbols_within_slot = ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx];
+      // TODO: Revise this when FR2 support is added.
+      // Based on Table 13-11 in TS 38.213.
+      if (ss0_monitoring_symbols_within_slot_per_ssb_beam.size() > 1) {
+        monitoring_symbols_within_slot =
+            ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx % TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
+      } else {
+        monitoring_symbols_within_slot = ss0_monitoring_symbols_within_slot_per_ssb_beam.front();
+      }
     } else {
       monitoring_symbols_within_slot = other_ss_monitoring_symbols_within_slot;
     }
@@ -172,8 +178,12 @@ struct search_space_configuration {
   unsigned monitoring_slot_offset(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
-      srsran_assert(ssb_beam_idx < ss0_monitoring_slot_offset.size(), "Invalid SSB beam index");
-      return ss0_monitoring_slot_offset[ssb_beam_idx];
+      // TODO: Revise this when FR2 support is added.
+      // Based on Table 13-11 in TS 38.213 and clause 13.
+      if (ss0_monitoring_slot_offset.size() > 1) {
+        return ss0_monitoring_slot_offset[ssb_beam_idx % TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
+      }
+      return ss0_monitoring_slot_offset.front();
     }
     return other_ss_monitoring_slot_offset;
   }
@@ -228,13 +238,21 @@ struct search_space_configuration {
   std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot(uint8_t ssb_beam_idx = 0) const
   {
     if (id == search_space_id(0)) {
-      srsran_assert(ssb_beam_idx < ss0_monitoring_symbols_within_slot_per_ssb_beam.size(), "Invalid SSB beam index");
-      return ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx];
+      // TODO: Revise this when FR2 support is added.
+      // Based on Table 13-11 in TS 38.213 and clause 13.
+      if (ss0_monitoring_symbols_within_slot_per_ssb_beam.size() > 1) {
+        return ss0_monitoring_symbols_within_slot_per_ssb_beam[ssb_beam_idx %
+                                                               TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT];
+      }
+      return ss0_monitoring_symbols_within_slot_per_ssb_beam.front();
     }
     return other_ss_monitoring_symbols_within_slot;
   }
 
 private:
+  /// Maximum number of Type0-PDCCH CSS monitoring occasions in a single slot.
+  static const unsigned TYPE0_PDCCH_CSS_MAX_NOF_OCCASIONS_PER_SLOT = 2;
+
   /// \brief Helper function to fetch SearchSpace#0 monitoring occasion information.
   static pdcch_type0_css_occasion_pattern1_description fetch_ss0_occasion_info(const cell_config_builder_params& params)
   {
