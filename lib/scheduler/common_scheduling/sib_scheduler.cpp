@@ -12,6 +12,7 @@
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/sch_pdu_builder.h"
@@ -96,7 +97,9 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
             ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration);
         continue;
       }
-      for (const auto& pdsch_td_res : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
+      const auto& pdsch_td_res_alloc_list = get_si_rnti_pdsch_time_domain_list(
+          cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+      for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
         // Check whether PDSCH time domain resource fits in DL symbols of the slot.
         if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
           continue;
