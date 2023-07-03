@@ -12,52 +12,13 @@
 
 using namespace srsran;
 
-unsigned srsran::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12_O,
-                                                  double   table_13_11_and_13_12_M,
-                                                  uint8_t  numerology_mu,
-                                                  unsigned ssb_index)
-{
-  // This is only used to retrieve the nof_slots_per_frame.
-  slot_point sl_point{numerology_mu, 0};
-
-  // Compute floor( ( O * 2^mu + floor(i*M) ) / nof_slots_per_frame  ) mod 2, as per TS 38.213, Section 13.
-  unsigned is_even = static_cast<unsigned>(floor(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
-                                                 floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) /
-                                           sl_point.nof_slots_per_frame()) %
-                     2;
-  return is_even;
-}
-
-slot_point srsran::get_type0_pdcch_css_n0(double             table_13_11_and_13_12_O,
-                                          double             table_13_11_and_13_12_M,
-                                          subcarrier_spacing scs_common,
-                                          unsigned           ssb_index)
-{
-  // Initialize n0 to a slot_point = 0.
-  const uint8_t numerology_mu = to_numerology_value(scs_common);
-  slot_point    type0_pdcch_css_n0{numerology_mu, 0};
-
-  // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
-  type0_pdcch_css_n0 += static_cast<unsigned>(static_cast<double>(table_13_11_and_13_12_O * (1U << numerology_mu)) +
-                                              floor(static_cast<double>(ssb_index) * table_13_11_and_13_12_M)) %
-                        type0_pdcch_css_n0.nof_slots_per_frame();
-
-  // We want to express n0 as a value from 0 to max_nof_slots. Since the mod operation above cap n0 to
-  // (nof_slots_per_frame - 1), we need to add nof_slots_per_frame to n0 if this falls into an odd frame.
-  type0_pdcch_css_n0 +=
-      type0_pdcch_css_n0_is_even_frame(table_13_11_and_13_12_O, table_13_11_and_13_12_M, numerology_mu, ssb_index) *
-      type0_pdcch_css_n0.nof_slots_per_frame();
-
-  return type0_pdcch_css_n0;
-}
-
 slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searchspace0,
                                                  uint8_t                   coreset0,
                                                  const cell_configuration& cell_cfg,
                                                  subcarrier_spacing        scs_common,
                                                  unsigned                  ssb_index)
 {
-  pdcch_type0_css_coreset_description coreset0_param =
+  const pdcch_type0_css_coreset_description coreset0_param =
       pdcch_type0_css_coreset_get(cell_cfg.dl_carrier.band,
                                   cell_cfg.ssb_cfg.scs,
                                   scs_common,
@@ -80,7 +41,19 @@ slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searc
   const auto pdcch_slot = get_type0_pdcch_css_n0(
       static_cast<unsigned>(ss0_config_occasion_param.offset), ss0_config_occasion_param.M, scs_common, ssb_index);
 
-  report_fatal_error_if_not(cell_cfg.is_fully_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  report_fatal_error_if_not(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  // For multiplexing pattern 1, number of entries in Type0-PDCCH CSS monitoring occasion's start symbol field is
+  // greater than 1 only for SearchSpaceZero values of 1, 3, 5, 7 as per TS 38.213, Table 13-11.
+  // TODO: Revise this when FR2 support is added.
+  const auto ss0_start_symbol =
+      ss0_config_occasion_param.start_symbol.size() > 1
+          ? ss0_config_occasion_param.start_symbol[ssb_index % ss0_config_occasion_param.MAX_NOF_OCCASIONS_PER_SLOT]
+          : ss0_config_occasion_param.start_symbol.front();
+  // Consider slots where PDCCH and PDSCH can be sent.
+  // TODO: To use greater than or equal operator when we support k0 > 0.
+  report_fatal_error_if_not(cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot) >
+                                ss0_start_symbol + coreset0_param.nof_symb_coreset,
+                            "PDCCH slot does not have enough DL symbols for CORESET + PDSCH.");
 
   return pdcch_slot;
 }
@@ -92,6 +65,36 @@ slot_point srsran::precompute_type0_pdcch_css_n0_plus_1(uint8_t                 
                                                         unsigned                  ssb_index)
 {
   const auto pdcch_slot = precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, scs_common, ssb_index) + 1;
-  report_fatal_error_if_not(cell_cfg.is_fully_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  report_fatal_error_if_not(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  const pdcch_type0_css_coreset_description coreset0_param =
+      pdcch_type0_css_coreset_get(cell_cfg.dl_carrier.band,
+                                  cell_cfg.ssb_cfg.scs,
+                                  scs_common,
+                                  coreset0,
+                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()));
+
+  srsran_assert(coreset0_param.pattern == ssb_coreset0_mplex_pattern::mplx_pattern1,
+                "SS/PBCH and CORESET multiplexing pattern not supported.");
+
+  // Get Coreset0 num of symbols from Coreset0 config.
+  const unsigned nof_symb_coreset0 = coreset0_param.nof_rb_coreset;
+
+  srsran_assert(band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1,
+                "Only bands in FR1 supported.");
+
+  const pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
+      pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+          .is_fr2 = false, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});
+
+  const auto ss0_start_symbol =
+      ss0_config_occasion_param.start_symbol.size() > 1
+          ? ss0_config_occasion_param.start_symbol[ssb_index % ss0_config_occasion_param.MAX_NOF_OCCASIONS_PER_SLOT]
+          : ss0_config_occasion_param.start_symbol.front();
+  // Consider slots where PDCCH and PDSCH can be sent.
+  // TODO: To use greater than or equal operator when we support k0 > 0.
+  report_fatal_error_if_not(cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot) >
+                                ss0_start_symbol + coreset0_param.nof_symb_coreset,
+                            "PDCCH slot does not have enough DL symbols for CORESET + PDSCH.");
+
   return pdcch_slot;
 }

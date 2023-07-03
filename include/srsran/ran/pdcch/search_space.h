@@ -157,16 +157,10 @@ struct search_space_configuration {
                   "Invalid access to SearchSpace#0 monitoring slot offset for a SearchSpace Id > 0");
     const pdcch_type0_css_occasion_pattern1_description ss0_occasion = fetch_ss0_occasion_info(params);
     for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ++ssb_idx) {
-      // Initialize n0 to a slot_point = 0.
-      const uint8_t numerology_mu = to_numerology_value(params.scs_common);
-      slot_point    type0_pdcch_css_n0{numerology_mu, 0};
+      const auto pdcch_slot = srsran::get_type0_pdcch_css_n0(
+          static_cast<unsigned>(ss0_occasion.offset), ss0_occasion.M, params.scs_common, ssb_idx);
 
-      // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
-      type0_pdcch_css_n0 += static_cast<unsigned>(static_cast<double>(ss0_occasion.offset * (1U << numerology_mu)) +
-                                                  floor(static_cast<double>(ssb_idx) * ss0_occasion.M)) %
-                            type0_pdcch_css_n0.nof_slots_per_frame();
-
-      ss0_monitoring_slot_offset.push_back(type0_pdcch_css_n0.slot_index());
+      ss0_monitoring_slot_offset.push_back(pdcch_slot);
     }
   }
 
@@ -181,7 +175,7 @@ struct search_space_configuration {
   {
     if (id == search_space_id(0)) {
       srsran_assert(ssb_beam_idx < ss0_monitoring_slot_offset.size(), "Invalid SSB beam index");
-      return ss0_monitoring_slot_offset[ssb_beam_idx];
+      return ss0_monitoring_slot_offset[ssb_beam_idx].to_uint();
     }
     return other_ss_monitoring_slot_offset;
   }
@@ -268,7 +262,7 @@ private:
   unsigned ss0_monitoring_slot_period;
   /// SearchSpace#0 slot offset for PDCCH monitoring. Set based on tables in TS 38.213, Section 13. Each element in
   /// vector corresponds to a SSB beam of index equal to index in vector.
-  std::vector<unsigned> ss0_monitoring_slot_offset;
+  std::vector<slot_point> ss0_monitoring_slot_offset;
   /// Number of consecutive slots that SearchSpace#0 lasts in every occasion.
   unsigned ss0_duration;
   /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring per SSB beam. The most significant
