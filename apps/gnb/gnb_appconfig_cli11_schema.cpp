@@ -159,33 +159,19 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--no_core", amf_params.no_core, "Allow gNB to run without a core");
 }
 
-static void configure_cli11_ncell_args(CLI::App& app, cu_cp_ncell_appconfig_item& config)
-{
-  app.add_option("--rat", config.rat, "RAT of this neighbor cell");
-  app.add_option("--nr_cell_id", config.n_id_cell, "NR cell id");
-  // TODO: Add SSB related params here.
-}
-
 static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item& config)
 {
   app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
+  app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
+  app.add_option("--band", config.band, "NR frequency band");
 
-  // Neighbor cell parameters.
-  app.add_option_function<std::vector<std::string>>(
-      "--ncells",
-      [&config](const std::vector<std::string>& values) {
-        config.ncells.resize(values.size());
+  app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
+  app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing");
+  app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
+  app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
+  app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 
-        for (unsigned i = 0, e = values.size(); i != e; ++i) {
-          CLI::App subapp("Neighbor cell list");
-          subapp.config_formatter(create_yaml_config_parser());
-          subapp.allow_config_extras(CLI::config_extras_mode::error);
-          configure_cli11_ncell_args(subapp, config.ncells[i]);
-          std::istringstream ss(values[i]);
-          subapp.parse_from_stream(ss);
-        }
-      },
-      "Sets the list of neightbor cells");
+  app.add_option("--ncells", config.rat, "Neighbor cell list");
 }
 
 static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)

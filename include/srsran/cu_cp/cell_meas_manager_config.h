@@ -54,3 +54,30 @@ bool is_complete(const cell_meas_manager_cfg& cfg);
 } // namespace srs_cu_cp
 
 } // namespace srsran
+
+namespace fmt {
+
+// Cell meas config formatter
+template <>
+struct formatter<srsran::srs_cu_cp::cell_meas_cfg> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::srs_cu_cp::cell_meas_cfg cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "nci={} complete={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
+                     cfg.nci,
+                     is_complete(cfg) ? "yes" : "no",
+                     cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.band.value())) : "?",
+                     cfg.ssb_arfcn.has_value() ? to_string(cfg.ssb_arfcn.value()) : "?",
+                     cfg.ssb_scs.has_value() ? to_string(cfg.ssb_scs.value()) : "?",
+                     "?");
+  }
+};
+
+} // namespace fmt

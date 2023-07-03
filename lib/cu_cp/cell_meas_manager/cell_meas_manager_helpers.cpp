@@ -16,6 +16,14 @@ using namespace srs_cu_cp;
 
 #define LOG_CHAN ("CU-CP")
 
+void srsran::srs_cu_cp::log_cells(const srslog::basic_logger& logger, const cell_meas_manager_cfg& cfg)
+{
+  logger.debug("Configured cells:");
+  for (const auto& cell : cfg.cells) {
+    logger.debug(" - {}", cell.second);
+  }
+}
+
 bool srsran::srs_cu_cp::is_complete(const cell_meas_cfg& cfg)
 {
   // True if all mendatory values are present.

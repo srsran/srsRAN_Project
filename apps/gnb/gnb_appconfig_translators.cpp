@@ -28,6 +28,36 @@ using namespace std::chrono_literals;
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
 
+srs_cu_cp::rrc_ssb_mtc srsran::generate_rrc_ssb_mtc(unsigned period, unsigned offset, unsigned duration)
+{
+  srs_cu_cp::rrc_ssb_mtc ssb_mtc;
+  switch (period) {
+    case 5:
+      ssb_mtc.periodicity_and_offset.sf5.emplace() = offset;
+      break;
+    case 10:
+      ssb_mtc.periodicity_and_offset.sf10.emplace() = offset;
+      break;
+    case 20:
+      ssb_mtc.periodicity_and_offset.sf20.emplace() = offset;
+      break;
+    case 40:
+      ssb_mtc.periodicity_and_offset.sf40.emplace() = offset;
+      break;
+    case 80:
+      ssb_mtc.periodicity_and_offset.sf80.emplace() = offset;
+      break;
+    case 160:
+      ssb_mtc.periodicity_and_offset.sf160.emplace() = offset;
+      break;
+    default:
+      report_error("Invalid SSB periodicity {}\n", period);
+  }
+  ssb_mtc.dur = duration;
+
+  return ssb_mtc;
+}
+
 srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
   srs_cu_cp::cu_cp_configuration out_cfg   = config_helpers::make_default_cu_cp_config();
@@ -41,13 +71,23 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
 
   out_cfg.ue_config.inactivity_timer = std::chrono::seconds{config.cu_cp_cfg.inactivity_timer};
 
-  // Convert cell list into map.
-  for (const auto& cell : config.cu_cp_cfg.mobility_config.cells) {
-    std::vector<nr_cell_id_t> ncell_ids;
-    for (const auto& ncell : cell.ncells) {
-      ncell_ids.push_back(ncell.n_id_cell);
+  // Convert appconfig's cell list into cell manager type.
+  for (const auto& app_cfg_item : config.cu_cp_cfg.mobility_config.cells) {
+    srs_cu_cp::cell_meas_cfg meas_cfg_item;
+    meas_cfg_item.nci       = app_cfg_item.n_id_cell;
+    meas_cfg_item.band      = app_cfg_item.band;
+    meas_cfg_item.ssb_arfcn = app_cfg_item.ssb_arfcn;
+    meas_cfg_item.ssb_scs   = app_cfg_item.ssb_scs;
+    meas_cfg_item.ncells    = app_cfg_item.ncells;
+    if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
+        app_cfg_item.ssb_period.has_value()) {
+      // Add MTC config.
+      meas_cfg_item.ssb_mtc.emplace() = generate_rrc_ssb_mtc(
+          app_cfg_item.ssb_period.value(), app_cfg_item.ssb_offset.value(), app_cfg_item.ssb_duration.value());
     }
-    out_cfg.mobility_config.meas_manager_config.cells[cell.n_id_cell].ncells = ncell_ids;
+
+    // Store config.
+    out_cfg.mobility_config.meas_manager_config.cells[meas_cfg_item.nci] = meas_cfg_item;
   }
 
   // Convert measurement config.

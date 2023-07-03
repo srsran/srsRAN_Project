@@ -410,18 +410,20 @@ struct amf_appconfig {
   bool        no_core                = false;
 };
 
-/// \brief Each item describes the parameters of a single neighbor cell.
-struct cu_cp_ncell_appconfig_item {
-  uint64_t    n_id_cell; ///< Cell id of the neighbor cell
-  std::string rat;       ///< RAT of this neighbor cell.
-  // TODO: Add optional SSB parameters.
-  optional<unsigned> ssb_arfcn;
-};
-
 /// \brief Each item describes the relationship between one cell to all other cells.
 struct cu_cp_cell_appconfig_item {
-  uint64_t                                n_id_cell; ///< Cell id.
-  std::vector<cu_cp_ncell_appconfig_item> ncells;    ///< Map of cell ids with their neigbors as value.
+  uint64_t    n_id_cell;  ///< Cell id.
+  std::string rat = "nr"; ///< RAT of this neighbor cell.
+
+  // TODO: Add optional SSB parameters.
+  optional<nr_band>            band;
+  optional<unsigned>           ssb_arfcn;
+  optional<subcarrier_spacing> ssb_scs;
+  optional<unsigned>           ssb_period;
+  optional<unsigned>           ssb_offset;
+  optional<unsigned>           ssb_duration;
+
+  std::vector<uint64_t> ncells; ///< Vector of cells that are a neighbor of this cell.
 };
 
 /// \brief Measurement configuration, for now only supporting the A3 event.
