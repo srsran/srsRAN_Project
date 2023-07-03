@@ -461,13 +461,21 @@ static bool validate_log_appconfig(const log_appconfig& config)
 /// Validates expert physical layer configuration parameters.
 static bool validate_expert_phy_appconfig(const expert_upper_phy_appconfig& config)
 {
-  static const interval<unsigned>  nof_ul_threads_range(1, std::thread::hardware_concurrency());
-  static constexpr interval<float> lphy_dl_throttling_range(0.0F, 1.0F);
+  static const interval<unsigned, true> nof_ul_dl_threads_range(1, std::thread::hardware_concurrency());
+  static constexpr interval<float>      lphy_dl_throttling_range(0.0F, 1.0F);
 
   bool valid = true;
 
-  if (!nof_ul_threads_range.contains(config.nof_ul_threads)) {
-    fmt::print("Number of UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_threads_range);
+  if (!nof_ul_dl_threads_range.contains(config.nof_ul_threads)) {
+    fmt::print(
+        "Number of PHY UL threads (i.e., {}) must be in range {}.\n", config.nof_ul_threads, nof_ul_dl_threads_range);
+    valid = false;
+  }
+
+  if (!nof_ul_dl_threads_range.contains(config.nof_pdsch_threads)) {
+    fmt::print("Number of PHY PDSCH threads (i.e., {}) must be in range {}.\n",
+               config.nof_pdsch_threads,
+               nof_ul_dl_threads_range);
     valid = false;
   }
 
