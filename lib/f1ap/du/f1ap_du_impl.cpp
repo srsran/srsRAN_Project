@@ -31,9 +31,8 @@ f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
   logger(srslog::fetch_basic_logger("DU-F1")),
   f1ap_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
-  ue_exec_mapper(ue_exec_mapper_),
   du_mng(du_mng_),
-  ues(du_mng_, f1ap_notifier),
+  ues(du_mng_, f1ap_notifier, ctrl_exec, ue_exec_mapper_),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
   paging_notifier(paging_notifier_)
 {
@@ -176,13 +175,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   // Forward SDU to lower layers.
   byte_buffer sdu;
   sdu.append(msg->rrc_container);
-  if (not ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
-        srb_bearer->handle_pdu(std::move(sdu));
-      })) {
-    logger.warning("Discarding DlRrcMessageTransfer. Cause: UE task queue is full.", srb_id);
-    // TODO: Handle error.
-    return;
-  }
+  srb_bearer->handle_pdu(std::move(sdu));
 }
 
 void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_release_request& request)
