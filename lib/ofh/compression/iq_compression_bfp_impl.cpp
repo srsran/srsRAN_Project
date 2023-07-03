@@ -15,21 +15,6 @@
 using namespace srsran;
 using namespace ofh;
 
-unsigned iq_compression_bfp_impl::determine_exponent(uint16_t x, unsigned data_width)
-{
-  srsran_assert(data_width < 17, "Passed IQ data width exceeds 16 bits");
-
-  unsigned max_shift       = MAX_IQ_WIDTH - data_width;
-  unsigned lz_without_sign = max_shift;
-
-  if ((x > 0) && (max_shift > 0)) {
-    // TODO: use a wrapper that checks whether this builtin is actually available and provides a fallback option.
-    lz_without_sign = __builtin_clz(x) - 16U - 1U;
-  }
-  int raw_exp = std::min(max_shift, lz_without_sign);
-  return std::max(0, static_cast<int>(MAX_IQ_WIDTH - data_width) - raw_exp);
-}
-
 void iq_compression_bfp_impl::quantize_input(span<int16_t> out, span<const float> in)
 {
   srsran_assert(in.size() == out.size(), "Input and output spans must have the same size");
