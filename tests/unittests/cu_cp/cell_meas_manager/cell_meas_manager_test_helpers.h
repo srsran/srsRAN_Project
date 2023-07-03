@@ -25,8 +25,9 @@ protected:
 
   void create_empty_manager();
   void create_default_manager();
-  void create_manager_with_one_cell_and_one_neighbor_cell();
+  void create_default_manager_with_cell_params();
   void check_default_meas_cfg(const rrc_meas_cfg& meas_cfg);
+  void verify_empty_meas_cfg(const rrc_meas_cfg& meas_cfg);
 
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP", false);
