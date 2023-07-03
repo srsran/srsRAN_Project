@@ -65,7 +65,11 @@ private:
   pucch_allocator&                  pucch_alloc;
   ue_repository&                    ues;
 
-  bwp_configuration          initial_active_dl_bwp;
+  bwp_configuration initial_active_dl_bwp;
+  // See 3GPP TS 38.213, clause 10.1,
+  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
   search_space_configuration ss_cfg;
   coreset_configuration      cs_cfg;
 

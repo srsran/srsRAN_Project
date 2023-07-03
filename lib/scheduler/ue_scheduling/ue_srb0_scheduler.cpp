@@ -28,24 +28,11 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   pucch_alloc(pucch_alloc_),
   ues(ues_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
+  ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+             .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
+  cs_cfg(cell_cfg.get_common_coreset(ss_cfg.cs_id)),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
-  // See 3GPP TS 38.213, clause 10.1,
-  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
-  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
-  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-  // Search valid PDSCH time domain resource.
-  const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
-  ss_cfg                     = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
-               .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
-  if (ss_cfg.cs_id == to_coreset_id(0) and bwp_cfg_common.pdcch_common.coreset0.has_value()) {
-    cs_cfg = bwp_cfg_common.pdcch_common.coreset0.value();
-  } else if (bwp_cfg_common.pdcch_common.common_coreset.has_value() and
-             ss_cfg.cs_id == bwp_cfg_common.pdcch_common.common_coreset->id) {
-    cs_cfg = bwp_cfg_common.pdcch_common.common_coreset.value();
-  } else {
-    srsran_assertion_failure("CORESET not configured for SearchSpace Id={}", ss_cfg.id);
-  }
 }
 
 void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
@@ -88,8 +75,8 @@ void ue_srb0_scheduler::handle_dl_buffer_state_indication(du_ue_index_t ue_index
 
 bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
 {
-  // Search valid PDSCH time domain resource.
   const auto& bwp_cfg_common = cell_cfg.dl_cfg_common.init_dl_bwp;
+  // Search valid PDSCH time domain resource.
   for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
        ++time_res_idx) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
