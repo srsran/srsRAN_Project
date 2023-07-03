@@ -54,7 +54,7 @@ public:
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
-  reserve_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_next_f1_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK / CSI).
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
@@ -62,7 +62,7 @@ public:
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
-  reserve_next_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_next_f2_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK / CSI).
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
@@ -92,36 +92,36 @@ public:
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  bool release_harq_f1_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH (format 2) resource from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_format2_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  bool release_harq_f2_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH (format 1) resource used for SR from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_sr_resource(slot_point slot_sr, rnti_t crnti);
+  bool release_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH (format 2) resource used for CSI from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_csi_resource(slot_point slot_sr, rnti_t crnti);
+  bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
   /// \brief Returns the PUCCH resource indicator (format 1) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
+  int fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Returns the PUCCH resource indicator (format 2) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
+  int fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Returns the configuration of the PUCCH resource used for CSI (format 2) for a given RNTI at a given slot.
   /// \return Pointer to the resource configuration used allocated to the UE; if UE is not found, returns \c nullptr.
@@ -134,37 +134,43 @@ private:
   static const size_t RES_MANAGER_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1);
 
+  static const unsigned PUCCH_HARQ_F1_RES_SET_ID = 0;
+  static const unsigned PUCCH_HARQ_F2_RES_SET_ID = 1;
+
   // [Implementation-defined] Number of PUCCH resources (of single format) that can be handled by the resource manager.
   // NOTE: this number allows us to have a 1-to-1 match between PUCCH resource indicator and index of the PUCCH resource
   // in its corresponding PUCCH resource set.
-  static const size_t MAX_HARQ_PUCCH_RESOURCES{8};
+  static const size_t MAX_HARQ_PUCCH_RESOURCES{128};
+  static const size_t MAX_PUCCH_RESOURCES{128};
   // As per Section 9.2.1, TS 38.213, this is given by the number of possible values of r_PUCCH, which is 16.
   static const size_t MAX_COMMON_PUCCH_RESOURCES{16};
   static const size_t MAX_SR_PUCCH_RESOURCES{4};
 
-  using pucch_res_record_array  = std::array<rnti_t, MAX_HARQ_PUCCH_RESOURCES>;
-  using common_res_record_array = std::array<bool, MAX_COMMON_PUCCH_RESOURCES>;
-  struct sr_record {
-    int    pucch_res_id;
-    rnti_t allocated_ue{INVALID_RNTI};
+  struct resource_tracker {
+    rnti_t       rnti;
+    pucch_format format;
   };
+
+  using pucch_res_record_array  = std::array<resource_tracker, MAX_PUCCH_RESOURCES>;
+  using common_res_record_array = std::array<bool, MAX_COMMON_PUCCH_RESOURCES>;
 
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.
   struct rnti_pucch_res_id_slot_record {
-    // Keeps track of the UE allocated to the SR resource.
-    std::array<sr_record, MAX_SR_PUCCH_RESOURCES> ues_using_sr_resources;
-    // Keeps track of the UE allocated to the SR resource.
-    rnti_t ue_using_csi_resource{INVALID_RNTI};
-    // Keeps track of the RNTI of the UE using a given PUCCH resource format 1 (indexed by the PUCCH res. indicator).
-    pucch_res_record_array ues_using_format1_res;
-    // Keeps track of the RNTI of the UE using a given PUCCH resource format 2 (indexed by the PUCCH res. indicator).
-    pucch_res_record_array ues_using_format2_res;
-    // Keeps track of the PUCCH common resources (indexed by r_PUCCH) used by the UEs.
     common_res_record_array used_common_resources;
+    pucch_res_record_array  ues_using_pucch_res;
   };
 
   // Returns the resource manager allocation record for a given slot.
   rnti_pucch_res_id_slot_record& get_slot_resource_counter(slot_point sl);
+
+  pucch_harq_resource_alloc_record reserve_next_harq_res_available(slot_point          slot_harq,
+                                                                   rnti_t              crnti,
+                                                                   const pucch_config& pucch_cfg,
+                                                                   pucch_format        format);
+
+  bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
+
+  int fetch_pucch_res_indic(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg, pucch_format format);
 
   // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
   std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
