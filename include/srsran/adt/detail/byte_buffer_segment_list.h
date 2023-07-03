@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/detail/byte_buffer_segment.h"
+#include <utility>
 
 namespace srsran {
 namespace detail {
