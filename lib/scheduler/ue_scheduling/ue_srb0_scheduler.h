@@ -42,10 +42,7 @@ private:
   bool schedule_srb0(cell_resource_allocator& res_alloc, ue& u);
 
   /// \brief Tries to schedule SRB0 message for a UE and a specific PDSCH TimeDomain Resource and Search Space.
-  bool schedule_srb0(ue&                               u,
-                     cell_resource_allocator&          res_alloc,
-                     unsigned                          pdsch_time_res,
-                     const search_space_configuration& ss_cfg);
+  bool schedule_srb0(ue& u, cell_resource_allocator& res_alloc, unsigned pdsch_time_res);
 
   void fill_srb0_grant(ue&                        u,
                        slot_point                 pdsch_slot,
@@ -68,7 +65,9 @@ private:
   pucch_allocator&                  pucch_alloc;
   ue_repository&                    ues;
 
-  bwp_configuration initial_active_dl_bwp;
+  bwp_configuration          initial_active_dl_bwp;
+  search_space_configuration ss_cfg;
+  coreset_configuration      cs_cfg;
 
   /// List of UE's DU Indexes for which SRB0 messages needs to be scheduled.
   std::vector<du_ue_index_t> pending_ues;
