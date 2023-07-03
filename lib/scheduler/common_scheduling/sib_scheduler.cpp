@@ -77,28 +77,58 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
     if (sl_point.to_uint() % sib1_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
-      if (not cell_cfg.is_fully_dl_enabled(sl_point)) {
+      if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
-        return;
+        continue;
       }
 
-      allocate_sib1(res_grid, ssb_idx);
+      unsigned                          time_resource = 0;
+      const search_space_configuration& ss_cfg =
+          cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+              .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id];
+      unsigned coreset_duration = 0;
+      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value() and
+          ss_cfg.cs_id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id) {
+        coreset_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->duration;
+      }
+      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value() and
+          ss_cfg.cs_id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->id) {
+        coreset_duration = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset->duration;
+      }
+      // Ensure slot has enough DL symbols for CORESET.
+      if (cell_cfg.get_nof_dl_symbol_per_slot(sl_point) < ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
+        logger.error(
+            "Could not allocate SIB1 for beam idx {} as slot does not have enough DL symbols for CORESET ({} < {}).",
+            ssb_idx,
+            cell_cfg.get_nof_dl_symbol_per_slot(sl_point),
+            ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration);
+        continue;
+      }
+      for (const auto& pdsch_td_res : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list) {
+        // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+        if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
+          continue;
+        }
+        if (pdsch_td_res.symbols.start() >= ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
+          if (allocate_sib1(res_grid, ssb_idx, time_resource)) {
+            // SIB1 Allocation successful.
+            break;
+          }
+          ++time_resource;
+        }
+      }
     }
   }
 }
 
 //  ------   Private methods   ------ .
 
-bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
+bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx, unsigned time_resource)
 {
-  // This is the list of parameters that are hard-coded and will need to be derived from some general config.
-  // TODO: Check if this can be derived from time_resource.
-  static const ofdm_symbol_range sib1_ofdm_symbols{2, 14};
-  static const unsigned          nof_symb_sh = sib1_ofdm_symbols.length();
-  static const unsigned          nof_layers  = 1;
-  // Time resource will be passed to the next function to fill the DCI.
-  // TODO: compute time_resource as part of the scheduler output.
-  static const unsigned time_resource = 0;
+  const ofdm_symbol_range sib1_ofdm_symbols =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
+  const unsigned        nof_symb_sh = sib1_ofdm_symbols.length();
+  static const unsigned nof_layers  = 1;
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by SI-RNTI.
   static const unsigned nof_oh_prb = 0;
 
@@ -107,8 +137,8 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   dmrs_information dmrs_info = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-  sch_mcs_description mcs_descr     = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.sib1_mcs_index);
-  sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
+  const sch_mcs_description mcs_descr     = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.sib1_mcs_index);
+  const sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
       sib1_payload_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
