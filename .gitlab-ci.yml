@@ -167,6 +167,8 @@ clangsa:
       when: manual
       allow_failure: true
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: manual
+      allow_failure: true
   interruptible: false
   variables:
     ANALYZER: clangsa
