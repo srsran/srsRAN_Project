@@ -333,9 +333,9 @@ bool pucch_resource_manager::release_harq_resource(slot_point          slot_harq
   unsigned               ue_first_f1_res_id     = ue_res_id_set_for_harq.front();
   span<resource_tracker> slot_ue_res_array(&slot_res_array[ue_first_f1_res_id], slot_res_array.size());
 
-  auto* target_res = std::find_if(slot_ue_res_array.begin(), slot_ue_res_array.end(), [](const resource_tracker res) {
-    return res.rnti == INVALID_RNTI;
-  });
+  auto* target_res = std::find_if(slot_ue_res_array.begin(),
+                                  slot_ue_res_array.end(),
+                                  [crnti](const resource_tracker res) { return res.rnti == crnti; });
 
   // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
   if (target_res != slot_ue_res_array.end()) {

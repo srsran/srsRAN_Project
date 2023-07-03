@@ -414,7 +414,7 @@ TEST_F(test_pucch_resource_manager, test_allocation_2_sr_resource)
 
   // Release resource and verify it was successful.
   ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4601), pucch_cfg));
-  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4602), pucch_cfg));
+  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4602), pucch_cfg_ue_2));
 
   // Attempt to allocate UEs over released SR resources.
   ASSERT_NE(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4603), pucch_cfg));
