@@ -51,7 +51,7 @@ protected:
   }
 };
 
-/// Test the RRC setup with connected AMF
+/// Test the RRC reconfig with connected AMF
 TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
 {
   // Prepare args
