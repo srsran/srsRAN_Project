@@ -11,6 +11,7 @@ set_directory_properties(PROPERTIES LABELS "ofh")
 add_subdirectory(compression)
 add_subdirectory(ecpri)
 add_subdirectory(ethernet)
+add_subdirectory(receiver)
 add_subdirectory(serdes)
 add_subdirectory(transmitter)
 

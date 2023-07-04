@@ -22,6 +22,12 @@ class uplane_message_decoder
 public:
   virtual ~uplane_message_decoder() = default;
 
+  /// Peeks and returns the filter index of the given message.
+  ///
+  /// \param[in] message Message to peek.
+  /// \return Message filter index.
+  virtual filter_index_type peek_filter_index(span<const uint8_t> message) const = 0;
+
   /// Decodes the given message into results and returns true on success, false otherwise.
   ///
   /// \param[out] results Results of decoding the message. On error, results value is undefined.

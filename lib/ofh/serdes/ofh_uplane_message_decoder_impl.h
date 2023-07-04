@@ -32,6 +32,9 @@ public:
   }
 
   // See interface for documentation.
+  filter_index_type peek_filter_index(span<const uint8_t> message) const override;
+
+  // See interface for documentation.
   bool decode(uplane_message_decoder_results& results, span<const uint8_t> message) override;
 
 private:

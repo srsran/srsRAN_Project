@@ -312,3 +312,9 @@ bool uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
 
   return true;
 }
+
+filter_index_type uplane_message_decoder_impl::peek_filter_index(span<const uint8_t> message) const
+{
+  // Filter index is codified in the first byte, the 4 LSB.
+  return to_filter_index_type((message[0] & 0xf));
+}
