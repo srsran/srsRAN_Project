@@ -837,13 +837,31 @@ public:
   byte_buffer_slice(byte_buffer_slice&&) noexcept = default;
   byte_buffer_slice(span<const uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
   byte_buffer_slice(std::initializer_list<uint8_t> bytes) : byte_buffer_slice(byte_buffer{bytes}) {}
+
+  /// Conversion from byte_buffer to byte_buffer_slice via move.
   byte_buffer_slice(byte_buffer&& buf_) : buf(std::move(buf_)), sliced_view(buf) {}
+
+  /// Conversion from byte_buffer to byte_buffer_slice via shallow copy.
   byte_buffer_slice(const byte_buffer& buf_) : buf(buf_.copy()), sliced_view(buf) {}
+
   byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
     buf(buf_.copy()), sliced_view(buf, offset, length)
   {
   }
+
+  /// Conversion from a [start, end) interval of a byte_buffer to a byte_buffer_slice.
+  byte_buffer_slice(byte_buffer&& buf_, size_t offset, size_t length) :
+    buf(std::move(buf_)), sliced_view(buf, offset, length)
+  {
+  }
+
   byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : buf(buf_.copy()), sliced_view(view)
+  {
+    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
+                        "byte_buffer_view is not part of the owned byte_buffer");
+  }
+
+  byte_buffer_slice(byte_buffer&& buf_, byte_buffer_view view) : buf(std::move(buf_)), sliced_view(view)
   {
     srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
