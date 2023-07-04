@@ -416,12 +416,12 @@ struct cu_cp_cell_appconfig_item {
   std::string rat = "nr"; ///< RAT of this neighbor cell.
 
   // TODO: Add optional SSB parameters.
-  optional<nr_band>            band;
-  optional<unsigned>           ssb_arfcn;
-  optional<subcarrier_spacing> ssb_scs;
-  optional<unsigned>           ssb_period;
-  optional<unsigned>           ssb_offset;
-  optional<unsigned>           ssb_duration;
+  optional<nr_band>  band;
+  optional<unsigned> ssb_arfcn;
+  optional<unsigned> ssb_scs;
+  optional<unsigned> ssb_period;
+  optional<unsigned> ssb_offset;
+  optional<unsigned> ssb_duration;
 
   std::vector<uint64_t> ncells; ///< Vector of cells that are a neighbor of this cell.
 };

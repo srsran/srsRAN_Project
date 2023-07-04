@@ -163,16 +163,10 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
 {
   app.add_option("--nr_cell_id", config.n_id_cell, "Cell id to be configured");
   app.add_option("--rat", config.rat, "RAT of this neighbor cell")->capture_default_str();
-  app.add_option("--band", config.band, "NR frequency band");
+  add_auto_enum_option(app, "--band", config.band, "NR frequency band");
 
   app.add_option("--ssb_arfcn", config.ssb_arfcn, "SSB ARFCN");
-  app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->transform([](const std::string& value) {
-    subcarrier_spacing scs = to_subcarrier_spacing(value);
-    if (scs == subcarrier_spacing::invalid) {
-      return "Invalid SSB subcarrier spacing '" + value + "'";
-    }
-    return std::to_string(to_numerology_value(scs));
-  });
+  app.add_option("--ssb_scs", config.ssb_scs, "SSB subcarrier spacing")->check(CLI::IsMember({15, 30, 60, 120, 240}));
   app.add_option("--ssb_period", config.ssb_period, "SSB period in ms");
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
   app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");

@@ -15,6 +15,7 @@
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
@@ -77,8 +78,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
     meas_cfg_item.nci       = app_cfg_item.n_id_cell;
     meas_cfg_item.band      = app_cfg_item.band;
     meas_cfg_item.ssb_arfcn = app_cfg_item.ssb_arfcn;
-    meas_cfg_item.ssb_scs   = app_cfg_item.ssb_scs;
-    meas_cfg_item.ncells    = app_cfg_item.ncells;
+    if (app_cfg_item.ssb_scs.has_value()) {
+      meas_cfg_item.ssb_scs.emplace() = to_subcarrier_spacing(std::to_string(app_cfg_item.ssb_scs.value()));
+    }
+    meas_cfg_item.ncells = app_cfg_item.ncells;
     if (app_cfg_item.ssb_duration.has_value() && app_cfg_item.ssb_offset.has_value() &&
         app_cfg_item.ssb_period.has_value()) {
       // Add MTC config.
