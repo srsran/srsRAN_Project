@@ -239,7 +239,8 @@ srsran docker compose:
           - docker/**/*
           - .gitlab/ci/builders/install_dependencies.sh
           - .gitlab/ci/builders/builder.sh
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  timeout: 2h
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
@@ -251,7 +252,7 @@ srsran docker compose:
       command: ["dockerd-entrypoint.sh"]
   script:
     - docker compose -f docker/docker-compose.yml run gnb gnb --version
-    - docker compose -f docker/docker-compose.yml run epc 5gc -v
+    - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
   needs: []
 
 ################################################################################

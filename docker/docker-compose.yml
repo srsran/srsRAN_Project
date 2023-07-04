@@ -9,8 +9,8 @@
 version: '3.9'
 
 services:
-  epc:
-    container_name: open5gs_epc
+  5gc:
+    container_name: open5gs_5gc
     build:
       context: open5gs
       target: open5gs
@@ -25,9 +25,11 @@ services:
     privileged: true
     ports:
       - "3000:3000/tcp"
-    # Uncomment port to use the epc from outside the docker network
+    # Uncomment port to use the 5gc from outside the docker network
     #   - "38412:38412/sctp"
     command: 5gc -c open5gs-5gc.yml
+    configs:
+      - user_db.csv
     healthcheck:
       test: [ "CMD-SHELL", "nc -z 127.0.0.20 7777" ]
       interval: 3s
@@ -64,13 +66,13 @@ services:
       - gnb_config.yml
     # Customize your desired network mode. 
     # current netowrk configuration creastes a private netwoek with both containers attached
-    # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the EPC is not in your PC
+    # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
     networks:
       ran:
         ipv4_address: ${GNB_IP:-10.53.1.3}
-    # Start GNB container after EPC is up and running
+    # Start GNB container after 5gc is up and running
     depends_on:
-      epc:
+      5gc:
         condition: service_healthy
     # Command to run into the final container
     command: gnb  -c /gnb_config.yml amf --addr ${OPEN5GS_IP:-10.53.1.2}
@@ -78,6 +80,8 @@ services:
 configs:
   gnb_config.yml:
     file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
+  user_db.csv:
+    file: ${USER_DATABASE_PATH} # Path to a csv file with UEs info. See open5gs/README.md for more details
 
 networks:
   ran:

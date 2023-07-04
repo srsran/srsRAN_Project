@@ -75,7 +75,6 @@ COPY open5gs-5gc.yml open5gs-5gc.yml.in
 COPY open5gs_entrypoint.sh .
 COPY add_users.py .
 COPY setup_tun.py .
-COPY user_db.csv .
 
 ENV PATH="${PATH}:/open5gs/build/tests/app/"
 

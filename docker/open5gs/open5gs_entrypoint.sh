@@ -30,7 +30,11 @@ done
 python3 setup_tun.py --ip_range ${UE_IP_RANGE}
 
 # Add users from user_db.csv to mongodb
-python3 add_users.py --mongodb ${MONGODB_IP}
+user_db_file="/user_db.csv"
+
+if [[ -f "$user_db_file" && ! -d "$user_db_file" ]]; then
+    python3 add_users.py --mongodb ${MONGODB_IP} --db_file ${user_db_file}
+fi
 
 if $DEBUG
 then

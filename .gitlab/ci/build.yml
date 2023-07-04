@@ -756,7 +756,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
       when: delayed
-      start_in: 150 minutes
+      start_in: 160 minutes
   interruptible: false
   parallel:
     matrix:

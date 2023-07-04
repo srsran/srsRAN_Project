@@ -27,7 +27,8 @@ Then run the docker container with:
 
 `docker run --net open5gsnet --ip 172.18.0.2 --env-file open5gs.env --privileged --publish 3000:3000 open5gs-docker ./build/tests/app/5gc -c open5gs-5gc.yml`
 
-To use this container with srsgnb, the `mme_addr` in `enb.conf` must be set to the OPEN5GS_IP (here: 172.18.0.2). Furthermore, the `gtp_bind_addr` and `s1c_bind_addr` must be set to the local ethernet/wifi IP address, not a localhost IP.
+To use this container with srsgnb, the `addr` option under `amf` section in gnb configuration must be set OPEN5GS_IP (here: 172.18.0.2).
+It could also be required to modify `bind_addr` option under `amf` section in gnb configuration to the local ethernet/wifi IP address for the host or container where gnb is running, not a localhost IP.
 
 To ping a connected UE setup the necessary route to the UE_IP_BASE + ".0/24" (here: 10.45.0) via the OPEN5GS_IP (here: 172.18.0.2) using:
 
@@ -35,6 +36,32 @@ To ping a connected UE setup the necessary route to the UE_IP_BASE + ".0/24" (he
 
 ## Note
 
-At startup of the container, all entries from the [user_db.csv](user_db.csv) will be added to the specified mongodb. If this is not desired comment `python3 add_users.py` in [open5gs_entrypoint.sh](open5gs_entrypoint.sh).
+At startup of the container, all entries from the [user_db.csv](user_db.csv), if exists, will be added to the specified mongodb.
+
+user_db.csv format must be:
+
+```bash
+#
+# .csv to store UE's information in HSS
+# Kept in the following format: "Name,Auth,IMSI,Key,OP_Type,OP/OPc,AMF,SQN,QCI,IP_alloc"
+#
+# Name:     Human readable name to help distinguish UE's. Ignored by the HSS
+# Auth:     Authentication algorithm used by the UE. Valid algorithms are XOR
+#           (xor) and MILENAGE (mil)
+# IMSI:     UE's IMSI value
+# Key:      UE's key, where other keys are derived from. Stored in hexadecimal
+# OP_Type:  Operator's code type, either OP or OPc
+# OP/OPc:   Operator Code/Cyphered Operator Code, stored in hexadecimal
+# AMF:      Authentication management field, stored in hexadecimal
+# SQN:      UE's Sequence number for freshness of the authentication
+# QCI:      QoS Class Identifier for the UE's default bearer.
+# IP_alloc: IP allocation stratagy for the SPGW.
+#           With 'dynamic' the SPGW will automatically allocate IPs
+#           With a valid IPv4 (e.g. '172.16.0.2') the UE will have a statically assigned IP.
+#
+# Note: Lines starting by '#' are ignored and will be overwritten
+# List of UEs with IMSI, and key increasing by one for each new UE.
+ue01,xor,000000000000001,00112233445566778899aabbccddeeff,opc,00aaa00aa0000000aa00a0a0a0a0a00a,9001,00000000d91e,9,10.45.1.2
+```
 
 The Open5GS WebUI to manually add/change UEs to the mongodb can be accessed at [localhost:3000](localhost:3000).
