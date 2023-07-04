@@ -46,7 +46,7 @@ using namespace srsran;
 #define CHECK_EQ_OR_ABOVE(val, max_val, ...)                                                                           \
   CHECK_TRUE((val >= max_val), "Invalid {} ({} < {})", fmt::format(__VA_ARGS__), val, max_val)
 
-/// Checks if "val" is above or equal to "max_val".
+/// Checks if "val" is above "max_val".
 #define CHECK_ABOVE(val, max_val, ...)                                                                                 \
   CHECK_TRUE((val > max_val), "Invalid {} ({} <= {})", fmt::format(__VA_ARGS__), val, max_val)
 

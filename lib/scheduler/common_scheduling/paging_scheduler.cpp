@@ -17,7 +17,6 @@
 #include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/pcch/pcch_configuration.h"
 
 using namespace srsran;
 
@@ -132,7 +131,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   const cell_slot_resource_allocator& pdcch_alloc = res_grid[0];
   const auto                          pdcch_slot  = pdcch_alloc.slot;
   // Verify PDCCH slot is DL enabled.
-  if (not cell_cfg.is_fully_dl_enabled(pdcch_slot)) {
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
     return;
   }
 
@@ -174,7 +173,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
       const cell_slot_resource_allocator& paging_alloc = res_grid[pdsch_td_alloc_list[time_res_idx].k0];
       // Verify Paging slot is DL enabled.
-      if (not cell_cfg.is_fully_dl_enabled(paging_alloc.slot)) {
+      if (not cell_cfg.is_dl_enabled(paging_alloc.slot)) {
         continue;
       }
       // Note: Unable at the moment to multiplex CSI and PDSCH.
@@ -184,6 +183,16 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
       // Verify there is space in PDSCH and PDCCH result lists for new allocations.
       if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full() or
           pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].size() >= MAX_PAGING_RECORDS_PER_PAGING_PDU) {
+        continue;
+      }
+      const auto&                 pdsch_td_cfg = pdsch_td_alloc_list[time_res_idx];
+      const coreset_configuration cs_cfg       = cell_cfg.get_common_coreset(ss_cfg.cs_id);
+      // Check whether PDSCH time domain resource does not overlap with CORESET.
+      if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
+        continue;
+      }
+      // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+      if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(paging_alloc.slot)) {
         continue;
       }
 
@@ -481,18 +490,13 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   const auto periodicity_in_slots = std::max(ss_periodicity, sl.nof_slots_per_frame());
   for (unsigned slot_num = 0; slot_num < periodicity_in_slots; slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
-    // Ensure slot for Paging has DL enabled.
-    if (not cell_cfg.is_fully_dl_enabled(ref_sl)) {
-      continue;
-    }
     if ((slot_num - ss_slot_offset) % ss_periodicity == 0) {
       // - [Implementation defined] Currently, PDCCH allocator does not support more than one monitoring occasion
       //   per slot.
       for (unsigned duration = 0; duration < ss_duration; duration++) {
         const slot_point add_pmo_slot = ref_sl + duration;
-
         // Ensure slot for Paging has DL enabled.
-        if (not cell_cfg.is_fully_dl_enabled(add_pmo_slot)) {
+        if (not cell_cfg.is_dl_enabled(add_pmo_slot)) {
           continue;
         }
         pdcch_monitoring_occasions.push_back(add_pmo_slot);
