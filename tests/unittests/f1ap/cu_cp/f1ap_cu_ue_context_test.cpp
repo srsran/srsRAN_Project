@@ -14,16 +14,36 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 
+#include <cstdint>
 #include <gtest/gtest.h>
+#include <memory>
 
 using namespace srsran;
 using namespace srs_cu_cp;
+
+// test class
+class f1ap_ue_context_list_test : public f1ap_ue_context_list
+{
+public:
+  f1ap_ue_context_list_test(timer_factory timers_, srslog::basic_logger& logger_) :
+    f1ap_ue_context_list(timers_, logger_)
+  {
+  }
+
+  gnb_cu_ue_f1ap_id_t get_next_cu_ue_f1ap_id() { return next_cu_ue_f1ap_id; }
+
+  void set_next_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_t next_id) { next_cu_ue_f1ap_id = next_id; }
+};
 
 /// Fixture class for F1AP UE context
 class f1ap_cu_ue_context_test : public ::testing::Test
 {
 protected:
-  f1ap_cu_ue_context_test() { srslog::init(); };
+  f1ap_cu_ue_context_test()
+  {
+    f1ap_logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+  };
   ~f1ap_cu_ue_context_test()
   {
     // flush logger after each test
@@ -36,11 +56,11 @@ protected:
         test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   }
 
-  srslog::basic_logger& f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
-  timer_manager         timer_mng;
-  manual_task_worker    ctrl_worker{128};
-  timer_factory         timers{timer_mng, ctrl_worker};
-  f1ap_ue_context_list  ue_ctxt_list{timers, f1ap_logger};
+  srslog::basic_logger&     f1ap_logger = srslog::fetch_basic_logger("CU-CP-F1");
+  timer_manager             timer_mng;
+  manual_task_worker        ctrl_worker{128};
+  timer_factory             timers{timer_mng, ctrl_worker};
+  f1ap_ue_context_list_test ue_ctxt_list{timers, f1ap_logger};
 };
 
 TEST_F(f1ap_cu_ue_context_test, when_ue_added_then_ue_exists)
@@ -124,43 +144,38 @@ TEST_F(f1ap_cu_ue_context_test, when_ue_is_added_then_next_ue_id_is_increased)
   ASSERT_EQ((unsigned)ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), (unsigned)gnb_cu_ue_f1ap_id_t::min + 1);
 }
 
-// Test is deactivated because it takes ~3min to run, but it passed
-#ifdef RUN_MAX_UE_ID_TEST
 TEST_F(f1ap_cu_ue_context_test, when_next_ue_id_reaches_max_then_unused_values_are_reused)
 {
   // Reduce F1AP logger loglevel to warning to reduce console output
   f1ap_logger.set_level(srslog::basic_levels::warning);
 
-  // Add ue with id 0
-  ue_ctxt_list.add_ue(uint_to_ue_index(0), ue_ctxt_list.next_gnb_cu_ue_f1ap_id());
-
-  // increase next cu ue f1ap id
-  for (uint64_t it = 1; it < (uint64_t)gnb_cu_ue_f1ap_id_t::max - MAX_NOF_UES_PER_DU + 2; ++it) {
-    ASSERT_NE(ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), gnb_cu_ue_f1ap_id_t::invalid);
-  }
-
-  // Add maximum number of supported UEs
-  unsigned ue_idx = 1;
-  for (uint64_t it = (uint64_t)gnb_cu_ue_f1ap_id_t::max - MAX_NOF_UES_PER_DU + 2;
-       it <= (uint64_t)gnb_cu_ue_f1ap_id_t::max;
-       ++it) {
+  // Add one less than the maximum number of supported UEs
+  for (unsigned it = 0; it < MAX_NOF_UES_PER_DU - 1; ++it) {
     gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctxt_list.next_gnb_cu_ue_f1ap_id();
     ASSERT_NE(cu_ue_f1ap_id, gnb_cu_ue_f1ap_id_t::invalid);
-    ue_index_t ue_index = uint_to_ue_index(ue_idx);
+    ue_index_t ue_index = uint_to_ue_index(it);
 
     ue_ctxt_list.add_ue(ue_index, cu_ue_f1ap_id);
 
     ASSERT_TRUE(ue_ctxt_list.contains(cu_ue_f1ap_id));
     ASSERT_TRUE(ue_ctxt_list.contains(ue_index));
-
-    ue_idx++;
   }
 
   // Reset F1AP logger loglevel
   f1ap_logger.set_level(srslog::basic_levels::debug);
 
+  // set next cu ue f1ap id to maximum value
+  ue_ctxt_list.set_next_cu_ue_f1ap_id(gnb_cu_ue_f1ap_id_t::max);
+  ASSERT_EQ((uint64_t)ue_ctxt_list.get_next_cu_ue_f1ap_id(), (uint64_t)gnb_cu_ue_f1ap_id_t::max);
+
+  // Add ue with max cu ue f1ap id to let next cu ue f1ap id overflow
+  ue_ctxt_list.add_ue(ue_index_t::max, gnb_cu_ue_f1ap_id_t::max);
+
+  ASSERT_TRUE(ue_ctxt_list.contains(gnb_cu_ue_f1ap_id_t::max));
+  ASSERT_TRUE(ue_ctxt_list.contains(ue_index_t::max));
+
   // remove an ue from the context list
-  gnb_cu_ue_f1ap_id_t rem_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_cu_ue_f1ap_id_t rem_ue_id = int_to_gnb_cu_ue_f1ap_id(19);
   ASSERT_TRUE(ue_ctxt_list.contains(rem_ue_id));
   ue_ctxt_list.remove_ue(rem_ue_id);
   ASSERT_FALSE(ue_ctxt_list.contains(rem_ue_id));
@@ -168,4 +183,3 @@ TEST_F(f1ap_cu_ue_context_test, when_next_ue_id_reaches_max_then_unused_values_a
   // Next available cu ue f1ap id should be the removed one
   ASSERT_EQ((uint64_t)ue_ctxt_list.next_gnb_cu_ue_f1ap_id(), (uint64_t)rem_ue_id);
 }
-#endif // RUN_MAX_UE_ID_TEST

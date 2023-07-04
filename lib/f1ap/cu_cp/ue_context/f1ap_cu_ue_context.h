@@ -108,6 +108,9 @@ public:
     return gnb_cu_ue_f1ap_id_t::invalid;
   }
 
+protected:
+  gnb_cu_ue_f1ap_id_t next_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::min;
+
 private:
   timer_factory         timers;
   srslog::basic_logger& logger;
@@ -125,7 +128,6 @@ private:
 
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
   std::unordered_map<ue_index_t, gnb_cu_ue_f1ap_id_t>      ue_index_to_ue_f1ap_id; // indexed by ue_index
-  gnb_cu_ue_f1ap_id_t                                      next_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::min;
 };
 
 } // namespace srs_cu_cp
