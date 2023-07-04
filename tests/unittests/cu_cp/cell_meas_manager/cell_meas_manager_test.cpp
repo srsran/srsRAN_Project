@@ -24,7 +24,7 @@ TEST_F(cell_meas_manager_test, when_valid_cell_config_is_used_validation_succeed
   cell_meas_cfg cell_cfg;
   cell_cfg.nci                 = 0;
   cell_cfg.band.emplace()      = nr_band::n78;
-  cell_cfg.ssb_arfcn.emplace() = 12;
+  cell_cfg.ssb_arfcn.emplace() = 632628;
   cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   rrc_ssb_mtc ssb_mtc;
   ssb_mtc.dur                                  = 1;
