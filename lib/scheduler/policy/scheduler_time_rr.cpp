@@ -99,11 +99,6 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
-        // Check whether CORESET fits in DL symbols of the slot.
-        if (res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot) <
-            ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
-          continue;
-        }
         // Check whether PDSCH time domain resource does not overlap with CORESET.
         if (pdsch.symbols.start() < ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
           continue;
@@ -202,12 +197,6 @@ static bool alloc_ul_ue(const ue&                    u,
         ue_cc.get_active_ul_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
       if (ss->cfg->id == to_search_space_id(0)) {
-        continue;
-      }
-
-      // Check whether CORESET fits in DL symbols of the slot.
-      if (res_grid.get_cell_cfg_common(ue_cc.cell_index).get_nof_dl_symbol_per_slot(pdcch_slot) <
-          ss->cfg->get_first_symbol_index() + ss->coreset->duration) {
         continue;
       }
 

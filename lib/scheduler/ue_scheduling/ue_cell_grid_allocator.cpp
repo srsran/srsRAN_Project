@@ -120,31 +120,24 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot", pdsch_alloc.slot);
     return false;
   }
-  // Check whether CORESET fits in DL symbols of the slot.
-  if (cell_cfg.get_nof_dl_symbol_per_slot(pdcch_alloc.slot) < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
-    logger.warning(
-        "Failed to allocate PDSCH in slot={}. Cause: Nof. DL symbols in PDCCH slot shorter than CORESET symbols",
-        pdsch_alloc.slot);
-    return false;
-  }
   if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
     logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
     return false;
   }
   // Check whether PDSCH time domain resource does not overlap with CORESET.
   if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
-    logger.info("Failed to allocate PDSCH in slot={}. Cause: PDSCH time domain resource ={} is starting before the "
-                "CORESET symbols",
-                pdsch_alloc.slot,
-                grant.time_res_index);
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: PDSCH time domain resource ={} is starting before the "
+                   "CORESET symbols",
+                   pdsch_alloc.slot,
+                   grant.time_res_index);
     return false;
   }
   // Check whether PDSCH time domain resource fits in DL symbols of the slot.
   if (pdsch_td_cfg.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(pdsch_alloc.slot)) {
-    logger.info("Failed to allocate PDSCH in slot={}. Cause: Nof. DL symbols in PDSCH slot shorter than PDSCH time "
-                "domain resource ={}",
-                pdsch_alloc.slot,
-                grant.time_res_index);
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: Nof. DL symbols in PDSCH slot shorter than PDSCH time "
+                   "domain resource ={}",
+                   pdsch_alloc.slot,
+                   grant.time_res_index);
     return false;
   }
 

@@ -87,17 +87,8 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
       const search_space_configuration& ss_cfg =
           cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
               .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id];
-      const unsigned coreset_duration = cell_cfg.get_common_coreset(ss_cfg.cs_id).duration;
-      // Ensure slot has enough DL symbols for CORESET.
-      if (cell_cfg.get_nof_dl_symbol_per_slot(sl_point) < ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
-        logger.error(
-            "Could not allocate SIB1 for beam idx {} as slot does not have enough DL symbols for CORESET ({} < {}).",
-            ssb_idx,
-            cell_cfg.get_nof_dl_symbol_per_slot(sl_point),
-            ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration);
-        continue;
-      }
-      const auto& pdsch_td_res_alloc_list = get_si_rnti_pdsch_time_domain_list(
+      const unsigned coreset_duration        = cell_cfg.get_common_coreset(ss_cfg.cs_id).duration;
+      const auto&    pdsch_td_res_alloc_list = get_si_rnti_pdsch_time_domain_list(
           cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
       for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
         // Check whether PDSCH time domain resource fits in DL symbols of the slot.
@@ -120,10 +111,11 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx, unsigned time_resource)
 {
-  const ofdm_symbol_range sib1_ofdm_symbols =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
-  const unsigned        nof_symb_sh = sib1_ofdm_symbols.length();
-  static const unsigned nof_layers  = 1;
+  const auto& pdsch_td_res_alloc_list =
+      get_si_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+  const ofdm_symbol_range sib1_ofdm_symbols = pdsch_td_res_alloc_list[time_resource].symbols;
+  const unsigned          nof_symb_sh       = sib1_ofdm_symbols.length();
+  static const unsigned   nof_layers        = 1;
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by SI-RNTI.
   static const unsigned nof_oh_prb = 0;
 
@@ -143,9 +135,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
         pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0));
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
-        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-        crb_lims,
-        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
+        cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, crb_lims, sib1_ofdm_symbols);
     sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
@@ -189,6 +179,9 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
 
+  const auto& pdsch_td_res_alloc_list =
+      get_si_rnti_pdsch_time_domain_list(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.dmrs_typeA_pos);
+
   // Fill SIB1 DCI.
   auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
   build_dci_f1_0_si_rnti(sib1_pdcch.dci,
@@ -204,12 +197,11 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;
-  build_pdsch_f1_0_si_rnti(
-      pdsch,
-      cell_cfg,
-      tbs,
-      sib1_pdcch.dci.si_f1_0,
-      sib1_crbs_grant,
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
-      dmrs_info);
+  build_pdsch_f1_0_si_rnti(pdsch,
+                           cell_cfg,
+                           tbs,
+                           sib1_pdcch.dci.si_f1_0,
+                           sib1_crbs_grant,
+                           pdsch_td_res_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
+                           dmrs_info);
 }

@@ -83,14 +83,8 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
 
     // Fetch PDSCH resource grid allocators.
     const cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
-    const slot_point&                   pdcch_slot  = res_alloc[0].slot;
 
     if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
-      continue;
-    }
-
-    // Check whether CORESET fits in DL symbols of the slot.
-    if (cell_cfg.get_nof_dl_symbol_per_slot(pdcch_slot) < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
       continue;
     }
 

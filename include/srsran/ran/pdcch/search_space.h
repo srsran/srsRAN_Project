@@ -300,7 +300,8 @@ private:
   /// SearchSpace slot offset for PDCCH monitoring.
   /// For SearchSpace == 0, set based on tables in TS 38.213, Section 13. Each element in vector corresponds to a SSB
   /// beam of index equal to index in vector.
-  /// For SearchSpace != 0, possible values: {0,...,monitoring_slot_period}.
+  /// For SearchSpace != 0, only the first element of the vector is used. Possible values:
+  /// {0,...,monitoring_slot_period}.
   static_vector<slot_point, MAX_NUM_BEAMS> monitoring_slot_offset;
   variant<ss0_params, other_ss_params>     ss_params;
 };
