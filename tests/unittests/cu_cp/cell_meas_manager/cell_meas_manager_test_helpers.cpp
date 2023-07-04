@@ -40,34 +40,34 @@ void cell_meas_manager_test::create_default_manager()
 
   // Add 2 cells - one being the neighbor of the other one
 
-  cell_meas_cfg cell_cfg;
-  cell_cfg.nci = 0;
+  cell_meas_config cell_cfg;
+  cell_cfg.serving_cell_cfg.nci = 0;
   cell_cfg.ncells.push_back(1);
-  cell_cfg.band.emplace()      = nr_band::n78;
-  cell_cfg.ssb_arfcn.emplace() = 632628;
-  cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                  = 1;
     ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    cell_cfg.ssb_mtc.emplace()                   = ssb_mtc;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
   }
-  cfg.cells.emplace(cell_cfg.nci, cell_cfg);
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Reuse config to setup config for next cell.
-  cell_cfg.nci = 1;
+  cell_cfg.serving_cell_cfg.nci = 1;
   cell_cfg.ncells.clear();
   cell_cfg.ncells.push_back(0);
-  cell_cfg.band.emplace()      = nr_band::n78;
-  cell_cfg.ssb_arfcn.emplace() = 632128;
-  cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
+  cell_cfg.serving_cell_cfg.band.emplace()      = nr_band::n78;
+  cell_cfg.serving_cell_cfg.ssb_arfcn.emplace() = 632128;
+  cell_cfg.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
   {
     rrc_ssb_mtc ssb_mtc;
     ssb_mtc.dur                                  = 1;
     ssb_mtc.periodicity_and_offset.sf5.emplace() = 0;
-    cell_cfg.ssb_mtc.emplace()                   = ssb_mtc;
+    cell_cfg.serving_cell_cfg.ssb_mtc.emplace()  = ssb_mtc;
   }
-  cfg.cells.emplace(cell_cfg.nci, cell_cfg);
+  cfg.cells.emplace(cell_cfg.serving_cell_cfg.nci, cell_cfg);
 
   // Add A3 event.
   cfg.a3_event_config.emplace();

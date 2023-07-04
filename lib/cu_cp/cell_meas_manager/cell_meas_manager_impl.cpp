@@ -39,27 +39,27 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   unsigned id_counter = 1;
   for (const auto& ncell_nci : cell_config.ncells) {
     // Verify we have a complete config for this cell.
-    if (!is_complete(cfg.cells.at(ncell_nci))) {
+    if (!is_complete(cfg.cells.at(ncell_nci).serving_cell_cfg)) {
       logger.debug(
           "Cell {} is neighbor of {} but skipping due to missing measurement parameters.", ncell_nci, serving_nci);
       continue;
     }
     srsran_assert(cfg.cells.find(ncell_nci) != cfg.cells.end(), "Cell id {} not found in list", ncell_nci);
-    const auto& ncell_config = cfg.cells.at(ncell_nci);
+    const auto& meas_cell_config = cfg.cells.at(ncell_nci);
 
     rrc_meas_obj_to_add_mod meas_obj;
     meas_obj.meas_obj_id = id_counter++;
     meas_obj.meas_obj_nr.emplace();
     auto& meas_obj_nr                  = meas_obj.meas_obj_nr.value();
-    meas_obj_nr.ssb_freq               = ncell_config.ssb_arfcn;
-    meas_obj_nr.ssb_subcarrier_spacing = ncell_config.ssb_scs;
-    meas_obj_nr.smtc1                  = ncell_config.ssb_mtc;
+    meas_obj_nr.ssb_freq               = meas_cell_config.serving_cell_cfg.ssb_arfcn;
+    meas_obj_nr.ssb_subcarrier_spacing = meas_cell_config.serving_cell_cfg.ssb_scs;
+    meas_obj_nr.smtc1                  = meas_cell_config.serving_cell_cfg.ssb_mtc;
 
     // Mandatory fields.
     meas_obj_nr.ref_sig_cfg.ssb_cfg_mob.emplace().derive_ssb_idx_from_cell = true;
     meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8;
     meas_obj_nr.quant_cfg_idx                                              = 1;
-    meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(ncell_config.band.value());
+    meas_obj_nr.freq_band_ind_nr.emplace() = nr_band_to_uint(meas_cell_config.serving_cell_cfg.band.value());
 
     meas_cfg.value().meas_obj_to_add_mod_list.push_back(meas_obj);
   }
@@ -118,27 +118,34 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   return meas_cfg;
 }
 
-optional<cell_meas_cfg> cell_meas_manager_impl::get_cell_config(nr_cell_id_t nci)
+optional<cell_meas_config> cell_meas_manager_impl::get_cell_config(nr_cell_id_t nci)
 {
-  optional<cell_meas_cfg> cell_cfg;
+  optional<cell_meas_config> cell_cfg;
   if (cfg.cells.find(nci) != cfg.cells.end()) {
     cell_cfg = cfg.cells.at(nci);
   }
   return cell_cfg;
 }
 
-bool cell_meas_manager_impl::update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cell_cfg_)
+bool cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    nci,
+                                                const serving_cell_meas_config& serv_cell_cfg_,
+                                                std::vector<nr_cell_id_t>       ncells_)
 {
   if (cfg.cells.find(nci) == cfg.cells.end()) {
     logger.error("Can't update configuration for nci={}. Cell not found.", nci);
     return false;
   }
-  if (!is_complete(cell_cfg_)) {
+  if (!is_complete(serv_cell_cfg_)) {
     logger.warning("Updating incomplete cell measurement configuration for nci={}", nci);
   }
 
-  // Perform update.
-  cfg.cells.at(nci) = cell_cfg_;
+  // Update serving cell config
+  cfg.cells.at(nci).serving_cell_cfg = serv_cell_cfg_;
+
+  // Update neighbor cells
+  if (!ncells_.empty()) {
+    cfg.cells.at(nci).ncells = ncells_;
+  }
 
   log_cells(logger, cfg);
 

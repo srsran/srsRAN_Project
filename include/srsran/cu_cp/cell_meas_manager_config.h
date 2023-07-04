@@ -21,12 +21,11 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-/// \brief Essential parameters required to configure cell measurements in the UE.
+/// \brief Essential parameters required to configure serving cell measurements in the UE.
 /// Note that some optional values need to be provided by the DU upon F1Setup.
-struct cell_meas_cfg {
-  nr_cell_id_t              nci;    ///< The NR cell identifier.
-  std::vector<nr_cell_id_t> ncells; ///< List of NCIs of neighbor cells.
 
+struct serving_cell_meas_config {
+  nr_cell_id_t nci; ///< The NR cell identifier.
   /// If not set in config must be provided by config update after DU attach.
   optional<nr_band>            band;      ///< NR band.
   optional<rrc_ssb_mtc>        ssb_mtc;   ///< SSB measurement and timing config.
@@ -34,13 +33,20 @@ struct cell_meas_cfg {
   optional<subcarrier_spacing> ssb_scs;   ///< SSB subcarrier spacing.
 };
 
+/// \brief Essential parameters required to configure serving and neighbor cell measurements in the UE.
+/// Note that some optional values need to be provided by the DU upon F1Setup.
+struct cell_meas_config {
+  serving_cell_meas_config  serving_cell_cfg; ///< Serving cell measurement config
+  std::vector<nr_cell_id_t> ncells;           ///< List of NCIs of neighbor cells.
+};
+
 /// \brief Verifies required parameters are set. Returns true if config is valid, false otherwise.
-bool is_complete(const cell_meas_cfg& cfg);
+bool is_complete(const serving_cell_meas_config& cfg);
 
 /// \brief Cell manager configuration.
 struct cell_meas_manager_cfg {
-  std::map<nr_cell_id_t, cell_meas_cfg> cells;           // Measurement related configs for all known cells.
-  optional<rrc_cond_event_a3>           a3_event_config; // A3 event config is currently the only supported event.
+  std::map<nr_cell_id_t, cell_meas_config> cells;           // Measurement related configs for all known cells.
+  optional<rrc_cond_event_a3>              a3_event_config; // A3 event config is currently the only supported event.
 };
 
 /// \brief Validates configuration but doesn't verify if all provided cells have complete configuration (yet). Returns
@@ -59,7 +65,7 @@ namespace fmt {
 
 // Cell meas config formatter
 template <>
-struct formatter<srsran::srs_cu_cp::cell_meas_cfg> {
+struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -67,16 +73,24 @@ struct formatter<srsran::srs_cu_cp::cell_meas_cfg> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::cell_meas_cfg cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(),
-                     "nci={} complete={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
-                     cfg.nci,
-                     is_complete(cfg) ? "yes" : "no",
-                     cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.band.value())) : "?",
-                     cfg.ssb_arfcn.has_value() ? to_string(cfg.ssb_arfcn.value()) : "?",
-                     cfg.ssb_scs.has_value() ? to_string(cfg.ssb_scs.value()) : "?",
-                     "?");
+    std::string ncell_str = "[ ";
+    for (const auto& ncell : cfg.ncells) {
+      ncell_str = ncell_str + std::to_string(ncell) + " ";
+    }
+    ncell_str = ncell_str + "]";
+
+    return format_to(
+        ctx.out(),
+        "nci={} complete={} band={} ssb_arfcn={} ssb_scs={} ncells={}",
+        cfg.serving_cell_cfg.nci,
+        is_complete(cfg.serving_cell_cfg) ? "yes" : "no",
+        cfg.serving_cell_cfg.band.has_value() ? to_string(nr_band_to_uint(cfg.serving_cell_cfg.band.value())) : "?",
+        cfg.serving_cell_cfg.ssb_arfcn.has_value() ? to_string(cfg.serving_cell_cfg.ssb_arfcn.value()) : "?",
+        cfg.serving_cell_cfg.ssb_scs.has_value() ? to_string(cfg.serving_cell_cfg.ssb_scs.value()) : "?",
+        ncell_str);
   }
 };
 

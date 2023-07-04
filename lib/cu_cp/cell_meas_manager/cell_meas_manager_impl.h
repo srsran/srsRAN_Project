@@ -22,10 +22,12 @@ public:
   cell_meas_manager_impl(const cell_meas_manager_cfg& cfg);
   ~cell_meas_manager_impl() = default;
 
-  optional<rrc_meas_cfg>  get_measurement_config(nr_cell_id_t nci) override;
-  optional<cell_meas_cfg> get_cell_config(nr_cell_id_t nci) override;
-  bool                    update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cfg) override;
-  void                    report_measurement(const rrc_meas_results& meas_results) override;
+  optional<rrc_meas_cfg>     get_measurement_config(nr_cell_id_t nci) override;
+  optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) override;
+  bool                       update_cell_config(nr_cell_id_t                    nci,
+                                                const serving_cell_meas_config& serv_cell_cfg_,
+                                                std::vector<nr_cell_id_t>       ncells_ = {}) override;
+  void                       report_measurement(const rrc_meas_results& meas_results) override;
 
 private:
   cell_meas_manager_cfg cfg;

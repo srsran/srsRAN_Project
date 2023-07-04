@@ -24,7 +24,7 @@ void srsran::srs_cu_cp::log_cells(const srslog::basic_logger& logger, const cell
   }
 }
 
-bool srsran::srs_cu_cp::is_complete(const cell_meas_cfg& cfg)
+bool srsran::srs_cu_cp::is_complete(const serving_cell_meas_config& cfg)
 {
   // All mendatory values must be present.
   if (!cfg.band.has_value() || !cfg.ssb_mtc.has_value() || !cfg.ssb_arfcn.has_value() || !cfg.ssb_scs.has_value()) {
@@ -86,7 +86,7 @@ bool srsran::srs_cu_cp::is_complete(const cell_meas_manager_cfg& cfg)
       }
 
       // Verify the config for this cell is complete.
-      if (!is_complete(cfg.cells.at(ncell_nci))) {
+      if (!is_complete(cfg.cells.at(ncell_nci).serving_cell_cfg)) {
         srslog::fetch_basic_logger(LOG_CHAN).error("Measurement config for cell id {} is not complete.", ncell_nci);
         return false;
       }

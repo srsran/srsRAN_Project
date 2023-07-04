@@ -27,10 +27,15 @@ public:
   virtual optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t nci) = 0;
 
   /// \brief Returns the cell config for the given cell id.
-  virtual optional<cell_meas_cfg> get_cell_config(nr_cell_id_t nci) = 0;
+  virtual optional<cell_meas_config> get_cell_config(nr_cell_id_t nci) = 0;
 
   /// \brief Update the measurement related parameters for the given cell id.
-  virtual bool update_cell_config(nr_cell_id_t nci, const cell_meas_cfg& cfg) = 0;
+  /// \param[in] nci The cell id of the serving cell to update.
+  /// \param[in] serv_cell_cfg_ The serving cell meas config to update.
+  /// \param[in] ncells_ Optional neigbor cells to replace the current neighbor cells with.
+  virtual bool update_cell_config(nr_cell_id_t                    nci,
+                                  const serving_cell_meas_config& serv_cell_cfg_,
+                                  std::vector<nr_cell_id_t>       ncells_ = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void report_measurement(const rrc_meas_results& meas_results) = 0;

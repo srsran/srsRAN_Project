@@ -75,7 +75,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
     cell_info_db.emplace(served_cell.served_cell_info.nr_cgi.nci, cell_info);
 
     // fill cell meas config
-    cell_meas_cfg meas_cfg;
+    serving_cell_meas_config meas_cfg;
     meas_cfg.nci  = served_cell.served_cell_info.nr_cgi.nci;
     meas_cfg.band = cell_info.band;
     // TODO: which meas timing to use here?
