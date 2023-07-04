@@ -54,6 +54,7 @@ TEST(sequence_identifier_generator, sequence_id_values_fit_in_one_byte)
   ASSERT_EQ(gen.generate(eaxc), 0);
 }
 
+#ifdef ASSERTS_ENABLED
 TEST(sequence_identifier_generator, death_when_eaxc_value_is_not_supported)
 {
   unsigned eaxc = MAX_SUPPORTED_EAXC_ID_VALUE;
@@ -61,3 +62,4 @@ TEST(sequence_identifier_generator, death_when_eaxc_value_is_not_supported)
   sequence_identifier_generator gen;
   ASSERT_DEATH(gen.generate(eaxc), "");
 }
+#endif
