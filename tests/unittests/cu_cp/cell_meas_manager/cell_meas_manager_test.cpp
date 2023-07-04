@@ -53,8 +53,8 @@ TEST_F(cell_meas_manager_test, when_empty_config_is_used_then_no_neighbor_cells_
 {
   create_empty_manager();
 
-  nr_cell_id_t cid      = 0;
-  rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t           cid      = 0;
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -64,8 +64,8 @@ TEST_F(cell_meas_manager_test, when_serving_cell_not_found_no_neighbor_cells_are
 {
   create_default_manager();
 
-  nr_cell_id_t cid      = 5;
-  rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+  nr_cell_id_t           cid      = 5;
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
 
   // Make sure meas_cfg is empty.
   verify_empty_meas_cfg(meas_cfg);
@@ -76,7 +76,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
   create_default_manager();
 
   for (unsigned cid = 0; cid < 2; ++cid) {
-    rrc_meas_cfg meas_cfg = manager->get_measurement_config(cid);
+    optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(cid);
     check_default_meas_cfg(meas_cfg);
   }
 }
@@ -118,6 +118,6 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
   ASSERT_TRUE(manager->update_cell_config(cell_cfg_val.nci, cell_cfg_val));
 
   // Make sure meas_cfg is created.
-  rrc_meas_cfg meas_cfg = manager->get_measurement_config(nci);
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
   check_default_meas_cfg(meas_cfg);
 }

@@ -21,17 +21,19 @@ cell_meas_manager_impl::cell_meas_manager_impl(const cell_meas_manager_cfg& cfg_
   log_cells(logger, cfg);
 }
 
-rrc_meas_cfg cell_meas_manager_impl::get_measurement_config(nr_cell_id_t serving_nci)
+optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id_t serving_nci)
 {
+  optional<rrc_meas_cfg> meas_cfg;
+
   // Find cell.
   if (cfg.cells.find(serving_nci) == cfg.cells.end()) {
     logger.error("Couldn't find neighbor cell list for nci={}", serving_nci);
-    return {};
+    return meas_cfg;
   }
-
   const auto& cell_config = cfg.cells.at(serving_nci);
 
-  rrc_meas_cfg meas_cfg;
+  // Create fresh config.
+  meas_cfg.emplace();
 
   // Create meas object for each neighbor cell
   unsigned id_counter = 0;
@@ -59,7 +61,7 @@ rrc_meas_cfg cell_meas_manager_impl::get_measurement_config(nr_cell_id_t serving
     meas_obj_nr.quant_cfg_idx                                              = 0;
     meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(ncell_config.band.value());
 
-    meas_cfg.meas_obj_to_add_mod_list.push_back(meas_obj);
+    meas_cfg.value().meas_obj_to_add_mod_list.push_back(meas_obj);
   }
 
   return meas_cfg;

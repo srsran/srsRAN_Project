@@ -78,20 +78,15 @@ void cell_meas_manager_test::create_default_manager()
   ASSERT_NE(manager, nullptr);
 }
 
-void cell_meas_manager_test::check_default_meas_cfg(const rrc_meas_cfg& meas_cfg)
+void cell_meas_manager_test::check_default_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
 {
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 1);
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.at(0).meas_obj_id, 0);
+  ASSERT_TRUE(meas_cfg.has_value());
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.size(), 1);
+  ASSERT_EQ(meas_cfg.value().meas_obj_to_add_mod_list.at(0).meas_obj_id, 0);
   // TODO: Add checks for more values
 }
 
-void cell_meas_manager_test::verify_empty_meas_cfg(const rrc_meas_cfg& meas_cfg)
+void cell_meas_manager_test::verify_empty_meas_cfg(const optional<rrc_meas_cfg>& meas_cfg)
 {
-  ASSERT_EQ(meas_cfg.meas_obj_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.report_cfg_to_add_mod_list.size(), 0);
-  ASSERT_EQ(meas_cfg.meas_id_to_add_mod_list.size(), 0);
-  ASSERT_FALSE(meas_cfg.s_measure_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.quant_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_cfg.has_value());
-  ASSERT_FALSE(meas_cfg.meas_gap_sharing_cfg.has_value());
+  ASSERT_FALSE(meas_cfg.has_value());
 }

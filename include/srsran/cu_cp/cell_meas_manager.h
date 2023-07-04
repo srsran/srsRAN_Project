@@ -24,7 +24,7 @@ public:
   virtual ~cell_meas_manager() = default;
 
   /// \brief Retrieve the measurement config (for any UE) connected to the given serving cell.
-  virtual rrc_meas_cfg get_measurement_config(nr_cell_id_t nci) = 0;
+  virtual optional<rrc_meas_cfg> get_measurement_config(nr_cell_id_t nci) = 0;
 
   /// \brief Returns the cell config for the given cell id.
   virtual optional<cell_meas_cfg> get_cell_config(nr_cell_id_t nci) = 0;
