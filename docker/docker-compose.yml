@@ -77,7 +77,7 @@ services:
 
 configs:
   gnb_config.yml:
-    file: ../configs/gnb_rf_b200_tdd_n78_20mhz.yml # Path to your desired config file
+    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
 
 networks:
   ran:

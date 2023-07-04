@@ -12,7 +12,8 @@ For more options, check `docker compose --help`
 
 ## Customizations
 
-- Default docker compose uses `configs/gnb_rf_b200_tdd_n78_20mhz.yml` config file. You can change it by modifying the config or adding a new one.
+- Default docker compose uses `configs/gnb_rf_b200_tdd_n78_20mhz.yml` config file. You can change it by setting the variable `${GNB_CONFIG_PATH}` in the shell, in the `docker compose up` command line or using an external env-file. More info about how to do it in docker documentation here: <https://docs.docker.com/compose/environment-variables/set-environment-variables/>
+
 - Network: If you are using an existing core-network on same machine, then you can comment the `epc` service section and also link your srsran container to some existing AMF N1/N2 subnet, doing something like this:
 
 ```yml
