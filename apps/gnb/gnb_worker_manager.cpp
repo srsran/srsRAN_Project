@@ -183,9 +183,15 @@ void worker_manager::create_executors(bool                               blockin
   // RU executors.
   create_worker("ru_timing", 1, os_thread_realtime_priority::max() - 1, os_sched_affinity_bitmask(0));
   ru_timing_exec = std::make_unique<task_worker_executor>(*workers.at("ru_timing"));
-  create_worker("ru_tx", 128, os_thread_realtime_priority::max() - 3, os_sched_affinity_bitmask(1));
+  create_worker("ru_tx",
+                128,
+                os_thread_realtime_priority::max() - 3,
+                os_sched_affinity_bitmask(std::min(srsran::compute_host_nof_hardware_threads() - 1, size_t(1U))));
   ru_tx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_tx"));
-  create_worker("ru_rx", 1, os_thread_realtime_priority::max() - 2, os_sched_affinity_bitmask(3));
+  create_worker("ru_rx",
+                1,
+                os_thread_realtime_priority::max() - 2,
+                os_sched_affinity_bitmask(std::min(srsran::compute_host_nof_hardware_threads() - 1, size_t(3U))));
   ru_rx_exec = std::make_unique<task_worker_executor>(*workers.at("ru_rx"));
 
   // Executor mappers.
