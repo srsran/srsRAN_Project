@@ -177,7 +177,7 @@ static void configure_cli11_cells_args(CLI::App& app, cu_cp_cell_appconfig_item&
   app.add_option("--ssb_offset", config.ssb_offset, "SSB offset");
   app.add_option("--ssb_duration", config.ssb_duration, "SSB duration");
 
-  app.add_option("--ncells", config.rat, "Neighbor cell list");
+  app.add_option("--ncells", config.ncells, "Neighbor cell list");
 }
 
 static void configure_cli11_measurement_args(CLI::App& app, cu_cp_measurement_appconfig& meas_params)
