@@ -141,7 +141,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
           }
         } else {
           // add this segment to the final SDU
-          sdu_info.sdu.push_back(std::move(it->second.payload));
+          sdu_info.sdu.append(std::move(it->second.payload));
           sdu_info.next_expected_so += it->second.payload.length();
           logger.log_debug("Chained segment. {} next_expected_so={}", it->second.header, sdu_info.next_expected_so);
           it = sdu_info.segments.erase(it);

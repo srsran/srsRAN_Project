@@ -134,7 +134,7 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override;
+  byte_buffer_chain pull_pdu(uint32_t grant_len) override;
 
   uint32_t get_buffer_state() override;
 
@@ -208,7 +208,7 @@ private:
   ///
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_new_pdu(uint32_t grant_len);
+  byte_buffer_chain build_new_pdu(uint32_t grant_len);
 
   /// \brief Builds a RLC PDU containing the first segment of a new SDU.
   ///
@@ -217,7 +217,7 @@ private:
   /// \param tx_pdu the tx_pdu info contained in the tx_window.
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
+  byte_buffer_chain build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
 
   /// \brief Builds a RLC PDU containing an SDU segment for an SDU that is undergoing segmentation.
   ///
@@ -227,7 +227,7 @@ private:
   /// \param tx_pdu The tx_pdu info contained in the tx_window.
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU
-  byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
+  byte_buffer_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
 
   /// \brief Builds a RETX RLC PDU.
   ///
@@ -237,7 +237,7 @@ private:
   ///
   /// \param grant_len Limits the maximum size of the requested PDU.
   /// \return One PDU or PDU segment segment
-  byte_buffer_slice_chain build_retx_pdu(uint32_t grant_len);
+  byte_buffer_chain build_retx_pdu(uint32_t grant_len);
 
   constexpr uint32_t get_retx_expected_hdr_len(const rlc_tx_amd_retx retx)
   {

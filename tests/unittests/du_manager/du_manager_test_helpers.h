@@ -43,11 +43,11 @@ public:
 class dummy_f1c_bearer : public f1c_bearer
 {
 public:
-  byte_buffer             last_rx_pdu;
-  byte_buffer_slice_chain last_tx_sdu;
+  byte_buffer       last_rx_pdu;
+  byte_buffer_chain last_tx_sdu;
 
   void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_tx_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_tx_sdu = std::move(sdu); }
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
 };
@@ -58,10 +58,10 @@ class dummy_f1u_bearer : public f1u_bearer,
                          public f1u_tx_sdu_handler
 {
 public:
-  nru_dl_message          last_msg;
-  optional<uint32_t>      last_highest_transmitted_pdcp_sn;
-  optional<uint32_t>      last_highest_delivered_pdcp_sn;
-  byte_buffer_slice_chain last_sdu;
+  nru_dl_message     last_msg;
+  optional<uint32_t> last_highest_transmitted_pdcp_sn;
+  optional<uint32_t> last_highest_delivered_pdcp_sn;
+  byte_buffer_chain  last_sdu;
 
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
   f1u_tx_delivery_handler& get_tx_delivery_handler() override { return *this; }
@@ -76,7 +76,7 @@ public:
   {
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
 };
 
 class f1ap_test_dummy : public f1ap_connection_manager,
@@ -156,7 +156,7 @@ public:
   optional<nru_dl_message> last_pdu;
   optional<uint32_t>       last_highest_transmitted_pdcp_sn;
   optional<uint32_t>       last_highest_delivered_pdcp_sn;
-  byte_buffer_slice_chain  last_sdu;
+  byte_buffer_chain        last_sdu;
 
   f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
 
@@ -173,7 +173,7 @@ public:
   {
     last_highest_delivered_pdcp_sn = highest_pdcp_sn;
   }
-  void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
+  void handle_sdu(byte_buffer_chain sdu) override { last_sdu = std::move(sdu); }
 };
 
 class f1u_gateway_dummy : public f1u_du_gateway

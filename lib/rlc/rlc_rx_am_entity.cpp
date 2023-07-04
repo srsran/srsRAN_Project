@@ -332,7 +332,7 @@ bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     // Assemble SDU from segments
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
       logger.log_debug("Chaining segment. so={} len={}", segm.so, segm.payload.length());
-      rx_sdu.sdu.push_back(segm.payload.copy());
+      rx_sdu.sdu.append(segm.payload.copy());
     }
     rx_sdu.segments.clear();
     logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", header.sn, rx_sdu.sdu.length());

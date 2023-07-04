@@ -24,11 +24,11 @@ class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier,
                              public f1u_bearer_disconnector
 {
 public:
-  std::list<nru_dl_message>          tx_msg_list;
-  std::list<uint32_t>                highest_transmitted_pdcp_sn_list;
-  std::list<uint32_t>                highest_delivered_pdcp_sn_list;
-  std::list<byte_buffer_slice_chain> rx_sdu_list;
-  std::list<gtpu_teid_t>             removed_ul_teid_list;
+  std::list<nru_dl_message>    tx_msg_list;
+  std::list<uint32_t>          highest_transmitted_pdcp_sn_list;
+  std::list<uint32_t>          highest_delivered_pdcp_sn_list;
+  std::list<byte_buffer_chain> rx_sdu_list;
+  std::list<gtpu_teid_t>       removed_ul_teid_list;
 
   // f1u_tx_pdu_notifier interface
   void on_new_pdu(nru_dl_message msg) override { tx_msg_list.push_back(std::move(msg)); }
@@ -44,7 +44,7 @@ public:
   }
 
   // f1u_rx_sdu_notifier interface
-  void on_new_sdu(byte_buffer_slice_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
+  void on_new_sdu(byte_buffer_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
 
   // f1u_bearer_disconnector interface
   void disconnect_cu_bearer(gtpu_teid_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); }
@@ -242,12 +242,12 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
 
   byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   nru_ul_message msg1;
-  msg1.t_pdu = byte_buffer_slice_chain{rx_pdcp_pdu1.deep_copy()};
+  msg1.t_pdu = byte_buffer_chain{rx_pdcp_pdu1.deep_copy()};
   f1u->handle_pdu(std::move(msg1));
 
   byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   nru_ul_message msg2;
-  msg2.t_pdu = byte_buffer_slice_chain{rx_pdcp_pdu2.deep_copy()};
+  msg2.t_pdu = byte_buffer_chain{rx_pdcp_pdu2.deep_copy()};
   f1u->handle_pdu(std::move(msg2));
 
   EXPECT_TRUE(tester->tx_msg_list.empty());

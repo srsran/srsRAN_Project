@@ -76,7 +76,7 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1
-byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
+byte_buffer_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
@@ -108,7 +108,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     // Log state
     log_state(srslog::basic_levels::debug);
 
-    return byte_buffer_slice_chain{std::move(pdu)};
+    return byte_buffer_chain{std::move(pdu)};
   }
 
   // Retransmit if required
@@ -137,7 +137,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
   return build_new_pdu(grant_len);
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
+byte_buffer_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 {
   if (grant_len <= head_min_size) {
     logger.log_debug("Cannot fit SDU into grant_len={}. head_min_size={}", grant_len, head_min_size);
@@ -189,9 +189,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
-  byte_buffer_slice_chain pdu_buf = {};
-  pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
+  byte_buffer_chain pdu_buf = {};
+  pdu_buf.append(std::move(header_buf));
+  pdu_buf.append(byte_buffer_slice{sdu_info.sdu});
   logger.log_info(
       pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
@@ -207,7 +207,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
+byte_buffer_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
 {
   logger.log_debug("Creating PDU with first SDU segment. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
@@ -244,9 +244,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
-  byte_buffer_slice_chain pdu_buf = {};
-  pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
+  byte_buffer_chain pdu_buf = {};
+  pdu_buf.append(std::move(header_buf));
+  pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
   logger.log_info(
       pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
@@ -262,7 +262,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
+byte_buffer_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
 {
   logger.log_debug("Creating PDU with continued SDU segment. sn={} next_so={} sdu_len={} grant_len={}",
                    sn_under_segmentation,
@@ -325,9 +325,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
-  byte_buffer_slice_chain pdu_buf = {};
-  pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
+  byte_buffer_chain pdu_buf = {};
+  pdu_buf.append(std::move(header_buf));
+  pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
   logger.log_info(
       pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
@@ -348,7 +348,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
+byte_buffer_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 {
   // Check there is at least 1 element before calling front()
   if (retx_queue.empty()) {
@@ -451,9 +451,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
                 expected_hdr_len);
 
   // Assemble PDU
-  byte_buffer_slice_chain pdu_buf = {};
-  pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
+  byte_buffer_chain pdu_buf = {};
+  pdu_buf.append(std::move(header_buf));
+  pdu_buf.append(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
   logger.log_info(
       pdu_buf.begin(), pdu_buf.end(), "RETX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 

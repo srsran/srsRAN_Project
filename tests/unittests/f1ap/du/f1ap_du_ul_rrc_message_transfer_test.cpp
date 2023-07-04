@@ -27,7 +27,7 @@ TEST_F(f1ap_du_test, when_sdu_is_received_then_sdu_is_forwarded_to_tx_pdu_notifi
 
   std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 4000));
   byte_buffer          sdu{bytes};
-  ue->f1c_bearers[1].bearer->handle_sdu(byte_buffer_slice_chain{sdu.copy()});
+  ue->f1c_bearers[1].bearer->handle_sdu(byte_buffer_chain{sdu.copy()});
 
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.init_msg().proc_code, ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);

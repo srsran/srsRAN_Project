@@ -140,10 +140,10 @@ public:
   unsigned    next_bs = 0;
   byte_buffer previous_tx_sdu;
 
-  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
+  byte_buffer_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
     previous_tx_sdu = test_rgen::random_vector<uint8_t>(nof_bytes);
-    return byte_buffer_slice_chain{previous_tx_sdu.copy()};
+    return byte_buffer_chain{previous_tx_sdu.copy()};
   }
   unsigned on_buffer_state_update() override { return next_bs; }
 };

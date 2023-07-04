@@ -89,7 +89,7 @@ class byte_buffer_chain
         if (remaining <= n) {
           n -= remaining;
           ++buffer_it;
-          srsran_assert(buffer_it != parent->main_block.end(), "Operator+= out-of-bounds access");
+          srsran_assert(buffer_it != parent->main_block->end(), "Operator+= out-of-bounds access");
           it = buffer_it->begin();
         } else {
           it += n;
@@ -162,7 +162,7 @@ public:
   /// No copy assignment operator.
   byte_buffer_chain& operator=(const byte_buffer_chain&) noexcept = delete;
 
-  /// Performs a deep copy of this byte_buffer_slice_chain.
+  /// Performs a deep copy of this byte_buffer_chain.
   byte_buffer deep_copy() const
   {
     byte_buffer buf;
@@ -179,11 +179,14 @@ public:
   bool full() const { return nof_slices() == max_nof_slices(); }
 
   /// Checks whether the byte_buffer_chain is empty.
-  bool empty() const { return main_block->nof_slices() == 0; }
+  bool empty() const { return not valid() or main_block->nof_slices() == 0; }
 
   /// Returns the total length of the byte_buffer_chain in bytes.
   size_t length() const
   {
+    if (not valid()) {
+      return 0;
+    }
     size_t len = 0;
     for (unsigned i = 0; i != main_block->nof_slices(); ++i) {
       len += main_block->slices[i].length();
@@ -254,12 +257,13 @@ public:
   /// Access to one byte of the byte_buffer_chain by a given index.
   const uint8_t& operator[](size_t idx) const
   {
-    size_t rem_pos = idx;
-    for (unsigned i = 0; i != main_block->nof_slices(); ++i) {
-      if (rem_pos < main_block->slices[i].length()) {
-        return main_block->slices[i][rem_pos];
+    size_t                              rem_pos = idx;
+    const span<const byte_buffer_slice> slices  = this->slices();
+    for (const byte_buffer_slice& s : slices) {
+      if (rem_pos < s.length()) {
+        return s[rem_pos];
       }
-      rem_pos -= main_block->slices[i].length();
+      rem_pos -= s.length();
     }
     srsran_assertion_failure("Out-of-bounds access ({} >= {})", idx, length());
     return (*main_block->begin())[0];
@@ -286,24 +290,20 @@ public:
   /// Returns an iterator to the begin of the byte_buffer_chain.
   iterator begin()
   {
-    return iterator{*this,
-                    main_block->slices.begin(),
-                    empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->slices.begin()->begin()};
+    return iterator{
+        *this, main_block->begin(), empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->begin()->begin()};
   }
-  const_iterator cbegin() const
+  const_iterator begin() const
   {
-    return const_iterator{*this,
-                          main_block->slices.begin(),
-                          empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->slices.begin()->begin()};
+    return const_iterator{
+        *this, main_block->begin(), empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->begin()->begin()};
   }
-  const_iterator begin() const { return cbegin(); }
 
   /// Returns an iterator to the end of the byte_buffer_chain.
-  iterator       end() { return iterator{*this, main_block->slices.end(), byte_buffer_view::iterator{nullptr, 0}}; }
-  const_iterator cend() const { return end(); }
+  iterator       end() { return iterator{*this, main_block->end(), byte_buffer_view::iterator{nullptr, 0}}; }
   const_iterator end() const
   {
-    return const_iterator{*this, main_block->slices.end(), byte_buffer_view::const_iterator{nullptr, 0}};
+    return const_iterator{*this, main_block->end(), byte_buffer_view::iterator{nullptr, 0}};
   }
 
 private:
@@ -361,7 +361,7 @@ private:
 
 namespace fmt {
 
-/// \brief Custom formatter for byte_buffer_slice_chain.
+/// \brief Custom formatter for byte_buffer_chain.
 template <>
 struct formatter<srsran::byte_buffer_chain> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>

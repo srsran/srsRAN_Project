@@ -98,7 +98,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_then_new_srbs_b
   ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added.size(), 1);
   f1c_bearer* srb2 = this->f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added[0].bearer;
   byte_buffer ul_rrc_msg{test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100))};
-  srb2->handle_sdu(byte_buffer_slice_chain{ul_rrc_msg.copy()});
+  srb2->handle_sdu(byte_buffer_chain{ul_rrc_msg.copy()});
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.type().value, f1ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(this->msg_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
             f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer);

@@ -35,7 +35,7 @@ f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&           ue_ctxt_,
 {
 }
 
-void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
+void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor.
   if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {
@@ -104,7 +104,7 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_
 {
 }
 
-void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
+void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_chain sdu)
 {
   // Ensure SRB tasks are handled within the control executor as they involve access to the UE context.
   if (not ctrl_exec.execute([this, sdu = std::move(sdu)]() {

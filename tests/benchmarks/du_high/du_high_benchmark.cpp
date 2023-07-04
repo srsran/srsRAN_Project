@@ -133,7 +133,7 @@ public:
   void handle_pdu(nru_dl_message msg) override {}
   void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
   void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
-  void handle_sdu(byte_buffer_slice_chain sdu) override {}
+  void handle_sdu(byte_buffer_chain sdu) override {}
 };
 
 /// \brief Simulator of the CU-UP from the perspective of the DU.

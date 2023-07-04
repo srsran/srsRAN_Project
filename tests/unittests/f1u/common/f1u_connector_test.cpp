@@ -17,13 +17,13 @@ using namespace srsran;
 
 // dummy CU-UP RX bearer interface
 struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_notifier {
-  void on_new_sdu(byte_buffer_slice_chain sdu) override
+  void on_new_sdu(byte_buffer_chain sdu) override
   {
     logger.info(sdu.begin(), sdu.end(), "CU-UP received SDU");
     last_sdu = std::move(sdu);
   }
-  byte_buffer_slice_chain last_sdu;
-  srslog::basic_logger&   logger = srslog::fetch_basic_logger("CU-F1-U", false);
+  byte_buffer_chain     last_sdu;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-F1-U", false);
 };
 
 struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
@@ -127,17 +127,17 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   cu_gw->attach_dl_teid(ul_teid, dl_teid);
 
   // Check CU-UP -> DU path
-  byte_buffer             cu_buf = make_byte_buffer("ABCD");
-  byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
-  pdcp_tx_pdu             sdu;
+  byte_buffer       cu_buf = make_byte_buffer("ABCD");
+  byte_buffer_chain du_exp{cu_buf.deep_copy()};
+  pdcp_tx_pdu       sdu;
   sdu.buf     = std::move(cu_buf);
   sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path
-  byte_buffer             du_buf = make_byte_buffer("DCBA");
-  byte_buffer             cu_exp = du_buf.deep_copy();
-  byte_buffer_slice_chain du_slice{du_buf.deep_copy()};
+  byte_buffer       du_buf = make_byte_buffer("DCBA");
+  byte_buffer       cu_exp = du_buf.deep_copy();
+  byte_buffer_chain du_slice{du_buf.deep_copy()};
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice));
 
   ASSERT_EQ(du_rx.last_sdu, du_exp);
@@ -147,9 +147,9 @@ TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
   cu_bearer.reset();
 
   // Check DU-> CU-UP path is properly detached
-  byte_buffer             du_buf2 = make_byte_buffer("LMNO");
-  byte_buffer             cu_exp2 = du_buf2.deep_copy();
-  byte_buffer_slice_chain du_slice2{du_buf2.deep_copy()};
+  byte_buffer       du_buf2 = make_byte_buffer("LMNO");
+  byte_buffer       cu_exp2 = du_buf2.deep_copy();
+  byte_buffer_chain du_slice2{du_buf2.deep_copy()};
   du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice2));
   ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
 }
