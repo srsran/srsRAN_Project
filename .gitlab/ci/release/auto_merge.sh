@@ -109,7 +109,7 @@ update_headers() {
  */}s" {} \;
 
     # for CMake/YML files
-    find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" \) ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e "s/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
+    find . -type f -\( -name "CMakeLists.txt" -o -name "*.cmake" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" \) ! -path "*/configs/*" ! -path "*/.github/*" ! -path "*/.gitlab/*" ! -path "*/docker/open5gs/*" ! -name "FindBackward.cmake" ! -name "FindRapidJSON.cmake" ! -name "CheckCSourceRuns.cmake" ! -name "CheckFunctionExistsMath.cmake" -exec perl -0777 -pi -e "s/#[^!][\s\S]*?(?=\n.*?=|\n\n)/#
 # Copyright 2021-$(date +%Y) Software Radio Systems Limited
 #
 # This file is part of srsRAN
