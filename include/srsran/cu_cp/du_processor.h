@@ -206,6 +206,10 @@ public:
   /// \brief Get the RRC UE release context.
   /// \returns The release context of the UE.
   virtual rrc_ue_release_context get_rrc_ue_release_context() = 0;
+
+  /// \brief Get the RRC measurement config for the current serving cell of the UE.
+  /// \return The measurement config, if present.
+  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor

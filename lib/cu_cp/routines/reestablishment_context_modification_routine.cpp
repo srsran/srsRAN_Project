@@ -118,6 +118,7 @@ void reestablishment_context_modification_routine::operator()(coro_context<async
                              pdu_sessions_to_setup_list,
                              ue_context_modification_response,
                              {},
+                             rrc_ue_notifier.get_rrc_ue_meas_config(),
                              true);
     }
 

@@ -43,6 +43,7 @@ void fill_rrc_reconfig_args(
     const std::map<pdu_session_id_t, up_pdu_session_context_update>&    pdu_sessions,
     const cu_cp_ue_context_modification_response&                       ue_context_modification_response,
     const std::map<pdu_session_id_t, byte_buffer>&                      nas_pdus,
+    const optional<rrc_meas_cfg>                                        rrc_meas_cfg,
     bool                                                                is_reestablishment = false);
 
 bool update_setup_list(

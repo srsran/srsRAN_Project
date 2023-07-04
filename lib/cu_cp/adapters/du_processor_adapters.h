@@ -223,6 +223,12 @@ public:
     return rrc_ue_handler->get_rrc_ue_release_context();
   }
 
+  virtual optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  {
+    srsran_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->get_rrc_ue_meas_config();
+  }
+
 private:
   rrc_ue_control_message_handler* rrc_ue_handler = nullptr;
 };

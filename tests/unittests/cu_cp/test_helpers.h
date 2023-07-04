@@ -390,6 +390,11 @@ public:
     // TODO: Add values
     return release_context;
   }
+  optional<rrc_meas_cfg> get_rrc_ue_meas_config() override
+  {
+    optional<rrc_meas_cfg> meas_config;
+    return meas_config;
+  }
 
   optional<rrc_radio_bearer_config> last_radio_bearer_cfg;
 

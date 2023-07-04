@@ -322,6 +322,11 @@ rrc_ue_release_context rrc_ue_impl::get_rrc_ue_release_context()
   return release_context;
 }
 
+optional<rrc_meas_cfg> rrc_ue_impl::get_rrc_ue_meas_config()
+{
+  return cell_meas_mng.get_measurement_config(context.cell.cgi.nci);
+}
+
 rrc_reestablishment_ue_context_t rrc_ue_impl::get_context()
 {
   rrc_reestablishment_ue_context_t rrc_reest_context;
