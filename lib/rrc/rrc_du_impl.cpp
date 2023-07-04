@@ -43,6 +43,17 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
   for (const auto& served_cell : served_cell_list) {
     rrc_cell_info cell_info;
 
+    // TODO: which freq band to use here?
+    if (served_cell.served_cell_info.nr_mode_info.fdd.has_value()) {
+      cell_info.band = (nr_band)served_cell.served_cell_info.nr_mode_info.fdd.value()
+                           .dl_nr_freq_info.freq_band_list_nr.begin()
+                           ->freq_band_ind_nr;
+    } else {
+      cell_info.band = (nr_band)served_cell.served_cell_info.nr_mode_info.tdd.value()
+                           .nr_freq_info.freq_band_list_nr.begin()
+                           ->freq_band_ind_nr;
+    }
+
     asn1::cbit_ref                  bref_meas{served_cell.served_cell_info.meas_timing_cfg};
     asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;
     if (asn1_meas_timing_cfg.unpack(bref_meas) != asn1::SRSASN_SUCCESS) {
@@ -65,6 +76,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
 
     // fill cell meas config
     cell_meas_cfg meas_cfg;
+    meas_cfg.nci  = served_cell.served_cell_info.nr_cgi.nci;
     meas_cfg.band = cell_info.band;
     // TODO: which meas timing to use here?
     meas_cfg.ssb_mtc   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_meas_timing_cfg;
@@ -72,6 +84,11 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
     meas_cfg.ssb_scs   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_subcarrier_spacing;
 
     // Update cell config in cell meas manager
+    logger.debug("Updating cell={} with band={} ssb_arfcn={} ssb_scs={}",
+                 meas_cfg.nci,
+                 nr_band_to_uint(meas_cfg.band.value()),
+                 meas_cfg.ssb_arfcn.value(),
+                 to_string(meas_cfg.ssb_scs.value()));
     cell_meas_mng.update_cell_config(served_cell.served_cell_info.nr_cgi.nci, meas_cfg);
   }
 

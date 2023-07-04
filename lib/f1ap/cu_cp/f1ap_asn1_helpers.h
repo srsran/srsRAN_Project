@@ -13,7 +13,7 @@
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
-#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/ran/bcd_helpers.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/srslog/srslog.h"
@@ -64,7 +64,8 @@ inline void fill_f1_setup_request(cu_cp_f1_setup_request& request, const asn1::f
       }
 
       // NR mode info
-      served_cell.served_cell_info.nr_mode_info = asn1_served_cell.served_cell_info.nr_mode_info.type().to_string();
+      served_cell.served_cell_info.nr_mode_info =
+          f1ap_asn1_to_nr_mode_info(asn1_served_cell.served_cell_info.nr_mode_info);
 
       // meas timing cfg
       served_cell.served_cell_info.meas_timing_cfg = asn1_served_cell.served_cell_info.meas_timing_cfg.copy();

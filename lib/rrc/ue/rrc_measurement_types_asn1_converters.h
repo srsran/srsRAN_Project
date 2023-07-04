@@ -19,6 +19,7 @@
 #include "srsran/asn1/rrc_nr/ul_dcch_msg.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
+#include "srsran/srslog/srslog.h"
 #include <string>
 #include <vector>
 
@@ -59,6 +60,36 @@ inline rrc_ssb_mtc asn1_to_ssb_mtc(const asn1::rrc_nr::ssb_mtc_s& asn1_ssb_mtc)
   return ssb_mtc;
 }
 
+/// \brief Converts type \c subcarrier_spacing to an RRC NR ASN.1 type.
+/// \param sc_spacing subcarrier spacing object.
+/// \return The RRC NR ASN.1 object where the result of the conversion is stored.
+inline subcarrier_spacing rrc_asn1_to_subcarrier_spacing(const asn1::rrc_nr::subcarrier_spacing_e asn1_sc_spacing)
+{
+  subcarrier_spacing sc_spacing;
+
+  switch (asn1_sc_spacing) {
+    case asn1::rrc_nr::subcarrier_spacing_opts::options::khz15:
+      sc_spacing = srsran::subcarrier_spacing::kHz15;
+      break;
+    case asn1::rrc_nr::subcarrier_spacing_opts::options::khz30:
+      sc_spacing = srsran::subcarrier_spacing::kHz30;
+      break;
+    case asn1::rrc_nr::subcarrier_spacing_opts::options::khz60:
+      sc_spacing = srsran::subcarrier_spacing::kHz60;
+      break;
+    case asn1::rrc_nr::subcarrier_spacing_opts::options::khz120:
+      sc_spacing = srsran::subcarrier_spacing::kHz120;
+      break;
+    case asn1::rrc_nr::subcarrier_spacing_opts::options::khz240:
+      sc_spacing = srsran::subcarrier_spacing::kHz240;
+      break;
+    default:
+      sc_spacing = srsran::subcarrier_spacing::invalid;
+  }
+
+  return sc_spacing;
+}
+
 inline rrc_meas_timing asn1_to_meas_timing(const asn1::rrc_nr::meas_timing_s& asn1_meas_timing)
 {
   rrc_meas_timing meas_timing;
@@ -72,7 +103,7 @@ inline rrc_meas_timing asn1_to_meas_timing(const asn1::rrc_nr::meas_timing_s& as
 
     // subcarrier spacing
     freq_and_timing.ssb_subcarrier_spacing =
-        to_subcarrier_spacing(asn1_meas_timing.freq_and_timing.ssb_subcarrier_spacing.to_string());
+        rrc_asn1_to_subcarrier_spacing(asn1_meas_timing.freq_and_timing.ssb_subcarrier_spacing);
 
     // ssb mtc
     freq_and_timing.ssb_meas_timing_cfg = asn1_to_ssb_mtc(asn1_meas_timing.freq_and_timing.ssb_meas_timing_cfg);

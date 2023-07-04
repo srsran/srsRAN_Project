@@ -10,13 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
-#include "srsran/asn1/e1ap/e1ap.h"
-#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/ran/up_transport_layer_info.h"
 #include <string>
 #include <vector>
 
@@ -278,6 +275,99 @@ inline uint64_t five_g_s_tmsi_struct_to_number(const cu_cp_five_g_s_tmsi& five_g
   // 5G-S-TMSI is a 48 bit string consisting of <aMFSetId (10 bit)><aMFPointer (6 bit)><5G-TMSI (32 bit)>
   return ((uint64_t)five_g_s_tmsi.amf_set_id << 38) + ((uint64_t)five_g_s_tmsi.amf_pointer << 32) +
          five_g_s_tmsi.five_g_tmsi;
+}
+
+inline cu_cp_tx_bw f1ap_asn1_to_tx_bw(const asn1::f1ap::tx_bw_s& asn1_tx_bw)
+{
+  cu_cp_tx_bw tx_bw;
+
+  // nr scs
+  tx_bw.nr_scs = to_subcarrier_spacing(asn1_tx_bw.nr_scs.to_string());
+
+  // nr nrb
+  tx_bw.nr_nrb = asn1_tx_bw.nr_nrb.to_number();
+
+  return tx_bw;
+}
+
+inline cu_cp_nr_freq_info f1ap_asn1_to_nr_freq_info(const asn1::f1ap::nr_freq_info_s& asn1_nr_freq_info)
+{
+  cu_cp_nr_freq_info nr_freq_info;
+
+  // nr arfcn
+  nr_freq_info.nr_arfcn = asn1_nr_freq_info.nr_arfcn;
+
+  // sul info
+  if (asn1_nr_freq_info.sul_info_present) {
+    cu_cp_sul_info sul_info;
+
+    // sul nr arfcn
+    sul_info.sul_nr_arfcn = asn1_nr_freq_info.sul_info.sul_nr_arfcn;
+
+    // sul tx bw
+    sul_info.sul_tx_bw = f1ap_asn1_to_tx_bw(asn1_nr_freq_info.sul_info.sul_tx_bw);
+
+    nr_freq_info.sul_info = sul_info;
+  }
+
+  // freq band list nr
+  for (const auto& asn1_freq_band : asn1_nr_freq_info.freq_band_list_nr) {
+    cu_cp_freq_band_nr_item freq_band;
+
+    // freq band ind
+    freq_band.freq_band_ind_nr = asn1_freq_band.freq_band_ind_nr;
+
+    // supported sul band list
+    for (const auto& asn1_sul_band : asn1_freq_band.supported_sul_band_list) {
+      freq_band.supported_sul_band_list.push_back(cu_cp_supported_sul_freq_band_item{asn1_sul_band.freq_band_ind_nr});
+    }
+
+    nr_freq_info.freq_band_list_nr.push_back(freq_band);
+  }
+
+  return nr_freq_info;
+}
+
+inline cu_cp_nr_mode_info f1ap_asn1_to_nr_mode_info(const asn1::f1ap::nr_mode_info_c& asn1_nr_mode_info)
+{
+  cu_cp_nr_mode_info nr_mode_info;
+
+  // fdd
+  if (asn1_nr_mode_info.type() == asn1::f1ap::nr_mode_info_c::types_opts::fdd) {
+    auto& asn1_fdd_info = asn1_nr_mode_info.fdd();
+
+    cu_cp_fdd_info fdd_info;
+
+    // ul nr freq info
+    fdd_info.ul_nr_freq_info = f1ap_asn1_to_nr_freq_info(asn1_fdd_info.ul_nr_freq_info);
+
+    // dl nr freq info
+    fdd_info.dl_nr_freq_info = f1ap_asn1_to_nr_freq_info(asn1_fdd_info.dl_nr_freq_info);
+
+    // ul tx bw
+    fdd_info.ul_tx_bw = f1ap_asn1_to_tx_bw(asn1_fdd_info.ul_tx_bw);
+
+    // dl tx bw
+    fdd_info.dl_tx_bw = f1ap_asn1_to_tx_bw(asn1_fdd_info.dl_tx_bw);
+
+    nr_mode_info.fdd = fdd_info;
+  } else if (asn1_nr_mode_info.type() == asn1::f1ap::nr_mode_info_c::types_opts::tdd) {
+    auto& asn1_tdd_info = asn1_nr_mode_info.tdd();
+
+    cu_cp_tdd_info tdd_info;
+
+    // nr freq info
+    tdd_info.nr_freq_info = f1ap_asn1_to_nr_freq_info(asn1_tdd_info.nr_freq_info);
+
+    // tx bw
+    tdd_info.tx_bw = f1ap_asn1_to_tx_bw(asn1_tdd_info.tx_bw);
+
+    nr_mode_info.tdd = tdd_info;
+  } else {
+    report_fatal_error("Invalid NR mode.");
+  }
+
+  return nr_mode_info;
 }
 
 } // namespace srs_cu_cp

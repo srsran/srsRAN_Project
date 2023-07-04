@@ -22,6 +22,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/rlc/rlc_config.h"
 #include <cstdint>
@@ -141,13 +142,56 @@ struct cu_cp_tai {
   uint32_t    tac;
 };
 
+struct cu_cp_tx_bw {
+  subcarrier_spacing nr_scs;
+  uint16_t           nr_nrb;
+};
+
+struct cu_cp_sul_info {
+  uint32_t    sul_nr_arfcn;
+  cu_cp_tx_bw sul_tx_bw;
+};
+
+struct cu_cp_supported_sul_freq_band_item {
+  uint16_t freq_band_ind_nr;
+};
+
+struct cu_cp_freq_band_nr_item {
+  uint16_t                                        freq_band_ind_nr;
+  std::vector<cu_cp_supported_sul_freq_band_item> supported_sul_band_list;
+};
+
+struct cu_cp_nr_freq_info {
+  uint32_t                             nr_arfcn;
+  optional<cu_cp_sul_info>             sul_info;
+  std::vector<cu_cp_freq_band_nr_item> freq_band_list_nr;
+};
+
+struct cu_cp_fdd_info {
+  cu_cp_nr_freq_info ul_nr_freq_info;
+  cu_cp_nr_freq_info dl_nr_freq_info;
+  cu_cp_tx_bw        ul_tx_bw;
+  cu_cp_tx_bw        dl_tx_bw;
+};
+
+struct cu_cp_tdd_info {
+  cu_cp_nr_freq_info nr_freq_info;
+  cu_cp_tx_bw        tx_bw;
+};
+
+struct cu_cp_nr_mode_info {
+  // choice
+  optional<cu_cp_fdd_info> fdd;
+  optional<cu_cp_tdd_info> tdd;
+};
+
 struct cu_cp_served_cell_info {
   nr_cell_global_id_t      nr_cgi;
   pci_t                    nr_pci;
   optional<uint32_t>       five_gs_tac;
   optional<uint32_t>       cfg_eps_tac;
   std::vector<std::string> served_plmns;
-  std::string              nr_mode_info;
+  cu_cp_nr_mode_info       nr_mode_info;
   byte_buffer              meas_timing_cfg;
 };
 
