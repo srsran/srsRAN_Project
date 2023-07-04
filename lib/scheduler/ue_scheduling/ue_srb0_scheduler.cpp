@@ -30,7 +30,7 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
              .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id]),
-  cs_cfg(cell_cfg.get_common_coreset(ss_cfg.cs_id)),
+  cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -136,7 +136,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
 
   prb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(
       initial_active_dl_bwp.scs,
-      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.id),
+      pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id()),
       pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
   crb_interval   unused_crbs      = rb_helper::find_next_empty_interval(used_crbs, starting_crb_idx, used_crbs.size());
@@ -187,7 +187,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue& u, cell_resource_allocator& res_alloc,
   }
 
   // Allocate PDCCH resources.
-  pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
+  pdcch_dl_information* pdcch =
+      pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.get_id(), aggregation_level::n4);
   if (pdcch == nullptr) {
     logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PDCCH.");
     return false;

@@ -172,7 +172,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_dl_information* pdcch =
-      get_pdcch_sched(grant.cell_index).alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index)
+          .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -320,7 +321,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.emplace_back();
   msg.context.ue_index  = u.ue_index;
   msg.context.k1        = k1;
-  msg.context.ss_id     = ss_cfg.id;
+  msg.context.ss_id     = ss_cfg.get_id();
   msg.context.nof_retxs = h_dl.tb(0).nof_retxs;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
@@ -476,7 +477,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Allocate PDCCH position.
   pdcch_ul_information* pdcch =
-      get_pdcch_sched(grant.cell_index).alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.id, grant.aggr_lvl);
+      get_pdcch_sched(grant.cell_index)
+          .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ss_cfg.get_id(), grant.aggr_lvl);
   if (pdcch == nullptr) {
     logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
     return false;
@@ -588,7 +590,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Fill PUSCH.
   ul_sched_info& msg    = pusch_alloc.result.ul.puschs.emplace_back();
   msg.context.ue_index  = u.ue_index;
-  msg.context.ss_id     = ss_cfg.id;
+  msg.context.ss_id     = ss_cfg.get_id();
   msg.context.k2        = pusch_td_cfg.k2;
   msg.context.nof_retxs = h_ul.tb().nof_retxs;
   switch (pdcch->dci.type) {
@@ -619,7 +621,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               pusch_cfg,
                               mcs_tbs_info.value(),
                               ue_cell_cfg,
-                              ss_cfg.id,
+                              ss_cfg.get_id(),
                               pdcch->dci.c_rnti_f0_1,
                               grant.crbs,
                               h_ul);

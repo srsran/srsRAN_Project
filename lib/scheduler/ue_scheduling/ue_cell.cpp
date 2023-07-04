@@ -167,12 +167,12 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter)
   std::sort(active_search_spaces.begin(),
             active_search_spaces.end(),
             [aggr_lvl_idx](const search_space_info* lhs, const search_space_info* rhs) -> bool {
-              if (lhs->cfg->nof_candidates[aggr_lvl_idx] == rhs->cfg->nof_candidates[aggr_lvl_idx]) {
+              if (lhs->cfg->get_nof_candidates()[aggr_lvl_idx] == rhs->cfg->get_nof_candidates()[aggr_lvl_idx]) {
                 // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
                 // little as possible).
-                return lhs->cfg->cs_id > rhs->cfg->cs_id;
+                return lhs->cfg->get_coreset_id() > rhs->cfg->get_coreset_id();
               }
-              return lhs->cfg->nof_candidates[aggr_lvl_idx] > rhs->cfg->nof_candidates[aggr_lvl_idx];
+              return lhs->cfg->get_nof_candidates()[aggr_lvl_idx] > rhs->cfg->get_nof_candidates()[aggr_lvl_idx];
             });
 
   return active_search_spaces;
@@ -197,14 +197,14 @@ ue_cell::get_active_dl_search_spaces(optional<dci_dl_rnti_config_type> required_
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.get_id()));
     }
     return active_search_spaces;
   }
 
   const unsigned aggr_lvl_idx = to_aggregation_level_index(get_aggregation_level());
   return get_prioritized_search_spaces(*this, [aggr_lvl_idx, required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_dl_dci_format());
   });
 }
@@ -222,13 +222,13 @@ ue_cell::get_active_ul_search_spaces(optional<dci_ul_rnti_config_type> required_
                   "Invalid required dci-rnti parameter");
     for (const search_space_configuration& ss :
          ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      active_search_spaces.push_back(&ue_cfg.search_space(ss.id));
+      active_search_spaces.push_back(&ue_cfg.search_space(ss.get_id()));
     }
     return active_search_spaces;
   }
 
   auto filter_dci = [aggr_lvl_idx, &required_dci_rnti_type](const search_space_info& ss) {
-    return ss.cfg->nof_candidates[aggr_lvl_idx] > 0 and
+    return ss.cfg->get_nof_candidates()[aggr_lvl_idx] > 0 and
            (not required_dci_rnti_type.has_value() or *required_dci_rnti_type == ss.get_crnti_ul_dci_format());
   };
 

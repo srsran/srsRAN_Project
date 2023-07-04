@@ -89,7 +89,7 @@ static bool alloc_dl_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_dl_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->id == 0) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -139,7 +139,7 @@ static bool alloc_dl_ue(const ue&                    u,
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
                                                                                   ue_cc.cell_index,
                                                                                   h->id,
-                                                                                  ss->cfg->id,
+                                                                                  ss->cfg->get_id(),
                                                                                   time_res,
                                                                                   ue_grant_crbs,
                                                                                   ue_cc.get_aggregation_level(),
@@ -196,7 +196,7 @@ static bool alloc_ul_ue(const ue&                    u,
     static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces =
         ue_cc.get_active_ul_search_spaces(preferred_dci_rnti_type);
     for (const search_space_info* ss : search_spaces) {
-      if (ss->cfg->id == to_search_space_id(0)) {
+      if (ss->cfg->is_search_space0()) {
         continue;
       }
 
@@ -242,7 +242,7 @@ static bool alloc_ul_ue(const ue&                    u,
                                                                                 ue_grant_crbs,
                                                                                 pusch_td.symbols,
                                                                                 time_res,
-                                                                                ss->cfg->id,
+                                                                                ss->cfg->get_id(),
                                                                                 ue_cc.get_aggregation_level(),
                                                                                 mcs_prbs.mcs});
         if (res_allocated) {

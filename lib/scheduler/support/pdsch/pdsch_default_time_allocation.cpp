@@ -138,8 +138,7 @@ srsran::get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_c
                                           const bwp_downlink_dedicated*     active_bwp_dl_ded,
                                           dmrs_typeA_position               dmrs_typeA_pos)
 {
-  const bool is_fallback =
-      ss_cfg.type == search_space_configuration::type_t::common and ss_cfg.cs_id == to_coreset_id(0);
+  const bool is_fallback = ss_cfg.is_common_search_space() and ss_cfg.get_coreset_id() == to_coreset_id(0);
   srsran_assert(is_fallback or active_bwp_dl_ded != nullptr, "Invalid BWP DL dedicated configuration");
 
   // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for DCI formats 1_0 and 1_1.

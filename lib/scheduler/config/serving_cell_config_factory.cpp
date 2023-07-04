@@ -161,46 +161,34 @@ coreset_configuration srsran::config_helpers::make_default_coreset0_config(const
 search_space_configuration
 srsran::config_helpers::make_default_search_space_zero_config(const cell_config_builder_params& params)
 {
-  search_space_configuration cfg{};
-  cfg.id    = to_search_space_id(0);
-  cfg.cs_id = to_coreset_id(0);
-  cfg.set_ss0_monitoring_slot_periodicity(params);
-  cfg.set_ss0_monitoring_slot_offset(params);
-  cfg.set_ss0_duration();
-  cfg.set_ss0_monitoring_symbols_within_slot(params);
-  // TODO: Use TS38.213, Table 10.1-1.
-  cfg.nof_candidates       = {0, 0, 2, 0, 0};
-  cfg.type                 = search_space_configuration::type_t::common;
-  cfg.common.f0_0_and_f1_0 = true;
-  return cfg;
+  return search_space_configuration{
+      params.dl_arfcn, params.scs_common, params.scs_common, params.coreset0_index, params.search_space0_index};
 }
 
 search_space_configuration
 srsran::config_helpers::make_default_common_search_space_config(const cell_config_builder_params& params)
 {
-  search_space_configuration cfg{};
-  cfg.id    = to_search_space_id(1);
-  cfg.cs_id = to_coreset_id(0);
-  cfg.set_non_ss0_monitoring_slot_periodicity(1);
-  cfg.set_non_ss0_monitoring_slot_offset(0, params.scs_common);
-  cfg.set_non_ss0_duration(1);
-  std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> monitoring_symbols_within_slot;
-  monitoring_symbols_within_slot.set(monitoring_symbols_within_slot.size() - 1, true);
-  cfg.set_non_ss0_monitoring_symbols_within_slot(monitoring_symbols_within_slot);
-  cfg.nof_candidates       = {0, 0, 1, 0, 0};
-  cfg.type                 = search_space_configuration::type_t::common;
-  cfg.common.f0_0_and_f1_0 = true;
-  return cfg;
+  search_space_configuration::monitoring_symbols_within_slot_t monitoring_symbols_within_slot(
+      NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+  monitoring_symbols_within_slot.set(0, true);
+  return search_space_configuration{to_search_space_id(1),
+                                    to_coreset_id(0),
+                                    {0, 0, 1, 0, 0},
+                                    search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true},
+                                    1,
+                                    0,
+                                    params.scs_common,
+                                    1,
+                                    monitoring_symbols_within_slot};
 }
 
 search_space_configuration
 srsran::config_helpers::make_default_ue_search_space_config(const cell_config_builder_params& params)
 {
   search_space_configuration cfg = make_default_common_search_space_config(params);
-  cfg.cs_id                      = to_coreset_id(1);
-  cfg.id                         = to_search_space_id(2);
-  cfg.type                       = search_space_configuration::type_t::ue_dedicated;
-  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+  cfg.set_non_ss0_coreset_id(to_coreset_id(1));
+  cfg.set_non_ss0_id(to_search_space_id(2));
+  cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
   return cfg;
 }
 
@@ -644,8 +632,8 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
-  pdcch_cfg.search_spaces[0].nof_candidates = {
-      0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0};
+  pdcch_cfg.search_spaces[0].set_non_ss0_nof_candidates(
+      {0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0});
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg = make_default_pdsch_config(params);
@@ -729,7 +717,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
     cs_duration         = {};
     ss_start_symbol_idx = 0;
     if (coreset0.has_value()) {
-      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+      if (ss_cfg.is_search_space0() and ss_cfg.get_coreset_id() == coreset0->id) {
         cs_duration = coreset0->duration;
         // Fetch SearchSpace#0 configuration.
         const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
@@ -737,13 +725,13 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
                 .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs_duration.value()});
         // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
         ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
-      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == coreset0->id) {
+      } else if (not ss_cfg.is_search_space0() and ss_cfg.get_coreset_id() == coreset0->id) {
         cs_duration         = coreset0->duration;
         ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
       }
     }
     if (common_coreset.has_value()) {
-      if (ss_cfg.id == to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+      if (ss_cfg.is_search_space0() and ss_cfg.get_coreset_id() == common_coreset->id) {
         cs_duration = common_coreset->duration;
         // Fetch SearchSpace#0 configuration.
         const pdcch_type0_css_occasion_pattern1_description ss0_occasion =
@@ -751,7 +739,7 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
                 .is_fr2 = false, .ss_zero_index = ss0_idx, .nof_symb_coreset = cs_duration.value()});
         // Consider the starting index of last PDCCH monitoring occasion to account for all SSB beams.
         ss_start_symbol_idx = *std::max_element(ss0_occasion.start_symbol.begin(), ss0_occasion.start_symbol.end());
-      } else if (ss_cfg.id != to_search_space_id(0) and ss_cfg.cs_id == common_coreset->id) {
+      } else if (not ss_cfg.is_search_space0() and ss_cfg.get_coreset_id() == common_coreset->id) {
         cs_duration         = common_coreset->duration;
         ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
       }
@@ -780,19 +768,19 @@ srsran::config_helpers::make_pdsch_time_domain_resource(uint8_t                 
       cs_duration         = {};
       ss_start_symbol_idx = ss_cfg.get_first_symbol_index();
       if (coreset0.has_value()) {
-        if (ss_cfg.cs_id == coreset0->id) {
+        if (ss_cfg.get_coreset_id() == coreset0->id) {
           cs_duration = coreset0->duration;
         }
       }
       if ((not cs_duration.has_value()) and common_coreset.has_value()) {
-        if (ss_cfg.cs_id == common_coreset->id) {
+        if (ss_cfg.get_coreset_id() == common_coreset->id) {
           cs_duration = common_coreset->duration;
         }
       }
 
       if (not cs_duration.has_value()) {
         for (const coreset_configuration& cs_cfg : ded_pdcch_cfg->coresets) {
-          if (ss_cfg.cs_id == cs_cfg.id) {
+          if (ss_cfg.get_coreset_id() == cs_cfg.id) {
             cs_duration = cs_cfg.duration;
             break;
           }

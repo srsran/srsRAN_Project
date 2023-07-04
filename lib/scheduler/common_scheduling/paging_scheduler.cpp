@@ -34,17 +34,15 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
-    bool ss_cfg_set = false;
     for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
-      if (cfg.id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
+      if (cfg.get_id() != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
         continue;
       }
-      ss_cfg     = cfg;
-      ss_cfg_set = true;
+      ss_cfg = &cfg;
       break;
     }
 
-    if (not ss_cfg_set) {
+    if (ss_cfg == nullptr) {
       srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
     }
 
@@ -71,12 +69,12 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
             precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
-      if (ss_cfg.cs_id != to_coreset_id(0) and
+      if (ss_cfg->get_coreset_id() != to_coreset_id(0) and
           ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) or
-           (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg.cs_id))) {
+           (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg->get_coreset_id()))) {
         srsran_assertion_failure("CORESET configuration for Paging Search Space not configured in DL BWP.");
       }
-      if (ss_cfg.cs_id == to_coreset_id(0) and
+      if (ss_cfg->get_coreset_id() == to_coreset_id(0) and
           (not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value())) {
         srsran_assertion_failure("CORESET0 configuration for Paging Search Space not configured in DL BWP.");
       }
@@ -85,7 +83,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
     // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
     bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-    if (ss_cfg.type == search_space_configuration::type_t::common) {
+    if (ss_cfg->is_common_search_space()) {
       // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
       if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
         bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
@@ -186,9 +184,9 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
         continue;
       }
       const auto&                 pdsch_td_cfg = pdsch_td_alloc_list[time_res_idx];
-      const coreset_configuration cs_cfg       = cell_cfg.get_common_coreset(ss_cfg.cs_id);
+      const coreset_configuration cs_cfg       = cell_cfg.get_common_coreset(ss_cfg->get_coreset_id());
       // Check whether PDSCH time domain resource does not overlap with CORESET.
-      if (pdsch_td_cfg.symbols.start() < ss_cfg.get_first_symbol_index() + cs_cfg.duration) {
+      if (pdsch_td_cfg.symbols.start() < ss_cfg->get_first_symbol_index() + cs_cfg.duration) {
         continue;
       }
       // Check whether PDSCH time domain resource fits in DL symbols of the slot.
@@ -272,7 +270,7 @@ bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_s
   // - [Implementation defined] PDCCH Monitoring Occasions (PMO) are pre-computed over max of nof. slots in radio frame
   // and nof. slots in SearchSpace periodicity. In order to take into account PMOs in atleast Paging Frame.
   const auto periodicity_in_slots =
-      std::max(ss_cfg.get_monitoring_slot_periodicity(), pdcch_slot.nof_slots_per_frame());
+      std::max(ss_cfg->get_monitoring_slot_periodicity(), pdcch_slot.nof_slots_per_frame());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -478,9 +476,9 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
 
 void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)
 {
-  const auto& ss_periodicity = ss_cfg.get_monitoring_slot_periodicity();
-  const auto& ss_slot_offset = ss_cfg.get_monitoring_slot_offset();
-  const auto& ss_duration    = ss_cfg.get_duration();
+  const auto& ss_periodicity = ss_cfg->get_monitoring_slot_periodicity();
+  const auto& ss_slot_offset = ss_cfg->get_monitoring_slot_offset();
+  const auto& ss_duration    = ss_cfg->get_duration();
 
   std::vector<slot_point> pdcch_monitoring_occasions;
   // Initialize slot point to 0.

@@ -31,23 +31,25 @@ validator_result srsran::config_validators::validate_pdcch_cfg(const serving_cel
     const auto& pdcch_cfg = init_dl_bwp.pdcch_cfg.value();
 
     VERIFY(has_unique_ids(pdcch_cfg.coresets, &coreset_configuration::id), "Duplication of CoresetId");
-    VERIFY(has_unique_ids(pdcch_cfg.search_spaces, &search_space_configuration::id), "Duplication of SearchSpaceId");
+    VERIFY(has_unique_ids(pdcch_cfg.search_spaces, [](const search_space_configuration& ss) { return ss.get_id(); }),
+           "Duplication of SearchSpaceId");
 
     for (const auto& ss : pdcch_cfg.search_spaces) {
-      const bool cset_id_found_in_ded = std::find_if(pdcch_cfg.coresets.begin(),
-                                                     pdcch_cfg.coresets.end(),
-                                                     [cs_id = ss.cs_id](const coreset_configuration& cset_cfg) {
-                                                       return cset_cfg.id == cs_id;
-                                                     }) != pdcch_cfg.coresets.end();
+      const bool cset_id_found_in_ded =
+          std::find_if(pdcch_cfg.coresets.begin(),
+                       pdcch_cfg.coresets.end(),
+                       [cs_id = ss.get_coreset_id()](const coreset_configuration& cset_cfg) {
+                         return cset_cfg.id == cs_id;
+                       }) != pdcch_cfg.coresets.end();
       const bool cst_id_found_in_common =
           dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()
-              ? dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == ss.cs_id
+              ? dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id == ss.get_coreset_id()
               : false;
-      const bool cst_id_found_in_coreset0 = ss.cs_id == 0;
+      const bool cst_id_found_in_coreset0 = ss.get_coreset_id() == 0;
       VERIFY(cset_id_found_in_ded or cst_id_found_in_common or cst_id_found_in_coreset0,
              "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Coresets",
-             ss.cs_id,
-             ss.id);
+             ss.get_coreset_id(),
+             ss.get_id());
     }
   }
   // TODO: Validate other parameters.

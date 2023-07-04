@@ -46,9 +46,9 @@ asn1::rrc_nr::coreset_s srsran::srs_du::make_asn1_rrc_coreset(const coreset_conf
 asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const search_space_configuration& cfg)
 {
   search_space_s ss;
-  ss.search_space_id                                = cfg.id;
+  ss.search_space_id                                = cfg.get_id();
   ss.coreset_id_present                             = true;
-  ss.coreset_id                                     = cfg.cs_id;
+  ss.coreset_id                                     = cfg.get_coreset_id();
   ss.monitoring_slot_periodicity_and_offset_present = true;
   search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
   bool success = asn1::number_to_enum(period, cfg.get_monitoring_slot_periodicity());
@@ -108,26 +108,29 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
   }
   if (cfg.get_monitoring_symbols_within_slot().any()) {
     ss.monitoring_symbols_within_slot_present = true;
-    ss.monitoring_symbols_within_slot.from_number(cfg.get_monitoring_symbols_within_slot().to_ulong());
+    ss.monitoring_symbols_within_slot.from_number(cfg.get_monitoring_symbols_within_slot().to_uint64());
   }
   ss.nrof_candidates_present = true;
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.nof_candidates[0]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level2, cfg.nof_candidates[1]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level4, cfg.nof_candidates[2]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.nof_candidates[3]);
-  asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.nof_candidates[4]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.get_nof_candidates()[0]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level2, cfg.get_nof_candidates()[1]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level4, cfg.get_nof_candidates()[2]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.get_nof_candidates()[3]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.get_nof_candidates()[4]);
   ss.search_space_type_present = true;
-  if (cfg.type == search_space_configuration::type_t::common) {
+  if (cfg.is_common_search_space()) {
+    const auto dci_fmt = variant_get<search_space_configuration::common_dci_format>(cfg.get_monitored_dci_formats());
     ss.search_space_type.set_common();
-    ss.search_space_type.common().dci_format0_0_and_format1_0_present = cfg.common.f0_0_and_f1_0;
-    ss.search_space_type.common().dci_format2_0_present               = cfg.common.f2_0;
-    ss.search_space_type.common().dci_format2_1_present               = cfg.common.f2_1;
-    ss.search_space_type.common().dci_format2_2_present               = cfg.common.f2_2;
-    ss.search_space_type.common().dci_format2_3_present               = cfg.common.f2_3;
+    ss.search_space_type.common().dci_format0_0_and_format1_0_present = dci_fmt.f0_0_and_f1_0;
+    ss.search_space_type.common().dci_format2_0_present               = dci_fmt.f2_0;
+    ss.search_space_type.common().dci_format2_1_present               = dci_fmt.f2_1;
+    ss.search_space_type.common().dci_format2_2_present               = dci_fmt.f2_2;
+    ss.search_space_type.common().dci_format2_3_present               = dci_fmt.f2_3;
   } else {
+    const auto dci_fmt =
+        variant_get<search_space_configuration::ue_specific_dci_format>(cfg.get_monitored_dci_formats());
     ss.search_space_type.set_ue_specific();
     ss.search_space_type.ue_specific().dci_formats.value =
-        cfg.ue_specific == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
+        dci_fmt == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
             ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg0_and_neg1_neg0
             : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg1_and_neg1_neg1;
   }
@@ -219,7 +222,7 @@ void calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_con
       src.search_spaces,
       dest.search_spaces,
       [](const search_space_configuration& ss) { return make_asn1_rrc_search_space(ss); },
-      [](const search_space_configuration& ss) { return (uint8_t)ss.id; });
+      [](const search_space_configuration& ss) { return (uint8_t)ss.get_id(); });
 
   // TODO: Remaining.
 }

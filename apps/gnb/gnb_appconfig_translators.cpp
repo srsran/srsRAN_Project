@@ -364,7 +364,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // Common PDCCH config.
     search_space_configuration& ss1_cfg = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back();
-    ss1_cfg.nof_candidates              = config.common_cell_cfg.pdcch_cfg.common.ss1_n_candidates;
+    ss1_cfg.set_non_ss0_nof_candidates(config.common_cell_cfg.pdcch_cfg.common.ss1_n_candidates);
 
     // UE-dedicated PDCCH config.
     freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
@@ -396,28 +396,27 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
     const std::array<uint8_t, 5> auto_compute_ss2_n_candidates_cfg = {0, 0, 0, 0, 0};
     if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates != auto_compute_ss2_n_candidates_cfg) {
-      ss2_cfg.nof_candidates = config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates;
+      ss2_cfg.set_non_ss0_nof_candidates(config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates);
     } else if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type != search_space_configuration::type_t::common) {
-      ss2_cfg.nof_candidates = {
-          0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0};
+      ss2_cfg.set_non_ss0_nof_candidates(
+          {0, 0, config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg), 0, 0});
     }
 
     if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
-      ss2_cfg.type                 = search_space_configuration::type_t::common;
-      ss2_cfg.common.f0_0_and_f1_0 = true;
+      ss2_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::common_dci_format{.f0_0_and_f1_0 = true});
       // TODO: Handle this implementation defined restriction of max. 4 PDCCH candidates in validator.
       if (config.common_cell_cfg.pdcch_cfg.dedicated.ss2_n_candidates == auto_compute_ss2_n_candidates_cfg) {
-        ss2_cfg.nof_candidates = {
-            0,
-            0,
-            std::min(static_cast<uint8_t>(4U),
-                     config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
-            0,
-            0};
+        ss2_cfg.set_non_ss0_nof_candidates(
+            {0,
+             0,
+             std::min(static_cast<uint8_t>(4U),
+                      config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg)),
+             0,
+             0});
       }
     } else if (not config.common_cell_cfg.pdcch_cfg.dedicated.dci_format_0_1_and_1_1) {
       search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
-      ss_cfg.ue_specific                 = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+      ss_cfg.set_non_ss0_monitored_dci_formats(search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0);
     }
 
     // PDSCH-Config - Update PDSCH time domain resource allocations based on partial slot.
