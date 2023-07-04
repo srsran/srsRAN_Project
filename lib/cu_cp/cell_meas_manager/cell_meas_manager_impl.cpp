@@ -36,7 +36,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
   meas_cfg.emplace();
 
   // Create meas object for each neighbor cell
-  unsigned id_counter = 0;
+  unsigned id_counter = 1;
   for (const auto& ncell_nci : cell_config.ncells) {
     // Verify we have a complete config for this cell.
     if (!is_complete(cfg.cells.at(ncell_nci))) {
@@ -58,11 +58,62 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
     // Mandatory fields.
     meas_obj_nr.ref_sig_cfg.ssb_cfg_mob.emplace().derive_ssb_idx_from_cell = true;
     meas_obj_nr.nrof_ss_blocks_to_average.emplace()                        = 8;
-    meas_obj_nr.quant_cfg_idx                                              = 0;
+    meas_obj_nr.quant_cfg_idx                                              = 1;
     meas_obj_nr.freq_band_ind_nr.emplace()                                 = nr_band_to_uint(ncell_config.band.value());
 
     meas_cfg.value().meas_obj_to_add_mod_list.push_back(meas_obj);
   }
+
+  // Add single periodic report configuration for NR.
+  rrc_report_cfg_to_add_mod report_cfg_to_add_mod;
+
+  report_cfg_to_add_mod.report_cfg_id = 1;
+
+  rrc_report_cfg            report_cfg;
+  rrc_report_cfg_nr         report_cfg_nr;
+  rrc_periodical_report_cfg periodical;
+
+  periodical.rs_type                = "ssb";
+  periodical.report_interv          = 1024;
+  periodical.report_amount          = -1;
+  periodical.report_quant_cell.rsrp = true;
+  periodical.report_quant_cell.rsrq = true;
+  periodical.report_quant_cell.sinr = true;
+  periodical.max_report_cells       = 4;
+
+  rrc_meas_report_quant report_quant_rs_idxes;
+  report_quant_rs_idxes.rsrp       = true;
+  report_quant_rs_idxes.rsrq       = true;
+  report_quant_rs_idxes.sinr       = true;
+  periodical.report_quant_rs_idxes = report_quant_rs_idxes;
+
+  periodical.max_nrof_rs_idxes_to_report = 4;
+  periodical.include_beam_meass          = true;
+  periodical.use_allowed_cell_list       = false;
+
+  report_cfg_nr.periodical         = periodical;
+  report_cfg.report_cfg_nr         = report_cfg_nr;
+  report_cfg_to_add_mod.report_cfg = report_cfg;
+
+  meas_cfg.value().report_cfg_to_add_mod_list.push_back(report_cfg_to_add_mod);
+
+  // Add meas id to link the first neighbor cell and the report together.
+  rrc_meas_id_to_add_mod meas_id_to_add_mod;
+
+  meas_id_to_add_mod.meas_id       = 1;
+  meas_id_to_add_mod.meas_obj_id   = 1;
+  meas_id_to_add_mod.report_cfg_id = 1;
+
+  meas_cfg.value().meas_id_to_add_mod_list.push_back(meas_id_to_add_mod);
+
+  // Add quantity config
+  rrc_quant_cfg    quant_cfg;
+  rrc_quant_cfg_nr quant_cfg_nr;
+  quant_cfg_nr.quant_cfg_cell.ssb_filt_cfg.filt_coef_rsrp    = 6;
+  quant_cfg_nr.quant_cfg_cell.csi_rs_filt_cfg.filt_coef_rsrp = 6;
+  quant_cfg.quant_cfg_nr_list.push_back(quant_cfg_nr);
+
+  meas_cfg.value().quant_cfg = quant_cfg;
 
   return meas_cfg;
 }
