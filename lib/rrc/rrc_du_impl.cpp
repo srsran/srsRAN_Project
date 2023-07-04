@@ -62,9 +62,18 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
     }
 
     cell_info_db.emplace(served_cell.served_cell_info.nr_cgi.nci, cell_info);
-  }
 
-  // TODO: Update cell config in cell meas manager
+    // fill cell meas config
+    cell_meas_cfg meas_cfg;
+    meas_cfg.band = cell_info.band;
+    // TODO: which meas timing to use here?
+    meas_cfg.ssb_mtc   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_meas_timing_cfg;
+    meas_cfg.ssb_arfcn = cell_info.meas_timings.begin()->freq_and_timing.value().carrier_freq;
+    meas_cfg.ssb_scs   = cell_info.meas_timings.begin()->freq_and_timing.value().ssb_subcarrier_spacing;
+
+    // Update cell config in cell meas manager
+    cell_meas_mng.update_cell_config(served_cell.served_cell_info.nr_cgi.nci, meas_cfg);
+  }
 
   return true;
 }
