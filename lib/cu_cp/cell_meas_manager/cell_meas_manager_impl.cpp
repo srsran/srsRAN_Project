@@ -27,7 +27,7 @@ optional<rrc_meas_cfg> cell_meas_manager_impl::get_measurement_config(nr_cell_id
 
   // Find cell.
   if (cfg.cells.find(serving_nci) == cfg.cells.end()) {
-    logger.error("Couldn't find neighbor cell list for nci={}", serving_nci);
+    logger.error("Couldn't find cell config for nci={}", serving_nci);
     return meas_cfg;
   }
   const auto& cell_config = cfg.cells.at(serving_nci);
