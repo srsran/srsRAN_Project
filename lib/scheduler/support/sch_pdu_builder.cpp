@@ -625,8 +625,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const bwp_uplink_dedicated*         bwp_ul_ded    = bwp_info.ul_ded;
   const bwp_uplink_common&            bwp_ul_cmn    = *bwp_info.ul_common;
   const optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
-  const optional<pusch_config>        pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
-  const optional<pusch_config_common> pusch_cfg_cmn = bwp_ul_cmn.pusch_cfg_common;
+  const optional<pusch_config>&       pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const prb_interval                  prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
 
   // TODO: Populate based on config.
