@@ -20,10 +20,25 @@
 
 static bool is_recognized_conf(const srsran::prach_detector::configuration& conf)
 {
-  if (conf.nof_rx_ports != 2) {
+  if (conf.nof_rx_ports == 1) {
+    if ((conf.format == prach_format_type::zero) && (conf.zero_correlation_zone == 1)) {
+      return true;
+    }
+    if ((conf.format == prach_format_type::B4) && (conf.zero_correlation_zone == 11)) {
+      return true;
+    }
     return false;
   }
-  return ((conf.format == prach_format_type::zero) || (conf.format == prach_format_type::A1));
+  if (conf.nof_rx_ports == 2) {
+    if ((conf.format == prach_format_type::zero) && (conf.zero_correlation_zone == 1)) {
+      return true;
+    }
+    if ((conf.format == prach_format_type::A1) && (conf.zero_correlation_zone == 11)) {
+      return true;
+    }
+    return false;
+  }
+  return false;
 }
 
 namespace srsran {
@@ -85,6 +100,7 @@ TEST_P(PrachDetectorFixture, FromVector)
   const PrachDetectorParams&           params          = GetParam();
   const prach_detector::configuration& config          = params.context.config;
   const prach_detection_result&        expected_result = params.context.result;
+  const phy_time_unit&                 true_delay      = params.context.true_delay;
   auto                                 sequence_data   = params.symbols.read();
 
   // Make sure configuration is valid.
@@ -121,15 +137,38 @@ TEST_P(PrachDetectorFixture, FromVector)
     time_error_tolerance = phy_time_unit::from_seconds(0.26e-6F);
   }
 
-  // TODO(david): work out a better set of test vectors.
   if (is_recognized_conf(config)) {
-    // Assert a one preamble is found.
-    ASSERT_EQ(1, result.preambles.size());
+    // Assert the required preamble was found. The detector thresholds are tweaked to have a small FA probability when
+    // there is no signal. However, when there is signal, spurious false detections may appear, especially when the SNR
+    // is high.
+    auto* it = std::find_if(result.preambles.begin(),
+                            result.preambles.end(),
+                            [&expected_result](const prach_detection_result::preamble_indication& a) {
+                              return (a.preamble_index == expected_result.preambles.front().preamble_index);
+                            });
+
+    ASSERT_NE(it, result.preambles.end());
 
     // Verify the preamble index.
-    const prach_detection_result::preamble_indication& preamble_indication = result.preambles.back();
+    const prach_detection_result::preamble_indication& preamble_indication = *it;
     ASSERT_EQ(expected_result.preambles.front().preamble_index, preamble_indication.preamble_index);
-    ASSERT_LE(preamble_indication.time_advance, time_error_tolerance);
+    // Assert the estimated time advance with respect to 0 - should be less than time_error_tolerance.
+    ASSERT_NEAR(
+        preamble_indication.time_advance.to_seconds(), true_delay.to_seconds(), time_error_tolerance.to_seconds());
+
+    // Assert the estimated time advance with respect to the expected one - we allow at most a difference equal to the
+    // time resolution of the detection algorithm.
+    ASSERT_NEAR(expected_result.preambles.front().time_advance.to_seconds(),
+                preamble_indication.time_advance.to_seconds(),
+                result.time_resolution.to_seconds());
+
+    // Allow a 1% difference between expected and measured SNR.
+    ASSERT_NEAR(expected_result.preambles.front().snr_dB,
+                preamble_indication.snr_dB,
+                std::abs(preamble_indication.snr_dB) / 100);
+
+    // Allow a 1% difference between expected and measured RSSI.
+    ASSERT_NEAR(expected_result.rssi_dB, result.rssi_dB, std::abs(result.rssi_dB) / 100);
   }
 }
 

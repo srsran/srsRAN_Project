@@ -155,10 +155,8 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
                 to_string(config.format));
 
   // Calculate maximum delay.
-  unsigned guard             = 50;
   unsigned max_delay_samples = (N_cs == 0) ? cp_prach : std::min(std::max(N_cs, 1U) - 1U, cp_prach);
   max_delay_samples          = (max_delay_samples * DFT_SIZE) / L_ra;
-  max_delay_samples          = std::max(guard + 1, max_delay_samples) - guard;
 
   // Calculate number of symbols.
   unsigned nof_symbols =
@@ -181,7 +179,7 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
   result.rssi_dB         = convert_power_to_dB(rssi);
   result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sample_rate_Hz));
   result.time_advance_max =
-      phy_time_unit::from_seconds(static_cast<double>(max_delay_samples) / static_cast<double>(sample_rate_Hz));
+      phy_time_unit::from_seconds(static_cast<double>(max_delay_samples) * 0.8 / static_cast<double>(sample_rate_Hz));
   result.preambles.clear();
 
   // Early stop if the RSSI is zero.
@@ -294,12 +292,15 @@ prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& i
       float    peak  = *it;
       unsigned delay = static_cast<unsigned>(it - metric_global.begin());
 
-      // Check with the threshold.
-      if ((it != metric_global.end()) && (peak > threshold) && (delay < max_delay_samples)) {
+      // Compare with the threshold. Note that we neglect the last 1/5 of the detection window because it may contain
+      // spurious peaks due to the adjacent window.
+      if ((it != metric_global.end()) && (peak > threshold) && (delay < static_cast<float>(max_delay_samples) * 0.8)) {
         prach_detection_result::preamble_indication& info = result.preambles.emplace_back();
         info.preamble_index                               = i_sequence * nof_shifts + i_window;
         info.time_advance =
             phy_time_unit::from_seconds(static_cast<double>(delay) / static_cast<double>(sample_rate_Hz));
+        // The peak value of the detection metric is somehow related to the SINR, although it can't be considered a
+        // reliable estimate.
         info.power_dB = convert_power_to_dB(peak);
         info.snr_dB   = convert_power_to_dB(peak);
       }
