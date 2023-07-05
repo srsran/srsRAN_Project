@@ -344,10 +344,13 @@ public:
   }
 
   /// Returns an iterator to the end of the byte_buffer_chain.
-  iterator       end() { return iterator{*this, slice_storage.end(), byte_buffer_view::iterator{nullptr, 0}}; }
+  iterator end()
+  {
+    return iterator{*this, slice_storage.begin() + slice_count, byte_buffer_view::iterator{nullptr, 0}};
+  }
   const_iterator end() const
   {
-    return const_iterator{*this, slice_storage.end(), byte_buffer_view::iterator{nullptr, 0}};
+    return const_iterator{*this, slice_storage.begin() + slice_count, byte_buffer_view::iterator{nullptr, 0}};
   }
 
 private:

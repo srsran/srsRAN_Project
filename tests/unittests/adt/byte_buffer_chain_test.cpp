@@ -70,6 +70,7 @@ TEST(byte_buffer_chain_test, append_byte_buffer)
     ASSERT_EQ(buf_concat[(count++)], v);
   }
   ASSERT_EQ(buf_concat.length(), count);
+  ASSERT_EQ(std::distance(buf.begin(), buf.end()), buf.length());
 
   // Test comparison.
   ASSERT_EQ(buf, buf_concat);
