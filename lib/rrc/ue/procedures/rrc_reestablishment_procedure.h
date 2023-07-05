@@ -26,6 +26,7 @@ public:
                                 const ue_index_t                      old_ue_index_,
                                 rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
                                 rrc_ue_du_processor_notifier&         du_processor_notifier_,
+                                rrc_ue_reestablishment_notifier&      cu_cp_notifier_,
                                 rrc_ue_event_manager&                 event_mng_,
                                 srslog::basic_logger&                 logger_);
 
@@ -46,6 +47,7 @@ private:
 
   rrc_ue_reestablishment_proc_notifier& rrc_ue;                // handler to the parent RRC UE object
   rrc_ue_du_processor_notifier&         du_processor_notifier; // notifier to the DU processor
+  rrc_ue_reestablishment_notifier&      cu_cp_notifier;        // notifier to the CU-CP
   rrc_ue_event_manager&                 event_mng;             // event manager for the RRC UE entity
   srslog::basic_logger&                 logger;
 

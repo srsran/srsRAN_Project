@@ -18,13 +18,15 @@ using namespace asn1::rrc_nr;
 rrc_reestablishment_procedure::rrc_reestablishment_procedure(rrc_ue_context_t&                     context_,
                                                              const ue_index_t                      old_ue_index_,
                                                              rrc_ue_reestablishment_proc_notifier& rrc_ue_notifier_,
-                                                             rrc_ue_du_processor_notifier& du_processor_notifier_,
-                                                             rrc_ue_event_manager&         event_mng_,
-                                                             srslog::basic_logger&         logger_) :
+                                                             rrc_ue_du_processor_notifier&    du_processor_notifier_,
+                                                             rrc_ue_reestablishment_notifier& cu_cp_notifier_,
+                                                             rrc_ue_event_manager&            event_mng_,
+                                                             srslog::basic_logger&            logger_) :
   context(context_),
   old_ue_index(old_ue_index_),
   rrc_ue(rrc_ue_notifier_),
   du_processor_notifier(du_processor_notifier_),
+  cu_cp_notifier(cu_cp_notifier_),
   event_mng(event_mng_),
   logger(logger_)
 {
@@ -52,6 +54,13 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   if (coro_res.has_value()) {
     logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
+
+    // Notify CU-CP to transfer and remove UE Contexts
+    cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, old_ue_index);
+
+    // Notify DU Processor to start a Reestablishment Context Modification Routine
+    du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index);
+
     logger.debug("ue={} old_ue={}: \"{}\" finalized.", context.ue_index, old_ue_index, name());
   } else {
     logger.debug("ue={} \"{}\" timed out", context.ue_index, name());

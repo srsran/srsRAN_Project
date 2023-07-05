@@ -188,13 +188,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   } else {
     // Accept RRC Reestablishment Request by sending RRC Reestablishment
     task_sched.schedule_async_task(launch_async<rrc_reestablishment_procedure>(
-        context, reest_context.ue_index, *this, du_processor_notifier, *event_mng, logger));
-
-    // Notify CU-CP to transfer and remove UE Contexts
-    cu_cp_notifier.on_rrc_reestablishment_complete(context.ue_index, reest_context.ue_index);
-
-    // Notify DU Processor to start a Reestablishment Context Modification Routine
-    du_processor_notifier.on_rrc_reestablishment_context_modification_required(context.ue_index);
+        context, reest_context.ue_index, *this, du_processor_notifier, cu_cp_notifier, *event_mng, logger));
   }
 }
 
