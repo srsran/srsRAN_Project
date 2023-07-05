@@ -201,47 +201,64 @@ public:
   size_t max_nof_slices() const { return main_block->max_nof_slices(); }
 
   /// Appends a byte_buffer_slice to the end of the byte_buffer_chain.
-  void append(byte_buffer_slice obj) noexcept
+  ///
+  /// \param obj Slice to append to the byte_buffer_chain.
+  /// \return true if operation was successful, false otherwise.
+  bool append(byte_buffer_slice obj) noexcept
   {
-    srsran_assert(valid() and not full(), "append() called on full container");
+    if (not valid() or full()) {
+      return false;
+    }
     if (obj.empty()) {
-      return;
+      return true;
     }
     main_block->slices[main_block->size++] = std::move(obj);
+    return true;
   }
 
   /// Appends a byte_buffer to the end of the byte_buffer_chain.
-  void append(byte_buffer buf) { append(byte_buffer_slice{std::move(buf)}); }
+  /// \return true if operation was successful, false otherwise.
+  bool append(byte_buffer buf) { return append(byte_buffer_slice{std::move(buf)}); }
 
   /// Appends the contents of another byte_buffer_chain to the end of this byte_buffer_chain.
-  void append(byte_buffer_chain&& other)
+  /// \return true if operation was successful, false otherwise.
+  bool append(byte_buffer_chain&& other)
   {
-    srsran_assert(valid() and other.valid(), "append() called on an invalid container");
-    srsran_assert(nof_slices() + other.nof_slices() <= max_nof_slices(),
-                  "append() would exceed container max capacity");
+    if (not valid() or not other.valid()) {
+      return false;
+    }
+    if (nof_slices() + other.nof_slices() > max_nof_slices()) {
+      return false;
+    }
     for (unsigned i = 0, end = other.nof_slices(); i != end; ++i) {
       main_block->slices[main_block->size + i] = std::move(other.main_block->slices[i]);
     }
     main_block->size += other.nof_slices();
     other.main_block->size = 0;
+    return true;
   }
 
-  /// Prepends a byte_buffer_slice to the beginning of the byte_buffer_chain.
-  void prepend(byte_buffer_slice slice)
+  /// Prepends a byte_buffer_slice to the beginning of the byte_buffer_chain. This operation has O(N) complexity.
+  /// \return true if operation was successful, false otherwise.
+  bool prepend(byte_buffer_slice slice)
   {
-    srsran_assert(valid() and not full(), "prepend() called on full container");
+    if (not valid() or full()) {
+      return false;
+    }
     if (slice.empty()) {
-      return;
+      return true;
     }
     for (size_t i = main_block->size; i > 0; --i) {
       main_block->slices[i] = std::move(main_block->slices[i - 1]);
     }
     main_block->slices[0] = std::move(slice);
     main_block->size++;
+    return true;
   }
 
   /// Prepends a byte_buffer to the beginning of the byte_buffer_chain.
-  void prepend(byte_buffer buf) { prepend(byte_buffer_slice{std::move(buf)}); }
+  /// \return true if operation was successful, false otherwise.
+  bool prepend(byte_buffer buf) { return prepend(byte_buffer_slice{std::move(buf)}); }
 
   /// Release all the byte buffer slices held by the byte_buffer_chain.
   void clear()
@@ -360,7 +377,6 @@ private:
 } // namespace srsran
 
 namespace fmt {
-
 /// \brief Custom formatter for byte_buffer_chain.
 template <>
 struct formatter<srsran::byte_buffer_chain> : public formatter<srsran::byte_buffer_view> {
