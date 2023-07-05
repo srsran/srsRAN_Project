@@ -19,6 +19,7 @@ services:
         OPEN5GS_VERSION: "v2.6.1"
     environment:
       MONGODB_IP: ${MONGODB_IP:-127.0.0.1}
+      SUBSCRIBER_DB: ${SUBSCRIBER_DB:-"001010123456780,00112233445566778899aabbccddeeff,opc,63bfa50ee6523365ff14c1f45f88737d,8000,10.45.1.2"}
       OPEN5GS_IP: ${OPEN5GS_IP:-10.53.1.2}
       UE_IP_BASE: ${UE_IP_BASE:-10.45.0}
       DEBUG: ${DEBUG:-false}
@@ -64,7 +65,7 @@ services:
     # Its content would be the value of the file used to create the config
     configs:
       - gnb_config.yml
-    # Customize your desired network mode. 
+    # Customize your desired network mode.
     # current netowrk configuration creastes a private netwoek with both containers attached
     # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
     networks:
