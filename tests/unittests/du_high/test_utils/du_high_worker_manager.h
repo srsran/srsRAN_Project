@@ -14,6 +14,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/executors/task_worker.h"
+#include <array>
 
 namespace srsran {
 
@@ -31,11 +32,11 @@ struct du_high_worker_manager {
     }
   }
 
-  manual_task_worker   test_worker{task_worker_queue_size};
-  task_worker          ctrl_worker{"CTRL", task_worker_queue_size};
-  task_worker          cell_workers[2] = {{"DU-CELL#0", task_worker_queue_size}, {"CELL#1", task_worker_queue_size}};
-  task_worker          ue_workers[2]   = {{"UE#0", task_worker_queue_size}, {"UE#1", task_worker_queue_size}};
-  task_worker_executor ctrl_exec{ctrl_worker};
+  manual_task_worker         test_worker{task_worker_queue_size};
+  task_worker                ctrl_worker{"CTRL", task_worker_queue_size};
+  std::array<task_worker, 2> cell_workers{{{"DU-CELL#0", task_worker_queue_size}, {"CELL#1", task_worker_queue_size}}};
+  std::array<task_worker, 2> ue_workers{{{"UE#0", task_worker_queue_size}, {"UE#1", task_worker_queue_size}}};
+  task_worker_executor       ctrl_exec{ctrl_worker};
   static_vector<task_worker_executor, 2> cell_execs{{cell_workers[0]}, {cell_workers[1]}};
   static_vector<task_worker_executor, 2> ue_execs{{ue_workers[0]}, {ue_workers[1]}};
   du_high_executor_mapper_impl           exec_mapper{
