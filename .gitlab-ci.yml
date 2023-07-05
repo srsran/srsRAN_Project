@@ -229,7 +229,7 @@ e2e tests tox:
 
 srsran docker compose:
   stage: build and unit tests
-  image: docker:24.0.2
+  image: docker:24.0.1
   tags:
     - docker
   rules:
@@ -246,12 +246,12 @@ srsran docker compose:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: docker:24.0.2-dind
+    - name: docker:24.0.1-dind
       alias: docker
       entrypoint: ["env", "-u", "DOCKER_HOST"]
       command: ["dockerd-entrypoint.sh"]
   script:
-    - docker compose -f docker/docker-compose.yml run gnb gnb --version
+    - docker compose -f docker/docker-compose.yml run --no-deps gnb gnb --version
     - docker compose -f docker/docker-compose.yml run 5gc 5gc -v
   needs: []
 

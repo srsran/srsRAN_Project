@@ -122,7 +122,7 @@ def main(mongodb, mongodb_port, subscriber_data):
         print("Reading subscriber data from cmd.")
         subscriber_db = read_from_string(subscriber_data)
 
-    for ue in db_data:
+    for ue in subscriber_db:
         try:
             sub_data = add_user(**ue)
             # Add Subscriber using dict of sub_data

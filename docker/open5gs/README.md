@@ -36,32 +36,4 @@ To ping a connected UE setup the necessary route to the UE_IP_BASE + ".0/24" (he
 
 ## Note
 
-At startup of the container, all entries from the [user_db.csv](user_db.csv), if exists, will be added to the specified mongodb.
-
-user_db.csv format must be:
-
-```bash
-#
-# .csv to store UE's information in HSS
-# Kept in the following format: "Name,Auth,IMSI,Key,OP_Type,OP/OPc,AMF,SQN,QCI,IP_alloc"
-#
-# Name:     Human readable name to help distinguish UE's. Ignored by the HSS
-# Auth:     Authentication algorithm used by the UE. Valid algorithms are XOR
-#           (xor) and MILENAGE (mil)
-# IMSI:     UE's IMSI value
-# Key:      UE's key, where other keys are derived from. Stored in hexadecimal
-# OP_Type:  Operator's code type, either OP or OPc
-# OP/OPc:   Operator Code/Cyphered Operator Code, stored in hexadecimal
-# AMF:      Authentication management field, stored in hexadecimal
-# SQN:      UE's Sequence number for freshness of the authentication
-# QCI:      QoS Class Identifier for the UE's default bearer.
-# IP_alloc: IP allocation stratagy for the SPGW.
-#           With 'dynamic' the SPGW will automatically allocate IPs
-#           With a valid IPv4 (e.g. '172.16.0.2') the UE will have a statically assigned IP.
-#
-# Note: Lines starting by '#' are ignored and will be overwritten
-# List of UEs with IMSI, and key increasing by one for each new UE.
-ue01,xor,000000000000001,00112233445566778899aabbccddeeff,opc,00aaa00aa0000000aa00a0a0a0a0a00a,9001,00000000d91e,9,10.45.1.2
-```
-
 The Open5GS WebUI to manually add/change UEs to the mongodb can be accessed at [localhost:3000](localhost:3000).

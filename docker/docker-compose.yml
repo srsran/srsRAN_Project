@@ -29,13 +29,11 @@ services:
     # Uncomment port to use the 5gc from outside the docker network
     #   - "38412:38412/sctp"
     command: 5gc -c open5gs-5gc.yml
-    configs:
-      - user_db.csv
     healthcheck:
       test: [ "CMD-SHELL", "nc -z 127.0.0.20 7777" ]
       interval: 3s
       timeout: 1s
-      retries: 5
+      retries: 60
     networks:
       ran:
         ipv4_address: ${OPEN5GS_IP:-10.53.1.2}
@@ -81,8 +79,6 @@ services:
 configs:
   gnb_config.yml:
     file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
-  user_db.csv:
-    file: ${USER_DATABASE_PATH} # Path to a csv file with UEs info. See open5gs/README.md for more details
 
 networks:
   ran:
