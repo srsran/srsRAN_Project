@@ -81,7 +81,7 @@ TEST_F(cell_meas_manager_test, when_serving_cell_found_then_neighbor_cells_are_a
   }
 }
 
-TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_update_fails)
+TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_config_is_added)
 {
   create_default_manager();
 
@@ -97,7 +97,10 @@ TEST_F(cell_meas_manager_test, when_inexisting_cell_config_is_updated_then_updat
   cell_cfg_val.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg_val.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
-  ASSERT_FALSE(manager->update_cell_config(cell_cfg_val.serving_cell_cfg.nci, cell_cfg_val.serving_cell_cfg));
+
+  // Make sure meas_cfg is created.
+  optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);
+  check_default_meas_cfg(meas_cfg);
 }
 
 TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid_meas_config_is_created)
@@ -115,7 +118,6 @@ TEST_F(cell_meas_manager_test, when_incomplete_cell_config_is_updated_then_valid
   cell_cfg_val.serving_cell_cfg.band.emplace()      = nr_band::n78;
   cell_cfg_val.serving_cell_cfg.ssb_arfcn.emplace() = 632628;
   cell_cfg_val.serving_cell_cfg.ssb_scs.emplace()   = subcarrier_spacing::kHz30;
-  ASSERT_TRUE(manager->update_cell_config(cell_cfg_val.serving_cell_cfg.nci, cell_cfg_val.serving_cell_cfg));
 
   // Make sure meas_cfg is created.
   optional<rrc_meas_cfg> meas_cfg = manager->get_measurement_config(nci);

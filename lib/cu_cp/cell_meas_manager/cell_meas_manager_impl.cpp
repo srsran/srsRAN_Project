@@ -127,29 +127,35 @@ optional<cell_meas_config> cell_meas_manager_impl::get_cell_config(nr_cell_id_t 
   return cell_cfg;
 }
 
-bool cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    nci,
+void cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    nci,
                                                 const serving_cell_meas_config& serv_cell_cfg_,
                                                 std::vector<nr_cell_id_t>       ncells_)
 {
-  if (cfg.cells.find(nci) == cfg.cells.end()) {
-    logger.error("Can't update configuration for nci={}. Cell not found.", nci);
-    return false;
-  }
   if (!is_complete(serv_cell_cfg_)) {
     logger.warning("Updating incomplete cell measurement configuration for nci={}", nci);
   }
 
-  // Update serving cell config
-  cfg.cells.at(nci).serving_cell_cfg = serv_cell_cfg_;
+  if (cfg.cells.find(nci) == cfg.cells.end()) {
+    logger.debug("No configuration to update for nci={}. Adding configuration.", nci);
 
-  // Update neighbor cells
-  if (!ncells_.empty()) {
-    cfg.cells.at(nci).ncells = ncells_;
+    cell_meas_config meas_cfg;
+    meas_cfg.serving_cell_cfg = serv_cell_cfg_;
+    meas_cfg.ncells           = ncells_;
+
+    cfg.cells.emplace(nci, meas_cfg);
+  } else {
+    logger.debug("Updating measurement configuration for nci={}.", nci);
+
+    // Update serving cell config
+    cfg.cells.at(nci).serving_cell_cfg = serv_cell_cfg_;
+
+    // Update neighbor cells
+    if (!ncells_.empty()) {
+      cfg.cells.at(nci).ncells = ncells_;
+    }
   }
 
   log_cells(logger, cfg);
-
-  return true;
 }
 
 void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results)
