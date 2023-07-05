@@ -43,7 +43,7 @@ class byte_buffer_chain
       parent(&parent_), buffer_it(buffer_it_), it(it_)
     {
       // Ensure we are not at the end of one of the byte buffers.
-      if (buffer_it != parent->main_block->end() and it == buffer_it->end()) {
+      if (buffer_it != parent->slices().end() and it == buffer_it->end()) {
         ++buffer_it;
         it = buffer_it->begin();
       }
@@ -62,11 +62,11 @@ class byte_buffer_chain
 
     iterator_type& operator++()
     {
-      srsran_assert(buffer_it != parent->main_block->end(), "Out-of-bound access");
+      srsran_assert(buffer_it != parent->slices().end(), "Out-of-bound access");
       ++it;
       if (it == buffer_it->end()) {
         ++buffer_it;
-        if (buffer_it != parent->main_block->end()) {
+        if (buffer_it != parent->slices().end()) {
           it = buffer_it->begin();
         } else {
           it = buffer_offset_it_t(nullptr, 0);
@@ -88,9 +88,13 @@ class byte_buffer_chain
         unsigned remaining = buffer_it->end() - it;
         if (remaining <= n) {
           n -= remaining;
+          srsran_assert(buffer_it != parent->slices().end(), "Out-of-bound access");
           ++buffer_it;
-          srsran_assert(buffer_it != parent->main_block->end(), "Operator+= out-of-bounds access");
-          it = buffer_it->begin();
+          if (buffer_it != parent->slices().end()) {
+            it = buffer_it->begin();
+          } else {
+            it = {nullptr, 0};
+          }
         } else {
           it += n;
           n = 0;
@@ -131,16 +135,40 @@ public:
   /// \brief Creates an empty byte_buffer_chain.
   byte_buffer_chain()
   {
-    void* block = detail::get_default_byte_buffer_segment_pool().allocate_node();
-    if (block == nullptr) {
+    // Allocate memory block from pool for the array of slices.
+    mem_block.reset(detail::get_default_byte_buffer_segment_pool().allocate_node());
+    if (mem_block == nullptr) {
       srslog::fetch_basic_logger("ALL").warning("POOL: Failed to allocate memory block for byte_buffer_chain");
       return;
     }
-    main_block.reset(new (block) master_block());
+
+    // Initialize slice array in the allocated memory block.
+    size_t max_nof_slices =
+        detail::get_default_byte_buffer_segment_pool().memory_block_size() / sizeof(byte_buffer_slice);
+    byte_buffer_slice* start = static_cast<byte_buffer_slice*>(align_next(mem_block.get(), alignof(byte_buffer_slice)));
+    for (unsigned i = 0; i != max_nof_slices; ++i) {
+      new (start + i) byte_buffer_slice();
+    }
+    slice_storage = {start, max_nof_slices};
+  }
+
+  ~byte_buffer_chain()
+  {
+    // Destroy slice array.
+    for (auto& slice : slice_storage) {
+      slice.~byte_buffer_slice();
+    }
   }
 
   /// Default move constructor.
-  byte_buffer_chain(byte_buffer_chain&&) noexcept = default;
+  byte_buffer_chain(byte_buffer_chain&& other) noexcept :
+    byte_count(std::exchange(other.byte_count, 0)),
+    slice_count(std::exchange(other.slice_count, 0)),
+    mem_block(std::move(other.mem_block))
+  {
+    slice_storage       = other.slice_storage;
+    other.slice_storage = {};
+  }
 
   byte_buffer_chain(const byte_buffer_chain&) = delete;
 
@@ -157,12 +185,19 @@ public:
   }
 
   /// Default move assignment operator.
-  byte_buffer_chain& operator=(byte_buffer_chain&&) noexcept = default;
+  byte_buffer_chain& operator=(byte_buffer_chain&& other) noexcept
+  {
+    byte_count  = std::exchange(other.byte_count, 0);
+    slice_count = std::exchange(other.slice_count, 0);
+    std::swap(mem_block, other.mem_block);
+    std::swap(slice_storage, other.slice_storage);
+    return *this;
+  }
 
   /// No copy assignment operator.
   byte_buffer_chain& operator=(const byte_buffer_chain&) noexcept = delete;
 
-  /// Performs a deep copy of this byte_buffer_chain.
+  /// Performs a deep copy of this byte_buffer_chain into a byte_buffer.
   byte_buffer deep_copy() const
   {
     byte_buffer buf;
@@ -173,32 +208,22 @@ public:
   }
 
   /// If the byte_buffer_chain failed to be allocated, this will return false.
-  bool valid() const { return main_block != nullptr; }
+  bool valid() const { return not slice_storage.empty(); }
 
   /// Checks whether the byte_buffer_chain can append/prepend more byte_buffers.
   bool full() const { return nof_slices() == max_nof_slices(); }
 
   /// Checks whether the byte_buffer_chain is empty.
-  bool empty() const { return not valid() or main_block->nof_slices() == 0; }
+  bool empty() const { return not valid() or nof_slices() == 0; }
 
   /// Returns the total length of the byte_buffer_chain in bytes.
-  size_t length() const
-  {
-    if (not valid()) {
-      return 0;
-    }
-    size_t len = 0;
-    for (unsigned i = 0; i != main_block->nof_slices(); ++i) {
-      len += main_block->slices[i].length();
-    }
-    return len;
-  }
+  size_t length() const { return byte_count; }
 
   /// Returns the number of byte_buffer_slices in the byte_buffer_chain.
-  size_t nof_slices() const { return main_block->nof_slices(); }
+  size_t nof_slices() const { return slice_count; }
 
   /// Returns the maximum number of byte_buffer_slices that the byte_buffer_chain can hold.
-  size_t max_nof_slices() const { return main_block->max_nof_slices(); }
+  size_t max_nof_slices() const { return slice_storage.size(); }
 
   /// Appends a byte_buffer_slice to the end of the byte_buffer_chain.
   ///
@@ -206,13 +231,14 @@ public:
   /// \return true if operation was successful, false otherwise.
   bool append(byte_buffer_slice obj) noexcept
   {
-    if (not valid() or full()) {
-      return false;
-    }
     if (obj.empty()) {
       return true;
     }
-    main_block->slices[main_block->size++] = std::move(obj);
+    if (not valid() or full()) {
+      return false;
+    }
+    byte_count += obj.length();
+    slice_storage[slice_count++] = std::move(obj);
     return true;
   }
 
@@ -224,17 +250,16 @@ public:
   /// \return true if operation was successful, false otherwise.
   bool append(byte_buffer_chain&& other)
   {
-    if (not valid() or not other.valid()) {
-      return false;
-    }
     if (nof_slices() + other.nof_slices() > max_nof_slices()) {
       return false;
     }
     for (unsigned i = 0, end = other.nof_slices(); i != end; ++i) {
-      main_block->slices[main_block->size + i] = std::move(other.main_block->slices[i]);
+      slice_storage[slice_count + i] = std::move(other.slice_storage[i]);
     }
-    main_block->size += other.nof_slices();
-    other.main_block->size = 0;
+    byte_count += other.byte_count;
+    slice_count += other.slice_count;
+    other.slice_count = 0;
+    other.byte_count  = 0;
     return true;
   }
 
@@ -242,17 +267,18 @@ public:
   /// \return true if operation was successful, false otherwise.
   bool prepend(byte_buffer_slice slice)
   {
-    if (not valid() or full()) {
-      return false;
-    }
     if (slice.empty()) {
       return true;
     }
-    for (size_t i = main_block->size; i > 0; --i) {
-      main_block->slices[i] = std::move(main_block->slices[i - 1]);
+    if (not valid() or full()) {
+      return false;
     }
-    main_block->slices[0] = std::move(slice);
-    main_block->size++;
+    for (size_t i = slice_count; i > 0; --i) {
+      slice_storage[i] = std::move(slice_storage[i - 1]);
+    }
+    byte_count += slice.length();
+    slice_count++;
+    slice_storage[0] = std::move(slice);
     return true;
   }
 
@@ -263,12 +289,11 @@ public:
   /// Release all the byte buffer slices held by the byte_buffer_chain.
   void clear()
   {
-    if (main_block != nullptr) {
-      for (unsigned i = 0; i != main_block->nof_slices(); ++i) {
-        main_block->slices[i] = {};
-      }
-      main_block->size = 0;
+    for (unsigned i = 0; i != nof_slices(); ++i) {
+      slice_storage[i] = {};
     }
+    slice_count = 0;
+    byte_count  = 0;
   }
 
   /// Access to one byte of the byte_buffer_chain by a given index.
@@ -283,13 +308,13 @@ public:
       rem_pos -= s.length();
     }
     srsran_assertion_failure("Out-of-bounds access ({} >= {})", idx, length());
-    return (*main_block->begin())[0];
+    return slice_storage[0][0];
   }
 
   /// Returns the slices of the byte_buffer_chain.
   span<const byte_buffer_slice> slices() const
   {
-    return span<const byte_buffer_slice>{main_block->begin(), main_block->end()};
+    return span<const byte_buffer_slice>{slice_storage.begin(), slice_storage.begin() + slice_count};
   }
 
   template <typename Range>
@@ -307,63 +332,27 @@ public:
   /// Returns an iterator to the begin of the byte_buffer_chain.
   iterator begin()
   {
-    return iterator{
-        *this, main_block->begin(), empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->begin()->begin()};
+    return iterator{*this,
+                    slice_storage.begin(),
+                    empty() ? byte_buffer_view::iterator{nullptr, 0} : slice_storage.begin()->begin()};
   }
   const_iterator begin() const
   {
-    return const_iterator{
-        *this, main_block->begin(), empty() ? byte_buffer_view::iterator{nullptr, 0} : main_block->begin()->begin()};
+    return const_iterator{*this,
+                          slice_storage.begin(),
+                          empty() ? byte_buffer_view::iterator{nullptr, 0} : slice_storage.begin()->begin()};
   }
 
   /// Returns an iterator to the end of the byte_buffer_chain.
-  iterator       end() { return iterator{*this, main_block->end(), byte_buffer_view::iterator{nullptr, 0}}; }
+  iterator       end() { return iterator{*this, slice_storage.end(), byte_buffer_view::iterator{nullptr, 0}}; }
   const_iterator end() const
   {
-    return const_iterator{*this, main_block->end(), byte_buffer_view::iterator{nullptr, 0}};
+    return const_iterator{*this, slice_storage.end(), byte_buffer_view::iterator{nullptr, 0}};
   }
 
 private:
-  struct master_block {
-    span<byte_buffer_slice> slices;
-    size_t                  size = 0;
-
-    master_block()
-    {
-      char* data_start =
-          static_cast<char*>(align_next(advance_ptr(this, sizeof(master_block)), alignof(byte_buffer_slice)));
-      char* data_end =
-          static_cast<char*>(advance_ptr(this, detail::byte_buffer_segment_pool::get_instance().memory_block_size()));
-      const size_t vec_sz = (data_end - data_start) / sizeof(byte_buffer_slice);
-      srsran_assert(vec_sz > 0, "Memory block size is too small to fit a single byte_buffer_slice");
-      byte_buffer_slice* first_elem = new (data_start) byte_buffer_slice{};
-      for (unsigned i = 1; i != vec_sz; ++i) {
-        new (data_start + i * sizeof(byte_buffer_slice)) byte_buffer_slice{};
-      }
-      slices = span<byte_buffer_slice>{first_elem, vec_sz};
-    }
-    master_block(const master_block&)            = delete;
-    master_block(master_block&&)                 = delete;
-    master_block& operator=(const master_block&) = delete;
-    master_block& operator=(master_block&&)      = delete;
-    ~master_block()
-    {
-      for (unsigned i = 0; i != slices.size(); ++i) {
-        slices[i].~byte_buffer_slice();
-      }
-    }
-
-    SRSRAN_FORCE_INLINE byte_buffer_slice*       begin() { return slices.begin(); }
-    SRSRAN_FORCE_INLINE const byte_buffer_slice* begin() const { return slices.begin(); }
-    SRSRAN_FORCE_INLINE byte_buffer_slice*       end() { return slices.begin() + size; }
-    SRSRAN_FORCE_INLINE const byte_buffer_slice* end() const { return slices.begin() + size; }
-
-    SRSRAN_FORCE_INLINE size_t nof_slices() const { return size; }
-    SRSRAN_FORCE_INLINE size_t max_nof_slices() const { return slices.size(); }
-  };
-
   struct block_deleter {
-    void operator()(master_block* p)
+    void operator()(void* p)
     {
       if (p != nullptr) {
         detail::byte_buffer_segment_pool::get_instance().deallocate_node(p);
@@ -371,7 +360,14 @@ private:
     }
   };
 
-  std::unique_ptr<master_block, block_deleter> main_block;
+  // Total number of bytes stored in this container.
+  size_t byte_count = 0;
+  // Total number of byte_buffer_slices stored in this container.
+  size_t slice_count = 0;
+  // Memory block managed by a memory pool, where the slices are stored.
+  std::unique_ptr<void, block_deleter> mem_block;
+  // Array where byte_buffer_slices are stored. This array is a view to the \c mem_block.
+  span<byte_buffer_slice> slice_storage;
 };
 
 } // namespace srsran
