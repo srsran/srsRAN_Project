@@ -152,9 +152,9 @@ bool cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    
   return true;
 }
 
-void cell_meas_manager_impl::report_measurement(const rrc_meas_results& meas_results)
+void cell_meas_manager_impl::report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
-  logger.debug("Received measurement result with meas_id={}", meas_results.meas_id);
+  logger.debug("ue={} Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
 
   // TODO: handle measurement result
 }

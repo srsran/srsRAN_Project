@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell_meas_manager_config.h"
+#include "cu_cp_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -38,7 +39,7 @@ public:
                                   std::vector<nr_cell_id_t>       ncells_ = {}) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
-  virtual void report_measurement(const rrc_meas_results& meas_results) = 0;
+  virtual void report_measurement(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
 };
 
 /// Creates an instance of an cell manager.

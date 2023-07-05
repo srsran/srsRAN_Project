@@ -263,7 +263,7 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
   // convert asn1 to common type
   rrc_meas_results meas_results = asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results);
   // send measurement results to cell measurement manager
-  cell_meas_mng.report_measurement(meas_results);
+  cell_meas_mng.report_measurement(context.ue_index, meas_results);
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
