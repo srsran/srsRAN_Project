@@ -16,7 +16,7 @@
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_builder.h"
-#include "srsran/ofh/ofh_cplane_message_builder.h"
+#include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
 
 namespace srsran {
 namespace ofh {

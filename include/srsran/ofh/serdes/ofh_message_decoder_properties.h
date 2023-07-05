@@ -10,11 +10,18 @@
 
 #pragma once
 
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
+
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul payload version as per O-RAN WG4 CUs v10.00 Section 7.5.2.2.
-static constexpr unsigned OFH_PAYLOAD_VERSION = 1U;
+/// Open Fronthaul message decoder properties.
+struct message_decoder_results {
+  /// eAxC.
+  unsigned eaxc;
+  /// User-Plane decoding results.
+  uplane_message_decoder_results uplane_results;
+};
 
 } // namespace ofh
 } // namespace srsran

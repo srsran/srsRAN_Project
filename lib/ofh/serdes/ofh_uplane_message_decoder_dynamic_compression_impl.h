@@ -15,6 +15,7 @@
 
 namespace srsran {
 namespace ofh {
+
 class iq_decompressor;
 class network_order_binary_deserializer;
 
@@ -35,7 +36,7 @@ private:
   // See parent for documentation.
   bool decode_compression_header(uplane_section_params&             results,
                                  network_order_binary_deserializer& deserializer,
-                                 bool                               is_a_prach_msg = false) override;
+                                 bool                               is_a_prach_msg) override;
 };
 
 } // namespace ofh

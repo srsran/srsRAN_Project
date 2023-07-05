@@ -10,8 +10,6 @@
 
 #include "ofh_transmitter_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
-#include "scoped_frame_buffer.h"
-#include "srsran/ofh/ethernet/ethernet_properties.h"
 
 using namespace srsran;
 using namespace ofh;

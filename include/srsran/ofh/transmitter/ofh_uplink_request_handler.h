@@ -11,6 +11,7 @@
 #pragma once
 
 namespace srsran {
+
 class prach_buffer;
 struct prach_buffer_context;
 class resource_grid;

@@ -12,7 +12,7 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/adt/span.h"
-#include "srsran/ofh/ofh_uplane_message_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_properties.h"
 #include "srsran/support/units.h"
 
 namespace srsran {

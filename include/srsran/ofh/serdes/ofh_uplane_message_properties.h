@@ -11,18 +11,16 @@
 #pragma once
 
 #include "srsran/ofh/compression/compression_params.h"
-#include "srsran/ofh/ofh_message_properties.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul User-Plane packet parameters.
+/// Open Fronthaul User-Plane message parameters.
 struct uplane_message_params {
   /// Data direction.
   data_direction direction;
-  /// Payload version.
-  unsigned payload_version;
   /// Frame, subframe and slot information.
   slot_point slot;
   /// Filter index.
@@ -33,7 +31,7 @@ struct uplane_message_params {
   unsigned nof_prb;
   /// Symbol identifier.
   unsigned symbol_id;
-  /// Section type of the packet to be built.
+  /// Section type of the message to be built.
   section_type sect_type;
   /// IQ data compression parameters.
   ru_compression_params compression_params;

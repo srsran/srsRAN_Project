@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/ofh/ofh_uplane_message_decoder_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
 
 namespace srsran {
 namespace ofh {

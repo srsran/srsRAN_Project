@@ -17,8 +17,8 @@
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/ofh_message_properties.h"
-#include "srsran/ofh/ofh_uplane_message_decoder.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {

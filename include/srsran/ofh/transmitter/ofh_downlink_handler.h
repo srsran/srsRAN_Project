@@ -11,6 +11,7 @@
 #pragma once
 
 namespace srsran {
+
 struct resource_grid_context;
 class resource_grid_reader;
 

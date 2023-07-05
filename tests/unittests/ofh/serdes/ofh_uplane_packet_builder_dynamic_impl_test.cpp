@@ -81,10 +81,9 @@ static const std::vector<test_case_t> ofh_uplane_builder_test_data = {
       {0.0217, 0.0217},
       {0.0220, 0.0220},
       {0.0223, 0.0223}},
-     // Params: direction downlink, payload version 1, Numerology 1, slot 2, filter index 0, startPRB 0, 3 PRBs, Symbol
-     // 9, type 1, compression none, compression bitwidth 16
+     // Params: direction downlink, Numerology 1, slot 2, filter index 0, startPRB 0, 3 PRBs, Symbol 9, type 1,
+     // compression none, compression bitwidth 16
      {data_direction::downlink,
-      1,
       {1, 2},
       filter_index_type::standard_channel_filter,
       0,

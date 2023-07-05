@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ofh/ofh_message_properties.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/slot_point.h"
 

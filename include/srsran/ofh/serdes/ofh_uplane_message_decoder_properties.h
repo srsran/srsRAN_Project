@@ -13,7 +13,7 @@
 #include "srsran/adt/complex.h"
 #include "srsran/adt/optional.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/ofh/ofh_uplane_message_properties.h"
+#include "srsran/ofh/serdes/ofh_uplane_message_properties.h"
 #include "srsran/ran/resource_block.h"
 
 namespace srsran {

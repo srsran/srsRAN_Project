@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/ofh/compression/compression_params.h"
-#include "srsran/ofh/ofh_message_properties.h"
+#include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 
@@ -85,6 +85,12 @@ enum class cplane_fft_size : uint8_t {
   fft_3072 = 0x0e
 };
 
+/// Converts and returns the given FFT size into an integer.
+constexpr unsigned to_value(cplane_fft_size fft)
+{
+  return static_cast<unsigned>(fft);
+}
+
 /// Subcarrier spacing defined in defined in O-RAN.WG4.CUS, Table 7.5.2.13-3 (part of frameStructure field).
 enum class cplane_scs : uint8_t {
   kHz15   = 0,
@@ -95,6 +101,12 @@ enum class cplane_scs : uint8_t {
   kHz5    = 0x0e,
   reserved
 };
+
+/// Converts and returns the given cplane scs into an integer.
+constexpr unsigned to_value(cplane_scs scs)
+{
+  return static_cast<unsigned>(scs);
+}
 
 /// Open Fronthaul Control-Plane section type 0 parameters.
 struct cplane_section_type0_parameters {
