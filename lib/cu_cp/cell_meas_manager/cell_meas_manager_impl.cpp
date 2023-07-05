@@ -132,7 +132,7 @@ void cell_meas_manager_impl::update_cell_config(nr_cell_id_t                    
                                                 std::vector<nr_cell_id_t>       ncells_)
 {
   if (!is_complete(serv_cell_cfg_)) {
-    logger.warning("Updating incomplete cell measurement configuration for nci={}", nci);
+    logger.debug("Updating incomplete cell measurement configuration for nci={}", nci);
   }
 
   if (cfg.cells.find(nci) == cfg.cells.end()) {
