@@ -39,6 +39,9 @@ public:
   /// E2 message handler functions.
   void handle_message(const e2_message& msg) override;
 
+  /// e2sm configuration functions.
+  void add_service_model(const std::string& ran_oid, std::unique_ptr<e2sm_handler> e2sm_handler);
+
 private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] outcome The received initiating message.
@@ -60,16 +63,15 @@ private:
   /// \param[in] msg The received ran_function_id from the e2 setup response message.
   void set_allowed_ran_functions(const uint16_t ran_function_id);
 
-  // void add_e2sm_service(const uint16_t ran_function_id
-
-  srslog::basic_logger&                               logger;
-  timer_factory                                       timers;
-  e2_message_notifier&                                pdu_notifier;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s> candidate_ran_functions;
-  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s> allowed_ran_functions;
-  e2_subscription_manager&                            subscription_mngr;
-  e2_subscription_setup_procedure                     subscribe_proc;
-  std::unique_ptr<e2_event_manager>                   events;
+  srslog::basic_logger&                                logger;
+  timer_factory                                        timers;
+  e2_message_notifier&                                 pdu_notifier;
+  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  candidate_ran_functions;
+  std::map<uint16_t, asn1::e2ap::ra_nfunction_item_s>  allowed_ran_functions;
+  std::map<std::string, std::unique_ptr<e2sm_handler>> e2sm_handlers;
+  e2_subscription_manager&                             subscription_mngr;
+  e2_subscription_setup_procedure                      subscribe_proc;
+  std::unique_ptr<e2_event_manager>                    events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id
 };

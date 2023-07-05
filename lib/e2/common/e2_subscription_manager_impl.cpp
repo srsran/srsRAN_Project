@@ -50,7 +50,10 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ricsub
       subscriptions.erase(outcome.request_id.ric_instance_id);
     }
   } else {
-    outcome.success = false;
+    outcome.request_id.ric_requestor_id = subscription.subscription_info.request_id.ric_requestor_id;
+    outcome.request_id.ric_instance_id  = subscription.subscription_info.request_id.ric_instance_id;
+    outcome.success                     = false;
+    outcome.cause.set_protocol();
     logger.error("RAN function ID not supported");
   }
   return outcome;

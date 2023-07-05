@@ -60,5 +60,6 @@ void e2_subscription_setup_procedure::send_e2_subscription_setup_failure(const e
   sub_fail->ri_crequest_id.value.ric_instance_id  = failure.request_id.ric_instance_id;
   sub_fail->ri_crequest_id.value.ric_requestor_id = failure.request_id.ric_requestor_id;
   sub_fail->cause.value                           = failure.cause;
+  ric_notif.on_new_message(msg);
   logger.info("E2AP: Sending subscription failure");
 }
